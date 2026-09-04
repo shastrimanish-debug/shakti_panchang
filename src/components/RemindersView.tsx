@@ -148,7 +148,7 @@ export const RemindersView: React.FC = () => {
         {reminders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {reminders.map((r) => {
-              const isPast = Date.now() > r.timestamp;
+              const isPast = r.timestamp ? Date.now() > r.timestamp : false;
               return (
                 <div
                   key={r.id}
@@ -167,11 +167,13 @@ export const RemindersView: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#735133]">{r.body}</p>
-                    <div className="text-[11px] font-bold text-[#B56A00] pt-1 flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {formatTimestamp(r.timestamp)}
-                    </div>
+                    {r.body && <p className="text-xs text-[#735133]">{r.body}</p>}
+                    {r.timestamp && (
+                      <div className="text-[11px] font-bold text-[#B56A00] pt-1 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        {formatTimestamp(r.timestamp)}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => handleDelete(r.id)}
