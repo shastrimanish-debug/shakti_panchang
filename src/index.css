@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Yantramanav', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  h1, h2, h3, h4, .font-granth {
+    font-family: 'Rozha One', 'Cinzel Decorative', 'Tiro Devanagari Hindi', Georgia, serif;
+    letter-spacing: 0.02em;
+  }
+}
+
+.bhojpatra-bg {
+  background-color: #faf2de;
+  background-image: radial-gradient(#d6bd94 0.75px, transparent 0.75px), radial-gradient(#ecd4ad 0.75px, #faf2de 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+.bhojpatra-leaf {
+  background: linear-gradient(135deg, #fdf8eb 0%, #f7ebd0 50%, #f1e0be 100%);
+  border: 1px solid #d4b584;
+  position: relative;
+  box-shadow: 0 4px 15px -3px rgba(82, 45, 18, 0.12), 0 1px 3px rgba(82, 45, 18, 0.08), inset 0 0 12px rgba(184, 134, 11, 0.06);
+}
+
+.granth-border {
+  border: 2px solid #8f2121;
+  outline: 2px solid #c27803;
+  outline-offset: -5px;
+}
+
+.granth-book-spine {
+  box-shadow: inset 25px 0 35px -15px rgba(62, 34, 13, 0.18), inset 6px 0 10px rgba(62, 34, 13, 0.1);
+}
+
+.shloka-banner {
+  background: linear-gradient(90deg, rgba(143, 33, 33, 0.08) 0%, rgba(194, 120, 3, 0.15) 50%, rgba(143, 33, 33, 0.08) 100%);
+  border-top: 1px solid #c27803;
+  border-bottom: 1px solid #c27803;
+}
+
+/* Custom Granth scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f1e0be;
+}
+::-webkit-scrollbar-thumb {
+  background: #c27803;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8f2121;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}

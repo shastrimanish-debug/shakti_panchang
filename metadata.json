@@ -1,0 +1,6 @@
+{
+  "name": "Shakti Panchang",
+  "description": "सनातन शक्ति पंचांग - वैदिक पंचांग, संपूर्ण कुण्डली, चौघड़िया, शुभ मुहूर्त, 100 वर्ष व्रत-त्योहार खोज, यात्रा दिशाशूल एवं उमा AI ज्योतिषीय मार्गदर्शन",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
