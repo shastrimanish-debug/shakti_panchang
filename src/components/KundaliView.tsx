@@ -10,7 +10,7 @@ import {
   calculatePratyantarPeriods,
 } from '../services/kundali';
 import { COMMON_INDIAN_CITIES } from '../services/disha';
-import { saveKundaliProfile } from '../services/storage';
+import { saveKundaliProfile, DEFAULT_LOCATION } from '../services/storage';
 import { calculateVedicPanchang } from '../services/astronomy';
 import { downloadMilanBhojpatraPdf, downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { generateExhaustive59PageKundaliPdf } from '../services/exhaustiveKundaliPdf';
@@ -137,17 +137,11 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [chartViewMode, setChartViewMode] = useState<'twin' | 'shodashvarga'>('twin');
   const [vargaListFilter, setVargaListFilter] = useState<'shodash' | 'all60'>('shodash');
 
-  // Kundali Input Form State - default to Manish (Burhanpur, 29/05/1974 15:45)
-  const [name, setName] = useState('मनीष (Manish)');
-  const [dob, setDob] = useState('1974-05-29');
-  const [tob, setTob] = useState('15:45');
-  const [selectedCity, setSelectedCity] = useState<SavedLocation>({
-    name: 'बुरहानपुर (Burhanpur)',
-    latitude: 21.3142,
-    longitude: 76.2298,
-    state: 'मध्य प्रदेश',
-    country: 'भारत',
-  });
+  // Kundali Input Form State - clean neutral default profile
+  const [name, setName] = useState('श्री जातक');
+  const [dob, setDob] = useState('1995-01-01');
+  const [tob, setTob] = useState('12:00');
+  const [selectedCity, setSelectedCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
 
   // Synchronize form inputs if activeKundali changes
@@ -164,7 +158,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         name: activeKundali.birthPlace,
         latitude: activeKundali.latitude,
         longitude: activeKundali.longitude,
-        state: 'मध्य प्रदेश',
+        state: selectedCity.state || 'भारत',
         country: 'भारत',
       });
     }
@@ -214,11 +208,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     saveKundaliProfile(k);
   };
 
-  // If no active kundali yet, or if cached profile for Manish has pre-fix lagna, recalculate!
+  // If no active kundali yet, initialize with current form inputs
   useEffect(() => {
     if (!activeKundali) {
-      handleCalculate();
-    } else if (activeKundali.name.includes('मनीष') && activeKundali.lagnaRashi !== 'तुला') {
       handleCalculate();
     }
   }, [activeKundali]);
@@ -288,8 +280,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         pageCount: res.pageCount,
         title: 'भोजपत्र अष्टकूट विवाह मिलान पत्रिका',
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Milan PDF error:', err);
+      alert('विवाह मिलान पत्रिका तैयार करने में त्रुटि: ' + (err?.message || 'अज्ञात त्रुटि'));
     } finally {
       setIsDownloadingMilanPdf(false);
     }
@@ -298,23 +291,27 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [isGeneratingSinglePdf, setIsGeneratingSinglePdf] = useState(false);
 
   const handleDownloadSinglePageKundaliPdf = async () => {
-    if (!k) return;
+    if (!k) {
+      alert('कृपया पहले जन्म विवरण भरकर "जन्म पत्रिका बनाएं" पर क्लिक करें।');
+      return;
+    }
     try {
       setIsGeneratingSinglePdf(true);
+      const birthDateObj = k.birthDate instanceof Date ? k.birthDate : new Date(k.birthDate);
       const panchangData = calculateVedicPanchang(
-        k.birthDate,
+        birthDateObj,
         k.latitude || 28.6139,
         k.longitude || 77.209
       );
 
       const res = await downloadBhojpatraPdf({
-        title: `वैदिक जन्म पत्रिका - ${k.name}`,
+        title: `वैदिक_जन्म_पत्रिका_${k.name}`,
         panchang: panchangData,
         query: `${k.name} की जन्म कुंडली, लग्न व ग्रह विवरण`,
         answer: `लग्न: ${k.lagnaRashi}, चन्द्र राशि: ${k.moonRashi}, नक्षत्र: ${k.nakshatra} (चरण ${k.charan}), वर्तमान महादशा: ${k.mahadasha}, अन्तर्दशा: ${k.antardasha}। लग्न चक्र एवं नवमांश चक्र सहित ग्रह स्पष्ट तालिका।`,
         activeKundali: k,
         locationName: k.birthPlace,
-        date: k.birthDate,
+        date: birthDateObj,
       });
 
       setPdfSuccessInfo({
@@ -325,15 +322,19 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         pageCount: 1,
         title: `त्वरित 1-पृष्ठीय जन्मपत्रिका (${k.name})`,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('1-Page PDF error:', err);
+      alert('1-पृष्ठीय पत्रिका तैयार करने में त्रुटि: ' + (err?.message || 'अज्ञात त्रुटि'));
     } finally {
       setIsGeneratingSinglePdf(false);
     }
   };
 
   const handleDownload59PagePdf = async () => {
-    if (!k) return;
+    if (!k) {
+      alert('कृपया पहले जन्म विवरण भरकर "जन्म पत्रिका बनाएं" पर क्लिक करें।');
+      return;
+    }
     try {
       setIsGeneratingPdf(true);
       setPdfProgress({ current: 1, total: 59, message: 'सम्पूर्ण 59-पृष्ठीय महा-जन्मपत्रिका तैयार की जा रही है...' });
@@ -348,9 +349,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         pageCount: res.pageCount,
         title: `सम्पूर्ण 59-पृष्ठीय महा-जन्मपत्रिका (${k.name})`,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('59-Page PDF Error:', err);
-      alert('PDF निर्माण में त्रुटि आई। कृपया पुनः प्रयास करें।');
+      alert('59-पृष्ठीय महा-पत्रिका तैयार करने में त्रुटि: ' + (err?.message || 'अज्ञात त्रुटि'));
     } finally {
       setIsGeneratingPdf(false);
     }

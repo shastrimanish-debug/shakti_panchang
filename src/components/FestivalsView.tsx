@@ -512,7 +512,6 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {centuryResults.map((res: CenturySearchResult, idx: number) => {
               const isCurrent = res.year === 2026;
-              const isManishBirth = res.year === 1974;
               const isReminded = addedReminderId === res.festival.id;
 
               return (
@@ -521,8 +520,6 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                   className={`bg-[#FAF2E4] border-2 rounded-xl p-3.5 shadow-xs transition flex flex-col justify-between ${
                     isCurrent
                       ? 'border-[#B56A00] bg-[#FFFBF0] ring-2 ring-[#B56A00]/40'
-                      : isManishBirth
-                      ? 'border-emerald-600 bg-emerald-50/40'
                       : 'border-[#8C6239]/40 hover:border-[#8C6239]'
                   }`}
                 >
@@ -536,11 +533,6 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                         {isCurrent && (
                           <span className="text-[10px] font-black bg-[#B56A00] text-white px-1.5 py-0.2 rounded">
                             वर्तमान
-                          </span>
-                        )}
-                        {isManishBirth && (
-                          <span className="text-[10px] font-black bg-emerald-700 text-white px-1.5 py-0.2 rounded">
-                            जन्म वर्ष
                           </span>
                         )}
                       </div>

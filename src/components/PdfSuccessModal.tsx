@@ -64,20 +64,10 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
 
   // Robust Mobile & Desktop Download
   const handleDownloadDirect = () => {
-    if (!info.blob) {
-      if (info.blobUrl) {
-        const a = document.createElement('a');
-        a.href = info.blobUrl;
-        a.download = info.fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-      return;
-    }
-
     try {
-      const blobUrl = info.blobUrl || URL.createObjectURL(info.blob);
+      const blobUrl = info.blobUrl || (info.blob ? URL.createObjectURL(info.blob) : '');
+      if (!blobUrl) return;
+
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = info.fileName;
@@ -85,21 +75,10 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
-        document.body.removeChild(a);
-      }, 300);
-
-      // Mobile WebView Base64 Fallback
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = info.fileName;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => document.body.removeChild(link), 300);
-      };
-      reader.readAsDataURL(info.blob);
+        if (document.body.contains(a)) {
+          document.body.removeChild(a);
+        }
+      }, 500);
 
       setDownloadSuccessMsg('फ़ाइल डाउनलोड शुरू हो गई है! आपके Downloads फ़ोल्डर में सहेजी जा रही है।');
       setTimeout(() => setDownloadSuccessMsg(null), 5000);

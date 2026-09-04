@@ -71,8 +71,8 @@ export function App() {
   const [turnDirection, setTurnDirection] = useState<'forward' | 'backward'>('forward');
   const [pageTurnNotice, setPageTurnNotice] = useState<string | null>(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(true);
-  // Book open/closed state (true: showing open pages; false: showing sacred hardbound book cover)
-  const [isBookOpen, setIsBookOpen] = useState<boolean>(true);
+  // Book open/closed state (false: showing sacred hardbound front cover; true: showing open pages)
+  const [isBookOpen, setIsBookOpen] = useState<boolean>(false);
 
   // Modals state
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
@@ -80,24 +80,13 @@ export function App() {
   const [isSavedProfilesModalOpen, setIsSavedProfilesModalOpen] = useState<boolean>(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
 
-  // Active Kundali Profile - default to Manish (29/05/1974 15:45 Burhanpur, MP)
+  // Active Kundali Profile - clean profile state without hardcoded defaults
   const [activeKundali, setActiveKundali] = useState<KundaliData | null>(() => {
     const saved = getSavedKundaliProfiles();
-    const manishProfile = saved.find((p) => p.name.includes('मनीष') || p.birthPlace.includes('बुरहानपुर'));
-    // If the saved profile for Manish was calculated with the older engine (e.g. Cancer Lagna or missing pratyantars), recalculate!
-    if (manishProfile && manishProfile.lagnaRashi === 'तुला' && manishProfile.pratyantardasha) {
-      return manishProfile;
-    }
-    if (saved && saved.length > 0 && !manishProfile) return saved[0];
-    return calculateKundali(
-      'मनीष (Manish)',
-      new Date(1974, 4, 29),
-      '15:45',
-      'बुरहानपुर (Burhanpur)',
-      21.3142,
-      76.2298,
-      5.5
+    const cleanSaved = saved.filter(
+      (p) => !p.name.includes('मनीष') && !p.name.includes('Manish') && !p.birthPlace.includes('बुरहानपुर')
     );
+    return cleanSaved.length > 0 ? cleanSaved[0] : null;
   });
 
   // Calculate high-precision Vedic Panchang based on current Date and Geo-coordinates
@@ -333,7 +322,6 @@ export function App() {
               if (isAudioEnabled) playTactilePageTurnSound();
             }}
             currentLocationName={currentLocation.name}
-            manishProfileName={activeKundali?.name || 'मनीष (Manish)'}
           />
         ) : (
           /* Sacred Vedic Book Wrapper (ग्रन्थ पट्टिका) */

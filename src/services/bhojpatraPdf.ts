@@ -286,10 +286,32 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
   });
 
   pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-  const fileName = `Uma_Bhojpatra_Patrika_${date.toISOString().slice(0, 10)}.pdf`;
+  const dateObj = date instanceof Date ? date : new Date(date || Date.now());
+  const dateIso = !isNaN(dateObj.getTime()) ? dateObj.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+  const sanitizedTitle = (options.title || 'Bhojpatra_Patrika')
+    .replace(/[^\w\u0900-\u097F\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '_');
+  const fileName = `${sanitizedTitle}_${dateIso}.pdf`;
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
-  pdf.save(fileName);
+
+  // Safely trigger browser file download without crashing if blocked
+  try {
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;
+    link.target = '_self';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (document.body.contains(link)) document.body.removeChild(link);
+    }, 500);
+  } catch (e) {
+    try {
+      pdf.save(fileName);
+    } catch {}
+  }
 
   return {
     fileName,
@@ -570,10 +592,28 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   });
 
   pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-  const fileName = `Milan_Bhojpatra_Patrika_${boy.name}_${girl.name}.pdf`;
+  const sanitizedBoy = (boy.name || 'Var').replace(/[^\w\u0900-\u097F\s-]/g, '').trim().replace(/\s+/g, '_');
+  const sanitizedGirl = (girl.name || 'Kanya').replace(/[^\w\u0900-\u097F\s-]/g, '').trim().replace(/\s+/g, '_');
+  const fileName = `Milan_Bhojpatra_Patrika_${sanitizedBoy}_${sanitizedGirl}.pdf`;
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
-  pdf.save(fileName);
+
+  // Safely trigger browser file download without crashing if blocked
+  try {
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;
+    link.target = '_self';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (document.body.contains(link)) document.body.removeChild(link);
+    }, 500);
+  } catch (e) {
+    try {
+      pdf.save(fileName);
+    } catch {}
+  }
 
   return {
     fileName,

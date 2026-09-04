@@ -1444,18 +1444,40 @@ export async function generateExhaustive59PageKundaliPdf(
       pdf.addPage('a4', 'portrait');
     }
     pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+
+    // Yield control to UI thread every page so browser stays responsive and progress updates smoothly
+    await new Promise((resolve) => setTimeout(resolve, 15));
   }
 
   // Save PDF
-  const cleanName = kundali.name.replace(/\s+/g, '_') || 'Jatak';
+  const cleanName = (kundali.name || 'Jatak')
+    .replace(/[^\w\u0900-\u097F\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '_') || 'Jatak';
   const fileName = `Shakti_Panchang_59_Page_Mahapatrika_${cleanName}.pdf`;
   
   // Create Blob and URL for viewing and sharing
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
   
-  // Trigger standard browser download
-  pdf.save(fileName);
+  // Safely trigger standard browser download
+  try {
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;
+    link.target = '_self';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (document.body.contains(link)) document.body.removeChild(link);
+    }, 500);
+  } catch (e) {
+    try {
+      pdf.save(fileName);
+    } catch (saveErr) {
+      console.warn('Direct pdf.save fallback notice:', saveErr);
+    }
+  }
 
   return {
     fileName,

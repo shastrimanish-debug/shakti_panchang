@@ -5,12 +5,11 @@ import { BookOpen, Sparkles, ArrowRight } from 'lucide-react';
 interface BookCoverProps {
   onOpenBook: (targetTabId?: string) => void;
   currentLocationName?: string;
-  manishProfileName?: string;
 }
 
 export const BookCover: React.FC<BookCoverProps> = ({
   onOpenBook,
-  manishProfileName = 'मनीष (Manish)',
+  currentLocationName,
 }) => {
   return (
     <div className="w-full max-w-5xl mx-auto my-4 sm:my-8 px-2 sm:px-4">
@@ -76,58 +75,76 @@ export const BookCover: React.FC<BookCoverProps> = ({
               <span className="px-3 py-1 bg-[#4A1010] border border-[#B58738]/60 rounded-full font-bold">
                 लाहिरी अयनांश (Lahiri)
               </span>
+              {currentLocationName && (
+                <span className="px-3 py-1 bg-[#3A0B0B] border border-[#B58738]/60 rounded-full font-bold text-[#E6C687]">
+                  📍 {currentLocationName}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Active Profile Info Box */}
+          {/* Granth Features & Highlights Box */}
           <div className="bg-[#1F0404]/80 border-2 border-[#E6C687]/70 rounded-xl p-3.5 sm:p-5 my-6 max-w-2xl mx-auto shadow-inner">
             <div className="flex items-center justify-between gap-2 border-b border-[#E6C687]/30 pb-2 mb-2.5">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#FFD88A] fill-[#FFD88A]" />
                 <span className="text-xs sm:text-sm font-bold text-[#FFEEC2] font-granth">
-                  सक्रिय जन्म पत्रिका (Active Kundali Profile)
+                  ॥ श्री शक्ति पञ्चाङ्गम् - प्रमुख ग्रन्थ विभाग ॥
                 </span>
               </div>
               <span className="px-2 py-0.5 bg-[#4A1010] text-[#FFD88A] border border-[#FFD88A]/40 rounded text-[10px] font-bold">
-                उच्च परिशुद्धता गणित
+                दृक-गणित परिशुद्धता
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs">
-              <div className="bg-[#3D0A0A]/70 p-2 rounded border border-[#E6C687]/30">
-                <div className="text-[10px] text-[#E6C687]">जातक का नाम</div>
-                <div className="font-bold text-sm text-[#FAF2E4]">{manishProfileName}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs">
+              <div className="bg-[#3D0A0A]/70 p-2.5 rounded border border-[#E6C687]/30 space-y-1">
+                <div className="font-bold text-sm text-[#FFD88A]">१. दैनिक पञ्चाङ्ग व मुहूर्त</div>
+                <p className="text-[11px] text-[#FAF2E4]/85 leading-relaxed">
+                  तिथि, वार, नक्षत्र, योग, करण, सूर्योदय-सूर्यास्त, चौघड़िया, होरा, राहुकाल एवं अभिजित मुहूर्त।
+                </p>
               </div>
-              <div className="bg-[#3D0A0A]/70 p-2 rounded border border-[#E6C687]/30">
-                <div className="text-[10px] text-[#E6C687]">जन्म दिनांक व समय</div>
-                <div className="font-bold text-xs text-[#FAF2E4]">29 मई 1974 • 15:45 (IST)</div>
+              <div className="bg-[#3D0A0A]/70 p-2.5 rounded border border-[#E6C687]/30 space-y-1">
+                <div className="font-bold text-sm text-[#FFD88A]">२. सम्पूर्ण षोडशवर्ग कुण्डली</div>
+                <p className="text-[11px] text-[#FAF2E4]/85 leading-relaxed">
+                  लग्न चक्र (D1), नवमांश (D9) से D60 तक समस्त 16 वर्ग चक्र, 120 वर्षीय विंशोत्तरी दशा व उपाय।
+                </p>
               </div>
-              <div className="bg-[#3D0A0A]/70 p-2 rounded border border-[#E6C687]/30">
-                <div className="text-[10px] text-[#E6C687]">जन्म स्थान</div>
-                <div className="font-bold text-xs text-[#FAF2E4]">बुरहानपुर, मध्य प्रदेश</div>
+              <div className="bg-[#3D0A0A]/70 p-2.5 rounded border border-[#E6C687]/30 space-y-1">
+                <div className="font-bold text-sm text-[#FFD88A]">३. अष्टकूट गुण मिलान</div>
+                <p className="text-[11px] text-[#FAF2E4]/85 leading-relaxed">
+                  वर-कन्या 36 गुण मिलान, नाड़ी व भकूट दोष परिहार, मांगलिक विचार एवं भोजपत्र मिलान पत्रक।
+                </p>
+              </div>
+              <div className="bg-[#3D0A0A]/70 p-2.5 rounded border border-[#E6C687]/30 space-y-1">
+                <div className="font-bold text-sm text-[#FFD88A]">४. उमा एआई व भोजपत्र PDF</div>
+                <p className="text-[11px] text-[#FAF2E4]/85 leading-relaxed">
+                  सम्पूर्ण 59 पृष्ठीय महा-पत्रिका एवं त्वरित 1-पृष्ठ भोजपत्र जन्मपत्रिका डाउनलोड सुविधा।
+                </p>
               </div>
             </div>
 
-            <div className="mt-2.5 text-[11px] text-[#FFD88A]/90 text-center font-medium">
-              ✓ तुला लग्न (1.10°) • बुध 9th भाव (मिथुन 6.63°) • शनि 9th भाव (मिथुन 10.75°) • शुक्र 7th भाव (मेष 4.34°) • चंद्र सिंह (11th)
+            <div className="mt-3 pt-2 border-t border-[#E6C687]/20 text-[11px] text-[#FFD88A]/90 text-center font-medium">
+              ❖ सूर्य सिद्धांत एवं पराशर होरा शास्त्र सम्मत प्रामाणिक वैदिक गणना ❖
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
             <button
-              onClick={() => onOpenBook()}
+              onClick={() => onOpenBook('panchang')}
               className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-[#C28A32] via-[#E8B85C] to-[#C28A32] hover:from-[#D4993B] hover:to-[#B37825] text-[#2C0A0A] font-black text-base sm:text-lg rounded-xl shadow-[0_0_25px_rgba(232,184,92,0.6)] border-2 border-[#FFE8B3] transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
             >
               <BookOpen className="w-5 h-5 text-[#2C0A0A]" />
-              <span>📖 पंचांग ग्रन्थ खोलें (Open Book)</span>
+              <span>📖 पञ्चाङ्ग ग्रन्थ खोलें (पन्ना पलटें)</span>
               <ArrowRight className="w-5 h-5 text-[#2C0A0A]" />
             </button>
             <button
               onClick={() => onOpenBook('kundali')}
               className="w-full sm:w-auto px-6 py-3.5 bg-[#4A1010] hover:bg-[#5C1414] text-[#FFD88A] font-bold text-sm sm:text-base rounded-xl border-2 border-[#E6C687]/70 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>🪐 मनीष लग्न कुण्डली देखें</span>
+              <Sparkles className="w-4 h-4 text-[#FFD88A]" />
+              <span>🪐 जन्म पत्रिका बनाएं (Kundali)</span>
             </button>
           </div>
 

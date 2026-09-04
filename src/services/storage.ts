@@ -6,10 +6,10 @@ const STORAGE_KEY_REMINDERS = 'shakti_app_reminders_v1';
 const STORAGE_KEY_CUSTOM_LOCS = 'shakti_panchang_user_custom_locations';
 
 export const DEFAULT_LOCATION: SavedLocation = {
-  name: 'बुरहानपुर (Burhanpur)',
-  latitude: 21.3142,
-  longitude: 76.2298,
-  state: 'मध्य प्रदेश',
+  name: 'नई दिल्ली (New Delhi)',
+  latitude: 28.6139,
+  longitude: 77.2090,
+  state: 'दिल्ली',
 };
 
 export function getStoredLocation(): SavedLocation {
@@ -31,7 +31,14 @@ export function getSavedKundaliProfiles(): KundaliData[] {
     const raw = localStorage.getItem(STORAGE_KEY_PROFILES);
     if (raw) {
       const arr = JSON.parse(raw);
-      return arr.map((p: any) => ({
+      // Filter out any older profiles for Manish
+      const cleanArr = arr.filter(
+        (p: any) => !p.name?.includes('मनीष') && !p.name?.includes('Manish') && !p.birthPlace?.includes('बुरहानपुर')
+      );
+      if (cleanArr.length !== arr.length) {
+        localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(cleanArr));
+      }
+      return cleanArr.map((p: any) => ({
         ...p,
         birthDate: new Date(p.birthDate),
         calculatedAt: new Date(p.calculatedAt || Date.now()),
