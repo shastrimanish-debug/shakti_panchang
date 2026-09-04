@@ -91,6 +91,8 @@ export function saveReminder(rem: AppReminder): void {
   } catch {}
 }
 
+export const saveAppReminder = saveReminder;
+
 export function deleteReminder(id: string): void {
   try {
     const filtered = getStoredReminders().filter((r) => r.id !== id);

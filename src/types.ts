@@ -102,6 +102,9 @@ export interface KundaliData {
   yoni: string;
   varna: string;
   vashya: string;
+  nakshatraLord?: string;
+  isManglik?: boolean;
+  manglikDescription?: string;
   mahadasha: string;
   antardasha: string;
   pratyantardasha: string;
