@@ -31,3 +31,12 @@ dist-ssr
 
 # Vite cache
 .vite
+
+# Android build outputs
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+release-apks/
+*.apk
+*.aab

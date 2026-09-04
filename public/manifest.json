@@ -1,0 +1,25 @@
+{
+  "name": "Shakti Panchang - शक्ति पंचांग",
+  "short_name": "शक्ति पंचांग",
+  "description": "सनातन शक्ति पंचांग - वैदिक पंचांग, संपूर्ण कुण्डली, चौघड़िया, शुभ मुहूर्त, 100 वर्ष व्रत-त्योहार खोज, यात्रा दिशाशूल एवं उमा AI ज्योतिषीय मार्गदर्शन",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf2de",
+  "theme_color": "#991b1b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

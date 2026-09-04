@@ -1,0 +1,8 @@
+{
+	"appId": "com.shaktipanchang.app",
+	"appName": "Shakti Panchang",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
+}

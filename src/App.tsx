@@ -10,6 +10,7 @@ import { RemindersView } from './components/RemindersView';
 import { UmaAssistantModal } from './components/UmaAssistantModal';
 import { LocationModal } from './components/LocationModal';
 import { SavedProfilesModal } from './components/SavedProfilesModal';
+import { InstallAppModal } from './components/InstallAppModal';
 import { BookCover } from './components/BookCover';
 import { getStoredLocation, getSavedKundaliProfiles } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
@@ -77,6 +78,7 @@ export function App() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [isUmaModalOpen, setIsUmaModalOpen] = useState<boolean>(false);
   const [isSavedProfilesModalOpen, setIsSavedProfilesModalOpen] = useState<boolean>(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
 
   // Active Kundali Profile - default to Manish (29/05/1974 15:45 Burhanpur, MP)
   const [activeKundali, setActiveKundali] = useState<KundaliData | null>(() => {
@@ -239,6 +241,7 @@ export function App() {
         onDateChange={setCurrentDate}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
         onOpenUmaModal={() => setIsUmaModalOpen(true)}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
         activeTab={activeTab}
         setActiveTab={handleSelectTab}
         isAudioEnabled={isAudioEnabled}
@@ -470,6 +473,11 @@ export function App() {
         isOpen={isSavedProfilesModalOpen}
         onClose={() => setIsSavedProfilesModalOpen(false)}
         onSelectProfile={setActiveKundali}
+      />
+
+      <InstallAppModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
       />
     </div>
   );
