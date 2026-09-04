@@ -160,17 +160,19 @@ export function App() {
   );
 
   // Touch Swipe Gesture detection
-  // User mandate: "unagli ko left side slide kare to previous page right kare to next page"
+  // Sliding finger to Left (Right->Left) = Next Page (अगला पृष्ठ)
+  // Sliding finger to Right (Left->Right) = Previous Page (पिछला पृष्ठ)
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const target = e.target as HTMLElement;
-    // Don't intercept touches on range sliders, text inputs, textareas, selects
     if (
       target.tagName === 'INPUT' ||
       target.tagName === 'TEXTAREA' ||
       target.tagName === 'SELECT' ||
-      target.closest('input[type="range"]') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('select') ||
       target.closest('.no-swipe')
     ) {
       touchStartRef.current = null;
@@ -192,18 +194,71 @@ export function App() {
     const elapsed = Date.now() - touchStartRef.current.time;
     touchStartRef.current = null;
 
-    // Discard slow gestures or gestures that are primarily vertical scrolls
-    if (elapsed > 1500) return;
-    if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+    // Discard gestures that took too long
+    if (elapsed > 1200) return;
 
-    if (deltaX < 0) {
-      // Finger slid to the LEFT side -> Previous Page (User explicitly requested)
-      handlePrevPage();
-    } else if (deltaX > 0) {
-      // Finger slid to the RIGHT side -> Next Page (User explicitly requested)
-      handleNextPage();
+    // Must be a predominantly horizontal swipe (displacement >= 40px)
+    if (Math.abs(deltaX) >= 40 && Math.abs(deltaX) > Math.abs(deltaY) * 0.75) {
+      if (deltaX < 0) {
+        // Slid finger to LEFT -> Next Page (अगला पृष्ठ)
+        handleNextPage();
+      } else {
+        // Slid finger to RIGHT -> Previous Page (पिछला पृष्ठ)
+        handlePrevPage();
+      }
     }
   };
+
+  // Global window swipe listener to ensure swiping works everywhere across cards and views
+  useEffect(() => {
+    const onWinTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.closest('input') ||
+        target.closest('textarea') ||
+        target.closest('select') ||
+        target.closest('.no-swipe')
+      ) {
+        touchStartRef.current = null;
+        return;
+      }
+      if (e.touches.length === 1) {
+        touchStartRef.current = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+          time: Date.now(),
+        };
+      }
+    };
+
+    const onWinTouchEnd = (e: TouchEvent) => {
+      if (!touchStartRef.current) return;
+      const touchEnd = e.changedTouches[0];
+      const deltaX = touchEnd.clientX - touchStartRef.current.x;
+      const deltaY = touchEnd.clientY - touchStartRef.current.y;
+      const elapsed = Date.now() - touchStartRef.current.time;
+      touchStartRef.current = null;
+
+      if (elapsed > 1200) return;
+      if (Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 0.75) {
+        if (deltaX < 0) {
+          handleNextPage();
+        } else {
+          handlePrevPage();
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', onWinTouchStart, { passive: true });
+    window.addEventListener('touchend', onWinTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onWinTouchStart);
+      window.removeEventListener('touchend', onWinTouchEnd);
+    };
+  }, [handleNextPage, handlePrevPage]);
 
   // Keyboard navigation (Arrow keys)
   useEffect(() => {
@@ -282,35 +337,35 @@ export function App() {
           />
         ) : (
           /* Sacred Vedic Book Wrapper (ग्रन्थ पट्टिका) */
-          <div className="granth-book-container book-stacked-pages bhojpatra-leaf border-3 sm:border-4 border-[#8C6239] rounded-2xl sm:rounded-3xl p-3 sm:p-6 lg:p-8 relative shadow-2xl">
+          <div className="granth-book-container book-stacked-pages bhojpatra-leaf granth-leaf-stack border-3 sm:border-4 border-[#8C6239] rounded-2xl sm:rounded-3xl p-3 sm:p-6 lg:p-8 relative shadow-2xl">
             {/* Authentic Book Corner Ornaments */}
-            <div className="absolute top-2 left-2 text-[#8C6239] text-xs select-none pointer-events-none font-bold">
-              ⚜
+            <div className="absolute top-2 left-2 text-[#8C6239] text-xs sm:text-sm select-none pointer-events-none font-bold">
+              ❖
             </div>
-            <div className="absolute top-2 right-2 text-[#8C6239] text-xs select-none pointer-events-none font-bold">
-              ⚜
+            <div className="absolute top-2 right-2 text-[#8C6239] text-xs sm:text-sm select-none pointer-events-none font-bold">
+              ❖
             </div>
-            <div className="absolute bottom-2 left-2 text-[#8C6239] text-xs select-none pointer-events-none font-bold">
-              ⚜
+            <div className="absolute bottom-2 left-2 text-[#8C6239] text-xs sm:text-sm select-none pointer-events-none font-bold">
+              ❖
             </div>
-            <div className="absolute bottom-2 right-2 text-[#8C6239] text-xs select-none pointer-events-none font-bold">
-              ⚜
+            <div className="absolute bottom-2 right-2 text-[#8C6239] text-xs sm:text-sm select-none pointer-events-none font-bold">
+              ❖
             </div>
 
-            {/* Book Top Chapter Ribbon (Subtle on Desktop, Hidden on Mobile to save screen space) */}
-            <div className="shloka-banner hidden md:flex py-1.5 px-3 rounded-lg mb-3 items-center justify-between gap-2 text-[#5C3A21]">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-[#B56A00] font-bold">ॐ</span>
-                <h2 className="font-granth font-black text-sm sm:text-base text-[#5C3A21] tracking-wide">
-                  {currentTabMeta.chapter} : {currentTabMeta.title}
-                </h2>
+            {/* Book Top Chapter Ribbon */}
+            <div className="shloka-banner py-2 px-3 sm:px-4 rounded-xl mb-4 flex items-center justify-between gap-2 text-[#5C3A21] border border-[#C27803]/40">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-base text-[#B56A00] font-black">ॐ</span>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-granth text-[#8B1E1E] font-bold">॥ श्री शक्ति पञ्चाङ्गम् ग्रन्थ ॥</div>
+                  <h2 className="font-granth font-black text-xs sm:text-base text-[#5C3A21] tracking-wide truncate">
+                    {currentTabMeta.chapter} : {currentTabMeta.title}
+                  </h2>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#735133]">
-                  {currentTabMeta.desc}
-                </span>
-                <span className="px-2.5 py-0.5 bg-[#8C6239]/20 border border-[#8C6239]/40 text-[#5C3A21] rounded-full text-xs font-black">
-                  पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="px-2.5 py-1 bg-[#5C3A21] text-[#FFD88A] rounded-lg text-xs font-black shadow-xs">
+                  📖 पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}
                 </span>
                 <button
                   type="button"
@@ -318,10 +373,10 @@ export function App() {
                     setIsBookOpen(false);
                     if (isAudioEnabled) playTactilePageTurnSound();
                   }}
-                  className="px-2 py-0.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded text-[11px] font-bold transition cursor-pointer"
-                  title="ग्रन्थ मुखपृष्ठ बंद करें"
+                  className="px-2.5 py-1 bg-[#8C6239] hover:bg-[#5C3A21] text-[#FAF2E4] rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
+                  title="ग्रन्थ मुखपृष्ठ खोलें"
                 >
-                  📕 मुखपृष्ठ
+                  <span>📕 मुखपृष्ठ</span>
                 </button>
               </div>
             </div>
@@ -383,25 +438,27 @@ export function App() {
             </div>
 
             {/* Book Bottom Page Navigation Footer */}
-            <div className="mt-8 pt-4 border-t-2 border-[#8C6239]/40 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="mt-8 pt-4 border-t-2 border-[#8C6239]/40 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#FAF2E4]/80 p-3 sm:p-4 rounded-2xl border border-[#8C6239]/30 shadow-inner">
               {/* Bottom Prev Page */}
               <button
                 type="button"
                 onClick={handlePrevPage}
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/50 rounded-lg font-bold shadow-xs transition transform active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] border border-[#B56A00]/70 rounded-xl font-bold shadow-md transition transform active:scale-95 cursor-pointer text-xs sm:text-sm"
               >
-                <ChevronLeft className="w-4 h-4 text-[#B56A00]" />
-                <span>← पिछला पृष्ठ ({prevTabMeta.label})</span>
+                <ChevronLeft className="w-4 h-4 text-[#FFD88A]" />
+                <span>‹ पिछला पृष्ठ ({prevTabMeta.label})</span>
               </button>
 
               {/* Gesture Tip & Page Indicator */}
               <div className="text-center text-[#735133] order-last sm:order-none w-full sm:w-auto">
-                <div className="font-bold text-[#5C3A21] flex items-center justify-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-[#B56A00]" />
-                  <span>अध्याय {currentTabMeta.pageNumber} / {BOOK_PAGES.length}</span>
+                <div className="font-granth font-black text-sm sm:text-base text-[#5C3A21] flex items-center justify-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-[#B56A00]" />
+                  <span>{currentTabMeta.chapter} • पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}</span>
                 </div>
-                <div className="text-[10px] sm:text-[11px] text-[#8C6239] mt-0.5">
-                  👆 <strong>उंगली से स्लाइड करें:</strong> बायें (Left) = पिछला पृष्ठ | दायें (Right) = अगला पृष्ठ
+                <div className="text-[11px] sm:text-xs text-[#8C6239] font-medium mt-1 flex items-center justify-center gap-2 flex-wrap">
+                  <span>👈 बाएँ स्वाइप करें = अगला पृष्ठ</span>
+                  <span>•</span>
+                  <span>दाएँ स्वाइप करें = पिछला पृष्ठ 👉</span>
                 </div>
               </div>
 
@@ -409,15 +466,46 @@ export function App() {
               <button
                 type="button"
                 onClick={handleNextPage}
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] border border-[#B56A00]/70 rounded-lg font-bold shadow-xs transition transform active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#8B1E1E] to-[#B56A00] hover:brightness-110 text-white border border-[#FFD88A]/50 rounded-xl font-bold shadow-md transition transform active:scale-95 cursor-pointer text-xs sm:text-sm"
               >
-                <span>अगला पृष्ठ ({nextTabMeta.label}) →</span>
+                <span>अगला पृष्ठ ({nextTabMeta.label}) ›</span>
                 <ChevronRight className="w-4 h-4 text-[#FFD88A]" />
               </button>
             </div>
           </div>
         )}
       </main>
+
+      {/* Floating Edge Navigation Buttons (Mobile & Desktop Thumb-Friendly Controls) */}
+      {isBookOpen && (
+        <>
+          {/* Left Screen Edge Floating Button: Previous Page */}
+          <button
+            type="button"
+            onClick={handlePrevPage}
+            className="fixed left-0 top-1/2 -translate-y-1/2 z-30 bg-[#5C3A21]/90 hover:bg-[#462B17] text-[#FFD88A] hover:text-white px-1 sm:px-2 py-3.5 sm:py-5 rounded-r-xl sm:rounded-r-2xl shadow-2xl border-y border-r border-[#B56A00] transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center gap-1 group cursor-pointer backdrop-blur-xs"
+            title={`पिछला पृष्ठ: ${prevTabMeta.label}`}
+          >
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD88A] group-hover:-translate-x-0.5 transition-transform" />
+            <span className="[writing-mode:vertical-rl] text-[9px] sm:text-[10px] font-bold font-granth tracking-wider">
+              ‹ पिछला
+            </span>
+          </button>
+
+          {/* Right Screen Edge Floating Button: Next Page */}
+          <button
+            type="button"
+            onClick={handleNextPage}
+            className="fixed right-0 top-1/2 -translate-y-1/2 z-30 bg-[#5C3A21]/90 hover:bg-[#462B17] text-[#FFD88A] hover:text-white px-1 sm:px-2 py-3.5 sm:py-5 rounded-l-xl sm:rounded-l-2xl shadow-2xl border-y border-l border-[#B56A00] transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center gap-1 group cursor-pointer backdrop-blur-xs"
+            title={`अगला पृष्ठ: ${nextTabMeta.label}`}
+          >
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD88A] group-hover:translate-x-0.5 transition-transform" />
+            <span className="[writing-mode:vertical-rl] text-[9px] sm:text-[10px] font-bold font-granth tracking-wider">
+              अगला ›
+            </span>
+          </button>
+        </>
+      )}
 
       {/* Floating UMA Assistant Pill (Mobile/Desktop Quick Access) */}
       <aside aria-label="Floating Vedic Assistant" className="fixed bottom-5 right-5 z-30">

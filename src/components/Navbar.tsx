@@ -207,15 +207,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={onPrevPage}
-          className="p-1 sm:px-2 sm:py-0.5 bg-[#382010] hover:bg-[#5C3A21] text-[#FFD88A] rounded text-[11px] font-bold transition shrink-0 cursor-pointer flex items-center gap-0.5 border border-[#8C6239]/40"
+          className="px-2 py-1 bg-[#382010] hover:bg-[#5C3A21] text-[#FFD88A] rounded text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1 border border-[#8C6239]/60 active:scale-95"
           title={`पिछला पृष्ठ: ${prevTabMeta.label}`}
         >
-          <ArrowLeft className="w-3 h-3" />
-          <span className="hidden sm:inline text-[10px]">‹ पिछला</span>
+          <ArrowLeft className="w-3.5 h-3.5 text-[#FFD88A]" />
+          <span className="text-[11px] font-bold">‹ पिछला</span>
         </button>
 
         {/* Scrollable Chapter Tabs */}
-        <nav className="flex-1 flex items-center space-x-0.5 sm:space-x-1 overflow-x-auto no-scrollbar py-0.5 px-0.5">
+        <nav className="flex-1 flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5 px-1">
           {BOOK_PAGES.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -223,20 +223,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 px-2 py-0.5 text-[11px] rounded transition cursor-pointer select-none whitespace-nowrap ${
+                className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded transition cursor-pointer select-none whitespace-nowrap ${
                   isActive
-                    ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-xs font-black'
+                    ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-sm font-black ring-1 ring-[#FFD88A]'
                     : 'text-[#D9C4A9] hover:text-[#FAF2E4] hover:bg-[#5C3A21]/50'
                 }`}
               >
                 <span
-                  className={`text-[9px] font-bold px-1 rounded ${
+                  className={`text-[10px] font-bold px-1 rounded ${
                     isActive ? 'bg-[#5C3A21] text-[#FAF2E4]' : 'bg-[#331C0C] text-[#D9C4A9]'
                   }`}
                 >
                   {tab.pageNumber}
                 </span>
-                <Icon className={`w-3 h-3 ${isActive ? 'text-[#B56A00]' : 'text-[#A89279]'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#B56A00]' : 'text-[#A89279]'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -247,11 +247,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={onNextPage}
-          className="p-1 sm:px-2 sm:py-0.5 bg-gradient-to-r from-[#B56A00] to-[#C67D24] hover:brightness-110 text-white rounded text-[11px] font-bold transition shrink-0 cursor-pointer flex items-center gap-0.5 border border-[#FFD88A]/40"
+          className="px-2 py-1 bg-gradient-to-r from-[#B56A00] to-[#C67D24] hover:brightness-110 text-white rounded text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1 border border-[#FFD88A]/60 shadow-xs active:scale-95"
           title={`अगला पृष्ठ: ${nextTabMeta.label}`}
         >
-          <span className="hidden sm:inline text-[10px]">अगला ›</span>
-          <ArrowRight className="w-3 h-3" />
+          <span className="text-[11px] font-bold">अगला ›</span>
+          <ArrowRight className="w-3.5 h-3.5 text-white" />
         </button>
       </div>
     </header>

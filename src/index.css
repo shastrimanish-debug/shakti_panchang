@@ -65,3 +65,58 @@
 .animate-spin-slow {
   animation: spin-slow 20s linear infinite;
 }
+
+/* Authentic 3D Granth Page Turn Keyframes */
+@keyframes pageTurnForward {
+  0% {
+    opacity: 0.35;
+    transform: perspective(1400px) rotateY(-10deg) translateX(30px) scale(0.985);
+    box-shadow: -15px 0 25px rgba(62, 34, 13, 0.25);
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1400px) rotateY(0deg) translateX(0) scale(1);
+    box-shadow: 0 4px 15px -3px rgba(82, 45, 18, 0.12);
+  }
+}
+
+@keyframes pageTurnBackward {
+  0% {
+    opacity: 0.35;
+    transform: perspective(1400px) rotateY(10deg) translateX(-30px) scale(0.985);
+    box-shadow: 15px 0 25px rgba(62, 34, 13, 0.25);
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1400px) rotateY(0deg) translateX(0) scale(1);
+    box-shadow: 0 4px 15px -3px rgba(82, 45, 18, 0.12);
+  }
+}
+
+.book-page-turn-forward {
+  animation: pageTurnForward 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  transform-origin: left center;
+}
+
+.book-page-turn-backward {
+  animation: pageTurnBackward 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  transform-origin: right center;
+}
+
+/* Granth leaf edges simulation */
+.granth-leaf-stack {
+  box-shadow: 
+    0 1px 1px rgba(140, 98, 57, 0.2),
+    0 4px 0 -1px #E5D2B8,
+    0 5px 1px rgba(140, 98, 57, 0.2),
+    0 8px 0 -2px #D9C4A9,
+    0 9px 2px rgba(140, 98, 57, 0.25),
+    0 12px 0 -3px #CAA882,
+    0 15px 25px rgba(44, 24, 16, 0.35);
+}

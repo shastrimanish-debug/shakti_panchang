@@ -11,7 +11,8 @@ import {
 } from '../services/kundali';
 import { COMMON_INDIAN_CITIES } from '../services/disha';
 import { saveKundaliProfile } from '../services/storage';
-import { downloadMilanBhojpatraPdf } from '../services/bhojpatraPdf';
+import { calculateVedicPanchang } from '../services/astronomy';
+import { downloadMilanBhojpatraPdf, downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { generateExhaustive59PageKundaliPdf } from '../services/exhaustiveKundaliPdf';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import {
@@ -294,6 +295,43 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     }
   };
 
+  const [isGeneratingSinglePdf, setIsGeneratingSinglePdf] = useState(false);
+
+  const handleDownloadSinglePageKundaliPdf = async () => {
+    if (!k) return;
+    try {
+      setIsGeneratingSinglePdf(true);
+      const panchangData = calculateVedicPanchang(
+        k.birthDate,
+        k.latitude || 28.6139,
+        k.longitude || 77.209
+      );
+
+      const res = await downloadBhojpatraPdf({
+        title: `वैदिक जन्म पत्रिका - ${k.name}`,
+        panchang: panchangData,
+        query: `${k.name} की जन्म कुंडली, लग्न व ग्रह विवरण`,
+        answer: `लग्न: ${k.lagnaRashi}, चन्द्र राशि: ${k.moonRashi}, नक्षत्र: ${k.nakshatra} (चरण ${k.charan}), वर्तमान महादशा: ${k.mahadasha}, अन्तर्दशा: ${k.antardasha}। लग्न चक्र एवं नवमांश चक्र सहित ग्रह स्पष्ट तालिका।`,
+        activeKundali: k,
+        locationName: k.birthPlace,
+        date: k.birthDate,
+      });
+
+      setPdfSuccessInfo({
+        isOpen: true,
+        fileName: res.fileName,
+        blobUrl: res.blobUrl,
+        blob: res.blob,
+        pageCount: 1,
+        title: `त्वरित 1-पृष्ठीय जन्मपत्रिका (${k.name})`,
+      });
+    } catch (err) {
+      console.error('1-Page PDF error:', err);
+    } finally {
+      setIsGeneratingSinglePdf(false);
+    }
+  };
+
   const handleDownload59PagePdf = async () => {
     if (!k) return;
     try {
@@ -389,16 +427,33 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
           <div className="flex flex-wrap items-center gap-2">
             {k && (
-              <button
-                type="button"
-                onClick={handleDownload59PagePdf}
-                disabled={isGeneratingPdf}
-                className="px-4 py-2 bg-gradient-to-r from-[#8B1E1E] via-[#A84318] to-[#B56A00] hover:brightness-110 text-white text-xs sm:text-sm font-bold rounded-lg shadow-md transition flex items-center gap-2 cursor-pointer"
-                title="59 पृष्ठीय सम्पूर्ण महा-जन्मपत्रिका PDF डाउनलोड करें"
-              >
-                <Download className="w-4 h-4" />
-                <span>सम्पूर्ण 59 पृष्ठीय महा-जन्मपत्रिका (PDF)</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleDownload59PagePdf}
+                  disabled={isGeneratingPdf || isGeneratingSinglePdf}
+                  className="px-3.5 sm:px-4 py-2 bg-gradient-to-r from-[#8B1E1E] via-[#A84318] to-[#B56A00] hover:brightness-110 text-white text-xs sm:text-sm font-bold rounded-lg shadow-md transition flex items-center gap-2 cursor-pointer active:scale-95"
+                  title="59 पृष्ठीय सम्पूर्ण महा-जन्मपत्रिका PDF डाउनलोड करें"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>सम्पूर्ण 59 पृष्ठीय महा-पत्रिका (PDF)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadSinglePageKundaliPdf}
+                  disabled={isGeneratingSinglePdf || isGeneratingPdf}
+                  className="px-3 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] border border-[#B56A00]/80 text-xs sm:text-sm font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  title="त्वरित 1-पृष्ठीय भोजपत्र जन्मपत्रिका (1 सेकंड में तैयार)"
+                >
+                  {isGeneratingSinglePdf ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
+                  ) : (
+                    <FileText className="w-4 h-4 text-[#FFD88A]" />
+                  )}
+                  <span>त्वरित 1-पृष्ठ पत्रिका (PDF)</span>
+                </button>
+              </>
             )}
 
             <button
