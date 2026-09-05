@@ -51,6 +51,12 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
   // Feedback state for reminders
   const [addedReminderId, setAddedReminderId] = useState<string | null>(null);
 
+  // Pagination states for mobile screen friendliness
+  const [centuryPage, setCenturyPage] = useState<number>(1);
+  const [yearPage, setYearPage] = useState<number>(1);
+  const CENTURY_PAGE_SIZE = 9;
+  const YEAR_PAGE_SIZE = 8;
+
   // 1925 to 2125 year options (200 years)
   const availableYears = useMemo(() => {
     const list: number[] = [];
@@ -104,6 +110,21 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
     }
     return raw; // default asc
   }, [centuryQuery, centuryRange, sortOrder, currentDate]);
+
+  // Paginated items
+  const totalCenturyPages = Math.max(1, Math.ceil(centuryResults.length / CENTURY_PAGE_SIZE));
+  const currentCenturyPage = Math.min(centuryPage, totalCenturyPages);
+  const paginatedCenturyResults = useMemo(() => {
+    const start = (currentCenturyPage - 1) * CENTURY_PAGE_SIZE;
+    return centuryResults.slice(start, start + CENTURY_PAGE_SIZE);
+  }, [centuryResults, currentCenturyPage]);
+
+  const totalYearPages = Math.max(1, Math.ceil(filteredYearList.length / YEAR_PAGE_SIZE));
+  const currentYearPage = Math.min(yearPage, totalYearPages);
+  const paginatedYearList = useMemo(() => {
+    const start = (currentYearPage - 1) * YEAR_PAGE_SIZE;
+    return filteredYearList.slice(start, start + YEAR_PAGE_SIZE);
+  }, [filteredYearList, currentYearPage]);
 
   const categories = [
     { id: 'all', label: 'सभी पर्व व व्रत' },
@@ -510,7 +531,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {centuryResults.map((res: CenturySearchResult, idx: number) => {
+            {paginatedCenturyResults.map((res: CenturySearchResult, idx: number) => {
               const isCurrent = res.year === 2026;
               const isReminded = addedReminderId === res.festival.id;
 
@@ -605,6 +626,41 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
             })}
           </div>
 
+          {/* Century Pagination Bar */}
+          {totalCenturyPages > 1 && (
+            <div className="flex items-center justify-between p-2.5 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl mt-3 shadow-xs">
+              <button
+                disabled={currentCenturyPage <= 1}
+                onClick={() => setCenturyPage((p) => Math.max(1, p - 1))}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                  currentCenturyPage <= 1
+                    ? 'opacity-40 cursor-not-allowed text-[#8C6239]'
+                    : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] cursor-pointer'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>पिछला</span>
+              </button>
+
+              <span className="text-xs font-bold text-[#5C3A21]">
+                पृष्ठ {currentCenturyPage} / {totalCenturyPages} (कुल {centuryResults.length})
+              </span>
+
+              <button
+                disabled={currentCenturyPage >= totalCenturyPages}
+                onClick={() => setCenturyPage((p) => Math.min(totalCenturyPages, p + 1))}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                  currentCenturyPage >= totalCenturyPages
+                    ? 'opacity-40 cursor-not-allowed text-[#8C6239]'
+                    : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] cursor-pointer'
+                }`}
+              >
+                <span>अगला</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {centuryResults.length === 0 && (
             <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-8 text-center text-[#735133] space-y-2">
               <History className="w-8 h-8 text-[#B56A00] mx-auto opacity-60" />
@@ -634,7 +690,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {filteredYearList.map((item: FestivalItem) => {
+            {paginatedYearList.map((item: FestivalItem) => {
               const isReminded = addedReminderId === item.id;
               return (
                 <div
@@ -697,6 +753,41 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
               );
             })}
           </div>
+
+          {/* Year Pagination Bar */}
+          {totalYearPages > 1 && (
+            <div className="flex items-center justify-between p-2.5 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl mt-3 shadow-xs">
+              <button
+                disabled={currentYearPage <= 1}
+                onClick={() => setYearPage((p) => Math.max(1, p - 1))}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                  currentYearPage <= 1
+                    ? 'opacity-40 cursor-not-allowed text-[#8C6239]'
+                    : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] cursor-pointer'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>पिछला</span>
+              </button>
+
+              <span className="text-xs font-bold text-[#5C3A21]">
+                पृष्ठ {currentYearPage} / {totalYearPages} (कुल {filteredYearList.length})
+              </span>
+
+              <button
+                disabled={currentYearPage >= totalYearPages}
+                onClick={() => setYearPage((p) => Math.min(totalYearPages, p + 1))}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                  currentYearPage >= totalYearPages
+                    ? 'opacity-40 cursor-not-allowed text-[#8C6239]'
+                    : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] cursor-pointer'
+                }`}
+              >
+                <span>अगला</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {filteredYearList.length === 0 && (
             <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-8 text-center text-[#735133] space-y-2">

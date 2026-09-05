@@ -146,6 +146,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   // Varga selector state
   const [selectedVarga, setSelectedVarga] = useState<number>(1);
   const [chartViewMode, setChartViewMode] = useState<'twin' | 'shodashvarga'>('twin');
+  const [chartSubPage, setChartSubPage] = useState<'twin' | 'planets' | 'vargas'>('twin');
+  const [milanSubPage, setMilanSubPage] = useState<'score' | 'ashtakoot' | 'manglik'>('score');
+  const [isFormExpanded, setIsFormExpanded] = useState<boolean>(false);
   const [vargaListFilter, setVargaListFilter] = useState<'shodash' | 'all60'>('shodash');
 
   // Kundali Input Form State - clean neutral default profile
@@ -258,6 +261,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     );
     setActiveKundali(k);
     saveKundaliProfile(k);
+    setIsFormExpanded(false);
   };
 
   // If no active kundali yet, initialize with current form inputs
@@ -485,148 +489,254 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         onClose={() => setPdfSuccessInfo(null)}
       />
 
-      {/* Top Input Form & Actions */}
-      <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-5 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h3 className="text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
-            <User className="w-5 h-5 text-[#B56A00]" />
-            जन्म विवरण दर्ज करें (Birth Details)
-          </h3>
+      {/* Top Input Form & Actions (Collapsible on Mobile for Screen-fit view) */}
+      {!isFormExpanded && k ? (
+        <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-[#5C3A21] text-[#FFD88A] border border-[#B56A00] flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                {name.trim() ? name.trim().charAt(0) : 'ॐ'}
+              </div>
+              <div>
+                <div className="font-bold text-xs sm:text-sm text-[#5C3A21] flex items-center gap-2">
+                  <span>{name}</span>
+                  <span className="text-[10px] text-[#8C6239] font-normal">
+                    ({dob} • {tob})
+                  </span>
+                </div>
+                <div className="text-[11px] text-[#735133] flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-[#B56A00]" />
+                  <span>{selectedCity.name}</span>
+                </div>
+              </div>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {k && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleDownload59PagePdf}
-                  disabled={isGeneratingPdf || isGeneratingSinglePdf}
-                  className="px-3.5 sm:px-4 py-2 bg-gradient-to-r from-[#8B1E1E] via-[#A84318] to-[#B56A00] hover:brightness-110 text-white text-xs sm:text-sm font-bold rounded-lg shadow-md transition flex items-center gap-2 cursor-pointer active:scale-95"
-                  title="59 पृष्ठीय सम्पूर्ण महा-जन्मपत्रिका PDF डाउनलोड करें"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>सम्पूर्ण 59 पृष्ठीय महा-पत्रिका (PDF)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDownloadSinglePageKundaliPdf}
-                  disabled={isGeneratingSinglePdf || isGeneratingPdf}
-                  className="px-3 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] border border-[#B56A00]/80 text-xs sm:text-sm font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
-                  title="त्वरित 1-पृष्ठीय भोजपत्र जन्मपत्रिका (1 सेकंड में तैयार)"
-                >
-                  {isGeneratingSinglePdf ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
-                  ) : (
-                    <FileText className="w-4 h-4 text-[#FFD88A]" />
-                  )}
-                  <span>त्वरित 1-पृष्ठ पत्रिका (PDF)</span>
-                </button>
-              </>
-            )}
-
-            <button
-              onClick={onOpenSavedModal}
-              className="px-3 py-2 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1.5 cursor-pointer"
-            >
-              सहेजे गए प्रोफाइल (History)
-            </button>
-
-            {/* Annual Subscription Pill */}
-            {subStatus.isSubscribed ? (
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => {
-                  setSubscriptionReason('आपकी वार्षिक सदस्यता सक्रिय है!');
-                  setIsSubscriptionModalOpen(true);
-                }}
-                className="px-3 py-2 bg-emerald-100 hover:bg-emerald-200 border border-emerald-400 text-emerald-950 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                onClick={() => setIsFormExpanded(true)}
+                className="px-2.5 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition cursor-pointer"
               >
-                <Crown className="w-3.5 h-3.5 text-amber-600 fill-current" />
-                <span>वार्षिक सदस्यता सक्रिय ({subStatus.daysRemaining} दिन)</span>
+                विवरण बदलें ▼
               </button>
-            ) : (
+
               <button
                 type="button"
-                onClick={() => {
-                  setSubscriptionReason('वार्षिक सदस्यता (₹99/वर्ष) सक्रिय करने पर आप असीमित 59-पृष्ठीय महापत्रिका व कुण्डली PDF डाउनलोड कर सकते हैं।');
-                  setIsSubscriptionModalOpen(true);
-                }}
-                className="px-3 py-2 bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer animate-pulse"
+                onClick={handleDownload59PagePdf}
+                disabled={isGeneratingPdf || isGeneratingSinglePdf}
+                className="px-3 py-1.5 bg-gradient-to-r from-[#8B1E1E] via-[#A84318] to-[#B56A00] hover:brightness-110 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                title="59 पृष्ठीय सम्पूर्ण महा-जन्मपत्रिका PDF डाउनलोड करें"
               >
-                <Lock className="w-3.5 h-3.5" />
-                <span>वार्षिक सदस्यता: ₹99/वर्ष</span>
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">59-पृष्ठीय महा-पत्रिका (PDF)</span>
+                <span className="sm:hidden">59-पृष्ठ PDF</span>
               </button>
-            )}
+
+              <button
+                type="button"
+                onClick={handleDownloadSinglePageKundaliPdf}
+                disabled={isGeneratingSinglePdf || isGeneratingPdf}
+                className="px-2.5 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] border border-[#B56A00]/80 text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer active:scale-95"
+                title="त्वरित 1-पृष्ठीय भोजपत्र जन्मपत्रिका"
+              >
+                {isGeneratingSinglePdf ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFD88A]" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5 text-[#FFD88A]" />
+                )}
+                <span>1-पृष्ठ PDF</span>
+              </button>
+
+              <button
+                onClick={onOpenSavedModal}
+                className="px-2.5 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition cursor-pointer"
+              >
+                सहेजे गए
+              </button>
+
+              {/* Annual Subscription Pill */}
+              {subStatus.isSubscribed ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubscriptionReason('आपकी वार्षिक सदस्यता सक्रिय है!');
+                    setIsSubscriptionModalOpen(true);
+                  }}
+                  className="px-2.5 py-1.5 bg-emerald-100 hover:bg-emerald-200 border border-emerald-400 text-emerald-950 rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition cursor-pointer"
+                >
+                  <Crown className="w-3 h-3 text-amber-600 fill-current" />
+                  <span className="hidden sm:inline">सक्रिय ({subStatus.daysRemaining} दिन)</span>
+                  <span className="sm:hidden">सक्रिय</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubscriptionReason('वार्षिक सदस्यता (₹99/वर्ष) सक्रिय करने पर आप असीमित 59-पृष्ठीय महापत्रिका व कुण्डली PDF डाउनलोड कर सकते हैं।');
+                    setIsSubscriptionModalOpen(true);
+                  }}
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition cursor-pointer animate-pulse"
+                >
+                  <Lock className="w-3 h-3" />
+                  <span>₹99/वर्ष</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
+      ) : (
+        <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h3 className="text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
+              <User className="w-5 h-5 text-[#B56A00]" />
+              जन्म विवरण दर्ज करें (Birth Details)
+            </h3>
 
-        <form onSubmit={handleCalculate} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          <div>
-            <label className="block text-xs font-bold text-[#8C6239] mb-1">नाम</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
-              placeholder="नाम लिखें"
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              {k && (
+                <button
+                  type="button"
+                  onClick={() => setIsFormExpanded(false)}
+                  className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition cursor-pointer"
+                >
+                  संक्षिप्त करें ▲
+                </button>
+              )}
+
+              {k && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleDownload59PagePdf}
+                    disabled={isGeneratingPdf || isGeneratingSinglePdf}
+                    className="px-3.5 sm:px-4 py-2 bg-gradient-to-r from-[#8B1E1E] via-[#A84318] to-[#B56A00] hover:brightness-110 text-white text-xs sm:text-sm font-bold rounded-lg shadow-md transition flex items-center gap-2 cursor-pointer active:scale-95"
+                    title="59 पृष्ठीय सम्पूर्ण महा-जन्मपत्रिका PDF डाउनलोड करें"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>सम्पूर्ण 59 पृष्ठीय महा-पत्रिका (PDF)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadSinglePageKundaliPdf}
+                    disabled={isGeneratingSinglePdf || isGeneratingPdf}
+                    className="px-3 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] border border-[#B56A00]/80 text-xs sm:text-sm font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    title="त्वरित 1-पृष्ठीय भोजपत्र जन्मपत्रिका (1 सेकंड में तैयार)"
+                  >
+                    {isGeneratingSinglePdf ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
+                    ) : (
+                      <FileText className="w-4 h-4 text-[#FFD88A]" />
+                    )}
+                    <span>त्वरित 1-पृष्ठ पत्रिका (PDF)</span>
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={onOpenSavedModal}
+                className="px-3 py-2 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+              >
+                सहेजे गए प्रोफाइल (History)
+              </button>
+
+              {/* Annual Subscription Pill */}
+              {subStatus.isSubscribed ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubscriptionReason('आपकी वार्षिक सदस्यता सक्रिय है!');
+                    setIsSubscriptionModalOpen(true);
+                  }}
+                  className="px-3 py-2 bg-emerald-100 hover:bg-emerald-200 border border-emerald-400 text-emerald-950 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                >
+                  <Crown className="w-3.5 h-3.5 text-amber-600 fill-current" />
+                  <span>वार्षिक सदस्यता सक्रिय ({subStatus.daysRemaining} दिन)</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubscriptionReason('वार्षिक सदस्यता (₹99/वर्ष) सक्रिय करने पर आप असीमित 59-पृष्ठीय महापत्रिका व कुण्डली PDF डाउनलोड कर सकते हैं।');
+                    setIsSubscriptionModalOpen(true);
+                  }}
+                  className="px-3 py-2 bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer animate-pulse"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>वार्षिक सदस्यता: ₹99/वर्ष</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#8C6239] mb-1">जन्म तिथि (DOB)</label>
-            <input
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#8C6239] mb-1">जन्म समय (Time)</label>
-            <input
-              type="time"
-              value={tob}
-              onChange={(e) => setTob(e.target.value)}
-              className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#8C6239] mb-1 flex items-center justify-between">
-              <span>जन्म स्थान (शहर / गाँव / देश)</span>
-              <span className="text-[10px] text-[#B56A00] font-normal">विश्व भर में खोजें</span>
-            </label>
-            <button
-              type="button"
-              onClick={() => setIsCityModalOpen(true)}
-              className="w-full bg-[#F4E8D1] hover:bg-[#EBDBC0] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] flex items-center justify-between transition text-left cursor-pointer"
-            >
-              <span className="truncate flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-[#B56A00] shrink-0" />
-                <span className="truncate">{selectedCity.name}</span>
-              </span>
-              <span className="text-[11px] text-[#B56A00] underline shrink-0 font-bold ml-1">स्थान बदलें</span>
-            </button>
-          </div>
-
-          <div className="sm:col-span-2 md:col-span-4 flex flex-wrap items-center justify-between gap-2 mt-2">
-            <div className="text-xs text-[#735133] flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span>चयनित: <strong>{selectedCity.name}</strong> ({selectedCity.latitude.toFixed(2)}°N, {selectedCity.longitude.toFixed(2)}°E)</span>
+          <form onSubmit={handleCalculate} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-[#8C6239] mb-1">नाम</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
+                placeholder="नाम लिखें"
+              />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div>
+              <label className="block text-xs font-bold text-[#8C6239] mb-1">जन्म तिथि (DOB)</label>
+              <input
+                type="date"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#8C6239] mb-1">जन्म समय (Time)</label>
+              <input
+                type="time"
+                value={tob}
+                onChange={(e) => setTob(e.target.value)}
+                className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#8C6239] mb-1 flex items-center justify-between">
+                <span>जन्म स्थान (शहर / गाँव / देश)</span>
+                <span className="text-[10px] text-[#B56A00] font-normal">विश्व भर में खोजें</span>
+              </label>
               <button
-                type="submit"
-                className="px-6 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs sm:text-sm font-bold rounded-lg shadow-sm transition cursor-pointer"
+                type="button"
+                onClick={() => setIsCityModalOpen(true)}
+                className="w-full bg-[#F4E8D1] hover:bg-[#EBDBC0] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] flex items-center justify-between transition text-left cursor-pointer"
               >
-                कुंडली बनाएँ / अद्यतन करें (Generate)
+                <span className="truncate flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-[#B56A00] shrink-0" />
+                  <span className="truncate">{selectedCity.name}</span>
+                </span>
+                <span className="text-[11px] text-[#B56A00] underline shrink-0 font-bold ml-1">स्थान बदलें</span>
               </button>
             </div>
-          </div>
-        </form>
-      </div>
+
+            <div className="sm:col-span-2 md:col-span-4 flex flex-wrap items-center justify-between gap-2 mt-2">
+              <div className="text-xs text-[#735133] flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#B56A00]" />
+                <span>चयनित: <strong>{selectedCity.name}</strong> ({selectedCity.latitude.toFixed(2)}°N, {selectedCity.longitude.toFixed(2)}°E)</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs sm:text-sm font-bold rounded-lg shadow-sm transition cursor-pointer"
+                >
+                  कुंडली बनाएँ / अद्यतन करें (Generate)
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Non-Subscribed Banner Alert */}
       {!subStatus.isSubscribed && (
@@ -720,45 +830,33 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             </div>
           </div>
 
-          {/* View Mode Toggle: Twin View vs Shodashvarga Grid */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#8C6239]">चार्ट दृश्य:</span>
-              <div className="inline-flex rounded-lg border border-[#8C6239]/30 p-0.5 bg-[#F4E8D1]">
-                <button
-                  onClick={() => setChartViewMode('twin')}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                    chartViewMode === 'twin'
-                      ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-                      : 'text-[#5C3A21] hover:bg-[#FAF2E4]'
-                  }`}
-                >
-                  लग्न (D1) व नवमांश (D9) युगल दृश्य
-                </button>
-                <button
-                  onClick={() => setChartViewMode('shodashvarga')}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                    chartViewMode === 'shodashvarga'
-                      ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-                      : 'text-[#5C3A21] hover:bg-[#FAF2E4]'
-                  }`}
-                >
-                  सम्पूर्ण षोडशवर्ग (D1 से D60)
-                </button>
-              </div>
-            </div>
-
-            {chartViewMode === 'shodashvarga' && (
-              <div className="text-xs text-[#735133] font-medium">
-                महर्षि पराशर प्रतिपादित समस्त 16 सूक्ष्म वर्गीय चक्र
-              </div>
-            )}
+          {/* Sub-Pages Segmented Bar for Chart Tab */}
+          <div className="flex items-center justify-between gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+            {[
+              { id: 'twin', label: '१. लग्न व नवमांश', full: 'पृष्ठ १: लग्न (D1) व नवमांश (D9) चक्र' },
+              { id: 'planets', label: '२. ग्रह स्पष्ट तालिका', full: 'पृष्ठ २: ग्रह स्थिति एवं स्पष्ट तालिका' },
+              { id: 'vargas', label: '३. षोडशवर्ग (D1-D60)', full: 'पृष्ठ ३: सम्पूर्ण षोडशवर्ग (D1 से D60)' },
+            ].map((sp) => (
+              <button
+                key={sp.id}
+                type="button"
+                onClick={() => setChartSubPage(sp.id as any)}
+                className={`flex-1 py-2 px-2 text-center text-xs font-bold rounded-lg transition cursor-pointer ${
+                  chartSubPage === sp.id
+                    ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
+                    : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+                }`}
+              >
+                <span className="sm:hidden">{sp.label}</span>
+                <span className="hidden sm:inline">{sp.full}</span>
+              </button>
+            ))}
           </div>
 
-          {/* Mode 1: Twin View (D1 + D9 Side-by-side) */}
-          {chartViewMode === 'twin' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Sub-Page 1: Twin View (D1 + D9 Side-by-side) */}
+          {chartSubPage === 'twin' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* D1 Lagna */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-2">
@@ -792,10 +890,28 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 </div>
               </div>
 
-              {/* Planetary Ephemeris Table */}
+              {/* Bottom Pagination */}
+              <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+                <div className="text-xs font-bold text-[#8C6239]">पृष्ठ 1 / 3 (लग्न व नवमांश चक्र)</div>
+                <button
+                  type="button"
+                  onClick={() => setChartSubPage('planets')}
+                  className="px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>अगला: २. ग्रह स्पष्ट तालिका</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-Page 2: Planetary Ephemeris Table */}
+          {chartSubPage === 'planets' && (
+            <div className="space-y-4">
               <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl overflow-hidden shadow-xs">
-                <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] font-bold text-xs uppercase tracking-wider">
-                  ग्रह स्थिति, स्पष्ट अंश एवं भाव विवरण (Planetary Ephemeris)
+                <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] font-bold text-xs uppercase tracking-wider flex items-center justify-between">
+                  <span>ग्रह स्थिति, स्पष्ट अंश एवं भाव विवरण (Planetary Ephemeris)</span>
+                  <span className="text-[10px] text-[#FFD88A]">9 ग्रह स्थिति</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -838,11 +954,32 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   </table>
                 </div>
               </div>
+
+              {/* Bottom Pagination */}
+              <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setChartSubPage('twin')}
+                  className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>पिछला: १. लग्न व नवमांश</span>
+                </button>
+                <div className="text-xs font-bold text-[#8C6239]">पृष्ठ 2 / 3</div>
+                <button
+                  type="button"
+                  onClick={() => setChartSubPage('vargas')}
+                  className="px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>अगला: ३. षोडशवर्ग (D1-D60)</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Mode 2: Shodashvarga Explorer (D1 to D60) */}
-          {chartViewMode === 'shodashvarga' && (
+          {/* Sub-Page 3: Shodashvarga Explorer (D1 to D60) */}
+          {chartSubPage === 'vargas' && (
             <div className="space-y-6">
               {/* Varga Selector (Shodashvarga & D1-D60) */}
               <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 space-y-3">
@@ -1037,6 +1174,19 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Bottom Pagination */}
+              <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setChartSubPage('planets')}
+                  className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>पिछला: २. ग्रह स्पष्ट तालिका</span>
+                </button>
+                <div className="text-xs font-bold text-[#8C6239]">पृष्ठ 3 / 3 (षोडशवर्ग D1-D60)</div>
               </div>
             </div>
           )}
@@ -1432,256 +1582,341 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
       {/* Tab 3: Kundali Milan (36 Gunas, Manglik, Nadi, Bhakoot & Twin Charts) */}
       {kundaliTab === 'milan' && (
-        <div className="space-y-6">
-          {/* Couple Profiles Inputs */}
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-5 shadow-xs">
-            <h3 className="text-sm font-bold text-[#5C3A21] mb-3 flex items-center gap-1.5">
-              <Heart className="w-4 h-4 text-rose-600" />
-              वर-कन्या विवरण (Boy & Girl Profiles for Matchmaking)
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Boy */}
-              <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20 space-y-2">
-                <span className="text-xs font-bold text-blue-900 uppercase">वर विवरण (Boy)</span>
-                <input
-                  type="text"
-                  value={boyName}
-                  onChange={(e) => setBoyName(e.target.value)}
-                  className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                  placeholder="वर का नाम"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="date"
-                    value={boyDob}
-                    onChange={(e) => setBoyDob(e.target.value)}
-                    className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                  />
-                  <input
-                    type="time"
-                    value={boyTob}
-                    onChange={(e) => setBoyTob(e.target.value)}
-                    className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                  />
-                </div>
-              </div>
-
-              {/* Girl */}
-              <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20 space-y-2">
-                <span className="text-xs font-bold text-rose-900 uppercase">कन्या विवरण (Girl)</span>
-                <input
-                  type="text"
-                  value={girlName}
-                  onChange={(e) => setGirlName(e.target.value)}
-                  className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                  placeholder="कन्या का नाम"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="date"
-                    value={girlDob}
-                    onChange={(e) => setGirlDob(e.target.value)}
-                    className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                  />
-                  <input
-                    type="time"
-                    value={girlTob}
-                    onChange={(e) => setGirlTob(e.target.value)}
-                    className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                  />
-                </div>
-              </div>
-            </div>
+        <div className="space-y-4">
+          {/* Sub-Pages Segmented Bar for Milan Tab */}
+          <div className="flex items-center justify-between gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+            {[
+              { id: 'score', label: '१. मिलान स्कोर', full: 'पृष्ठ १: वर-कन्या विवरण एवं स्कोर' },
+              { id: 'ashtakoot', label: '२. अष्टकूट तालिका', full: 'पृष्ठ २: अष्टकूट 8 घटक तालिका' },
+              { id: 'manglik', label: '३. दोष विचार व चक्र', full: 'पृष्ठ ३: मांगलिक, नाड़ी, भकूट व चक्र' },
+            ].map((sp) => (
+              <button
+                key={sp.id}
+                type="button"
+                onClick={() => setMilanSubPage(sp.id as any)}
+                className={`flex-1 py-2 px-2 text-center text-xs font-bold rounded-lg transition cursor-pointer ${
+                  milanSubPage === sp.id
+                    ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
+                    : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+                }`}
+              >
+                <span className="sm:hidden">{sp.label}</span>
+                <span className="hidden sm:inline">{sp.full}</span>
+              </button>
+            ))}
           </div>
 
-          {/* Milan Result Banner with Bhojpatra PDF Download Button */}
-          <div className="bg-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-xl p-5 shadow-sm space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#8C6239]/20 pb-3">
-              <div>
-                <div className="text-xs font-bold text-[#8C6239]">अष्टकूट गुण मिलान स्कोर</div>
-                <div className="text-3xl font-black font-granth text-[#5C3A21]">
-                  {milanResult.totalScore} / 36 गुण
+          {/* Sub-Page 1: Profiles and Score Banner */}
+          {milanSubPage === 'score' && (
+            <div className="space-y-4">
+              {/* Couple Profiles Inputs */}
+              <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 sm:p-5 shadow-xs">
+                <h3 className="text-sm font-bold text-[#5C3A21] mb-3 flex items-center gap-1.5">
+                  <Heart className="w-4 h-4 text-rose-600" />
+                  वर-कन्या विवरण (Boy & Girl Profiles for Matchmaking)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Boy */}
+                  <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20 space-y-2">
+                    <span className="text-xs font-bold text-blue-900 uppercase">वर विवरण (Boy)</span>
+                    <input
+                      type="text"
+                      value={boyName}
+                      onChange={(e) => setBoyName(e.target.value)}
+                      className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                      placeholder="वर का नाम"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={boyDob}
+                        onChange={(e) => setBoyDob(e.target.value)}
+                        className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                      />
+                      <input
+                        type="time"
+                        value={boyTob}
+                        onChange={(e) => setBoyTob(e.target.value)}
+                        className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Girl */}
+                  <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20 space-y-2">
+                    <span className="text-xs font-bold text-rose-900 uppercase">कन्या विवरण (Girl)</span>
+                    <input
+                      type="text"
+                      value={girlName}
+                      onChange={(e) => setGirlName(e.target.value)}
+                      className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                      placeholder="कन्या का नाम"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={girlDob}
+                        onChange={(e) => setGirlDob(e.target.value)}
+                        className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                      />
+                      <input
+                        type="time"
+                        value={girlTob}
+                        onChange={(e) => setGirlTob(e.target.value)}
+                        className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div
-                  className={`px-4 py-2 rounded-lg font-black text-xs sm:text-sm border ${
-                    milanResult.verdictGrade === 'excellent'
-                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                      : milanResult.verdictGrade === 'good'
-                      ? 'bg-amber-100 text-amber-900 border-amber-300'
-                      : 'bg-rose-100 text-rose-900 border-rose-300'
-                  }`}
-                >
-                  {milanResult.verdictGrade === 'excellent'
-                    ? 'अति उत्तम मिलान (28-36)'
-                    : milanResult.verdictGrade === 'good'
-                    ? 'शुभ व अनुकूल मिलान (21-27)'
-                    : milanResult.verdictGrade === 'average'
-                    ? 'मध्यम विवाह योग्य (18-20)'
-                    : 'अस्वीकार्य / दोषयुक्त (<18)'}
+              {/* Milan Result Banner with Bhojpatra PDF Download Button */}
+              <div className="bg-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-xl p-5 shadow-sm space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#8C6239]/20 pb-3">
+                  <div>
+                    <div className="text-xs font-bold text-[#8C6239]">अष्टकूट गुण मिलान स्कोर</div>
+                    <div className="text-3xl font-black font-granth text-[#5C3A21]">
+                      {milanResult.totalScore} / 36 गुण
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`px-4 py-2 rounded-lg font-black text-xs sm:text-sm border ${
+                        milanResult.verdictGrade === 'excellent'
+                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                          : milanResult.verdictGrade === 'good'
+                          ? 'bg-amber-100 text-amber-900 border-amber-300'
+                          : 'bg-rose-100 text-rose-900 border-rose-300'
+                      }`}
+                    >
+                      {milanResult.verdictGrade === 'excellent'
+                        ? 'अति उत्तम मिलान (28-36)'
+                        : milanResult.verdictGrade === 'good'
+                        ? 'शुभ व अनुकूल मिलान (21-27)'
+                        : milanResult.verdictGrade === 'average'
+                        ? 'मध्यम विवाह योग्य (18-20)'
+                        : 'अस्वीकार्य / दोषयुक्त (<18)'}
+                    </div>
+
+                    <button
+                      onClick={handleDownloadMilanPdf}
+                      disabled={isDownloadingMilanPdf}
+                      className="px-4 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      {isDownloadingMilanPdf ? 'पीडीएफ बन रहा है...' : 'मिलान भोजपत्र PDF'}
+                    </button>
+                  </div>
                 </div>
 
+                <p className="text-xs sm:text-sm text-[#5C3A21] font-medium leading-relaxed">
+                  {milanResult.verdict}
+                </p>
+              </div>
+
+              {/* Bottom Pagination */}
+              <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+                <div className="text-xs font-bold text-[#8C6239]">पृष्ठ 1 / 3 (मिलान स्कोर)</div>
                 <button
-                  onClick={handleDownloadMilanPdf}
-                  disabled={isDownloadingMilanPdf}
-                  className="px-4 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-sm"
+                  type="button"
+                  onClick={() => setMilanSubPage('ashtakoot')}
+                  className="px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  {isDownloadingMilanPdf ? 'पीडीएफ बन रहा है...' : 'मिलान भोजपत्र PDF'}
+                  <span>अगला: २. अष्टकूट तालिका</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
+          )}
 
-            <p className="text-xs sm:text-sm text-[#5C3A21] font-medium leading-relaxed">
-              {milanResult.verdict}
-            </p>
-          </div>
-
-          {/* Manglik, Nadi & Bhakoot Dosha Comprehensive Analysis */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Manglik Card */}
-            <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 space-y-2">
-              <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-1.5">
-                <span className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
-                  <Flame className="w-4 h-4 text-rose-600" />
-                  मांगलिक दोष विचार
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                    milanResult.manglikAnalysis?.isCancelled
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-amber-100 text-amber-800'
-                  }`}
-                >
-                  {milanResult.manglikAnalysis?.verdict || 'विश्लेषण'}
-                </span>
-              </div>
-              <div className="text-xs text-[#5C3A21] space-y-1">
-                <div><strong>वर:</strong> {milanResult.manglikAnalysis?.boyNote}</div>
-                <div><strong>कन्या:</strong> {milanResult.manglikAnalysis?.girlNote}</div>
-                <div className="text-[11px] text-[#735133] leading-relaxed pt-1">
-                  <strong>परिहार:</strong> {milanResult.manglikAnalysis?.cancellationReason}
+          {/* Sub-Page 2: 8 Kootas Detailed Table */}
+          {milanSubPage === 'ashtakoot' && (
+            <div className="space-y-4">
+              <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl overflow-hidden shadow-xs">
+                <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] font-bold text-xs uppercase tracking-wider flex items-center justify-between">
+                  <span>अष्टकूट 8 घटकों का विस्तृत विश्लेषण तालिका</span>
+                  <span className="text-[10px] text-[#FFD88A] font-bold">प्राप्त: {milanResult.totalScore}/36</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#F4E8D1] text-[#5C3A21] border-b border-[#8C6239]/30">
+                      <tr>
+                        <th className="py-2.5 px-3">कूट (Factor)</th>
+                        <th className="py-2.5 px-3">प्राप्त अंक</th>
+                        <th className="py-2.5 px-3">अधिकतम</th>
+                        <th className="py-2.5 px-3">वर स्थिति</th>
+                        <th className="py-2.5 px-3">कन्या स्थिति</th>
+                        <th className="py-2.5 px-3">फल व विश्लेषण</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#8C6239]/20">
+                      {milanResult.items.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-[#F4E8D1]/60">
+                          <td className="py-2.5 px-3 font-bold text-[#5C3A21]">{item.name}</td>
+                          <td className="py-2.5 px-3 font-black text-[#B56A00]">{item.score}</td>
+                          <td className="py-2.5 px-3 text-[#735133]">{item.max}</td>
+                          <td className="py-2.5 px-3 text-[#5C3A21]">{item.boyValue}</td>
+                          <td className="py-2.5 px-3 text-[#5C3A21]">{item.girlValue}</td>
+                          <td className="py-2.5 px-3 text-[#5C3A21]">{item.note}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </div>
 
-            {/* Nadi Card */}
-            <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 space-y-2">
-              <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-1.5">
-                <span className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
-                  <Info className="w-4 h-4 text-blue-600" />
-                  नाड़ी दोष विचार (8 अंक)
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                    milanResult.nadiDosha?.hasDosha
-                      ? 'bg-rose-100 text-rose-800'
-                      : 'bg-emerald-100 text-emerald-800'
-                  }`}
+              {/* Bottom Pagination */}
+              <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setMilanSubPage('score')}
+                  className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
                 >
-                  {milanResult.nadiDosha?.hasDosha ? 'समान नाड़ी दोष' : 'निर्दोष नाड़ी'}
-                </span>
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>पिछला: १. मिलान स्कोर</span>
+                </button>
+                <div className="text-xs font-bold text-[#8C6239]">पृष्ठ 2 / 3</div>
+                <button
+                  type="button"
+                  onClick={() => setMilanSubPage('manglik')}
+                  className="px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>अगला: ३. दोष विचार व चक्र</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div className="text-xs text-[#5C3A21] space-y-1">
-                <div><strong>वर नाड़ी:</strong> {boyKundali.nadi} | <strong>कन्या नाड़ी:</strong> {girlKundali.nadi}</div>
-                <div className="text-[11px] text-[#735133] leading-relaxed pt-1">
-                  {milanResult.nadiDosha?.hasDosha
-                    ? milanResult.nadiDosha.remedy
-                    : 'दोनों की भिन्न नाड़ी होने से संतान, स्वास्थ्य व वंश वृद्धि अनुकूल रहेगी।'}
+            </div>
+          )}
+
+          {/* Sub-Page 3: Manglik, Nadi, Bhakoot Dosha & Twin Charts */}
+          {milanSubPage === 'manglik' && (
+            <div className="space-y-4">
+              {/* Manglik, Nadi & Bhakoot Dosha Comprehensive Analysis */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Manglik Card */}
+                <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-1.5">
+                    <span className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+                      <Flame className="w-4 h-4 text-rose-600" />
+                      मांगलिक दोष विचार
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        milanResult.manglikAnalysis?.isCancelled
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {milanResult.manglikAnalysis?.verdict || 'विश्लेषण'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#5C3A21] space-y-1">
+                    <div><strong>वर:</strong> {milanResult.manglikAnalysis?.boyNote}</div>
+                    <div><strong>कन्या:</strong> {milanResult.manglikAnalysis?.girlNote}</div>
+                    <div className="text-[11px] text-[#735133] leading-relaxed pt-1">
+                      <strong>परिहार:</strong> {milanResult.manglikAnalysis?.cancellationReason}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Nadi Card */}
+                <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-1.5">
+                    <span className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+                      <Info className="w-4 h-4 text-blue-600" />
+                      नाड़ी दोष विचार (8 अंक)
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        milanResult.nadiDosha?.hasDosha
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {milanResult.nadiDosha?.hasDosha ? 'समान नाड़ी दोष' : 'निर्दोष नाड़ी'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#5C3A21] space-y-1">
+                    <div><strong>वर नाड़ी:</strong> {boyKundali.nadi} | <strong>कन्या नाड़ी:</strong> {girlKundali.nadi}</div>
+                    <div className="text-[11px] text-[#735133] leading-relaxed pt-1">
+                      {milanResult.nadiDosha?.hasDosha
+                        ? milanResult.nadiDosha.remedy
+                        : 'दोनों की भिन्न नाड़ी होने से संतान, स्वास्थ्य व वंश वृद्धि अनुकूल रहेगी।'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bhakoot Card */}
+                <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-1.5">
+                    <span className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+                      <AlertTriangle className="w-4 h-4 text-amber-600" />
+                      भकूट दोष विचार (7 अंक)
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        milanResult.bhakootDosha?.hasDosha
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {milanResult.bhakootDosha?.hasDosha ? 'भकूट दोष' : 'निर्दोष संबंध'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#5C3A21] space-y-1">
+                    <div><strong>वर राशि:</strong> {boyKundali.moonRashi} | <strong>कन्या राशि:</strong> {girlKundali.moonRashi}</div>
+                    <div className="text-[11px] text-[#735133] leading-relaxed pt-1">
+                      {milanResult.bhakootDosha?.hasDosha
+                        ? milanResult.bhakootDosha.remedy
+                        : 'राशि परस्पर शुभ भाव संबंध में होने से प्रेम व सद्भाव की वृद्धि होगी।'}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Bhakoot Card */}
-            <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 space-y-2">
-              <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-1.5">
-                <span className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
-                  <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  भकूट दोष विचार (7 अंक)
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                    milanResult.bhakootDosha?.hasDosha
-                      ? 'bg-rose-100 text-rose-800'
-                      : 'bg-emerald-100 text-emerald-800'
-                  }`}
-                >
-                  {milanResult.bhakootDosha?.hasDosha ? 'भकूट दोष' : 'निर्दोष संबंध'}
-                </span>
-              </div>
-              <div className="text-xs text-[#5C3A21] space-y-1">
-                <div><strong>वर राशि:</strong> {boyKundali.moonRashi} | <strong>कन्या राशि:</strong> {girlKundali.moonRashi}</div>
-                <div className="text-[11px] text-[#735133] leading-relaxed pt-1">
-                  {milanResult.bhakootDosha?.hasDosha
-                    ? milanResult.bhakootDosha.remedy
-                    : 'राशि परस्पर शुभ भाव संबंध में होने से प्रेम व सद्भाव की वृद्धि होगी।'}
+              {/* Twin Charts Comparison: Boy Lagna & Girl Lagna */}
+              <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
+                <h4 className="text-sm font-bold font-granth text-[#5C3A21]">
+                  वर एवं कन्या के लग्न व नवमांश चक्रों की तुलना
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <div className="text-xs font-bold text-blue-900 mb-2">वर लग्न चक्र: {boyKundali.name} ({boyKundali.lagnaRashi} लग्न)</div>
+                    <KundaliChart
+                      lagnaDegree={boyKundali.lagnaDegree}
+                      planets={boyKundali.planets}
+                      vargaDivision={1}
+                      chartTitle={`${boyKundali.name} — लग्न चक्र`}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-bold text-rose-900 mb-2">कन्या लग्न चक्र: {girlKundali.name} ({girlKundali.lagnaRashi} लग्न)</div>
+                    <KundaliChart
+                      lagnaDegree={girlKundali.lagnaDegree}
+                      planets={girlKundali.planets}
+                      vargaDivision={1}
+                      chartTitle={`${girlKundali.name} — लग्न चक्र`}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* 8 Kootas Detailed Table */}
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl overflow-hidden shadow-xs">
-            <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] font-bold text-xs uppercase tracking-wider">
-              अष्टकूट 8 घटकों का विस्तृत विश्लेषण तालिका
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#F4E8D1] text-[#5C3A21] border-b border-[#8C6239]/30">
-                  <tr>
-                    <th className="py-2.5 px-3">कूट (Factor)</th>
-                    <th className="py-2.5 px-3">प्राप्त अंक</th>
-                    <th className="py-2.5 px-3">अधिकतम</th>
-                    <th className="py-2.5 px-3">वर स्थिति</th>
-                    <th className="py-2.5 px-3">कन्या स्थिति</th>
-                    <th className="py-2.5 px-3">फल व विश्लेषण</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#8C6239]/20">
-                  {milanResult.items.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-[#F4E8D1]/60">
-                      <td className="py-2.5 px-3 font-bold text-[#5C3A21]">{item.name}</td>
-                      <td className="py-2.5 px-3 font-black text-[#B56A00]">{item.score}</td>
-                      <td className="py-2.5 px-3 text-[#735133]">{item.max}</td>
-                      <td className="py-2.5 px-3 text-[#5C3A21]">{item.boyValue}</td>
-                      <td className="py-2.5 px-3 text-[#5C3A21]">{item.girlValue}</td>
-                      <td className="py-2.5 px-3 text-[#5C3A21]">{item.note}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Twin Charts Comparison: Boy Lagna & Girl Lagna */}
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-5 shadow-xs space-y-4">
-            <h4 className="text-sm font-bold font-granth text-[#5C3A21]">
-              वर एवं कन्या के लग्न व नवमांश चक्रों की तुलना
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <div className="text-xs font-bold text-blue-900 mb-2">वर लग्न चक्र: {boyKundali.name} ({boyKundali.lagnaRashi} लग्न)</div>
-                <KundaliChart
-                  lagnaDegree={boyKundali.lagnaDegree}
-                  planets={boyKundali.planets}
-                  vargaDivision={1}
-                  chartTitle={`${boyKundali.name} — लग्न चक्र`}
-                />
-              </div>
-
-              <div>
-                <div className="text-xs font-bold text-rose-900 mb-2">कन्या लग्न चक्र: {girlKundali.name} ({girlKundali.lagnaRashi} लग्न)</div>
-                <KundaliChart
-                  lagnaDegree={girlKundali.lagnaDegree}
-                  planets={girlKundali.planets}
-                  vargaDivision={1}
-                  chartTitle={`${girlKundali.name} — लग्न चक्र`}
-                />
+              {/* Bottom Pagination */}
+              <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setMilanSubPage('ashtakoot')}
+                  className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>पिछला: २. अष्टकूट तालिका</span>
+                </button>
+                <div className="text-xs font-bold text-[#8C6239]">पृष्ठ 3 / 3 (दोष विचार व चक्र)</div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
