@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { KundaliData, SavedLocation, DashaPratyantarPeriod } from '../types';
 import { KundaliChart } from './KundaliChart';
 import { LocationModal } from './LocationModal';
@@ -10,11 +10,17 @@ import {
   calculatePratyantarPeriods,
 } from '../services/kundali';
 import { COMMON_INDIAN_CITIES } from '../services/disha';
-import { saveKundaliProfile, DEFAULT_LOCATION } from '../services/storage';
+import {
+  saveKundaliProfile,
+  DEFAULT_LOCATION,
+  getSubscriptionStatus,
+  SubscriptionStatus,
+} from '../services/storage';
 import { calculateVedicPanchang } from '../services/astronomy';
 import { downloadMilanBhojpatraPdf, downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { generateExhaustive59PageKundaliPdf } from '../services/exhaustiveKundaliPdf';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
+import { SubscriptionModal } from './SubscriptionModal';
 import {
   User,
   Clock,
@@ -32,6 +38,11 @@ import {
   FileText,
   Loader2,
   CheckCircle2,
+  Crown,
+  Lock,
+  ChevronLeft,
+  ChevronRight,
+  MoveHorizontal,
 } from 'lucide-react';
 
 export const SHODASHVARGA_OPTIONS = [
@@ -189,7 +200,48 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   // Dasha Drill-down state
   const [inspectedMaha, setInspectedMaha] = useState<string>('');
   const [inspectedAntar, setInspectedAntar] = useState<string>('');
-  const [dashaViewLevel, setDashaViewLevel] = useState<'all' | 'maha' | 'antar' | 'pratyantar'>('all');
+  const [dashaViewLevel, setDashaViewLevel] = useState<'all' | 'maha' | 'antar' | 'pratyantar'>('maha');
+
+  // Annual Subscription State (₹99 / Year)
+  const [subStatus, setSubStatus] = useState<SubscriptionStatus>(() => getSubscriptionStatus());
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [subscriptionReason, setSubscriptionReason] = useState<string>('');
+
+  // Dasha Touch Swipe Gestures for Mobile
+  const dashaTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleDashaTouchStart = (e: React.TouchEvent) => {
+    dashaTouchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  };
+
+  const handleDashaTouchEnd = (e: React.TouchEvent) => {
+    if (!dashaTouchStartRef.current) return;
+    const touchEnd = e.changedTouches[0];
+    const deltaX = touchEnd.clientX - dashaTouchStartRef.current.x;
+    const deltaY = touchEnd.clientY - dashaTouchStartRef.current.y;
+    dashaTouchStartRef.current = null;
+
+    if (Math.abs(deltaX) >= 35 && Math.abs(deltaX) > Math.abs(deltaY) * 0.7) {
+      if (deltaX < 0) {
+        // Swiped Left: Advance deeper (Maha -> Antar -> Pratyantar)
+        if (dashaViewLevel === 'maha' || dashaViewLevel === 'all') {
+          setDashaViewLevel('antar');
+        } else if (dashaViewLevel === 'antar') {
+          setDashaViewLevel('pratyantar');
+        }
+      } else {
+        // Swiped Right: Return backward (Pratyantar -> Antar -> Maha)
+        if (dashaViewLevel === 'pratyantar') {
+          setDashaViewLevel('antar');
+        } else if (dashaViewLevel === 'antar') {
+          setDashaViewLevel('maha');
+        }
+      }
+    }
+  };
 
   // Handle Calculate or Recalculate
   const handleCalculate = (e?: React.FormEvent) => {
@@ -265,6 +317,11 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       : [];
 
   const handleDownloadMilanPdf = async () => {
+    if (!subStatus.isSubscribed) {
+      setSubscriptionReason('विवाह मिलान पत्रिका PDF डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
+      setIsSubscriptionModalOpen(true);
+      return;
+    }
     try {
       setIsDownloadingMilanPdf(true);
       const res = await downloadMilanBhojpatraPdf({
@@ -291,6 +348,11 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [isGeneratingSinglePdf, setIsGeneratingSinglePdf] = useState(false);
 
   const handleDownloadSinglePageKundaliPdf = async () => {
+    if (!subStatus.isSubscribed) {
+      setSubscriptionReason('जन्मपत्रिका PDF डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
+      setIsSubscriptionModalOpen(true);
+      return;
+    }
     if (!k) {
       alert('कृपया पहले जन्म विवरण भरकर "जन्म पत्रिका बनाएं" पर क्लिक करें।');
       return;
@@ -331,6 +393,11 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   };
 
   const handleDownload59PagePdf = async () => {
+    if (!subStatus.isSubscribed) {
+      setSubscriptionReason('सम्पूर्ण 59-पृष्ठीय महा-जन्मपत्रिका सचित्र PDF तैयार व डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
+      setIsSubscriptionModalOpen(true);
+      return;
+    }
     if (!k) {
       alert('कृपया पहले जन्म विवरण भरकर "जन्म पत्रिका बनाएं" पर क्लिक करें।');
       return;
@@ -459,10 +526,37 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
             <button
               onClick={onOpenSavedModal}
-              className="px-3 py-2 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1.5"
+              className="px-3 py-2 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1.5 cursor-pointer"
             >
               सहेजे गए प्रोफाइल (History)
             </button>
+
+            {/* Annual Subscription Pill */}
+            {subStatus.isSubscribed ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSubscriptionReason('आपकी वार्षिक सदस्यता सक्रिय है!');
+                  setIsSubscriptionModalOpen(true);
+                }}
+                className="px-3 py-2 bg-emerald-100 hover:bg-emerald-200 border border-emerald-400 text-emerald-950 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+              >
+                <Crown className="w-3.5 h-3.5 text-amber-600 fill-current" />
+                <span>वार्षिक सदस्यता सक्रिय ({subStatus.daysRemaining} दिन)</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setSubscriptionReason('वार्षिक सदस्यता (₹99/वर्ष) सक्रिय करने पर आप असीमित 59-पृष्ठीय महापत्रिका व कुण्डली PDF डाउनलोड कर सकते हैं।');
+                  setIsSubscriptionModalOpen(true);
+                }}
+                className="px-3 py-2 bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer animate-pulse"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>वार्षिक सदस्यता: ₹99/वर्ष</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -533,6 +627,36 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Non-Subscribed Banner Alert */}
+      {!subStatus.isSubscribed && (
+        <div className="bg-gradient-to-r from-[#8B1E1E] via-[#A84318] to-[#5C3A21] rounded-xl p-4 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-3.5 border-2 border-amber-400/60">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center shrink-0 shadow-xs font-black">
+              <Crown className="w-6 h-6 fill-current" />
+            </div>
+            <div>
+              <div className="font-black text-sm sm:text-base text-amber-200">
+                श्री शक्ति पंचांग वार्षिक सदस्यता (केवल ₹99 / वर्ष)
+              </div>
+              <div className="text-xs text-amber-100/90 mt-0.5">
+                सम्पूर्ण 59-पृष्ठीय महापत्रिका सचित्र PDF, अष्टकूट विवाह मिलान, एवं सूक्ष्म दशा सेवा हेतु वार्षिक सदस्यता आवश्यक है।
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSubscriptionReason('सम्पूर्ण कुण्डली सेवा एवं 59-पृष्ठीय महापत्रिका सचित्र PDF डाउनलोड करने के लिए केवल ₹99/वर्ष की सदस्यता प्राप्त करें।');
+              setIsSubscriptionModalOpen(true);
+            }}
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black text-xs sm:text-sm rounded-lg shadow-md transition cursor-pointer shrink-0 active:scale-95 flex items-center gap-1.5"
+          >
+            <Lock className="w-4 h-4" />
+            <span>₹99/वर्ष में अनलॉक करें</span>
+          </button>
+        </div>
+      )}
 
       {/* Sub-Navigation Tabs */}
       <div className="flex border-b border-[#8C6239]/30 overflow-x-auto no-scrollbar gap-1">
@@ -921,7 +1045,11 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
       {/* Tab 2: Vimshottari Mahadasha, Antardasha & Pratyantardasha */}
       {kundaliTab === 'dasha' && k && (
-        <div className="space-y-6">
+        <div
+          className="space-y-6 select-none touch-pan-y"
+          onTouchStart={handleDashaTouchStart}
+          onTouchEnd={handleDashaTouchEnd}
+        >
           {/* Active Dasha Hero Card with Pratyantar */}
           <div className="bg-[#FAF2E4] border-2 border-[#B56A00] rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -932,11 +1060,58 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
               <button
                 onClick={jumpToActiveDasha}
-                className="px-3 py-1.5 bg-[#B56A00] hover:bg-[#945500] text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="px-3 py-1.5 bg-[#B56A00] hover:bg-[#945500] text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
               >
                 <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
                 <span>वर्तमान सक्रिय सूक्ष्म दशा पर जाएँ</span>
               </button>
+            </div>
+
+            {/* Mobile Touch Swipe Indicator Banner */}
+            <div className="p-2.5 bg-gradient-to-r from-amber-100/90 via-amber-50 to-amber-100/90 border border-[#B56A00]/40 rounded-lg flex flex-wrap items-center justify-between gap-2 text-xs text-[#5C3A21]">
+              <div className="flex items-center gap-2 font-bold">
+                <MoveHorizontal className="w-4 h-4 text-[#B56A00] shrink-0" />
+                <span>फोन पर दशा बदलने हेतु स्क्रीन पर बाएँ (←) या दाएँ (→) स्वाइप करें</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (dashaViewLevel === 'pratyantar') setDashaViewLevel('antar');
+                    else if (dashaViewLevel === 'antar') setDashaViewLevel('maha');
+                  }}
+                  disabled={dashaViewLevel === 'maha'}
+                  className={`px-2 py-1 rounded text-[11px] font-bold transition flex items-center gap-0.5 cursor-pointer ${
+                    dashaViewLevel === 'maha'
+                      ? 'opacity-40 cursor-not-allowed bg-[#FAF2E4] text-[#8C6239]'
+                      : 'bg-[#5C3A21] text-[#FAF2E4] active:scale-95'
+                  }`}
+                  title="पिछला स्तर"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>पिछला</span>
+                </button>
+                <span className="text-[11px] text-[#8C6239] font-bold px-1">
+                  {dashaViewLevel === 'maha' ? 'स्तर १/३' : dashaViewLevel === 'antar' ? 'स्तर २/३' : dashaViewLevel === 'pratyantar' ? 'स्तर ३/३' : 'समस्त'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (dashaViewLevel === 'maha' || dashaViewLevel === 'all') setDashaViewLevel('antar');
+                    else if (dashaViewLevel === 'antar') setDashaViewLevel('pratyantar');
+                  }}
+                  disabled={dashaViewLevel === 'pratyantar'}
+                  className={`px-2 py-1 rounded text-[11px] font-bold transition flex items-center gap-0.5 cursor-pointer ${
+                    dashaViewLevel === 'pratyantar'
+                      ? 'opacity-40 cursor-not-allowed bg-[#FAF2E4] text-[#8C6239]'
+                      : 'bg-[#5C3A21] text-[#FAF2E4] active:scale-95'
+                  }`}
+                  title="अगला स्तर"
+                >
+                  <span>अगला</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
             {/* 3 Prominent Cards: Mahadasha, Antardasha, Pratyantardasha */}
@@ -1616,6 +1791,14 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* ₹99 / Year Annual Subscription Modal */}
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+        onSubscribed={(newStatus) => setSubStatus(newStatus)}
+        reason={subscriptionReason}
+      />
     </div>
   );
 };

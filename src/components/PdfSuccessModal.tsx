@@ -11,8 +11,7 @@ import {
   Smartphone,
   Laptop,
   BookOpen,
-  ZoomIn,
-  ShieldCheck,
+  Send,
 } from 'lucide-react';
 
 export interface PdfSuccessInfo {
@@ -35,17 +34,27 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
 
   if (!info || !info.isOpen) return null;
 
-  // Reliable Native Android / iOS Share
-  const handleNativeShare = async () => {
-    if (!info.blob) return;
+  const isMobile =
+    typeof navigator !== 'undefined' &&
+    /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+
+  // 1. Native Mobile Share / Save to Files
+  const handleSaveToMobileDevice = async () => {
+    if (!info.blob) {
+      handleDownloadDirect();
+      return;
+    }
+
     try {
       const file = new File([info.blob], info.fileName, { type: 'application/pdf' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: info.title,
-          text: `श्री शक्ति पंचांग • ${info.title} (${info.fileName})`,
+          text: `श्री शक्ति पंचांग • ${info.title}`,
         });
+        setDownloadSuccessMsg('सफलतापूर्वक सहेजा / शेयर किया गया!');
+        setTimeout(() => setDownloadSuccessMsg(null), 5000);
         return;
       } else if (navigator.share) {
         await navigator.share({
@@ -56,13 +65,14 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
         return;
       }
     } catch {
-      // User cancelled share
+      // User cancelled share or aborted
     }
-    // Fallback if share unavailable
+
+    // Fallback if native share fails or cancelled
     handleDownloadDirect();
   };
 
-  // Robust Mobile & Desktop Download
+  // 2. Direct Browser Download
   const handleDownloadDirect = () => {
     try {
       const blobUrl = info.blobUrl || (info.blob ? URL.createObjectURL(info.blob) : '');
@@ -71,28 +81,29 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = info.fileName;
-      a.target = '_self';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
         if (document.body.contains(a)) {
           document.body.removeChild(a);
         }
-      }, 500);
+      }, 600);
 
-      setDownloadSuccessMsg('फ़ाइल डाउनलोड शुरू हो गई है! आपके Downloads फ़ोल्डर में सहेजी जा रही है।');
+      setDownloadSuccessMsg('डाउनलोड शुरू हो गया है! आपके "Downloads" फ़ोल्डर में सहेजी जा रही है।');
       setTimeout(() => setDownloadSuccessMsg(null), 5000);
     } catch {
-      setViewMode('reader');
+      // If direct download fails on mobile, open in tab
+      handleOpenInTab();
     }
   };
 
-  // Direct Open In Browser Tab
+  // 3. Direct Open In Native Browser Tab / PDF Viewer
   const handleOpenInTab = () => {
     if (info.blobUrl) {
       const win = window.open(info.blobUrl, '_blank');
       if (!win || win.closed || typeof win.closed === 'undefined') {
-        // Mobile popup blocker intercepted
         setViewMode('reader');
       }
     }
@@ -102,9 +113,11 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className={`bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl shadow-2xl overflow-hidden text-[#5C3A21] flex flex-col transition-all duration-300 ${
-        viewMode === 'reader' ? 'max-w-4xl w-full h-[90vh]' : 'max-w-xl w-full'
-      }`}>
+      <div
+        className={`bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl shadow-2xl overflow-hidden text-[#5C3A21] flex flex-col transition-all duration-300 ${
+          viewMode === 'reader' ? 'max-w-4xl w-full h-[90vh]' : 'max-w-xl w-full'
+        }`}
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-[#5C3A21] to-[#3B1F0E] text-[#FAF2E4] p-3.5 sm:p-4 flex items-center justify-between border-b border-[#8C6239] shrink-0">
           <div className="flex items-center gap-2">
@@ -163,19 +176,22 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
               </span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleNativeShare}
+                  onClick={handleSaveToMobileDevice}
                   className="px-2.5 py-1 bg-[#25D366] hover:bg-[#1EBE5D] text-white rounded font-bold flex items-center gap-1 cursor-pointer text-[11px]"
                 >
                   <Share2 className="w-3 h-3" />
-                  <span>शेयर करें</span>
+                  <span>फ़ोन में सहेजें / शेयर</span>
                 </button>
-                <button
-                  onClick={handleDownloadDirect}
+                <a
+                  href={info.blobUrl}
+                  download={info.fileName}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-2.5 py-1 bg-[#8B1E1E] hover:bg-[#721818] text-white rounded font-bold flex items-center gap-1 cursor-pointer text-[11px]"
                 >
                   <Download className="w-3 h-3" />
                   <span>डाउनलोड</span>
-                </button>
+                </a>
               </div>
             </div>
 
@@ -191,8 +207,9 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
           /* Download & Location Guide Mode */
           <div className="p-4 sm:p-5 space-y-4 overflow-y-auto max-h-[80vh]">
             {downloadSuccessMsg && (
-              <div className="p-3 bg-green-100 border border-green-400 text-green-900 rounded-xl text-xs font-bold animate-in fade-in">
-                {downloadSuccessMsg}
+              <div className="p-3 bg-emerald-100 border border-emerald-400 text-emerald-950 rounded-xl text-xs font-bold animate-in fade-in flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                <span>{downloadSuccessMsg}</span>
               </div>
             )}
 
@@ -218,69 +235,66 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
               </div>
             </div>
 
-            {/* Primary Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {/* Option A: In-App View */}
+            {/* Mobile-Optimized Direct Action Buttons */}
+            <div className="space-y-2.5">
+              {/* Primary Mobile Button: Save to Device / Native Share */}
               <button
                 type="button"
-                onClick={() => setViewMode('reader')}
-                className="py-3 px-3 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition transform active:scale-98 cursor-pointer"
-              >
-                <Eye className="w-4 h-4 text-[#FFD88A]" />
-                <span>यहीं ऐप में पढ़ें</span>
-              </button>
-
-              {/* Option B: WhatsApp / Drive Native Share */}
-              <button
-                type="button"
-                onClick={handleNativeShare}
-                className="py-3 px-3 bg-gradient-to-r from-[#1E7E34] to-[#28A745] hover:brightness-110 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition transform active:scale-98 cursor-pointer"
+                onClick={handleSaveToMobileDevice}
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-[#1E7E34] via-[#28A745] to-[#1E7E34] hover:brightness-110 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg transition transform active:scale-98 cursor-pointer"
               >
                 <Share2 className="w-4 h-4" />
-                <span>WhatsApp / ड्राइव</span>
+                <span>📲 फ़ोन में सेव करें (Save to Files / WhatsApp)</span>
               </button>
 
-              {/* Option C: Download File to Device */}
-              <button
-                type="button"
-                onClick={handleDownloadDirect}
-                className="py-3 px-3 bg-gradient-to-r from-[#8B1E1E] to-[#B56A00] hover:brightness-110 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition transform active:scale-98 cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>फ़ोन में सेव करें</span>
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* Direct Physical Download Link (Works with single tap on mobile) */}
+                <a
+                  href={info.blobUrl}
+                  download={info.fileName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    setDownloadSuccessMsg('डाउनलोड आरंभ हो गया है!');
+                    setTimeout(() => setDownloadSuccessMsg(null), 5000);
+                  }}
+                  className="py-2.5 px-3 bg-gradient-to-r from-[#8B1E1E] to-[#B56A00] hover:brightness-110 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-md transition transform active:scale-98 text-center"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>📥 सीधा डाउनलोड</span>
+                </a>
+
+                {/* Open In New Browser Tab (Native PDF viewer with download/print) */}
+                <button
+                  type="button"
+                  onClick={handleOpenInTab}
+                  className="py-2.5 px-3 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-md transition transform active:scale-98 cursor-pointer text-center"
+                >
+                  <ExternalLink className="w-4 h-4 text-amber-300" />
+                  <span>🌐 नए टैब में खोलें</span>
+                </button>
+
+                {/* In-App Reader */}
+                <button
+                  type="button"
+                  onClick={() => setViewMode('reader')}
+                  className="py-2.5 px-3 bg-[#462B17] hover:bg-[#382010] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-md transition transform active:scale-98 cursor-pointer text-center"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>📖 यहीं ऐप में पढ़ें</span>
+                </button>
+              </div>
             </div>
 
-            {/* File Location Helper Card */}
-            <div className="bg-[#F4E8D1] border border-[#8C6239]/40 rounded-xl p-3.5 space-y-2.5">
-              <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-[#5C3A21]">
-                <FolderCheck className="w-4 h-4 text-[#B56A00]" />
-                <span>फ़ोन व कंप्यूटर में PDF कहाँ मिलेगी?</span>
+            {/* Mobile Helpful Hint */}
+            <div className="p-3 bg-amber-50 border border-amber-300/80 rounded-xl text-xs text-amber-900 space-y-1">
+              <div className="font-bold flex items-center gap-1.5 text-amber-950">
+                <Smartphone className="w-4 h-4 text-[#B56A00]" />
+                <span>फ़ोन में PDF सेव करने के लिए:</span>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {/* Mobile Guide */}
-                <div className="bg-[#FAF2E4] p-3 rounded-lg border border-[#8C6239]/20 space-y-1">
-                  <div className="flex items-center gap-1 font-bold text-[#8C6239]">
-                    <Smartphone className="w-4 h-4 text-[#B56A00]" />
-                    <span>Android / iPhone मोबाइल</span>
-                  </div>
-                  <p className="text-[11px] text-[#735133] leading-relaxed">
-                    फ़ोन के <strong>&quot;Files&quot;</strong> या <strong>&quot;My Files&quot;</strong> ऐप को खोलें और <strong>&quot;Downloads&quot;</strong> फ़ोल्डर देखें। ऊपर दिए <strong>&quot;WhatsApp / ड्राइव&quot;</strong> बटन से भी सीधे अपने WhatsApp या Google Drive में भेज सकते हैं।
-                  </p>
-                </div>
-
-                {/* Computer Guide */}
-                <div className="bg-[#FAF2E4] p-3 rounded-lg border border-[#8C6239]/20 space-y-1">
-                  <div className="flex items-center gap-1 font-bold text-[#8C6239]">
-                    <Laptop className="w-4 h-4 text-[#B56A00]" />
-                    <span>कंप्यूटर / लैपटॉप</span>
-                  </div>
-                  <p className="text-[11px] text-[#735133] leading-relaxed">
-                    आपके कंप्यूटर के <strong>Downloads</strong> फ़ोल्डर में सुरक्षित हो गई है। आप इसे Adobe Acrobat या Chrome में कभी भी खोल सकते हैं।
-                  </p>
-                </div>
-              </div>
+              <p className="text-[11px] leading-relaxed text-[#735133]">
+                ऊपर दिए गए हरे बटन <strong>&quot;फ़ोन में सेव करें&quot;</strong> पर क्लिक करें। Android व iPhone आपको सीधे <strong>&quot;Save to Files&quot;</strong>, <strong>&quot;Drive&quot;</strong> या <strong>&quot;WhatsApp&quot;</strong> में भेजने का विकल्प देंगे।
+              </p>
             </div>
 
             {/* Secondary footer options */}

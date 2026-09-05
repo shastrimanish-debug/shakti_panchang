@@ -162,7 +162,9 @@ export function App() {
       target.closest('input') ||
       target.closest('textarea') ||
       target.closest('select') ||
-      target.closest('.no-swipe')
+      target.closest('.no-swipe') ||
+      target.closest('.dasha-section') ||
+      target.closest('[data-swipe-ignore="true"]')
     ) {
       touchStartRef.current = null;
       return;
@@ -198,7 +200,7 @@ export function App() {
     }
   };
 
-  // Global window swipe listener to ensure swiping works everywhere across cards and views
+  // Global window swipe listener to ensure swiping works across cards and views without interfering with Dasha or forms
   useEffect(() => {
     const onWinTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
@@ -209,7 +211,9 @@ export function App() {
         target.closest('input') ||
         target.closest('textarea') ||
         target.closest('select') ||
-        target.closest('.no-swipe')
+        target.closest('.no-swipe') ||
+        target.closest('.dasha-section') ||
+        target.closest('[data-swipe-ignore="true"]')
       ) {
         touchStartRef.current = null;
         return;
@@ -425,75 +429,41 @@ export function App() {
               )}
             </div>
 
-            {/* Book Bottom Page Navigation Footer */}
-            <div className="mt-8 pt-4 border-t-2 border-[#8C6239]/40 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#FAF2E4]/80 p-3 sm:p-4 rounded-2xl border border-[#8C6239]/30 shadow-inner">
-              {/* Bottom Prev Page */}
+            {/* Book Bottom Page Navigation Footer - Clean, Compact & Refined */}
+            <div className="mt-6 pt-3 border-t border-[#8C6239]/30 flex items-center justify-between gap-2 text-xs">
+              {/* Prev Page Button */}
               <button
                 type="button"
                 onClick={handlePrevPage}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] border border-[#B56A00]/70 rounded-xl font-bold shadow-md transition transform active:scale-95 cursor-pointer text-xs sm:text-sm"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#FAF2E4] hover:bg-[#EBD8BD] text-[#5C3A21] border border-[#8C6239]/40 rounded-lg font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs"
+                title={`पिछला पृष्ठ: ${prevTabMeta.label}`}
               >
-                <ChevronLeft className="w-4 h-4 text-[#FFD88A]" />
-                <span>‹ पिछला पृष्ठ ({prevTabMeta.label})</span>
+                <ChevronLeft className="w-3.5 h-3.5 text-[#B56A00]" />
+                <span className="hidden xs:inline">‹ {prevTabMeta.label}</span>
+                <span className="xs:hidden">‹ पिछला</span>
               </button>
 
-              {/* Gesture Tip & Page Indicator */}
-              <div className="text-center text-[#735133] order-last sm:order-none w-full sm:w-auto">
-                <div className="font-granth font-black text-sm sm:text-base text-[#5C3A21] flex items-center justify-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-[#B56A00]" />
-                  <span>{currentTabMeta.chapter} • पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}</span>
-                </div>
-                <div className="text-[11px] sm:text-xs text-[#8C6239] font-medium mt-1 flex items-center justify-center gap-2 flex-wrap">
-                  <span>👈 बाएँ स्वाइप करें = अगला पृष्ठ</span>
-                  <span>•</span>
-                  <span>दाएँ स्वाइप करें = पिछला पृष्ठ 👉</span>
-                </div>
+              {/* Page Indicator */}
+              <div className="font-granth text-xs font-bold text-[#8C6239] text-center">
+                <span>पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}</span>
+                <span className="hidden sm:inline text-[#B56A00] font-normal ml-1.5">• {currentTabMeta.label}</span>
               </div>
 
-              {/* Bottom Next Page */}
+              {/* Next Page Button */}
               <button
                 type="button"
                 onClick={handleNextPage}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#8B1E1E] to-[#B56A00] hover:brightness-110 text-white border border-[#FFD88A]/50 rounded-xl font-bold shadow-md transition transform active:scale-95 cursor-pointer text-xs sm:text-sm"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] border border-[#B56A00] rounded-lg font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs"
+                title={`अगला पृष्ठ: ${nextTabMeta.label}`}
               >
-                <span>अगला पृष्ठ ({nextTabMeta.label}) ›</span>
-                <ChevronRight className="w-4 h-4 text-[#FFD88A]" />
+                <span className="hidden xs:inline">{nextTabMeta.label} ›</span>
+                <span className="xs:hidden">अगला ›</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#FFD88A]" />
               </button>
             </div>
           </div>
         )}
       </main>
-
-      {/* Floating Edge Navigation Buttons (Mobile & Desktop Thumb-Friendly Controls) */}
-      {isBookOpen && (
-        <>
-          {/* Left Screen Edge Floating Button: Previous Page */}
-          <button
-            type="button"
-            onClick={handlePrevPage}
-            className="fixed left-0 top-1/2 -translate-y-1/2 z-30 bg-[#5C3A21]/90 hover:bg-[#462B17] text-[#FFD88A] hover:text-white px-1 sm:px-2 py-3.5 sm:py-5 rounded-r-xl sm:rounded-r-2xl shadow-2xl border-y border-r border-[#B56A00] transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center gap-1 group cursor-pointer backdrop-blur-xs"
-            title={`पिछला पृष्ठ: ${prevTabMeta.label}`}
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD88A] group-hover:-translate-x-0.5 transition-transform" />
-            <span className="[writing-mode:vertical-rl] text-[9px] sm:text-[10px] font-bold font-granth tracking-wider">
-              ‹ पिछला
-            </span>
-          </button>
-
-          {/* Right Screen Edge Floating Button: Next Page */}
-          <button
-            type="button"
-            onClick={handleNextPage}
-            className="fixed right-0 top-1/2 -translate-y-1/2 z-30 bg-[#5C3A21]/90 hover:bg-[#462B17] text-[#FFD88A] hover:text-white px-1 sm:px-2 py-3.5 sm:py-5 rounded-l-xl sm:rounded-l-2xl shadow-2xl border-y border-l border-[#B56A00] transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center gap-1 group cursor-pointer backdrop-blur-xs"
-            title={`अगला पृष्ठ: ${nextTabMeta.label}`}
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD88A] group-hover:translate-x-0.5 transition-transform" />
-            <span className="[writing-mode:vertical-rl] text-[9px] sm:text-[10px] font-bold font-granth tracking-wider">
-              अगला ›
-            </span>
-          </button>
-        </>
-      )}
 
       {/* Floating UMA Assistant Pill (Mobile/Desktop Quick Access) */}
       <aside aria-label="Floating Vedic Assistant" className="fixed bottom-5 right-5 z-30">

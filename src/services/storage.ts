@@ -122,3 +122,84 @@ export function saveUserCustomLocation(loc: SavedLocation): void {
     localStorage.setItem(STORAGE_KEY_CUSTOM_LOCS, JSON.stringify(existing.slice(0, 50)));
   } catch {}
 }
+
+// -------------------------------------------------------------
+// Annual Membership & Subscription Model (₹99 / Year)
+// -------------------------------------------------------------
+const STORAGE_KEY_SUBSCRIPTION = 'shakti_panchang_annual_subscription_v1';
+
+export interface SubscriptionStatus {
+  isSubscribed: boolean;
+  activatedAt: string;
+  expiresAt: string;
+  daysRemaining: number;
+  planName: string;
+  amount: number;
+  txnId?: string;
+  paymentMethod?: string;
+}
+
+export function getSubscriptionStatus(): SubscriptionStatus {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SUBSCRIPTION);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const expires = new Date(parsed.expiresAt);
+      const now = new Date();
+      const diffMs = expires.getTime() - now.getTime();
+      const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      const isSubscribed = diffMs > 0;
+
+      return {
+        isSubscribed,
+        activatedAt: parsed.activatedAt,
+        expiresAt: parsed.expiresAt,
+        daysRemaining,
+        planName: parsed.planName || 'श्री शक्ति पंचांग वार्षिक सदस्यता',
+        amount: parsed.amount || 99,
+        txnId: parsed.txnId,
+        paymentMethod: parsed.paymentMethod,
+      };
+    }
+  } catch {}
+
+  return {
+    isSubscribed: false,
+    activatedAt: '',
+    expiresAt: '',
+    daysRemaining: 0,
+    planName: 'श्री शक्ति पंचांग वार्षिक सदस्यता',
+    amount: 99,
+  };
+}
+
+export function activateSubscription(
+  txnId?: string,
+  paymentMethod: string = 'UPI'
+): SubscriptionStatus {
+  const now = new Date();
+  const oneYearLater = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+  const status: SubscriptionStatus = {
+    isSubscribed: true,
+    activatedAt: now.toISOString(),
+    expiresAt: oneYearLater.toISOString(),
+    daysRemaining: 365,
+    planName: 'श्री शक्ति पंचांग वार्षिक सदस्यता',
+    amount: 99,
+    txnId: txnId || `TXN${Date.now().toString().slice(-8)}`,
+    paymentMethod,
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEY_SUBSCRIPTION, JSON.stringify(status));
+  } catch {}
+
+  return status;
+}
+
+export function cancelSubscription(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY_SUBSCRIPTION);
+  } catch {}
+}
+
