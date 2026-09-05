@@ -81,8 +81,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = info.fileName;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
+      a.target = '_self';
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
@@ -185,8 +184,6 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                 <a
                   href={info.blobUrl}
                   download={info.fileName}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="px-2.5 py-1 bg-[#8B1E1E] hover:bg-[#721818] text-white rounded font-bold flex items-center gap-1 cursor-pointer text-[11px]"
                 >
                   <Download className="w-3 h-3" />
@@ -252,8 +249,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                 <a
                   href={info.blobUrl}
                   download={info.fileName}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target="_self"
                   onClick={() => {
                     setDownloadSuccessMsg('डाउनलोड आरंभ हो गया है!');
                     setTimeout(() => setDownloadSuccessMsg(null), 5000);

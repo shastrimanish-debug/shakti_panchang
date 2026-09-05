@@ -1438,15 +1438,16 @@ export async function generateExhaustive59PageKundaliPdf(
       }
     }
 
-    // Convert canvas to image data and add to PDF
-    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+    // Convert canvas to image data and add to PDF with mobile-optimized compression
+    const imgData = canvas.toDataURL('image/jpeg', 0.70);
     if (page > 1) {
       pdf.addPage('a4', 'portrait');
     }
-    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+    // 'FAST' compression prevents mobile browser CPU choke
+    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
 
-    // Yield control to UI thread every page so browser stays responsive and progress updates smoothly
-    await new Promise((resolve) => setTimeout(resolve, 15));
+    // Yield control to UI thread every page so mobile browser stays responsive and progress updates smoothly
+    await new Promise((resolve) => setTimeout(resolve, 25));
   }
 
   // Save PDF
@@ -1460,7 +1461,7 @@ export async function generateExhaustive59PageKundaliPdf(
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
   
-  // Safely trigger standard browser download
+  // Safely trigger standard browser download without blocking
   try {
     const link = document.createElement('a');
     link.href = blobUrl;

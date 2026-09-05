@@ -278,14 +278,14 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
   ctx.fillText('श्री शक्ति पंचांग संस्थान | उमा एआई वैदिक ज्योतिष प्रणाली द्वारा मुद्रित भोजपत्र पत्रिका', width / 2 + 30, footerY + 32);
 
   // 9. Generate and save PDF with jsPDF
-  const imgData = canvas.toDataURL('image/jpeg', 0.96);
+  const imgData = canvas.toDataURL('image/jpeg', 0.88);
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
   });
 
-  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
   const dateObj = date instanceof Date ? date : new Date(date || Date.now());
   const dateIso = !isNaN(dateObj.getTime()) ? dateObj.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
   const sanitizedTitle = (options.title || 'Bhojpatra_Patrika')
@@ -584,14 +584,14 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   ctx.font = '13px "Tiro Devanagari Hindi", serif';
   ctx.fillText('श्री शक्ति पंचांग संस्थान | प्रमाणित अष्टकूट गुण मिलान भोजपत्र पत्रिका', width / 2, footerY + 30);
 
-  const imgData = canvas.toDataURL('image/jpeg', 0.96);
+  const imgData = canvas.toDataURL('image/jpeg', 0.88);
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
   });
 
-  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
   const sanitizedBoy = (boy.name || 'Var').replace(/[^\w\u0900-\u097F\s-]/g, '').trim().replace(/\s+/g, '_');
   const sanitizedGirl = (girl.name || 'Kanya').replace(/[^\w\u0900-\u097F\s-]/g, '').trim().replace(/\s+/g, '_');
   const fileName = `Milan_Bhojpatra_Patrika_${sanitizedBoy}_${sanitizedGirl}.pdf`;
