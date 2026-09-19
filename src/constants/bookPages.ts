@@ -7,7 +7,9 @@ import {
   Heart,
   Gift,
   Bell,
-  LucideIcon
+  Sparkles,
+  Timer,
+  type LucideIcon,
 } from 'lucide-react';
 
 export interface BookPageItem {
@@ -18,7 +20,82 @@ export interface BookPageItem {
   chapter: string;
   desc: string;
   icon: LucideIcon;
+  screenTitle?: string;
 }
+
+/** Physical flip-book chapters — exact Flutter BookHomeScreen order */
+export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
+  {
+    id: 'panchang',
+    title: 'पंचांग',
+    label: 'पंचांग',
+    pageNumber: 1,
+    chapter: '',
+    desc: 'तिथि • नक्षत्र • योग • करण • सूर्य समय',
+    icon: Calendar,
+    screenTitle: '📜 पूरा पंचांग',
+  },
+  {
+    id: 'kundali',
+    title: 'कुंडली',
+    label: 'कुंडली',
+    pageNumber: 2,
+    chapter: '',
+    desc: 'जन्म कुंडली • वर्ग • दशा • फलित',
+    icon: Sparkles,
+    screenTitle: '🪐 जन्म कुंडली',
+  },
+  {
+    id: 'muhurat',
+    title: 'शुभ मुहूर्त',
+    label: 'शुभ मुहूर्त',
+    pageNumber: 3,
+    chapter: '',
+    desc: 'विवाह • गृहप्रवेश • कार्यारम्भ',
+    icon: Clock,
+    screenTitle: '🙏 काम के अनुसार मुहूर्त',
+  },
+  {
+    id: 'yatra',
+    title: 'यात्रा',
+    label: 'यात्रा',
+    pageNumber: 4,
+    chapter: '',
+    desc: 'दिशाशूल • शुभ दिशा • यात्रा सलाह',
+    icon: Compass,
+    screenTitle: '🚗 यात्रा मुहूर्त',
+  },
+  {
+    id: 'festivals',
+    title: 'व्रत एवं त्योहार',
+    label: 'व्रत एवं त्योहार',
+    pageNumber: 5,
+    chapter: '',
+    desc: 'एकादशी • पूर्णिमा • अमावस्या • पर्व',
+    icon: Gift,
+    screenTitle: '📅 पर्व और व्रत',
+  },
+  {
+    id: 'choghadiya',
+    title: 'शुभ समय',
+    label: 'शुभ समय',
+    pageNumber: 6,
+    chapter: '',
+    desc: 'चौघड़िया • राहुकाल • यमगण्ड • गुलिक',
+    icon: Timer,
+    screenTitle: '✨ शुभ समय सलाह',
+  },
+  {
+    id: 'reminders',
+    title: 'रिमाइंडर',
+    label: 'रिमाइंडर',
+    pageNumber: 7,
+    chapter: '',
+    desc: 'व्रत और शुभ समय के लिए सूचनाएँ',
+    icon: Bell,
+    screenTitle: '🔔 उमा Reminder',
+  },
+];
 
 export const BOOK_PAGES: BookPageItem[] = [
   {
@@ -29,15 +106,17 @@ export const BOOK_PAGES: BookPageItem[] = [
     chapter: 'प्रथम अध्याय',
     desc: 'तिथि, वार, नक्षत्र, योग, करण व अयनांश',
     icon: Sun,
+    screenTitle: '📜 पूरा पंचांग',
   },
   {
     id: 'choghadiya',
     title: 'चौघड़िया चक्र व मुहूर्त वेला',
-    label: 'चौघड़िया',
+    label: 'शुभ समय',
     pageNumber: 2,
     chapter: 'द्वितीय अध्याय',
     desc: 'दिन व रात्रि के अमृत, शुभ, लाभ व त्याज्य काल',
     icon: Clock,
+    screenTitle: '✨ शुभ समय सलाह',
   },
   {
     id: 'muhurat',
@@ -47,6 +126,7 @@ export const BOOK_PAGES: BookPageItem[] = [
     chapter: 'तृतीय अध्याय',
     desc: 'विवाह, गृह प्रवेश, व्यापार, वाहन व नामकरण मुहूर्त',
     icon: Compass,
+    screenTitle: '🙏 काम के अनुसार मुहूर्त',
   },
   {
     id: 'yatra',
@@ -56,6 +136,7 @@ export const BOOK_PAGES: BookPageItem[] = [
     chapter: 'चतुर्थ अध्याय',
     desc: 'दैनिक दिशाशूल, यात्रा दूरी व शास्त्रोक्त सात्विक परिहार',
     icon: Compass,
+    screenTitle: '🚗 यात्रा मुहूर्त',
   },
   {
     id: 'kundali',
@@ -65,6 +146,7 @@ export const BOOK_PAGES: BookPageItem[] = [
     chapter: 'पंचम अध्याय',
     desc: 'लग्न चक्र, नवमांश, महादशा, अंतर्दशा व प्रत्यंतर',
     icon: User,
+    screenTitle: '🪐 जन्म कुंडली',
   },
   {
     id: 'milan',
@@ -74,6 +156,7 @@ export const BOOK_PAGES: BookPageItem[] = [
     chapter: 'षष्ठ अध्याय',
     desc: '36 गुण विचार, नाड़ी, भकूट, गण, योनि व मांगलिक विचार',
     icon: Heart,
+    screenTitle: 'कुंडली मिलान – 36 गुण',
   },
   {
     id: 'festivals',
@@ -83,6 +166,7 @@ export const BOOK_PAGES: BookPageItem[] = [
     chapter: 'सप्तम अध्याय',
     desc: 'एकादशी, प्रदोष, पूर्णिमा, अमावस्या, शिवरात्रि व समस्त व्रत',
     icon: Gift,
+    screenTitle: '📅 पर्व और व्रत',
   },
   {
     id: 'reminders',
@@ -92,5 +176,6 @@ export const BOOK_PAGES: BookPageItem[] = [
     chapter: 'अष्टम अध्याय',
     desc: 'नित्य पूजा, जप, साधना व व्यक्तिगत धार्मिक संकल्प स्मरण',
     icon: Bell,
+    screenTitle: '🔔 उमा Reminder',
   },
 ];

@@ -1,7 +1,10 @@
 import { jsPDF } from 'jspdf';
-import { KundaliData, PlanetPosition } from '../types';
+import { KundaliData } from '../types';
 import { RASHIS, calculateVargaSign } from './astronomy';
 import { DASHA_ORDER, DASHA_YEARS, getVedicRemedies } from './kundali';
+import { analyzeKundali } from './predictions';
+import { waitForPdfFonts } from './pdfFonts';
+import { PDF_MM_H, PDF_MM_W, PDF_PX_H, PDF_PX_W } from './pdfPage';
 
 export interface PdfProgressCallback {
   (current: number, total: number, message: string): void;
@@ -37,19 +40,21 @@ export async function generateExhaustive59PageKundaliPdf(
   pageCount: number;
 }> {
   const totalPages = 59;
-  const width = 1240;
-  const height = 1754;
+  const width = PDF_PX_W;
+  const height = PDF_PX_H;
+  const contentBottom = height - 92;
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas 2D context unavailable');
+  await waitForPdfFonts();
 
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a4',
+    format: [PDF_MM_W, PDF_MM_H],
   });
 
   // Base background drawing helper
@@ -140,27 +145,63 @@ export async function generateExhaustive59PageKundaliPdf(
     ctx.fillText(`पृष्ठ ${pageNum} / ${totalPages}`, width - 90, footerY + 25);
   };
 
+  const PLANET_ABBR: Record<string, string> = {
+    सूर्य: 'सू',
+    चंद्र: 'चं',
+    मंगल: 'मं',
+    बुध: 'बु',
+    गुरु: 'गु',
+    शुक्र: 'शु',
+    शनि: 'शनि',
+    राहु: 'रा',
+    केतु: 'के',
+  };
+  const planetAbbr = (name: string) => PLANET_ABBR[name] || name.slice(0, 2);
+  const signOfPlanet = (name: string, varga = 1): number => {
+    const p = kundali.planets.find((x) => x.planet === name);
+    return p ? calculateVargaSign(p.degree, varga) : 0;
+  };
+  const houseFromAsc = (planetSign: number, ascSign: number) =>
+    ((planetSign - ascSign + 12) % 12) + 1;
+  const occupantsFromAsc = (ascSign: number, varga = 1) => {
+    const occ: Record<number, { name: string; retro: boolean; deg: string; full: string }[]> = {};
+    for (let i = 1; i <= 12; i++) occ[i] = [];
+    kundali.planets.forEach((p) => {
+      const pSign = calculateVargaSign(p.degree, varga);
+      occ[houseFromAsc(pSign, ascSign)].push({
+        name: planetAbbr(p.planet),
+        retro: p.isRetrograde,
+        deg: `${Math.floor(p.degreeInRashi)}°`,
+        full: p.planet,
+      });
+    });
+    return occ;
+  };
+  const formatOcc = (list: { name: string; retro: boolean; deg: string }[], withDeg = true) => {
+    if (!list.length) return '—';
+    return list.map((p) => `${p.name}${p.retro ? 'व' : ''}${withDeg ? ` ${p.deg}` : ''}`).join('  ');
+  };
+
   // Helper to draw a North Indian diamond chart on canvas
   const drawNorthIndianDiamondChart = (
     centerX: number,
     centerY: number,
     size: number,
     vargaDivision: number,
-    title?: string
+    title?: string,
+    opts?: { ascSignIndex?: number; useNatalHouses?: boolean }
   ) => {
     ctx.save();
     const half = size / 2;
     const x0 = centerX - half;
     const y0 = centerY - half;
 
-    // Background & Outer Box
     ctx.fillStyle = '#FFFDF7';
     ctx.fillRect(x0, y0, size, size);
     ctx.strokeStyle = '#8C6239';
     ctx.lineWidth = 2.5;
     ctx.strokeRect(x0, y0, size, size);
 
-    // Diagonals
     ctx.beginPath();
     ctx.moveTo(x0, y0);
     ctx.lineTo(x0 + size, y0 + size);
@@ -168,7 +209,6 @@ export async function generateExhaustive59PageKundaliPdf(
     ctx.lineTo(x0, y0 + size);
     ctx.stroke();
 
-    // Inner Diamond
     ctx.beginPath();
     ctx.moveTo(centerX, y0);
     ctx.lineTo(x0 + size, centerY);
@@ -181,10 +221,11 @@ export async function generateExhaustive59PageKundaliPdf(
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Lagna sign
-    const lagnaSign = calculateVargaSign(kundali.lagnaDegree, vargaDivision);
+    const lagnaSign =
+      opts?.ascSignIndex !== undefined
+        ? opts.ascSignIndex
+        : calculateVargaSign(kundali.lagnaDegree, vargaDivision);
 
-    // House coordinates normalized from 360 to size
     const scale = size / 360;
     const anchors = [
       { h: 1, cx: 180, cy: 95, nx: 180, ny: 150 },
@@ -201,43 +242,39 @@ export async function generateExhaustive59PageKundaliPdf(
       { h: 12, cx: 270, cy: 45, nx: 240, ny: 75 },
     ];
 
-    // Group planets by house
     const hPlanets: Record<number, { name: string; retro: boolean; deg: string }[]> = {};
     for (let i = 1; i <= 12; i++) hPlanets[i] = [];
 
     kundali.planets.forEach((p) => {
-      const pSign = calculateVargaSign(p.degree, vargaDivision);
-      const house = ((pSign - lagnaSign + 12) % 12) + 1;
-      const sName = p.planet.substring(0, 2);
+      const house = opts?.useNatalHouses
+        ? p.house
+        : houseFromAsc(calculateVargaSign(p.degree, vargaDivision), lagnaSign);
       hPlanets[house]?.push({
-        name: sName,
+        name: planetAbbr(p.planet),
         retro: p.isRetrograde,
         deg: `${Math.floor(p.degreeInRashi)}°`,
       });
     });
 
-    // Draw numbers & planets
     anchors.forEach(({ h, cx: acx, cy: acy, nx, ny }) => {
       const rashiNum = ((lagnaSign + h - 1) % 12) + 1;
       const px = x0 + acx * scale;
       const py = y0 + acy * scale;
-      const numPx = x0 + nx * scale;
-      const numPy = y0 + ny * scale;
-
-      // Rashi number
-      ctx.fillStyle = '#8C6239';
-      ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
+      ctx.fillStyle = h === 1 ? '#8B1E1E' : '#8C6239';
+      ctx.font = h === 1 ? 'bold 15px serif' : 'bold 13px serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`${rashiNum}`, numPx, numPy);
+      ctx.fillText(`${rashiNum}`, x0 + nx * scale, y0 + ny * scale);
 
-      // Planets
       const plist = hPlanets[h] || [];
+      const n = plist.length;
+      const fs = n >= 4 ? 10 : n >= 3 ? 11 : 12;
+      const lh = fs + 3;
+      ctx.font = `bold ${fs}px "Tiro Devanagari Hindi", serif`;
       plist.forEach((p, idx) => {
-        const offset = (idx - (plist.length - 1) / 2) * 16 * scale;
-        ctx.fillStyle = p.retro ? '#991B1B' : '#3E2714';
-        ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
-        ctx.fillText(`${p.name}${p.retro ? '(व)' : ''} ${p.deg}`, px, py + offset);
+        ctx.fillStyle = p.retro ? '#8B1E1E' : '#2A1502';
+        const label = n >= 4 ? `${p.name}${p.retro ? 'व' : ''}` : `${p.name}${p.retro ? 'व' : ''} ${p.deg}`;
+        ctx.fillText(label, px, py + (idx - (n - 1) / 2) * lh);
       });
     });
 
@@ -245,13 +282,105 @@ export async function generateExhaustive59PageKundaliPdf(
       ctx.fillStyle = '#5C3A21';
       ctx.font = 'bold 15px "Tiro Devanagari Hindi", serif';
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
       ctx.fillText(title, centerX, y0 + size + 24);
     }
     ctx.restore();
   };
 
+  /** 12-spoke Sudarshan: outer Lagna, middle Chandra, inner Surya — with planets in every house. */
+  const drawSudarshanChakra = (cx: number, cy: number, outerR: number) => {
+    ctx.save();
+    const lagnaAsc = calculateVargaSign(kundali.lagnaDegree, 1);
+    const moonAsc = signOfPlanet('चंद्र', 1);
+    const sunAsc = signOfPlanet('सूर्य', 1);
+    const rings = [
+      { occ: occupantsFromAsc(lagnaAsc, 1), fillA: '#FAF6EA', fillB: '#FFFDF2' },
+      { occ: occupantsFromAsc(moonAsc, 1), fillA: '#F0DDB8', fillB: '#F6E6C4' },
+      { occ: occupantsFromAsc(sunAsc, 1), fillA: '#E8C48A', fillB: '#EFC997' },
+    ];
+    const rOuter = [outerR, outerR * 0.72, outerR * 0.46];
+    const rInner = [outerR * 0.72, outerR * 0.46, outerR * 0.22];
+    const sector = (Math.PI * 2) / 12;
+    const start0 = -Math.PI / 2;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR + 32, 0, Math.PI * 2);
+    ctx.fillStyle = '#FBF6EA';
+    ctx.fill();
+    ctx.strokeStyle = '#8C6239';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    for (let h = 1; h <= 12; h++) {
+      const a0 = start0 + (h - 1) * sector;
+      const a1 = a0 + sector;
+      rings.forEach((ring, ri) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, rOuter[ri], a0, a1);
+        ctx.arc(cx, cy, rInner[ri], a1, a0, true);
+        ctx.closePath();
+        ctx.fillStyle = h % 2 === 0 ? ring.fillA : ring.fillB;
+        ctx.fill();
+        ctx.strokeStyle = '#8C6239';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        const midA = (a0 + a1) / 2;
+        const midR = (rOuter[ri] + rInner[ri]) / 2;
+        const list = ring.occ[h] || [];
+        const names = list.map((p) => `${p.name}${p.retro ? 'व' : ''}`);
+        ctx.fillStyle = names.length ? '#2A1502' : '#C4A574';
+        ctx.font = `bold ${names.length >= 3 ? 10 : 11}px "Tiro Devanagari Hindi", serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const tx = cx + Math.cos(midA) * midR;
+        const ty = cy + Math.sin(midA) * midR;
+        if (!names.length) {
+          ctx.fillText('·', tx, ty);
+        } else if (names.length === 1) {
+          ctx.fillText(names[0], tx, ty);
+        } else {
+          names.forEach((n, i) => {
+            ctx.fillText(n, tx, ty + (i - (names.length - 1) / 2) * 11);
+          });
+        }
+      });
+
+      const midA = a0 + sector / 2;
+      ctx.fillStyle = '#8B1E1E';
+      ctx.font = 'bold 13px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(h), cx + Math.cos(midA) * (outerR + 20), cy + Math.sin(midA) * (outerR + 20));
+    }
+
+    [outerR, outerR * 0.72, outerR * 0.46, outerR * 0.22].forEach((r, i) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = i === 0 ? '#5C3A21' : '#8C6239';
+      ctx.lineWidth = i === 0 ? 2.5 : 1.4;
+      ctx.stroke();
+    });
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR * 0.22, 0, Math.PI * 2);
+    ctx.fillStyle = '#5C3A21';
+    ctx.fill();
+    ctx.fillStyle = '#FFD88A';
+    ctx.font = 'bold 15px "Tiro Devanagari Hindi", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('सुदर्शन', cx, cy - 8);
+    ctx.font = 'bold 12px "Tiro Devanagari Hindi", serif';
+    ctx.fillText('चक्र', cx, cy + 12);
+    ctx.restore();
+    return { lagnaAsc, moonAsc, sunAsc, rings };
+  };
+
   // Helper to draw text box
   const drawCardBox = (x: number, y: number, w: number, h: number, heading?: string) => {
+    h = Math.min(h, Math.max(64, contentBottom - y));
     ctx.fillStyle = 'rgba(255, 252, 245, 0.9)';
     ctx.fillRect(x, y, w, h);
     ctx.strokeStyle = '#C58F27';
@@ -269,7 +398,43 @@ export async function generateExhaustive59PageKundaliPdf(
     }
   };
 
+  const wrapLines = (text: string, maxWidth: number): string[] => {
+    const words = text.split(/\s+/);
+    const lines: string[] = [];
+    let cur = '';
+    for (const w of words) {
+      const test = cur ? `${cur} ${w}` : w;
+      if (ctx.measureText(test).width > maxWidth && cur) {
+        lines.push(cur);
+        cur = w;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  };
+
+  const fillWrapped = (text: string, x: number, y: number, maxWidth: number, lh: number, maxY = contentBottom): number => {
+    ctx.textAlign = 'left';
+    let yy = y;
+    for (const line of wrapLines(text, maxWidth)) {
+      if (yy > maxY) break;
+      ctx.fillText(line, x, yy);
+      yy += lh;
+    }
+    return yy;
+  };
+
+  const fitLine = (text: string, maxWidth: number): string => {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let t = text;
+    while (t.length > 8 && ctx.measureText(`${t}…`).width > maxWidth) t = t.slice(0, -1);
+    return `${t}…`;
+  };
+
   const remedies = getVedicRemedies(kundali);
+  const analysis = analyzeKundali(kundali);
   const fmtDate = (d: Date) =>
     d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -434,23 +599,20 @@ export async function generateExhaustive59PageKundaliPdf(
       // ---------------- Page 3: D1 लग्न चक्र (Lagna Rashi Chart) ---------------- //
       case 3: {
         drawBhojpatraBackground(page, '॥ D1 लग्न चक्र (Lagna Rashi Chart) ॥', 'समग्र भौतिक जीवन, शरीर, व्यक्तित्व व मूल स्वभाव');
-        drawNorthIndianDiamondChart(width / 2, 480, 520, 1, `जातक ${kundali.name} — लग्न चक्र (D1)`);
-        
-        drawCardBox(90, 810, width - 180, 480, 'लग्न चक्र शास्त्रीय विवेचना एवं केंद्र-त्रिकोण फल');
+        drawNorthIndianDiamondChart(width / 2, 375, 340, 1, `जातक ${kundali.name} — लग्न चक्र (D1)`);
+
+        drawCardBox(90, 575, width - 180, 900, 'द्वादश भाव — इस कुण्डली का स्पष्ट फलादेश');
         ctx.fillStyle = '#3E2714';
-        ctx.font = '15px "Tiro Devanagari Hindi", serif';
+        ctx.font = '13px "Tiro Devanagari Hindi", serif';
         ctx.textAlign = 'left';
-        let cy = 870;
-        const d1points = [
-          `1. प्रथम भाव (तनु भाव): लग्न राशि ${kundali.lagnaRashi} है। यह जातक के रूप-रंग, शारीरिक गठन व स्वास्थ्य का मुख्य द्योतक है।`,
-          `2. केंद्र स्थान (भाव 1, 4, 7, 10): भगवान विष्णु के स्थान माने गए हैं। इनमें स्थित शुभ ग्रह जीवन में स्थिरता, यश व रक्षा करते हैं।`,
-          `3. त्रिकोण स्थान (भाव 1, 5, 9): देवी महालक्ष्मी के स्थान हैं। पंचम (पूर्व पुण्य व विद्या) एवं नवम (भाग्य व धर्म) परम फलदायी हैं।`,
-          `4. उपचय स्थान (भाव 3, 6, 10, 11): पुरुषार्थ और सतत संघर्ष से विजय व आर्थिक उन्नति प्रदान करने वाले भाव हैं।`,
-          `5. त्रिक भाव (भाव 6, 8, 12): रोग, ऋण, अरिष्ट व व्यय के सूचक हैं। इन भावों के स्वामियों का अनुकूलन ही जीवन को निर्विघ्न बनाता है।`,
-        ];
-        d1points.forEach((pt) => {
-          ctx.fillText(pt, 120, cy);
-          cy += 36;
+        ctx.textBaseline = 'alphabetic';
+        const colW = (width - 250) / 2;
+        analysis.housePhala.forEach((pt, i) => {
+          const col = i < 6 ? 0 : 1;
+          const row = i % 6;
+          const x = 120 + col * (colW + 20);
+          const y = 618 + row * 110;
+          fillWrapped(`• ${pt}`, x, y, colW - 10, 18, y + 100);
         });
         break;
       }
@@ -458,47 +620,86 @@ export async function generateExhaustive59PageKundaliPdf(
       // ---------------- Page 4: चंद्र कुंडली एवं सूर्य कुंडली ---------------- //
       case 4: {
         drawBhojpatraBackground(page, '॥ चंद्र कुंडली एवं सूर्य कुंडली चक्र ॥', 'मानसिक शक्ति, आत्मबल, पिता-माता सुख एवं चेतना का स्तर');
-        // Twin charts side by side
-        drawNorthIndianDiamondChart(340, 440, 400, 1, 'चंद्र कुंडली (Chandra Chart)');
-        drawNorthIndianDiamondChart(900, 440, 400, 1, 'सूर्य कुंडली (Surya Chart)');
-
-        drawCardBox(90, 750, width - 180, 550, 'सुदर्शन एवं चंद्र-सूर्य स्थिति विश्लेषण');
-        ctx.fillStyle = '#2A1502';
-        ctx.font = '15px "Tiro Devanagari Hindi", serif';
-        ctx.textAlign = 'left';
-        let cy4 = 810;
-        const cNotes = [
-          `• चंद्र कुंडली विचार: चंद्र मनसो जातः—चंद्रमा मन, कल्पना, भावुकता व माता का कारक है। चंद्र कुंडली से सभी गोचर ग्रह देखे जाते हैं।`,
-          `• सूर्य कुंडली विचार: सूर्य आत्मा जगतस्तस्थुषश्च—सूर्य आत्मा, पिता, आत्मविश्वास, राजकीय मान-सम्मान व उच्च पद का कारक है।`,
-          `• त्रि-आयामी दृष्टिकोण: महर्षि पराशर अनुसार जब लग्न, चंद्र व सूर्य तीनों कुंडलियों में कोई ग्रह शुभ संबंध बनाता है, तो वह अखंड राजयोग देता है।`,
-          `• चंद्र राशि: ${kundali.moonRashi}। इस राशि में स्थित चंद्रमा जातक को सृजनात्मक शक्ति व तीव्र स्मरण सामर्थ्य प्रदान करता है।`,
-        ];
-        cNotes.forEach((cn) => {
-          ctx.fillText(cn, 120, cy4);
-          cy4 += 38;
+        const moonAsc = signOfPlanet('चंद्र', 1);
+        const sunAsc = signOfPlanet('सूर्य', 1);
+        drawNorthIndianDiamondChart(340, 370, 320, 1, `चंद्र कुंडली — ${kundali.moonRashi} लग्न`, {
+          ascSignIndex: moonAsc,
         });
+        drawNorthIndianDiamondChart(900, 370, 320, 1, `सूर्य कुंडली — ${kundali.sunRashi} लग्न`, {
+          ascSignIndex: sunAsc,
+        });
+
+        drawCardBox(90, 570, width - 180, 900, 'चंद्र-सूर्य भाव तुलना (सुदर्शन आधार)');
+        const moonOcc = occupantsFromAsc(moonAsc, 1);
+        const sunOcc = occupantsFromAsc(sunAsc, 1);
+        const lagnaOcc = occupantsFromAsc(calculateVargaSign(kundali.lagnaDegree, 1), 1);
+
+        let hy = 612;
+        ctx.fillStyle = '#5C3A21';
+        ctx.fillRect(110, hy - 16, width - 220, 30);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('भाव', 130, hy);
+        ctx.fillText('लग्न चक्र', 230, hy);
+        ctx.fillText('चंद्र चक्र', 520, hy);
+        ctx.fillText('सूर्य चक्र', 820, hy);
+        hy += 34;
+        for (let h = 1; h <= 12; h++) {
+          ctx.fillStyle = h % 2 === 0 ? 'rgba(245, 235, 215, 0.7)' : 'rgba(255, 250, 240, 0.7)';
+          ctx.fillRect(110, hy - 16, width - 220, 28);
+          ctx.fillStyle = '#8B1E1E';
+          ctx.font = 'bold 13px serif';
+          ctx.fillText(String(h), 140, hy);
+          ctx.fillStyle = '#2A1502';
+          ctx.font = '13px "Tiro Devanagari Hindi", serif';
+          ctx.fillText(fitLine(formatOcc(lagnaOcc[h], false), 260), 230, hy);
+          ctx.fillText(fitLine(formatOcc(moonOcc[h], false), 260), 520, hy);
+          ctx.fillText(fitLine(formatOcc(sunOcc[h], false), 260), 820, hy);
+          hy += 30;
+        }
+        ctx.fillStyle = '#5C3A21';
+        ctx.font = '13px "Tiro Devanagari Hindi", serif';
+        fillWrapped(
+          `चंद्र राशि ${kundali.moonRashi}, सूर्य राशि ${kundali.sunRashi}, लग्न ${kundali.lagnaRashi}। तीनों चक्रों में एक ही भाव पर शुभ ग्रह हों तो वह फल निश्चित माना जाता है।`,
+          120,
+          hy + 10,
+          width - 250,
+          22
+        );
         break;
       }
 
       // ---------------- Page 5: D9 नवमांश चक्र (Navamsha Chart) ---------------- //
       case 5: {
         drawBhojpatraBackground(page, '॥ D9 नवमांश चक्र (Navamsha Kundali) ॥', 'विवाह, जीवनसाथी, धर्म, भाग्य एवं सूक्ष्म आत्मिक बल की कुंजी');
-        drawNorthIndianDiamondChart(width / 2, 480, 520, 9, `जातक ${kundali.name} — नवमांश चक्र (D9)`);
+        drawNorthIndianDiamondChart(width / 2, 370, 340, 9, `जातक ${kundali.name} — नवमांश चक्र (D9)`);
 
-        drawCardBox(90, 810, width - 180, 480, 'नवमांश फल एवं वर्गोत्तम ग्रह रहस्य');
+        drawCardBox(90, 570, width - 180, 900, 'नवमांश फल एवं वर्गोत्तम ग्रह रहस्य');
         ctx.fillStyle = '#3E2714';
-        ctx.font = '15px "Tiro Devanagari Hindi", serif';
+        ctx.font = '14px "Tiro Devanagari Hindi", serif';
         ctx.textAlign = 'left';
-        let cy5 = 870;
+        let cy5 = 618;
         const d9notes = [
-          '• नवमांश चक्र को कुंडली का प्राण व आत्मा कहा गया है। लग्न चक्र यदि वृक्ष है तो नवमांश उसका मीठा फल है।',
-          '• वर्गोत्तम विचार: यदि कोई ग्रह D1 (लग्न) और D9 (नवमांश) दोनों में एक ही राशि में हो तो वह वर्गोत्तम होकर असीम बलवान हो जाता है।',
-          '• सप्तम भाव विचार: नवमांश का सप्तम भाव जीवनसाथी का रूप, स्वभाव, संस्कार, वैवाहिक सामंजस्य व भाग्य सहयोग दर्शाता है।',
-          '• भाग्य की सूक्ष्मता: 30 से 35 वर्ष की आयु के पश्चात नवमांश का प्रभाव मुख्य रूप से जीवन की दिशा निर्धारित करता है।',
+          '• नवमांश चक्र को कुंडली का प्राण कहा गया है — लग्न चक्र वृक्ष है, नवमांश उसका फल।',
+          '• वर्गोत्तम: D1 और D9 में एक ही राशि हो तो ग्रह असीम बलवान होता है।',
         ];
         d9notes.forEach((dn) => {
-          ctx.fillText(dn, 120, cy5);
-          cy5 += 36;
+          cy5 = fillWrapped(dn, 120, cy5, width - 250, 24) + 6;
+        });
+        const d9Lagna = calculateVargaSign(kundali.lagnaDegree, 9);
+        kundali.planets.forEach((p) => {
+          const s1 = calculateVargaSign(p.degree, 1);
+          const s9 = calculateVargaSign(p.degree, 9);
+          const h9 = houseFromAsc(s9, d9Lagna);
+          const vg = s1 === s9 ? ' — वर्गोत्तम' : '';
+          cy5 = fillWrapped(
+            `• ${p.planet}: D9 में ${RASHIS[s9]} (भाव ${h9})${vg}`,
+            120,
+            cy5,
+            width - 250,
+            22
+          ) + 4;
         });
         break;
       }
@@ -571,73 +772,121 @@ export async function generateExhaustive59PageKundaliPdf(
       // ---------------- Page 7: भाव चलित चक्र एवं भाव संधि तालिका ---------------- //
       case 7: {
         drawBhojpatraBackground(page, '॥ भाव चलित चक्र एवं भाव संधि तालिका ॥', 'श्रीपति पद्धति अनुसार भाव मध्य, संधि एवं चलित प्रभाव');
-        drawNorthIndianDiamondChart(width / 2, 450, 480, 1, 'भाव चलित चक्र (Bhav Chalit Chart)');
+        drawNorthIndianDiamondChart(width / 2, 365, 320, 1, 'भाव चलित चक्र (ग्रहों को भाव संख्या से)', {
+          useNatalHouses: true,
+        });
 
-        drawCardBox(90, 780, width - 180, 520, 'द्वादश भाव मध्य एवं संधि भोगांश विवरण');
+        drawCardBox(90, 560, width - 180, 900, 'राशि चक्र बनाम भाव चलित — ग्रह तुलना');
         ctx.fillStyle = '#3E2714';
         ctx.font = '14px "Tiro Devanagari Hindi", serif';
-        let bcy = 840;
-        ctx.fillText('भाव चलित चक्र का नियम: कई बार ग्रह राशि कुण्डली में एक भाव में दिखते हैं किन्तु स्पष्ट भोगांश के कारण', 120, bcy);
-        bcy += 28;
-        ctx.fillText('वे चलित चक्र में अगले या पिछले भाव में चले जाते हैं। वास्तविक फलादेश भाव चलित के आधार पर ही घटित होता है।', 120, bcy);
-        bcy += 36;
+        ctx.textAlign = 'left';
+        let bcy = 608;
+        bcy =
+          fillWrapped(
+            'भाव चलित: राशि कुण्डली में ग्रह एक भाव में दिख सकते हैं, किन्तु स्पष्ट भोगांश से वे अगले/पिछले भाव में फल देते हैं। नीचे प्रत्येक ग्रह की राशि-भाव व चलित-भाव स्थिति है।',
+            120,
+            bcy,
+            width - 250,
+            22
+          ) + 16;
 
-        for (let bh = 1; bh <= 6; bh++) {
-          const deg1 = ((bh - 1) * 30 + 15).toFixed(1);
-          const deg2 = (bh * 30 + 15).toFixed(1);
-          ctx.fillText(`• भाव ${bh}: मध्य ${deg1}° | संधि ${deg2}°   ————   • भाव ${bh + 6}: मध्य ${(parseFloat(deg1) + 180).toFixed(1)}° | संधि ${(parseFloat(deg2) + 180).toFixed(1)}°`, 130, bcy);
-          bcy += 32;
-        }
+        ctx.fillStyle = '#5C3A21';
+        ctx.fillRect(110, bcy - 16, width - 220, 30);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
+        ctx.fillText('ग्रह', 130, bcy);
+        ctx.fillText('राशि', 280, bcy);
+        ctx.fillText('अंश', 430, bcy);
+        ctx.fillText('राशि-भाव', 560, bcy);
+        ctx.fillText('चलित भाव', 740, bcy);
+        ctx.fillText('टिप्पणी', 900, bcy);
+        bcy += 34;
+        const lagnaSignD1 = calculateVargaSign(kundali.lagnaDegree, 1);
+        kundali.planets.forEach((p, idx) => {
+          const signHouse = houseFromAsc(calculateVargaSign(p.degree, 1), lagnaSignD1);
+          const shifted = signHouse !== p.house;
+          ctx.fillStyle = idx % 2 === 0 ? 'rgba(245, 235, 215, 0.7)' : 'rgba(255, 250, 240, 0.7)';
+          ctx.fillRect(110, bcy - 16, width - 220, 28);
+          ctx.fillStyle = p.isRetrograde ? '#8B1E1E' : '#2A1502';
+          ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
+          ctx.fillText(p.planet, 130, bcy);
+          ctx.fillStyle = '#2A1502';
+          ctx.font = '13px "Tiro Devanagari Hindi", serif';
+          ctx.fillText(p.rashi, 280, bcy);
+          ctx.fillText(`${p.degreeInRashi.toFixed(1)}°`, 430, bcy);
+          ctx.fillText(String(signHouse), 580, bcy);
+          ctx.fillStyle = shifted ? '#8B1E1E' : '#166534';
+          ctx.fillText(String(p.house), 760, bcy);
+          ctx.fillStyle = '#5C3A21';
+          ctx.fillText(shifted ? 'भाव परिवर्तन' : 'समान', 900, bcy);
+          bcy += 30;
+        });
         break;
       }
 
       // ---------------- Page 8: सुदर्शन चक्र (Sudarshan Chakra) ---------------- //
       case 8: {
-        drawBhojpatraBackground(page, '॥ सुदर्शन चक्र (Sudarshan Chakra) ॥', 'लग्न, चंद्र एवं सूर्य का त्रि-आयामी संयुक्त चक्र');
-        drawCardBox(90, 180, width - 180, 520, 'सुदर्शन चक्र की शास्त्रीय संरचना एवं तीनों लग्नों का फल');
-        
-        ctx.fillStyle = '#8B1E1E';
-        ctx.font = 'bold 18px "Tiro Devanagari Hindi", serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('॥ सुदर्शन चक्र विचार ॥', width / 2, 230);
+        drawBhojpatraBackground(page, '॥ सुदर्शन चक्र (Sudarshan Chakra) ॥', 'लग्न (बाह्य), चंद्र (मध्य), सूर्य (आंतरिक) — 12 भाव, पूर्ण ग्रह स्थिति');
+        const sd = drawSudarshanChakra(width / 2, 400, 200);
 
-        ctx.fillStyle = '#3E2714';
-        ctx.font = '15px "Tiro Devanagari Hindi", serif';
-        ctx.textAlign = 'left';
-        let scY = 280;
-        const scNotes = [
-          `1. देह लग्न (शारीरिक): ${kundali.lagnaRashi} लग्न से भौतिक शरीर, स्वास्थ्य, आयु व रूप का विचार किया जाता है।`,
-          `2. चंद्र लग्न (मानसिक): ${kundali.moonRashi} चंद्र लग्न से मन, सुख-शांति, चिंताएं, संवेदनाएं व गोचर देखा जाता है।`,
-          `3. सूर्य लग्न (आत्मिक): सूर्य लग्न से जातक का तेज, आत्मबल, सरकारी पद, अधिकार व समाज में वर्चस्व देखा जाता है।`,
-          'सुदर्शन चक्र में जब तीनों लग्नों से किसी भाव पर शुभ ग्रहों की दृष्टि अथवा युति होती है, तो उस भाव से',
-          'संबंधित फल शत-प्रतिशत निश्चित व निर्विवाद रूप से प्राप्त होता है।',
+        // Legend
+        const legendY = 635;
+        const legend = [
+          { c: '#FAF6EA', t: 'बाह्य वलय — लग्न चक्र (देह)' },
+          { c: '#F0DDB8', t: 'मध्य वलय — चंद्र चक्र (मन)' },
+          { c: '#E8C48A', t: 'आंतरिक वलय — सूर्य चक्र (आत्मा)' },
         ];
-        scNotes.forEach((nt) => {
-          ctx.fillText(nt, 120, scY);
-          scY += 38;
+        legend.forEach((lg, i) => {
+          const lx = 140 + i * 340;
+          ctx.fillStyle = lg.c;
+          ctx.strokeStyle = '#8C6239';
+          ctx.lineWidth = 1;
+          ctx.fillRect(lx, legendY, 22, 16);
+          ctx.strokeRect(lx, legendY, 22, 16);
+          ctx.fillStyle = '#3E2714';
+          ctx.font = '13px "Tiro Devanagari Hindi", serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(lg.t, lx + 30, legendY + 8);
         });
 
-        // Circular Sudarshan visual diagram
-        ctx.save();
-        ctx.strokeStyle = '#8C6239';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(width / 2, 980, 220, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(width / 2, 980, 160, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(width / 2, 980, 100, 0, Math.PI * 2);
-        ctx.stroke();
-
+        drawCardBox(90, 665, width - 180, 900, 'सुदर्शन भाव तालिका — तीनों लग्नों से ग्रह');
+        let scY = 708;
         ctx.fillStyle = '#5C3A21';
-        ctx.font = 'bold 14px "Tiro Devanagari Hindi", serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('लग्न चक्र', width / 2, 920);
-        ctx.fillText('चंद्र चक्र', width / 2, 970);
-        ctx.fillText('सूर्य चक्र', width / 2, 1020);
-        ctx.restore();
+        ctx.fillRect(110, scY - 16, width - 220, 30);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('भाव', 130, scY);
+        ctx.fillText(`लग्न (${kundali.lagnaRashi})`, 220, scY);
+        ctx.fillText(`चंद्र (${kundali.moonRashi})`, 520, scY);
+        ctx.fillText(`सूर्य (${kundali.sunRashi})`, 820, scY);
+        scY += 32;
+        const lOcc = sd.rings[0].occ;
+        const mOcc = sd.rings[1].occ;
+        const sOcc = sd.rings[2].occ;
+        for (let h = 1; h <= 12; h++) {
+          ctx.fillStyle = h % 2 === 0 ? 'rgba(245, 235, 215, 0.7)' : 'rgba(255, 250, 240, 0.7)';
+          ctx.fillRect(110, scY - 15, width - 220, 28);
+          ctx.fillStyle = '#8B1E1E';
+          ctx.font = 'bold 13px serif';
+          ctx.fillText(String(h), 140, scY);
+          ctx.fillStyle = '#2A1502';
+          ctx.font = '13px "Tiro Devanagari Hindi", serif';
+          ctx.fillText(fitLine(formatOcc(lOcc[h]), 270), 220, scY);
+          ctx.fillText(fitLine(formatOcc(mOcc[h]), 270), 520, scY);
+          ctx.fillText(fitLine(formatOcc(sOcc[h]), 270), 820, scY);
+          scY += 28;
+        }
+        ctx.fillStyle = '#5C3A21';
+        ctx.font = '13px "Tiro Devanagari Hindi", serif';
+        fillWrapped(
+          `नियम: जिस भाव पर तीनों वलयों में शुभ ग्रह (गुरु, शुक्र, बुध, चंद्र) हों, वह क्षेत्र इस जन्म में निश्चित फल देता है। रिक्त कक्ष (·) भावेश से फलित होता है। व = वक्री।`,
+          120,
+          scY + 8,
+          width - 250,
+          22
+        );
         break;
       }
 
@@ -964,7 +1213,7 @@ export async function generateExhaustive59PageKundaliPdf(
           ctx.font = '13px "Tiro Devanagari Hindi", serif';
           ctx.fillText(`${months} माह ${days} दिन`, 300, ay14 + 8);
 
-          const phalaText = `${planetName} व ${antar} के संयोग से जातक के जीवन में धन, पुरुषार्थ व सुख की प्राप्ति तथा इष्ट मंत्र जप से कार्यसिद्धि।`;
+          const phalaText = fitLine(analysis.antarPhala(planetName, antar), width - 590);
           ctx.fillText(phalaText, 460, ay14 + 8);
 
           ay14 += 56;
@@ -1010,22 +1259,31 @@ export async function generateExhaustive59PageKundaliPdf(
 
         const curV = vargaList[page - 23];
         drawBhojpatraBackground(page, `॥ ${curV.code}: ${curV.name} ॥`, `महर्षि पराशर प्रतिपादित सूक्ष्म वर्ग (विभाजन 1/${curV.div})`);
-        drawNorthIndianDiamondChart(width / 2, 480, 520, curV.div, `${kundali.name} — ${curV.code} चक्र`);
+        drawNorthIndianDiamondChart(width / 2, 370, 340, curV.div, `${kundali.name} — ${curV.code} चक्र`);
 
-        drawCardBox(90, 810, width - 180, 480, `${curV.code} शास्त्रीय महत्व एवं फलित विचार`);
+        drawCardBox(90, 570, width - 180, 900, `${curV.code} शास्त्रीय महत्व एवं फलित विचार`);
         ctx.fillStyle = '#3E2714';
-        ctx.font = '15px "Tiro Devanagari Hindi", serif';
+        ctx.font = '14px "Tiro Devanagari Hindi", serif';
         ctx.textAlign = 'left';
-        let vy = 870;
+        let vy = 618;
+        const vLagna = calculateVargaSign(kundali.lagnaDegree, curV.div);
         const vNotes = [
           `• विषय क्षेत्र: ${curV.desc}।`,
-          `• पराशरी नियम: प्रत्येक वर्ग चक्र जातक के जीवन के एक विशिष्ट आयाम का सूक्ष्म विश्लेषण करता है।`,
-          `• ग्रह बल विचार: यदि कोई ग्रह D1 में सामान्य हो किन्तु ${curV.code} में उच्च अथवा स्वक्षेत्री हो, तो वह संबंधित क्षेत्र में अद्भुत सफलता देता है।`,
-          `• भाव स्वामियों का संबंध: ${curV.code} के लग्न और लग्नेश की स्थिति जातक को इस क्षेत्र में मिलने वाली अनुकूलता निर्धारित करती है।`,
+          `• ${curV.code} लग्न राशि: ${RASHIS[vLagna]}। नीचे इस चक्र में प्रत्येक ग्रह की राशि व भाव:`,
         ];
         vNotes.forEach((vn) => {
-          ctx.fillText(vn, 120, vy);
-          vy += 36;
+          vy = fillWrapped(vn, 120, vy, width - 250, 24) + 6;
+        });
+        kundali.planets.forEach((p) => {
+          const s = calculateVargaSign(p.degree, curV.div);
+          const h = houseFromAsc(s, vLagna);
+          vy = fillWrapped(
+            `• ${p.planet}: ${RASHIS[s]} राशि, भाव ${h}${p.isRetrograde ? ' (वक्री)' : ''}`,
+            120,
+            vy,
+            width - 250,
+            22
+          ) + 4;
         });
         break;
       }
@@ -1033,38 +1291,38 @@ export async function generateExhaustive59PageKundaliPdf(
       // ---------------- Pages 39 to 44: अतिरिक्त वर्ग, विंशोपक बल व वर्ग समन्वय ---------------- //
       case 39: {
         drawBhojpatraBackground(page, '॥ D5 पंचांश एवं D6 षष्ठांश चक्र ॥', 'आध्यात्मिक आभा, प्रतिष्ठा तथा रोग-ऋण-शत्रु विचार');
-        drawNorthIndianDiamondChart(340, 440, 400, 5, 'D5 पंचांश चक्र (Panchamsha)');
-        drawNorthIndianDiamondChart(900, 440, 400, 6, 'D6 षष्ठांश चक्र (Shashtamsha)');
-        drawCardBox(90, 750, width - 180, 550, 'D5 एवं D6 का शास्त्रीय फलित');
+        drawNorthIndianDiamondChart(340, 370, 320, 5, 'D5 पंचांश चक्र (Panchamsha)');
+        drawNorthIndianDiamondChart(900, 370, 320, 6, 'D6 षष्ठांश चक्र (Shashtamsha)');
+        drawCardBox(90, 570, width - 180, 900, 'D5 एवं D6 का शास्त्रीय फलित');
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         ctx.textAlign = 'left';
-        ctx.fillText('• D5 पंचांश चक्र: जातक की आध्यात्मिक आभा, बुद्धि का तेज एवं प्रसिद्धि का सूक्ष्म विश्लेषण।', 120, 810);
-        ctx.fillText('• D6 षष्ठांश चक्र: जीवन में आने वाले रोग, शत्रु, ऋण तथा कानूनी विवादों की रोकथाम का विचार।', 120, 850);
+        ctx.fillText('• D5 पंचांश चक्र: जातक की आध्यात्मिक आभा, बुद्धि का तेज एवं प्रसिद्धि का सूक्ष्म विश्लेषण।', 120, 630);
+        ctx.fillText('• D6 षष्ठांश चक्र: जीवन में आने वाले रोग, शत्रु, ऋण तथा कानूनी विवादों की रोकथाम का विचार।', 120, 670);
         break;
       }
       case 40: {
         drawBhojpatraBackground(page, '॥ D8 अष्टमांश एवं D11 एकादशांश चक्र ॥', 'दीर्घायु, गूढ़ बाधाएं तथा विशेष लाभ व विजय चक्र');
-        drawNorthIndianDiamondChart(340, 440, 400, 8, 'D8 अष्टमांश चक्र (Ashtamsha)');
-        drawNorthIndianDiamondChart(900, 440, 400, 11, 'D11 एकादशांश चक्र (Rudramsha)');
-        drawCardBox(90, 750, width - 180, 550, 'D8 एवं D11 का शास्त्रीय फलित');
+        drawNorthIndianDiamondChart(340, 370, 320, 8, 'D8 अष्टमांश चक्र (Ashtamsha)');
+        drawNorthIndianDiamondChart(900, 370, 320, 11, 'D11 एकादशांश चक्र (Rudramsha)');
+        drawCardBox(90, 570, width - 180, 900, 'D8 एवं D11 का शास्त्रीय फलित');
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         ctx.textAlign = 'left';
-        ctx.fillText('• D8 अष्टमांश चक्र: आयु का गूढ़ विचार, गुप्त विद्याएं, आकस्मिक संकट तथा पैतृक वसीयत।', 120, 810);
-        ctx.fillText('• D11 एकादशांश चक्र: व्यापारिक लाभ, इच्छाओं की पूर्ति, विशिष्ट विजय तथा बड़े भाइयों संग संबंध।', 120, 850);
+        ctx.fillText('• D8 अष्टमांश चक्र: आयु का गूढ़ विचार, गुप्त विद्याएं, आकस्मिक संकट तथा पैतृक वसीयत।', 120, 630);
+        ctx.fillText('• D11 एकादशांश चक्र: व्यापारिक लाभ, इच्छाओं की पूर्ति, विशिष्ट विजय तथा बड़े भाइयों संग संबंध।', 120, 670);
         break;
       }
       case 41: {
         drawBhojpatraBackground(page, '॥ D14 चतुर्दशांश एवं D28 ब्रह्मांश चक्र ॥', 'सूक्ष्म विद्या, पराक्रम तथा दैवीय रक्षा का विश्लेषण');
-        drawNorthIndianDiamondChart(340, 440, 400, 14, 'D14 चतुर्दशांश चक्र');
-        drawNorthIndianDiamondChart(900, 440, 400, 28, 'D28 ब्रह्मांश चक्र');
-        drawCardBox(90, 750, width - 180, 550, 'विशिष्ट सूक्ष्म वर्गीय चक्र विवेचना');
+        drawNorthIndianDiamondChart(340, 370, 320, 14, 'D14 चतुर्दशांश चक्र');
+        drawNorthIndianDiamondChart(900, 370, 320, 28, 'D28 ब्रह्मांश चक्र');
+        drawCardBox(90, 570, width - 180, 900, 'विशिष्ट सूक्ष्म वर्गीय चक्र विवेचना');
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         ctx.textAlign = 'left';
-        ctx.fillText('• D14 चक्र से जातक के गूढ़ ज्ञान एवं पराक्रम की सूक्ष्मता जानी जाती है।', 120, 810);
-        ctx.fillText('• D28 ब्रह्मांश चक्र से जातक के आध्यात्मिक पूर्व कर्मों का संचित फल आंका जाता है।', 120, 850);
+        ctx.fillText('• D14 चक्र से जातक के गूढ़ ज्ञान एवं पराक्रम की सूक्ष्मता जानी जाती है।', 120, 630);
+        ctx.fillText('• D28 ब्रह्मांश चक्र से जातक के आध्यात्मिक पूर्व कर्मों का संचित फल आंका जाता है।', 120, 670);
         break;
       }
       case 42: {
@@ -1147,14 +1405,8 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         let ryY = 240;
-        const ryNotes = [
-          '1. गजकेसरी योग विचार: जब गुरु व चंद्र परस्पर केंद्र में हों तो अखंड गजकेसरी योग बनता है जो यश, बुद्धि व वाहन सुख देता है।',
-          '2. पंचमहापुरुष योग विचार: मंगल (रुचक), बुध (भद्र), गुरु (हंस), शुक्र (मालव्य), शनि (शश) योग का निर्माण करते हैं।',
-          '3. केंद्र-त्रिकोण राजयोग: केंद्रेश व त्रिकोणेश की युति अथवा परस्पर दृष्टि अखंड राजयोग प्रदायक होती है।',
-        ];
-        ryNotes.forEach((rn) => {
-          ctx.fillText(rn, 120, ryY);
-          ryY += 45;
+        analysis.yogas.forEach((rn) => {
+          ryY = fillWrapped(`• ${rn}`, 120, ryY, width - 240, 26) + 10;
         });
         break;
       }
@@ -1182,14 +1434,8 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         let ayY = 240;
-        const ayNotes = [
-          '1. गुरु-राहु चांडाल विचार: गुरु संग राहु की युति पर भगवान श्री हरि विष्णु की आराधना व पीले वस्त्र-हल्दी का दान सर्वोत्तम परिहार है।',
-          '2. मंगल-राहु अंगारक विचार: हनुमान चालीसा का नित्य पाठ व सुंदरकांड का गायन इस दोष को शून्य कर देता है।',
-          '3. सूर्य-राहु ग्रहण विचार: गायत्री महामंत्र का नियमित जप एवं पिता व सूर्य देव को प्रातः अर्घ्य देना श्रेष्ठ फल देता है।',
-        ];
-        ayNotes.forEach((an) => {
-          ctx.fillText(an, 120, ayY);
-          ayY += 45;
+        analysis.doshas.forEach((an) => {
+          ayY = fillWrapped(`• ${an}`, 120, ayY, width - 240, 26) + 10;
         });
         break;
       }
@@ -1276,15 +1522,8 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         let h14Y = 240;
-        const h14Notes = [
-          `• प्रथम भाव (तनु): ${kundali.lagnaRashi} लग्न जातक को आकर्षक व्यक्तित्व, नेतृत्व गुण व दीर्घायु प्रदान करता है।`,
-          '• द्वितीय भाव (धन): वाणी में ओज, संचित कोष में निरंतर वृद्धि एवं परिवार संग आत्मीय संबंध।',
-          '• तृतीय भाव (सहज): भाई-बहनों का सहयोग, अदम्य साहस, पुरुषार्थ व यात्राओं से लाभ।',
-          '• चतुर्थ भाव (सुख): माता का सुख, सुंदर गृह, अचल संपत्ति, भूमि-वाहन का दीर्घकालिक लाभ।',
-        ];
-        h14Notes.forEach((hn) => {
-          ctx.fillText(hn, 120, h14Y);
-          h14Y += 45;
+        analysis.housePhala.slice(0, 4).forEach((hn) => {
+          h14Y = fillWrapped(`• ${hn}`, 120, h14Y, width - 240, 26) + 14;
         });
         break;
       }
@@ -1294,15 +1533,8 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         let h58Y = 240;
-        const h58Notes = [
-          '• पंचम भाव (सुत): उच्च शिक्षा, कुशाग्र बुद्धि, शोध क्षमता एवं योग्य व आज्ञाकारी संतान का सुख।',
-          '• षष्ठ भाव (रिपु): गुप्त शत्रुओं पर विजय, प्रतियोगी परीक्षाओं में सफलता व ऋणों से त्वरित मुक्ति।',
-          '• सप्तम भाव (जाया): गुणवान जीवनसाथी, सुखी वैवाहिक जीवन एवं साझेदारी के व्यापार में उत्तम लाभ।',
-          '• अष्टम भाव (आयु): उत्तम जीवन रेखा, आध्यात्मिक गूढ़ विद्याओं का ज्ञान एवं आकस्मिक लाभ।',
-        ];
-        h58Notes.forEach((hn) => {
-          ctx.fillText(hn, 120, h58Y);
-          h58Y += 45;
+        analysis.housePhala.slice(4, 8).forEach((hn) => {
+          h58Y = fillWrapped(`• ${hn}`, 120, h58Y, width - 240, 26) + 14;
         });
         break;
       }
@@ -1312,15 +1544,8 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         let h912Y = 240;
-        const h912Notes = [
-          '• नवम भाव (धर्म): प्रबल भाग्योदय, तीर्थ यात्राएं, गुरुजनों का आशीर्वाद व धार्मिक निष्ठा।',
-          '• दशम भाव (कर्म): प्रतिष्ठित व्यवसाय, प्रशासनिक सम्मान, उच्च पद, आजीविका में उत्तरोत्तर उत्थान।',
-          '• एकादश भाव (आय): विविध स्रोतों से आय, मित्रों का उत्तम सहयोग एवं सभी अभिलाषाओं की पूर्ति।',
-          '• द्वादश भाव (व्यय): सात्विक कार्यों में धन व्यय, विदेश यात्रा योग एवं अंत में मोक्ष प्राप्ति का मार्ग।',
-        ];
-        h912Notes.forEach((hn) => {
-          ctx.fillText(hn, 120, h912Y);
-          h912Y += 45;
+        analysis.housePhala.slice(8, 12).forEach((hn) => {
+          h912Y = fillWrapped(`• ${hn}`, 120, h912Y, width - 240, 26) + 14;
         });
         break;
       }
@@ -1332,14 +1557,14 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         let cfY = 240;
-        const cfNotes = [
-          '• अनुकूल कार्यक्षेत्र: प्रबंधकीय पद, परामर्श, आईटी, शिक्षण, न्याय, व्यापार अथवा तकनीकी क्षेत्र।',
-          '• उन्नति का समय: गुरु व शुक्र की अंतर्दशाओं तथा शुभ गोचर के समय करियर में अभूतपूर्व छलांग।',
-          '• धन संचय रणनीति: स्थाई संपत्तियों (भूमि, भवन, स्वर्ण) में निवेश जातक को आजीवन निश्चिंतता प्रदान करेगा।',
-        ];
-        cfNotes.forEach((cf) => {
-          ctx.fillText(cf, 120, cfY);
-          cfY += 45;
+        const career = analysis.areas.find((a) => a.id === 'career');
+        const finance = analysis.areas.find((a) => a.id === 'finance');
+        const cfBlocks = [career, finance].filter(Boolean) as typeof analysis.areas;
+        cfBlocks.forEach((ar) => {
+          cfY = fillWrapped(`• ${ar.title}: ${ar.finding}`, 120, cfY, width - 240, 24) + 8;
+          cfY = fillWrapped(`  कारण: ${ar.why}`, 120, cfY, width - 240, 22) + 6;
+          cfY = fillWrapped(`  समय: ${ar.timing}`, 120, cfY, width - 240, 22) + 6;
+          cfY = fillWrapped(`  उपाय: ${ar.remedy}`, 120, cfY, width - 240, 22) + 16;
         });
         break;
       }
@@ -1349,14 +1574,15 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         let dsY = 240;
-        const dsNotes = [
-          '• दांपत्य सुख: जीवनसाथी के विचारों का सम्मान व परस्पर विश्वास से वैवाहिक जीवन अत्यंत सुखमय रहेगा।',
-          '• संतान योग: पंचमेश की शुभता से संतान कुल का नाम रोशन करेगी एवं उच्च शिक्षा प्राप्त करेगी।',
-          '• स्वास्थ्य रक्षा: प्राणायाम, सूर्य नमस्कार एवं संतुलित सात्विक आहार से मौसमी व्याधियों से पूर्ण रक्षा।',
-        ];
-        dsNotes.forEach((ds) => {
-          ctx.fillText(ds, 120, dsY);
-          dsY += 45;
+        const marriage = analysis.areas.find((a) => a.id === 'marriage');
+        const children = analysis.areas.find((a) => a.id === 'children');
+        const health = analysis.areas.find((a) => a.id === 'health');
+        [marriage, children, health].filter(Boolean).forEach((ar) => {
+          if (!ar) return;
+          dsY = fillWrapped(`• ${ar.title}: ${ar.finding}`, 120, dsY, width - 240, 24) + 8;
+          dsY = fillWrapped(`  कारण: ${ar.why}`, 120, dsY, width - 240, 22) + 6;
+          dsY = fillWrapped(`  सावधानी: ${ar.caution}`, 120, dsY, width - 240, 22) + 6;
+          dsY = fillWrapped(`  उपाय: ${ar.remedy}`, 120, dsY, width - 240, 22) + 16;
         });
         break;
       }
@@ -1407,15 +1633,11 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillStyle = '#3E2714';
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         let fnY = 240;
-        const fnNotes = [
-          '• वर्षफल निष्कर्ष: आगामी वर्ष में गुरु एवं शुभ ग्रहों का गोचर जातक को नूतन अवसर, प्रतिष्ठा व धन लाभ देगा।',
-          '• शुभ संकल्प: धर्म, सत्य, माता-पिता की सेवा तथा दीन-दुखियों की सहायता से भाग्य सदैव साथ रहेगा।',
-        ];
-        fnNotes.forEach((fn) => {
-          ctx.fillText(fn, 120, fnY);
-          fnY += 40;
+        fillWrapped(analysis.dashaNarrative, 120, fnY, width - 240, 24);
+        fnY += 50;
+        analysis.yearPhala.forEach((fn) => {
+          fnY = fillWrapped(`• ${fn}`, 120, fnY, width - 240, 24, contentBottom) + 10;
         });
-
         fnY += 20;
         ctx.fillStyle = '#8B1E1E';
         ctx.font = 'bold 18px "Tiro Devanagari Hindi", serif';
@@ -1444,7 +1666,7 @@ export async function generateExhaustive59PageKundaliPdf(
       pdf.addPage('a4', 'portrait');
     }
     // 'FAST' compression prevents mobile browser CPU choke
-    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+    pdf.addImage(imgData, 'JPEG', 0, 0, PDF_MM_W, PDF_MM_H, undefined, 'FAST');
 
     // Yield control to UI thread every page so mobile browser stays responsive and progress updates smoothly
     await new Promise((resolve) => setTimeout(resolve, 25));

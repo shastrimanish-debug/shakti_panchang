@@ -194,7 +194,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
 
             <div className="flex-1 w-full bg-[#1C0E07] relative rounded-b-lg overflow-hidden">
               <iframe
-                src={`${info.blobUrl}#toolbar=1&navpanes=1`}
+                src={`${info.blobUrl}#view=Fit&toolbar=0&navpanes=0`}
                 title="Kundali Mahapatrika PDF"
                 className="w-full h-full border-0"
               />
@@ -227,7 +227,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                   <span>•</span>
                   <span>आकार: ~{fileSizeMb} MB</span>
                   <span>•</span>
-                  <span>फॉर्मेट: वैदिक भोजपत्र A4</span>
+                  <span>फॉर्मेट: मोबाइल-फिट पत्रिका</span>
                 </div>
               </div>
             </div>

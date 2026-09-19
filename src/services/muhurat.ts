@@ -1,5 +1,6 @@
 import { VedicPanchangData } from '../types';
 import { getDayChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from './choghadiya';
+import { formatPlaceTime } from './engine/time';
 
 export const MUHURAT_ACTIVITIES = [
   'सामान्य शुभ कार्य',
@@ -38,8 +39,7 @@ export function getMuhuratGuidance(
   const recommendations: string[] = [];
   let grade: 'excellent' | 'good' | 'neutral' | 'avoid' = 'good';
 
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const fmt = (d: Date) => formatPlaceTime(d);
 
   const avoidWindows = inauspicious.map((w) => ({
     title: w.title,

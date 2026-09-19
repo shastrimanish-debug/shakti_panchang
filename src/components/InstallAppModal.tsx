@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Smartphone, Globe, CheckCircle2, ExternalLink, X, ShieldCheck } from 'lucide-react';
+import {
+  GITHUB_LATEST_RELEASE_URL,
+  GITHUB_RELEASES_URL,
+  GITHUB_REPO_URL,
+  RELEASE_NAME,
+  RELEASE_TAG,
+} from '../constants/release';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -119,13 +126,32 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ isOpen, onClos
               </span>
             </div>
             <p className="text-xs text-[#5C3A21]/80 leading-relaxed">
-              GitHub Actions पर स्वचालित APK बिल्ड कॉन्फ़िगर कर दिया गया है। जब भी आप GitHub पर कोड पुश करेंगे:
+              रिलीज़ स्थान सेव है: <strong>{RELEASE_NAME}</strong> ({RELEASE_TAG})
             </p>
+            <a
+              href={GITHUB_LATEST_RELEASE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2 px-3 bg-[#991B1B] hover:bg-[#7F1D1D] text-[#FAF2DE] font-bold text-xs rounded-md shadow-xs flex items-center justify-center gap-2 transition"
+            >
+              <ExternalLink className="w-4 h-4" />
+              GitHub से नवीनतम APK डाउनलोड करें
+            </a>
             <ol className="list-decimal list-inside text-xs text-[#5C3A21]/90 space-y-1 pl-1 bg-[#FAF2DE] p-2.5 rounded border border-[#8C6239]/20">
-              <li>GitHub रिपॉजिटरी में जाएँ।</li>
-              <li>ऊपर <strong>Actions</strong> टैब पर क्लिक करें।</li>
-              <li>नवीनतम <strong>Build Web App and Android APK</strong> रन पर क्लिक करें।</li>
-              <li>नीचे स्क्रॉल करें और <strong>Artifacts</strong> सेक्शन में <strong>Shakti-Panchang-APK</strong> पर क्लिक करके APK डाउनलोड करें।</li>
+              <li>
+                रेपो:{" "}
+                <a className="underline font-bold" href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                  shastrimanish-debug/shakti_panchang
+                </a>
+              </li>
+              <li>
+                रिलीज़:{" "}
+                <a className="underline font-bold" href={GITHUB_RELEASES_URL} target="_blank" rel="noopener noreferrer">
+                  Releases
+                </a>
+              </li>
+              <li>Actions टैब → <strong>Build Web App and Android APK</strong></li>
+              <li>Artifacts से <strong>Shakti-Panchang-APK</strong> डाउनलोड करें।</li>
             </ol>
             <div className="flex items-center gap-1 text-[11px] text-[#735133] pt-0.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />

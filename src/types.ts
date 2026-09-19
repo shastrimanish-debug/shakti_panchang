@@ -15,6 +15,27 @@ export interface SolarTimes {
   solarNoon: Date;
 }
 
+export interface PanchangSpan {
+  name: string;
+  nextName: string;
+  start: Date;
+  end: Date;
+}
+
+export interface DayMuhuratWindow {
+  title: string;
+  start: Date;
+  end: Date;
+  kind: "shubh" | "tyajya";
+}
+
+export interface EngineCheck {
+  primary: string;
+  secondary: string;
+  sunDeltaArcsec: number;
+  moonDeltaArcsec: number;
+}
+
 export interface VedicPanchangData {
   date: Date;
   weekday: string;
@@ -41,6 +62,12 @@ export interface VedicPanchangData {
   moonLongitude: number;
   solar: SolarTimes;
   calculationNote?: string;
+  tithiSpan?: PanchangSpan;
+  nakshatraSpan?: PanchangSpan;
+  yogaSpan?: PanchangSpan;
+  karanaSpan?: PanchangSpan;
+  dayWindows?: DayMuhuratWindow[];
+  engineCheck?: EngineCheck;
 }
 
 export interface PlanetPosition {

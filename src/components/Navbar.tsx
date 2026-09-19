@@ -1,25 +1,17 @@
-import React from 'react';
+import { BOOK_PAGES } from "../constants/bookPages";
+import type { SavedLocation } from "../types";
+import { useLicense } from "@/lib/license-client";
 import {
   BookOpen,
-  Calendar,
-  Sparkles,
   MapPin,
   Volume2,
   VolumeX,
   ChevronLeft,
   ChevronRight,
-  ArrowLeft,
-  ArrowRight,
-  User,
-  Heart,
-  HelpCircle,
-  Shield,
-  Compass,
-  Bell,
-  Sun,
+  Sparkles,
+  Crown,
   Download,
-} from 'lucide-react';
-import { SavedLocation } from '../types';
+} from "lucide-react";
 
 interface NavbarProps {
   activeTab: string;
@@ -32,24 +24,14 @@ interface NavbarProps {
   setIsAudioEnabled: (enabled: boolean) => void;
   onOpenUmaModal: () => void;
   onOpenInstallModal?: () => void;
+  onOpenPremium?: () => void;
   isBookOpen?: boolean;
   onToggleBookOpen?: () => void;
   onPrevPage: () => void;
   onNextPage: () => void;
 }
 
-export const BOOK_PAGES = [
-  { id: 'panchang', label: 'दैनिक पंचांग', chapter: 'प्रथम अध्याय', pageNumber: 1, icon: Sun },
-  { id: 'kundali', label: 'जन्म कुंडली', chapter: 'द्वितीय अध्याय', pageNumber: 2, icon: User },
-  { id: 'milan', label: 'कुंडली मिलान', chapter: 'तृतीय अध्याय', pageNumber: 3, icon: Heart },
-  { id: 'muhurat', label: 'शुभ मुहूर्त', chapter: 'चतुर्थ अध्याय', pageNumber: 4, icon: Compass },
-  { id: 'choghadiya', label: 'चौघड़िया चक्र', chapter: 'पंचम अध्याय', pageNumber: 5, icon: Calendar },
-  { id: 'horoscope', label: 'राशिफल', chapter: 'षष्ठ अध्याय', pageNumber: 6, icon: Sparkles },
-  { id: 'festivals', label: 'पर्व व व्रत', chapter: 'सप्तम अध्याय', pageNumber: 7, icon: Calendar },
-  { id: 'reminders', label: 'स्मृति व उपाय', chapter: 'अष्टम अध्याय', pageNumber: 8, icon: Bell },
-];
-
-export const Navbar: React.FC<NavbarProps> = ({
+export function Navbar({
   activeTab,
   setActiveTab,
   currentDate,
@@ -60,178 +42,179 @@ export const Navbar: React.FC<NavbarProps> = ({
   setIsAudioEnabled,
   onOpenUmaModal,
   onOpenInstallModal,
+  onOpenPremium,
   isBookOpen = true,
   onToggleBookOpen,
-  onPrevPage,
-  onNextPage,
-}) => {
+}: NavbarProps) {
+  const { status, loading } = useLicense();
+
   const handlePrevDay = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() - 1);
-    onDateChange(newDate);
+    const next = new Date(currentDate);
+    next.setDate(next.getDate() - 1);
+    onDateChange(next);
   };
-
   const handleNextDay = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() + 1);
-    onDateChange(newDate);
+    const next = new Date(currentDate);
+    next.setDate(next.getDate() + 1);
+    onDateChange(next);
   };
 
-  const handleToday = () => {
-    onDateChange(new Date());
-  };
-
-  const formattedDate = currentDate.toLocaleDateString('hi-IN', {
-    day: 'numeric',
-    month: 'short',
+  const formattedDate = currentDate.toLocaleDateString("hi-IN", {
+    day: "numeric",
+    month: "short",
   });
 
-  const currentIndex = BOOK_PAGES.findIndex((p) => p.id === activeTab);
-  const currentTabMeta = BOOK_PAGES[currentIndex >= 0 ? currentIndex : 0];
-  const prevIndex = (currentIndex - 1 + BOOK_PAGES.length) % BOOK_PAGES.length;
-  const nextIndex = (currentIndex + 1) % BOOK_PAGES.length;
-  const prevTabMeta = BOOK_PAGES[prevIndex];
-  const nextTabMeta = BOOK_PAGES[nextIndex];
+  const placeShort = currentLocation.name.split("(")[0].trim();
+
+  const trialLabel = loading
+    ? "सदस्यता…"
+    : status.entitled && status.kind === "trial"
+      ? `${status.daysRemaining} दिन`
+      : status.entitled
+        ? "प्रीमियम"
+        : "₹99/वर्ष";
 
   return (
     <header className="sticky top-0 z-40 bg-[#5C3A21] text-[#FAF2E4] shadow-md border-b border-[#8C6239]">
-      {/* 1. Ultra-Compact Top Bar (Height ~38px) */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-3 py-1 flex items-center justify-between gap-1 sm:gap-2">
-        {/* Left: App Title & Sacred Motif */}
-        <div
-          className="flex items-center gap-1.5 cursor-pointer shrink-0"
-          onClick={() => setActiveTab('panchang')}
+      <div className="max-w-7xl mx-auto px-2 sm:px-3 py-1.5 flex items-center justify-between gap-1.5">
+        <button
+          type="button"
+          className="flex items-center gap-1.5 shrink-0"
+          onClick={() => setActiveTab("panchang")}
+          title="शक्ति पंचांग"
         >
-          <div className="w-6 h-6 rounded-full bg-[#B56A00] flex items-center justify-center border border-[#F4E8D1] shadow-inner text-xs font-bold text-white shrink-0">
+          <div className="w-7 h-7 rounded-full bg-[#B56A00] flex items-center justify-center border border-[#F4E8D1] text-xs font-bold text-white">
             ॐ
           </div>
-          <h1 className="text-xs sm:text-sm font-black font-granth tracking-wide text-[#FAF2E4] leading-none whitespace-nowrap">
+          <h1 className="text-xs sm:text-sm font-black font-granth tracking-wide leading-none whitespace-nowrap">
             शक्ति पंचांग
           </h1>
-        </div>
+        </button>
 
-        {/* Center/Right: Date, Location, Audio & Uma AI Controls in single compact line */}
-        <div className="flex items-center gap-1 sm:gap-1.5 text-xs shrink-0">
-          {/* Date Navigator */}
-          <div className="flex items-center bg-[#462B17] rounded p-0.5 border border-[#8C6239]/60">
-            <button
-              onClick={handlePrevDay}
-              title="पिछला दिन"
-              className="p-0.5 hover:bg-[#5C3A21] rounded text-[#FAF2E4] transition cursor-pointer"
-            >
+        <div className="flex items-center gap-1 sm:gap-1.5 text-xs min-w-0">
+          <div className="flex items-center bg-[#462B17] rounded border border-[#8C6239]/60 shrink-0">
+            <button type="button" onClick={handlePrevDay} title="पिछला दिन" className="p-1">
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={handleToday}
-              title="आज की तिथि"
-              className="px-1.5 py-0.5 text-[11px] font-bold text-[#F4E8D1] hover:text-white transition cursor-pointer whitespace-nowrap"
+              type="button"
+              onClick={() => onDateChange(new Date())}
+              className="px-1.5 py-1 text-[11px] font-bold whitespace-nowrap"
             >
               {formattedDate}
             </button>
-            <button
-              onClick={handleNextDay}
-              title="अगला दिन"
-              className="p-0.5 hover:bg-[#5C3A21] rounded text-[#FAF2E4] transition cursor-pointer"
-            >
+            <button type="button" onClick={handleNextDay} title="अगला दिन" className="p-1">
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Location Picker Button */}
           <button
+            type="button"
             onClick={onOpenLocationModal}
-            className="flex items-center gap-0.5 px-1.5 py-0.5 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded text-[11px] font-medium text-[#FAF2E4] transition cursor-pointer"
-            title="स्थान बदलें"
+            className="flex items-center gap-0.5 px-1.5 py-1 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded text-[11px] font-medium min-w-0"
+            title={currentLocation.name}
           >
             <MapPin className="w-3 h-3 text-[#E69A33] shrink-0" />
-            <span className="truncate max-w-[55px] xs:max-w-[75px] sm:max-w-[110px]">
-              {currentLocation.name.split('(')[0].trim()}
-            </span>
+            <span className="truncate max-w-[72px] sm:max-w-[140px]">{placeShort}</span>
           </button>
 
-          {/* Audio speech toggle */}
+          {onOpenPremium && (
+            <button
+              type="button"
+              onClick={onOpenPremium}
+              className={`shrink-0 px-1.5 py-1 rounded text-[10px] sm:text-[11px] font-bold flex items-center gap-1 border ${
+                status.entitled
+                  ? "bg-[#FAF2E4] text-[#5C3A21] border-[#FFD88A]"
+                  : "bg-[#B56A00] text-white border-[#FFD88A]"
+              }`}
+            >
+              <Crown className="w-3 h-3" />
+              <span className="whitespace-nowrap">{trialLabel}</span>
+            </button>
+          )}
+
           <button
+            type="button"
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
-            className="p-1 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded transition cursor-pointer"
-            title={isAudioEnabled ? 'ध्वनि चालू' : 'ध्वनि बंद'}
+            className="hidden sm:flex p-1 bg-[#462B17] border border-[#8C6239]/60 rounded"
+            title={isAudioEnabled ? "ध्वनि चालू" : "ध्वनि बंद"}
           >
             {isAudioEnabled ? (
-              <Volume2 className="w-3 h-3 text-[#E69A33]" />
+              <Volume2 className="w-3.5 h-3.5 text-[#E69A33]" />
             ) : (
-              <VolumeX className="w-3 h-3 text-[#A89279]" />
+              <VolumeX className="w-3.5 h-3.5 text-[#A89279]" />
             )}
           </button>
 
-          {/* Book Cover Toggle Button */}
           {onToggleBookOpen && (
             <button
+              type="button"
               onClick={onToggleBookOpen}
-              className={`hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
+              className={`hidden md:flex items-center gap-1 px-1.5 py-1 rounded text-[11px] font-bold border ${
                 !isBookOpen
-                  ? 'bg-gradient-to-r from-[#B58738] to-[#D4A548] text-[#2C0A0A] border-[#FFD88A]'
-                  : 'bg-[#462B17] hover:bg-[#382010] text-[#FFD88A] border-[#8C6239]'
+                  ? "bg-gradient-to-r from-[#B58738] to-[#D4A548] text-[#2C0A0A] border-[#FFD88A]"
+                  : "bg-[#462B17] text-[#FFD88A] border-[#8C6239]"
               }`}
-              title={isBookOpen ? 'मुखपृष्ठ' : 'ग्रंथ खोलें'}
             >
               <BookOpen className="w-3 h-3" />
-              <span>{isBookOpen ? 'मुखपृष्ठ' : 'ग्रंथ'}</span>
+              {isBookOpen ? "मुखपृष्ठ" : "ग्रंथ"}
             </button>
           )}
 
-          {/* APK & App Install Button */}
           {onOpenInstallModal && (
             <button
+              type="button"
               onClick={onOpenInstallModal}
-              className="flex items-center gap-1 px-2 py-0.5 bg-[#5C3A21] hover:bg-[#462B17] border border-[#8C6239] text-[#FFD88A] hover:text-white rounded text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
-              title="ऐप डाउनलोड व APK"
+              className="hidden sm:flex items-center gap-1 px-1.5 py-1 bg-[#462B17] border border-[#8C6239] text-[#FFD88A] rounded text-[11px] font-bold"
             >
-              <Download className="w-3 h-3 text-[#FFD88A]" />
-              <span className="hidden xs:inline">APK</span>
+              <Download className="w-3 h-3" />
+              APK
             </button>
           )}
 
-          {/* UMA Assistant Button */}
           <button
+            type="button"
             onClick={onOpenUmaModal}
-            className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-[#B56A00] to-[#C67D24] hover:from-[#A25E00] hover:to-[#B56A00] text-white rounded text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
+            className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-[#B56A00] to-[#C67D24] text-white rounded text-[11px] font-bold shrink-0"
           >
             <Sparkles className="w-3 h-3 text-[#FFD88A]" />
-            <span>उमा AI</span>
+            उमा
           </button>
         </div>
       </div>
 
-      {/* 2. Streamlined Chapter Tabs Bar - Clean & Breathable */}
-      <div className="bg-[#462B17] border-t border-[#8C6239]/60 px-2 sm:px-3 overflow-hidden">
-        {/* Scrollable Chapter Tabs */}
-        <nav className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1.5 px-0.5">
+      {isBookOpen && (
+        <div className="bg-[#462B17] border-t border-[#8C6239]/60 px-2 sm:px-3 overflow-hidden">
+        <nav className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1.5">
           {BOOK_PAGES.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = isBookOpen && activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg transition cursor-pointer select-none whitespace-nowrap shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg whitespace-nowrap shrink-0 ${
                   isActive
-                    ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-sm font-black ring-1 ring-[#FFD88A]'
-                    : 'text-[#D9C4A9] hover:text-[#FAF2E4] hover:bg-[#5C3A21]/50'
+                    ? "bg-[#FAF2E4] text-[#5C3A21] shadow-sm font-black ring-1 ring-[#FFD88A]"
+                    : "text-[#D9C4A9] hover:text-[#FAF2E4] hover:bg-[#5C3A21]/50"
                 }`}
               >
                 <span
-                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                    isActive ? 'bg-[#5C3A21] text-[#FAF2E4]' : 'bg-[#331C0C] text-[#D9C4A9]'
+                  className={`text-[10px] font-bold px-1.5 rounded ${
+                    isActive ? "bg-[#5C3A21] text-[#FAF2E4]" : "bg-[#331C0C] text-[#D9C4A9]"
                   }`}
                 >
                   {tab.pageNumber}
                 </span>
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#B56A00]' : 'text-[#A89279]'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-[#B56A00]" : "text-[#A89279]"}`} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </nav>
       </div>
+      )}
     </header>
   );
-};
+}

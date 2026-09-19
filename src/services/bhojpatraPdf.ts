@@ -1,5 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { VedicPanchangData, KundaliData } from '../types';
+import { triggerPdfDownload, waitForPdfFonts, type PdfResult } from './pdfFonts';
+import { PDF_MM_H, PDF_MM_W, PDF_PX_H, PDF_PX_W } from './pdfPage';
 
 export interface BhojpatraPdfOptions {
   title?: string;
@@ -16,11 +18,12 @@ export interface BhojpatraPdfOptions {
  * onto an off-screen Canvas and compiles it into a high-fidelity PDF.
  */
 export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promise<PdfResult> {
+  await waitForPdfFonts();
   const { panchang, query, answer, activeKundali, locationName, date = new Date() } = options;
 
-  // A4 dimensions at 150 DPI for crisp typography without excessive payload
-  const width = 1240;
-  const height = 1754;
+  // Mobile-fit sheet (same width as A4, shorter so one page fills the phone)
+  const width = PDF_PX_W;
+  const height = PDF_PX_H;
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -282,10 +285,10 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a4',
+    format: [PDF_MM_W, PDF_MM_H],
   });
 
-  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+  pdf.addImage(imgData, 'JPEG', 0, 0, PDF_MM_W, PDF_MM_H, undefined, 'FAST');
   const dateObj = date instanceof Date ? date : new Date(date || Date.now());
   const dateIso = !isNaN(dateObj.getTime()) ? dateObj.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
   const sanitizedTitle = (options.title || 'Bhojpatra_Patrika')
@@ -328,17 +331,11 @@ export interface MilanPdfOptions {
   date?: Date;
 }
 
-export interface PdfResult {
-  fileName: string;
-  blob: Blob;
-  blobUrl: string;
-  pageCount: number;
-}
-
 export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promise<PdfResult> {
+  await waitForPdfFonts();
   const { boy, girl, milan, date = new Date() } = options;
-  const width = 1240;
-  const height = 1754;
+  const width = PDF_PX_W;
+  const height = PDF_PX_H;
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -588,10 +585,10 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a4',
+    format: [PDF_MM_W, PDF_MM_H],
   });
 
-  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+  pdf.addImage(imgData, 'JPEG', 0, 0, PDF_MM_W, PDF_MM_H, undefined, 'FAST');
   const sanitizedBoy = (boy.name || 'Var').replace(/[^\w\u0900-\u097F\s-]/g, '').trim().replace(/\s+/g, '_');
   const sanitizedGirl = (girl.name || 'Kanya').replace(/[^\w\u0900-\u097F\s-]/g, '').trim().replace(/\s+/g, '_');
   const fileName = `Milan_Bhojpatra_Patrika_${sanitizedBoy}_${sanitizedGirl}.pdf`;

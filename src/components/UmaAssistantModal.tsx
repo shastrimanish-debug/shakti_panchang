@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows } from '../services/choghadiya';
+import { askUma } from '@/lib/uma';
+import { analyzeKundali } from '../services/predictions';
 import {
   X,
   Send,
@@ -276,31 +278,20 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
     try {
       // Attempt backend call to /api/uma-chat if server is alive
-      const panchangCtx = `वार: ${panchang.weekday}, तिथि: ${panchang.paksha} ${panchang.tithi}, नक्षत्र: ${panchang.nakshatra}, संवत्: ${panchang.samvat}`;
+      const analysis = activeKundali ? analyzeKundali(activeKundali) : null;
+      const panchangCtx = `वार: ${panchang.weekday}, तिथि: ${panchang.paksha} ${panchang.tithi} (${panchang.tithiSpan ? 'सीमा सहित' : ''}), नक्षत्र: ${panchang.nakshatra}, योग: ${panchang.yoga}, करण: ${panchang.karana}`;
       const kundaliCtx = activeKundali
-        ? `जातक: ${activeKundali.name}, लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, महादशा: ${activeKundali.mahadasha}`
+        ? `जातक: ${activeKundali.name}, लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}-${activeKundali.antardasha}-${activeKundali.pratyantardasha}. ${analysis?.dashaNarrative ?? ''} गोचर: ${(analysis?.yearPhala ?? []).slice(1, 3).join(' ')}`
         : 'सामान्य';
 
       let answer = '';
       let actionPayload: ChatMessage['actionPayload'] | undefined;
 
       try {
-        const res = await fetch('/api/uma-chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: text,
-            panchangContext: panchangCtx,
-            kundaliContext: kundaliCtx,
-            chatHistory: messages.slice(-4).map((m) => ({ sender: m.sender, text: m.text })),
-          }),
+        const data = await askUma({
+          data: { query: text, panchangContext: panchangCtx, kundaliContext: kundaliCtx },
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.answer) {
-            answer = data.answer;
-          }
-        }
+        if (data.ok && data.text) answer = data.text;
       } catch {
         // Handled by offline fallback
       }

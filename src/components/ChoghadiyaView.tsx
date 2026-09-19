@@ -7,6 +7,7 @@ import {
   getInauspiciousWindows,
   getAuspiciousWindows,
 } from '../services/choghadiya';
+import { formatPlaceTime } from '../services/engine/time';
 import {
   Clock,
   Sun,
@@ -45,8 +46,7 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
   const inauspiciousWindows = getInauspiciousWindows(panchang.solar, weekday);
   const auspiciousWindows = getAuspiciousWindows(panchang.solar);
 
-  const formatTime = (d: Date) =>
-    d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const formatTime = (d: Date) => formatPlaceTime(d);
 
   const getBadgeStyle = (nature: ChoghadiyaItem['nature']) => {
     switch (nature) {

@@ -1,5 +1,13 @@
 import * as Astronomy from 'astronomy-engine';
 import { VedicPanchangData, SolarTimes, PlanetPosition } from '../types';
+import { ayanamshaDegrees, AYANAMSHA_NAMES } from './engine/ayanamsha';
+import { getCalcSettings } from './engine/calcSettings';
+import { calculateAccurateSolarTimes, dayMuhuratWindows } from './engine/solarAccurate';
+import { meanNodeTropical, trueNodeTropical } from './engine/nodes';
+import { midheavenTropical, sripatiCusps, planetHouse } from './engine/houses';
+import { computeDayBoundaries } from './engine/boundaries';
+import { meeusTropicalBodies } from './engine/meeusEngine';
+import { timezoneHoursFor } from './engine/time';
 
 export const RASHIS = [
   'मेष', 'वृषभ', 'मिथुन', 'कर्क',
@@ -68,11 +76,10 @@ export function getJulianDay(date: Date): number {
 }
 
 /**
- * Standard Lahiri / Chitra Paksha Ayanamsha in degrees
+ * Standard Lahiri / Chitra Paksha Ayanamsha in degrees (or Raman / KP from settings)
  */
 export function getLahiriAyanamsha(jd: number): number {
-  const t = (jd - 2451545.0) / 36525.0;
-  return 23.856 + 1.3969 * t + 0.0003 * t * t;
+  return ayanamshaDegrees(jd, getCalcSettings().ayanamsha);
 }
 
 /**
@@ -109,70 +116,26 @@ function calculateSolarEvent(date: Date, lat: number, lon: number, isSunrise: bo
 }
 
 /**
- * Calculate Vedic solar times for a given date and location
+ * Calculate Vedic solar times for a given date and location (true UTC + refraction)
  */
-export function calculateSolarTimes(date: Date, lat: number, lon: number, tzHours: number = 5.5): SolarTimes {
-  const y = date.getFullYear();
-  const m = date.getMonth();
-  const d = date.getDate();
-
-  const baseUtc = new Date(Date.UTC(y, m, d));
-  const rawSunrise = calculateSolarEvent(baseUtc, lat, lon, true);
-  const rawSunset = calculateSolarEvent(baseUtc, lat, lon, false);
-
-  const nextBaseUtc = new Date(Date.UTC(y, m, d + 1));
-  const rawNextSunrise = calculateSolarEvent(nextBaseUtc, lat, lon, true);
-
-  const tzOffsetMs = tzHours * 60 * 60 * 1000;
-  const sunrise = new Date(rawSunrise.getTime() + tzOffsetMs);
-  const sunset = new Date(rawSunset.getTime() + tzOffsetMs);
-  const nextSunrise = new Date(rawNextSunrise.getTime() + tzOffsetMs);
-  const solarNoon = new Date(sunrise.getTime() + (sunset.getTime() - sunrise.getTime()) / 2);
-
-  return { sunrise, sunset, nextSunrise, solarNoon };
+export function calculateSolarTimes(date: Date, lat: number, lon: number, tzHours?: number): SolarTimes {
+  return calculateAccurateSolarTimes(date, lat, lon, tzHours ?? timezoneHoursFor(lat, lon));
 }
 
 /**
- * Returns Sidereal Sun and Moon longitudes and Lahiri ayanamsha
+ * Returns Sidereal Sun and Moon longitudes and selected ayanamsha (XALEN / astronomy-engine)
  */
 export function getSunMoonSidereal(date: Date): { sunSidereal: number; moonSidereal: number; ayanamsa: number } {
   const jd = getJulianDay(date);
-  const t = (jd - 2451545.0) / 36525.0;
-  const ayanamsa = getLahiriAyanamsha(jd);
-
-  // Mean sun
-  const L0 = 280.46646 + 36000.76983 * t + 0.0003032 * t * t;
-  const M_sun = 357.52911 + 35999.05029 * t - 0.0001537 * t * t;
-  const C = (1.914602 - 0.004817 * t - 0.000014 * t * t) * Math.sin(degToRad(M_sun))
-    + (0.019993 - 0.000101 * t) * Math.sin(degToRad(2 * M_sun))
-    + 0.000289 * Math.sin(degToRad(3 * M_sun));
-  const sunTrue = normalize360(L0 + C);
-  const sunSidereal = normalize360(sunTrue - ayanamsa);
-
-  // Moon perturbations
-  const L_moon = 218.3164477 + 481267.88123421 * t - 0.0015786 * t * t;
-  const D_moon = 297.8501921 + 445267.1114034 * t - 0.0018819 * t * t;
-  const M_moon = 134.9633964 + 477198.8675055 * t + 0.0087414 * t * t;
-  const F_moon = 93.272095 + 483202.0175233 * t - 0.0036539 * t * t;
-
-  let moonLon = L_moon
-    + 6.288774 * Math.sin(degToRad(M_moon))
-    + 1.274027 * Math.sin(degToRad(2 * D_moon - M_moon))
-    + 0.658314 * Math.sin(degToRad(2 * D_moon))
-    + 0.213618 * Math.sin(degToRad(2 * M_moon))
-    - 0.185116 * Math.sin(degToRad(M_sun))
-    - 0.114332 * Math.sin(degToRad(2 * F_moon))
-    + 0.058793 * Math.sin(degToRad(2 * D_moon - 2 * M_moon))
-    + 0.057066 * Math.sin(degToRad(2 * D_moon - M_sun - M_moon))
-    + 0.053320 * Math.sin(degToRad(2 * D_moon + M_moon))
-    + 0.045758 * Math.sin(degToRad(2 * D_moon - M_sun))
-    - 0.040923 * Math.sin(degToRad(M_sun - M_moon))
-    - 0.034720 * Math.sin(degToRad(D_moon));
-
-  moonLon = normalize360(moonLon);
-  const moonSidereal = normalize360(moonLon - ayanamsa);
-
-  return { sunSidereal, moonSidereal, ayanamsa };
+  const ayanamsa = ayanamshaDegrees(jd, getCalcSettings().ayanamsha);
+  const t = Astronomy.MakeTime(date);
+  const sunTrop = normalize360(Astronomy.Ecliptic(Astronomy.GeoVector(Astronomy.Body.Sun, t, false)).elon);
+  const moonTrop = normalize360(Astronomy.Ecliptic(Astronomy.GeoVector(Astronomy.Body.Moon, t, false)).elon);
+  return {
+    sunSidereal: normalize360(sunTrop - ayanamsa),
+    moonSidereal: normalize360(moonTrop - ayanamsa),
+    ayanamsa,
+  };
 }
 
 /**
@@ -181,7 +144,7 @@ export function getSunMoonSidereal(date: Date): { sunSidereal: number; moonSider
 export function calculateLagnaDegree(date: Date, lat: number, lon: number, tzHours: number = 5.5): number {
   const jd = getJulianDay(date);
   const t = (jd - 2451545.0) / 36525.0;
-  const ayanamsa = getLahiriAyanamsha(jd);
+  const ayanamsa = ayanamshaDegrees(jd, getCalcSettings().ayanamsha);
 
   const astroTime = Astronomy.MakeTime(date);
   const gmstHours = Astronomy.SiderealTime(astroTime);
@@ -212,9 +175,14 @@ export function calculatePlanetPositions(
 ): PlanetPosition[] {
   const jd = getJulianDay(date);
   const t = (jd - 2451545.0) / 36525.0;
-  const ayanamsa = getLahiriAyanamsha(jd);
+  const settings = getCalcSettings();
+  const ayanamsa = ayanamshaDegrees(jd, settings.ayanamsha);
   const lagnaDegree = calculateLagnaDegree(date, lat, lon, tzHours);
-  const lagnaRashiIdx = Math.floor(lagnaDegree / 30) % 12;
+  const ramc = normalize360(Astronomy.SiderealTime(Astronomy.MakeTime(date)) * 15.0 + lon);
+  const eps = 23.4392911 - 0.0130042 * t;
+  const mcTrop = midheavenTropical(ramc, eps);
+  const mcSid = normalize360(mcTrop - ayanamsa);
+  const cusps = settings.houseSystem === "sripati" ? sripatiCusps(lagnaDegree, mcSid) : undefined;
 
   const bodies = [
     { name: 'सूर्य', en: 'Sun', body: Astronomy.Body.Sun },
@@ -246,7 +214,7 @@ export function calculatePlanetPositions(
     const isRetrograde = diff < 0;
 
     const rashiIdx = Math.floor(siderealLon / 30) % 12;
-    const house = ((rashiIdx - lagnaRashiIdx + 12) % 12) + 1;
+    const house = planetHouse(siderealLon, lagnaDegree, settings.houseSystem, cusps);
     const nakIdx = Math.floor(siderealLon / (360 / 27)) % 27;
     const pada = Math.floor((siderealLon % (360 / 27)) / (360 / 108)) + 1;
 
@@ -266,9 +234,9 @@ export function calculatePlanetPositions(
     });
   }
 
-  // Mean lunar node (Rahu)
-  const meanNode = normalize360(125.044555 - 1934.1361849 * t + 0.0020762 * t * t);
-  const rahuLon = normalize360(meanNode - ayanamsa);
+  // Lunar node (Rahu) — Mean or True from settings
+  const nodeTrop = settings.nodeType === "true" ? trueNodeTropical(date) : meanNodeTropical(date);
+  const rahuLon = normalize360(nodeTrop - ayanamsa);
   const ketuLon = normalize360(rahuLon + 180);
 
   const rahuRashiIdx = Math.floor(rahuLon / 30) % 12;
@@ -283,7 +251,7 @@ export function calculatePlanetPositions(
     rashiNumber: rahuRashiIdx + 1,
     degree: rahuLon,
     degreeInRashi: rahuLon % 30,
-    house: ((rahuRashiIdx - lagnaRashiIdx + 12) % 12) + 1,
+    house: planetHouse(rahuLon, lagnaDegree, settings.houseSystem, cusps),
     isRetrograde: true,
     latitude: 0,
     speed: 0.053,
@@ -298,7 +266,7 @@ export function calculatePlanetPositions(
     rashiNumber: ketuRashiIdx + 1,
     degree: ketuLon,
     degreeInRashi: ketuLon % 30,
-    house: ((ketuRashiIdx - lagnaRashiIdx + 12) % 12) + 1,
+    house: planetHouse(ketuLon, lagnaDegree, settings.houseSystem, cusps),
     isRetrograde: true,
     latitude: 0,
     speed: 0.053,
@@ -366,6 +334,25 @@ export function calculateVedicPanchang(
   const vikramSamvat = date.getFullYear() + 57;
   const sakaSamvat = date.getFullYear() - 78;
   const masa = MASAS[sunRashiIdx];
+  const settings = getCalcSettings();
+  const windows = dayMuhuratWindows(solar);
+  let spans: ReturnType<typeof computeDayBoundaries> | undefined;
+  let engineCheck: VedicPanchangData["engineCheck"];
+  try {
+    spans = computeDayBoundaries(date, solar.sunrise, solar.nextSunrise);
+    const meeus = meeusTropicalBodies(solar.sunrise);
+    const sunDelta = Math.abs(normalize360(sunSidereal - normalize360(meeus.Sun.tropicalLon - ayanamsa)));
+    const moonDelta = Math.abs(normalize360(moonSidereal - normalize360(meeus.Moon.tropicalLon - ayanamsa)));
+    const wrap = (x: number) => (x > 180 ? 360 - x : x);
+    engineCheck = {
+      primary: "XALEN / astronomy-engine",
+      secondary: "मीयस (मुफ़्त)",
+      sunDeltaArcsec: wrap(sunDelta) * 3600,
+      moonDeltaArcsec: wrap(moonDelta) * 3600,
+    };
+  } catch {
+    spans = undefined;
+  }
 
   return {
     date,
@@ -388,12 +375,18 @@ export function calculateVedicPanchang(
     solarRashi: RASHIS[sunRashiIdx],
     lunarRashi: RASHIS[moonRashiIdx],
     ayanamsha: ayanamsa,
-    ayanamshaName: 'लाहिरी अयनांश',
+    ayanamshaName: AYANAMSHA_NAMES[settings.ayanamsha],
     sunLongitude: sunSidereal,
     moonLongitude: moonSidereal,
     solar,
+    tithiSpan: spans?.tithiSpan,
+    nakshatraSpan: spans?.nakshatraSpan,
+    yogaSpan: spans?.yogaSpan,
+    karanaSpan: spans?.karanaSpan,
+    dayWindows: [windows.brahma, windows.abhijit, windows.pradosh, windows.nishith],
+    engineCheck,
     calculationNote:
-      'सटीक खगोलीय गणना सूर्योदय आधारित। तिथि, नक्षत्र, योग और करण सूर्य-चंद्र की सायन एवं निरयण स्थिति से प्राप्त हैं।',
+      'XALEN (astronomy-engine) + मीयस जाँच। सूर्योदय अपवर्तन सहित। तिथि-नक्षत्र प्रारंभ/समाप्ति सूर्योदय-आधारित। Swiss Ephemeris नहीं।',
   };
 }
 

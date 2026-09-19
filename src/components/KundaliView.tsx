@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { KundaliData, SavedLocation, DashaPratyantarPeriod } from '../types';
 import { KundaliChart } from './KundaliChart';
 import { LocationModal } from './LocationModal';
@@ -13,12 +13,13 @@ import { COMMON_INDIAN_CITIES } from '../services/disha';
 import {
   saveKundaliProfile,
   DEFAULT_LOCATION,
-  getSubscriptionStatus,
-  SubscriptionStatus,
 } from '../services/storage';
+import { useLicense } from '@/lib/license-client';
 import { calculateVedicPanchang } from '../services/astronomy';
 import { downloadMilanBhojpatraPdf, downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { generateExhaustive59PageKundaliPdf } from '../services/exhaustiveKundaliPdf';
+import { analyzeKundali, professionalPdfAnswer } from '../services/predictions';
+import { CalcSettingsPanel } from './CalcSettingsPanel';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import { SubscriptionModal } from './SubscriptionModal';
 import {
@@ -122,7 +123,7 @@ interface KundaliViewProps {
   setActiveKundali: (k: KundaliData) => void;
   currentLocation: SavedLocation;
   onOpenSavedModal: () => void;
-  initialSubTab?: 'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies';
+  initialSubTab?: 'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit';
 }
 
 export const KundaliView: React.FC<KundaliViewProps> = ({
@@ -133,7 +134,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   initialSubTab,
 }) => {
   // Active Sub-Tab
-  const [kundaliTab, setKundaliTab] = useState<'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies'>(
+  const [kundaliTab, setKundaliTab] = useState<'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit'>(
     initialSubTab || 'chart'
   );
 
@@ -143,18 +144,38 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     }
   }, [initialSubTab]);
 
+  useEffect(() => {
+    const onSettings = () => {
+      if (!activeKundali) return;
+      setActiveKundali(
+        calculateKundali(
+          activeKundali.name,
+          activeKundali.birthDate,
+          activeKundali.birthTime,
+          activeKundali.birthPlace,
+          activeKundali.latitude,
+          activeKundali.longitude,
+          activeKundali.timezoneHours,
+        ),
+      );
+    };
+    window.addEventListener("shakti-calc-settings", onSettings);
+    return () => window.removeEventListener("shakti-calc-settings", onSettings);
+  }, [activeKundali, setActiveKundali]);
+
   // Varga selector state
   const [selectedVarga, setSelectedVarga] = useState<number>(1);
   const [chartViewMode, setChartViewMode] = useState<'twin' | 'shodashvarga'>('twin');
   const [chartSubPage, setChartSubPage] = useState<'twin' | 'planets' | 'vargas'>('twin');
   const [milanSubPage, setMilanSubPage] = useState<'score' | 'ashtakoot' | 'manglik'>('score');
-  const [isFormExpanded, setIsFormExpanded] = useState<boolean>(false);
+  const [isFormExpanded, setIsFormExpanded] = useState<boolean>(true);
+  const [formError, setFormError] = useState<string | null>(null);
   const [vargaListFilter, setVargaListFilter] = useState<'shodash' | 'all60'>('shodash');
 
-  // Kundali Input Form State - clean neutral default profile
-  const [name, setName] = useState('श्री जातक');
-  const [dob, setDob] = useState('1995-01-01');
-  const [tob, setTob] = useState('12:00');
+  // Kundali Input Form State — empty until the user enters a real native
+  const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
+  const [tob, setTob] = useState('');
   const [selectedCity, setSelectedCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
 
@@ -188,12 +209,12 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
 
   // Ashtakoot Milan Boy & Girl Form
-  const [boyName, setBoyName] = useState('वर (Boy)');
-  const [boyDob, setBoyDob] = useState('1996-03-20');
-  const [boyTob, setBoyTob] = useState('10:15');
-  const [girlName, setGirlName] = useState('कन्या (Girl)');
-  const [girlDob, setGirlDob] = useState('1998-08-12');
-  const [girlTob, setGirlTob] = useState('14:45');
+  const [boyName, setBoyName] = useState('');
+  const [boyDob, setBoyDob] = useState('');
+  const [boyTob, setBoyTob] = useState('');
+  const [girlName, setGirlName] = useState('');
+  const [girlDob, setGirlDob] = useState('');
+  const [girlTob, setGirlTob] = useState('');
   const [isDownloadingMilanPdf, setIsDownloadingMilanPdf] = useState(false);
 
   // Prashna Question State
@@ -205,8 +226,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [inspectedAntar, setInspectedAntar] = useState<string>('');
   const [dashaViewLevel, setDashaViewLevel] = useState<'all' | 'maha' | 'antar' | 'pratyantar'>('maha');
 
-  // Annual Subscription State (₹99 / Year)
-  const [subStatus, setSubStatus] = useState<SubscriptionStatus>(() => getSubscriptionStatus());
+  const { status: subStatus } = useLicense();
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [subscriptionReason, setSubscriptionReason] = useState<string>('');
 
@@ -249,29 +269,39 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   // Handle Calculate or Recalculate
   const handleCalculate = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed || !dob || !tob) {
+      setFormError('कृपया जातक का नाम, सही जन्म तिथि और जन्म समय भरें। कोई भी पूर्व-भरी कुंडली नहीं चलेगी।');
+      setIsFormExpanded(true);
+      return;
+    }
     const [y, m, d] = dob.split('-').map(Number);
+    if (!y || !m || !d) {
+      setFormError('जन्म तिथि सही प्रारूप में लिखें।');
+      return;
+    }
     const dateObj = new Date(y, m - 1, d);
+    if (Number.isNaN(dateObj.getTime()) || y < 1800 || y > 2100) {
+      setFormError('जन्म तिथि 1800–2100 के बीच होनी चाहिए।');
+      return;
+    }
     const k = calculateKundali(
-      name.trim() || 'जातक',
+      trimmed,
       dateObj,
       tob,
       selectedCity.name,
       selectedCity.latitude,
       selectedCity.longitude
     );
+    setFormError(null);
     setActiveKundali(k);
     saveKundaliProfile(k);
     setIsFormExpanded(false);
+    setKundaliTab('phalit');
   };
 
-  // If no active kundali yet, initialize with current form inputs
-  useEffect(() => {
-    if (!activeKundali) {
-      handleCalculate();
-    }
-  }, [activeKundali]);
-
   const k = activeKundali;
+  const analysis = useMemo(() => (k ? analyzeKundali(k) : null), [k]);
 
   // Initialize inspected dasha on active kundali
   useEffect(() => {
@@ -282,9 +312,14 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   }, [k?.mahadasha, k?.antardasha]);
 
   // Milan calculation
-  const boyKundali = calculateKundali(boyName, new Date(boyDob), boyTob, currentLocation.name);
-  const girlKundali = calculateKundali(girlName, new Date(girlDob), girlTob, currentLocation.name);
-  const milanResult = calculateAshtakootMilan(boyKundali, girlKundali);
+  const milanReady = Boolean(boyName.trim() && boyDob && boyTob && girlName.trim() && girlDob && girlTob);
+  const boyKundali = milanReady
+    ? calculateKundali(boyName.trim(), new Date(boyDob), boyTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
+    : null;
+  const girlKundali = milanReady
+    ? calculateKundali(girlName.trim(), new Date(girlDob), girlTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
+    : null;
+  const milanResult = boyKundali && girlKundali ? calculateAshtakootMilan(boyKundali, girlKundali) : null;
 
   // Remedies calculation
   const remedies = k ? getVedicRemedies(k) : null;
@@ -321,9 +356,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       : [];
 
   const handleDownloadMilanPdf = async () => {
-    if (!subStatus.isSubscribed) {
+    if (!subStatus.entitled) {
       setSubscriptionReason('विवाह मिलान पत्रिका PDF डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
       setIsSubscriptionModalOpen(true);
+      return;
+    }
+    if (!boyKundali || !girlKundali || !milanResult) {
+      setFormError('वर और कन्या दोनों का नाम, जन्म तिथि और समय भरें।');
       return;
     }
     try {
@@ -352,7 +391,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [isGeneratingSinglePdf, setIsGeneratingSinglePdf] = useState(false);
 
   const handleDownloadSinglePageKundaliPdf = async () => {
-    if (!subStatus.isSubscribed) {
+    if (!subStatus.entitled) {
       setSubscriptionReason('जन्मपत्रिका PDF डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
       setIsSubscriptionModalOpen(true);
       return;
@@ -373,8 +412,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       const res = await downloadBhojpatraPdf({
         title: `वैदिक_जन्म_पत्रिका_${k.name}`,
         panchang: panchangData,
-        query: `${k.name} की जन्म कुंडली, लग्न व ग्रह विवरण`,
-        answer: `लग्न: ${k.lagnaRashi}, चन्द्र राशि: ${k.moonRashi}, नक्षत्र: ${k.nakshatra} (चरण ${k.charan}), वर्तमान महादशा: ${k.mahadasha}, अन्तर्दशा: ${k.antardasha}। लग्न चक्र एवं नवमांश चक्र सहित ग्रह स्पष्ट तालिका।`,
+        query: `${k.name} की जन्म कुंडली — लग्न, ग्रह, दशा व फलादेश`,
+        answer: professionalPdfAnswer(k),
         activeKundali: k,
         locationName: k.birthPlace,
         date: birthDateObj,
@@ -397,7 +436,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   };
 
   const handleDownload59PagePdf = async () => {
-    if (!subStatus.isSubscribed) {
+    if (!subStatus.entitled) {
       setSubscriptionReason('सम्पूर्ण 59-पृष्ठीय महा-जन्मपत्रिका सचित्र PDF तैयार व डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
       setIsSubscriptionModalOpen(true);
       return;
@@ -439,7 +478,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     ALL_D1_TO_D60_VARGAS.find((v) => v.division === selectedVarga) || ALL_D1_TO_D60_VARGAS[0];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-3 sm:space-y-6 animate-in fade-in duration-300">
       {/* 59-Page PDF Generating Progress Overlay Modal */}
       {isGeneratingPdf && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
@@ -555,7 +594,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </button>
 
               {/* Annual Subscription Pill */}
-              {subStatus.isSubscribed ? (
+              {subStatus.entitled ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -585,9 +624,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           </div>
         </div>
       ) : (
-        <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h3 className="text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
+        <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-5 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 className="text-sm sm:text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
               <User className="w-5 h-5 text-[#B56A00]" />
               जन्म विवरण दर्ज करें (Birth Details)
             </h3>
@@ -641,7 +680,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </button>
 
               {/* Annual Subscription Pill */}
-              {subStatus.isSubscribed ? (
+              {subStatus.entitled ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -728,18 +767,21 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs sm:text-sm font-bold rounded-lg shadow-sm transition cursor-pointer"
+                  className="px-6 py-2 min-h-11 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs sm:text-sm font-bold rounded-lg shadow-sm transition cursor-pointer"
                 >
-                  कुंडली बनाएँ / अद्यतन करें (Generate)
+                  कुंडली बनाएँ
                 </button>
               </div>
             </div>
+            {formError && (
+              <p className="sm:col-span-2 md:col-span-4 text-xs font-bold text-vermilion">{formError}</p>
+            )}
           </form>
         </div>
       )}
 
       {/* Non-Subscribed Banner Alert */}
-      {!subStatus.isSubscribed && (
+      {!subStatus.entitled && (
         <div className="bg-gradient-to-r from-[#8B1E1E] via-[#A84318] to-[#5C3A21] rounded-xl p-4 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-3.5 border-2 border-amber-400/60">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center shrink-0 shadow-xs font-black">
@@ -768,9 +810,22 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         </div>
       )}
 
+      {!k && (
+        <div className="bg-parchment border border-wood/40 rounded-xl p-6 text-center space-y-2">
+          <User className="w-8 h-8 text-gold mx-auto" />
+          <h3 className="font-granth font-bold text-temple text-base">नई कुंडली — कोई पूर्व-भरा जातक नहीं</h3>
+          <p className="text-sm text-muted max-w-xl mx-auto leading-relaxed">
+            पैक में किसी व्यक्ति की डिफ़ॉल्ट कुंडली नहीं है। ऊपर जातक का नाम, जन्म तिथि, सही जन्म समय और स्थान भरकर
+            <strong> कुंडली बनाएँ</strong> दबाएँ। उसी चार्ट से फलादेश और PDF बनेगा।
+          </p>
+        </div>
+      )}
+
       {/* Sub-Navigation Tabs */}
+      <CalcSettingsPanel compact />
       <div className="flex border-b border-[#8C6239]/30 overflow-x-auto no-scrollbar gap-1">
         {[
+          { id: 'phalit', label: 'फलादेश (Prediction)', icon: Sparkles },
           { id: 'chart', label: 'लग्न व सम्पूर्ण वर्ग चक्र (D1 से D60)', icon: Layers },
           { id: 'dasha', label: 'विंशोत्तरी महादशा / अंतर्दशा / प्रत्यंतर', icon: Clock },
           { id: 'milan', label: 'कुंडली मिलान (36 गुण व मांगलिक)', icon: Heart },
@@ -795,6 +850,48 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           );
         })}
       </div>
+
+      {/* Tab: chart-specific professional phaladesh */}
+      {kundaliTab === 'phalit' && k && analysis && (
+        <div className="space-y-4">
+          <div className="bg-parchment border border-wood/40 rounded-xl p-4 space-y-2">
+            <h3 className="font-granth font-bold text-temple">इस जातक का सार — {k.name}</h3>
+            {analysis.summaryLines.map((line) => (
+              <p key={line} className="text-sm text-ink leading-relaxed">{line}</p>
+            ))}
+            <p className="text-sm text-muted leading-relaxed">{analysis.dashaNarrative}</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {analysis.areas.map((area) => (
+              <article key={area.id} className="bg-parchment border border-wood/30 rounded-xl p-4 space-y-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="font-bold text-sm text-temple">{area.title}</h4>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap ${
+                    area.strength === 'उच्च' ? 'bg-leaf text-temple' : area.strength === 'सावधानी' ? 'bg-vermilion/15 text-vermilion' : 'bg-sand text-temple'
+                  }`}>{area.strength}</span>
+                </div>
+                <p className="text-sm text-ink leading-relaxed"><span className="font-bold">निष्कर्ष: </span>{area.finding}</p>
+                <p className="text-xs text-muted leading-relaxed"><span className="font-bold">कारण: </span>{area.why}</p>
+                <p className="text-xs text-muted"><span className="font-bold">समय: </span>{area.timing}</p>
+                <p className="text-xs text-ink"><span className="font-bold">सावधानी: </span>{area.caution}</p>
+                <p className="text-xs text-temple"><span className="font-bold">उपाय: </span>{area.remedy}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="bg-parchment border border-wood/40 rounded-xl p-4 space-y-2">
+            <h4 className="font-bold text-sm text-temple">योग</h4>
+            {analysis.yogas.map((y) => <p key={y} className="text-sm text-ink leading-relaxed">• {y}</p>)}
+            <h4 className="font-bold text-sm text-temple pt-2">दोष विचार</h4>
+            {analysis.doshas.map((y) => <p key={y} className="text-sm text-ink leading-relaxed">• {y}</p>)}
+          </div>
+        </div>
+      )}
+
+      {kundaliTab === 'phalit' && !k && (
+        <p className="text-sm text-muted p-4">फलादेश के लिए पहले जन्म विवरण भरकर कुंडली बनाएँ।</p>
+      )}
 
       {/* Tab 1: Charts & Shodashvarga (D1 to D60) */}
       {kundaliTab === 'chart' && k && (
@@ -1671,6 +1768,11 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </div>
 
               {/* Milan Result Banner with Bhojpatra PDF Download Button */}
+              {!milanResult ? (
+                <div className="bg-leaf border border-wood/40 rounded-xl p-5 text-sm text-muted">
+                  वर और कन्या दोनों का पूरा नाम, जन्म तिथि और समय भरें — तब ही मिलान बनेगा। पैक में कोई पूर्व-भरी कुंडली नहीं है।
+                </div>
+              ) : (
               <div className="bg-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-xl p-5 shadow-sm space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#8C6239]/20 pb-3">
                   <div>
@@ -1714,6 +1816,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   {milanResult.verdict}
                 </p>
               </div>
+              )}
 
               {/* Bottom Pagination */}
               <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
@@ -1731,7 +1834,12 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           )}
 
           {/* Sub-Page 2: 8 Kootas Detailed Table */}
-          {milanSubPage === 'ashtakoot' && (
+          {milanSubPage === 'ashtakoot' && !milanResult && (
+            <div className="bg-leaf border border-wood/40 rounded-xl p-5 text-sm text-muted">
+              पहले वर-कन्या का जन्म विवरण भरें।
+            </div>
+          )}
+          {milanSubPage === 'ashtakoot' && milanResult && (
             <div className="space-y-4">
               <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl overflow-hidden shadow-xs">
                 <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] font-bold text-xs uppercase tracking-wider flex items-center justify-between">
@@ -1790,7 +1898,12 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           )}
 
           {/* Sub-Page 3: Manglik, Nadi, Bhakoot Dosha & Twin Charts */}
-          {milanSubPage === 'manglik' && (
+          {milanSubPage === 'manglik' && !milanResult && (
+            <div className="bg-leaf border border-wood/40 rounded-xl p-5 text-sm text-muted">
+              पहले वर-कन्या का जन्म विवरण भरें।
+            </div>
+          )}
+          {milanSubPage === 'manglik' && milanResult && boyKundali && girlKundali && (
             <div className="space-y-4">
               {/* Manglik, Nadi & Bhakoot Dosha Comprehensive Analysis */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2031,7 +2144,6 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       <SubscriptionModal
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
-        onSubscribed={(newStatus) => setSubStatus(newStatus)}
         reason={subscriptionReason}
       />
     </div>

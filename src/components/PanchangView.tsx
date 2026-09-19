@@ -24,11 +24,16 @@ import { getAuspiciousWindows, getInauspiciousWindows } from '../services/chogha
 import { DISHASHOOL_MAP, DISHASHOOL_REMEDIES } from '../services/disha';
 import { downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
+import { useLicense } from '@/lib/license-client';
+import { formatPlaceTime } from '../services/engine/time';
+import { CalcSettingsPanel } from './CalcSettingsPanel';
+import { AccuracyPanel } from './AccuracyPanel';
 
 interface PanchangViewProps {
   panchang: VedicPanchangData;
   onNavigateTab: (tab: string) => void;
   onOpenUmaModal?: () => void;
+  onOpenPremium?: (reason?: string) => void;
   locationName?: string;
 }
 
@@ -38,8 +43,10 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   panchang,
   onNavigateTab,
   onOpenUmaModal,
+  onOpenPremium,
   locationName,
 }) => {
+  const { status, assertEntitled } = useLicense();
   const [subPage, setSubPage] = useState<PanchangSubPage>('anga');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
@@ -59,11 +66,15 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   const dishaShool = DISHASHOOL_MAP[weekday] || 'अज्ञात';
   const dishaRemedy = DISHASHOOL_REMEDIES[weekday] || '';
 
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+  const fmt = (d: Date) => formatPlaceTime(d, 23.1765, 75.7885);
 
   const handleDownloadTodayBhojpatra = async () => {
     try {
+      if (!status.entitled) {
+        onOpenPremium?.('भोजपत्र PDF के लिए 7 दिन का निःशुल्क परीक्षण या ₹99/वर्ष सदस्यता आवश्यक है।');
+        return;
+      }
+      await assertEntitled();
       setIsDownloadingPdf(true);
       const defaultGuidance = `॥ ॐ श्री गणेशाय नमः ॥\n\nआज ${panchang.weekday}, ${panchang.paksha} पक्ष की ${panchang.tithi} तिथि है। नक्षत्र ${panchang.nakshatra} (चरण ${panchang.pada}) तथा योग ${panchang.yoga} है। संवत्सर ${panchang.samvat} गतिशील है।\n\nशास्त्रानुसार आज सूर्य देव ${panchang.solarRashi} में एवं चंद्र देव ${panchang.lunarRashi} में स्थित हैं। आज के दिन प्रातःकाल सूर्य अर्घ्य तथा सात्विक कार्य सिद्धि हेतु अनुकूल समय का चयन करें। राहुकाल के समय किसी नवीन कार्य का आरंभ न करें।\n\n॥ शुभम् भवतु • कल्याणमस्तु ॥`;
 
@@ -165,6 +176,12 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 <p className="text-[11px] sm:text-xs text-[#735133] mt-0.5">
                   {panchang.samvat} • {panchang.sakaSamvat}
                 </p>
+                {panchang.tithiSpan && (
+                  <p className="text-[11px] text-[#5C3A21] mt-1 font-semibold">
+                    तिथि {fmt(panchang.tithiSpan.start)} → {fmt(panchang.tithiSpan.end)}
+                    <span className="text-[#8C6239] font-medium"> · अगली {panchang.tithiSpan.nextName}</span>
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
@@ -233,18 +250,33 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               <div className="text-[10px] font-bold text-[#8C6239]">२. नक्षत्र</div>
               <div className="text-base font-black text-[#5C3A21] truncate">{panchang.nakshatra}</div>
               <div className="text-[10px] text-[#735133]">चरण {panchang.pada}</div>
+              {panchang.nakshatraSpan && (
+                <div className="text-[9px] text-[#8C6239] mt-0.5">
+                  {fmt(panchang.nakshatraSpan.start)}–{fmt(panchang.nakshatraSpan.end)}
+                </div>
+              )}
             </div>
 
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
               <div className="text-[10px] font-bold text-[#8C6239]">३. योग</div>
               <div className="text-base font-black text-[#5C3A21] truncate">{panchang.yoga}</div>
               <div className="text-[10px] text-[#735133]">योग {panchang.yogaNumber}/27</div>
+              {panchang.yogaSpan && (
+                <div className="text-[9px] text-[#8C6239] mt-0.5">
+                  {fmt(panchang.yogaSpan.start)}–{fmt(panchang.yogaSpan.end)}
+                </div>
+              )}
             </div>
 
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
               <div className="text-[10px] font-bold text-[#8C6239]">४. करण</div>
               <div className="text-base font-black text-[#5C3A21] truncate">{panchang.karana}</div>
               <div className="text-[10px] text-[#735133]">संख्या {panchang.karanaNumber}</div>
+              {panchang.karanaSpan && (
+                <div className="text-[9px] text-[#8C6239] mt-0.5">
+                  {fmt(panchang.karanaSpan.start)}–{fmt(panchang.karanaSpan.end)}
+                </div>
+              )}
             </div>
           </div>
 
@@ -310,6 +342,26 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               </div>
             </div>
           </div>
+
+          {panchang.dayWindows && panchang.dayWindows.length > 0 && (
+            <div className="grid grid-cols-2 gap-2">
+              {panchang.dayWindows.map((w) => (
+                <div
+                  key={w.title}
+                  className={`rounded-xl p-2.5 border ${
+                    w.kind === "shubh"
+                      ? "bg-emerald-50 border-emerald-200"
+                      : "bg-rose-50 border-rose-200"
+                  }`}
+                >
+                  <div className="text-[11px] font-black text-[#5C3A21]">{w.title}</div>
+                  <div className="text-xs font-bold text-[#3E2714]">
+                    {fmt(w.start)} – {fmt(w.end)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Key Auspicious & Inauspicious Periods */}
           <div className="space-y-2">
@@ -398,9 +450,14 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               <span>अयनांश: <strong>{panchang.ayanamshaName}</strong> ({panchang.ayanamsha.toFixed(4)}°)</span>
             </div>
             <div className="text-[11px] text-[#8C6239]">
-              खगोलीय गणना: चित्रपक्षीय / लाहिरी
+              {panchang.engineCheck
+                ? `XALEN↔मीयस सूर्य ${panchang.engineCheck.sunDeltaArcsec.toFixed(0)}″ चंद्र ${panchang.engineCheck.moonDeltaArcsec.toFixed(0)}″`
+                : "XALEN + मीयस • Swiss नहीं"}
             </div>
           </div>
+
+          <CalcSettingsPanel />
+          <AccuracyPanel date={panchang.date} />
 
           {/* Navigation Shortcuts */}
           <div className="grid grid-cols-2 gap-2 pt-1">
