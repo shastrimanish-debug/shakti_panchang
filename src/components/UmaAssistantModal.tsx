@@ -91,6 +91,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   panchang,
   activeKundali,
   onNavigateTab,
+  isAudioEnabled = true,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -110,6 +111,43 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const greetingSpoken = useRef(false);
+
+  const pickHindiVoice = () => {
+    if (!('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    return (
+      voices.find((v) => v.lang.toLowerCase().startsWith('hi')) ||
+      voices.find((v) => /hindi|हिन्दी/i.test(v.name)) ||
+      voices.find((v) => v.lang.toLowerCase().includes('in')) ||
+      null
+    );
+  };
+
+  const speakHindi = (text: string, id: string) => {
+    if (!('speechSynthesis' in window) || !isAudioEnabled) return;
+    const synth = window.speechSynthesis;
+    if (playingVoiceId === id) {
+      synth.cancel();
+      setPlayingVoiceId(null);
+      return;
+    }
+    synth.cancel();
+    synth.resume();
+    const cleanText = text.replace(/[*_#•॥]/g, ' ').replace(/\n+/g, '। ').slice(0, 1400);
+    const utter = new SpeechSynthesisUtterance(cleanText);
+    utter.lang = 'hi-IN';
+    utter.rate = 0.92;
+    const voice = pickHindiVoice();
+    if (voice) utter.voice = voice;
+    utter.onend = () => setPlayingVoiceId(null);
+    utter.onerror = () => setPlayingVoiceId(null);
+    setPlayingVoiceId(id);
+    window.setTimeout(() => {
+      synth.resume();
+      synth.speak(utter);
+    }, 60);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -117,13 +155,28 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     }
   }, [messages, isOpen]);
 
-  // Stop TTS voice on close
   useEffect(() => {
-    if (!isOpen && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (!('speechSynthesis' in window)) return;
+    const load = () => window.speechSynthesis.getVoices();
+    load();
+    window.speechSynthesis.addEventListener('voiceschanged', load);
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', load);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      greetingSpoken.current = false;
+      window.speechSynthesis?.cancel();
       setPlayingVoiceId(null);
+      return;
     }
-  }, [isOpen]);
+    if (!isAudioEnabled || greetingSpoken.current) return;
+    greetingSpoken.current = true;
+    const greeting = `प्रणाम! मैं उमा हूँ। आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि है। आप मुझसे पूछ सकते हैं।`;
+    const t = window.setTimeout(() => speakHindi(greeting, 'init_1'), 400);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, isAudioEnabled]);
 
   if (!isOpen) return null;
 
@@ -165,26 +218,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   };
 
   const handleSpeak = (text: string, id: string) => {
-    if (!('speechSynthesis' in window)) return;
-
-    if (playingVoiceId === id) {
-      window.speechSynthesis.cancel();
-      setPlayingVoiceId(null);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    // Strip markdown formatting for cleaner speech
-    const cleanText = text.replace(/[*_#•]/g, '').replace(/\n+/g, '। ');
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'hi-IN';
-    utterance.rate = 0.95;
-
-    utterance.onend = () => setPlayingVoiceId(null);
-    utterance.onerror = () => setPlayingVoiceId(null);
-
-    setPlayingVoiceId(id);
-    window.speechSynthesis.speak(utterance);
+    speakHindi(text, id);
   };
 
   const handleCopy = (text: string, id: string) => {
@@ -311,6 +345,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       };
 
       setMessages((prev) => [...prev, umaMsg]);
+      speakHindi(answer, umaMsg.id);
     } catch {
       setMessages((prev) => [
         ...prev,
