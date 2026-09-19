@@ -3,6 +3,7 @@ import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows } from '../services/choghadiya';
 import { askUma } from '@/lib/uma';
+import { speakUma, stopUmaSpeech } from '@/lib/umaSpeech';
 import { analyzeKundali } from '../services/predictions';
 import {
   X,
@@ -113,40 +114,15 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const recognitionRef = useRef<any>(null);
   const greetingSpoken = useRef(false);
 
-  const pickHindiVoice = () => {
-    if (!('speechSynthesis' in window)) return null;
-    const voices = window.speechSynthesis.getVoices();
-    return (
-      voices.find((v) => v.lang.toLowerCase().startsWith('hi')) ||
-      voices.find((v) => /hindi|हिन्दी/i.test(v.name)) ||
-      voices.find((v) => v.lang.toLowerCase().includes('in')) ||
-      null
-    );
-  };
-
   const speakHindi = (text: string, id: string) => {
-    if (!('speechSynthesis' in window) || !isAudioEnabled) return;
-    const synth = window.speechSynthesis;
+    if (!isAudioEnabled) return;
     if (playingVoiceId === id) {
-      synth.cancel();
+      stopUmaSpeech();
       setPlayingVoiceId(null);
       return;
     }
-    synth.cancel();
-    synth.resume();
-    const cleanText = text.replace(/[*_#•॥]/g, ' ').replace(/\n+/g, '। ').slice(0, 1400);
-    const utter = new SpeechSynthesisUtterance(cleanText);
-    utter.lang = 'hi-IN';
-    utter.rate = 0.92;
-    const voice = pickHindiVoice();
-    if (voice) utter.voice = voice;
-    utter.onend = () => setPlayingVoiceId(null);
-    utter.onerror = () => setPlayingVoiceId(null);
     setPlayingVoiceId(id);
-    window.setTimeout(() => {
-      synth.resume();
-      synth.speak(utter);
-    }, 60);
+    void speakUma(text).finally(() => setPlayingVoiceId(null));
   };
 
   useEffect(() => {
@@ -172,9 +148,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     }
     if (!isAudioEnabled || greetingSpoken.current) return;
     greetingSpoken.current = true;
-    const greeting = `प्रणाम! मैं उमा हूँ। आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि है। आप मुझसे पूछ सकते हैं।`;
-    const t = window.setTimeout(() => speakHindi(greeting, 'init_1'), 400);
-    return () => window.clearTimeout(t);
+    // Greeting is spoken from the UMA open click (user gesture). Do not delay.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isAudioEnabled]);
 
@@ -232,6 +206,22 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     const weekday = panchang.date.getDay();
     const formatT = (d: Date) =>
       d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+
+    if (
+      q.includes('डेटा') ||
+      q.includes('data') ||
+      q.includes('डाटा') ||
+      q.includes('mera data') ||
+      q.includes('मेरा डेटा')
+    ) {
+      const kundaliLine = activeKundali
+        ? `सेव कुंडली: ${activeKundali.name}, लग्न ${activeKundali.lagnaRashi}, चंद्र ${activeKundali.moonRashi}, नक्षत्र ${activeKundali.nakshatra}, महादशा ${activeKundali.mahadasha}।`
+        : 'अभी कोई सक्रिय कुंडली नहीं है। कुंडली अध्याय में जन्म विवरण भरें।';
+      return {
+        text: `॥ आपका वर्तमान डेटा ॥\nआज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}, योग ${panchang.yoga}, करण ${panchang.karana}।\n${kundaliLine}\nआप राहुकाल, चौघड़िया, यात्रा या कुंडली फल भी पूछ सकते हैं।`,
+        actionPayload: { type: 'open_panchang', label: 'पंचांग देखें' },
+      };
+    }
 
     if (q.includes('राहु') || q.includes('rahu') || q.includes('अशुभ समय')) {
       const inauspicious = getInauspiciousWindows(panchang.solar, weekday);
@@ -311,33 +301,31 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     setIsLoading(true);
 
     try {
-      // Attempt backend call to /api/uma-chat if server is alive
-      const analysis = activeKundali ? analyzeKundali(activeKundali) : null;
-      const panchangCtx = `वार: ${panchang.weekday}, तिथि: ${panchang.paksha} ${panchang.tithi} (${panchang.tithiSpan ? 'सीमा सहित' : ''}), नक्षत्र: ${panchang.nakshatra}, योग: ${panchang.yoga}, करण: ${panchang.karana}`;
-      const kundaliCtx = activeKundali
-        ? `जातक: ${activeKundali.name}, लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}-${activeKundali.antardasha}-${activeKundali.pratyantardasha}. ${analysis?.dashaNarrative ?? ''} गोचर: ${(analysis?.yearPhala ?? []).slice(1, 3).join(' ')}`
-        : 'सामान्य';
-
-      let answer = '';
-      let actionPayload: ChatMessage['actionPayload'] | undefined;
+      const offlineResult = generateOfflineResponse(text);
+      let answer = offlineResult.text;
+      let actionPayload = offlineResult.actionPayload;
+      const umaId = `uma_${Date.now() + 1}`;
+      speakHindi(answer, umaId);
 
       try {
+        const analysis = activeKundali ? analyzeKundali(activeKundali) : null;
+        const panchangCtx = `वार: ${panchang.weekday}, तिथि: ${panchang.paksha} ${panchang.tithi}, नक्षत्र: ${panchang.nakshatra}, योग: ${panchang.yoga}, करण: ${panchang.karana}`;
+        const kundaliCtx = activeKundali
+          ? `जातक: ${activeKundali.name}, लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}`
+          : 'सामान्य';
         const data = await askUma({
           data: { query: text, panchangContext: panchangCtx, kundaliContext: kundaliCtx },
         });
-        if (data.ok && data.text) answer = data.text;
+        if (data.ok && data.text) {
+          answer = data.text;
+          actionPayload = undefined;
+        }
       } catch {
-        // Handled by offline fallback
-      }
-
-      if (!answer) {
-        const offlineResult = generateOfflineResponse(text);
-        answer = offlineResult.text;
-        actionPayload = offlineResult.actionPayload;
+        /* keep offline */
       }
 
       const umaMsg: ChatMessage = {
-        id: `uma_${Date.now() + 1}`,
+        id: umaId,
         sender: 'uma',
         text: answer,
         timestamp: new Date(),
@@ -345,7 +333,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       };
 
       setMessages((prev) => [...prev, umaMsg]);
-      speakHindi(answer, umaMsg.id);
+      if (answer !== offlineResult.text) speakHindi(answer, umaId);
     } catch {
       setMessages((prev) => [
         ...prev,

@@ -20,6 +20,7 @@ import { calculateVedicPanchang } from './services/astronomy';
 import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES, FLIP_BOOK_CHAPTERS } from './constants/bookPages';
 import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { unlockUmaSpeech, speakUma } from './lib/umaSpeech';
 
 function playTactilePageTurnSound() {
   try {
@@ -93,6 +94,16 @@ export function App() {
   const prevTabMeta = BOOK_PAGES[prevIndex];
   const nextTabMeta = BOOK_PAGES[nextIndex];
 
+  const openUma = useCallback(() => {
+    unlockUmaSpeech();
+    if (isAudioEnabled) {
+      void speakUma(
+        `प्रणाम! मैं उमा हूँ। आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि है। आप मुझसे पूछ सकते हैं।`
+      );
+    }
+    setIsUmaModalOpen(true);
+  }, [isAudioEnabled, panchang]);
+
   const notifyPageTurn = useCallback((pageTitle: string, pageNum: number) => {
     setPageTurnNotice(`📖 पृष्ठ ${pageNum} : ${pageTitle}`);
     const timer = setTimeout(() => setPageTurnNotice(null), 2000);
@@ -148,7 +159,7 @@ export function App() {
         }}
         currentLocationName={currentLocation.name}
         onOpenLocation={() => setIsLocationModalOpen(true)}
-        onOpenUma={() => setIsUmaModalOpen(true)}
+        onOpenUma={openUma}
         onOpenPremium={() => {
           setPremiumReason('');
           setIsPremiumModalOpen(true);
@@ -159,12 +170,12 @@ export function App() {
           key={page.id}
           page={page}
           onOpenChapter={() => handleSelectTab(page.id)}
-          onOpenUma={() => setIsUmaModalOpen(true)}
+          onOpenUma={openUma}
         />
       )),
-      <BookBackCover key="back" onOpenUma={() => setIsUmaModalOpen(true)} />,
+      <BookBackCover key="back" onOpenUma={openUma} />,
     ],
-    [currentLocation.name, handleSelectTab, isAudioEnabled]
+    [currentLocation.name, handleSelectTab, isAudioEnabled, openUma]
   );
 
   return (
@@ -174,7 +185,7 @@ export function App() {
         currentDate={currentDate}
         onDateChange={setCurrentDate}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
-        onOpenUmaModal={() => setIsUmaModalOpen(true)}
+        onOpenUmaModal={openUma}
         onOpenInstallModal={() => setIsInstallModalOpen(true)}
         onOpenPremium={() => {
           setPremiumReason('');
@@ -240,7 +251,7 @@ export function App() {
                 <PanchangView
                   panchang={panchang}
                   onNavigateTab={handleSelectTab}
-                  onOpenUmaModal={() => setIsUmaModalOpen(true)}
+                  onOpenUmaModal={openUma}
                   onOpenPremium={(reason) => {
                     setPremiumReason(reason || '');
                     setIsPremiumModalOpen(true);
@@ -279,7 +290,7 @@ export function App() {
       {isBookOpen && (
         <aside aria-label="Floating Vedic Assistant" className="hidden sm:block fixed bottom-3 right-3 z-30">
           <button
-            onClick={() => setIsUmaModalOpen(true)}
+            onClick={openUma}
             className="flex items-center gap-1.5 px-3 py-2 bg-temple hover:bg-temple-deep text-parchment border border-gold rounded-full shadow-lg"
           >
             <Sparkles className="w-4 h-4 text-gold-bright" />
