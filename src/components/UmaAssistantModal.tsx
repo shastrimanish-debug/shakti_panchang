@@ -268,7 +268,29 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       };
     }
 
-    if (q.includes('कुंडली') || q.includes('दशा') || q.includes('ग्रह योग')) {
+    if (q.includes('सूर्योदय') || q.includes('सूर्यास्त') || q.includes('ब्रह्म') || q.includes('sunrise') || q.includes('sunset')) {
+      const rise = panchang.solar.sunrise;
+      const set = panchang.solar.sunset;
+      const brahmaStart = new Date(rise.getTime() - 96 * 60000);
+      const brahmaEnd = new Date(rise.getTime() - 48 * 60000);
+      return {
+        text: `॥ सूर्य समय ॥\nस्थान के अनुसार आज सूर्योदय ${formatT(rise)}, सूर्यास्त ${formatT(set)}। ब्रह्म मुहूर्त लगभग ${formatT(brahmaStart)} से ${formatT(brahmaEnd)} तक।`,
+        actionPayload: { type: 'open_panchang', label: 'पंचांग पटल' },
+      };
+    }
+
+    if (q.includes('विवाह') || q.includes('शादी') || q.includes('गृह प्रवेश') || q.includes('मुहूर्त') || q.includes('शुभ है') || q.includes('करूँ') || q.includes('करूं')) {
+      const inauspicious = getInauspiciousWindows(panchang.solar, weekday);
+      const rahu = inauspicious.find((w) => w.title === 'राहु काल');
+      const dayChoghadiyas = getDayChoghadiya(panchang.solar, weekday);
+      const amrit = dayChoghadiyas.filter((c) => ['Amrit', 'Shubh', 'Labh'].includes(c.name));
+      return {
+        text: `॥ मुहूर्त विचार ॥\nआज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}। राहु काल ${rahu ? `${formatT(rahu.start)}–${formatT(rahu.end)}` : ''} में नया कार्य न करें। शुभ चौघड़िया: ${amrit.map((c) => `${c.hindiName} ${formatT(c.start)}–${formatT(c.end)}`).join(', ')}। विवाह/गृहप्रवेश के लिए लग्न और दोष भी कुंडली से देखें।`,
+        actionPayload: { type: 'open_choghadiya', label: 'शुभ समय देखें' },
+      };
+    }
+
+    if (q.includes('कुंडली') || q.includes('दशा') || q.includes('ग्रह योग') || q.includes('लग्न')) {
       if (activeKundali) {
         return {
           text: `॥ ॐ गुरवे नमः ॥\n**जातक:** ${activeKundali.name}\n• **लग्न राशि:** ${activeKundali.lagnaRashi}\n• **चंद्र राशि:** ${activeKundali.moonRashi} (${activeKundali.nakshatra})\n• **वर्तमान विंशोत्तरी महादशा:** ${activeKundali.mahadasha}\n• **अंतर्दशा:** ${activeKundali.antardasha}\n\n**ज्योतिषीय फलकथन:**\nलग्न एवं चंद्र राशि की युति जातक को प्रखर बुद्धि व सात्विक चेतना प्रदान करती है। वर्तमान महादशा में इष्टदेव का पूजन व नित्य गायत्री मंत्र अथवा अपने इष्ट मंत्र का जाप करने से कार्यों में निर्विघ्न प्रगति होगी।`,
@@ -281,14 +303,18 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       };
     }
 
+    const inauspicious = getInauspiciousWindows(panchang.solar, weekday);
+    const rahu = inauspicious.find((w) => w.title === 'राहु काल');
+    const shoolDir = DISHASHOOL_MAP[weekday];
     return {
-      text: `॥ शुभम् भवतु ॥\nआपकी जिज्ञासा के संदर्भ में शास्त्र सम्मत विचार:\nवैदिक सनातन परम्परा में कोई भी शुभ कार्य करते समय तिथि, वार, नक्षत्र, योग और करण (पञ्चाङ्ग) की शुद्धि अनिवार्य मानी गई है।\n\nआज का दिन ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि और ${panchang.nakshatra} नक्षत्र से युक्त है। अपने इष्टदेव का स्मरण कर, गुरु व माता-पिता का आशीर्वाद लेकर किया गया कार्य सदैव कल्याणकारी सिद्ध होता है।`,
+      text: `॥ उमा ॥\nआज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}, योग ${panchang.yoga}, करण ${panchang.karana}। सूर्योदय ${formatT(panchang.solar.sunrise)}, सूर्यास्त ${formatT(panchang.solar.sunset)}। राहु काल ${rahu ? `${formatT(rahu.start)} से ${formatT(rahu.end)}` : ''}। दिशाशूल: ${shoolDir}।\nआप राहुकाल, चौघड़िया, यात्रा, विवाह मुहूर्त या कुंडली भी पूछ सकते हैं।`,
+      actionPayload: { type: 'open_panchang', label: 'पंचांग देखें' },
     };
   };
 
   const handleSubmit = async (queryText: string) => {
-    if (!queryText.trim() || isLoading) return;
     const text = queryText.trim();
+    if (!text) return;
     setInputQuery('');
 
     const userMsg: ChatMessage = {
@@ -297,55 +323,39 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       text,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
+    const offlineResult = generateOfflineResponse(text);
+    const umaId = `uma_${Date.now() + 1}`;
+    const umaMsg: ChatMessage = {
+      id: umaId,
+      sender: 'uma',
+      text: offlineResult.text,
+      timestamp: new Date(),
+      actionPayload: offlineResult.actionPayload,
+    };
+    setMessages((prev) => [...prev, userMsg, umaMsg]);
+    speakHindi(offlineResult.text, umaId);
 
     try {
-      const offlineResult = generateOfflineResponse(text);
-      let answer = offlineResult.text;
-      let actionPayload = offlineResult.actionPayload;
-      const umaId = `uma_${Date.now() + 1}`;
-      speakHindi(answer, umaId);
-
-      try {
-        const analysis = activeKundali ? analyzeKundali(activeKundali) : null;
-        const panchangCtx = `वार: ${panchang.weekday}, तिथि: ${panchang.paksha} ${panchang.tithi}, नक्षत्र: ${panchang.nakshatra}, योग: ${panchang.yoga}, करण: ${panchang.karana}`;
-        const kundaliCtx = activeKundali
-          ? `जातक: ${activeKundali.name}, लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}`
-          : 'सामान्य';
-        const data = await askUma({
+      const analysis = activeKundali ? analyzeKundali(activeKundali) : null;
+      const panchangCtx = `वार: ${panchang.weekday}, तिथि: ${panchang.paksha} ${panchang.tithi}, नक्षत्र: ${panchang.nakshatra}, योग: ${panchang.yoga}, करण: ${panchang.karana}, सूर्योदय: ${panchang.solar.sunrise.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}`;
+      const kundaliCtx = activeKundali
+        ? `जातक: ${activeKundali.name}, लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}`
+        : 'सामान्य';
+      const data = await Promise.race([
+        askUma({
           data: { query: text, panchangContext: panchangCtx, kundaliContext: kundaliCtx },
-        });
-        if (data.ok && data.text) {
-          answer = data.text;
-          actionPayload = undefined;
-        }
-      } catch {
-        /* keep offline */
-      }
-
-      const umaMsg: ChatMessage = {
-        id: umaId,
-        sender: 'uma',
-        text: answer,
-        timestamp: new Date(),
-        actionPayload,
-      };
-
-      setMessages((prev) => [...prev, umaMsg]);
-      if (answer !== offlineResult.text) speakHindi(answer, umaId);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `uma_err_${Date.now()}`,
-          sender: 'uma',
-          text: '॥ क्षम्यताम् ॥ उत्तर तैयार करने में तकनीकी व्यवधान आया। कृपया पुनः प्रयास करें।',
-          timestamp: new Date(),
-        },
+        }),
+        new Promise<{ ok: false; error: string }>((resolve) =>
+          setTimeout(() => resolve({ ok: false, error: 'timeout' }), 8000)
+        ),
       ]);
-    } finally {
-      setIsLoading(false);
+      if (data && 'ok' in data && data.ok && data.text) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === umaId ? { ...m, text: data.text, actionPayload: undefined } : m))
+        );
+      }
+    } catch {
+      /* offline answer already shown */
     }
   };
 
@@ -604,7 +614,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
             <button
               type="submit"
-              disabled={!inputQuery.trim() || isLoading}
+              disabled={!inputQuery.trim()}
               className="px-4 py-2.5 sm:py-3 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] disabled:opacity-40 hover:from-[#5C1414] hover:to-[#4A1010] text-[#FAF2E4] font-bold rounded-xl transition shadow-md flex items-center gap-1.5 text-xs sm:text-sm font-serif cursor-pointer"
             >
               <span>पूछें</span>
