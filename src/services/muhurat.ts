@@ -160,6 +160,13 @@ export function getMuhuratGuidance(
       recommendations.push('राहुकाल व यमगण्ड काल का त्याग कर कार्य संपन्न करें।');
   }
 
+  reasons.unshift(
+    `आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}, योग ${panchang.yoga}, करण ${panchang.karana}।`
+  );
+  if (!recommendations.length) {
+    recommendations.push('राहुकाल व यमगण्ड काल का त्याग कर कार्य संपन्न करें।');
+  }
+
   const gradeText =
     grade === 'excellent'
       ? 'अति शुभ मुहूर्त'
@@ -188,4 +195,76 @@ export function getMuhuratGuidance(
     recommendations,
     reasons,
   };
+}
+
+export interface DailyMuhuratRow {
+  title: string;
+  start: string;
+  end: string;
+  kind: 'shubh' | 'tyajya';
+  note: string;
+}
+
+/** Today's named Vedic muhurat windows with Hindi labels and clock times. */
+export function getDailyMuhuratDetails(panchang: VedicPanchangData): DailyMuhuratRow[] {
+  const fmt = (d: Date) => formatPlaceTime(d);
+  const solar = panchang.solar;
+  const weekday = panchang.date.getDay();
+  const dayLen = solar.sunset.getTime() - solar.sunrise.getTime();
+  const slot = dayLen / 15;
+  const muhurta = 48 * 60000;
+  const nightMid = new Date(
+    solar.sunset.getTime() + (solar.nextSunrise.getTime() - solar.sunset.getTime()) / 2
+  );
+  const shubh = getAuspiciousWindows(solar);
+  const tyajya = getInauspiciousWindows(solar, weekday);
+  const pick = (title: string) => shubh.find((w) => w.title === title);
+
+  const brahma = pick('ब्रह्म मुहूर्त');
+  const abhijit = pick('अभिजित मुहूर्त');
+  const godhuli = pick('गोधूलि मुहूर्त');
+  const amrit = pick('अमृत काल');
+
+  const rows: DailyMuhuratRow[] = [];
+  const pushWin = (
+    title: string,
+    start: Date,
+    end: Date,
+    kind: 'shubh' | 'tyajya',
+    note: string
+  ) => {
+    rows.push({ title, start: fmt(start), end: fmt(end), kind, note });
+  };
+
+  if (brahma) pushWin(brahma.title, brahma.start, brahma.end, 'shubh', 'योग, जप, अध्ययन — दिन का श्रेष्ठ आरंभ');
+  pushWin('सूर्योदय', solar.sunrise, solar.sunrise, 'shubh', 'संध्या वंदन, स्नान, अर्घ्य, दान');
+  if (abhijit && weekday !== 3) {
+    pushWin('अभिजित मुहूर्त', abhijit.start, abhijit.end, 'shubh', 'विजय काल — बुधवार को त्याज्य, शेष दिन श्रेष्ठ');
+  } else if (abhijit) {
+    pushWin('अभिजित मुहूर्त', abhijit.start, abhijit.end, 'tyajya', 'बुधवार को अभिजित मुहूर्त वर्जित');
+  }
+  pushWin(
+    'विजय मुहूर्त',
+    new Date(solar.sunrise.getTime() + 10 * slot),
+    new Date(solar.sunrise.getTime() + 11 * slot),
+    'shubh',
+    'कार्यसिद्धि, यात्रा, नया आरंभ'
+  );
+  if (amrit) pushWin(amrit.title, amrit.start, amrit.end, 'shubh', 'मांगलिक व नवीन कार्य');
+  if (godhuli) pushWin(godhuli.title, godhuli.start, godhuli.end, 'shubh', 'गृह प्रवेश, गो-सेवा, सांध्य पूजन');
+  pushWin('प्रदोष काल', solar.sunset, new Date(solar.sunset.getTime() + muhurta), 'shubh', 'शिव पूजन, दीपदान');
+  pushWin(
+    'निशीथ काल',
+    new Date(nightMid.getTime() - muhurta / 2),
+    new Date(nightMid.getTime() + muhurta / 2),
+    'tyajya',
+    'मध्यरात्रि — सामान्य शुभ कार्य न करें'
+  );
+  pushWin('सूर्यास्त', solar.sunset, solar.sunset, 'tyajya', 'संध्या बेला के बाद नया शुभ कार्य टालें');
+
+  for (const w of tyajya) {
+    pushWin(w.title, w.start, w.end, 'tyajya', w.description || 'नया शुभ कार्य न करें');
+  }
+
+  return rows;
 }

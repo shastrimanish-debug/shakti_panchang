@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { VedicPanchangData } from '../types';
-import { MUHURAT_ACTIVITIES, getMuhuratGuidance } from '../services/muhurat';
+import { MUHURAT_ACTIVITIES, getMuhuratGuidance, getDailyMuhuratDetails } from '../services/muhurat';
 import { DISHASHOOL_MAP } from '../services/disha';
 import { Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, ChevronRight, ChevronLeft, Clock, BookOpen } from 'lucide-react';
 
@@ -10,10 +10,11 @@ interface MuhuratViewProps {
 
 export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
   const [selectedActivity, setSelectedActivity] = useState(MUHURAT_ACTIVITIES[0]);
-  const [subPage, setSubPage] = useState<'windows' | 'guidance'>('windows');
+  const [subPage, setSubPage] = useState<'today' | 'windows' | 'guidance'>('today');
   const weekday = panchang.date.getDay();
   const shoolDirection = DISHASHOOL_MAP[weekday];
   const guidance = getMuhuratGuidance(selectedActivity, panchang, shoolDirection);
+  const dailyRows = getDailyMuhuratDetails(panchang);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
@@ -46,27 +47,33 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
       <div className="flex items-center justify-between gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
         <button
           type="button"
-          onClick={() => setSubPage('windows')}
-          className={`flex-1 py-2 px-2 text-center text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-            subPage === 'windows'
-              ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-              : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+          onClick={() => setSubPage('today')}
+          className={`flex-1 py-2 px-1 text-center text-[11px] sm:text-xs font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+            subPage === 'today' ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs' : 'text-[#8C6239] hover:bg-[#F4E8D1]'
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
-          <span>१. शुभ व त्याज्य समय</span>
+          <span>आज के मुहूर्त</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubPage('windows')}
+          className={`flex-1 py-2 px-1 text-center text-[11px] sm:text-xs font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+            subPage === 'windows' ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs' : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>कार्य अनुसार</span>
         </button>
         <button
           type="button"
           onClick={() => setSubPage('guidance')}
-          className={`flex-1 py-2 px-2 text-center text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-            subPage === 'guidance'
-              ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-              : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+          className={`flex-1 py-2 px-1 text-center text-[11px] sm:text-xs font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+            subPage === 'guidance' ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs' : 'text-[#8C6239] hover:bg-[#F4E8D1]'
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
-          <span>२. वैदिक विचार व नियम</span>
+          <span>वैदिक नियम</span>
         </button>
       </div>
 
@@ -84,6 +91,49 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
             {guidance.gradeText}
           </div>
         </div>
+
+        {subPage === 'today' && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              {[
+                ['वार', panchang.weekday],
+                ['तिथि', `${panchang.paksha} ${panchang.tithi}`],
+                ['नक्षत्र', panchang.nakshatra],
+                ['योग / करण', `${panchang.yoga} · ${panchang.karana}`],
+              ].map(([k, v]) => (
+                <div key={k} className="bg-[#F4E8D1] border border-[#8C6239]/25 rounded-lg p-2">
+                  <div className="text-[10px] font-bold text-[#8C6239] uppercase">{k}</div>
+                  <div className="font-black text-[#5C3A21] leading-tight">{v}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-[11px] font-bold text-[#8C6239]">
+              दिशाशूल आज: {shoolDirection} · स्थानीय सूर्योदय–सूर्यास्त से गणना
+            </div>
+            <div className="divide-y divide-[#8C6239]/15 border border-[#8C6239]/25 rounded-xl overflow-hidden">
+              {dailyRows.map((row) => (
+                <div
+                  key={row.title + row.start}
+                  className={`flex items-start justify-between gap-2 px-3 py-2 text-xs ${
+                    row.kind === 'shubh' ? 'bg-emerald-50/80' : 'bg-rose-50/70'
+                  }`}
+                >
+                  <div>
+                    <div className="font-black text-[#3E2714]">{row.title}</div>
+                    <div className="text-[11px] text-[#735133]">{row.note}</div>
+                  </div>
+                  <div
+                    className={`shrink-0 font-black px-2 py-0.5 rounded ${
+                      row.kind === 'shubh' ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-900'
+                    }`}
+                  >
+                    {row.start === row.end ? row.start : `${row.start}–${row.end}`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Sub-Page 1: Suitable & Avoid Windows */}
         {subPage === 'windows' && (

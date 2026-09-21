@@ -37,7 +37,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
 
   // Active Mode: 'century' (200 वर्षों में महा-खोज) vs 'year' (वार्षिक पंचांगीय पर्व सूची)
   // Default to century search to fulfill user's direct requirement of 100 years past and future
-  const [viewMode, setViewMode] = useState<'century' | 'year'>('century');
+  const [viewMode, setViewMode] = useState<'century' | 'year'>('year');
 
   // Single year filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,6 +70,18 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
   const yearFestivals = useMemo(() => {
     return getFestivalsForYear(selectedYear);
   }, [selectedYear]);
+
+  const upcomingHindi = useMemo(() => {
+    const start = new Date(currentDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 50);
+    const y = currentDate.getFullYear();
+    return [...getFestivalsForYear(y), ...getFestivalsForYear(y + 1)]
+      .filter((f) => f.date >= start && f.date <= end)
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 10);
+  }, [currentDate]);
 
   // Filtered list for the single year view
   const filteredYearList = useMemo(() => {
@@ -176,6 +188,27 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
+      {upcomingHindi.length > 0 && (
+        <div className="bg-[#FAF2E4] border-2 border-[#B56A00]/50 rounded-xl p-3 shadow-xs">
+          <h3 className="text-sm font-black font-granth text-[#5C3A21] mb-2">आगामी हिंदी त्योहार तिथियाँ</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            {upcomingHindi.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => onDateSelect?.(f.date)}
+                className="flex items-center justify-between gap-2 text-left px-2.5 py-1.5 rounded-lg bg-[#F4E8D1] border border-[#8C6239]/25 hover:bg-white cursor-pointer"
+              >
+                <span className="font-black text-[#5C3A21] text-sm">{f.hindiName}</span>
+                <span className="text-[11px] font-bold text-[#8C6239] shrink-0">
+                  {f.date.toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', weekday: 'short' })}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Top Header Card with Mode Switcher */}
       <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
