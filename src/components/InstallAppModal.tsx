@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ShaktiLogo } from './ShaktiLogo';
 import { Download, Smartphone, Globe, CheckCircle2, ExternalLink, X, ShieldCheck } from 'lucide-react';
 import {
   GITHUB_LATEST_RELEASE_URL,
@@ -72,14 +73,12 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ isOpen, onClos
         </button>
 
         <div className="flex items-center gap-3 border-b border-[#8C6239]/30 pb-3 mb-4">
-          <div className="p-2.5 bg-[#991B1B] text-[#FAF2DE] rounded-lg shadow-xs">
-            <Smartphone className="w-6 h-6" />
-          </div>
+          <ShaktiLogo size={46} className="shrink-0 shadow-md rounded-2xl" />
           <div>
-            <h3 className="font-bold text-base sm:text-lg text-[#5C3A21]">
-              शक्ति पंचांग - Web App & Android APK
+            <h3 className="font-bold text-base sm:text-lg text-[#5C3A21] font-granth">
+              शक्ति पंचांग - App & Android APK
             </h3>
-            <p className="text-xs text-[#735133]">फ़ोन व कंप्यूटर में उपयोग के विकल्प</p>
+            <p className="text-xs text-[#735133]">सनातन वैदिक पंचांग • फ़ोन व कंप्यूटर स्थापना</p>
           </div>
         </div>
 

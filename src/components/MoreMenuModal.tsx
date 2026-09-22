@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShaktiLogo } from './ShaktiLogo';
 import {
   Compass,
   Heart,
@@ -61,9 +62,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#8C6239]/30">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-[#B56A00] text-white flex items-center justify-center text-xs font-bold font-granth">
-              ॐ
-            </span>
+            <ShaktiLogo size={24} className="shrink-0" />
             <h3 className="font-granth font-bold text-base text-[#5C3A21]">
               अतिरिक्त सेवाएँ व विकल्प
             </h3>
@@ -222,6 +221,14 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <span>APK डाउनलोड</span>
             </button>
           )}
+        </div>
+
+        {/* Sacred Brand Footer */}
+        <div className="flex items-center justify-center gap-2 pt-3 mt-3 border-t border-[#8C6239]/20 text-center">
+          <ShaktiLogo size={20} className="shrink-0" />
+          <span className="text-[11px] font-bold text-[#8C6239] font-granth">
+            सनातन शक्ति पंचांग • अचूक वैदिक गणना
+          </span>
         </div>
       </div>
     </div>

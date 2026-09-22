@@ -1,5 +1,6 @@
 import { BookOpen, Crown, FileText, Sparkles } from "lucide-react";
 import { useLicense } from "@/lib/license-client";
+import { ShaktiLogo } from "./ShaktiLogo";
 
 interface BookCoverProps {
   onOpenBook: (targetTabId?: string) => void;
@@ -29,8 +30,8 @@ export function BookCover({
       <div className="max-w-md w-full">
         <p className="text-base sm:text-lg font-extrabold">॥ श्री गणेशाय नमः ॥</p>
 
-        <div className="mt-7 flex justify-center text-[#B56A00]">
-          <BookOpen className="w-[88px] h-[88px]" strokeWidth={1.4} />
+        <div className="mt-7 flex justify-center">
+          <ShaktiLogo size={96} className="shadow-2xl rounded-3xl" />
         </div>
 
         <h1 className="mt-4 font-granth text-[34px] leading-none font-black">शक्ति पंचांग</h1>

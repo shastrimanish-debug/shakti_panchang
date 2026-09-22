@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShaktiLogo } from './ShaktiLogo';
 import {
   BookOpen,
   Calendar,
@@ -112,10 +113,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div
           className="flex items-center gap-1.5 cursor-pointer shrink-0"
           onClick={() => setActiveTab('panchang')}
+          title="शक्ति पंचांग मुख्य पृष्ठ"
         >
-          <div className="w-6 h-6 rounded-full bg-[#B56A00] flex items-center justify-center border border-[#F4E8D1] shadow-inner text-xs font-bold text-white shrink-0">
-            ॐ
-          </div>
+          <ShaktiLogo size={24} className="shrink-0" />
           <h1 className="text-xs sm:text-sm font-black font-granth tracking-wide text-[#FAF2E4] leading-none whitespace-nowrap">
             शक्ति पंचांग
           </h1>
