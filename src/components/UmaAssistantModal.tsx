@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
-import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows } from '../services/choghadiya';
-import { askUma } from '@/lib/uma';
+import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
+import { askUma, AskUmaResponse } from '@/lib/uma';
 import { speakUma, stopUmaSpeech } from '@/lib/umaSpeech';
 import { analyzeKundali } from '../services/predictions';
 import {
@@ -16,6 +16,14 @@ import {
   Check,
   ExternalLink,
   Sparkles,
+  UserCheck,
+  AlertCircle,
+  Radio,
+  BookOpen,
+  Briefcase,
+  Heart,
+  Coins,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -23,8 +31,9 @@ interface ChatMessage {
   sender: 'user' | 'uma';
   text: string;
   timestamp: Date;
+  source?: 'gemini' | 'local_vedic';
   actionPayload?: {
-    type: 'open_panchang' | 'open_choghadiya' | 'open_kundali' | 'open_yatra';
+    type: 'open_panchang' | 'open_choghadiya' | 'open_kundali' | 'open_yatra' | 'open_muhurat';
     label: string;
   };
 }
@@ -40,49 +49,60 @@ interface UmaAssistantModalProps {
 }
 
 const CATEGORY_TABS = [
-  { id: 'all', label: 'समस्त जिज्ञासा' },
-  { id: 'muhurat', label: 'मुहूर्त व राहुकाल' },
-  { id: 'vivah', label: 'विवाह व संस्कार' },
-  { id: 'yatra', label: 'यात्रा व दिशाशूल' },
-  { id: 'kundali', label: 'कुंडली व दशा' },
+  { id: 'all', label: 'समस्त प्रश्न' },
+  { id: 'kundali', label: 'कुंडली व फलादेश' },
   { id: 'upay', label: 'सात्विक उपाय' },
+  { id: 'career', label: 'करियर व धन' },
+  { id: 'vivah', label: 'विवाह व दांपत्य' },
+  { id: 'muhurat', label: 'मुहूर्त व राहुकाल' },
+  { id: 'yatra', label: 'यात्रा व दिशाशूल' },
 ];
 
 const SUGGESTIONS_MAP: Record<string, string[]> = {
   all: [
-    'आज का राहुकाल और चौघड़िया बताओ',
-    'क्या आज कोई नया कार्य प्रारंभ करना शुभ है?',
-    'आज यात्रा किस दिशा में न करें?',
-    'विवाह विचार व शुभ लग्न',
-    'मेरी कुंडली में वर्तमान दशा और प्रभाव',
-    'ग्रह शांति व कष्ट निवारण के सात्विक उपाय',
+    'मेरी सम्पूर्ण कुंडली चेक करके फलादेश व उपाय बताओ',
+    'वर्तमान महादशा का मेरे जीवन पर क्या प्रभाव है?',
+    'करियर व नौकरी में उन्नति के शास्त्रोक्त उपाय बताओ',
+    'क्या मेरी कुंडली में मांगलिक दोष या साढ़ेसाती है?',
+    'आज का राहुकाल और शुभ चौघड़िया समय बताओ',
+    'कष्ट निवारण व ग्रह शांति के सिद्ध मंत्र व दान',
+  ],
+  kundali: [
+    'मेरी सम्पूर्ण कुंडली चेक करके फलादेश व उपाय बताओ',
+    'मेरी कुंडली के मुख्य राजयोग और ग्रह स्थिति बताओ',
+    'मेरी लग्न व चंद्र राशि के अनुसार इष्टदेव कौन हैं?',
+    'वर्तमान विंशोत्तरी महादशा और अंतर्दशा का फल',
+    'कुंडली में कौन से ग्रह बलवान अथवा कमजोर हैं?',
+  ],
+  upay: [
+    'वर्तमान महादशा शांति हेतु सिद्ध मंत्र व दान के नियम',
+    'शनि की साढ़ेसाती व ढैय्या से मुक्ति के सात्विक उपाय',
+    'सूर्य देव को अर्घ्य देने और आदित्य हृदय स्तोत्र की विधि',
+    'व्यापार वृद्धि, धन लाभ और ऋण मुक्ति के वैदिक उपाय',
+    'मानसिक शांति व स्वास्थ्य रक्षा हेतु महामृत्युंजय जप',
+  ],
+  career: [
+    'मेरी कुंडली में दशम भाव और करियर के योग कैसे हैं?',
+    'नौकरी में पदोन्नति या स्थानांतरण के क्या योग हैं?',
+    'मेरे लिए नौकरी उत्तम है या स्वतंत्र व्यापार?',
+    'धन संचय और आय में वृद्धि हेतु कौन से उपाय करें?',
+  ],
+  vivah: [
+    'मेरी कुंडली में विवाह व दांपत्य जीवन के योग बताओ',
+    'सप्तम भाव में कौन से ग्रह हैं और उनका क्या प्रभाव है?',
+    'क्या मेरी कुंडली मांगलिक है? इसका परिहार क्या है?',
+    'शीघ्र विवाह और सुयोग्य जीवनसाथी प्राप्ति के उपाय',
   ],
   muhurat: [
     'आज का राहुकाल कब से कब तक है?',
     'आज के अमृत और शुभ चौघड़िया समय',
-    'आज गृह प्रवेश का मुहूर्त है या नहीं?',
-    'आज नया वाहन क्रय करने का समय',
-  ],
-  vivah: [
-    'विवाह हेतु आज की तिथि व नक्षत्र की अनुकूलता',
-    'विवाह में गुरु और शुक्र के बल का विचार',
-    'कुंडली में नाड़ी व भकूट दोष का प्रभाव',
+    'आज कोई नया कार्य प्रारंभ करने हेतु श्रेष्ठ काल',
+    'आज का अभिजित मुहूर्त कब है?',
   ],
   yatra: [
     'आज किस दिशा में दिशाशूल है?',
     'दिशाशूल का सात्विक परिहार क्या है?',
-    'आज की यात्रा हेतु शुभ समय बताओ',
-  ],
-  kundali: [
-    'मेरी कुंडली के मुख्य ग्रह योग बताओ',
-    'वर्तमान विंशोत्तरी महादशा का फल',
-    'चंद्र राशि और लग्न के अनुसार इष्टदेव कौन हैं?',
-  ],
-  upay: [
-    'सूर्य देव को अर्घ्य देने की शास्त्रीय विधि',
-    'मानसिक शान्ति व स्वास्थ्य हेतु महामृत्युंजय जप',
-    'व्यापार वृद्धि और धन लाभ के वैदिक उपाय',
-    'गौ-सेवा और दीप दान का धार्मिक महत्व',
+    'आज यात्रा प्रारंभ करने का सबसे शुभ समय',
   ],
 };
 
@@ -93,12 +113,17 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   activeKundali,
   onNavigateTab,
   isAudioEnabled = true,
+  locationName = 'वाराणसी, भारत',
 }) => {
+  const initialGreeting = activeKundali
+    ? `॥ श्री गणेशाय नमः ॥\nप्रणाम! मैं उमा (UMA) हूँ — आपकी 'वैदिक एलेक्सा' एवं संपूर्ण ज्योतिष मार्गदर्शिका।\n\nमैंने आपकी सक्रिय कुंडली **${activeKundali.name}** (लग्न: ${activeKundali.lagnaRashi}, राशि: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}) का संज्ञान ले लिया है। आप बोलकर या लिखकर अपनी कुंडली के किसी भी भाव, करियर, विवाह, धन, स्वास्थ्य, वर्तमान दशा या कष्ट निवारण के सात्विक उपाय पूछ सकते हैं।`
+    : `॥ श्री गणेशाय नमः ॥\nप्रणाम! मैं उमा (UMA) हूँ — आपकी 'वैदिक एलेक्सा' एवं पंचांग व ज्योतिष मार्गदर्शिका। आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि है।\n\nआप मुझसे शुभ मुहूर्त, राहुकाल, चौघड़िया, यात्रा दिशाशूल अथवा ज्योतिषीय प्रश्नों के उत्तर पूछ सकते हैं। व्यक्तिगत कुंडली विश्लेषण हेतु 'कुंडली' टैब में जन्म विवरण भरें।`;
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'init_1',
       sender: 'uma',
-      text: `॥ श्री गणेशाय नमः ॥\nप्रणाम! मैं उमा (UMA) हूँ — आपकी वैदिक ग्रन्थ एवं पंचांग मार्गदर्शिका। आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि है। आप मुझसे शुभ मुहूर्त, राहुकाल, चौघड़िया, यात्रा दिशाशूल, विवाह विचार, जन्म कुंडली एवं ग्रह शांति के उपाय शुद्ध हिन्दी में पूछ सकते हैं।`,
+      text: initialGreeting,
       timestamp: new Date(),
     },
   ]);
@@ -106,16 +131,16 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [activeCategory, setActiveCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [autoSpeak, setAutoSpeak] = useState(isAudioEnabled);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
-  const greetingSpoken = useRef(false);
 
   const speakHindi = (text: string, id: string) => {
-    if (!isAudioEnabled) return;
     if (playingVoiceId === id) {
       stopUmaSpeech();
       setPlayingVoiceId(null);
@@ -129,7 +154,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isLoading]);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
@@ -141,24 +166,23 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) {
-      greetingSpoken.current = false;
-      window.speechSynthesis?.cancel();
+      stopUmaSpeech();
       setPlayingVoiceId(null);
-      return;
+      if (isListening && recognitionRef.current) {
+        recognitionRef.current.stop();
+        setIsListening(false);
+      }
     }
-    if (!isAudioEnabled || greetingSpoken.current) return;
-    greetingSpoken.current = true;
-    // Greeting is spoken from the UMA open click (user gesture). Do not delay.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, isAudioEnabled]);
+  }, [isOpen, isListening]);
 
   if (!isOpen) return null;
 
+  // Alexa Voice Speech Recognition (Hindi)
   const handleVoiceInput = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('आपके ब्राउज़र में वॉइस रिकग्निशन समर्थित नहीं है। कृपया टाइप करें।');
+      alert('आपके ब्राउज़र में वॉइस रिकग्निशन समर्थित नहीं है। कृपया टाइप करके प्रश्न पूछें।');
       return;
     }
 
@@ -171,28 +195,53 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     try {
       const rec = new SpeechRecognition();
       rec.lang = 'hi-IN';
-      rec.interimResults = false;
+      rec.interimResults = true;
       rec.maxAlternatives = 1;
 
-      rec.onstart = () => setIsListening(true);
+      rec.onstart = () => {
+        setIsListening(true);
+        setVoiceTranscript('उमा सुन रही हैं...');
+      };
+
       rec.onresult = (e: any) => {
-        const transcript = e.results[0][0].transcript;
-        if (transcript) {
-          setInputQuery(transcript);
+        let interim = '';
+        let final = '';
+        for (let i = e.resultIndex; i < e.results.length; ++i) {
+          if (e.results[i].isFinal) {
+            final += e.results[i][0].transcript;
+          } else {
+            interim += e.results[i][0].transcript;
+          }
+        }
+        const text = final || interim;
+        if (text) {
+          setVoiceTranscript(text);
+          setInputQuery(text);
+        }
+        if (final) {
+          // Auto submit after a completed phrase
+          setTimeout(() => {
+            handleSubmit(final);
+          }, 400);
         }
       };
-      rec.onerror = () => setIsListening(false);
-      rec.onend = () => setIsListening(false);
+
+      rec.onerror = () => {
+        setIsListening(false);
+        setVoiceTranscript('');
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+        setVoiceTranscript('');
+      };
 
       recognitionRef.current = rec;
       rec.start();
     } catch {
       setIsListening(false);
+      setVoiceTranscript('');
     }
-  };
-
-  const handleSpeak = (text: string, id: string) => {
-    speakHindi(text, id);
   };
 
   const handleCopy = (text: string, id: string) => {
@@ -201,121 +250,73 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const generateOfflineResponse = (query: string): { text: string; actionPayload?: ChatMessage['actionPayload'] } => {
-    const q = query.toLowerCase().trim();
-    const weekday = panchang.date.getDay();
-    const formatT = (d: Date) =>
-      d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+  // Build complete astrological context for Gemini AI
+  const buildKundaliContext = (k: KundaliData): string => {
+    try {
+      const analysis = analyzeKundali(k);
+      const planetList = k.planets
+        .map(
+          (p) =>
+            `${p.planet}: भाव ${p.house}, ${p.rashi} राशि (${p.degree.toFixed(1)}°), ${
+              p.isRetrograde ? 'वक्री' : 'मार्गी'
+            }, नक्षत्र: ${p.nakshatra} (चरण ${p.pada})`
+        )
+        .join('; ');
 
-    if (
-      q.includes('डेटा') ||
-      q.includes('data') ||
-      q.includes('डाटा') ||
-      q.includes('mera data') ||
-      q.includes('मेरा डेटा')
-    ) {
-      const kundaliLine = activeKundali
-        ? `सेव कुंडली: ${activeKundali.name}, लग्न ${activeKundali.lagnaRashi}, चंद्र ${activeKundali.moonRashi}, नक्षत्र ${activeKundali.nakshatra}, महादशा ${activeKundali.mahadasha}।`
-        : 'अभी कोई सक्रिय कुंडली नहीं है। कुंडली अध्याय में जन्म विवरण भरें।';
-      return {
-        text: `॥ आपका वर्तमान डेटा ॥\nआज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}, योग ${panchang.yoga}, करण ${panchang.karana}।\n${kundaliLine}\nआप राहुकाल, चौघड़िया, यात्रा या कुंडली फल भी पूछ सकते हैं।`,
-        actionPayload: { type: 'open_panchang', label: 'पंचांग देखें' },
-      };
-    }
-
-    if (q.includes('राहु') || q.includes('rahu') || q.includes('अशुभ समय')) {
-      const inauspicious = getInauspiciousWindows(panchang.solar, weekday);
-      const rahu = inauspicious.find((w) => w.title === 'राहु काल');
-      return {
-        text: `॥ ॐ श्री गणेशाय नमः ॥\nशास्त्रानुसार आज ${panchang.weekday} को राहु काल ${
-          rahu ? `प्रातः ${formatT(rahu.start)} से ${formatT(rahu.end)} तक` : 'प्रभावी'
-        } रहेगा।\n\n**वैदिक सिद्धांत व परिहार:**\nराहु काल को तमोगुणी एवं विघ्नकारक वेला माना गया है। इस कालखंड में कोई भी नवीन व्यापार, गृह प्रवेश, स्वर्ण-रजत क्रय, विवाह वार्ता अथवा दूरस्थ यात्रा का श्रीगणेश न करें। यदि कोई कार्य इस समय अपरिहार्य हो, तो भगवान शिव के पंचाक्षरी मंत्र 'ॐ नमः शिवाय' का 108 बार मानसिक जप करें अथवा श्री हनुमान चालीसा का पाठ कर जल ग्रहण करके ही अग्रसर हों।`,
-        actionPayload: { type: 'open_choghadiya', label: 'चौघड़िया तालिका देखें' },
-      };
-    }
-
-    if (q.includes('चौघड़िया') || q.includes('शुभ समय') || q.includes('choghadiya')) {
-      const dayChoghadiyas = getDayChoghadiya(panchang.solar, weekday);
-      const { current, remainingMinutes } = getCurrentChoghadiya(dayChoghadiyas);
-      const amritList = dayChoghadiyas
-        .filter((c) => ['Amrit', 'Shubh', 'Labh'].includes(c.name))
-        .map((c) => `• ${c.hindiName}: ${formatT(c.start)} से ${formatT(c.end)} तक`)
+      const yogasStr = analysis.yogas.join('; ') || 'सामान्य शुभ योग';
+      const areasStr = analysis.areas
+        .map((a) => `${a.title}: ${a.finding} [उपाय: ${a.remedy}]`)
         .join('\n');
 
-      const currStr = current
-        ? `वर्तमान में **${current.hindiName}** चौघड़िया चल रहा है (लगभग ${remainingMinutes} मिनट शेष)।\n\n`
-        : '';
-
-      return {
-        text: `॥ ॐ नमः शिवाय ॥\n${currStr}आज के प्रमुख शुभ व फलदायी चौघड़िया कालखंड इस प्रकार हैं:\n${amritList}\n\n**शास्त्रोक्त परामर्श:**\nअमृत चौघड़िया समस्त कार्यों की सिद्धि हेतु सर्वोत्तम है। शुभ चौघड़िया में विद्या, धार्मिक अनुष्ठान व क्रय-विक्रय उत्तम रहता है, तथा लाभ चौघड़िया में व्यापारिक समझौते व धन-निवेश अति फलदायी सिद्ध होते हैं।`,
-        actionPayload: { type: 'open_choghadiya', label: 'सम्पूर्ण चौघड़िया चक्र' },
-      };
-    }
-
-    if (q.includes('यात्रा') || q.includes('दिशाशूल') || q.includes('travel')) {
-      const shoolDir = DISHASHOOL_MAP[weekday];
-      const remedy = TRAVEL_REMEDIES[weekday];
-      return {
-        text: `॥ ॐ नमो भगवते वासुदेवाय ॥\nआज ${panchang.weekday} होने के कारण **${shoolDir}** दिशा में दिशाशूल का वास है।\n\n**शास्त्र निर्देश:**\nऋषियों का मत है कि जिस दिशा में शूल हो, उस दिशा की ओर मुख कर नई यात्रा का प्रारंभ नहीं करना चाहिए।\n\n**सात्विक परिहार:**\nयदि यात्रा अत्यावश्यक व टाली न जा सके, तो प्रस्थान से पूर्व: **${remedy}**। इसके उपरांत पूर्व दिशा की ओर पाँच पग चलकर अपने गंतव्य की ओर अग्रसर हों, यात्रा मंगलमय होगी।`,
-        actionPayload: { type: 'open_yatra', label: 'यात्रा कैलकुलेटर देखें' },
-      };
-    }
-
-    if (q.includes('पंचांग') || q.includes('तिथि') || q.includes('नक्षत्र')) {
-      return {
-        text: `॥ श्री गणेशाय नमः ॥\nआज का विशुद्ध वैदिक पंचांग विवरण:\n• **संवत्सर:** ${panchang.samvat} (शक संवत्: ${panchang.sakaSamvat})\n• **वार व तिथि:** ${panchang.weekday}, ${panchang.paksha} की **${panchang.tithi}** तिथि\n• **नक्षत्र:** **${panchang.nakshatra}** (चरण ${panchang.pada})\n• **योग:** **${panchang.yoga}** | **करण:** **${panchang.karana}**\n• **सूर्य व चंद्र राशि:** सूर्य देव **${panchang.solarRashi}** में तथा चंद्र देव **${panchang.lunarRashi}** में विराजमान हैं।\n• **सौर समय:** सूर्योदय प्रातः ${formatT(panchang.solar.sunrise)} एवं सूर्यास्त सायं ${formatT(panchang.solar.sunset)}।\n\nयह दिन धर्म-कर्म, अध्ययन, सात्विक उपासना एवं सद्कार्यों के चिंतन हेतु अत्यंत प्रशस्त है।`,
-        actionPayload: { type: 'open_panchang', label: 'विस्तृत पंचांग पटल' },
-      };
-    }
-
-    if (q.includes('सूर्योदय') || q.includes('सूर्यास्त') || q.includes('ब्रह्म') || q.includes('sunrise') || q.includes('sunset')) {
-      const rise = panchang.solar.sunrise;
-      const set = panchang.solar.sunset;
-      const brahmaStart = new Date(rise.getTime() - 96 * 60000);
-      const brahmaEnd = new Date(rise.getTime() - 48 * 60000);
-      return {
-        text: `॥ सूर्य समय ॥\nस्थान के अनुसार आज सूर्योदय ${formatT(rise)}, सूर्यास्त ${formatT(set)}। ब्रह्म मुहूर्त लगभग ${formatT(brahmaStart)} से ${formatT(brahmaEnd)} तक।`,
-        actionPayload: { type: 'open_panchang', label: 'पंचांग पटल' },
-      };
-    }
-
-    if (q.includes('विवाह') || q.includes('शादी') || q.includes('गृह प्रवेश') || q.includes('मुहूर्त') || q.includes('शुभ है') || q.includes('करूँ') || q.includes('करूं')) {
-      const inauspicious = getInauspiciousWindows(panchang.solar, weekday);
-      const rahu = inauspicious.find((w) => w.title === 'राहु काल');
-      const dayChoghadiyas = getDayChoghadiya(panchang.solar, weekday);
-      const amrit = dayChoghadiyas.filter((c) => ['Amrit', 'Shubh', 'Labh'].includes(c.name));
-      return {
-        text: `॥ मुहूर्त विचार ॥\nआज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}। राहु काल ${rahu ? `${formatT(rahu.start)}–${formatT(rahu.end)}` : ''} में नया कार्य न करें। शुभ चौघड़िया: ${amrit.map((c) => `${c.hindiName} ${formatT(c.start)}–${formatT(c.end)}`).join(', ')}। विवाह/गृहप्रवेश के लिए लग्न और दोष भी कुंडली से देखें।`,
-        actionPayload: { type: 'open_choghadiya', label: 'शुभ समय देखें' },
-      };
-    }
-
-    if (q.includes('कुंडली') || q.includes('दशा') || q.includes('ग्रह योग') || q.includes('लग्न')) {
-      if (activeKundali) {
-        return {
-          text: `॥ ॐ गुरवे नमः ॥\n**जातक:** ${activeKundali.name}\n• **लग्न राशि:** ${activeKundali.lagnaRashi}\n• **चंद्र राशि:** ${activeKundali.moonRashi} (${activeKundali.nakshatra})\n• **वर्तमान विंशोत्तरी महादशा:** ${activeKundali.mahadasha}\n• **अंतर्दशा:** ${activeKundali.antardasha}\n\n**ज्योतिषीय फलकथन:**\nलग्न एवं चंद्र राशि की युति जातक को प्रखर बुद्धि व सात्विक चेतना प्रदान करती है। वर्तमान महादशा में इष्टदेव का पूजन व नित्य गायत्री मंत्र अथवा अपने इष्ट मंत्र का जाप करने से कार्यों में निर्विघ्न प्रगति होगी।`,
-          actionPayload: { type: 'open_kundali', label: 'सम्पूर्ण जन्म कुण्डली चक्र' },
-        };
+      return `जातक: ${k.name}, जन्म: ${new Date(k.birthDate).toLocaleDateString('hi-IN')}, समय: ${
+        k.birthTime
+      }, स्थान: ${k.birthPlace} (अक्षांश ${k.latitude.toFixed(2)}, रेखांश ${k.longitude.toFixed(2)})
+लग्न: ${k.lagnaRashi} (डिग्री: ${k.lagnaDegree.toFixed(1)}°), लग्नेश: भाव ${k.lagnaRashiNumber}
+चंद्र राशि: ${k.moonRashi}, नक्षत्र: ${k.nakshatra} (चरण ${k.charan}), नाड़ी: ${k.nadi}, गण: ${
+        k.gana
       }
-      return {
-        text: `॥ ॐ गुरवे नमः ॥\nवैदिक ज्योतिष में जन्म कुण्डली जातक के पूर्वार्जित कर्मों और ग्रहीय संरेखण का दिव्य दर्पण है। कुण्डली का अवलोकन करने हेतु ऊपर 'जन्म कुंडली' टैब में जाकर अपनी जन्म विवरण भरें अथवा सहेजी गई प्रोफाइल का चयन करें।`,
-        actionPayload: { type: 'open_kundali', label: 'जन्म कुंडली बनाएँ' },
-      };
+सूर्य राशि: ${k.sunRashi}, मांगलिक: ${k.isManglik ? `हाँ (${k.manglikDescription || 'मांगलिक'})` : 'नहीं (अमंगल)'}
+विंशोत्तरी दशा: महादशा ${k.mahadasha}, अंतर्दशा ${k.antardasha}, प्रत्यंतर्दशा ${k.pratyantardasha}
+ग्रह स्थितियां: ${planetList}
+प्रमुख योग: ${yogasStr}
+जीवन क्षेत्र विश्लेषण:
+${areasStr}`;
+    } catch {
+      return `जातक: ${k.name}, लग्न: ${k.lagnaRashi}, चंद्र राशि: ${k.moonRashi}, नक्षत्र: ${k.nakshatra}, महादशा: ${k.mahadasha}`;
     }
+  };
 
-    const inauspicious = getInauspiciousWindows(panchang.solar, weekday);
+  const buildPanchangContext = (p: VedicPanchangData): string => {
+    const formatT = (d: Date) =>
+      d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+    const weekday = p.date.getDay();
+    const inauspicious = getInauspiciousWindows(p.solar, weekday);
+    const auspicious = getAuspiciousWindows(p.solar);
     const rahu = inauspicious.find((w) => w.title === 'राहु काल');
+    const abhijit = auspicious.find((w) => w.title.includes('अभिजित'));
     const shoolDir = DISHASHOOL_MAP[weekday];
-    return {
-      text: `॥ उमा ॥\nआज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}, योग ${panchang.yoga}, करण ${panchang.karana}। सूर्योदय ${formatT(panchang.solar.sunrise)}, सूर्यास्त ${formatT(panchang.solar.sunset)}। राहु काल ${rahu ? `${formatT(rahu.start)} से ${formatT(rahu.end)}` : ''}। दिशाशूल: ${shoolDir}।\nआप राहुकाल, चौघड़िया, यात्रा, विवाह मुहूर्त या कुंडली भी पूछ सकते हैं।`,
-      actionPayload: { type: 'open_panchang', label: 'पंचांग देखें' },
-    };
+    const shoolRemedy = TRAVEL_REMEDIES[weekday];
+
+    return `दिनांक: ${p.date.toLocaleDateString('hi-IN')}, वार: ${p.weekday}, पक्ष: ${
+      p.paksha
+    }, तिथि: ${p.tithi}
+नक्षत्र: ${p.nakshatra}, योग: ${p.yoga}, करण: ${p.karana}
+सूर्योदय: ${formatT(p.solar.sunrise)}, सूर्यास्त: ${formatT(p.solar.sunset)}, चंद्र राशि: ${p.lunarRashi}
+राहु काल: ${rahu ? `${formatT(rahu.start)} से ${formatT(rahu.end)}` : 'प्रभावी'}
+अभिजित मुहूर्त: ${abhijit ? `${formatT(abhijit.start)} से ${formatT(abhijit.end)}` : 'उपलब्ध नहीं'}
+दिशाशूल: ${shoolDir}, परिहार: ${shoolRemedy}
+स्थान: ${locationName}`;
   };
 
   const handleSubmit = async (queryText: string) => {
     const text = queryText.trim();
-    if (!text) return;
+    if (!text || isLoading) return;
     setInputQuery('');
+    setVoiceTranscript('');
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
 
     const userMsg: ChatMessage = {
       id: `usr_${Date.now()}`,
@@ -323,39 +324,48 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       text,
       timestamp: new Date(),
     };
-    const offlineResult = generateOfflineResponse(text);
-    const umaId = `uma_${Date.now() + 1}`;
-    const umaMsg: ChatMessage = {
-      id: umaId,
-      sender: 'uma',
-      text: offlineResult.text,
-      timestamp: new Date(),
-      actionPayload: offlineResult.actionPayload,
-    };
-    setMessages((prev) => [...prev, userMsg, umaMsg]);
-    speakHindi(offlineResult.text, umaId);
+
+    setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
 
     try {
-      const analysis = activeKundali ? analyzeKundali(activeKundali) : null;
-      const panchangCtx = `वार: ${panchang.weekday}, तिथि: ${panchang.paksha} ${panchang.tithi}, नक्षत्र: ${panchang.nakshatra}, योग: ${panchang.yoga}, करण: ${panchang.karana}, सूर्योदय: ${panchang.solar.sunrise.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}`;
-      const kundaliCtx = activeKundali
-        ? `जातक: ${activeKundali.name}, लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}`
-        : 'सामान्य';
-      const data = await Promise.race([
-        askUma({
-          data: { query: text, panchangContext: panchangCtx, kundaliContext: kundaliCtx },
-        }),
-        new Promise<{ ok: false; error: string }>((resolve) =>
-          setTimeout(() => resolve({ ok: false, error: 'timeout' }), 8000)
-        ),
-      ]);
-      if (data && 'ok' in data && data.ok && data.text) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === umaId ? { ...m, text: data.text, actionPayload: undefined } : m))
-        );
+      const panchangCtx = buildPanchangContext(panchang);
+      const kundaliCtx = activeKundali ? buildKundaliContext(activeKundali) : undefined;
+
+      const chatHistory = messages.slice(-6).map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }));
+
+      const res: AskUmaResponse = await askUma({
+        query: text,
+        panchangContext: panchangCtx,
+        kundaliContext: kundaliCtx,
+        chatHistory,
+        panchang,
+        activeKundali,
+      });
+
+      const umaMsgId = `uma_${Date.now()}`;
+      const umaMsg: ChatMessage = {
+        id: umaMsgId,
+        sender: 'uma',
+        text: res.text,
+        timestamp: new Date(),
+        source: res.source,
+        actionPayload: res.actionPayload,
+      };
+
+      setMessages((prev) => [...prev, umaMsg]);
+
+      // Alexa-like voice response if audio enabled
+      if (autoSpeak) {
+        speakHindi(res.text, umaMsgId);
       }
-    } catch {
-      /* offline answer already shown */
+    } catch (err) {
+      console.error('Error submitting to Uma:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -365,67 +375,144 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200">
       <div
         className={`bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full shadow-2xl flex flex-col transition-all duration-300 ${
-          isExpanded ? 'h-[98vh] max-w-[96vw]' : 'h-[92vh] max-h-[720px] max-w-4xl'
+          isExpanded ? 'h-[98vh] max-w-[96vw]' : 'h-[92vh] max-h-[740px] max-w-4xl'
         } overflow-hidden`}
       >
-        {/* Header */}
+        {/* Header - Alexa Vedic Assistant Styling */}
         <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] p-3 sm:p-4 flex items-center justify-between border-b-2 border-[#B58738] shadow-md">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#B58738] to-[#734A1B] border-2 border-[#FAF2E4] flex items-center justify-center text-[#FAF2E4] font-bold text-lg shadow-inner">
-              ॐ
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#B58738] to-[#734A1B] border-2 border-[#FAF2E4] flex items-center justify-center text-[#FAF2E4] font-bold text-lg shadow-inner">
+                ॐ
+              </div>
+              {/* Alexa-like audio indicator pulse */}
+              {isListening && (
+                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500 border border-white"></span>
+                </span>
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-lg sm:text-xl font-bold font-granth tracking-wide text-[#FFD88A]">
-                  उमा (UMA) वैदिक ग्रन्थ AI
+                  उमा (UMA) वैदिक एलेक्सा
                 </span>
-                <span className="text-[10px] bg-[#B58738] px-2 py-0.5 rounded text-[#2C0A0A] font-black uppercase tracking-wider shadow-xs">
-                  भोजपत्र दर्शन
+                <span className="text-[10px] bg-[#B58738] px-2 py-0.5 rounded text-[#2C0A0A] font-black uppercase tracking-wider shadow-xs flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  AI ज्योतिषी
                 </span>
               </div>
               <p className="text-xs text-[#E6C687] hidden sm:block font-serif">
-                सनातन पराविद्या, मुहूर्त निर्णय, ज्योतिष संहिता एवं पंचांग ज्ञानकोष
+                कुण्डली फलादेश, ग्रह गणना, सटीक भविष्यवाणी एवं शास्त्रीय सात्विक उपाय
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Auto-Speak Toggle */}
+            <button
+              onClick={() => {
+                const next = !autoSpeak;
+                setAutoSpeak(next);
+                if (!next) stopUmaSpeech();
+              }}
+              className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition cursor-pointer ${
+                autoSpeak
+                  ? 'bg-[#B58738] text-[#2C0A0A] border-[#FAF2E4] font-bold'
+                  : 'bg-[#5C1414] text-[#E6C687] border-[#B58738]/50'
+              }`}
+              title={autoSpeak ? 'ऑटो वॉइस चालू है' : 'ऑटो वॉइस बंद है'}
+            >
+              {autoSpeak ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              <span className="hidden md:inline text-[11px]">{autoSpeak ? 'वाणी चालू' : 'वाणी बंद'}</span>
+            </button>
+
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="px-2.5 py-1 text-xs text-[#E6C687] hover:text-white border border-[#B58738]/50 rounded-lg hidden sm:block cursor-pointer"
             >
-              {isExpanded ? 'सामान्य आकार' : 'विस्तृत आकार'}
+              {isExpanded ? 'सामान्य' : 'विस्तार'}
             </button>
+
             <button
               onClick={onClose}
-              className="p-1.5 text-[#E6C687] hover:text-white rounded-lg cursor-pointer"
+              className="p-1.5 text-[#E6C687] hover:text-white rounded-lg cursor-pointer transition hover:bg-black/20"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Shloka Sub-banner */}
-        <div className="bg-[#F4E8D1] py-1.5 px-3 sm:px-6 flex items-center justify-between text-xs text-[#5C3A21] font-semibold border-b border-[#8C6239]/20">
-          <div className="flex items-center gap-2">
-            <span className="text-[#8F2121] font-bold">॥ ॐ ॥</span>
-            <span className="font-serif italic truncate">
-              शुभम् करोति कल्याणम् आरोग्यम् धनसंपदा | शत्रुबुद्धि विनाशाय दीपज्योतिर्नमोऽस्तुते ||
-            </span>
-          </div>
-          <div className="hidden md:flex items-center gap-2 text-[11px] text-[#735133]">
-            <span>{panchang.weekday}</span>
-            <span>•</span>
-            <span>
-              {panchang.paksha} {panchang.tithi}
-            </span>
-            <span>•</span>
-            <span>{panchang.nakshatra}</span>
-          </div>
+        {/* Active Kundali Awareness Banner (Software Alexa Feature) */}
+        <div className="bg-[#F4E8D1] py-2 px-3 sm:px-4 border-b border-[#8C6239]/30 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+          {activeKundali ? (
+            <div className="flex items-center gap-2 text-xs text-[#5C3A21] flex-wrap">
+              <span className="bg-[#7A1D1D] text-white px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1">
+                <UserCheck className="w-3 h-3 text-[#FFD88A]" />
+                सक्रिय कुंडली: {activeKundali.name}
+              </span>
+              <span className="font-semibold">
+                लग्न: <strong className="text-[#7A1D1D]">{activeKundali.lagnaRashi}</strong> | चंद्र:{' '}
+                <strong className="text-[#7A1D1D]">{activeKundali.moonRashi}</strong> ({activeKundali.nakshatra}) | दशा:{' '}
+                <strong className="text-[#7A1D1D]">{activeKundali.mahadasha}</strong>
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-xs text-[#8C6239]">
+              <AlertCircle className="w-3.5 h-3.5 text-[#B56A00]" />
+              <span className="font-serif">
+                कोई सक्रिय कुंडली नहीं चुनी गई। सामान्य ज्योतिष व पंचांग सक्रिय है।
+              </span>
+            </div>
+          )}
+
+          {/* Quick Action Button for 1-Tap Full Reading */}
+          {activeKundali ? (
+            <button
+              onClick={() =>
+                handleSubmit(
+                  'मेरी सम्पूर्ण जन्म कुंडली का गहन विश्लेषण करें: प्रमुख राजयोग, ग्रह स्थिति, वर्तमान महादशा का फल और कष्ट निवारण हेतु सटीक सात्विक उपाय बताएं।'
+                )
+              }
+              className="px-2.5 py-1 bg-gradient-to-r from-[#B56A00] to-[#8C6239] text-white rounded-lg text-xs font-bold shadow-xs hover:from-[#8C6239] hover:to-[#5C3A21] transition flex items-center gap-1 cursor-pointer shrink-0"
+            >
+              <Sparkles className="w-3 h-3 text-amber-200" />
+              <span>✨ सम्पूर्ण कुंडली फलादेश व उपाय</span>
+            </button>
+          ) : (
+            onNavigateTab && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onNavigateTab('kundali');
+                }}
+                className="px-2.5 py-1 bg-[#7A1D1D] text-white rounded-lg text-xs font-bold shadow-xs hover:bg-[#5C1414] transition flex items-center gap-1 cursor-pointer"
+              >
+                <span>➕ कुंडली बनाएँ / लोड करें</span>
+              </button>
+            )
+          )}
         </div>
 
+        {/* Listening Status Bar when Mic is active */}
+        {isListening && (
+          <div className="bg-rose-100 border-b border-rose-300 px-4 py-2 flex items-center justify-between text-rose-800 text-xs font-bold animate-pulse">
+            <div className="flex items-center gap-2">
+              <Radio className="w-4 h-4 text-rose-600 animate-spin" />
+              <span>{voiceTranscript || 'उमा सुन रही हैं... (कृपया स्पष्ट हिन्दी में बोलें)'}</span>
+            </div>
+            <button
+              onClick={handleVoiceInput}
+              className="px-2 py-0.5 bg-rose-600 text-white rounded text-[11px] cursor-pointer"
+            >
+              रोकें
+            </button>
+          </div>
+        )}
+
         {/* Category Tabs */}
-        <div className="bg-[#EBDCC0] px-3 py-2 overflow-x-auto flex items-center gap-1.5 border-b border-[#8C6239]/30">
+        <div className="bg-[#EBDCC0] px-3 py-1.5 overflow-x-auto flex items-center gap-1.5 border-b border-[#8C6239]/30">
           {CATEGORY_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -449,14 +536,14 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               onClick={() => handleSubmit(sug)}
               className="px-2.5 py-1 bg-[#F4E8D1] hover:bg-[#EBDCC0] border border-[#8C6239]/30 rounded-lg text-xs font-serif text-[#5C3A21] whitespace-nowrap transition flex items-center gap-1 group cursor-pointer"
             >
-              <Sparkles className="w-3 h-3 text-[#B56A00] group-hover:scale-110 transition" />
-              <span>{sug}</span>
+              <Sparkles className="w-3 h-3 text-[#B56A00] group-hover:scale-110 transition shrink-0" />
+              <span className="truncate max-w-[280px]">{sug}</span>
             </button>
           ))}
         </div>
 
         {/* Messages List Container */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 bg-[#FAF2E4]">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 bg-[#FAF2E4]">
           {messages.map((msg) => {
             const isUma = msg.sender === 'uma';
             return (
@@ -470,18 +557,23 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   </div>
                 )}
                 <div
-                  className={`max-w-[92%] sm:max-w-[85%] rounded-xl p-4 sm:p-5 relative ${
+                  className={`max-w-[94%] sm:max-w-[85%] rounded-xl p-3.5 sm:p-5 relative ${
                     isUma
                       ? 'bg-[#FFFDF8] border-2 border-[#8C6239]/30 text-[#3E2714] shadow-md'
                       : 'bg-gradient-to-r from-[#7A1D1D] to-[#8F2121] text-[#FAF2E4] border border-[#B58738] shadow-md font-serif ml-6'
                   }`}
                 >
                   {isUma && (
-                    <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#8C6239]/20 text-xs text-[#735133]">
+                    <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-[#8C6239]/20 text-xs text-[#735133]">
                       <div className="flex items-center gap-1.5 font-serif font-bold text-[#8F2121]">
                         <span>॥</span>
-                        <span>अथ उमा दिव्य निर्णयः</span>
+                        <span>उमा ज्योतिषाचार्य निर्णय</span>
                         <span>॥</span>
+                        {msg.source === 'gemini' && (
+                          <span className="bg-amber-100 text-[#B56A00] text-[10px] px-1.5 py-0.2 rounded border border-amber-300 font-sans">
+                            AI
+                          </span>
+                        )}
                       </div>
                       <span className="text-[11px] text-[#8C6239]">
                         {msg.timestamp.toLocaleTimeString('hi-IN', {
@@ -506,8 +598,9 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                           if (msg.actionPayload?.type === 'open_choghadiya') onNavigateTab('choghadiya');
                           if (msg.actionPayload?.type === 'open_kundali') onNavigateTab('kundali');
                           if (msg.actionPayload?.type === 'open_yatra') onNavigateTab('yatra');
+                          if (msg.actionPayload?.type === 'open_muhurat') onNavigateTab('muhurat');
                         }}
-                        className="text-xs font-bold text-[#7A1D1D] hover:text-[#5C1414] hover:underline flex items-center gap-1 bg-[#F4E8D1] px-3 py-1.5 rounded-lg border border-[#8C6239]/30 cursor-pointer"
+                        className="text-xs font-bold text-[#7A1D1D] hover:text-[#5C1414] hover:underline flex items-center gap-1 bg-[#F4E8D1] px-3 py-1.5 rounded-lg border border-[#8C6239]/30 cursor-pointer shadow-xs"
                       >
                         <span>{msg.actionPayload.label}</span>
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -520,7 +613,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between flex-wrap gap-2 text-xs">
                       <div className="flex items-center gap-1.5">
                         <button
-                          onClick={() => handleSpeak(msg.text, msg.id)}
+                          onClick={() => speakHindi(msg.text, msg.id)}
                           className={`px-2.5 py-1 rounded-md border flex items-center gap-1 transition cursor-pointer ${
                             playingVoiceId === msg.id
                               ? 'bg-[#7A1D1D] text-white border-[#7A1D1D]'
@@ -561,19 +654,20 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             );
           })}
 
+          {/* Loading Indicator with Vedic Chant */}
           {isLoading && (
             <div className="flex gap-3 justify-start animate-in fade-in duration-150">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#7A1D1D] text-[#FAF2E4] border-2 border-[#B58738] flex items-center justify-center shrink-0 text-sm font-bold shadow-md">
                 ॐ
               </div>
               <div className="bg-[#FFFDF8] border-2 border-[#8C6239]/30 rounded-xl p-4 max-w-md shadow-md flex items-center gap-3">
-                <div className="w-5 h-5 border-2 border-[#7A1D1D] border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-[#7A1D1D] border-t-transparent rounded-full animate-spin shrink-0" />
                 <div>
                   <p className="text-xs sm:text-sm font-serif font-bold text-[#7A1D1D]">
-                    उमा नक्षत्र, ग्रह गोचर व ग्रन्थों का अवलोकन कर रही हैं...
+                    उमा कुण्डली के भावों, ग्रहों व दशा का सूक्ष्म विश्लेषण कर रही हैं...
                   </p>
                   <p className="text-[11px] text-[#735133] font-serif">
-                    ॥ ॐ सूर्याय नमः • ॐ चं चंद्राय नमः ॥
+                    ॥ ॐ सूर्याय नमः • ॐ गुरवे नमः • ॐ नमः शिवाय ॥
                   </p>
                 </div>
               </div>
@@ -582,8 +676,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Bar */}
-        <div className="bg-[#F4E8D1] p-3 border-t-2 border-[#8C6239]/30">
+        {/* Input Bar - Alexa Voice & Text input */}
+        <div className="bg-[#F4E8D1] p-2.5 sm:p-3 border-t-2 border-[#8C6239]/30">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -591,31 +685,40 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             }}
             className="flex items-center gap-2"
           >
+            {/* Mic button for Alexa Voice query */}
             <button
               type="button"
               onClick={handleVoiceInput}
-              className={`p-2.5 sm:p-3 rounded-xl transition shadow-xs cursor-pointer ${
+              className={`p-2.5 sm:p-3 rounded-xl transition shadow-xs cursor-pointer flex items-center justify-center ${
                 isListening
-                  ? 'bg-rose-700 text-white animate-pulse'
+                  ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-300'
                   : 'bg-[#FAF2E4] text-[#5C3A21] hover:bg-[#EBDCC0] border border-[#8C6239]/40'
               }`}
-              title={isListening ? 'सुनना बंद करें' : 'हिन्दी में बोलकर पूछें'}
+              title={isListening ? 'बोलना बंद करें' : 'उमा से बोलकर पूछें (Alexa Voice)'}
             >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5 text-[#7A1D1D]" />}
+              {isListening ? (
+                <MicOff className="w-5 h-5 text-white" />
+              ) : (
+                <Mic className="w-5 h-5 text-[#7A1D1D]" />
+              )}
             </button>
 
             <input
               type="text"
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
-              placeholder="उमा से शुद्ध हिन्दी में कोई भी शंका या मुहूर्त पूछें..."
-              className="flex-1 bg-[#FFFDF8] border-2 border-[#8C6239]/40 focus:border-[#7A1D1D] rounded-xl px-3.5 py-2.5 text-xs sm:text-base font-serif text-[#3E2714] placeholder:text-[#8C6239]/70 outline-none shadow-inner"
+              placeholder={
+                activeKundali
+                  ? `उमा से ${activeKundali.name} जी की कुंडली, करियर, विवाह, दशा या उपाय पूछें...`
+                  : 'उमा से कोई भी ज्योतिषीय प्रश्न, राहुकाल, चौघड़िया या उपाय पूछें...'
+              }
+              className="flex-1 bg-[#FFFDF8] border-2 border-[#8C6239]/40 focus:border-[#7A1D1D] rounded-xl px-3.5 py-2 sm:py-2.5 text-xs sm:text-base font-serif text-[#3E2714] placeholder:text-[#8C6239]/70 outline-none shadow-inner"
             />
 
             <button
               type="submit"
-              disabled={!inputQuery.trim()}
-              className="px-4 py-2.5 sm:py-3 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] disabled:opacity-40 hover:from-[#5C1414] hover:to-[#4A1010] text-[#FAF2E4] font-bold rounded-xl transition shadow-md flex items-center gap-1.5 text-xs sm:text-sm font-serif cursor-pointer"
+              disabled={!inputQuery.trim() || isLoading}
+              className="px-4 py-2 sm:py-2.5 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] disabled:opacity-40 hover:from-[#5C1414] hover:to-[#4A1010] text-[#FAF2E4] font-bold rounded-xl transition shadow-md flex items-center gap-1.5 text-xs sm:text-sm font-serif cursor-pointer"
             >
               <span>पूछें</span>
               <Send className="w-4 h-4" />

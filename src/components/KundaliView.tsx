@@ -123,6 +123,7 @@ interface KundaliViewProps {
   setActiveKundali: (k: KundaliData) => void;
   currentLocation: SavedLocation;
   onOpenSavedModal: () => void;
+  onOpenUmaModal?: () => void;
   initialSubTab?: 'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit';
 }
 
@@ -131,6 +132,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   setActiveKundali,
   currentLocation,
   onOpenSavedModal,
+  onOpenUmaModal,
   initialSubTab,
 }) => {
   // Active Sub-Tab
@@ -592,6 +594,18 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               >
                 सहेजे गए
               </button>
+
+              {onOpenUmaModal && (
+                <button
+                  type="button"
+                  onClick={onOpenUmaModal}
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:brightness-110 text-[#FFD88A] border border-[#B58738] text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer active:scale-95"
+                  title="उमा AI (वैदिक एलेक्सा) से इस कुंडली का गहन फलादेश व सात्विक उपाय पूछें"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#FFD88A]" />
+                  <span>उमा AI परामर्श</span>
+                </button>
+              )}
 
               {/* Annual Subscription Pill */}
               {subStatus.entitled ? (

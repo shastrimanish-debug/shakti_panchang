@@ -422,6 +422,7 @@ export function App() {
                   currentLocation={currentLocation}
                   initialSubTab={activeTab === 'milan' ? 'milan' : undefined}
                   onOpenSavedModal={() => setIsSavedProfilesModalOpen(true)}
+                  onOpenUmaModal={() => setIsUmaModalOpen(true)}
                 />
               )}
 
