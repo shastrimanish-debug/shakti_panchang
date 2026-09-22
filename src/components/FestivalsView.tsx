@@ -5,6 +5,7 @@ import {
   searchFestivalsAcrossCenturies,
   CenturySearchResult,
 } from '../services/festivals';
+import { KalnirnayMonthView } from './KalnirnayMonthView';
 import {
   Calendar,
   Search,
@@ -43,9 +44,8 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
   // Selected Year for single-year view (default to currentDate's year or 2026)
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear() || 2026);
 
-  // Active Mode: 'century' (200 वर्षों में महा-खोज) vs 'year' (वार्षिक पंचांगीय पर्व सूची)
-  // Default to century search to fulfill user's direct requirement of 100 years past and future
-  const [viewMode, setViewMode] = useState<'century' | 'year'>('year');
+  // Active Mode: 'kalnirnay' (कालनिर्णय मासिक पंचांग) vs 'year' (वार्षिक सूची) vs 'century' (200 वर्षों में महा-खोज)
+  const [viewMode, setViewMode] = useState<'kalnirnay' | 'year' | 'century'>('kalnirnay');
 
   // Single year filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -291,29 +291,44 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
         )}
 
         {/* Primary View Mode Tabs (Clear, high-contrast toggle) */}
-        <div className="flex items-center p-1 bg-[#462B17] rounded-xl text-xs font-bold border border-[#8C6239]/60">
+        <div className="flex flex-wrap items-center p-1 bg-[#462B17] rounded-xl text-xs font-bold border border-[#8C6239]/60 gap-1">
           <button
+            type="button"
+            onClick={() => setViewMode('kalnirnay')}
+            className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[150px] ${
+              viewMode === 'kalnirnay'
+                ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
+                : 'text-[#E5D2B8] hover:text-white'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-[#B56A00]" />
+            <span>🗓️ कालनिर्णय मासिक पंचांग</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('year')}
+            className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[150px] ${
+              viewMode === 'year'
+                ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
+                : 'text-[#E5D2B8] hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-[#B56A00]" />
+            <span>📅 वार्षिक पर्व सूची ({selectedYear})</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setViewMode('century')}
-            className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[150px] ${
               viewMode === 'century'
                 ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
                 : 'text-[#E5D2B8] hover:text-white'
             }`}
           >
             <History className="w-4 h-4 text-[#B56A00]" />
-            <span>🔍 200 वर्षों में महा-खोज (100 साल पहले / आगे)</span>
-          </button>
-
-          <button
-            onClick={() => setViewMode('year')}
-            className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
-              viewMode === 'year'
-                ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
-                : 'text-[#E5D2B8] hover:text-white'
-            }`}
-          >
-            <Calendar className="w-4 h-4 text-[#B56A00]" />
-            <span>📅 वार्षिक पर्व सूची (वर्ष {selectedYear})</span>
+            <span>🔍 200 वर्षों में महा-खोज</span>
           </button>
         </div>
 
@@ -609,6 +624,17 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODE 0: KALNIRNAY MONTHLY WALL CALENDAR VIEW                  */}
+      {/* ------------------------------------------------------------- */}
+      {viewMode === 'kalnirnay' && (
+        <KalnirnayMonthView
+          currentDate={currentDate}
+          onDateSelect={onDateSelect}
+          onNavigateToReminders={onNavigateToReminders}
+        />
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* MODE 1 RESULTS: 200 YEARS CENTURY SEARCH RESULTS              */}

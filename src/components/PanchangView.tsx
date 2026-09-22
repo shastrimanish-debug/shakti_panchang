@@ -9,6 +9,7 @@ import {
   Compass,
   ShieldAlert,
   Award,
+  Calendar,
   CalendarDays,
   Clock,
   Download,
@@ -196,6 +197,21 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Quick link to Kalnirnay Monthly Calendar */}
+      {onNavigateTab && (
+        <div className="flex items-center justify-end px-0.5">
+          <button
+            type="button"
+            onClick={() => onNavigateTab('festivals')}
+            className="text-[11px] sm:text-xs font-bold text-[#8B1E1E] hover:text-[#5C3A21] flex items-center gap-1.5 px-2.5 py-1 bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8C6239]/30 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
+            title="पूरे महीने के व्रत, त्यौहार और तिथियाँ कालनिर्णय की तरह देखें"
+          >
+            <Calendar className="w-3.5 h-3.5 text-[#B56A00]" />
+            <span>🗓️ कालनिर्णय मासिक पंचांग देखें →</span>
+          </button>
+        </div>
+      )}
 
       {/* 2. Flutter Exact 3 Segmented Chips (_chip: अंग, मुहूर्त, दिशा) */}
       <div className="flex items-center gap-1.5 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">

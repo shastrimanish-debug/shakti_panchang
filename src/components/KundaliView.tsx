@@ -23,6 +23,7 @@ import { CalcSettingsPanel } from './CalcSettingsPanel';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import { SubscriptionModal } from './SubscriptionModal';
 import { SadeSatiView } from './SadeSatiView';
+import { VargaAnalysisPanel } from './VargaAnalysisPanel';
 import {
   User,
   Clock,
@@ -168,9 +169,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   }, [activeKundali, setActiveKundali]);
 
   // Varga selector state
-  const [selectedVarga, setSelectedVarga] = useState<number>(1);
+  const [selectedVarga, setSelectedVarga] = useState<number>(10);
   const [chartViewMode, setChartViewMode] = useState<'twin' | 'shodashvarga'>('twin');
   const [chartSubPage, setChartSubPage] = useState<'twin' | 'planets' | 'vargas'>('twin');
+  const [vargaViewType, setVargaViewType] = useState<'priority_analysis' | 'explorer'>('priority_analysis');
   const [milanSubPage, setMilanSubPage] = useState<'score' | 'ashtakoot' | 'manglik'>('score');
   const [isFormExpanded, setIsFormExpanded] = useState<boolean>(true);
   const [formError, setFormError] = useState<string | null>(null);
@@ -1094,9 +1096,54 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
           {/* Sub-Page 3: Shodashvarga Explorer (D1 to D60) */}
           {chartSubPage === 'vargas' && (
-            <div className="space-y-6">
-              {/* Varga Selector (Shodashvarga & D1-D60) */}
-              <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 space-y-3">
+            <div className="space-y-4">
+              {/* Primary Varga View Selector */}
+              <div className="flex flex-wrap items-center p-1 bg-[#462B17] rounded-xl text-xs font-bold border border-[#8C6239]/60 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setVargaViewType('priority_analysis')}
+                  className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[180px] ${
+                    vargaViewType === 'priority_analysis'
+                      ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
+                      : 'text-[#E5D2B8] hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 text-[#B56A00]" />
+                  <span>⭐ विशेष वर्ग विश्लेषण (D10 करियर, D7 संतान, D3 पराक्रम व वैशेषिकांश)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVargaViewType('explorer')}
+                  className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[180px] ${
+                    vargaViewType === 'explorer'
+                      ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
+                      : 'text-[#E5D2B8] hover:text-white'
+                  }`}
+                >
+                  <Layers className="w-4 h-4 text-[#B56A00]" />
+                  <span>☸️ सम्पूर्ण D1 से D60 वर्गीय चक्र अन्वेषक (Custom Explorer)</span>
+                </button>
+              </div>
+
+              {/* 1. Priority Analysis Mode */}
+              {vargaViewType === 'priority_analysis' && (
+                <VargaAnalysisPanel
+                  lagnaDegree={k.lagnaDegree}
+                  planets={k.planets}
+                  nativeName={k.name}
+                  selectedVarga={selectedVarga}
+                  onSelectVarga={(v) => {
+                    setSelectedVarga(v);
+                  }}
+                />
+              )}
+
+              {/* 2. Custom D1-D60 Full Explorer Mode */}
+              {vargaViewType === 'explorer' && (
+                <div className="space-y-6">
+                  {/* Varga Selector (Shodashvarga & D1-D60) */}
+                  <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-[#8C6239] uppercase tracking-wider">
@@ -1289,6 +1336,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
               {/* Bottom Pagination */}
               <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
