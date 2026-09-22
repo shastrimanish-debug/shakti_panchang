@@ -32,6 +32,7 @@ import { downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import { sharePanchang, copyPanchangToClipboard } from '../services/sharePanchang';
 import { CalcSettingsPanel } from './CalcSettingsPanel';
+import { DailyShlokaCard } from './DailyShlokaCard';
 
 interface PanchangViewProps {
   panchang: VedicPanchangData;
@@ -567,6 +568,9 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Daily Shloka Verse of Wisdom (दैनिक सुभाषितम्) */}
+      <DailyShlokaCard date={currentDate || panchang.date} />
 
       {/* 6. Quick Action Row (WhatsApp Share, Bhojpatra PDF, Uma AI, Copy) */}
       <div className="grid grid-cols-4 gap-1.5 pt-1">
