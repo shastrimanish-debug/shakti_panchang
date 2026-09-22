@@ -206,10 +206,10 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             type="button"
             onClick={() => onNavigateTab('festivals')}
             className="text-[11px] sm:text-xs font-bold text-[#8B1E1E] hover:text-[#5C3A21] flex items-center gap-1.5 px-2.5 py-1 bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8C6239]/30 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
-            title="पूरे महीने के व्रत, त्यौहार और तिथियाँ कालनिर्णय की तरह देखें"
+            title="पूरे महीने के व्रत, त्यौहार और तिथियाँ मासिक पंचांग में देखें"
           >
             <Calendar className="w-3.5 h-3.5 text-[#B56A00]" />
-            <span>🗓️ कालनिर्णय मासिक पंचांग देखें →</span>
+            <span>🗓️ मासिक पंचांग देखें →</span>
           </button>
         </div>
       )}

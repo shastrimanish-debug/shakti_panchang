@@ -147,7 +147,7 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-[#B56A00]" />
               <h2 className="text-base sm:text-xl font-bold font-granth text-[#5C3A21]">
-                कालनिर्णय मासिक भित्ति पंचांग (Monthly Wall Calendar)
+                मासिक पंचांग (Monthly Calendar)
               </h2>
             </div>
             <p className="text-xs text-[#735133] mt-0.5">
@@ -394,7 +394,7 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
         </div>
       </div>
 
-      {/* 3. Selected Day Detailed Sheet (कालनिर्णय दैनिक विस्तृत पत्रक) */}
+      {/* 3. Selected Day Detailed Sheet (दैनिक विस्तृत पत्रक) */}
       {selectedDay && (
         <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#8C6239]/20 pb-3">

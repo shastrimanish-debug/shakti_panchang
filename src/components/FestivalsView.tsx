@@ -44,7 +44,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
   // Selected Year for single-year view (default to currentDate's year or 2026)
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear() || 2026);
 
-  // Active Mode: 'kalnirnay' (कालनिर्णय मासिक पंचांग) vs 'year' (वार्षिक सूची) vs 'century' (200 वर्षों में महा-खोज)
+  // Active Mode: 'kalnirnay' (मासिक पंचांग) vs 'year' (वार्षिक सूची) vs 'century' (200 वर्षों में महा-खोज)
   const [viewMode, setViewMode] = useState<'kalnirnay' | 'year' | 'century'>('kalnirnay');
 
   // Single year filters
@@ -302,7 +302,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
             }`}
           >
             <Calendar className="w-4 h-4 text-[#B56A00]" />
-            <span>🗓️ कालनिर्णय मासिक पंचांग</span>
+            <span>🗓️ मासिक पंचांग (Monthly Calendar)</span>
           </button>
 
           <button
