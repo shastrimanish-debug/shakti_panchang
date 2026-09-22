@@ -15,7 +15,8 @@ import {
   DEFAULT_LOCATION,
 } from '../services/storage';
 import { useLicense } from '@/lib/license-client';
-import { calculateVedicPanchang } from '../services/astronomy';
+import { calculateVedicPanchang, RASHIS, NAKSHATRAS } from '../services/astronomy';
+import { createQuickKundaliFromRashiNakshatra } from '../services/milan';
 import { downloadMilanBhojpatraPdf, downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { generateExhaustive59PageKundaliPdf } from '../services/exhaustiveKundaliPdf';
 import { analyzeKundali, professionalPdfAnswer } from '../services/predictions';
@@ -215,13 +216,28 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
 
   // Ashtakoot Milan Boy & Girl Form
-  const [boyName, setBoyName] = useState('');
+  const [boyName, setBoyName] = useState('वर (वर पक्ष)');
   const [boyDob, setBoyDob] = useState('');
   const [boyTob, setBoyTob] = useState('');
-  const [girlName, setGirlName] = useState('');
+  const [girlName, setGirlName] = useState('कन्या (कन्या पक्ष)');
   const [girlDob, setGirlDob] = useState('');
   const [girlTob, setGirlTob] = useState('');
   const [isDownloadingMilanPdf, setIsDownloadingMilanPdf] = useState(false);
+  const [milanInputMode, setMilanInputMode] = useState<'rashi' | 'dob'>('rashi');
+  const [boyRashiIdx, setBoyRashiIdx] = useState<number>(0); // मेष
+  const [boyNakIdx, setBoyNakIdx] = useState<number>(0); // अश्विनी
+  const [girlRashiIdx, setGirlRashiIdx] = useState<number>(3); // कर्क
+  const [girlNakIdx, setGirlNakIdx] = useState<number>(7); // पुष्य
+
+  const handleLoadSampleMilan = () => {
+    setMilanInputMode('dob');
+    setBoyName('श्री राम');
+    setBoyDob('1995-04-12');
+    setBoyTob('12:00');
+    setGirlName('सीता (जानकी)');
+    setGirlDob('1997-05-15');
+    setGirlTob('08:30');
+  };
 
   // Prashna Question State
   const [prashnaText, setPrashnaText] = useState('क्या यह कार्य सफल होगा?');
@@ -318,13 +334,23 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   }, [k?.mahadasha, k?.antardasha]);
 
   // Milan calculation
-  const milanReady = Boolean(boyName.trim() && boyDob && boyTob && girlName.trim() && girlDob && girlTob);
+  const milanReady =
+    milanInputMode === 'rashi'
+      ? true
+      : Boolean(boyName.trim() && boyDob && boyTob && girlName.trim() && girlDob && girlTob);
+
   const boyKundali = milanReady
-    ? calculateKundali(boyName.trim(), new Date(boyDob), boyTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
+    ? milanInputMode === 'rashi'
+      ? createQuickKundaliFromRashiNakshatra(boyName.trim() || 'वर', boyRashiIdx, boyNakIdx)
+      : calculateKundali(boyName.trim(), new Date(boyDob), boyTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
     : null;
+
   const girlKundali = milanReady
-    ? calculateKundali(girlName.trim(), new Date(girlDob), girlTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
+    ? milanInputMode === 'rashi'
+      ? createQuickKundaliFromRashiNakshatra(girlName.trim() || 'कन्या', girlRashiIdx, girlNakIdx)
+      : calculateKundali(girlName.trim(), new Date(girlDob), girlTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
     : null;
+
   const milanResult = boyKundali && girlKundali ? calculateAshtakootMilan(boyKundali, girlKundali) : null;
 
   // Remedies calculation
@@ -1773,15 +1799,61 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           {milanSubPage === 'score' && (
             <div className="space-y-4">
               {/* Couple Profiles Inputs */}
-              <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 sm:p-5 shadow-xs">
-                <h3 className="text-sm font-bold text-[#5C3A21] mb-3 flex items-center gap-1.5">
-                  <Heart className="w-4 h-4 text-rose-600" />
-                  वर-कन्या विवरण (Boy & Girl Profiles for Matchmaking)
-                </h3>
+              <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 sm:p-5 shadow-xs space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-2">
+                  <h3 className="text-sm font-bold text-[#5C3A21] flex items-center gap-1.5">
+                    <Heart className="w-4 h-4 text-rose-600" />
+                    <span>वर-कन्या विवरण (36-गुण अष्टकूट मिलान)</span>
+                  </h3>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {/* Mode Toggle */}
+                    <div className="inline-flex rounded-lg border border-[#8C6239]/30 p-0.5 bg-[#F4E8D1]">
+                      <button
+                        type="button"
+                        onClick={() => setMilanInputMode('rashi')}
+                        className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition cursor-pointer ${
+                          milanInputMode === 'rashi'
+                            ? 'bg-[#5C3A21] text-white shadow-xs'
+                            : 'text-[#5C3A21] hover:bg-[#FAF2E4]'
+                        }`}
+                      >
+                        🌙 राशि व नक्षत्र से
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMilanInputMode('dob')}
+                        className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition cursor-pointer ${
+                          milanInputMode === 'dob'
+                            ? 'bg-[#5C3A21] text-white shadow-xs'
+                            : 'text-[#5C3A21] hover:bg-[#FAF2E4]'
+                        }`}
+                      >
+                        🗓️ जन्म तिथि व समय
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleLoadSampleMilan}
+                      className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-md text-[11px] font-bold transition cursor-pointer shadow-xs active:scale-95"
+                    >
+                      🌟 उदाहरण भरें
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Boy */}
                   <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20 space-y-2">
-                    <span className="text-xs font-bold text-blue-900 uppercase">वर विवरण (Boy)</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-blue-900 uppercase">वर विवरण (Boy)</span>
+                      {boyKundali && (
+                        <span className="text-[10px] font-bold bg-blue-100 text-blue-900 px-2 py-0.5 rounded border border-blue-200">
+                          {boyKundali.moonRashi} • {boyKundali.nakshatra} ({boyKundali.nadi} नाड़ी)
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={boyName}
@@ -1789,25 +1861,66 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
                       placeholder="वर का नाम"
                     />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="date"
-                        value={boyDob}
-                        onChange={(e) => setBoyDob(e.target.value)}
-                        className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                      />
-                      <input
-                        type="time"
-                        value={boyTob}
-                        onChange={(e) => setBoyTob(e.target.value)}
-                        className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                      />
-                    </div>
+
+                    {milanInputMode === 'rashi' ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">चंद्र राशि</label>
+                          <select
+                            value={boyRashiIdx}
+                            onChange={(e) => setBoyRashiIdx(Number(e.target.value))}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                          >
+                            {RASHIS.map((r, idx) => (
+                              <option key={r} value={idx}>
+                                {idx + 1}. {r}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">जन्म नक्षत्र</label>
+                          <select
+                            value={boyNakIdx}
+                            onChange={(e) => setBoyNakIdx(Number(e.target.value))}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                          >
+                            {NAKSHATRAS.map((n, idx) => (
+                              <option key={n} value={idx}>
+                                {idx + 1}. {n}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="date"
+                          value={boyDob}
+                          onChange={(e) => setBoyDob(e.target.value)}
+                          className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                        />
+                        <input
+                          type="time"
+                          value={boyTob}
+                          onChange={(e) => setBoyTob(e.target.value)}
+                          className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Girl */}
                   <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20 space-y-2">
-                    <span className="text-xs font-bold text-rose-900 uppercase">कन्या विवरण (Girl)</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-rose-900 uppercase">कन्या विवरण (Girl)</span>
+                      {girlKundali && (
+                        <span className="text-[10px] font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded border border-rose-200">
+                          {girlKundali.moonRashi} • {girlKundali.nakshatra} ({girlKundali.nadi} नाड़ी)
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={girlName}
@@ -1815,20 +1928,54 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
                       placeholder="कन्या का नाम"
                     />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="date"
-                        value={girlDob}
-                        onChange={(e) => setGirlDob(e.target.value)}
-                        className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                      />
-                      <input
-                        type="time"
-                        value={girlTob}
-                        onChange={(e) => setGirlTob(e.target.value)}
-                        className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                      />
-                    </div>
+
+                    {milanInputMode === 'rashi' ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">चंद्र राशि</label>
+                          <select
+                            value={girlRashiIdx}
+                            onChange={(e) => setGirlRashiIdx(Number(e.target.value))}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                          >
+                            {RASHIS.map((r, idx) => (
+                              <option key={r} value={idx}>
+                                {idx + 1}. {r}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">जन्म नक्षत्र</label>
+                          <select
+                            value={girlNakIdx}
+                            onChange={(e) => setGirlNakIdx(Number(e.target.value))}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                          >
+                            {NAKSHATRAS.map((n, idx) => (
+                              <option key={n} value={idx}>
+                                {idx + 1}. {n}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="date"
+                          value={girlDob}
+                          onChange={(e) => setGirlDob(e.target.value)}
+                          className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                        />
+                        <input
+                          type="time"
+                          value={girlTob}
+                          onChange={(e) => setGirlTob(e.target.value)}
+                          className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

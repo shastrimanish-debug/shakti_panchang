@@ -2,7 +2,18 @@ import React, { useState } from 'react';
 import { VedicPanchangData } from '../types';
 import { MUHURAT_ACTIVITIES, getMuhuratGuidance, getDailyMuhuratDetails } from '../services/muhurat';
 import { DISHASHOOL_MAP } from '../services/disha';
-import { Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, ChevronRight, ChevronLeft, Clock, BookOpen } from 'lucide-react';
+import { AnnualMuhuratTableView } from './AnnualMuhuratTableView';
+import {
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  ShieldCheck,
+  ChevronRight,
+  ChevronLeft,
+  Clock,
+  BookOpen,
+  Calendar,
+} from 'lucide-react';
 
 interface MuhuratViewProps {
   panchang: VedicPanchangData;
@@ -10,45 +21,32 @@ interface MuhuratViewProps {
 
 export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
   const [selectedActivity, setSelectedActivity] = useState(MUHURAT_ACTIVITIES[0]);
-  const [subPage, setSubPage] = useState<'today' | 'windows' | 'guidance'>('today');
+  const [subPage, setSubPage] = useState<'annual_table' | 'today' | 'windows' | 'guidance'>('annual_table');
   const weekday = panchang.date.getDay();
   const shoolDirection = DISHASHOOL_MAP[weekday];
   const guidance = getMuhuratGuidance(selectedActivity, panchang, shoolDirection);
   const dailyRows = getDailyMuhuratDetails(panchang);
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
-      {/* Activity Selector */}
-      <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3 sm:p-4 shadow-xs">
-        <label className="block text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2">
-          कार्य का चयन करें (Select Activity for Muhurat Guidance)
-        </label>
-        <div className="flex flex-wrap gap-1.5">
-          {MUHURAT_ACTIVITIES.map((act) => {
-            const isSelected = selectedActivity === act;
-            return (
-              <button
-                key={act}
-                onClick={() => setSelectedActivity(act)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-                    : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#FAF2E4] border border-[#8C6239]/30'
-                }`}
-              >
-                {act}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
+    <div className="space-y-3.5 animate-in fade-in duration-300">
       {/* Flutter-style Segmented Chips */}
-      <div className="flex items-center gap-1.5 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
+      <div className="flex items-center gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setSubPage('annual_table')}
+          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+            subPage === 'annual_table'
+              ? 'bg-[#5C3A21] text-white shadow-xs'
+              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5 text-amber-300" />
+          <span>📅 विवाह/गृहप्रवेश सारणी</span>
+        </button>
         <button
           type="button"
           onClick={() => setSubPage('today')}
-          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
             subPage === 'today'
               ? 'bg-[#5C3A21] text-white shadow-xs'
               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
@@ -60,7 +58,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
         <button
           type="button"
           onClick={() => setSubPage('windows')}
-          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
             subPage === 'windows'
               ? 'bg-[#5C3A21] text-white shadow-xs'
               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
@@ -72,7 +70,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
         <button
           type="button"
           onClick={() => setSubPage('guidance')}
-          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
             subPage === 'guidance'
               ? 'bg-[#5C3A21] text-white shadow-xs'
               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
@@ -83,20 +81,51 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
         </button>
       </div>
 
-      {/* Main Guidance Card */}
-      <div className="bg-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
-        {/* Header Status */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-3">
-          <div>
-            <div className="text-xs font-bold text-[#8C6239]">चयनित कार्य</div>
-            <h2 className="text-xl sm:text-2xl font-black font-granth text-[#5C3A21]">
-              {guidance.activity} मुहूर्त
-            </h2>
+      {/* When Annual Table is selected */}
+      {subPage === 'annual_table' && <AnnualMuhuratTableView />}
+
+      {/* When other sub-pages are selected */}
+      {subPage !== 'annual_table' && (
+        <div className="space-y-4">
+          {/* Activity Selector */}
+          <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3 sm:p-4 shadow-xs">
+            <label className="block text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2">
+              कार्य का चयन करें (Select Activity for Muhurat Guidance)
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {MUHURAT_ACTIVITIES.map((act) => {
+                const isSelected = selectedActivity === act;
+                return (
+                  <button
+                    key={act}
+                    onClick={() => setSelectedActivity(act)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
+                        : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#FAF2E4] border border-[#8C6239]/30'
+                    }`}
+                  >
+                    {act}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className={`px-3 py-1 rounded-lg border font-black text-xs sm:text-sm ${guidance.statusColor}`}>
-            {guidance.gradeText}
-          </div>
-        </div>
+
+          {/* Main Guidance Card */}
+          <div className="bg-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
+            {/* Header Status */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-3">
+              <div>
+                <div className="text-xs font-bold text-[#8C6239]">चयनित कार्य</div>
+                <h2 className="text-xl sm:text-2xl font-black font-granth text-[#5C3A21]">
+                  {guidance.activity} मुहूर्त
+                </h2>
+              </div>
+              <div className={`px-3 py-1 rounded-lg border font-black text-xs sm:text-sm ${guidance.statusColor}`}>
+                {guidance.gradeText}
+              </div>
+            </div>
 
         {subPage === 'today' && (
           <div className="space-y-3">
@@ -255,6 +284,8 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
           </div>
         )}
       </div>
+      </div>
+      )}
     </div>
   );
 };

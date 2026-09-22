@@ -6,7 +6,14 @@
 
 import { KundaliData, AshtakootItem } from '../types';
 import { RASHIS, NAKSHATRAS } from './astronomy';
-import { checkManglik } from './kundali';
+import {
+  checkManglik,
+  getVarna,
+  RASHI_VASHYAS,
+  NAKSHATRA_GANAS,
+  NAKSHATRA_YONIS,
+  NAKSHATRA_NADIS,
+} from './kundali';
 
 export interface MilanEvaluationResult {
   totalScore: number;
@@ -533,5 +540,83 @@ export function evaluateKundaliMilan(boy: KundaliData, girl: KundaliData): Milan
     },
     conclusion: `${verdict} ${isManglikCancelled ? 'मांगलिक दोष का परिहार उपलब्ध है।' : 'मांगलिक दोष निवारण आवश्यक है।'}`,
     auspiciousRemedies,
+  };
+}
+
+/**
+ * Creates a compliant KundaliData instance directly from Rashi & Nakshatra selections
+ * allowing instantaneous 36-guna calculation without requiring exact birth time.
+ */
+export function createQuickKundaliFromRashiNakshatra(
+  name: string,
+  rashiIdx: number,
+  nakIdx: number,
+  isManglik: boolean = false
+): KundaliData {
+  const varna = getVarna(rashiIdx);
+  const vashya = RASHI_VASHYAS[rashiIdx] || 'मानव';
+  const gana = NAKSHATRA_GANAS[nakIdx] || 'देव';
+  const yoni = NAKSHATRA_YONIS[nakIdx] || 'अश्व';
+  const nadi = NAKSHATRA_NADIS[nakIdx] || 'मध्य';
+  const marsHouse = isManglik ? 1 : 3;
+
+  return {
+    name: name.trim() || 'जातक',
+    birthDate: new Date(),
+    birthTime: '12:00',
+    birthPlace: 'भारत',
+    latitude: 23.1765,
+    longitude: 75.7885,
+    timezoneHours: 5.5,
+    lagnaDegree: 0,
+    lagnaRashi: RASHIS[rashiIdx],
+    lagnaRashiNumber: rashiIdx + 1,
+    moonRashi: RASHIS[rashiIdx],
+    sunRashi: RASHIS[rashiIdx],
+    nakshatra: NAKSHATRAS[nakIdx],
+    charan: '1',
+    nadi,
+    gana,
+    yoni,
+    varna,
+    vashya,
+    isManglik,
+    mahadasha: 'सूर्य',
+    antardasha: 'सूर्य',
+    pratyantardasha: 'सूर्य',
+    planets: [
+      {
+        planet: 'चंद्र',
+        englishName: 'Moon',
+        degree: rashiIdx * 30 + 15,
+        degreeInRashi: 15,
+        house: 1,
+        rashi: RASHIS[rashiIdx],
+        rashiNumber: rashiIdx + 1,
+        isRetrograde: false,
+        latitude: 0,
+        speed: 13.2,
+        nakshatra: NAKSHATRAS[nakIdx],
+        pada: 1,
+      },
+      {
+        planet: 'मंगल',
+        englishName: 'Mars',
+        degree: isManglik ? 15 : 75,
+        degreeInRashi: 15,
+        house: marsHouse,
+        rashi: RASHIS[(rashiIdx + marsHouse - 1) % 12],
+        rashiNumber: ((rashiIdx + marsHouse - 1) % 12) + 1,
+        isRetrograde: false,
+        latitude: 0,
+        speed: 0.5,
+        nakshatra: NAKSHATRAS[0],
+        pada: 1,
+      },
+    ],
+    dashaPeriods: [],
+    antarPeriods: [],
+    pratyantarPeriods: [],
+    calculatedAt: new Date(),
   };
 }
