@@ -34,6 +34,12 @@ import { sharePanchang, copyPanchangToClipboard } from '../services/sharePanchan
 import { CalcSettingsPanel } from './CalcSettingsPanel';
 import { DailyShlokaCard } from './DailyShlokaCard';
 import { MoonPhaseChart } from './MoonPhaseChart';
+import {
+  calculateSpecialYogas,
+  calculatePanchakAndBhadra,
+} from '../services/horaPanchakYogas';
+import { HoraChakraView } from './HoraChakraView';
+import { PanchakBhadraCard } from './PanchakBhadraCard';
 
 export type PanchangSubPage = 'main' | 'moon' | 'muhurat' | 'disha';
 
@@ -65,10 +71,14 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 }) => {
   // Flutter-style 4-page mobile-fit architecture
   const [activeSubTab, setActiveSubTab] = useState<PanchangSubPage>('main');
+  const [muhuratSubTab, setMuhuratSubTab] = useState<'shubh' | 'hora' | 'panchak'>('shubh');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [showCalcOptions, setShowCalcOptions] = useState(false);
+
+  const specialYogas = calculateSpecialYogas(panchang);
+  const { panchak, bhadra } = calculatePanchakAndBhadra(panchang);
 
   const solar = panchang.solar;
   const weekday = panchang.date.getDay();
@@ -288,6 +298,58 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 className="bg-[#B56A00] h-full rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(100, Math.max(5, panchang.tithiProgress * 100))}%` }}
               />
+            </div>
+          </div>
+
+          {/* Special Vedic Yogas Banner (सर्वार्थ सिद्धि, अमृत सिद्धि, गुरु पुष्य, द्विपुष्कर आदि) */}
+          {specialYogas.length > 0 && (
+            <div className="space-y-1">
+              {specialYogas.map((y) => (
+                <div
+                  key={y.id}
+                  className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between text-xs shadow-2xs ${y.badgeColor}`}
+                >
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span className="font-black text-[#5C3A21]">{y.name}</span>
+                    <span className="text-[10px] text-[#735133] hidden sm:inline truncate">
+                      — {y.description}
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-[#5C3A21] shrink-0">
+                    सक्रिय योग
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Panchak & Bhadra Quick Micro-Indicators */}
+          <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+            <div
+              className={`px-2 py-1 rounded-lg border flex items-center justify-between shadow-2xs ${
+                panchak.isActive
+                  ? panchak.nature === 'auspicious'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    : 'bg-amber-50 border-amber-200 text-amber-900'
+                  : 'bg-white border-[#8C6239]/20 text-[#735133]'
+              }`}
+            >
+              <span className="font-bold">⚡ पञ्चक:</span>
+              <span className="font-black truncate ml-1">{panchak.isActive ? panchak.typeNameHindi : 'पञ्चक मुक्त'}</span>
+            </div>
+
+            <div
+              className={`px-2 py-1 rounded-lg border flex items-center justify-between shadow-2xs ${
+                bhadra.isActive
+                  ? bhadra.nature === 'varjya'
+                    ? 'bg-rose-50 border-rose-200 text-rose-900'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                  : 'bg-white border-[#8C6239]/20 text-[#735133]'
+              }`}
+            >
+              <span className="font-bold">🛡️ भद्रा:</span>
+              <span className="font-black truncate ml-1">{bhadra.isActive ? `${bhadra.vas} (${bhadra.nature === 'varjya' ? 'वर्जित' : 'शुभ'})` : 'भद्रा मुक्त'}</span>
             </div>
           </div>
 
@@ -553,138 +615,217 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* PAGE 3: ⏳ शुभ मुहूर्त व चौघड़िया (Auspicious / Inauspicious & Day Choghadiya) */}
+      {/* PAGE 3: ⏳ शुभ मुहूर्त, चौघड़िया, होरा चक्र एवं पञ्चक-भद्रा */}
       {/* ========================================================================= */}
       {activeSubTab === 'muhurat' && (
         <div className="space-y-2.5 animate-in fade-in duration-150">
-          {/* Tyajya / Inauspicious Cards (लाल रंग - Red) */}
-          <div className="space-y-1.5">
-            <div className="text-xs font-black text-[#B71C1C] flex items-center gap-1 px-1">
-              <span>⚠️ त्याज्य / अशुभ काल (वर्जित समय)</span>
-            </div>
+          {/* Muhurat 3-Way Sub-Switcher */}
+          <div className="flex items-center gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setMuhuratSubTab('shubh')}
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer text-center ${
+                muhuratSubTab === 'shubh'
+                  ? 'bg-[#5C3A21] text-white shadow-xs'
+                  : 'text-[#5C3A21] hover:bg-[#F4E8D1]'
+              }`}
+            >
+              ⏳ मुहूर्त व चौघड़िया
+            </button>
 
-            {rahu && (
-              <div className="bg-[#FFEBEE] border border-[#FFCDD2] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
-                <div>
-                  <div className="font-black text-[#B71C1C]">राहु काल</div>
-                  <div className="text-[10px] text-[#C62828]">नवीन कार्य आरंभ वर्जित</div>
-                </div>
-                <div className="font-black font-mono text-[#B71C1C] text-xs sm:text-sm">
-                  {fmt(rahu.start)} – {fmt(rahu.end)}
-                </div>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setMuhuratSubTab('hora')}
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer text-center ${
+                muhuratSubTab === 'hora'
+                  ? 'bg-[#5C3A21] text-white shadow-xs'
+                  : 'text-[#5C3A21] hover:bg-[#F4E8D1]'
+              }`}
+            >
+              🪐 होरा चक्र (२४ घंटे)
+            </button>
 
-            {yamaghanta && (
-              <div className="bg-[#FFEBEE] border border-[#FFCDD2] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
-                <div>
-                  <div className="font-black text-[#B71C1C]">यमगण्ड</div>
-                  <div className="text-[10px] text-[#C62828]">यात्रा व शुभ कार्य त्याज्य</div>
-                </div>
-                <div className="font-black font-mono text-[#B71C1C] text-xs sm:text-sm">
-                  {fmt(yamaghanta.start)} – {fmt(yamaghanta.end)}
-                </div>
-              </div>
-            )}
-
-            {gulika && (
-              <div className="bg-[#FFEBEE] border border-[#FFCDD2] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
-                <div>
-                  <div className="font-black text-[#B71C1C]">गुलिक काल</div>
-                  <div className="text-[10px] text-[#C62828]">मन्द फलदायी समय</div>
-                </div>
-                <div className="font-black font-mono text-[#B71C1C] text-xs sm:text-sm">
-                  {fmt(gulika.start)} – {fmt(gulika.end)}
-                </div>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setMuhuratSubTab('panchak')}
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer text-center ${
+                muhuratSubTab === 'panchak'
+                  ? 'bg-[#5C3A21] text-white shadow-xs'
+                  : 'text-[#5C3A21] hover:bg-[#F4E8D1]'
+              }`}
+            >
+              🛡️ पञ्चक व भद्रा
+            </button>
           </div>
 
-          {/* Auspicious Cards (हरा रंग - Green) */}
-          <div className="space-y-1.5">
-            <div className="text-xs font-black text-[#1B5E20] flex items-center gap-1 px-1">
-              <span>✨ शुभ मुहूर्त (सर्वकार्य सिद्धि)</span>
-            </div>
-
-            {abhijit && (
-              <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
-                <div>
-                  <div className="font-black text-[#1B5E20]">अभिजित मुहूर्त</div>
-                  <div className="text-[10px] text-[#2E7D32]">सर्वकार्य सिद्धिदायक काल</div>
-                </div>
-                <div className="font-black font-mono text-[#1B5E20] text-xs sm:text-sm">
-                  {fmt(abhijit.start)} – {fmt(abhijit.end)}
-                </div>
-              </div>
-            )}
-
-            {brahma && (
-              <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
-                <div>
-                  <div className="font-black text-[#1B5E20]">ब्रह्म मुहूर्त</div>
-                  <div className="text-[10px] text-[#2E7D32]">ईश्वर ध्यान, साधना व अध्ययन</div>
-                </div>
-                <div className="font-black font-mono text-[#1B5E20] text-xs sm:text-sm">
-                  {fmt(brahma.start)} – {fmt(brahma.end)}
-                </div>
-              </div>
-            )}
-
-            {amrit && (
-              <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
-                <div>
-                  <div className="font-black text-[#1B5E20]">अमृत काल</div>
-                  <div className="text-[10px] text-[#2E7D32]">श्रेष्ठ अमृत सिद्धि योग</div>
-                </div>
-                <div className="font-black font-mono text-[#1B5E20] text-xs sm:text-sm">
-                  {fmt(amrit.start)} – {fmt(amrit.end)}
-                </div>
-              </div>
-            )}
-
-            {godhuli && (
-              <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
-                <div>
-                  <div className="font-black text-[#1B5E20]">गोधूलि मुहूर्त</div>
-                  <div className="text-[10px] text-[#2E7D32]">संध्या दीपदान व पूजन</div>
-                </div>
-                <div className="font-black font-mono text-[#1B5E20] text-xs sm:text-sm">
-                  {fmt(godhuli.start)} – {fmt(godhuli.end)}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Day Choghadiya List (दिन चौघड़िया) */}
-          <div className="pt-1 space-y-1.5">
-            <div className="text-xs font-black text-[#5C3A21] px-0.5">दिन चौघड़िया चक्र</div>
-            <div className="space-y-1">
-              {dayChoghadiyas.map((c, idx) => {
-                const isTyajya = c.nature === 'inauspicious';
-                const isShubh = c.nature === 'auspicious';
-                return (
-                  <div
-                    key={idx}
-                    className={`rounded-xl px-3 py-1.5 flex items-center justify-between text-xs border shadow-2xs ${
-                      isTyajya
-                        ? 'bg-[#FFEBEE] border-[#FFCDD2] text-[#B71C1C]'
-                        : isShubh
-                        ? 'bg-[#E8F5E9] border-[#C8E6C9] text-[#1B5E20]'
-                        : 'bg-[#FFF8E1] border-[#FFE082] text-[#F57F17]'
-                    }`}
-                  >
-                    <div>
-                      <span className="font-black">{c.hindiName}</span>
-                      <span className="text-[10px] opacity-80 ml-1.5">({c.meaning})</span>
+          {/* Sub-View 1: Standard Shubh/Tyajya Windows & Day Choghadiya */}
+          {muhuratSubTab === 'shubh' && (
+            <div className="space-y-2.5 animate-in fade-in duration-150">
+              {/* Active Special Yogas if any */}
+              {specialYogas.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-xs font-black text-[#B56A00] flex items-center gap-1 px-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>आज के विशिष्ट सिद्ध योग</span>
+                  </div>
+                  {specialYogas.map((y) => (
+                    <div
+                      key={y.id}
+                      className={`p-2.5 rounded-xl border text-xs shadow-2xs space-y-1 ${y.badgeColor}`}
+                    >
+                      <div className="flex items-center justify-between font-black text-[#5C3A21]">
+                        <span>{y.name}</span>
+                        <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded">सक्रिय</span>
+                      </div>
+                      <div className="text-xs text-[#5C3A21]">{y.description}</div>
+                      <div className="text-[11px] text-[#735133] leading-snug">
+                        <strong>निर्देश: </strong>{y.guidance}
+                      </div>
                     </div>
-                    <div className="font-black font-mono text-xs">
-                      {fmt(c.start)} – {fmt(c.end)}
+                  ))}
+                </div>
+              )}
+
+              {/* Tyajya / Inauspicious Cards (लाल रंग - Red) */}
+              <div className="space-y-1.5">
+                <div className="text-xs font-black text-[#B71C1C] flex items-center gap-1 px-1">
+                  <span>⚠️ त्याज्य / अशुभ काल (वर्जित समय)</span>
+                </div>
+
+                {rahu && (
+                  <div className="bg-[#FFEBEE] border border-[#FFCDD2] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
+                    <div>
+                      <div className="font-black text-[#B71C1C]">राहु काल</div>
+                      <div className="text-[10px] text-[#C62828]">नवीन कार्य आरंभ वर्जित</div>
+                    </div>
+                    <div className="font-black font-mono text-[#B71C1C] text-xs sm:text-sm">
+                      {fmt(rahu.start)} – {fmt(rahu.end)}
                     </div>
                   </div>
-                );
-              })}
+                )}
+
+                {yamaghanta && (
+                  <div className="bg-[#FFEBEE] border border-[#FFCDD2] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
+                    <div>
+                      <div className="font-black text-[#B71C1C]">यमगण्ड</div>
+                      <div className="text-[10px] text-[#C62828]">यात्रा व शुभ कार्य त्याज्य</div>
+                    </div>
+                    <div className="font-black font-mono text-[#B71C1C] text-xs sm:text-sm">
+                      {fmt(yamaghanta.start)} – {fmt(yamaghanta.end)}
+                    </div>
+                  </div>
+                )}
+
+                {gulika && (
+                  <div className="bg-[#FFEBEE] border border-[#FFCDD2] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
+                    <div>
+                      <div className="font-black text-[#B71C1C]">गुलिक काल</div>
+                      <div className="text-[10px] text-[#C62828]">मन्द फलदायी समय</div>
+                    </div>
+                    <div className="font-black font-mono text-[#B71C1C] text-xs sm:text-sm">
+                      {fmt(gulika.start)} – {fmt(gulika.end)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Auspicious Cards (हरा रंग - Green) */}
+              <div className="space-y-1.5">
+                <div className="text-xs font-black text-[#1B5E20] flex items-center gap-1 px-1">
+                  <span>✨ शुभ मुहूर्त (सर्वकार्य सिद्धि)</span>
+                </div>
+
+                {abhijit && (
+                  <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
+                    <div>
+                      <div className="font-black text-[#1B5E20]">अभिजित मुहूर्त</div>
+                      <div className="text-[10px] text-[#2E7D32]">सर्वकार्य सिद्धिदायक काल</div>
+                    </div>
+                    <div className="font-black font-mono text-[#1B5E20] text-xs sm:text-sm">
+                      {fmt(abhijit.start)} – {fmt(abhijit.end)}
+                    </div>
+                  </div>
+                )}
+
+                {brahma && (
+                  <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
+                    <div>
+                      <div className="font-black text-[#1B5E20]">ब्रह्म मुहूर्त</div>
+                      <div className="text-[10px] text-[#2E7D32]">ईश्वर ध्यान, साधना व अध्ययन</div>
+                    </div>
+                    <div className="font-black font-mono text-[#1B5E20] text-xs sm:text-sm">
+                      {fmt(brahma.start)} – {fmt(brahma.end)}
+                    </div>
+                  </div>
+                )}
+
+                {amrit && (
+                  <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
+                    <div>
+                      <div className="font-black text-[#1B5E20]">अमृत काल</div>
+                      <div className="text-[10px] text-[#2E7D32]">श्रेष्ठ अमृत सिद्धि योग</div>
+                    </div>
+                    <div className="font-black font-mono text-[#1B5E20] text-xs sm:text-sm">
+                      {fmt(amrit.start)} – {fmt(amrit.end)}
+                    </div>
+                  </div>
+                )}
+
+                {godhuli && (
+                  <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl px-3 py-2 flex items-center justify-between text-xs shadow-2xs">
+                    <div>
+                      <div className="font-black text-[#1B5E20]">गोधूलि मुहूर्त</div>
+                      <div className="text-[10px] text-[#2E7D32]">संध्या दीपदान व पूजन</div>
+                    </div>
+                    <div className="font-black font-mono text-[#1B5E20] text-xs sm:text-sm">
+                      {fmt(godhuli.start)} – {fmt(godhuli.end)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Day Choghadiya List (दिन चौघड़िया) */}
+              <div className="pt-1 space-y-1.5">
+                <div className="text-xs font-black text-[#5C3A21] px-0.5">दिन चौघड़िया चक्र</div>
+                <div className="space-y-1">
+                  {dayChoghadiyas.map((c, idx) => {
+                    const isTyajya = c.nature === 'inauspicious';
+                    const isShubh = c.nature === 'auspicious';
+                    return (
+                      <div
+                        key={idx}
+                        className={`rounded-xl px-3 py-1.5 flex items-center justify-between text-xs border shadow-2xs ${
+                          isTyajya
+                            ? 'bg-[#FFEBEE] border-[#FFCDD2] text-[#B71C1C]'
+                            : isShubh
+                            ? 'bg-[#E8F5E9] border-[#C8E6C9] text-[#1B5E20]'
+                            : 'bg-[#FFF8E1] border-[#FFE082] text-[#F57F17]'
+                        }`}
+                      >
+                        <div>
+                          <span className="font-black">{c.hindiName}</span>
+                          <span className="text-[10px] opacity-80 ml-1.5">({c.meaning})</span>
+                        </div>
+                        <div className="font-black font-mono text-xs">
+                          {fmt(c.start)} – {fmt(c.end)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Sub-View 2: 24-Hour Planetary Hora Chakra */}
+          {muhuratSubTab === 'hora' && (
+            <HoraChakraView solar={solar} date={currentDate || panchang.date} />
+          )}
+
+          {/* Sub-View 3: Panchak and Bhadra Analysis */}
+          {muhuratSubTab === 'panchak' && (
+            <PanchakBhadraCard panchak={panchak} bhadra={bhadra} />
+          )}
         </div>
       )}
 

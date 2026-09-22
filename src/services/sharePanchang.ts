@@ -1,6 +1,7 @@
 import { VedicPanchangData, SavedLocation } from '../types';
 import { DISHASHOOL_MAP, DISHASHOOL_REMEDIES } from './disha';
 import { getAuspiciousWindows, getInauspiciousWindows } from './choghadiya';
+import { calculateSpecialYogas, calculatePanchakAndBhadra } from './horaPanchakYogas';
 
 export function formatTimeHi(d: Date): string {
   return d.toLocaleTimeString('hi-IN', {
@@ -39,6 +40,16 @@ export function generatePanchangShareText(panchang: VedicPanchangData, location:
   const gulik = inauspicious.find((w) => w.title.includes('गुलिक'));
   const gulikStr = gulik ? `${formatTimeHi(gulik.start)} - ${formatTimeHi(gulik.end)}` : 'उपलब्ध नहीं';
 
+  const specialYogas = calculateSpecialYogas(panchang);
+  const { panchak, bhadra } = calculatePanchakAndBhadra(panchang);
+
+  const yogaLines = specialYogas.length > 0
+    ? `\n🌟 *विशिष्ट महायोग:*\n${specialYogas.map((y) => `✨ ${y.name}: ${y.description}`).join('\n')}\n`
+    : '';
+
+  const panchakLine = panchak.isActive ? `⚡ पञ्चक: ${panchak.typeNameHindi}` : '⚡ पञ्चक: पञ्चक रहित (सामान्य)';
+  const bhadraLine = bhadra.isActive ? `🛡️ भद्रा: ${bhadra.vas} (${bhadra.nature === 'varjya' ? 'वर्जित' : 'दोषमुक्त'})` : '🛡️ भद्रा: भद्रा मुक्त';
+
   const text = `🚩 ॐ श्री गणेशाय नमः 🚩
 *सनातन शक्ति वैदिक पंचांग*
 📅 दिनांक: ${dateStr} (${panchang.weekday})
@@ -55,6 +66,10 @@ export function generatePanchangShareText(panchang: VedicPanchangData, location:
 🔹 नक्षत्र: ${panchang.nakshatra} (चरण: ${panchang.pada})
 🔹 योग: ${panchang.yoga}
 🔹 करण: ${panchang.karana}
+${yogaLines}
+🛡️ *पञ्चक एवं भद्रा:*
+${panchakLine}
+${bhadraLine}
 
 ⏱️ *शुभ एवं त्याज्य समय:*
 ✅ अभिजित मुहूर्त: ${abhijitStr}
@@ -68,7 +83,7 @@ export function generatePanchangShareText(panchang: VedicPanchangData, location:
 "तिथिर्वारश्च नक्षत्रं योगः करणमेव च।
 पञ्चाङ्गस्य फलं श्रुत्वा गङ्गास्नानफलं लभेत्॥"
 
-📲 संपूर्ण कुण्डली, चौघड़िया व 200 वर्ष पर्व खोजें शक्ति पंचांग पर:
+📲 संपूर्ण कुण्डली, होरा चक्र, पञ्चक व चौघड़िया देखें शक्ति पंचांग पर:
 https://shaktipanchang.app`;
 
   return text;
