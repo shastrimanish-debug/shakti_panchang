@@ -102,9 +102,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   const nextTabMeta = BOOK_PAGES[nextIndex];
 
   return (
-    <header className="sticky top-0 z-40 bg-[#5C3A21] text-[#FAF2E4] shadow-md border-b border-[#8C6239]">
-      {/* 1. Ultra-Compact Top Bar (Height ~38px) */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-3 py-1 flex items-center justify-between gap-1 sm:gap-2">
+    <header
+      className="sticky top-0 z-40 bg-[#5C3A21] text-[#FAF2E4] shadow-md border-b border-[#8C6239] transition-all"
+      style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)' }}
+    >
+      {/* 1. Ultra-Compact Top Bar with Safe-Area clearance */}
+      <div className="max-w-7xl mx-auto px-2 sm:px-3 pt-2.5 pb-2 sm:py-1.5 flex items-center justify-between gap-1 sm:gap-2">
         {/* Left: App Title & Sacred Motif */}
         <div
           className="flex items-center gap-1.5 cursor-pointer shrink-0"
