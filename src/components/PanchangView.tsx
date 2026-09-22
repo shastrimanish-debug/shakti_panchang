@@ -19,21 +19,20 @@ import {
   Clock,
   Shield,
   CheckCircle2,
+  Share2,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { getAuspiciousWindows, getInauspiciousWindows } from '../services/choghadiya';
 import { DISHASHOOL_MAP, DISHASHOOL_REMEDIES } from '../services/disha';
 import { downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
-import { useLicense } from '@/lib/license-client';
-import { formatPlaceTime } from '../services/engine/time';
-import { CalcSettingsPanel } from './CalcSettingsPanel';
-import { AccuracyPanel } from './AccuracyPanel';
+import { sharePanchang, copyPanchangToClipboard } from '../services/sharePanchang';
 
 interface PanchangViewProps {
   panchang: VedicPanchangData;
   onNavigateTab: (tab: string) => void;
   onOpenUmaModal?: () => void;
-  onOpenPremium?: (reason?: string) => void;
   locationName?: string;
 }
 
@@ -43,13 +42,37 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   panchang,
   onNavigateTab,
   onOpenUmaModal,
-  onOpenPremium,
   locationName,
 }) => {
-  const { status, assertEntitled } = useLicense();
   const [subPage, setSubPage] = useState<PanchangSubPage>('anga');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+
+  const handleShare = async () => {
+    try {
+      const loc = { name: locationName || 'नई दिल्ली', latitude: 28.6139, longitude: 77.2090, state: '' };
+      const outcome = await sharePanchang(panchang, loc);
+      if (outcome === 'shared') {
+        setShareNotice('पंचांग सफलतापूर्वक साझा किया गया!');
+      } else if (outcome === 'whatsapp') {
+        setShareNotice('व्हाट्सएप खोला गया!');
+      }
+      setTimeout(() => setShareNotice(null), 3000);
+    } catch {
+      setShareNotice('शेयर करने में त्रुटि आई');
+      setTimeout(() => setShareNotice(null), 3000);
+    }
+  };
+
+  const handleCopy = () => {
+    const loc = { name: locationName || 'नई दिल्ली', latitude: 28.6139, longitude: 77.2090, state: '' };
+    const success = copyPanchangToClipboard(panchang, loc);
+    if (success) {
+      setShareNotice('आज का पंचांग क्लिपबोर्ड पर कॉपी हो गया!');
+      setTimeout(() => setShareNotice(null), 3000);
+    }
+  };
 
   const solar = panchang.solar;
   const weekday = panchang.date.getDay();
@@ -66,15 +89,11 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   const dishaShool = DISHASHOOL_MAP[weekday] || 'अज्ञात';
   const dishaRemedy = DISHASHOOL_REMEDIES[weekday] || '';
 
-  const fmt = (d: Date) => formatPlaceTime(d, 23.1765, 75.7885);
+  const fmt = (d: Date) =>
+    d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
 
   const handleDownloadTodayBhojpatra = async () => {
     try {
-      if (!status.entitled) {
-        onOpenPremium?.('भोजपत्र PDF के लिए 7 दिन का निःशुल्क परीक्षण या ₹99/वर्ष सदस्यता आवश्यक है।');
-        return;
-      }
-      await assertEntitled();
       setIsDownloadingPdf(true);
       const defaultGuidance = `॥ ॐ श्री गणेशाय नमः ॥\n\nआज ${panchang.weekday}, ${panchang.paksha} पक्ष की ${panchang.tithi} तिथि है। नक्षत्र ${panchang.nakshatra} (चरण ${panchang.pada}) तथा योग ${panchang.yoga} है। संवत्सर ${panchang.samvat} गतिशील है।\n\nशास्त्रानुसार आज सूर्य देव ${panchang.solarRashi} में एवं चंद्र देव ${panchang.lunarRashi} में स्थित हैं। आज के दिन प्रातःकाल सूर्य अर्घ्य तथा सात्विक कार्य सिद्धि हेतु अनुकूल समय का चयन करें। राहुकाल के समय किसी नवीन कार्य का आरंभ न करें।\n\n॥ शुभम् भवतु • कल्याणमस्तु ॥`;
 
@@ -176,12 +195,6 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 <p className="text-[11px] sm:text-xs text-[#735133] mt-0.5">
                   {panchang.samvat} • {panchang.sakaSamvat}
                 </p>
-                {panchang.tithiSpan && (
-                  <p className="text-[11px] text-[#5C3A21] mt-1 font-semibold">
-                    तिथि {fmt(panchang.tithiSpan.start)} → {fmt(panchang.tithiSpan.end)}
-                    <span className="text-[#8C6239] font-medium"> · अगली {panchang.tithiSpan.nextName}</span>
-                  </p>
-                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
@@ -250,53 +263,66 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               <div className="text-[10px] font-bold text-[#8C6239]">२. नक्षत्र</div>
               <div className="text-base font-black text-[#5C3A21] truncate">{panchang.nakshatra}</div>
               <div className="text-[10px] text-[#735133]">चरण {panchang.pada}</div>
-              {panchang.nakshatraSpan && (
-                <div className="text-[9px] text-[#8C6239] mt-0.5">
-                  {fmt(panchang.nakshatraSpan.start)}–{fmt(panchang.nakshatraSpan.end)}
-                </div>
-              )}
             </div>
 
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
               <div className="text-[10px] font-bold text-[#8C6239]">३. योग</div>
               <div className="text-base font-black text-[#5C3A21] truncate">{panchang.yoga}</div>
               <div className="text-[10px] text-[#735133]">योग {panchang.yogaNumber}/27</div>
-              {panchang.yogaSpan && (
-                <div className="text-[9px] text-[#8C6239] mt-0.5">
-                  {fmt(panchang.yogaSpan.start)}–{fmt(panchang.yogaSpan.end)}
-                </div>
-              )}
             </div>
 
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
               <div className="text-[10px] font-bold text-[#8C6239]">४. करण</div>
               <div className="text-base font-black text-[#5C3A21] truncate">{panchang.karana}</div>
               <div className="text-[10px] text-[#735133]">संख्या {panchang.karanaNumber}</div>
-              {panchang.karanaSpan && (
-                <div className="text-[9px] text-[#8C6239] mt-0.5">
-                  {fmt(panchang.karanaSpan.start)}–{fmt(panchang.karanaSpan.end)}
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Compact Quick Action Row (PDF & UMA) */}
-          <div className="flex items-center gap-2">
+          {/* Feedback notice for Share/Copy */}
+          {shareNotice && (
+            <div className="bg-emerald-800 text-[#FAF2E4] px-3 py-1.5 rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1.5 animate-in fade-in duration-150 shadow-xs">
+              <Check className="w-3.5 h-3.5 text-emerald-300" />
+              <span>{shareNotice}</span>
+            </div>
+          )}
+
+          {/* Compact Quick Action Row (Share, PDF & UMA) */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex-1 min-w-[130px] py-2 px-3 bg-[#1e7e34] hover:bg-[#155d27] text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+              title="व्हाट्सएप अथवा अन्य माध्यम पर पंचांग भेजें"
+            >
+              <Share2 className="w-3.5 h-3.5 text-emerald-200" />
+              <span>साझा करें</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="py-2 px-3 bg-[#FAF2E4] hover:bg-[#F4E8D1] text-[#5C3A21] border border-[#8C6239]/40 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+              title="पंचांग टेक्स्ट कॉपी करें"
+            >
+              <Copy className="w-3.5 h-3.5 text-[#B56A00]" />
+              <span className="hidden sm:inline">कॉपी</span>
+            </button>
+
             <button
               type="button"
               onClick={handleDownloadTodayBhojpatra}
               disabled={isDownloadingPdf}
-              className="flex-1 py-2 px-3 bg-[#8f2121] hover:bg-[#731919] text-[#fdf8eb] font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer"
+              className="flex-1 min-w-[130px] py-2 px-3 bg-[#8f2121] hover:bg-[#731919] text-[#fdf8eb] font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>{isDownloadingPdf ? 'PDF तैयार हो रही है...' : 'भोजपत्र PDF डाउनलोड'}</span>
+              <span>{isDownloadingPdf ? 'PDF तैयार हो रही है...' : 'भोजपत्र PDF'}</span>
             </button>
 
             {onOpenUmaModal && (
               <button
                 type="button"
                 onClick={onOpenUmaModal}
-                className="py-2 px-3.5 bg-[#c27803] hover:bg-[#a66602] text-[#2a1303] font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                className="py-2 px-3 bg-[#c27803] hover:bg-[#a66602] text-[#2a1303] font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>उमा संवाद</span>
@@ -342,26 +368,6 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               </div>
             </div>
           </div>
-
-          {panchang.dayWindows && panchang.dayWindows.length > 0 && (
-            <div className="grid grid-cols-2 gap-2">
-              {panchang.dayWindows.map((w) => (
-                <div
-                  key={w.title}
-                  className={`rounded-xl p-2.5 border ${
-                    w.kind === "shubh"
-                      ? "bg-emerald-50 border-emerald-200"
-                      : "bg-rose-50 border-rose-200"
-                  }`}
-                >
-                  <div className="text-[11px] font-black text-[#5C3A21]">{w.title}</div>
-                  <div className="text-xs font-bold text-[#3E2714]">
-                    {fmt(w.start)} – {fmt(w.end)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Key Auspicious & Inauspicious Periods */}
           <div className="space-y-2">
@@ -450,14 +456,9 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               <span>अयनांश: <strong>{panchang.ayanamshaName}</strong> ({panchang.ayanamsha.toFixed(4)}°)</span>
             </div>
             <div className="text-[11px] text-[#8C6239]">
-              {panchang.engineCheck
-                ? `XALEN↔मीयस सूर्य ${panchang.engineCheck.sunDeltaArcsec.toFixed(0)}″ चंद्र ${panchang.engineCheck.moonDeltaArcsec.toFixed(0)}″`
-                : "XALEN + मीयस • Swiss नहीं"}
+              खगोलीय गणना: चित्रपक्षीय / लाहिरी
             </div>
           </div>
-
-          <CalcSettingsPanel />
-          <AccuracyPanel date={panchang.date} />
 
           {/* Navigation Shortcuts */}
           <div className="grid grid-cols-2 gap-2 pt-1">

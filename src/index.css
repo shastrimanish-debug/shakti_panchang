@@ -41,6 +41,76 @@
   border-bottom: 1px solid #c27803;
 }
 
+/* ताम्र-रात्रि मोड (Dark Bronze / Night Puja Theme) */
+.tamra-theme {
+  background-color: #17110e !important;
+  color: #f7ebd0 !important;
+}
+
+.tamra-theme .bhojpatra-bg {
+  background-color: #17110e !important;
+  background-image: radial-gradient(#3a271c 0.75px, transparent 0.75px), radial-gradient(#291b13 0.75px, #17110e 0.75px) !important;
+}
+
+.tamra-theme .bhojpatra-leaf {
+  background: linear-gradient(135deg, #261b15 0%, #1e1510 50%, #160e0a 100%) !important;
+  border: 1px solid #734c26 !important;
+  box-shadow: 0 4px 20px -3px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(194, 120, 3, 0.12) !important;
+}
+
+.tamra-theme .granth-leaf-stack {
+  box-shadow: 
+    0 1px 1px rgba(0, 0, 0, 0.4),
+    0 4px 0 -1px #2a1c14,
+    0 5px 1px rgba(0, 0, 0, 0.4),
+    0 8px 0 -2px #20150e,
+    0 9px 2px rgba(0, 0, 0, 0.45),
+    0 12px 0 -3px #180f0a !important;
+}
+
+.tamra-theme .shloka-banner {
+  background: linear-gradient(90deg, rgba(143, 33, 33, 0.25) 0%, rgba(194, 120, 3, 0.3) 50%, rgba(143, 33, 33, 0.25) 100%) !important;
+  border-color: #b56a00 !important;
+  color: #ffd88a !important;
+}
+
+.tamra-theme .bg-\[\#FAF2E4\],
+.tamra-theme .bg-\[\#faf2de\],
+.tamra-theme .bg-\[\#FFFBF0\] {
+  background-color: #241913 !important;
+  color: #f5e8d0 !important;
+}
+
+.tamra-theme .bg-\[\#F4E8D1\],
+.tamra-theme .bg-\[\#F6EBD4\] {
+  background-color: #2e2018 !important;
+  color: #faeedb !important;
+}
+
+.tamra-theme .text-\[\#5C3A21\],
+.tamra-theme .text-\[\#2C1810\],
+.tamra-theme .text-\[\#2c1810\] {
+  color: #faeedb !important;
+}
+
+.tamra-theme .text-\[\#735133\],
+.tamra-theme .text-\[\#8C6239\] {
+  color: #d8b688 !important;
+}
+
+.tamra-theme .border-\[\#8C6239\]\/30,
+.tamra-theme .border-\[\#8C6239\]\/40,
+.tamra-theme .border-\[\#8C6239\]\/20 {
+  border-color: rgba(184, 122, 60, 0.35) !important;
+}
+
+.tamra-theme ::-webkit-scrollbar-track {
+  background: #241913 !important;
+}
+.tamra-theme ::-webkit-scrollbar-thumb {
+  background: #8c531d !important;
+}
+
 /* Custom Granth scrollbar */
 ::-webkit-scrollbar {
   width: 7px;

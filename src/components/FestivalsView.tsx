@@ -18,8 +18,16 @@ import {
   Clock,
   ArrowUpDown,
   Filter,
+  CalendarPlus,
+  Download,
 } from 'lucide-react';
 import { saveAppReminder } from '../services/storage';
+import {
+  generateSingleEventICS,
+  generateYearFestivalsICS,
+  downloadICSBlob,
+  getGoogleCalendarUrl,
+} from '../services/calendarExport';
 
 interface FestivalsViewProps {
   currentDate: Date;
@@ -50,6 +58,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
 
   // Feedback state for reminders
   const [addedReminderId, setAddedReminderId] = useState<string | null>(null);
+  const [calendarSyncNotice, setCalendarSyncNotice] = useState<string | null>(null);
 
   // Pagination states for mobile screen friendliness
   const [centuryPage, setCenturyPage] = useState<number>(1);
@@ -178,6 +187,44 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
     setTimeout(() => setAddedReminderId(null), 2500);
   };
 
+  const handleExportSingleToICS = (f: FestivalItem) => {
+    const ics = generateSingleEventICS({
+      id: f.id,
+      name: f.hindiName,
+      date: f.date.toISOString(),
+      category: f.type,
+      description: f.description,
+    });
+    downloadICSBlob(ics, `${f.hindiName}-${f.date.getFullYear()}`);
+    setCalendarSyncNotice(`${f.hindiName} कैलेंडर फाइल (.ics) डाउनलोड हुई!`);
+    setTimeout(() => setCalendarSyncNotice(null), 3000);
+  };
+
+  const handleExportFullYearToICS = () => {
+    const items = yearFestivals.map((f) => ({
+      id: f.id,
+      name: f.hindiName,
+      date: f.date.toISOString(),
+      category: f.type,
+      description: f.description,
+    }));
+    const ics = generateYearFestivalsICS(items, selectedYear);
+    downloadICSBlob(ics, `Shakti-Panchang-Vrat-Parv-${selectedYear}`);
+    setCalendarSyncNotice(`वर्ष ${selectedYear} के सभी ${items.length} पर्व कैलेंडर में डाउनलोड हुए!`);
+    setTimeout(() => setCalendarSyncNotice(null), 3500);
+  };
+
+  const handleOpenGoogleCalendar = (f: FestivalItem) => {
+    const url = getGoogleCalendarUrl({
+      id: f.id,
+      name: f.hindiName,
+      date: f.date.toISOString(),
+      category: f.type,
+      description: f.description,
+    });
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const fmtDate = (d: Date) =>
     d.toLocaleDateString('hi-IN', {
       weekday: 'long',
@@ -234,6 +281,14 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Calendar Sync Notice Banner */}
+        {calendarSyncNotice && (
+          <div className="bg-emerald-800 text-[#FAF2E4] px-3.5 py-2 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 shadow-xs animate-in fade-in duration-150">
+            <Check className="w-4 h-4 text-emerald-300 shrink-0" />
+            <span>{calendarSyncNotice}</span>
+          </div>
+        )}
 
         {/* Primary View Mode Tabs (Clear, high-contrast toggle) */}
         <div className="flex items-center p-1 bg-[#462B17] rounded-xl text-xs font-bold border border-[#8C6239]/60">
@@ -538,6 +593,19 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                 );
               })}
             </div>
+
+            {/* 1-Click All Events Calendar Sync (.ICS) */}
+            <div className="pt-1.5">
+              <button
+                type="button"
+                onClick={handleExportFullYearToICS}
+                className="w-full py-2 px-3 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
+                title="वर्ष के सभी पर्व व व्रत अपने मोबाइल/कंप्यूटर कैलेंडर में जोड़ें"
+              >
+                <CalendarPlus className="w-4 h-4 text-[#FFD88A]" />
+                <span>वर्ष {selectedYear} के सभी {yearFestivals.length} व्रत-पर्व कैलेंडर में जोड़ें (.ics)</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -652,6 +720,14 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                           <Bell className="w-3.5 h-3.5 text-[#8C6239]" />
                         )}
                       </button>
+
+                      <button
+                        onClick={() => handleExportSingleToICS(res.festival)}
+                        className="p-1.5 rounded-lg text-xs bg-[#F4E8D1] hover:bg-[#E5D2B8] text-[#5C3A21] transition cursor-pointer"
+                        title="मोबाइल/गूगल कैलेंडर में जोड़ें (.ics)"
+                      >
+                        <CalendarPlus className="w-3.5 h-3.5 text-[#B56A00]" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -765,6 +841,13 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                           ) : (
                             <Bell className="w-3.5 h-3.5 text-[#8C6239]" />
                           )}
+                        </button>
+                        <button
+                          onClick={() => handleExportSingleToICS(item)}
+                          className="p-1.5 rounded-lg text-xs bg-[#F4E8D1] hover:bg-[#E5D2B8] text-[#5C3A21] transition cursor-pointer"
+                          title="मोबाइल/गूगल कैलेंडर में जोड़ें (.ics)"
+                        >
+                          <CalendarPlus className="w-3.5 h-3.5 text-[#B56A00]" />
                         </button>
                       </div>
                     </div>

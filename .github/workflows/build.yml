@@ -62,12 +62,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # Google stopped serving the old `tools` package (Sep 2026).
-      # v3 installs it by default and fails. v4 + platform-tools only.
       - name: 🤖 Setup Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools'
+        uses: android-actions/setup-android@v3
 
       - name: 🐘 Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -83,29 +79,41 @@ jobs:
       - name: 🔑 Make Gradlew Executable
         run: chmod +x android/gradlew
 
-      - name: 🔨 Build Debug APK
+      - name: 🔨 Build Android Release Bundle (AAB), Release APK & Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew bundleRelease assembleRelease assembleDebug --no-daemon --stacktrace
 
-      - name: 📋 Prepare APK Output
+      - name: 📋 Prepare Android Artifacts
         run: |
-          mkdir -p release-apks
-          cp android/app/build/outputs/apk/debug/app-debug.apk release-apks/Shakti-Panchang-v1.2.0.apk
-          ls -lh release-apks/
+          mkdir -p release-artifacts
+          # Google Play Store App Bundle (AAB)
+          if [ -f "android/app/build/outputs/bundle/release/app-release.aab" ]; then
+            cp android/app/build/outputs/bundle/release/app-release.aab release-artifacts/Shakti-Panchang-PlayStore-Release.aab
+          fi
+          # Signed Release APK for direct install
+          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk release-artifacts/Shakti-Panchang-Signed-Release.apk
+          fi
+          # Debug APK
+          if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+            cp android/app/build/outputs/apk/debug/app-debug.apk release-artifacts/Shakti-Panchang-Debug.apk
+          fi
+          echo "Generated Android artifacts:"
+          ls -lh release-artifacts/
 
-      - name: 📤 Upload Android APK Artifact
+      - name: 📤 Upload Android Artifacts (AAB & APKs)
         uses: actions/upload-artifact@v4
         with:
-          name: Shakti-Panchang-APK
-          path: release-apks/Shakti-Panchang-v1.2.0.apk
+          name: Shakti-Panchang-Android-Binaries
+          path: release-artifacts/*
           retention-days: 30
 
       - name: 🚀 Release on GitHub (Tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: release-apks/Shakti-Panchang-v1.2.0.apk
+          files: release-artifacts/*
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
