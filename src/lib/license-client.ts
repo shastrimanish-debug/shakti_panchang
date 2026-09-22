@@ -112,7 +112,15 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
 
 export function useLicense(): LicenseContextValue {
   const ctx = useContext(LicenseContext);
-  if (!ctx) throw new Error("useLicense must be used within LicenseProvider");
+  if (!ctx) {
+    return {
+      status: trialStatus(),
+      loading: false,
+      refresh: async () => trialStatus(),
+      assertEntitled: async () => trialStatus(),
+      activateAnnual: async () => trialStatus(),
+    };
+  }
   return ctx;
 }
 
