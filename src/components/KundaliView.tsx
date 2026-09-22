@@ -22,6 +22,7 @@ import { analyzeKundali, professionalPdfAnswer } from '../services/predictions';
 import { CalcSettingsPanel } from './CalcSettingsPanel';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import { SubscriptionModal } from './SubscriptionModal';
+import { SadeSatiView } from './SadeSatiView';
 import {
   User,
   Clock,
@@ -44,6 +45,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MoveHorizontal,
+  Compass,
 } from 'lucide-react';
 
 export const SHODASHVARGA_OPTIONS = [
@@ -124,7 +126,7 @@ interface KundaliViewProps {
   currentLocation: SavedLocation;
   onOpenSavedModal: () => void;
   onOpenUmaModal?: () => void;
-  initialSubTab?: 'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit';
+  initialSubTab?: 'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati';
 }
 
 export const KundaliView: React.FC<KundaliViewProps> = ({
@@ -136,7 +138,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   initialSubTab,
 }) => {
   // Active Sub-Tab
-  const [kundaliTab, setKundaliTab] = useState<'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit'>(
+  const [kundaliTab, setKundaliTab] = useState<'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati'>(
     initialSubTab || 'chart'
   );
 
@@ -843,6 +845,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           { id: 'chart', label: 'लग्न व सम्पूर्ण वर्ग चक्र (D1 से D60)', icon: Layers },
           { id: 'dasha', label: 'विंशोत्तरी महादशा / अंतर्दशा / प्रत्यंतर', icon: Clock },
           { id: 'milan', label: 'कुंडली मिलान (36 गुण व मांगलिक)', icon: Heart },
+          { id: 'sadesati', label: 'साढ़े साती एवं गोचर फल', icon: Compass },
           { id: 'prashna', label: 'प्रश्न कुंडली', icon: HelpCircle },
           { id: 'remedies', label: 'वैदिक उपाय एवं रत्न', icon: Shield },
         ].map((tab) => {
@@ -2000,7 +2003,54 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Gana Dosha Card */}
+                <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-1.5">
+                    <span className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+                      <Shield className="w-4 h-4 text-purple-600" />
+                      गण दोष विचार (6 अंक)
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        milanResult.ganaDosha?.hasDosha
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {milanResult.ganaDosha?.hasDosha ? 'गण भेद / दोष' : 'अनुकूल गण'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#5C3A21] space-y-1">
+                    <div><strong>वर गण:</strong> {boyKundali.gana} | <strong>कन्या गण:</strong> {girlKundali.gana}</div>
+                    <div className="text-[11px] text-[#735133] leading-relaxed pt-1">
+                      {milanResult.ganaDosha?.isPariharApplicable
+                        ? `परिहार: ${milanResult.ganaDosha.pariharReason}`
+                        : milanResult.ganaDosha?.hasDosha
+                        ? 'गण भिन्नता होने से स्वभाव व जीवनशैली में समझदारी की आवश्यकता।'
+                        : 'समान अथवा मित्र गण होने से स्वाभाविक प्रेम व वैवाहिक सुख।'}
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* Auspicious Remedies & Conclusions */}
+              {milanResult.auspiciousRemedies && milanResult.auspiciousRemedies.length > 0 && (
+                <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 shadow-xs space-y-2.5">
+                  <h4 className="text-xs sm:text-sm font-bold font-granth text-[#5C3A21] flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#B56A00]" />
+                    विवाह मिलान दोष परिहार एवं शास्त्रोक्त सात्विक उपाय
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {milanResult.auspiciousRemedies.map((rem: string, rIdx: number) => (
+                      <div key={rIdx} className="flex items-start gap-2 p-2 bg-[#F4E8D1] rounded border border-[#8C6239]/20 text-xs text-[#5C3A21]">
+                        <span className="text-[#B56A00] font-bold">ॐ</span>
+                        <span>{rem}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Twin Charts Comparison: Boy Lagna & Girl Lagna */}
               <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
@@ -2045,6 +2095,15 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* Tab: Shani Sade Sati & Daily Planetary Transits (Gochar) */}
+      {kundaliTab === 'sadesati' && (
+        <SadeSatiView
+          activeKundali={k}
+          currentLocation={selectedCity}
+          onNavigateToKundali={() => setIsFormExpanded(true)}
+        />
       )}
 
       {/* Tab 4: Prashna Kundali */}
