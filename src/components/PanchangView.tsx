@@ -34,6 +34,7 @@ import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import { sharePanchang, copyPanchangToClipboard } from '../services/sharePanchang';
 import { CalcSettingsPanel } from './CalcSettingsPanel';
 import { DailyShlokaCard } from './DailyShlokaCard';
+import { MoonPhaseChart } from './MoonPhaseChart';
 
 interface PanchangViewProps {
   panchang: VedicPanchangData;
@@ -262,7 +263,10 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
       {/* 3. Sub-Tab 0: 'अंग' (Five Limbs & Astronomical Ephemeris) */}
       {activeSubTab === 'anga' && (
-        <div className="space-y-2 animate-in fade-in duration-150">
+        <div className="space-y-3 animate-in fade-in duration-150">
+          {/* D3.js Moon Phase & Current Tithi Progress Visualization */}
+          <MoonPhaseChart panchang={panchang} />
+
           {/* Quick Header Card */}
           <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3 shadow-xs">
             <div className="flex items-center justify-between text-xs text-[#8C6239] font-bold">
