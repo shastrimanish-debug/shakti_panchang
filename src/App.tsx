@@ -11,6 +11,7 @@ import { UmaAssistantModal } from './components/UmaAssistantModal';
 import { LocationModal } from './components/LocationModal';
 import { SavedProfilesModal } from './components/SavedProfilesModal';
 import { InstallAppModal } from './components/InstallAppModal';
+import { AccuracyModal } from './components/AccuracyModal';
 import { BookCover } from './components/BookCover';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme } from './services/storage';
@@ -18,6 +19,8 @@ import { calculateVedicPanchang } from './services/astronomy';
 import { calculateKundali } from './services/kundali';
 import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES } from './constants/bookPages';
+import { BottomNavBar } from './components/BottomNavBar';
+import { MoreMenuModal } from './components/MoreMenuModal';
 import {
   Sparkles,
   BookOpen,
@@ -73,8 +76,10 @@ export function App() {
   const [pageTurnNotice, setPageTurnNotice] = useState<string | null>(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(true);
   const [theme, setTheme] = useState<AppTheme>(() => getStoredTheme());
-  // Book open/closed state (false: showing sacred hardbound front cover; true: showing open pages)
-  const [isBookOpen, setIsBookOpen] = useState<boolean>(false);
+  // Book open/closed state (true: showing active panchang immediately; false: showing front cover)
+  const [isBookOpen, setIsBookOpen] = useState<boolean>(true);
+  const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
+  const [isAccuracyModalOpen, setIsAccuracyModalOpen] = useState<boolean>(false);
 
   // Apply Tamra-Ratri theme to document body
   useEffect(() => {
@@ -337,8 +342,8 @@ export function App() {
         </div>
       )}
 
-      {/* Main Book-like Granth Presentation Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 lg:p-6">
+      {/* Main Vedic Content Presentation Area (Mobile Fit & Responsive) */}
+      <main className="flex-1 max-w-md sm:max-w-xl md:max-w-4xl w-full mx-auto px-2 sm:px-4 py-1 pb-24 sm:pb-12">
         {!isBookOpen ? (
           <BookCover
             onOpenBook={(targetTabId) => {
@@ -351,35 +356,16 @@ export function App() {
             currentLocationName={currentLocation.name}
           />
         ) : (
-          /* Sacred Vedic Book Wrapper (ग्रन्थ पट्टिका) */
-          <div className="granth-book-container book-stacked-pages bhojpatra-leaf granth-leaf-stack border-3 sm:border-4 border-[#8C6239] rounded-2xl sm:rounded-3xl p-3 sm:p-6 lg:p-8 relative shadow-2xl">
-            {/* Authentic Book Corner Ornaments */}
-            <div className="absolute top-2 left-2 text-[#8C6239] text-xs sm:text-sm select-none pointer-events-none font-bold">
-              ❖
-            </div>
-            <div className="absolute top-2 right-2 text-[#8C6239] text-xs sm:text-sm select-none pointer-events-none font-bold">
-              ❖
-            </div>
-            <div className="absolute bottom-2 left-2 text-[#8C6239] text-xs sm:text-sm select-none pointer-events-none font-bold">
-              ❖
-            </div>
-            <div className="absolute bottom-2 right-2 text-[#8C6239] text-xs sm:text-sm select-none pointer-events-none font-bold">
-              ❖
-            </div>
-
-            {/* Book Top Chapter Ribbon */}
-            <div className="shloka-banner py-2 px-3 sm:px-4 rounded-xl mb-4 flex items-center justify-between gap-2 text-[#5C3A21] border border-[#C27803]/40">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-base text-[#B56A00] font-black">ॐ</span>
-                <div className="min-w-0">
-                  <div className="text-[10px] font-granth text-[#8B1E1E] font-bold">॥ श्री शक्ति पञ्चाङ्गम् ग्रन्थ ॥</div>
-                  <h2 className="font-granth font-black text-xs sm:text-base text-[#5C3A21] tracking-wide truncate">
-                    {currentTabMeta.chapter} : {currentTabMeta.title}
-                  </h2>
-                </div>
+          /* Mobile-Fit Card Container (No heavy padding or excessive border on mobile) */
+          <div className="bg-[#FAF2E4] sm:bhojpatra-leaf sm:border-2 sm:border-[#8C6239]/40 rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 relative shadow-xs">
+            {/* Desktop Chapter Title Ribbon (Hidden on mobile to maximize screen fit) */}
+            <div className="hidden sm:flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[#8C6239]/20 text-[#5C3A21] text-xs">
+              <div className="flex items-center gap-1.5 font-bold">
+                <span className="text-sm text-[#B56A00] font-black">ॐ</span>
+                <span className="font-granth">{currentTabMeta.chapter}: {currentTabMeta.title}</span>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="px-2.5 py-1 bg-[#5C3A21] text-[#FFD88A] rounded-lg text-xs font-black shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-[#8C6239]">
                   📖 पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}
                 </span>
                 <button
@@ -388,7 +374,7 @@ export function App() {
                     setIsBookOpen(false);
                     if (isAudioEnabled) playTactilePageTurnSound();
                   }}
-                  className="px-2.5 py-1 bg-[#8C6239] hover:bg-[#5C3A21] text-[#FAF2E4] rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
+                  className="px-2 py-0.5 bg-[#8C6239] hover:bg-[#5C3A21] text-[#FAF2E4] rounded text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
                   title="ग्रन्थ मुखपृष्ठ खोलें"
                 >
                   <span>📕 मुखपृष्ठ</span>
@@ -396,10 +382,10 @@ export function App() {
               </div>
             </div>
 
-            {/* Book Content Container with Realistic 3D Page Turn Animation */}
+            {/* Main Active Page View */}
             <div
               key={activeTab}
-              className={`min-h-[550px] ${
+              className={`w-full ${
                 turnDirection === 'forward'
                   ? 'book-page-turn-forward'
                   : 'book-page-turn-backward'
@@ -411,6 +397,9 @@ export function App() {
                   onNavigateTab={handleSelectTab}
                   onOpenUmaModal={() => setIsUmaModalOpen(true)}
                   locationName={currentLocation.name}
+                  currentDate={currentDate}
+                  onDateChange={setCurrentDate}
+                  onOpenLocationModal={() => setIsLocationModalOpen(true)}
                 />
               )}
 
@@ -452,35 +441,30 @@ export function App() {
               )}
             </div>
 
-            {/* Book Bottom Page Navigation Footer - Clean, Compact & Refined */}
-            <div className="mt-6 pt-3 border-t border-[#8C6239]/30 flex items-center justify-between gap-2 text-xs">
-              {/* Prev Page Button */}
+            {/* Desktop-only Page Navigation Footer (Mobile has Flutter BottomNavBar) */}
+            <div className="hidden sm:flex mt-4 pt-2.5 border-t border-[#8C6239]/30 items-center justify-between text-xs">
               <button
                 type="button"
                 onClick={handlePrevPage}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#FAF2E4] hover:bg-[#EBD8BD] text-[#5C3A21] border border-[#8C6239]/40 rounded-lg font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs"
+                className="flex items-center gap-1 px-3 py-1 bg-[#FAF2E4] hover:bg-[#EBD8BD] text-[#5C3A21] border border-[#8C6239]/40 rounded-lg font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs"
                 title={`पिछला पृष्ठ: ${prevTabMeta.label}`}
               >
                 <ChevronLeft className="w-3.5 h-3.5 text-[#B56A00]" />
-                <span className="hidden xs:inline">‹ {prevTabMeta.label}</span>
-                <span className="xs:hidden">‹ पिछला</span>
+                <span>‹ {prevTabMeta.label}</span>
               </button>
 
-              {/* Page Indicator */}
               <div className="font-granth text-xs font-bold text-[#8C6239] text-center">
                 <span>पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}</span>
-                <span className="hidden sm:inline text-[#B56A00] font-normal ml-1.5">• {currentTabMeta.label}</span>
+                <span className="text-[#B56A00] font-normal ml-1.5">• {currentTabMeta.label}</span>
               </div>
 
-              {/* Next Page Button */}
               <button
                 type="button"
                 onClick={handleNextPage}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] border border-[#B56A00] rounded-lg font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs"
+                className="flex items-center gap-1 px-3 py-1 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] border border-[#B56A00] rounded-lg font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs"
                 title={`अगला पृष्ठ: ${nextTabMeta.label}`}
               >
-                <span className="hidden xs:inline">{nextTabMeta.label} ›</span>
-                <span className="xs:hidden">अगला ›</span>
+                <span>{nextTabMeta.label} ›</span>
                 <ChevronRight className="w-3.5 h-3.5 text-[#FFD88A]" />
               </button>
             </div>
@@ -488,37 +472,68 @@ export function App() {
         )}
       </main>
 
-      {/* Floating UMA Assistant Pill (Mobile/Desktop Quick Access) */}
-      <aside aria-label="Floating Vedic Assistant" className="fixed bottom-5 right-5 z-30">
+      {/* Floating UMA Assistant Pill (Desktop Only - Mobile has it in Top Bar, Panchang Actions & More Menu) */}
+      <aside aria-label="Floating Vedic Assistant" className="hidden sm:block fixed bottom-6 right-6 z-30">
         <button
           onClick={() => setIsUmaModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#5C3A21] to-[#735133] hover:from-[#462B17] hover:to-[#5C3A21] text-[#FAF2E4] border-2 border-[#B56A00] rounded-full shadow-2xl transition transform hover:scale-105 active:scale-95 group cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-[#5C3A21] to-[#735133] hover:from-[#462B17] hover:to-[#5C3A21] text-[#FAF2E4] border-2 border-[#B56A00] rounded-full shadow-xl transition transform hover:scale-105 active:scale-95 group cursor-pointer"
         >
-          <div className="relative flex items-center justify-center w-7 h-7 rounded-full bg-[#B56A00] text-white">
-            <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-[#B56A00] text-white">
+            <Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
             </span>
           </div>
-          <span className="text-xs sm:text-sm font-bold font-granth tracking-wide pr-1">
-            उमा से पूछें
+          <span className="text-xs font-bold font-granth tracking-wide pr-1">
+            उमा AI
           </span>
         </button>
       </aside>
 
-      {/* Traditional Bhojpatra Footer */}
-      <footer className="bg-[#462B17] text-[#D9C4A9] border-t-2 border-[#8C6239] py-6 px-4 mt-8 text-center text-xs space-y-2">
-        <div className="font-granth text-sm sm:text-base text-[#FAF2E4] tracking-wide">
-          ॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः । सर्वे भद्राणि पश्यन्तु मा कश्चिद्दुःखभाग्भवेत् ॥
+      {/* Traditional Bhojpatra Footer (Compact with bottom padding for mobile navigation bar) */}
+      <footer className="bg-[#462B17] text-[#D9C4A9] border-t border-[#8C6239] py-4 px-3 mb-16 sm:mb-0 text-center text-xs space-y-1">
+        <div className="font-granth text-xs sm:text-sm text-[#FAF2E4] tracking-wide">
+          ॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥
         </div>
-        <p className="text-[#A89279]">
-          शक्ति पंचांग (Shakti Panchang) • प्रामाणिक वैदिक खगोलशास्त्र एवं ज्योतिषीय पंचांग ग्रन्थ
+        <p className="text-[11px] text-[#A89279]">
+          शक्ति पंचांग • प्रामाणिक वैदिक खगोलशास्त्र एवं ज्योतिषीय पंचांग ग्रन्थ
         </p>
-        <p className="text-[11px] text-[#8C6239]">
-          गणना: सूर्य सिद्धान्त एवं लाहिरी अयनांश (Lahiri Ayanamsha) • स्थान: {currentLocation.name}
+        <p className="text-[10px] text-[#8C6239]">
+          गणना: सूर्य सिद्धान्त एवं लाहिरी अयनांश • स्थान: {currentLocation.name}
         </p>
       </footer>
+
+      {/* Flutter-style Mobile Bottom Navigation Bar */}
+      <BottomNavBar
+        activeTab={activeTab}
+        onSelectTab={handleSelectTab}
+        onOpenMore={() => setIsMoreModalOpen(true)}
+      />
+
+      {/* More Options Sheet / Modal */}
+      <MoreMenuModal
+        isOpen={isMoreModalOpen}
+        onClose={() => setIsMoreModalOpen(false)}
+        onSelectTab={handleSelectTab}
+        onOpenLocationModal={() => setIsLocationModalOpen(true)}
+        onOpenUmaModal={() => setIsUmaModalOpen(true)}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
+        onOpenAccuracyModal={() => setIsAccuracyModalOpen(true)}
+        onToggleBookCover={() => setIsBookOpen(false)}
+        currentLocation={currentLocation}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        isAudioEnabled={isAudioEnabled}
+        onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
+      />
+
+      {/* Accuracy Verification Modal */}
+      <AccuracyModal
+        isOpen={isAccuracyModalOpen}
+        onClose={() => setIsAccuracyModalOpen(false)}
+        date={currentDate}
+      />
 
       {/* Dialog Modals */}
       <UmaAssistantModal

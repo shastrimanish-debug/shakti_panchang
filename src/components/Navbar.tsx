@@ -225,8 +225,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* 2. Streamlined Chapter Tabs Bar - Clean & Breathable */}
-      <div className="bg-[#462B17] border-t border-[#8C6239]/60 px-2 sm:px-3 overflow-hidden">
+      {/* 2. Streamlined Chapter Tabs Bar - Clean & Breathable on Tablet/Desktop, hidden on mobile */}
+      <div className="hidden sm:block bg-[#462B17] border-t border-[#8C6239]/60 px-2 sm:px-3 overflow-hidden">
         {/* Scrollable Chapter Tabs */}
         <nav className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1.5 px-0.5">
           {BOOK_PAGES.map((tab) => {

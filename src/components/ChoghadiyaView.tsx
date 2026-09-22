@@ -72,31 +72,31 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
 
   return (
     <div className="space-y-3 sm:space-y-4 animate-in fade-in duration-200">
-      {/* Screen-Fit Sub-Page Segmented Bar */}
-      <div className="flex items-center justify-between gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
+      {/* Flutter-style Segmented Chips */}
+      <div className="flex items-center gap-1.5 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
         <button
           type="button"
           onClick={() => setSubPage('table')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
             subPage === 'table'
-              ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-              : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+              ? 'bg-[#5C3A21] text-white shadow-xs'
+              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
           }`}
         >
           <Clock className={`w-3.5 h-3.5 ${subPage === 'table' ? 'text-[#FFD88A]' : 'text-[#8C6239]'}`} />
-          <span>पृष्ठ १: चौघड़िया तालिका</span>
+          <span>चौघड़िया तालिका</span>
         </button>
         <button
           type="button"
           onClick={() => setSubPage('windows')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
             subPage === 'windows'
-              ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-              : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+              ? 'bg-[#5C3A21] text-white shadow-xs'
+              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
           }`}
         >
           <Sparkles className={`w-3.5 h-3.5 ${subPage === 'windows' ? 'text-[#FFD88A]' : 'text-[#8C6239]'}`} />
-          <span>पृष्ठ २: शुभाशुभ मुहूर्त</span>
+          <span>विशिष्ट शुभाशुभ काल</span>
         </button>
       </div>
 

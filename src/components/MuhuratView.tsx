@@ -43,13 +43,15 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
         </div>
       </div>
 
-      {/* Segmented Sub-Pages Bar */}
-      <div className="flex items-center justify-between gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
+      {/* Flutter-style Segmented Chips */}
+      <div className="flex items-center gap-1.5 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
         <button
           type="button"
           onClick={() => setSubPage('today')}
-          className={`flex-1 py-2 px-1 text-center text-[11px] sm:text-xs font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
-            subPage === 'today' ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs' : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+            subPage === 'today'
+              ? 'bg-[#5C3A21] text-white shadow-xs'
+              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
@@ -58,8 +60,10 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
         <button
           type="button"
           onClick={() => setSubPage('windows')}
-          className={`flex-1 py-2 px-1 text-center text-[11px] sm:text-xs font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
-            subPage === 'windows' ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs' : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+            subPage === 'windows'
+              ? 'bg-[#5C3A21] text-white shadow-xs'
+              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -68,8 +72,10 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
         <button
           type="button"
           onClick={() => setSubPage('guidance')}
-          className={`flex-1 py-2 px-1 text-center text-[11px] sm:text-xs font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
-            subPage === 'guidance' ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs' : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+            subPage === 'guidance'
+              ? 'bg-[#5C3A21] text-white shadow-xs'
+              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
