@@ -86,5 +86,6 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    hmr: process.env.DISABLE_HMR === 'true' ? false : undefined,
   },
 });

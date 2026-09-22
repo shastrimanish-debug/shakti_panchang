@@ -7,7 +7,16 @@ import { LicenseProvider } from './lib/license-client';
 
 // Auto-register service worker for PWA offline capabilities
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  registerSW({ immediate: true });
+  try {
+    registerSW({
+      immediate: true,
+      onRegisterError(error: any) {
+        console.warn('PWA service worker registration skipped in preview:', error);
+      },
+    });
+  } catch (err) {
+    console.warn('PWA registration error:', err);
+  }
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
