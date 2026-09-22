@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+@theme {
+  --color-parchment: #faf2e4;
+  --color-parchment-deep: #f4e8d1;
+  --color-leaf: #ebd8bd;
+  --color-leaf-dark: #e5d2b8;
+  --color-sand: #d9c4a9;
+  --color-gold: #b56a00;
+  --color-gold-mid: #e69a33;
+  --color-gold-bright: #ffd88a;
+  --color-gold-dark: #c27803;
+  --color-temple: #5c3a21;
+  --color-temple-deep: #462b17;
+  --color-temple-dark: #2c180c;
+  --color-wood: #8c6239;
+  --color-muted: #735133;
+  --color-vermilion: #8b1e1e;
+  --color-ink: #3e2714;
+}
+
 @layer base {
   body {
     font-family: 'Yantramanav', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
