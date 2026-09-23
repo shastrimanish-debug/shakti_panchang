@@ -3,8 +3,15 @@ import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
 import { askUma, AskUmaResponse } from '@/lib/uma';
-import { speakUma, stopUmaSpeech } from '@/lib/umaSpeech';
+import { speakUma, stopUmaSpeech, isUmaSpeaking } from '@/lib/umaSpeech';
 import { analyzeKundali } from '../services/predictions';
+import { getAstrologerBranding } from '../services/storage';
+import {
+  downloadUmaConsultationPdf,
+  formatWhatsAppConsultationMessage,
+  openWhatsAppShare,
+} from '../services/umaConsultationPdf';
+import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import {
   X,
   Send,
@@ -19,11 +26,20 @@ import {
   UserCheck,
   AlertCircle,
   Radio,
-  BookOpen,
-  Briefcase,
+  FileText,
+  Share2,
+  Download,
+  MessageSquare,
+  Phone,
+  User,
+  Loader2,
+  CheckCircle2,
   Heart,
+  Briefcase,
   Coins,
-  ShieldAlert,
+  Shield,
+  Clock,
+  Sparkle,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -56,6 +72,16 @@ const CATEGORY_TABS = [
   { id: 'vivah', label: 'विवाह व दांपत्य' },
   { id: 'muhurat', label: 'मुहूर्त व राहुकाल' },
   { id: 'yatra', label: 'यात्रा व दिशाशूल' },
+];
+
+const BOT_QUICK_TOPICS = [
+  { id: 'vivah', label: '💍 विवाह व मांगलिक विचार', prompt: 'मेरी कुंडली में विवाह योग, दांपत्य सुख व मांगलिक परिहार' },
+  { id: 'career', label: '💼 नौकरी व पदोन्नति योग', prompt: 'दशम भाव, नौकरी में पदोन्नति, स्थानांतरण व कार्यक्षेत्र फलादेश' },
+  { id: 'dhan', label: '💰 व्यापार, धन लाभ व ऋण मुक्ति', prompt: 'धन भाव, व्यापार में समृद्धि व आर्थिक उन्नति के सात्विक उपाय' },
+  { id: 'health', label: '🩺 स्वास्थ्य रक्षा व महामृत्युंजय', prompt: 'स्वास्थ्य रक्षा, अरिष्ट निवारण एवं महामृत्युंजय जप विधान' },
+  { id: 'sadesati', label: '🪐 शनि साढ़ेसाती व ढैया फल', prompt: 'शनि की साढ़ेसाती का प्रभाव, चरण व कष्ट निवारण के अचूक उपाय' },
+  { id: 'ratna', label: '💎 भाग्य रत्न व रुद्राक्ष परामर्श', prompt: 'मेरी कुंडली के अनुसार सर्वोत्तम भाग्य रत्न, धातु व रुद्राक्ष' },
+  { id: 'muhurat', label: '⏰ आज का शुभ मुहूर्त व चौघड़िया', prompt: 'आज का अमृत चौघड़िया, अभिजित मुहूर्त व शुभ कार्य समय' },
 ];
 
 const SUGGESTIONS_MAP: Record<string, string[]> = {
@@ -116,8 +142,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   locationName = 'वाराणसी, भारत',
 }) => {
   const initialGreeting = activeKundali
-    ? `॥ श्री गणेशाय नमः ॥\nप्रणाम! मैं उमा (UMA) हूँ — आपकी 'वैदिक एलेक्सा' एवं संपूर्ण ज्योतिष मार्गदर्शिका।\n\nमैंने आपकी सक्रिय कुंडली **${activeKundali.name}** (लग्न: ${activeKundali.lagnaRashi}, राशि: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}) का संज्ञान ले लिया है। आप बोलकर या लिखकर अपनी कुंडली के किसी भी भाव, करियर, विवाह, धन, स्वास्थ्य, वर्तमान दशा या कष्ट निवारण के सात्विक उपाय पूछ सकते हैं।`
-    : `॥ श्री गणेशाय नमः ॥\nप्रणाम! मैं उमा (UMA) हूँ — आपकी 'वैदिक एलेक्सा' एवं पंचांग व ज्योतिष मार्गदर्शिका। आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि है।\n\nआप मुझसे शुभ मुहूर्त, राहुकाल, चौघड़िया, यात्रा दिशाशूल अथवा ज्योतिषीय प्रश्नों के उत्तर पूछ सकते हैं। व्यक्तिगत कुंडली विश्लेषण हेतु 'कुंडली' टैब में जन्म विवरण भरें।`;
+    ? `॥ श्री गणेशाय नमः ॥\nप्रणाम! मैं उमा (UMA) हूँ — आपकी 'वैदिक एलेक्सा' एवं संपूर्ण ज्योतिष मार्गदर्शिका।\n\nमैंने आपकी सक्रिय कुंडली **${activeKundali.name}** (लग्न: ${activeKundali.lagnaRashi}, राशि: ${activeKundali.moonRashi}, दशा: ${activeKundali.mahadasha}) का संज्ञान ले लिया है। आप बोलकर या लिखकर अपनी कुंडली के किसी भी भाव, करियर, विवाह, धन, स्वास्थ्य, वर्तमान दशा या कष्ट निवारण के सात्विक उपाय पूछ सकते हैं।\n\nप्रत्येक उत्तर के साथ संस्कृत श्लोक, 1-क्लिक व्हाट्सएप शेयर व शास्त्रोक्त PDF रिपोर्ट उपलब्ध है।`
+    : `॥ श्री गणेशाय नमः ॥\nप्रणाम! मैं उमा (UMA) हूँ — आपकी 'वैदिक एलेक्सा' एवं पंचांग व ज्योतिष मार्गदर्शिका। आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि है।\n\nआप मुझसे शुभ मुहूर्त, राहुकाल, चौघड़िया, यात्रा दिशाशूल अथवा ज्योतिषीय प्रश्नों के उत्तर बोलकर या लिखकर पूछ सकते हैं।`;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -137,8 +163,24 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // PDF generation and WhatsApp Bot states
+  const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isWhatsAppBotOpen, setIsWhatsAppBotOpen] = useState(false);
+  const [clientBotName, setClientBotName] = useState(activeKundali?.name || '');
+  const [clientBotPhone, setClientBotPhone] = useState('');
+  const [clientBotGeneratedMsg, setClientBotGeneratedMsg] = useState('');
+  const [isGeneratingBotMsg, setIsGeneratingBotMsg] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  // Update client bot name if activeKundali changes
+  useEffect(() => {
+    if (activeKundali?.name && !clientBotName) {
+      setClientBotName(activeKundali.name);
+    }
+  }, [activeKundali]);
 
   const speakHindi = (text: string, id: string) => {
     if (playingVoiceId === id) {
@@ -147,7 +189,13 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       return;
     }
     setPlayingVoiceId(id);
-    void speakUma(text).finally(() => setPlayingVoiceId(null));
+    void speakUma(text, {
+      rate: 0.88,
+      pitch: 1.02,
+      onStart: () => setPlayingVoiceId(id),
+      onEnd: () => setPlayingVoiceId(null),
+      onError: () => setPlayingVoiceId(null),
+    });
   };
 
   useEffect(() => {
@@ -177,7 +225,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Alexa Voice Speech Recognition (Hindi)
+  // Alexa Voice Speech Recognition (Hindi & English)
   const handleVoiceInput = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -200,7 +248,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
       rec.onstart = () => {
         setIsListening(true);
-        setVoiceTranscript('उमा सुन रही हैं...');
+        setVoiceTranscript('उमा सुन रही हैं... (बोलें)');
       };
 
       rec.onresult = (e: any) => {
@@ -219,10 +267,9 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           setInputQuery(text);
         }
         if (final) {
-          // Auto submit after a completed phrase
           setTimeout(() => {
             handleSubmit(final);
-          }, 400);
+          }, 450);
         }
       };
 
@@ -248,6 +295,85 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // 1-Click WhatsApp Share for a message
+  const handleWhatsAppShare = (msgText: string, queryText?: string) => {
+    const formatted = formatWhatsAppConsultationMessage({
+      activeKundali,
+      query: queryText || 'ज्योतिषीय जिज्ञासा',
+      answer: msgText,
+      panchang,
+    });
+    openWhatsAppShare(formatted);
+  };
+
+  // Generate Official PDF Consultation Report
+  const handleDownloadPdfReport = async (msgText: string, queryText?: string) => {
+    try {
+      setIsGeneratingPdf(true);
+      const res = await downloadUmaConsultationPdf({
+        panchang,
+        query: queryText || (activeKundali ? `${activeKundali.name} जी की कुण्डली विश्लेषण` : 'पंचांग एवं ज्योतिषीय परामर्श'),
+        answer: msgText,
+        activeKundali,
+        locationName,
+        consultationDate: new Date(),
+      });
+      setPdfSuccessInfo({
+        isOpen: true,
+        fileName: res.fileName,
+        blobUrl: res.blobUrl,
+        blob: res.blob,
+        pageCount: res.pageCount,
+        title: `ज्योतिषीय परामर्श रिपोर्ट • ${activeKundali?.name || 'जातक'}`,
+      });
+    } catch (err) {
+      console.error('Error generating Consultation PDF:', err);
+      alert('PDF तैयार करने में त्रुटि आई। कृपया पुनः प्रयास करें।');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  // Export Entire Session as Single Mega PDF
+  const handleExportFullSessionPdf = async () => {
+    const umaMessages = messages.filter((m) => m.sender === 'uma');
+    if (umaMessages.length === 0) return;
+
+    const fullAnswer = umaMessages.map((m, idx) => `[परामर्श भाग ${idx + 1}]\n${m.text}`).join('\n\n══════════════════\n\n');
+    await handleDownloadPdfReport(fullAnswer, 'सम्पूर्ण उमा ज्योतिषीय परामर्श संवाद');
+  };
+
+  // WhatsApp Client Bot Generator Function
+  const handleGenerateBotMessage = async (topicPrompt: string) => {
+    setIsGeneratingBotMsg(true);
+    try {
+      const q = `${topicPrompt} (यजमान: ${clientBotName || 'यजमान'})`;
+      const panchangCtx = buildPanchangContext(panchang);
+      const kundaliCtx = activeKundali ? buildKundaliContext(activeKundali) : undefined;
+
+      const res = await askUma({
+        query: q,
+        panchangContext: panchangCtx,
+        kundaliContext: kundaliCtx,
+        panchang,
+        activeKundali,
+      });
+
+      const formatted = formatWhatsAppConsultationMessage({
+        activeKundali: activeKundali ? { ...activeKundali, name: clientBotName || activeKundali.name } : null,
+        query: topicPrompt,
+        answer: res.text,
+        panchang,
+      });
+
+      setClientBotGeneratedMsg(formatted);
+    } catch (err) {
+      console.error('Error generating client bot message:', err);
+    } finally {
+      setIsGeneratingBotMsg(false);
+    }
   };
 
   // Build complete astrological context for Gemini AI
@@ -409,7 +535,32 @@ ${areasStr}`;
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            {/* WhatsApp Client Bot Trigger */}
+            <button
+              onClick={() => setIsWhatsAppBotOpen(true)}
+              className="px-2.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-emerald-500/50"
+              title="यजमानों के प्रश्नों के सीधे व्हाट्सएप पर स्वचालित उत्तर"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-200" />
+              <span className="inline">💬 यजमान बॉट</span>
+            </button>
+
+            {/* Full Session PDF Export */}
+            <button
+              onClick={handleExportFullSessionPdf}
+              disabled={isGeneratingPdf}
+              className="px-2.5 py-1.5 rounded-lg bg-[#B58738] hover:bg-[#9B7028] text-[#2C0A0A] text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#FAF2E4]/40 disabled:opacity-50"
+              title="सम्पूर्ण संवाद की औपचारिक ज्योतिषीय परामर्श PDF डाउनलोड करें"
+            >
+              {isGeneratingPdf ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <FileText className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden md:inline">सम्पूर्ण PDF</span>
+            </button>
+
             {/* Auto-Speak Toggle */}
             <button
               onClick={() => {
@@ -419,18 +570,18 @@ ${areasStr}`;
               }}
               className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition cursor-pointer ${
                 autoSpeak
-                  ? 'bg-[#B58738] text-[#2C0A0A] border-[#FAF2E4] font-bold'
+                  ? 'bg-[#FAF2E4] text-[#7A1D1D] border-[#FAF2E4] font-bold'
                   : 'bg-[#5C1414] text-[#E6C687] border-[#B58738]/50'
               }`}
               title={autoSpeak ? 'ऑटो वॉइस चालू है' : 'ऑटो वॉइस बंद है'}
             >
               {autoSpeak ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              <span className="hidden md:inline text-[11px]">{autoSpeak ? 'वाणी चालू' : 'वाणी बंद'}</span>
+              <span className="hidden lg:inline text-[11px]">{autoSpeak ? 'वाणी चालू' : 'वाणी बंद'}</span>
             </button>
 
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="px-2.5 py-1 text-xs text-[#E6C687] hover:text-white border border-[#B58738]/50 rounded-lg hidden sm:block cursor-pointer"
+              className="px-2 py-1 text-xs text-[#E6C687] hover:text-white border border-[#B58738]/50 rounded-lg hidden sm:block cursor-pointer"
             >
               {isExpanded ? 'सामान्य' : 'विस्तार'}
             </button>
@@ -443,6 +594,51 @@ ${areasStr}`;
             </button>
           </div>
         </div>
+
+        {/* Live Speaking / Listening Waveform Notice */}
+        {playingVoiceId && (
+          <div className="bg-amber-100/95 border-b border-amber-300 px-4 py-2 flex items-center justify-between text-amber-900 text-xs font-bold animate-in fade-in">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-0.5">
+                <span className="w-1 h-3 bg-[#7A1D1D] rounded-full animate-bounce [animation-delay:0ms]"></span>
+                <span className="w-1 h-5 bg-[#7A1D1D] rounded-full animate-bounce [animation-delay:150ms]"></span>
+                <span className="w-1 h-4 bg-[#7A1D1D] rounded-full animate-bounce [animation-delay:300ms]"></span>
+                <span className="w-1 h-2 bg-[#7A1D1D] rounded-full animate-bounce [animation-delay:450ms]"></span>
+              </div>
+              <span className="font-serif">॥ उमा संस्कृत श्लोक व फलादेश का मधुर वाचन कर रही हैं... ॥</span>
+            </div>
+            <button
+              onClick={() => {
+                stopUmaSpeech();
+                setPlayingVoiceId(null);
+              }}
+              className="px-2.5 py-1 bg-[#7A1D1D] hover:bg-[#5C1414] text-white rounded text-[11px] cursor-pointer shadow-xs transition"
+            >
+              वाणी रोकें
+            </button>
+          </div>
+        )}
+
+        {isListening && (
+          <div className="bg-rose-100/95 border-b border-rose-300 px-4 py-2 flex items-center justify-between text-rose-900 text-xs font-bold animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
+              </span>
+              <span className="font-serif">॥ उमा सुन रही हैं... कृपया स्पष्ट हिन्दी में अपना प्रश्न पूछें ॥</span>
+            </div>
+            <button
+              onClick={() => {
+                recognitionRef.current?.stop();
+                setIsListening(false);
+              }}
+              className="px-2 py-0.5 bg-rose-700 text-white rounded text-[11px] cursor-pointer"
+            >
+              समाप्त करें
+            </button>
+          </div>
+        )}
 
         {/* Active Kundali Awareness Banner (Software Alexa Feature) */}
         <div className="bg-[#F4E8D1] py-2 px-3 sm:px-4 border-b border-[#8C6239]/30 flex flex-wrap items-center justify-between gap-2 shadow-xs">
@@ -608,18 +804,19 @@ ${areasStr}`;
                     </div>
                   )}
 
-                  {/* Voice / Copy Controls */}
+                  {/* Voice / WhatsApp / PDF / Copy Controls */}
                   {isUma && (
                     <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between flex-wrap gap-2 text-xs">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {/* 1. Voice Play/Stop */}
                         <button
                           onClick={() => speakHindi(msg.text, msg.id)}
-                          className={`px-2.5 py-1 rounded-md border flex items-center gap-1 transition cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-md border flex items-center gap-1 transition cursor-pointer font-medium ${
                             playingVoiceId === msg.id
                               ? 'bg-[#7A1D1D] text-white border-[#7A1D1D]'
                               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDCC0] border-[#8C6239]/40'
                           }`}
-                          title="हिन्दी में सुनें"
+                          title="हिन्दी व संस्कृत श्लोक में सुनें"
                         >
                           {playingVoiceId === msg.id ? (
                             <>
@@ -634,6 +831,46 @@ ${areasStr}`;
                           )}
                         </button>
 
+                        {/* 2. Direct 1-Click WhatsApp Share */}
+                        <button
+                          onClick={() => {
+                            const idx = messages.findIndex((m) => m.id === msg.id);
+                            const userQuery =
+                              idx > 0 && messages[idx - 1].sender === 'user'
+                                ? messages[idx - 1].text
+                                : undefined;
+                            handleWhatsAppShare(msg.text, userQuery);
+                          }}
+                          className="px-2.5 py-1 rounded-md border border-emerald-600/50 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 flex items-center gap-1 transition cursor-pointer font-medium"
+                          title="यजमान को सीधे व्हाट्सएप पर भेजें"
+                        >
+                          <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>WhatsApp शेयर</span>
+                        </button>
+
+                        {/* 3. Direct PDF Generator */}
+                        <button
+                          onClick={() => {
+                            const idx = messages.findIndex((m) => m.id === msg.id);
+                            const userQuery =
+                              idx > 0 && messages[idx - 1].sender === 'user'
+                                ? messages[idx - 1].text
+                                : undefined;
+                            void handleDownloadPdfReport(msg.text, userQuery);
+                          }}
+                          disabled={isGeneratingPdf}
+                          className="px-2.5 py-1 rounded-md border border-amber-600/50 bg-amber-50 text-amber-900 hover:bg-amber-100 flex items-center gap-1 transition cursor-pointer font-medium disabled:opacity-50"
+                          title="जातक के नाम की औपचारिक ज्योतिषीय परामर्श रिपोर्ट (PDF)"
+                        >
+                          {isGeneratingPdf ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-700" />
+                          ) : (
+                            <FileText className="w-3.5 h-3.5 text-amber-700" />
+                          )}
+                          <span>PDF रिपोर्ट</span>
+                        </button>
+
+                        {/* 4. Copy */}
                         <button
                           onClick={() => handleCopy(msg.text, msg.id)}
                           className="p-1 text-[#8C6239] hover:text-[#5C3A21] rounded transition cursor-pointer"
@@ -725,6 +962,174 @@ ${areasStr}`;
             </button>
           </form>
         </div>
+
+        {/* WhatsApp Client Bot Modal Overlay */}
+        {isWhatsAppBotOpen && (
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
+            <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+              {/* Bot Header */}
+              <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-3 sm:p-4 flex items-center justify-between border-b border-emerald-600">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-emerald-600 border border-emerald-300 flex items-center justify-center shadow-inner">
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base sm:text-lg font-granth text-emerald-100 flex items-center gap-1.5">
+                      <span>यजमान व्हाट्सएप बॉट</span>
+                      <span className="text-[10px] bg-emerald-600 px-2 py-0.5 rounded text-white font-mono uppercase tracking-wider">
+                        BOT AI
+                      </span>
+                    </h3>
+                    <p className="text-xs text-emerald-200">
+                      यजमानों के प्रश्नों के सीधे व्हाट्सएप पर स्वचालित शास्त्रीय उत्तर व उपाय
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsWhatsAppBotOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-emerald-700 text-emerald-200 hover:text-white cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Bot Body */}
+              <div className="p-4 overflow-y-auto space-y-4 text-sm font-serif">
+                {/* Client Details Form */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#FFFDF8] p-3 rounded-xl border border-[#8C6239]/30 shadow-xs">
+                  <div>
+                    <label className="block text-xs font-bold text-[#5C3A21] mb-1">
+                      यजमान / जातक का नाम:
+                    </label>
+                    <input
+                      type="text"
+                      value={clientBotName}
+                      onChange={(e) => setClientBotName(e.target.value)}
+                      placeholder="यजमान का नाम लिखें"
+                      className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs text-[#3E2714] focus:outline-[#7A1D1D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#5C3A21] mb-1">
+                      व्हाट्सएप मोबाइल नंबर (वैकल्पिक):
+                    </label>
+                    <input
+                      type="text"
+                      value={clientBotPhone}
+                      onChange={(e) => setClientBotPhone(e.target.value)}
+                      placeholder="उदा. 9876543210"
+                      className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs text-[#3E2714] focus:outline-[#7A1D1D]"
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Topic Selection */}
+                <div>
+                  <label className="block text-xs font-bold text-[#7A1D1D] mb-2">
+                    १. त्वरित शास्त्रीय परामर्श विषय चुनें (Topic Select):
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {BOT_QUICK_TOPICS.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleGenerateBotMessage(item.prompt)}
+                        disabled={isGeneratingBotMsg}
+                        className="text-left px-3 py-2 bg-[#FFFDF8] hover:bg-emerald-50 border border-[#8C6239]/30 hover:border-emerald-600 rounded-lg text-xs text-[#3E2714] transition flex items-center justify-between cursor-pointer group disabled:opacity-50"
+                      >
+                        <span className="font-medium group-hover:text-emerald-800">{item.label}</span>
+                        <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Status indicator */}
+                {isGeneratingBotMsg && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center gap-2.5 text-emerald-800 text-xs shadow-inner">
+                    <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
+                    <span>उमा यजमान हेतु संस्कृत श्लोक सहित शास्त्रोक्त परामर्श संदेश तैयार कर रही हैं...</span>
+                  </div>
+                )}
+
+                {/* Generated WhatsApp Preview */}
+                {clientBotGeneratedMsg && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-[#5C3A21]">
+                        २. व्हाट्सएप संदेश पूर्वावलोकन (संपादन योग्य):
+                      </label>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(clientBotGeneratedMsg);
+                          alert('संदेश कॉपी कर लिया गया!');
+                        }}
+                        className="text-[11px] text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer font-bold"
+                      >
+                        <Copy className="w-3 h-3" /> प्रतिलिपि (Copy)
+                      </button>
+                    </div>
+                    <textarea
+                      rows={6}
+                      value={clientBotGeneratedMsg}
+                      onChange={(e) => setClientBotGeneratedMsg(e.target.value)}
+                      className="w-full bg-[#FFFDF8] border border-[#8C6239]/40 rounded-xl p-3 text-xs text-[#2C0A0A] font-mono leading-relaxed focus:outline-[#7A1D1D] shadow-inner"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Bot Footer Actions */}
+              <div className="bg-[#F4E8D1] p-3 border-t border-[#8C6239]/30 flex items-center justify-between flex-wrap gap-2">
+                <button
+                  onClick={() => setIsWhatsAppBotOpen(false)}
+                  className="px-3 py-1.5 border border-[#8C6239]/50 rounded-lg text-xs text-[#5C3A21] hover:bg-[#EBDCC0] cursor-pointer"
+                >
+                  बंद करें
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {clientBotGeneratedMsg && (
+                    <button
+                      onClick={() =>
+                        handleDownloadPdfReport(
+                          clientBotGeneratedMsg,
+                          `${clientBotName || 'यजमान'} जी का परामर्श`
+                        )
+                      }
+                      disabled={isGeneratingPdf}
+                      className="px-3 py-1.5 bg-[#B58738] hover:bg-[#9B7028] text-[#2C0A0A] font-bold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      {isGeneratingPdf ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <FileText className="w-3.5 h-3.5" />
+                      )}
+                      <span>PDF बनाएं</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      if (!clientBotGeneratedMsg) {
+                        alert('कृपया पहले कोई विषय चुनकर संदेश तैयार करें।');
+                        return;
+                      }
+                      openWhatsAppShare(clientBotGeneratedMsg, clientBotPhone);
+                    }}
+                    disabled={!clientBotGeneratedMsg}
+                    className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>📲 सीधे व्हाट्सएप पर भेजें</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PDF Success Download Modal */}
+        <PdfSuccessModal info={pdfSuccessInfo} onClose={() => setPdfSuccessInfo(null)} />
       </div>
     </div>
   );
