@@ -9,6 +9,7 @@ import {
   Bell,
   Sparkles,
   Timer,
+  BookOpen,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -95,6 +96,16 @@ export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
     icon: Bell,
     screenTitle: '🔔 उमा Reminder',
   },
+  {
+    id: 'vratkatha',
+    title: 'व्रत कथा व आरती',
+    label: 'व्रत कथा',
+    pageNumber: 8,
+    chapter: '',
+    desc: 'एकादशी, प्रदोष, सत्यनारायण कथा व आरती',
+    icon: BookOpen,
+    screenTitle: '📖 व्रत कथा एवं आरती संग्रह',
+  },
 ];
 
 export const BOOK_PAGES: BookPageItem[] = [
@@ -177,5 +188,15 @@ export const BOOK_PAGES: BookPageItem[] = [
     desc: 'नित्य पूजा, जप, साधना व व्यक्तिगत धार्मिक संकल्प स्मरण',
     icon: Bell,
     screenTitle: '🔔 उमा Reminder',
+  },
+  {
+    id: 'vratkatha',
+    title: 'व्रत कथा, पूजा विधि व आरती संग्रह',
+    label: 'व्रत कथा',
+    pageNumber: 9,
+    chapter: 'नवम अध्याय',
+    desc: 'एकादशी, प्रदोष, सत्यनारायण सम्पूर्ण कथा, स्तोत्र व आरती',
+    icon: BookOpen,
+    screenTitle: '📖 व्रत कथा एवं आरती संग्रह',
   },
 ];

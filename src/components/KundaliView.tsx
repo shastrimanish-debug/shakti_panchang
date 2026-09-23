@@ -13,6 +13,7 @@ import { COMMON_INDIAN_CITIES } from '../services/disha';
 import {
   saveKundaliProfile,
   DEFAULT_LOCATION,
+  getAstrologerBranding,
 } from '../services/storage';
 import { useLicense } from '@/lib/license-client';
 import { calculateVedicPanchang, RASHIS, NAKSHATRAS } from '../services/astronomy';
@@ -48,6 +49,7 @@ import {
   ChevronRight,
   MoveHorizontal,
   Compass,
+  Award,
 } from 'lucide-react';
 
 export const SHODASHVARGA_OPTIONS = [
@@ -128,6 +130,7 @@ interface KundaliViewProps {
   currentLocation: SavedLocation;
   onOpenSavedModal: () => void;
   onOpenUmaModal?: () => void;
+  onOpenBrandingModal?: () => void;
   initialSubTab?: 'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati';
 }
 
@@ -137,6 +140,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   currentLocation,
   onOpenSavedModal,
   onOpenUmaModal,
+  onOpenBrandingModal,
   initialSubTab,
 }) => {
   // Active Sub-Tab

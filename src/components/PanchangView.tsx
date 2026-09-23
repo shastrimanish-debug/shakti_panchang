@@ -54,6 +54,7 @@ interface PanchangViewProps {
   panchang: VedicPanchangData;
   onNavigateTab: (tab: string) => void;
   onOpenUmaModal?: () => void;
+  onOpenWhatsAppPanchang?: () => void;
   locationName?: string;
   currentDate?: Date;
   onDateChange?: (date: Date) => void;
@@ -64,6 +65,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   panchang,
   onNavigateTab,
   onOpenUmaModal,
+  onOpenWhatsAppPanchang,
   locationName = 'उज्जैन',
   currentDate,
   onDateChange,
@@ -458,6 +460,19 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             </div>
           </div>
 
+          {/* 1-Click WhatsApp Daily Panchang Card Button */}
+          {onOpenWhatsAppPanchang && (
+            <button
+              type="button"
+              onClick={onOpenWhatsAppPanchang}
+              className="w-full py-2 px-3 bg-gradient-to-r from-[#25D366] to-[#1EBE5D] hover:from-[#20bd5a] hover:to-[#1aa852] text-white font-bold text-xs sm:text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
+              title="दैनिक पंचांग व सुविचार व्हाट्सएप पर शेयर करें"
+            >
+              <Share2 className="w-4 h-4 text-white" />
+              <span>📲 व्हाट्सएप सुप्रभात पंचांग कार्ड (सुविचार सहित)</span>
+            </button>
+          )}
+
           {/* Quick Action Row (4 Buttons) */}
           <div className="grid grid-cols-4 gap-1.5 pt-0.5">
             <button
@@ -504,17 +519,26 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             </button>
           </div>
 
-          {/* Quick link to Monthly Calendar */}
+          {/* Quick link to Monthly Calendar & Vrat Katha */}
           {onNavigateTab && (
-            <div className="pt-0.5">
+            <div className="grid grid-cols-2 gap-1.5 pt-0.5">
               <button
                 type="button"
                 onClick={() => onNavigateTab('festivals')}
-                className="w-full text-[11px] font-bold text-[#8B1E1E] hover:text-[#5C3A21] flex items-center justify-center gap-1.5 py-1.5 bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl transition cursor-pointer shadow-2xs active:scale-98"
+                className="text-[11px] font-bold text-[#8B1E1E] hover:text-[#5C3A21] flex items-center justify-center gap-1.5 py-1.5 bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl transition cursor-pointer shadow-2xs active:scale-98"
                 title="पूरे महीने के व्रत, त्यौहार और तिथियाँ मासिक पंचांग में देखें"
               >
                 <Calendar className="w-3.5 h-3.5 text-[#B56A00]" />
-                <span>🗓️ मासिक पंचांग देखें →</span>
+                <span>🗓️ मासिक पंचांग</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigateTab('vratkatha')}
+                className="text-[11px] font-bold text-[#5C3A21] hover:text-[#8B1E1E] flex items-center justify-center gap-1.5 py-1.5 bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl transition cursor-pointer shadow-2xs active:scale-98"
+                title="व्रत कथा, पूजा विधि एवं आरती संग्रह"
+              >
+                <span>📖 व्रत कथा व आरती</span>
               </button>
             </div>
           )}

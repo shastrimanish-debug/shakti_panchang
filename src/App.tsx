@@ -7,6 +7,9 @@ import { YatraView } from './components/YatraView';
 import { KundaliView } from './components/KundaliView';
 import { FestivalsView } from './components/FestivalsView';
 import { RemindersView } from './components/RemindersView';
+import { VratKathaView } from './components/VratKathaView';
+import { WhatsAppPanchangModal } from './components/WhatsAppPanchangModal';
+import { AstrologerBrandingModal } from './components/AstrologerBrandingModal';
 import { UmaAssistantModal } from './components/UmaAssistantModal';
 import { LocationModal } from './components/LocationModal';
 import { SavedProfilesModal } from './components/SavedProfilesModal';
@@ -98,6 +101,8 @@ export function App() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [isUmaModalOpen, setIsUmaModalOpen] = useState<boolean>(false);
   const [isSavedProfilesModalOpen, setIsSavedProfilesModalOpen] = useState<boolean>(false);
+  const [isWhatsAppPanchangOpen, setIsWhatsAppPanchangOpen] = useState<boolean>(false);
+  const [isBrandingModalOpen, setIsBrandingModalOpen] = useState<boolean>(false);
 
   // Active Kundali Profile - clean profile state without hardcoded defaults
   const [activeKundali, setActiveKundali] = useState<KundaliData | null>(() => {
@@ -345,6 +350,7 @@ export function App() {
                   panchang={panchang}
                   onNavigateTab={handleSelectTab}
                   onOpenUmaModal={() => setIsUmaModalOpen(true)}
+                  onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
                   locationName={currentLocation.name}
                   currentDate={currentDate}
                   onDateChange={setCurrentDate}
@@ -372,6 +378,7 @@ export function App() {
                   initialSubTab={activeTab === 'milan' ? 'milan' : undefined}
                   onOpenSavedModal={() => setIsSavedProfilesModalOpen(true)}
                   onOpenUmaModal={() => setIsUmaModalOpen(true)}
+                  onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
                 />
               )}
 
@@ -388,6 +395,10 @@ export function App() {
 
               {activeTab === 'reminders' && (
                 <RemindersView />
+              )}
+
+              {activeTab === 'vratkatha' && (
+                <VratKathaView onBackToPanchang={() => handleSelectTab('panchang')} />
               )}
             </div>
 
@@ -469,11 +480,29 @@ export function App() {
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
         onOpenUmaModal={() => setIsUmaModalOpen(true)}
         onToggleBookCover={() => setIsBookOpen(false)}
+        onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
+        onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
         currentLocation={currentLocation}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         isAudioEnabled={isAudioEnabled}
         onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
+      />
+
+      {/* WhatsApp Daily Panchang Card Generator Modal */}
+      <WhatsAppPanchangModal
+        isOpen={isWhatsAppPanchangOpen}
+        onClose={() => setIsWhatsAppPanchangOpen(false)}
+        panchang={panchang}
+        location={currentLocation}
+        currentDate={currentDate}
+        onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
+      />
+
+      {/* Astrologer / Pandit Custom Visiting Card Branding Modal */}
+      <AstrologerBrandingModal
+        isOpen={isBrandingModalOpen}
+        onClose={() => setIsBrandingModalOpen(false)}
       />
 
       {/* Dialog Modals */}

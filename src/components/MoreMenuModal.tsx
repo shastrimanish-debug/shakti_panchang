@@ -12,9 +12,11 @@ import {
   X,
   Volume2,
   VolumeX,
+  Share2,
+  Award,
 } from 'lucide-react';
 import { SavedLocation } from '../types';
-import { AppTheme } from '../services/storage';
+import { AppTheme, getAstrologerBranding } from '../services/storage';
 
 interface MoreMenuModalProps {
   isOpen: boolean;
@@ -23,6 +25,8 @@ interface MoreMenuModalProps {
   onOpenLocationModal: () => void;
   onOpenUmaModal: () => void;
   onToggleBookCover: () => void;
+  onOpenWhatsAppPanchang?: () => void;
+  onOpenBrandingModal?: () => void;
   currentLocation: SavedLocation;
   theme: AppTheme;
   onToggleTheme: () => void;
@@ -37,6 +41,8 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   onOpenLocationModal,
   onOpenUmaModal,
   onToggleBookCover,
+  onOpenWhatsAppPanchang,
+  onOpenBrandingModal,
   currentLocation,
   theme,
   onToggleTheme,
@@ -45,8 +51,10 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const handleAction = (cb: () => void) => {
-    cb();
+  const branding = getAstrologerBranding();
+
+  const handleAction = (cb?: () => void) => {
+    if (cb) cb();
     onClose();
   };
 
@@ -70,8 +78,86 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </button>
         </div>
 
+        {/* Highlight Banner: 1-Click WhatsApp Daily Panchang Card */}
+        {onOpenWhatsAppPanchang && (
+          <div className="mt-3.5">
+            <button
+              type="button"
+              onClick={() => handleAction(onOpenWhatsAppPanchang)}
+              className="w-full p-3 bg-gradient-to-r from-[#25D366] to-[#1EBE5D] hover:from-[#20bd5a] hover:to-[#1aa852] text-white rounded-xl shadow-sm flex items-center justify-between transition cursor-pointer active:scale-95"
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="p-2 bg-white/20 rounded-lg text-white">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs sm:text-sm font-bold">
+                    📲 व्हाट्सएप सुप्रभात पंचांग कार्ड
+                  </div>
+                  <div className="text-[10px] text-white/90">
+                    आज का पंचांग व सुविचार 1-क्लिक में शेयर करें
+                  </div>
+                </div>
+              </div>
+              <span className="text-[11px] bg-white text-[#1EBE5D] px-2.5 py-1 rounded-lg font-bold">
+                शेयर करें
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Astrologer Custom Branding Badge */}
+        {onOpenBrandingModal && (
+          <div className="mt-2.5">
+            <button
+              type="button"
+              onClick={() => handleAction(onOpenBrandingModal)}
+              className="w-full p-2.5 bg-[#F4E8D1] hover:bg-[#EBD8BD] border-2 border-[#8C6239]/40 rounded-xl flex items-center justify-between text-left transition cursor-pointer active:scale-95"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-[#5C3A21] rounded-lg text-[#FFD88A]">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1.5">
+                    <span>📇 पंडित जी / ज्योतिषी विज़िटिंग कार्ड</span>
+                    {branding.enabled && (
+                      <span className="text-[9px] bg-[#B56A00] text-white px-1.5 py-0.2 rounded font-medium">
+                        सक्रिय
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-[#735133]">
+                    {branding.enabled
+                      ? `${branding.name} • ${branding.phone || branding.city}`
+                      : 'पंचांग कार्ड व कुंडली पर अपना नाम/नंबर जोड़ें'}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs text-[#B56A00] font-bold">सेट करें →</span>
+            </button>
+          </div>
+        )}
+
         {/* Grid Options */}
-        <div className="grid grid-cols-2 gap-2.5 my-4">
+        <div className="grid grid-cols-2 gap-2.5 my-3.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('vratkatha'))}
+            className="flex items-center gap-2.5 p-3 bg-[#F4E8D1] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-xl text-left transition cursor-pointer active:scale-95 col-span-2 bg-gradient-to-r from-[#F4E8D1] to-[#EBD8BD]"
+          >
+            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-lg">
+              <BookOpen className="w-4 h-4 text-[#FFD88A]" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+                <span>📖 व्रत कथा, पूजा विधि व आरती संग्रह</span>
+                <span className="text-[9px] bg-[#B56A00] text-white px-1.5 rounded font-bold">नया</span>
+              </div>
+              <div className="text-[10px] text-[#735133]">सत्यनारायण, एकादशी, प्रदोष कथा व नित्य स्तोत्र</div>
+            </div>
+          </button>
+
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('yatra'))}
@@ -179,7 +265,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 mt-4">
+        <div className="flex items-center gap-2 mt-3.5">
           <button
             type="button"
             onClick={() => handleAction(onOpenUmaModal)}
@@ -201,3 +287,4 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
     </div>
   );
 };
+

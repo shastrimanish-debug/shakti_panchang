@@ -52,6 +52,7 @@ export const BOOK_PAGES = [
   { id: 'milan', label: 'कुंडली मिलान', chapter: 'षष्ठ अध्याय', pageNumber: 6, icon: Heart },
   { id: 'festivals', label: 'पर्व व व्रत', chapter: 'सप्तम अध्याय', pageNumber: 7, icon: Gift },
   { id: 'reminders', label: 'स्मृति व उपाय', chapter: 'अष्टम अध्याय', pageNumber: 8, icon: Bell },
+  { id: 'vratkatha', label: 'व्रत कथा व आरती', chapter: 'नवम अध्याय', pageNumber: 9, icon: BookOpen },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({

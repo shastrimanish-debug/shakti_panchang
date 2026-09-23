@@ -220,4 +220,41 @@ export function setStoredTheme(theme: AppTheme): void {
   } catch {}
 }
 
+// -------------------------------------------------------------
+// Astrologer / Pandit Custom Visiting Card Branding
+// -------------------------------------------------------------
+export interface AstrologerBranding {
+  enabled: boolean;
+  name: string;
+  title: string;
+  phone: string;
+  city: string;
+  sansthan?: string;
+  specialization?: string;
+}
+
+const STORAGE_KEY_BRANDING = 'shakti_astrologer_branding_v1';
+
+export function getAstrologerBranding(): AstrologerBranding {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_BRANDING);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return {
+    enabled: false,
+    name: 'ज्योतिषाचार्य मनीष शास्त्री',
+    title: 'वैदिक ज्योतिषी एवं कर्मकांड मर्मज्ञ',
+    phone: '',
+    city: 'वडोदरा (गुजरात)',
+    sansthan: 'श्री शक्ति ज्योतिष एवं कर्मकांड संस्थान',
+    specialization: 'जन्म पत्रिका, विवाह मेलापक, वास्तु एवं अनुष्ठान',
+  };
+}
+
+export function saveAstrologerBranding(branding: AstrologerBranding): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_BRANDING, JSON.stringify(branding));
+  } catch {}
+}
+
 
