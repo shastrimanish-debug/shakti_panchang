@@ -308,6 +308,12 @@ export function App() {
               if (isAudioEnabled) playTactilePageTurnSound();
             }}
             currentLocationName={currentLocation.name}
+            onOpenLocation={() => setIsLocationModalOpen(true)}
+            onOpenUma={() => setIsUmaModalOpen(true)}
+            onOpenPremium={() => {
+              setSubscriptionReason('वार्षिक सदस्यता सक्रिय करें और सभी विशेषाधिकार प्राप्त करें।');
+              setIsSubscriptionModalOpen(true);
+            }}
           />
         ) : (
           /* Mobile-Fit Card Container (No heavy padding or excessive border on mobile) */

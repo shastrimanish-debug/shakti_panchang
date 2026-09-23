@@ -727,6 +727,18 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 सहेजे गए प्रोफाइल (History)
               </button>
 
+              {onOpenUmaModal && (
+                <button
+                  type="button"
+                  onClick={onOpenUmaModal}
+                  className="px-3 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:brightness-110 text-[#FFD88A] border border-[#B58738] text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  title="उमा AI (वैदिक एलेक्सा) से परामर्श लें"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#FFD88A]" />
+                  <span>उमा AI परामर्श</span>
+                </button>
+              )}
+
               {/* Annual Subscription Pill */}
               {subStatus.entitled ? (
                 <button
