@@ -12,7 +12,6 @@ import {
   X,
   Volume2,
   VolumeX,
-  Activity,
 } from 'lucide-react';
 import { SavedLocation } from '../types';
 import { AppTheme } from '../services/storage';
@@ -23,7 +22,6 @@ interface MoreMenuModalProps {
   onSelectTab: (tabId: string) => void;
   onOpenLocationModal: () => void;
   onOpenUmaModal: () => void;
-  onOpenAccuracyModal?: () => void;
   onToggleBookCover: () => void;
   currentLocation: SavedLocation;
   theme: AppTheme;
@@ -38,7 +36,6 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   onSelectTab,
   onOpenLocationModal,
   onOpenUmaModal,
-  onOpenAccuracyModal,
   onToggleBookCover,
   currentLocation,
   theme,
@@ -130,22 +127,6 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <div className="text-[10px] text-[#735133]">पारंपरिक परिचय</div>
             </div>
           </button>
-
-          {onOpenAccuracyModal && (
-            <button
-              type="button"
-              onClick={() => handleAction(onOpenAccuracyModal)}
-              className="flex items-center gap-2.5 p-3 bg-[#F4E8D1] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-xl text-left transition cursor-pointer active:scale-95 col-span-2"
-            >
-              <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-lg">
-                <Activity className="w-4 h-4 text-[#FFD88A]" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-[#5C3A21]">खगोलीय गणना जाँच (Engine Accuracy)</div>
-                <div className="text-[10px] text-[#735133]">XALEN व मीयस शुद्धता तुलना एवं अयनांश विवरण</div>
-              </div>
-            </button>
-          )}
         </div>
 
         {/* Quick Settings Bar */}

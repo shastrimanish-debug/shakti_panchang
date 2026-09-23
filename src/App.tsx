@@ -10,7 +10,6 @@ import { RemindersView } from './components/RemindersView';
 import { UmaAssistantModal } from './components/UmaAssistantModal';
 import { LocationModal } from './components/LocationModal';
 import { SavedProfilesModal } from './components/SavedProfilesModal';
-import { AccuracyModal } from './components/AccuracyModal';
 import { BookCover } from './components/BookCover';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme } from './services/storage';
@@ -78,7 +77,6 @@ export function App() {
   // Book open/closed state (true: showing active panchang immediately; false: showing front cover)
   const [isBookOpen, setIsBookOpen] = useState<boolean>(true);
   const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
-  const [isAccuracyModalOpen, setIsAccuracyModalOpen] = useState<boolean>(false);
 
   // Apply Tamra-Ratri theme to document body
   useEffect(() => {
@@ -470,20 +468,12 @@ export function App() {
         onSelectTab={handleSelectTab}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
         onOpenUmaModal={() => setIsUmaModalOpen(true)}
-        onOpenAccuracyModal={() => setIsAccuracyModalOpen(true)}
         onToggleBookCover={() => setIsBookOpen(false)}
         currentLocation={currentLocation}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         isAudioEnabled={isAudioEnabled}
         onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
-      />
-
-      {/* Accuracy Verification Modal */}
-      <AccuracyModal
-        isOpen={isAccuracyModalOpen}
-        onClose={() => setIsAccuracyModalOpen(false)}
-        date={currentDate}
       />
 
       {/* Dialog Modals */}
