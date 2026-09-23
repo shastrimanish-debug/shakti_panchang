@@ -48,6 +48,26 @@ const DAILY_SHLOKAS = [
   },
 ];
 
+// Safe rounded rectangle for Canvas across all browser/webview versions
+function safeRoundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+  }
+}
+
 export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   isOpen,
   onClose,
@@ -144,7 +164,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     headerGrad.addColorStop(1, '#5C3A21');
     ctx.fillStyle = headerGrad;
     ctx.beginPath();
-    ctx.roundRect(W / 2 - 340, 105, 680, 80, 20);
+    safeRoundRect(ctx, W / 2 - 340, 105, 680, 80, 20);
     ctx.fill();
     ctx.strokeStyle = '#FFD88A';
     ctx.lineWidth = 3;
@@ -182,7 +202,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     const card = (x: number, y: number, w: number, h: number, title: string, value: string, sub: string, iconStr: string) => {
       ctx.fillStyle = '#FAF2E4';
       ctx.beginPath();
-      ctx.roundRect(x, y, w, h, 14);
+      safeRoundRect(ctx, x, y, w, h, 14);
       ctx.fill();
       ctx.strokeStyle = '#8C6239';
       ctx.lineWidth = 2;
@@ -242,7 +262,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     const sunBoxY = 605;
     ctx.fillStyle = '#5C3A21';
     ctx.beginPath();
-    ctx.roundRect(leftX, sunBoxY, W - 150, 115, 16);
+    safeRoundRect(ctx, leftX, sunBoxY, W - 150, 115, 16);
     ctx.fill();
     ctx.strokeStyle = '#B56A00';
     ctx.lineWidth = 2.5;
@@ -283,7 +303,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     const muhuratY = 740;
     ctx.fillStyle = '#FAF2E4';
     ctx.beginPath();
-    ctx.roundRect(leftX, muhuratY, W - 150, 75, 14);
+    safeRoundRect(ctx, leftX, muhuratY, W - 150, 75, 14);
     ctx.fill();
     ctx.strokeStyle = '#8C6239';
     ctx.lineWidth = 2;
@@ -303,7 +323,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     const shlokaY = 835;
     ctx.fillStyle = '#FAF2E4';
     ctx.beginPath();
-    ctx.roundRect(leftX, shlokaY, W - 150, 160, 16);
+    safeRoundRect(ctx, leftX, shlokaY, W - 150, 160, 16);
     ctx.fill();
     ctx.strokeStyle = '#B56A00';
     ctx.lineWidth = 2;
@@ -331,7 +351,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       cardGrad.addColorStop(1, '#3E2714');
       ctx.fillStyle = cardGrad;
       ctx.beginPath();
-      ctx.roundRect(leftX, footerY, W - 150, 230, 20);
+      safeRoundRect(ctx, leftX, footerY, W - 150, 230, 20);
       ctx.fill();
       ctx.strokeStyle = '#FFD88A';
       ctx.lineWidth = 3;
@@ -372,7 +392,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       // Default Sacred Shakti Panchang Granth Brand
       ctx.fillStyle = '#5C3A21';
       ctx.beginPath();
-      ctx.roundRect(leftX, footerY, W - 150, 230, 20);
+      safeRoundRect(ctx, leftX, footerY, W - 150, 230, 20);
       ctx.fill();
       ctx.strokeStyle = '#B56A00';
       ctx.lineWidth = 2.5;
