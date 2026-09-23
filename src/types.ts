@@ -5,7 +5,10 @@ export interface SavedLocation {
   state?: string;
   district?: string;
   country?: string;
+  countryCode?: string;
   type?: string;
+  timezone?: string;
+  timezoneHours?: number;
 }
 
 export interface SolarTimes {

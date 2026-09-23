@@ -283,9 +283,10 @@ export function calculatePlanetPositions(
 export function calculateVedicPanchang(
   date: Date,
   lat: number = 23.1765,
-  lon: number = 75.7885
+  lon: number = 75.7885,
+  tzHours?: number
 ): VedicPanchangData {
-  const solar = calculateSolarTimes(date, lat, lon);
+  const solar = calculateSolarTimes(date, lat, lon, tzHours);
   const { sunSidereal, moonSidereal, ayanamsa } = getSunMoonSidereal(solar.sunrise);
 
   // Tithi calculation (each tithi is 12 degrees of Moon - Sun)

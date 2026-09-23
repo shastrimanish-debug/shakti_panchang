@@ -117,7 +117,8 @@ export function App() {
     return calculateVedicPanchang(
       currentDate,
       currentLocation.latitude,
-      currentLocation.longitude
+      currentLocation.longitude,
+      currentLocation.timezoneHours
     );
   }, [currentDate, currentLocation]);
 

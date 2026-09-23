@@ -1,3 +1,5 @@
+import { timezoneHoursFor } from "../services/engine/time";
+
 export type GeoPlace = {
   name: string;
   latitude: number;
@@ -6,6 +8,7 @@ export type GeoPlace = {
   district?: string;
   country?: string;
   type?: string;
+  timezoneHours?: number;
 };
 
 type NominatimHit = {
@@ -30,14 +33,17 @@ function mapHit(item: NominatimHit, fallbackQuery: string): GeoPlace {
     : state
       ? `${name} (${state}, ${country})`
       : `${name} (${country})`;
+  const lat = parseFloat(item.lat);
+  const lon = parseFloat(item.lon);
   return {
     name: label,
-    latitude: parseFloat(item.lat),
-    longitude: parseFloat(item.lon),
+    latitude: lat,
+    longitude: lon,
     state: state || undefined,
     district: dist || undefined,
     country,
     type: addr.village || addr.hamlet ? "village" : "city",
+    timezoneHours: timezoneHoursFor(lat, lon),
   };
 }
 
