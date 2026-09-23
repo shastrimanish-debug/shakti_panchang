@@ -139,15 +139,19 @@ ${historyText}`);
     }
   });
   if (process.env.NODE_ENV !== "production") {
+    const isHmrDisabled = process.env.DISABLE_HMR === "true";
     const vite = await (0, import_vite.createServer)({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: isHmrDisabled ? false : void 0
+      },
       appType: "spa"
     });
     app.use(vite.middlewares);
   } else {
     const distPath = import_path.default.join(process.cwd(), "dist");
     app.use(import_express.default.static(distPath));
-    app.get("*", (_req, res) => {
+    app.get("*all", (_req, res) => {
       res.sendFile(import_path.default.join(distPath, "index.html"));
     });
   }

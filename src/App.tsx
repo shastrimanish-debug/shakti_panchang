@@ -10,7 +10,6 @@ import { RemindersView } from './components/RemindersView';
 import { UmaAssistantModal } from './components/UmaAssistantModal';
 import { LocationModal } from './components/LocationModal';
 import { SavedProfilesModal } from './components/SavedProfilesModal';
-import { InstallAppModal } from './components/InstallAppModal';
 import { AccuracyModal } from './components/AccuracyModal';
 import { BookCover } from './components/BookCover';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -101,7 +100,6 @@ export function App() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [isUmaModalOpen, setIsUmaModalOpen] = useState<boolean>(false);
   const [isSavedProfilesModalOpen, setIsSavedProfilesModalOpen] = useState<boolean>(false);
-  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
 
   // Active Kundali Profile - clean profile state without hardcoded defaults
   const [activeKundali, setActiveKundali] = useState<KundaliData | null>(() => {
@@ -269,7 +267,6 @@ export function App() {
         onDateChange={setCurrentDate}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
         onOpenUmaModal={() => setIsUmaModalOpen(true)}
-        onOpenInstallModal={() => setIsInstallModalOpen(true)}
         activeTab={activeTab}
         setActiveTab={handleSelectTab}
         isAudioEnabled={isAudioEnabled}
@@ -473,7 +470,6 @@ export function App() {
         onSelectTab={handleSelectTab}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
         onOpenUmaModal={() => setIsUmaModalOpen(true)}
-        onOpenInstallModal={() => setIsInstallModalOpen(true)}
         onOpenAccuracyModal={() => setIsAccuracyModalOpen(true)}
         onToggleBookCover={() => setIsBookOpen(false)}
         currentLocation={currentLocation}
@@ -512,11 +508,6 @@ export function App() {
         isOpen={isSavedProfilesModalOpen}
         onClose={() => setIsSavedProfilesModalOpen(false)}
         onSelectProfile={setActiveKundali}
-      />
-
-      <InstallAppModal
-        isOpen={isInstallModalOpen}
-        onClose={() => setIsInstallModalOpen(false)}
       />
     </div>
   );

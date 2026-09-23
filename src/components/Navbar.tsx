@@ -19,7 +19,6 @@ import {
   Bell,
   Sun,
   Moon,
-  Download,
   Clock,
   Gift,
 } from 'lucide-react';
@@ -36,7 +35,6 @@ interface NavbarProps {
   isAudioEnabled: boolean;
   setIsAudioEnabled: (enabled: boolean) => void;
   onOpenUmaModal: () => void;
-  onOpenInstallModal?: () => void;
   isBookOpen?: boolean;
   onToggleBookOpen?: () => void;
   onPrevPage: () => void;
@@ -66,7 +64,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   isAudioEnabled,
   setIsAudioEnabled,
   onOpenUmaModal,
-  onOpenInstallModal,
   isBookOpen = true,
   onToggleBookOpen,
   onPrevPage,
@@ -202,18 +199,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <BookOpen className="w-3 h-3" />
               <span>{isBookOpen ? 'मुखपृष्ठ' : 'ग्रंथ'}</span>
-            </button>
-          )}
-
-          {/* APK & App Install Button - Desktop/Tablet */}
-          {onOpenInstallModal && (
-            <button
-              onClick={onOpenInstallModal}
-              className="hidden sm:flex items-center gap-1 px-2 py-0.5 bg-[#5C3A21] hover:bg-[#462B17] border border-[#8C6239] text-[#FFD88A] hover:text-white rounded text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
-              title="ऐप डाउनलोड व APK"
-            >
-              <Download className="w-3 h-3 text-[#FFD88A]" />
-              <span className="hidden xs:inline">APK</span>
             </button>
           )}
 

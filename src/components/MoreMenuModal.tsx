@@ -6,7 +6,6 @@ import {
   Bell,
   BookOpen,
   MapPin,
-  Download,
   Sparkles,
   Sun,
   Moon,
@@ -24,7 +23,6 @@ interface MoreMenuModalProps {
   onSelectTab: (tabId: string) => void;
   onOpenLocationModal: () => void;
   onOpenUmaModal: () => void;
-  onOpenInstallModal?: () => void;
   onOpenAccuracyModal?: () => void;
   onToggleBookCover: () => void;
   currentLocation: SavedLocation;
@@ -40,7 +38,6 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   onSelectTab,
   onOpenLocationModal,
   onOpenUmaModal,
-  onOpenInstallModal,
   onOpenAccuracyModal,
   onToggleBookCover,
   currentLocation,
@@ -205,22 +202,11 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(onOpenUmaModal)}
-            className="flex-1 py-2 px-3 bg-gradient-to-r from-[#B56A00] to-[#C67D24] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+            className="w-full py-2.5 px-3 bg-gradient-to-r from-[#B56A00] to-[#C67D24] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
           >
             <Sparkles className="w-4 h-4 text-[#FFD88A]" />
             <span>उमा AI से परामर्श</span>
           </button>
-
-          {onOpenInstallModal && (
-            <button
-              type="button"
-              onClick={() => handleAction(onOpenInstallModal)}
-              className="py-2 px-3 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-            >
-              <Download className="w-4 h-4 text-[#FFD88A]" />
-              <span>APK डाउनलोड</span>
-            </button>
-          )}
         </div>
 
         {/* Sacred Brand Footer */}

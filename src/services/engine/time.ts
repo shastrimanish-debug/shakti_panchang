@@ -32,10 +32,26 @@ export function timezoneHoursFor(lat: number, lon: number): number {
   if (lat >= -10 && lat <= 7 && lon >= 99 && lon <= 120) return 8;
   // Japan (UTC+9)
   if (lat >= 30 && lat <= 46 && lon >= 128 && lon <= 146) return 9;
-  // Mauritius (UTC+4)
-  if (lat >= -21 && lat <= -19 && lon >= 57 && lon <= 58.5) return 4;
-  // Fiji (UTC+12)
-  if (lat >= -20 && lat <= -15 && lon >= 177 && lon <= 180) return 12;
+  // Indian Ocean Islands - Mauritius, Réunion, Seychelles (UTC+4)
+  if (lat >= -22 && lat <= -4 && lon >= 55 && lon <= 58.5) return 4;
+  // East Africa - Kenya, Uganda, Tanzania, Ethiopia, Madagascar, Somalia (UTC+3)
+  if (lat >= -26 && lat <= 15 && lon >= 29 && lon <= 51) {
+    if (lat >= -12 && lat <= 6 && lon >= 29 && lon <= 42) return 3; // Kenya, Uganda, Tanzania
+    if (lat >= 3 && lat <= 15 && lon >= 33 && lon <= 48) return 3; // Ethiopia, Somalia
+    if (lat >= -26 && lat <= -12 && lon >= 43 && lon <= 51) return 3; // Madagascar
+  }
+  // Central & Southern Africa - South Africa, Zimbabwe, Zambia, Malawi, Mozambique, Botswana, Rwanda, Egypt, Sudan (UTC+2)
+  if (lat >= -35 && lat <= 32 && lon >= 17 && lon <= 36) {
+    if (lat >= -35 && lat <= -22) return 2; // South Africa, Lesotho, Eswatini
+    if (lat >= -22 && lat <= -9 && lon >= 18 && lon <= 36) return 2; // Zimbabwe, Zambia, Malawi, Mozambique, Botswana
+    if (lat >= -3 && lat <= 5 && lon >= 28 && lon <= 31) return 2; // Rwanda, Burundi
+    if (lat >= 10 && lat <= 32 && lon >= 22 && lon <= 36) return 2; // Egypt, Sudan
+  }
+  // West Africa - Nigeria, Cameroon, DR Congo west, Angola, Niger (UTC+1)
+  if (lat >= -18 && lat <= 15 && lon >= 2 && lon <= 18) return 1;
+  // West Africa coastal GMT - Ghana, Ivory Coast, Senegal, Mali, Guinea (UTC+0)
+  if (lat >= 4 && lat <= 20 && lon >= -18 && lon <= 2) return 0;
+
   // Fallback to closest standard hour by longitude
   return Math.round(lon / 15);
 }
