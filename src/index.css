@@ -20,8 +20,24 @@
 }
 
 @layer base {
-  body {
+  html, body {
     font-family: 'Yantramanav', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
+    min-height: 100vh;
   }
 
   h1, h2, h3, h4, .font-granth {
@@ -155,36 +171,26 @@
   animation: spin-slow 20s linear infinite;
 }
 
-/* Authentic 3D Granth Page Turn Keyframes */
+/* Authentic 3D Granth Page Turn Keyframes - Screen-Fit (Zero horizontal overflow) */
 @keyframes pageTurnForward {
   0% {
-    opacity: 0.35;
-    transform: perspective(1400px) rotateY(-10deg) translateX(30px) scale(0.985);
-    box-shadow: -15px 0 25px rgba(62, 34, 13, 0.25);
-  }
-  50% {
-    opacity: 0.85;
+    opacity: 0.45;
+    transform: perspective(1000px) rotateY(-5deg) scale(0.99);
   }
   100% {
     opacity: 1;
-    transform: perspective(1400px) rotateY(0deg) translateX(0) scale(1);
-    box-shadow: 0 4px 15px -3px rgba(82, 45, 18, 0.12);
+    transform: perspective(1000px) rotateY(0deg) scale(1);
   }
 }
 
 @keyframes pageTurnBackward {
   0% {
-    opacity: 0.35;
-    transform: perspective(1400px) rotateY(10deg) translateX(-30px) scale(0.985);
-    box-shadow: 15px 0 25px rgba(62, 34, 13, 0.25);
-  }
-  50% {
-    opacity: 0.85;
+    opacity: 0.45;
+    transform: perspective(1000px) rotateY(5deg) scale(0.99);
   }
   100% {
     opacity: 1;
-    transform: perspective(1400px) rotateY(0deg) translateX(0) scale(1);
-    box-shadow: 0 4px 15px -3px rgba(82, 45, 18, 0.12);
+    transform: perspective(1000px) rotateY(0deg) scale(1);
   }
 }
 

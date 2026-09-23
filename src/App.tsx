@@ -171,59 +171,12 @@ export function App() {
     [currentIndex, isAudioEnabled, notifyPageTurn]
   );
 
-  // Touch Swipe Gesture detection
+  // Touch Swipe Gesture detection (strict horizontal only, will not interfere with vertical scrolling)
   // Sliding finger to Left (Right->Left) = Next Page (अगला पृष्ठ)
   // Sliding finger to Right (Left->Right) = Previous Page (पिछला पृष्ठ)
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const target = e.target as HTMLElement;
-    if (
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT' ||
-      target.closest('input') ||
-      target.closest('textarea') ||
-      target.closest('select') ||
-      target.closest('.no-swipe') ||
-      target.closest('.dasha-section') ||
-      target.closest('[data-swipe-ignore="true"]')
-    ) {
-      touchStartRef.current = null;
-      return;
-    }
-
-    touchStartRef.current = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-      time: Date.now(),
-    };
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current) return;
-    const touchEnd = e.changedTouches[0];
-    const deltaX = touchEnd.clientX - touchStartRef.current.x;
-    const deltaY = touchEnd.clientY - touchStartRef.current.y;
-    const elapsed = Date.now() - touchStartRef.current.time;
-    touchStartRef.current = null;
-
-    // Discard gestures that took too long
-    if (elapsed > 1200) return;
-
-    // Must be a predominantly horizontal swipe (displacement >= 40px)
-    if (Math.abs(deltaX) >= 40 && Math.abs(deltaX) > Math.abs(deltaY) * 0.75) {
-      if (deltaX < 0) {
-        // Slid finger to LEFT -> Next Page (अगला पृष्ठ)
-        handleNextPage();
-      } else {
-        // Slid finger to RIGHT -> Previous Page (पिछला पृष्ठ)
-        handlePrevPage();
-      }
-    }
-  };
-
-  // Global window swipe listener to ensure swiping works across cards and views without interfering with Dasha or forms
+  // Global window swipe listener with strict horizontal angle check
   useEffect(() => {
     const onWinTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
@@ -258,8 +211,12 @@ export function App() {
       const elapsed = Date.now() - touchStartRef.current.time;
       touchStartRef.current = null;
 
-      if (elapsed > 1200) return;
-      if (Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 0.75) {
+      // Discard gestures that took too long (> 800ms is usually a scroll/drag)
+      if (elapsed > 800) return;
+
+      // STRICT swipe condition: Must be predominantly horizontal with minimal vertical drift
+      // This ensures vertical reading & scrolling never accidentally flips pages!
+      if (Math.abs(deltaX) >= 80 && Math.abs(deltaX) > Math.abs(deltaY) * 2.5 && Math.abs(deltaY) < 45) {
         if (deltaX < 0) {
           handleNextPage();
         } else {
@@ -300,11 +257,7 @@ export function App() {
   }, [handlePrevPage, handleNextPage]);
 
   return (
-    <div
-      className="min-h-screen bg-[#F4E8D1] text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden relative bg-[#F4E8D1] text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
 
@@ -343,7 +296,7 @@ export function App() {
       )}
 
       {/* Main Vedic Content Presentation Area (Mobile Fit & Responsive) */}
-      <main className="flex-1 max-w-md sm:max-w-xl md:max-w-4xl w-full mx-auto px-2 sm:px-4 py-1 pb-24 sm:pb-12">
+      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-1.5 sm:px-4 py-1 pb-20 sm:pb-12 min-w-0 overflow-x-hidden">
         {!isBookOpen ? (
           <BookCover
             onOpenBook={(targetTabId) => {
@@ -357,7 +310,7 @@ export function App() {
           />
         ) : (
           /* Mobile-Fit Card Container (No heavy padding or excessive border on mobile) */
-          <div className="bg-[#FAF2E4] sm:bhojpatra-leaf sm:border-2 sm:border-[#8C6239]/40 rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 relative shadow-xs">
+          <div className="w-full min-w-0 overflow-x-hidden bg-[#FAF2E4] sm:bhojpatra-leaf sm:border-2 sm:border-[#8C6239]/40 rounded-xl sm:rounded-2xl p-1.5 sm:p-4 md:p-5 relative shadow-xs">
             {/* Desktop Chapter Title Ribbon (Hidden on mobile to maximize screen fit) */}
             <div className="hidden sm:flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[#8C6239]/20 text-[#5C3A21] text-xs">
               <div className="flex items-center gap-1.5 font-bold">
@@ -385,7 +338,7 @@ export function App() {
             {/* Main Active Page View */}
             <div
               key={activeTab}
-              className={`w-full ${
+              className={`w-full min-w-0 overflow-x-hidden ${
                 turnDirection === 'forward'
                   ? 'book-page-turn-forward'
                   : 'book-page-turn-backward'

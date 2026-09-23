@@ -28,25 +28,25 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
   const dailyRows = getDailyMuhuratDetails(panchang);
 
   return (
-    <div className="space-y-3.5 animate-in fade-in duration-300">
+    <div className="space-y-2 sm:space-y-3 animate-in fade-in duration-200">
       {/* Flutter-style Segmented Chips */}
-      <div className="flex items-center gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs overflow-x-auto">
+      <div className="flex items-center gap-1 p-0.5 sm:p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setSubPage('annual_table')}
-          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+          className={`flex-1 py-1 px-1.5 text-center text-[11px] sm:text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
             subPage === 'annual_table'
               ? 'bg-[#5C3A21] text-white shadow-xs'
               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
           }`}
         >
           <Calendar className="w-3.5 h-3.5 text-amber-300" />
-          <span>📅 विवाह/गृहप्रवेश सारणी</span>
+          <span>विवाह/गृहप्रवेश सारणी</span>
         </button>
         <button
           type="button"
           onClick={() => setSubPage('today')}
-          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+          className={`flex-1 py-1 px-1.5 text-center text-[11px] sm:text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
             subPage === 'today'
               ? 'bg-[#5C3A21] text-white shadow-xs'
               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
@@ -58,7 +58,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
         <button
           type="button"
           onClick={() => setSubPage('windows')}
-          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+          className={`flex-1 py-1 px-1.5 text-center text-[11px] sm:text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
             subPage === 'windows'
               ? 'bg-[#5C3A21] text-white shadow-xs'
               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
@@ -70,7 +70,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
         <button
           type="button"
           onClick={() => setSubPage('guidance')}
-          className={`flex-1 py-1.5 px-2 text-center text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+          className={`flex-1 py-1 px-1.5 text-center text-[11px] sm:text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
             subPage === 'guidance'
               ? 'bg-[#5C3A21] text-white shadow-xs'
               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'

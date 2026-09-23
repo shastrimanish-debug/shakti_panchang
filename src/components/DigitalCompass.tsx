@@ -126,56 +126,56 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
   const isFacingShool = facingCard.name === shoolDirectionName;
 
   return (
-    <div className="bg-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+    <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-2.5 sm:p-4 shadow-xs space-y-2.5 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[#5C3A21] flex items-center justify-center text-amber-300">
-            <Compass className="w-4 h-4" />
+      <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-[#8C6239]/20 pb-2">
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#5C3A21] flex items-center justify-center text-amber-300 shrink-0">
+            <Compass className="w-3.5 h-3.5" />
           </div>
           <div>
-            <h3 className="font-granth text-base sm:text-lg font-bold text-[#5C3A21] leading-none">
+            <h3 className="font-granth text-xs sm:text-base font-bold text-[#5C3A21] leading-none">
               सजीव डिजिटल दिशा-सूचक (Live Vedic Compass)
             </h3>
-            <p className="text-[11px] text-[#735133] mt-0.5">
+            <p className="text-[9px] sm:text-[11px] text-[#735133] mt-0.5 line-clamp-1">
               शास्त्रोक्त अष्ट-दिक्पाल, दिशाशूल चेतावनी एवं सजीव कोण मापक
             </p>
           </div>
         </div>
 
         {/* Sensor activation state */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {permissionNeeded && !sensorActive && (
             <button
               type="button"
               onClick={requestSensorAccess}
-              className="px-2.5 py-1 bg-[#B56A00] hover:bg-[#8C5200] text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-1 transition cursor-pointer"
+              className="px-2 py-0.5 bg-[#B56A00] hover:bg-[#8C5200] text-white text-[10px] sm:text-xs font-bold rounded-md shadow-xs flex items-center gap-1 transition cursor-pointer"
             >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>सेंसर सक्रिय करें</span>
+              <Smartphone className="w-3 h-3" />
+              <span>सेंसर सक्रिय</span>
             </button>
           )}
 
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+            className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border ${
               sensorActive
                 ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                 : 'bg-amber-100 text-amber-800 border-amber-300'
             }`}
           >
-            {sensorActive ? '● लाइव सेंसर सक्रिय' : '○ मैनुअल मोड'}
+            {sensorActive ? '● लाइव सेंसर' : '○ मैनुअल'}
           </span>
         </div>
       </div>
 
       {/* Compass Stage & Readout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-5 items-center">
         {/* Visual Dial (Left/Top) */}
         <div className="md:col-span-7 flex flex-col items-center justify-center">
-          <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-full border-4 border-[#8C6239] bg-gradient-to-b from-[#FFFDF8] to-[#F3E5CB] shadow-lg flex items-center justify-center select-none overflow-hidden">
+          <div className="relative w-44 h-44 sm:w-64 sm:h-64 rounded-full border-3 sm:border-4 border-[#8C6239] bg-gradient-to-b from-[#FFFDF8] to-[#F3E5CB] shadow-md flex items-center justify-center select-none overflow-hidden">
             {/* Outer Compass Rose Ticks */}
             <div
-              className="absolute inset-1 rounded-full border-2 border-dashed border-[#8C6239]/40 transition-transform duration-300 ease-out"
+              className="absolute inset-1 rounded-full border border-dashed border-[#8C6239]/40 transition-transform duration-300 ease-out"
               style={{ transform: `rotate(${-currentHeading}deg)` }}
             >
               {/* Cardinal & Inter-cardinal Markers */}
@@ -186,12 +186,12 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
                 return (
                   <div
                     key={dir.name}
-                    className="absolute inset-0 flex flex-col items-center justify-start pt-1.5 pointer-events-none"
+                    className="absolute inset-0 flex flex-col items-center justify-start pt-1 pointer-events-none"
                     style={{ transform: `rotate(${dir.angle}deg)` }}
                   >
                     {/* Tick Mark */}
                     <div
-                      className={`w-1 h-3 rounded-full ${
+                      className={`w-0.5 sm:w-1 h-2 sm:h-3 rounded-full ${
                         isShool
                           ? 'bg-rose-600'
                           : dir.angle % 90 === 0
@@ -202,13 +202,13 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
 
                     {/* Vedic Name */}
                     <div
-                      className="mt-1 flex flex-col items-center"
+                      className="mt-0.5 flex flex-col items-center"
                       style={{ transform: `rotate(${-dir.angle + currentHeading}deg)` }}
                     >
                       <span
-                        className={`text-[10px] font-black leading-none ${
+                        className={`text-[8px] sm:text-[10px] font-black leading-none ${
                           isShool
-                            ? 'text-rose-700 bg-rose-100 px-1 rounded font-bold'
+                            ? 'text-rose-700 bg-rose-100 px-0.5 rounded font-bold'
                             : isTarget
                             ? 'text-[#B56A00] font-black'
                             : 'text-[#5C3A21]'
@@ -216,7 +216,7 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
                       >
                         {dir.name}
                       </span>
-                      <span className="text-[8px] text-[#8C6239]/80 font-bold">
+                      <span className="text-[7px] sm:text-[8px] text-[#8C6239]/80 font-bold leading-none">
                         {dir.en}
                       </span>
                     </div>
@@ -229,89 +229,89 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
                 style={{ transform: `rotate(${shoolAngle}deg)` }}
               >
-                <div className="absolute top-0 w-16 h-28 bg-gradient-to-b from-rose-500/25 to-transparent rounded-t-full border-t-2 border-rose-500" />
+                <div className="absolute top-0 w-12 sm:w-16 h-20 sm:h-28 bg-gradient-to-b from-rose-500/25 to-transparent rounded-t-full border-t-2 border-rose-500" />
               </div>
             </div>
 
             {/* Needle Pivot / Target Pointer Needle (Fixed on dial) */}
             {/* North Magnetic Arrow (Always points to North 0°) */}
             <div
-              className="absolute w-8 h-48 transition-transform duration-300 ease-out pointer-events-none flex flex-col items-center justify-between"
+              className="absolute w-6 sm:w-8 h-32 sm:h-44 transition-transform duration-300 ease-out pointer-events-none flex flex-col items-center justify-between"
               style={{ transform: `rotate(${-currentHeading}deg)` }}
             >
               {/* North Arrow Tip */}
-              <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[38px] border-b-[#C82333] drop-shadow-sm" />
-              <div className="w-1.5 h-12 bg-gradient-to-b from-[#C82333] to-[#5C3A21]" />
+              <div className="w-0 h-0 border-l-[7px] sm:border-l-[10px] border-l-transparent border-r-[7px] sm:border-r-[10px] border-r-transparent border-b-[28px] sm:border-b-[38px] border-b-[#C82333] drop-shadow-xs" />
+              <div className="w-1 sm:w-1.5 h-8 sm:h-12 bg-gradient-to-b from-[#C82333] to-[#5C3A21]" />
               {/* South Arrow Tip */}
-              <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[38px] border-t-[#5C3A21] drop-shadow-sm" />
+              <div className="w-0 h-0 border-l-[7px] sm:border-l-[10px] border-l-transparent border-r-[7px] sm:border-r-[10px] border-r-transparent border-t-[28px] sm:border-t-[38px] border-t-[#5C3A21] drop-shadow-xs" />
             </div>
 
             {/* Target Bearing Needle (Gold pointer) */}
             <div
-              className="absolute w-6 h-40 transition-transform duration-300 ease-out pointer-events-none flex flex-col items-center justify-start"
+              className="absolute w-5 sm:w-6 h-28 sm:h-38 transition-transform duration-300 ease-out pointer-events-none flex flex-col items-center justify-start"
               style={{ transform: `rotate(${targetBearing - currentHeading}deg)` }}
             >
-              <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[30px] border-b-[#E69A33] drop-shadow-md" />
-              <div className="w-1 h-14 bg-[#E69A33]" />
+              <div className="w-0 h-0 border-l-[6px] sm:border-l-[8px] border-l-transparent border-r-[6px] sm:border-r-[8px] border-r-transparent border-b-[22px] sm:border-b-[30px] border-b-[#E69A33] drop-shadow-xs" />
+              <div className="w-0.5 sm:w-1 h-10 sm:h-14 bg-[#E69A33]" />
             </div>
 
             {/* Center Dial Hub */}
-            <div className="relative z-10 w-14 h-14 rounded-full bg-gradient-to-b from-[#FAF2E4] to-[#E3CEAE] border-2 border-[#8C6239] shadow-inner flex flex-col items-center justify-center text-center">
-              <span className="text-[10px] font-black text-[#5C3A21] leading-none">
+            <div className="relative z-10 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-gradient-to-b from-[#FAF2E4] to-[#E3CEAE] border sm:border-2 border-[#8C6239] shadow-inner flex flex-col items-center justify-center text-center">
+              <span className="text-[9px] sm:text-[10px] font-black text-[#5C3A21] leading-none">
                 {currentHeading}°
               </span>
-              <span className="text-[9px] font-bold text-[#8C6239] mt-0.5">
+              <span className="text-[8px] sm:text-[9px] font-bold text-[#8C6239] mt-0.5">
                 {facingCard.name}
               </span>
             </div>
           </div>
 
           {/* Compass Legends */}
-          <div className="flex items-center gap-4 text-xs font-bold text-[#5C3A21] mt-3">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 bg-red-600 rounded-sm inline-block" />
-              <span>उत्तर सूचक</span>
+          <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-bold text-[#5C3A21] mt-2">
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 bg-red-600 rounded-xs inline-block" />
+              <span>उत्तर</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 bg-amber-500 rounded-sm inline-block" />
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 bg-amber-500 rounded-xs inline-block" />
               <span>गंतव्य ({targetDirectionName})</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 bg-rose-200 border border-rose-500 rounded-sm inline-block" />
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 bg-rose-200 border border-rose-500 rounded-xs inline-block" />
               <span>दिशाशूल ({shoolDirectionName})</span>
             </div>
           </div>
         </div>
 
         {/* Real-time Diagnostics & Shool Proximity (Right/Bottom) */}
-        <div className="md:col-span-5 space-y-3">
+        <div className="md:col-span-5 space-y-2">
           {/* Facing Direction Status */}
           <div
-            className={`p-3.5 rounded-xl border-2 transition ${
+            className={`p-2.5 sm:p-3.5 rounded-xl border transition ${
               isFacingShool
                 ? 'bg-rose-50 border-rose-400 text-rose-950'
                 : 'bg-emerald-50 border-emerald-300 text-emerald-950'
             }`}
           >
-            <div className="flex items-start gap-2.5">
+            <div className="flex items-start gap-2">
               <div className="mt-0.5">
                 {isFacingShool ? (
-                  <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                 ) : (
-                  <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 )}
               </div>
               <div>
-                <div className="text-xs font-black uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-black uppercase tracking-wider">
                   {isFacingShool ? '⚠️ दिशाशूल चेतावनी' : '✓ अनुकूल दिशा'}
                 </div>
-                <div className="text-sm font-bold font-granth mt-0.5">
+                <div className="text-xs sm:text-sm font-bold font-granth mt-0.5">
                   वर्तमान सम्मुख दिशा: {facingCard.name} ({currentHeading}°)
                 </div>
-                <p className="text-xs mt-1 leading-relaxed">
+                <p className="text-[10px] sm:text-xs mt-0.5 leading-relaxed">
                   {isFacingShool
                     ? `आपका फ़ोन आज के वर्जित दिशाशूल (${shoolDirectionName}) की ओर लक्षित है। इस दिशा में प्रस्थान से पूर्व वैदिक परिहार अवश्य करें।`
-                    : `वर्तमान मुख दिशा ${facingCard.name} है, इसके दिक्पाल ${facingCard.devata} देव हैं। यात्रा दिशा अनुकूल है।`}
+                    : `वर्तमान मुख दिशा ${facingCard.name} है, दिक्पाल ${facingCard.devata} हैं।`}
                 </p>
               </div>
             </div>

@@ -104,24 +104,24 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className="sticky top-0 z-40 bg-[#5C3A21] text-[#FAF2E4] shadow-md border-b border-[#8C6239] transition-all"
+      className="sticky top-0 z-40 bg-[#5C3A21] text-[#FAF2E4] shadow-md border-b border-[#8C6239] transition-all w-full max-w-full overflow-hidden"
       style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)' }}
     >
       {/* 1. Ultra-Compact Top Bar with Safe-Area clearance */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-3 pt-2.5 pb-2 sm:py-1.5 flex items-center justify-between gap-1 sm:gap-2">
+      <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-3 pt-1.5 pb-1.5 sm:py-1.5 flex items-center justify-between gap-1 sm:gap-2">
         {/* Left: App Title & Sacred Motif */}
         <div
-          className="flex items-center gap-1.5 cursor-pointer shrink-0"
+          className="flex items-center gap-1 sm:gap-1.5 cursor-pointer shrink-0"
           onClick={() => setActiveTab('panchang')}
           title="शक्ति पंचांग मुख्य पृष्ठ"
         >
-          <ShaktiLogo size={24} className="shrink-0" />
+          <ShaktiLogo size={20} className="shrink-0 sm:w-6 sm:h-6" />
           <h1 className="text-xs sm:text-sm font-black font-granth tracking-wide text-[#FAF2E4] leading-none whitespace-nowrap">
             शक्ति पंचांग
           </h1>
         </div>
 
-        {/* Center/Right: Date, Location, Audio & Uma AI Controls in single compact line */}
+        {/* Center/Right: Date, Location, & Controls fitted for mobile */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-xs shrink-0">
           {/* Date Navigator */}
           <div className="flex items-center bg-[#462B17] rounded p-0.5 border border-[#8C6239]/60">
@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={handleToday}
               title="आज की तिथि"
-              className="px-1.5 py-0.5 text-[11px] font-bold text-[#F4E8D1] hover:text-white transition cursor-pointer whitespace-nowrap"
+              className="px-1 sm:px-1.5 py-0.5 text-[10px] sm:text-[11px] font-bold text-[#F4E8D1] hover:text-white transition cursor-pointer whitespace-nowrap"
             >
               {formattedDate}
             </button>
@@ -151,19 +151,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Location Picker Button */}
           <button
             onClick={onOpenLocationModal}
-            className="flex items-center gap-0.5 px-1.5 py-0.5 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded text-[11px] font-medium text-[#FAF2E4] transition cursor-pointer"
+            className="flex items-center gap-0.5 px-1 sm:px-1.5 py-0.5 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded text-[10px] sm:text-[11px] font-medium text-[#FAF2E4] transition cursor-pointer"
             title="स्थान बदलें"
           >
             <MapPin className="w-3 h-3 text-[#E69A33] shrink-0" />
-            <span className="truncate max-w-[55px] xs:max-w-[75px] sm:max-w-[110px]">
+            <span className="truncate max-w-[48px] xs:max-w-[70px] sm:max-w-[110px]">
               {currentLocation.name.split('(')[0].trim()}
             </span>
           </button>
 
-          {/* Audio speech toggle */}
+          {/* Audio speech toggle - Desktop/Tablet (available in 'अधिक' menu on mobile) */}
           <button
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
-            className="p-1 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded transition cursor-pointer"
+            className="hidden sm:flex p-1 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded transition cursor-pointer"
             title={isAudioEnabled ? 'ध्वनि चालू' : 'ध्वनि बंद'}
           >
             {isAudioEnabled ? (
@@ -173,12 +173,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
-          {/* Theme Mode Toggle (ताम्र-रात्रि / भोजपत्र) */}
+          {/* Theme Mode Toggle (ताम्र-रात्रि / भोजपत्र) - Desktop/Tablet */}
           {onToggleTheme && (
             <button
               type="button"
               onClick={onToggleTheme}
-              className="p-1 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded transition cursor-pointer"
+              className="hidden sm:flex p-1 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded transition cursor-pointer"
               title={theme === 'tamra' ? 'भोजपत्र मोड (प्रकाश)' : 'ताम्र-रात्रि मोड (अंधकार)'}
             >
               {theme === 'tamra' ? (
@@ -189,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Book Cover Toggle Button */}
+          {/* Book Cover Toggle Button - Tablet/Desktop */}
           {onToggleBookOpen && (
             <button
               onClick={onToggleBookOpen}
@@ -205,11 +205,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* APK & App Install Button */}
+          {/* APK & App Install Button - Desktop/Tablet */}
           {onOpenInstallModal && (
             <button
               onClick={onOpenInstallModal}
-              className="flex items-center gap-1 px-2 py-0.5 bg-[#5C3A21] hover:bg-[#462B17] border border-[#8C6239] text-[#FFD88A] hover:text-white rounded text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
+              className="hidden sm:flex items-center gap-1 px-2 py-0.5 bg-[#5C3A21] hover:bg-[#462B17] border border-[#8C6239] text-[#FFD88A] hover:text-white rounded text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
               title="ऐप डाउनलोड व APK"
             >
               <Download className="w-3 h-3 text-[#FFD88A]" />
@@ -217,10 +217,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* UMA Assistant Button */}
+          {/* UMA Assistant Button - Always accessible */}
           <button
             onClick={onOpenUmaModal}
-            className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-[#B56A00] to-[#C67D24] hover:from-[#A25E00] hover:to-[#B56A00] text-white rounded text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
+            className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-[#B56A00] to-[#C67D24] hover:from-[#A25E00] hover:to-[#B56A00] text-white rounded text-[10px] sm:text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
           >
             <Sparkles className="w-3 h-3 text-[#FFD88A]" />
             <span>उमा AI</span>

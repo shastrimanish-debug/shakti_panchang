@@ -196,25 +196,25 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
         onClose={() => setPdfSuccessInfo(null)}
       />
 
-      {/* 1. Mobile-Fit Compact Date Selector Header */}
-      <div className="flex items-center justify-between bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl px-2.5 py-1.5 shadow-2xs">
+      {/* 1. Mobile-Fit Compact Date & Location Header */}
+      <div className="flex items-center justify-between bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl px-2 py-1 sm:py-1.5 shadow-2xs">
         <button
           type="button"
           onClick={handlePrevDay}
-          className="p-1 hover:bg-[#F4E8D1] rounded-lg text-[#5C3A21] transition cursor-pointer active:scale-90"
+          className="p-0.5 sm:p-1 hover:bg-[#F4E8D1] rounded-lg text-[#5C3A21] transition cursor-pointer active:scale-90"
           title="पिछला दिन"
         >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
 
         <div className="text-center">
-          <div className="text-xs sm:text-sm font-black text-[#5C3A21] leading-tight">
+          <div className="text-[11px] sm:text-xs font-black text-[#5C3A21] leading-tight">
             {panchang.weekday} • {dateDisplay}
           </div>
           <button
             type="button"
             onClick={onOpenLocationModal}
-            className="text-[10px] sm:text-xs font-semibold text-[#8C6239] hover:underline cursor-pointer flex items-center justify-center gap-1 mx-auto"
+            className="text-[9px] sm:text-[10px] font-semibold text-[#8C6239] hover:underline cursor-pointer flex items-center justify-center gap-0.5 mx-auto"
           >
             <span>📍 {locationName}</span>
           </button>
@@ -223,15 +223,15 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
         <button
           type="button"
           onClick={handleNextDay}
-          className="p-1 hover:bg-[#F4E8D1] rounded-lg text-[#5C3A21] transition cursor-pointer active:scale-90"
+          className="p-0.5 sm:p-1 hover:bg-[#F4E8D1] rounded-lg text-[#5C3A21] transition cursor-pointer active:scale-90"
           title="अगला दिन"
         >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
       </div>
 
       {/* 2. Flutter-Style 4 Segmented Sub-Page Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
+      <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
         {SUB_PAGES.map((sub, idx) => {
           const isActive = activeSubTab === sub.id;
           return (
@@ -239,7 +239,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               key={sub.id}
               type="button"
               onClick={() => setActiveSubTab(sub.id)}
-              className={`flex-1 py-1.5 px-1.5 rounded-lg text-[11px] sm:text-xs font-black transition cursor-pointer flex items-center justify-center gap-1 ${
+              className={`flex-1 py-1 sm:py-1.5 px-1 rounded-lg text-[10px] sm:text-xs font-black transition cursor-pointer flex items-center justify-center gap-0.5 sm:gap-1 ${
                 isActive
                   ? 'bg-[#5C3A21] text-white shadow-xs'
                   : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
@@ -248,7 +248,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             >
               <span>{sub.icon}</span>
               <span className="truncate">{sub.label}</span>
-              <span className="text-[9px] opacity-75 font-mono hidden xs:inline">{idx + 1}</span>
+              <span className="text-[8px] opacity-75 font-mono hidden xs:inline">{idx + 1}</span>
             </button>
           );
         })}

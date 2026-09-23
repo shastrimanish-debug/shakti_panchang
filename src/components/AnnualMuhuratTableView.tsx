@@ -70,14 +70,14 @@ export const AnnualMuhuratTableView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3.5 animate-in fade-in duration-200">
+    <div className="space-y-2 sm:space-y-3 animate-in fade-in duration-200">
       {/* Category Horizontal Selector */}
-      <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-2.5 shadow-xs">
-        <div className="text-[11px] font-bold text-[#8C6239] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+      <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-2 shadow-xs">
+        <div className="text-[10px] sm:text-[11px] font-bold text-[#8C6239] uppercase tracking-wider mb-1 flex items-center justify-between">
           <span>मुहूर्त सारणी श्रेणी चुनें</span>
           <span className="text-[10px] text-[#5C3A21] font-semibold">शास्त्रोक्त निर्णय</span>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
           {MUHURAT_CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat.id;
             return (
@@ -85,14 +85,14 @@ export const AnnualMuhuratTableView: React.FC = () => {
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`py-2 px-1 rounded-lg text-center transition cursor-pointer flex flex-col items-center justify-center gap-0.5 border ${
+                className={`py-1.5 px-1 rounded-lg text-center transition cursor-pointer flex flex-col items-center justify-center gap-0.5 border ${
                   isSelected
-                    ? 'bg-[#5C3A21] text-white border-[#5C3A21] shadow-xs scale-[1.02]'
+                    ? 'bg-[#5C3A21] text-white border-[#5C3A21] shadow-xs'
                     : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBD8BD] border-[#8C6239]/20'
                 }`}
               >
-                <span className="text-base leading-none">{cat.icon}</span>
-                <span className="text-[11px] font-bold leading-tight line-clamp-1">
+                <span className="text-sm leading-none">{cat.icon}</span>
+                <span className="text-[10px] sm:text-[11px] font-bold leading-tight line-clamp-1">
                   {cat.shortTitle}
                 </span>
               </button>
@@ -101,18 +101,18 @@ export const AnnualMuhuratTableView: React.FC = () => {
         </div>
       </div>
 
-      {/* Year & Month Filter Controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-2.5 shadow-xs">
+      {/* Year & Action Buttons Row (Combined for zero vertical waste) */}
+      <div className="flex items-center justify-between gap-1.5 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl px-2 py-1.5 shadow-xs">
         {/* Year Toggle */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-[#8C6239]">वर्ष:</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[11px] font-bold text-[#8C6239]">वर्ष:</span>
           <div className="inline-flex rounded-lg border border-[#8C6239]/30 p-0.5 bg-[#F4E8D1]">
             {[2026, 2027].map((yr) => (
               <button
                 key={yr}
                 type="button"
                 onClick={() => setSelectedYear(yr)}
-                className={`px-3 py-1 text-xs font-black rounded-md transition cursor-pointer ${
+                className={`px-2.5 py-0.5 text-xs font-black rounded-md transition cursor-pointer ${
                   selectedYear === yr
                     ? 'bg-[#5C3A21] text-white shadow-xs'
                     : 'text-[#5C3A21] hover:bg-[#FAF2E4]'
@@ -125,28 +125,28 @@ export const AnnualMuhuratTableView: React.FC = () => {
         </div>
 
         {/* Action Buttons: WhatsApp Share & Copy */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={handleCopyList}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-2.5 py-1.5 bg-[#F4E8D1] hover:bg-[#EBD8BD] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg text-xs font-bold transition cursor-pointer active:scale-95"
+            className="flex items-center justify-center gap-1 px-2 py-1 bg-[#F4E8D1] hover:bg-[#EBD8BD] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg text-[11px] font-bold transition cursor-pointer active:scale-95"
           >
-            {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
             <span>{isCopied ? 'कॉपी हो गया' : 'कॉपी सूची'}</span>
           </button>
           <button
             type="button"
             onClick={handleShareWhatsApp}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95"
+            className="flex items-center justify-center gap-1 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[11px] font-bold transition cursor-pointer shadow-xs active:scale-95"
           >
-            <Share2 className="w-3.5 h-3.5" />
+            <Share2 className="w-3 h-3" />
             <span>व्हाट्सएप शेयर</span>
           </button>
         </div>
       </div>
 
       {/* Month Scroll Bar */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex items-center gap-1 overflow-x-auto pb-0.5 no-scrollbar">
         {HINDI_MONTHS_NAMES.map((name, idx) => {
           const mIndex = idx === 0 ? -1 : idx - 1;
           const isSelected = selectedMonth === mIndex;
@@ -155,7 +155,7 @@ export const AnnualMuhuratTableView: React.FC = () => {
               key={name}
               type="button"
               onClick={() => setSelectedMonth(mIndex)}
-              className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+              className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
                 isSelected
                   ? 'bg-[#5C3A21] text-white shadow-xs'
                   : 'bg-[#FAF2E4] text-[#8C6239] border border-[#8C6239]/30 hover:bg-[#F4E8D1]'
@@ -167,62 +167,60 @@ export const AnnualMuhuratTableView: React.FC = () => {
         })}
       </div>
 
-      {/* Category Banner with Counts */}
-      <div className="bg-gradient-to-r from-[#FAF2E4] via-[#F4E8D1] to-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{activeCategoryMeta.icon}</span>
-            <div>
-              <h3 className="text-base font-black font-granth text-[#5C3A21]">
-                {activeCategoryMeta.title} ({selectedYear})
-              </h3>
-              <p className="text-[11px] text-[#735133] leading-tight">
-                {activeCategoryMeta.desc}
-              </p>
-            </div>
+      {/* Category Banner with Counts (Compact & Screen-Fit) */}
+      <div className="bg-gradient-to-r from-[#FAF2E4] via-[#F4E8D1] to-[#FAF2E4] border border-[#8C6239]/40 rounded-xl px-2.5 py-1.5 shadow-xs flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xl">{activeCategoryMeta.icon}</span>
+          <div>
+            <h3 className="text-xs sm:text-sm font-black font-granth text-[#5C3A21] leading-tight">
+              {activeCategoryMeta.title} ({selectedYear})
+            </h3>
+            <p className="text-[10px] text-[#735133] leading-tight line-clamp-1">
+              {activeCategoryMeta.desc}
+            </p>
           </div>
-          <div className="text-right shrink-0">
-            <span className="bg-[#B56A00] text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-xs">
-              {muhuratList.length} शुभ तिथियाँ
-            </span>
-          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <span className="bg-[#B56A00] text-white text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full shadow-xs">
+            {muhuratList.length} शुभ तिथियाँ
+          </span>
         </div>
       </div>
 
       {/* Muhurat Cards List */}
       {muhuratList.length === 0 ? (
-        <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-6 text-center text-[#8C6239]">
-          <p className="text-sm font-bold">चयनित अवधि में कोई शुभ मुहूर्त नहीं है।</p>
-          <p className="text-xs text-[#735133] mt-1">
+        <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 text-center text-[#8C6239]">
+          <p className="text-xs sm:text-sm font-bold">चयनित अवधि में कोई शुभ मुहूर्त नहीं है।</p>
+          <p className="text-[11px] text-[#735133] mt-0.5">
             कृपया अन्य माह अथवा वर्ष 2026/2027 का चयन करें।
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {muhuratList.map((item, idx) => (
             <div
               key={item.id}
-              className="bg-[#FAF2E4] hover:bg-[#FDF9F0] border-2 border-[#8C6239]/30 rounded-xl p-3 sm:p-4 transition shadow-xs space-y-2"
+              className="bg-[#FAF2E4] hover:bg-[#FDF9F0] border border-[#8C6239]/30 rounded-xl p-2.5 sm:p-3.5 transition shadow-xs space-y-1.5"
             >
               {/* Card Top: Date, Day & Special Badge */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-[#5C3A21] text-amber-200 text-xs font-black flex items-center justify-center">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-[#8C6239]/20 pb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-full bg-[#5C3A21] text-amber-200 text-[10px] font-black flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
                   <div>
-                    <h4 className="text-sm sm:text-base font-black text-[#5C3A21]">
+                    <h4 className="text-xs sm:text-sm font-black text-[#5C3A21] leading-tight">
                       {item.dateStr}
                     </h4>
-                    <span className="text-xs text-[#8C6239] font-bold">
+                    <span className="text-[10px] text-[#8C6239] font-bold">
                       ({item.weekdayHindi})
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1 flex-wrap">
                   {item.specialYoga && (
-                    <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
                       <Sparkles className="w-3 h-3 text-amber-700" />
                       <span>{item.specialYoga}</span>
                     </span>

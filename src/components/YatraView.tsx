@@ -35,17 +35,17 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
     d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-2.5 sm:space-y-4 animate-in fade-in duration-200">
       {/* Route Selector */}
-      <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-5 shadow-xs">
-        <h3 className="text-base font-bold font-granth text-[#5C3A21] mb-4 flex items-center gap-2">
-          <Compass className="w-5 h-5 text-[#B56A00]" />
+      <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-2.5 sm:p-4 shadow-xs">
+        <h3 className="text-xs sm:text-sm font-bold font-granth text-[#5C3A21] mb-2 flex items-center gap-1.5">
+          <Compass className="w-4 h-4 text-[#B56A00]" />
           यात्रा मार्ग एवं दिशाशूल कैलकुलेटर
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
-            <label className="block text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+            <label className="block text-[10px] sm:text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1 flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-emerald-600" />
               प्रस्थान स्थल (Origin)
             </label>
             <select
@@ -54,7 +54,7 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
                 const found = COMMON_INDIAN_CITIES.find((c) => c.name === e.target.value);
                 if (found) setOrigin(found);
               }}
-              className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2.5 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
+              className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-1.5 sm:p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
             >
               {COMMON_INDIAN_CITIES.map((c) => (
                 <option key={c.name} value={c.name}>
@@ -65,8 +65,8 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-rose-600" />
+            <label className="block text-[10px] sm:text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1 flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-rose-600" />
               गंतव्य स्थल (Destination)
             </label>
             <select
@@ -75,7 +75,7 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
                 const found = COMMON_INDIAN_CITIES.find((c) => c.name === e.target.value);
                 if (found) setDestination(found);
               }}
-              className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2.5 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
+              className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-1.5 sm:p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
             >
               {COMMON_INDIAN_CITIES.map((c) => (
                 <option key={c.name} value={c.name}>
@@ -96,28 +96,28 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
       />
 
       {/* Analysis Result Card */}
-      <div className="bg-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#8C6239]/20 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#5C3A21] text-white flex items-center justify-center font-bold">
-              <Navigation className="w-5 h-5 text-amber-400" />
+      <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-2.5 sm:p-4 shadow-xs space-y-2 sm:space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#5C3A21] text-white flex items-center justify-center font-bold shrink-0">
+              <Navigation className="w-4 h-4 text-amber-400" />
             </div>
             <div>
-              <div className="text-xs font-bold text-[#8C6239]">यात्रा दिशा</div>
-              <div className="text-xl font-black font-granth text-[#5C3A21]">
+              <div className="text-[10px] sm:text-xs font-bold text-[#8C6239]">यात्रा दिशा</div>
+              <div className="text-sm sm:text-base font-black font-granth text-[#5C3A21]">
                 {result.direction} दिशा ({result.bearing.toFixed(0)}°)
               </div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-xs font-bold text-[#8C6239]">अनुमानित दूरी</div>
-            <div className="text-xl font-black text-[#5C3A21]">~{result.distanceKm} कि.मी.</div>
+            <div className="text-[10px] sm:text-xs font-bold text-[#8C6239]">अनुमानित दूरी</div>
+            <div className="text-xs sm:text-sm font-black text-[#5C3A21]">~{result.distanceKm} कि.मी.</div>
           </div>
         </div>
 
         {/* Shool Warning or Green State */}
         <div
-          className={`p-4 rounded-xl border flex items-start gap-3.5 ${
+          className={`p-2.5 sm:p-3.5 rounded-xl border flex items-start gap-2.5 ${
             result.isDirectionBlocked
               ? 'bg-rose-50 border-rose-300 text-rose-900'
               : 'bg-emerald-50 border-emerald-300 text-emerald-900'

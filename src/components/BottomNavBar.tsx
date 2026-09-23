@@ -30,7 +30,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   return (
     <nav
       aria-label="Mobile Navigation Bar"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-[#462B17]/98 backdrop-blur-md text-[#FAF2E4] border-t border-[#8C6239] shadow-[0_-4px_16px_rgba(0,0,0,0.25)] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-[#462B17]/98 backdrop-blur-md text-[#FAF2E4] border-t border-[#8C6239] shadow-[0_-4px_16px_rgba(0,0,0,0.25)] pb-[max(0.5rem,env(safe-area-inset-bottom))] w-full max-w-full overflow-hidden"
     >
       <div className="max-w-md sm:max-w-lg md:max-w-xl mx-auto px-1 flex items-center justify-around h-14">
         {BOTTOM_TABS.map((tab) => {
