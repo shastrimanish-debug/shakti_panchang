@@ -2,10 +2,20 @@
 
 let unlocked = false;
 let isCurrentlySpeaking = false;
+let currentUtterance: SpeechSynthesisUtterance | null = null;
+let keepAliveTimer: any = null;
+
+function clearKeepAlive() {
+  if (keepAliveTimer) {
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = null;
+  }
+}
 
 export function pickHindiVoice(): SpeechSynthesisVoice | null {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices();
+  if (!voices || voices.length === 0) return null;
   // Prioritize natural Hindi neural voices if present
   return (
     voices.find((v) => v.lang.toLowerCase() === "hi-in" && /natural|online|google/i.test(v.name)) ||
@@ -29,6 +39,7 @@ export function unlockUmaSpeech() {
     u.rate = 1;
     const hi = pickHindiVoice();
     if (hi) u.voice = hi;
+    currentUtterance = u;
     window.speechSynthesis.speak(u);
   } catch {
     /* ignore */
@@ -98,10 +109,12 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
   }
 
   const synth = window.speechSynthesis;
+  clearKeepAlive();
   synth.cancel();
   synth.resume();
 
   const utter = new SpeechSynthesisUtterance(clean);
+  currentUtterance = utter; // Retain reference to prevent garbage collection in Chrome
   utter.lang = "hi-IN";
   // Calm, melodious, authoritative Vedic pace
   utter.rate = options?.rate ?? 0.88;
@@ -113,15 +126,27 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
   utter.onstart = () => {
     isCurrentlySpeaking = true;
     options?.onStart?.();
+    // Keep alive for long speeches in Chromium
+    clearKeepAlive();
+    keepAliveTimer = setInterval(() => {
+      if (synth.speaking && !synth.paused) {
+        synth.pause();
+        synth.resume();
+      }
+    }, 10000);
   };
 
   utter.onend = () => {
+    clearKeepAlive();
     isCurrentlySpeaking = false;
+    currentUtterance = null;
     options?.onEnd?.();
   };
 
   utter.onerror = (e) => {
+    clearKeepAlive();
     isCurrentlySpeaking = false;
+    currentUtterance = null;
     options?.onError?.(e);
     options?.onEnd?.();
   };
@@ -131,7 +156,9 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
 }
 
 export function stopUmaSpeech() {
+  clearKeepAlive();
   isCurrentlySpeaking = false;
+  currentUtterance = null;
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }

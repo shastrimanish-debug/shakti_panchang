@@ -10,6 +10,7 @@ export interface AskUmaParams {
   chatHistory?: Array<{ sender: "user" | "uma"; text: string }>;
   panchang?: VedicPanchangData;
   activeKundali?: KundaliData | null;
+  systemPrompt?: string;
 }
 
 export interface AskUmaResponse {
@@ -28,7 +29,7 @@ export interface AskUmaResponse {
  * falls back to deep local Vedic astrological calculations.
  */
 export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
-  const { query, panchangContext, kundaliContext, chatHistory, panchang, activeKundali } = params;
+  const { query, panchangContext, kundaliContext, chatHistory, panchang, activeKundali, systemPrompt } = params;
 
   try {
     const res = await fetch("/api/uma/chat", {
@@ -39,6 +40,7 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
         panchangContext: panchangContext || "",
         kundaliContext: kundaliContext || "",
         chatHistory: chatHistory || [],
+        systemPrompt: systemPrompt || "",
       }),
     });
 
