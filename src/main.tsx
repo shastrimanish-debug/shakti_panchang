@@ -4,6 +4,10 @@ import { App } from './App';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 import { LicenseProvider } from './lib/license-client';
+import { initializeSecurityGuard } from './utils/securityGuard';
+
+// Initialize anti-tamper and security safeguards
+initializeSecurityGuard();
 
 // Auto-register service worker for PWA offline capabilities in production only
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {

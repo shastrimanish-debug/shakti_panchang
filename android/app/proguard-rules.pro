@@ -1,21 +1,37 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard and R8 rules for Shakti Panchang
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve JavaScript Interface for Capacitor WebView Bridge
+-keepattributes JavascriptInterface
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserve Capacitor Core and Plugins
+-keep class com.getcapacitor.** { *; }
+-keep interface com.getcapacitor.** { *; }
+-dontwarn com.getcapacitor.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Preserve Application package classes & BridgeActivity
+-keep class com.shaktipanchang.app.** { *; }
+-keepclassmembers class com.shaktipanchang.app.** { *; }
+
+# Preserve annotations and enums
+-keepattributes *Annotation*
+-keepclassmembers enum * { *; }
+
+# Prevent obfuscation of native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Preserve View constructors for XML inflation
+-keepclassmembers class * extends android.view.View {
+    public <init>(android.content.Context);
+    public <init>(android.content.Context, android.util.AttributeSet);
+    public <init>(android.content.Context, android.util.AttributeSet, int);
+}
+
+# Hide line numbers and source file names to prevent reverse engineering
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable
+

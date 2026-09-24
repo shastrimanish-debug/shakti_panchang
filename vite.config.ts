@@ -78,6 +78,22 @@ export default defineConfig({
     }),
   ],
   base: '/',
+  build: {
+    sourcemap: false,
+    chunkSizeWarningLimit: 2000,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          astronomy: ['astronomy-engine', 'd3'],
+        },
+      },
+    },
+  },
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
