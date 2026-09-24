@@ -2,6 +2,7 @@ import { KundaliData, VedicPanchangData } from "../types";
 import { analyzeKundali } from "../services/predictions";
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from "../services/disha";
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from "../services/choghadiya";
+import { getLicenseStatus } from "./license-client";
 
 export interface AskUmaParams {
   query: string;
@@ -31,16 +32,29 @@ export interface AskUmaResponse {
 export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
   const { query, panchangContext, kundaliContext, chatHistory, panchang, activeKundali, systemPrompt } = params;
 
+  const license = getLicenseStatus();
+  if (!license.entitled) {
+    return {
+      ok: false,
+      text: "॥ श्री गणेशाय नमः ॥\nआयुष्मान भव! आपका ७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। उमा AI के व्यक्तिगत ज्योतिषीय मार्गदर्शन, संस्कृत श्लोक एवं सात्विक वैदिक उपायों के लिए कृपया अपनी वार्षिक सदस्यता सक्रिय करें।",
+      source: "local_vedic",
+    };
+  }
+
   try {
     const res = await fetch("/api/uma/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-license-token": license.token,
+      },
       body: JSON.stringify({
         query,
         panchangContext: panchangContext || "",
         kundaliContext: kundaliContext || "",
         chatHistory: chatHistory || [],
         systemPrompt: systemPrompt || "",
+        licenseToken: license.token,
       }),
     });
 

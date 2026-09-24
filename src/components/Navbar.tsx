@@ -21,9 +21,11 @@ import {
   Moon,
   Clock,
   Gift,
+  Lock,
 } from 'lucide-react';
 import { SavedLocation } from '../types';
 import { AppTheme } from '../services/storage';
+import { useLicense } from '../lib/license-client';
 
 interface NavbarProps {
   activeTab: string;
@@ -72,6 +74,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   theme = 'bhojpatra',
   onToggleTheme,
 }) => {
+  const { status } = useLicense();
+  const isEntitled = status.entitled;
+
   const handlePrevDay = () => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() - 1);
@@ -92,13 +97,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     day: 'numeric',
     month: 'short',
   });
-
-  const currentIndex = BOOK_PAGES.findIndex((p) => p.id === activeTab);
-  const currentTabMeta = BOOK_PAGES[currentIndex >= 0 ? currentIndex : 0];
-  const prevIndex = (currentIndex - 1 + BOOK_PAGES.length) % BOOK_PAGES.length;
-  const nextIndex = (currentIndex + 1) % BOOK_PAGES.length;
-  const prevTabMeta = BOOK_PAGES[prevIndex];
-  const nextTabMeta = BOOK_PAGES[nextIndex];
 
   return (
     <header
@@ -124,6 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Date Navigator */}
           <div className="flex items-center bg-[#462B17] rounded p-0.5 border border-[#8C6239]/60">
             <button
+              type="button"
               onClick={handlePrevDay}
               title="पिछला दिन"
               className="p-0.5 hover:bg-[#5C3A21] rounded text-[#FAF2E4] transition cursor-pointer"
@@ -131,6 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <button
+              type="button"
               onClick={handleToday}
               title="आज की तिथि"
               className="px-1 sm:px-1.5 py-0.5 text-[10px] sm:text-[11px] font-bold text-[#F4E8D1] hover:text-white transition cursor-pointer whitespace-nowrap"
@@ -138,6 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {formattedDate}
             </button>
             <button
+              type="button"
               onClick={handleNextDay}
               title="अगला दिन"
               className="p-0.5 hover:bg-[#5C3A21] rounded text-[#FAF2E4] transition cursor-pointer"
@@ -146,50 +147,41 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Location Picker Button */}
+          {/* Location Badge */}
           <button
+            type="button"
             onClick={onOpenLocationModal}
-            className="flex items-center gap-0.5 px-1 sm:px-1.5 py-0.5 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded text-[10px] sm:text-[11px] font-medium text-[#FAF2E4] transition cursor-pointer"
-            title="स्थान बदलें"
+            className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 bg-[#462B17] hover:bg-[#382010] text-[#FFD88A] rounded border border-[#8C6239]/60 transition cursor-pointer truncate max-w-[90px] sm:max-w-[130px]"
+            title={`वर्तमान स्थान: ${currentLocation.name}`}
           >
-            <MapPin className="w-3 h-3 text-[#E69A33] shrink-0" />
-            <span className="truncate max-w-[48px] xs:max-w-[70px] sm:max-w-[110px]">
-              {currentLocation.name.split('(')[0].trim()}
+            <MapPin className="w-3 h-3 shrink-0 text-[#E5A93C]" />
+            <span className="text-[10px] sm:text-[11px] font-semibold truncate">
+              {currentLocation.name}
             </span>
           </button>
 
-          {/* Audio speech toggle - Desktop/Tablet (available in 'अधिक' menu on mobile) */}
+          {/* Sound Toggle */}
           <button
+            type="button"
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
-            className="hidden sm:flex p-1 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded transition cursor-pointer"
+            className={`p-1 rounded border transition cursor-pointer ${
+              isAudioEnabled
+                ? 'bg-[#462B17] text-[#FFD88A] border-[#8C6239]'
+                : 'bg-[#382010] text-[#A89279] border-transparent'
+            }`}
             title={isAudioEnabled ? 'ध्वनि चालू' : 'ध्वनि बंद'}
           >
             {isAudioEnabled ? (
-              <Volume2 className="w-3 h-3 text-[#E69A33]" />
+              <Volume2 className="w-3.5 h-3.5" />
             ) : (
-              <VolumeX className="w-3 h-3 text-[#A89279]" />
+              <VolumeX className="w-3.5 h-3.5" />
             )}
           </button>
-
-          {/* Theme Mode Toggle (ताम्र-रात्रि / भोजपत्र) - Desktop/Tablet */}
-          {onToggleTheme && (
-            <button
-              type="button"
-              onClick={onToggleTheme}
-              className="hidden sm:flex p-1 bg-[#462B17] hover:bg-[#3B2211] border border-[#8C6239]/60 rounded transition cursor-pointer"
-              title={theme === 'tamra' ? 'भोजपत्र मोड (प्रकाश)' : 'ताम्र-रात्रि मोड (अंधकार)'}
-            >
-              {theme === 'tamra' ? (
-                <Sun className="w-3 h-3 text-[#FFD88A]" />
-              ) : (
-                <Moon className="w-3 h-3 text-[#E69A33]" />
-              )}
-            </button>
-          )}
 
           {/* Book Cover Toggle Button - Tablet/Desktop */}
           {onToggleBookOpen && (
             <button
+              type="button"
               onClick={onToggleBookOpen}
               className={`hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
                 !isBookOpen
@@ -205,11 +197,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* UMA Assistant Button - Always accessible */}
           <button
+            type="button"
             onClick={onOpenUmaModal}
             className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-[#B56A00] to-[#C67D24] hover:from-[#A25E00] hover:to-[#B56A00] text-white rounded text-[10px] sm:text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
           >
             <Sparkles className="w-3 h-3 text-[#FFD88A]" />
-            <span>उमा AI</span>
+            <span>उमा AI {!isEntitled && '🔒'}</span>
           </button>
         </div>
       </div>
@@ -221,11 +214,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           {BOOK_PAGES.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            const isLocked = !isEntitled && tab.id !== 'panchang';
+
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg transition cursor-pointer select-none whitespace-nowrap shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg transition cursor-pointer select-none whitespace-nowrap shrink-0 relative ${
                   isActive
                     ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-sm font-black ring-1 ring-[#FFD88A]'
                     : 'text-[#D9C4A9] hover:text-[#FAF2E4] hover:bg-[#5C3A21]/50'
@@ -240,6 +236,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#B56A00]' : 'text-[#A89279]'}`} />
                 <span>{tab.label}</span>
+                {isLocked && <Lock className="w-3 h-3 text-[#FFD88A] ml-0.5 shrink-0" />}
               </button>
             );
           })}

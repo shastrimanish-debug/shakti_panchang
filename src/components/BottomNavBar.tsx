@@ -6,7 +6,9 @@ import {
   User,
   Gift,
   MoreHorizontal,
+  Lock,
 } from 'lucide-react';
+import { useLicense } from '../lib/license-client';
 
 interface BottomNavBarProps {
   activeTab: string;
@@ -27,6 +29,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onSelectTab,
   onOpenMore,
 }) => {
+  const { status } = useLicense();
+  const isEntitled = status.entitled;
+
   return (
     <nav
       aria-label="Mobile Navigation Bar"
@@ -36,6 +41,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         {BOTTOM_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const isLocked = !isEntitled && tab.id !== 'panchang';
+
           return (
             <button
               key={tab.id}
@@ -51,15 +58,22 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 <span className="absolute -top-1 w-6 h-0.5 bg-[#FFD88A] rounded-full shadow-[0_0_8px_#FFD88A]" />
               )}
               <div
-                className={`p-1 rounded-full transition-transform ${
+                className={`p-1 rounded-full transition-transform relative ${
                   isActive ? 'bg-[#5C3A21] scale-110 shadow-xs' : ''
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-[#FFD88A]' : 'text-[#D9C4A9]'}`} />
+                {isLocked && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-[#B56A00] text-white rounded-full p-0.5 shadow-2xs">
+                    <Lock className="w-2.5 h-2.5 text-white" />
+                  </span>
+                )}
               </div>
-              <span className={`text-[10px] sm:text-[11px] leading-tight mt-0.5 whitespace-nowrap ${
-                isActive ? 'font-bold text-[#FFD88A]' : 'font-medium'
-              }`}>
+              <span
+                className={`text-[10px] sm:text-[11px] leading-tight mt-0.5 whitespace-nowrap flex items-center gap-0.5 ${
+                  isActive ? 'font-bold text-[#FFD88A]' : 'font-medium'
+                }`}
+              >
                 {tab.label}
               </span>
             </button>
@@ -70,7 +84,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         <button
           type="button"
           onClick={onOpenMore}
-          className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 transition cursor-pointer select-none ${
+          className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 transition cursor-pointer select-none relative ${
             ['yatra', 'milan', 'reminders'].includes(activeTab)
               ? 'text-[#FFD88A] font-black'
               : 'text-[#D9C4A9] hover:text-[#FAF2E4]'

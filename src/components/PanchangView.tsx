@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VedicPanchangData } from '../types';
 import {
   Sunrise,
@@ -21,7 +21,9 @@ import {
   ArrowRight,
   ArrowLeft,
   Layers,
+  Lock,
 } from 'lucide-react';
+import { useLicense } from '../lib/license-client';
 import {
   getAuspiciousWindows,
   getInauspiciousWindows,
@@ -65,6 +67,7 @@ interface PanchangViewProps {
   latitude?: number;
   longitude?: number;
   timezoneHours?: number;
+  onOpenSubscriptionModal?: (reason?: string) => void;
 }
 
 export const PanchangView: React.FC<PanchangViewProps> = ({
@@ -79,7 +82,11 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   latitude = 23.1765,
   longitude = 75.7885,
   timezoneHours = 5.5,
+  onOpenSubscriptionModal,
 }) => {
+  const { status: licenseStatus } = useLicense();
+  const isAllowed = licenseStatus.entitled;
+
   // 5-page mobile-fit architecture (मुख्य, गोचर, होरा, मुहूर्त, दिशा)
   const [activeSubTab, setActiveSubTab] = useState<PanchangSubPage>('main');
   const [muhuratSubTab, setMuhuratSubTab] = useState<'shubh' | 'panchak'>('shubh');
@@ -87,6 +94,13 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [showCalcOptions, setShowCalcOptions] = useState(false);
+
+  // STRICT ANTI-MOD ENFORCEMENT: If trial expired, only 'main' subpage is allowed!
+  useEffect(() => {
+    if (!isAllowed && activeSubTab !== 'main') {
+      setActiveSubTab('main');
+    }
+  }, [isAllowed, activeSubTab]);
 
   const specialYogas = calculateSpecialYogas(panchang);
   const { panchak, bhadra } = calculatePanchakAndBhadra(panchang);
@@ -131,11 +145,19 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   const currentSubPageIdx = SUB_PAGES.findIndex((p) => p.id === activeSubTab);
 
   const handlePrevSubPage = () => {
+    if (!isAllowed) {
+      onOpenSubscriptionModal?.("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। अन्य चक्र देखने के लिए वार्षिक सदस्यता सक्रिय करें।");
+      return;
+    }
     const prevIdx = (currentSubPageIdx - 1 + SUB_PAGES.length) % SUB_PAGES.length;
     setActiveSubTab(SUB_PAGES[prevIdx].id);
   };
 
   const handleNextSubPage = () => {
+    if (!isAllowed) {
+      onOpenSubscriptionModal?.("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। अन्य चक्र देखने के लिए वार्षिक सदस्यता सक्रिय करें।");
+      return;
+    }
     const nextIdx = (currentSubPageIdx + 1) % SUB_PAGES.length;
     setActiveSubTab(SUB_PAGES[nextIdx].id);
   };
@@ -166,6 +188,10 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   };
 
   const handleDownloadTodayBhojpatra = async () => {
+    if (!isAllowed) {
+      onOpenSubscriptionModal?.("सम्पूर्ण भोजपत्र पंचांग PDF डाउनलोड करने के लिए वार्षिक सदस्यता सक्रिय करें।");
+      return;
+    }
     try {
       setIsDownloadingPdf(true);
       const defaultGuidance = `॥ ॐ श्री गणेशाय नमः ॥\n\nआज ${panchang.weekday}, ${panchang.paksha} पक्ष की ${panchang.tithi} तिथि है। नक्षत्र ${panchang.nakshatra} (चरण ${panchang.pada}) तथा योग ${panchang.yoga} है। संवत्सर ${panchang.samvat} गतिशील है।\n\nशास्त्रानुसार आज सूर्य देव ${panchang.solarRashi} में एवं चंद्र देव ${panchang.lunarRashi} में स्थित हैं। आज के दिन प्रातःकाल सूर्य अर्घ्य तथा सात्विक कार्य सिद्धि हेतु अनुकूल समय का चयन करें। राहुकाल के समय किसी नवीन कार्य का आरंभ न करें।\n\n॥ शुभम् भवतु • कल्याणमस्तु ॥`;
@@ -245,12 +271,19 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
         {SUB_PAGES.map((sub, idx) => {
           const isActive = activeSubTab === sub.id;
+          const isLocked = !isAllowed && sub.id !== 'main';
           return (
             <button
               key={sub.id}
               type="button"
-              onClick={() => setActiveSubTab(sub.id)}
-              className={`flex-1 py-1 sm:py-1.5 px-1 rounded-lg text-[10px] sm:text-xs font-black transition cursor-pointer flex items-center justify-center gap-0.5 sm:gap-1 ${
+              onClick={() => {
+                if (isLocked) {
+                  onOpenSubscriptionModal?.("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। गोचर, होरा, मुहूर्त व खगोल देखने के लिए वार्षिक सदस्यता सक्रिय करें।");
+                  return;
+                }
+                setActiveSubTab(sub.id);
+              }}
+              className={`flex-1 py-1 sm:py-1.5 px-1 rounded-lg text-[10px] sm:text-xs font-black transition cursor-pointer flex items-center justify-center gap-0.5 sm:gap-1 relative ${
                 isActive
                   ? 'bg-[#5C3A21] text-white shadow-xs'
                   : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
@@ -259,6 +292,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             >
               <span>{sub.icon}</span>
               <span className="truncate">{sub.label}</span>
+              {isLocked && <Lock className="w-2.5 h-2.5 text-amber-700 shrink-0" />}
               <span className="text-[8px] opacity-75 font-mono hidden xs:inline">{idx + 1}</span>
             </button>
           );
@@ -369,7 +403,13 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             {/* Gochar Snapshot Card */}
             <button
               type="button"
-              onClick={() => setActiveSubTab('gochar')}
+              onClick={() => {
+                if (!isAllowed) {
+                  onOpenSubscriptionModal?.("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। गोचर चक्र देखने के लिए वार्षिक सदस्यता सक्रिय करें।");
+                  return;
+                }
+                setActiveSubTab('gochar');
+              }}
               className="bg-gradient-to-br from-[#FFF8E1] to-[#FFE082]/60 hover:to-[#FFE082] border border-[#FFE082] rounded-xl p-2 text-left shadow-2xs transition cursor-pointer active:scale-98 group"
               title="दैनिक प्रत्यक्ष नवग्रह गोचर चक्र देखें"
             >
@@ -377,6 +417,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 <span className="flex items-center gap-1">
                   <span>🪐</span>
                   <span>दैनिक ग्रह गोचर</span>
+                  {!isAllowed && <Lock className="w-2.5 h-2.5 text-amber-700" />}
                 </span>
                 <ChevronRight className="w-3 h-3 text-[#B56A00] group-hover:translate-x-0.5 transition" />
               </div>
@@ -385,14 +426,20 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               </div>
               <div className="text-[9px] text-[#B56A00] font-bold mt-0.5 flex items-center justify-between">
                 <span>नवग्रह चक्र व सारणी</span>
-                <span>खोलें →</span>
+                <span>{!isAllowed ? '🔒 अनलॉक करें' : 'खोलें →'}</span>
               </div>
             </button>
 
             {/* Hora Snapshot Card */}
             <button
               type="button"
-              onClick={() => setActiveSubTab('hora')}
+              onClick={() => {
+                if (!isAllowed) {
+                  onOpenSubscriptionModal?.("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। २४ घंटे का होरा चक्र देखने के लिए वार्षिक सदस्यता सक्रिय करें।");
+                  return;
+                }
+                setActiveSubTab('hora');
+              }}
               className="bg-gradient-to-br from-[#FAF2E4] to-[#F4E8D1] hover:to-[#EBDDC1] border border-[#8C6239]/30 rounded-xl p-2 text-left shadow-2xs transition cursor-pointer active:scale-98 group"
               title="२४ घंटे का दैनिक होरा चक्र देखें"
             >
@@ -400,6 +447,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 <span className="flex items-center gap-1">
                   <span>⏳</span>
                   <span>वर्तमान होरा चक्र</span>
+                  {!isAllowed && <Lock className="w-2.5 h-2.5 text-amber-700" />}
                 </span>
                 <ChevronRight className="w-3 h-3 text-[#5C3A21] group-hover:translate-x-0.5 transition" />
               </div>
@@ -408,7 +456,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               </div>
               <div className="text-[9px] text-[#8C6239] font-bold mt-0.5 flex items-center justify-between">
                 <span>दिन-रात्रि होरा सारणी</span>
-                <span>खोलें →</span>
+                <span>{!isAllowed ? '🔒 अनलॉक करें' : 'खोलें →'}</span>
               </div>
             </button>
           </div>
@@ -522,12 +570,18 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
           {onOpenWhatsAppPanchang && (
             <button
               type="button"
-              onClick={onOpenWhatsAppPanchang}
+              onClick={() => {
+                if (!isAllowed) {
+                  onOpenSubscriptionModal?.("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु वार्षिक सदस्यता सक्रिय करें।");
+                  return;
+                }
+                onOpenWhatsAppPanchang();
+              }}
               className="w-full py-2 px-3 bg-gradient-to-r from-[#25D366] to-[#1EBE5D] hover:from-[#20bd5a] hover:to-[#1aa852] text-white font-bold text-xs sm:text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
               title="दैनिक पंचांग व सुविचार व्हाट्सएप पर शेयर करें"
             >
               <Share2 className="w-4 h-4 text-white" />
-              <span>📲 व्हाट्सएप सुप्रभात पंचांग कार्ड (सुविचार सहित)</span>
+              <span>📲 व्हाट्सएप सुप्रभात पंचांग कार्ड (सुविचार सहित) {!isAllowed && '🔒'}</span>
             </button>
           )}
 
@@ -551,18 +605,24 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               title="भोजपत्र PDF डाउनलोड करें"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="text-[10px]">{isDownloadingPdf ? 'तैयार…' : 'भोजपत्र PDF'}</span>
+              <span className="text-[10px]">{isDownloadingPdf ? 'तैयार…' : (!isAllowed ? 'भोजपत्र 🔒' : 'भोजपत्र PDF')}</span>
             </button>
 
             {onOpenUmaModal && (
               <button
                 type="button"
-                onClick={() => onOpenUmaModal?.()}
+                onClick={() => {
+                  if (!isAllowed) {
+                    onOpenSubscriptionModal?.("उमा AI दैवज्ञ परामर्श हेतु वार्षिक सदस्यता सक्रिय करें।");
+                    return;
+                  }
+                  onOpenUmaModal?.();
+                }}
                 className="py-1.5 px-1 bg-[#c27803] hover:bg-[#a66602] text-[#2a1303] font-bold text-xs rounded-xl transition flex flex-col items-center justify-center gap-0.5 shadow-2xs cursor-pointer active:scale-95"
                 title="उमा AI से परामर्श करें"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-[10px]">उमा AI</span>
+                <span className="text-[10px]">उमा AI {!isAllowed && '🔒'}</span>
               </button>
             )}
 

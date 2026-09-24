@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SolarTimes } from '../types';
 import { calculateHoraTable, HoraItem } from '../services/horaPanchakYogas';
 import { Clock, Sun, Moon, Info, Sparkles, Share2 } from 'lucide-react';
+import { openWhatsAppShare } from '../services/umaConsultationPdf';
 
 interface HoraChakraViewProps {
   solar: SolarTimes;
@@ -48,7 +49,7 @@ export const HoraChakraView: React.FC<HoraChakraViewProps> = ({
     lines.push(`॥ शुभम् भवतु • शक्ति पंचांग ॥`);
 
     const text = lines.join('\n');
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    openWhatsAppShare(text);
   };
 
   return (

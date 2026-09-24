@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { calculateDailyGochar, DailyGocharData, GocharPlanetDetail } from '../services/gochar';
 import { KundaliChart } from './KundaliChart';
 import { Sparkles, Share2, Compass, AlertCircle, CheckCircle2, ChevronRight, Moon, Sun } from 'lucide-react';
+import { openWhatsAppShare } from '../services/umaConsultationPdf';
 
 interface DailyGocharViewProps {
   date: Date;
@@ -69,8 +70,7 @@ export const DailyGocharView: React.FC<DailyGocharViewProps> = ({
     lines.push(`॥ शुभम् भवतु • शक्ति पंचांग ॥`);
 
     const text = lines.join('\n');
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    openWhatsAppShare(text);
   };
 
   const handleCopyGochar = () => {

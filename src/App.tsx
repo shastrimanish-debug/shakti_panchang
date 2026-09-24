@@ -22,6 +22,8 @@ import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES } from './constants/bookPages';
 import { BottomNavBar } from './components/BottomNavBar';
 import { MoreMenuModal } from './components/MoreMenuModal';
+import { SubscriptionModal } from './components/SubscriptionModal';
+import { useLicense } from './lib/license-client';
 import {
   Sparkles,
   BookOpen,
@@ -104,6 +106,27 @@ export function App() {
   const [isSavedProfilesModalOpen, setIsSavedProfilesModalOpen] = useState<boolean>(false);
   const [isWhatsAppPanchangOpen, setIsWhatsAppPanchangOpen] = useState<boolean>(false);
   const [isBrandingModalOpen, setIsBrandingModalOpen] = useState<boolean>(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
+  const [subscriptionReason, setSubscriptionReason] = useState<string>('');
+
+  // Strict Subscription & Anti-Mod State
+  const { status: licenseStatus } = useLicense();
+  const isEntitled = licenseStatus.entitled;
+
+  const triggerSubscriptionModal = useCallback((reason?: string) => {
+    setSubscriptionReason(
+      reason ||
+        "७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। अब केवल पंचांग का मुख्य पृष्ठ निःशुल्क उपलब्ध है। अन्य सुविधाओं के लिए कृपया वार्षिक सदस्यता सक्रिय करें।"
+    );
+    setIsSubscriptionModalOpen(true);
+  }, []);
+
+  // Guard Effect: If trial is expired or revoked while on another tab, immediately snap back to 'panchang'
+  useEffect(() => {
+    if (!isEntitled && activeTab !== 'panchang') {
+      setActiveTab('panchang');
+    }
+  }, [isEntitled, activeTab]);
 
   // Active Kundali Profile - clean profile state without hardcoded defaults
   const [activeKundali, setActiveKundali] = useState<KundaliData | null>(() => {
@@ -141,25 +164,53 @@ export function App() {
 
   // Navigate to previous page
   const handlePrevPage = useCallback(() => {
+    if (!isEntitled) {
+      triggerSubscriptionModal("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग का मुख्य पृष्ठ उपलब्ध है।");
+      return;
+    }
     setTurnDirection('backward');
     const prev = BOOK_PAGES[prevIndex];
     setActiveTab(prev.id);
     if (isAudioEnabled) playTactilePageTurnSound();
     notifyPageTurn(prev.label, prev.pageNumber);
-  }, [prevIndex, isAudioEnabled, notifyPageTurn]);
+  }, [prevIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal]);
 
   // Navigate to next page
   const handleNextPage = useCallback(() => {
+    if (!isEntitled) {
+      triggerSubscriptionModal("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग का मुख्य पृष्ठ उपलब्ध है।");
+      return;
+    }
     setTurnDirection('forward');
     const next = BOOK_PAGES[nextIndex];
     setActiveTab(next.id);
     if (isAudioEnabled) playTactilePageTurnSound();
     notifyPageTurn(next.label, next.pageNumber);
-  }, [nextIndex, isAudioEnabled, notifyPageTurn]);
+  }, [nextIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal]);
 
   // Navigate directly to a tab
   const handleSelectTab = useCallback(
     (tabId: string) => {
+      // STRICT ANTI-MOD & SUBSCRIPTION ENFORCEMENT:
+      // If trial has expired and user is not subscribed, ONLY 'panchang' tab is accessible!
+      if (!isEntitled && tabId !== 'panchang') {
+        const featureNames: Record<string, string> = {
+          choghadiya: 'चौघड़िया चक्र',
+          muhurat: 'शुभ मुहूर्त',
+          yatra: 'यात्रा दिशाशूल',
+          kundali: 'जन्म कुण्डली व फलादेश',
+          milan: 'अष्टकूट गुण मिलान',
+          festivals: 'पर्व व त्योहार सूची',
+          reminders: 'दैनिक स्मृति व उपाय',
+          vratkatha: 'व्रत कथा व आरती',
+        };
+        const name = featureNames[tabId] || 'यह अध्याय';
+        triggerSubscriptionModal(
+          `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग मुख्य पृष्ठ फ्री है। ${name} देखने के लिए वार्षिक सदस्यता (₹99/वर्ष) सक्रिय करें।`
+        );
+        return;
+      }
+
       const targetIdx = BOOK_PAGES.findIndex((p) => p.id === tabId);
       if (targetIdx !== -1) {
         setTurnDirection(targetIdx >= currentIndex ? 'forward' : 'backward');
@@ -171,7 +222,7 @@ export function App() {
         setActiveTab(tabId);
       }
     },
-    [currentIndex, isAudioEnabled, notifyPageTurn]
+    [currentIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal]
   );
 
   // Touch Swipe Gesture detection (strict horizontal only, will not interfere with vertical scrolling)
@@ -310,9 +361,15 @@ export function App() {
             }}
             currentLocationName={currentLocation.name}
             onOpenLocation={() => setIsLocationModalOpen(true)}
-            onOpenUma={() => setIsUmaModalOpen(true)}
+            onOpenUma={() => {
+              if (!isEntitled) {
+                triggerSubscriptionModal("उमा AI परामर्श के लिए वार्षिक सदस्यता सक्रिय करें।");
+                return;
+              }
+              setIsUmaModalOpen(true);
+            }}
             onOpenPremium={() => {
-              setIsBrandingModalOpen(true);
+              triggerSubscriptionModal();
             }}
           />
         ) : (
@@ -356,10 +413,21 @@ export function App() {
                   panchang={panchang}
                   onNavigateTab={handleSelectTab}
                   onOpenUmaModal={(query?: string) => {
+                    if (!isEntitled) {
+                      triggerSubscriptionModal("उमा AI परामर्श के लिए वार्षिक सदस्यता सक्रिय करें।");
+                      return;
+                    }
                     if (query) setUmaInitialPrompt(query);
                     setIsUmaModalOpen(true);
                   }}
-                  onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
+                  onOpenWhatsAppPanchang={() => {
+                    if (!isEntitled) {
+                      triggerSubscriptionModal("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु वार्षिक सदस्यता सक्रिय करें।");
+                      return;
+                    }
+                    setIsWhatsAppPanchangOpen(true);
+                  }}
+                  onOpenSubscriptionModal={triggerSubscriptionModal}
                   locationName={currentLocation.name}
                   currentDate={currentDate}
                   onDateChange={setCurrentDate}
@@ -448,7 +516,13 @@ export function App() {
       {/* Floating UMA Assistant Pill (Desktop Only - Mobile has it in Top Bar, Panchang Actions & More Menu) */}
       <aside aria-label="Floating Vedic Assistant" className="hidden sm:block fixed bottom-6 right-6 z-30">
         <button
-          onClick={() => setIsUmaModalOpen(true)}
+          onClick={() => {
+            if (!isEntitled) {
+              triggerSubscriptionModal("उमा AI परामर्श के लिए वार्षिक सदस्यता सक्रिय करें।");
+              return;
+            }
+            setIsUmaModalOpen(true);
+          }}
           className="flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-[#5C3A21] to-[#735133] hover:from-[#462B17] hover:to-[#5C3A21] text-[#FAF2E4] border-2 border-[#B56A00] rounded-full shadow-xl transition transform hover:scale-105 active:scale-95 group cursor-pointer"
         >
           <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-[#B56A00] text-white">
@@ -459,7 +533,7 @@ export function App() {
             </span>
           </div>
           <span className="text-xs font-bold font-granth tracking-wide pr-1">
-            उमा AI
+            उमा AI {!isEntitled && '🔒'}
           </span>
         </button>
       </aside>
@@ -490,15 +564,35 @@ export function App() {
         onClose={() => setIsMoreModalOpen(false)}
         onSelectTab={handleSelectTab}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
-        onOpenUmaModal={() => setIsUmaModalOpen(true)}
+        onOpenUmaModal={() => {
+          if (!isEntitled) {
+            triggerSubscriptionModal("उमा AI परामर्श के लिए वार्षिक सदस्यता सक्रिय करें।");
+            return;
+          }
+          setIsUmaModalOpen(true);
+        }}
         onToggleBookCover={() => setIsBookOpen(false)}
-        onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
+        onOpenWhatsAppPanchang={() => {
+          if (!isEntitled) {
+            triggerSubscriptionModal("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु वार्षिक सदस्यता सक्रिय करें।");
+            return;
+          }
+          setIsWhatsAppPanchangOpen(true);
+        }}
         onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
+        onOpenSubscriptionModal={triggerSubscriptionModal}
         currentLocation={currentLocation}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         isAudioEnabled={isAudioEnabled}
         onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
+      />
+
+      {/* Subscription & VIP Activation Modal */}
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+        reason={subscriptionReason}
       />
 
       {/* WhatsApp Daily Panchang Card Generator Modal */}

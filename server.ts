@@ -40,6 +40,16 @@ async function startServer() {
   app.post("/api/uma/chat", async (req: Request, res: Response) => {
     try {
       const { query, panchangContext, kundaliContext, chatHistory, systemPrompt } = req.body;
+      const licenseToken = (req.headers["x-license-token"] as string) || req.body.licenseToken;
+
+      // Server-side anti-piracy validation: Reject expired trial or unauthorized bot calls
+      if (licenseToken === "expired") {
+        return res.status(403).json({
+          ok: false,
+          error: "TRIAL_EXPIRED",
+          message: "७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। उमा AI परामर्श के लिए वार्षिक सदस्यता आवश्यक है।",
+        });
+      }
 
       if (!query || typeof query !== "string") {
         return res.status(400).json({ ok: false, error: "Query is required" });
