@@ -95,12 +95,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [showCalcOptions, setShowCalcOptions] = useState(false);
 
-  // STRICT ANTI-MOD ENFORCEMENT: If trial expired, only 'main' subpage is allowed!
-  useEffect(() => {
-    if (!isAllowed && activeSubTab !== 'main') {
-      setActiveSubTab('main');
-    }
-  }, [isAllowed, activeSubTab]);
+  // Sub-pages state (मुख्य, गोचर, होरा, मुहूर्त, दिशा)
 
   const specialYogas = calculateSpecialYogas(panchang);
   const { panchak, bhadra } = calculatePanchakAndBhadra(panchang);
@@ -187,11 +182,8 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
     }
   };
 
+  // Handle Bhojpatra PDF Download
   const handleDownloadTodayBhojpatra = async () => {
-    if (!isAllowed) {
-      onOpenSubscriptionModal?.("सम्पूर्ण भोजपत्र पंचांग PDF डाउनलोड करने के लिए वार्षिक सदस्यता सक्रिय करें।");
-      return;
-    }
     try {
       setIsDownloadingPdf(true);
       const defaultGuidance = `॥ ॐ श्री गणेशाय नमः ॥\n\nआज ${panchang.weekday}, ${panchang.paksha} पक्ष की ${panchang.tithi} तिथि है। नक्षत्र ${panchang.nakshatra} (चरण ${panchang.pada}) तथा योग ${panchang.yoga} है। संवत्सर ${panchang.samvat} गतिशील है।\n\nशास्त्रानुसार आज सूर्य देव ${panchang.solarRashi} में एवं चंद्र देव ${panchang.lunarRashi} में स्थित हैं। आज के दिन प्रातःकाल सूर्य अर्घ्य तथा सात्विक कार्य सिद्धि हेतु अनुकूल समय का चयन करें। राहुकाल के समय किसी नवीन कार्य का आरंभ न करें।\n\n॥ शुभम् भवतु • कल्याणमस्तु ॥`;
@@ -213,8 +205,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
         title: `दैनिक भोजपत्र पंचांग (${panchang.weekday}, ${panchang.tithi})`,
       });
     } catch (err) {
-      console.error(err);
-      alert('भोजपत्र पत्रिका तैयार करने में त्रुटि आई।');
+      console.error('Bhojpatra PDF generation error:', err);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -267,33 +258,25 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
         </button>
       </div>
 
-      {/* 2. Flutter-Style 4 Segmented Sub-Page Tabs */}
-      <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
+      {/* 2. Flutter-Style 5 Segmented Sub-Page Tabs */}
+      <div className="flex items-center gap-1 p-1 bg-[#FAF2E4]/90 backdrop-blur-md border border-[#8C6239]/20 rounded-2xl shadow-xs">
         {SUB_PAGES.map((sub, idx) => {
           const isActive = activeSubTab === sub.id;
-          const isLocked = !isAllowed && sub.id !== 'main';
           return (
             <button
               key={sub.id}
               type="button"
-              onClick={() => {
-                if (isLocked) {
-                  onOpenSubscriptionModal?.("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। गोचर, होरा, मुहूर्त व खगोल देखने के लिए वार्षिक सदस्यता सक्रिय करें।");
-                  return;
-                }
-                setActiveSubTab(sub.id);
-              }}
-              className={`flex-1 py-1 sm:py-1.5 px-1 rounded-lg text-[10px] sm:text-xs font-black transition cursor-pointer flex items-center justify-center gap-0.5 sm:gap-1 relative ${
+              onClick={() => setActiveSubTab(sub.id)}
+              className={`flex-1 py-1.5 px-1 rounded-xl text-[10px] sm:text-xs font-black transition cursor-pointer flex items-center justify-center gap-1 active:scale-95 ${
                 isActive
-                  ? 'bg-[#5C3A21] text-white shadow-xs'
-                  : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
+                  ? 'bg-[#5C3A21] text-[#FFD88A] shadow-xs'
+                  : 'bg-white/70 text-[#5C3A21] hover:bg-white'
               }`}
               title={sub.fullLabel}
             >
               <span>{sub.icon}</span>
               <span className="truncate">{sub.label}</span>
-              {isLocked && <Lock className="w-2.5 h-2.5 text-amber-700 shrink-0" />}
-              <span className="text-[8px] opacity-75 font-mono hidden xs:inline">{idx + 1}</span>
+              <span className="text-[8px] opacity-70 font-mono hidden xs:inline">{idx + 1}</span>
             </button>
           );
         })}
@@ -403,60 +386,46 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             {/* Gochar Snapshot Card */}
             <button
               type="button"
-              onClick={() => {
-                if (!isAllowed) {
-                  onOpenSubscriptionModal?.("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। गोचर चक्र देखने के लिए वार्षिक सदस्यता सक्रिय करें।");
-                  return;
-                }
-                setActiveSubTab('gochar');
-              }}
-              className="bg-gradient-to-br from-[#FFF8E1] to-[#FFE082]/60 hover:to-[#FFE082] border border-[#FFE082] rounded-xl p-2 text-left shadow-2xs transition cursor-pointer active:scale-98 group"
+              onClick={() => setActiveSubTab('gochar')}
+              className="bg-gradient-to-br from-[#FFF8E1] to-[#FFE082]/60 hover:to-[#FFE082] border border-[#FFE082] rounded-2xl p-2.5 text-left shadow-2xs transition cursor-pointer active:scale-95 group m3-touch"
               title="दैनिक प्रत्यक्ष नवग्रह गोचर चक्र देखें"
             >
               <div className="flex items-center justify-between text-[10px] font-bold text-[#8C6239]">
                 <span className="flex items-center gap-1">
                   <span>🪐</span>
                   <span>दैनिक ग्रह गोचर</span>
-                  {!isAllowed && <Lock className="w-2.5 h-2.5 text-amber-700" />}
                 </span>
-                <ChevronRight className="w-3 h-3 text-[#B56A00] group-hover:translate-x-0.5 transition" />
+                <ChevronRight className="w-3.5 h-3.5 text-[#B56A00] group-hover:translate-x-0.5 transition" />
               </div>
               <div className="text-xs font-black text-[#5C3A21] mt-0.5 truncate">
                 सूर्य: {panchang.solarRashi} • चंद्र: {panchang.lunarRashi}
               </div>
               <div className="text-[9px] text-[#B56A00] font-bold mt-0.5 flex items-center justify-between">
                 <span>नवग्रह चक्र व सारणी</span>
-                <span>{!isAllowed ? '🔒 अनलॉक करें' : 'खोलें →'}</span>
+                <span>खोलें →</span>
               </div>
             </button>
 
             {/* Hora Snapshot Card */}
             <button
               type="button"
-              onClick={() => {
-                if (!isAllowed) {
-                  onOpenSubscriptionModal?.("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। २४ घंटे का होरा चक्र देखने के लिए वार्षिक सदस्यता सक्रिय करें।");
-                  return;
-                }
-                setActiveSubTab('hora');
-              }}
-              className="bg-gradient-to-br from-[#FAF2E4] to-[#F4E8D1] hover:to-[#EBDDC1] border border-[#8C6239]/30 rounded-xl p-2 text-left shadow-2xs transition cursor-pointer active:scale-98 group"
+              onClick={() => setActiveSubTab('hora')}
+              className="bg-gradient-to-br from-[#FAF2E4] to-[#F4E8D1] hover:to-[#EBDDC1] border border-[#8C6239]/30 rounded-2xl p-2.5 text-left shadow-2xs transition cursor-pointer active:scale-95 group m3-touch"
               title="२४ घंटे का दैनिक होरा चक्र देखें"
             >
               <div className="flex items-center justify-between text-[10px] font-bold text-[#8C6239]">
                 <span className="flex items-center gap-1">
                   <span>⏳</span>
                   <span>वर्तमान होरा चक्र</span>
-                  {!isAllowed && <Lock className="w-2.5 h-2.5 text-amber-700" />}
                 </span>
-                <ChevronRight className="w-3 h-3 text-[#5C3A21] group-hover:translate-x-0.5 transition" />
+                <ChevronRight className="w-3.5 h-3.5 text-[#5C3A21] group-hover:translate-x-0.5 transition" />
               </div>
               <div className="text-xs font-black text-[#5C3A21] mt-0.5 truncate">
                 {currentActiveHora ? `${currentActiveHora.symbol} ${currentActiveHora.planet} की होरा` : '२४ घंटे होरा'}
               </div>
               <div className="text-[9px] text-[#8C6239] font-bold mt-0.5 flex items-center justify-between">
                 <span>दिन-रात्रि होरा सारणी</span>
-                <span>{!isAllowed ? '🔒 अनलॉक करें' : 'खोलें →'}</span>
+                <span>खोलें →</span>
               </div>
             </button>
           </div>
@@ -570,18 +539,12 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
           {onOpenWhatsAppPanchang && (
             <button
               type="button"
-              onClick={() => {
-                if (!isAllowed) {
-                  onOpenSubscriptionModal?.("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु वार्षिक सदस्यता सक्रिय करें।");
-                  return;
-                }
-                onOpenWhatsAppPanchang();
-              }}
-              className="w-full py-2 px-3 bg-gradient-to-r from-[#25D366] to-[#1EBE5D] hover:from-[#20bd5a] hover:to-[#1aa852] text-white font-bold text-xs sm:text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
+              onClick={() => onOpenWhatsAppPanchang()}
+              className="w-full py-2.5 px-3 bg-gradient-to-r from-[#25D366] via-[#20BD5A] to-[#1EBE5D] hover:from-[#20bd5a] hover:to-[#1aa852] text-white font-black text-xs sm:text-sm rounded-2xl transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-97 m3-touch"
               title="दैनिक पंचांग व सुविचार व्हाट्सएप पर शेयर करें"
             >
               <Share2 className="w-4 h-4 text-white" />
-              <span>📲 व्हाट्सएप सुप्रभात पंचांग कार्ड (सुविचार सहित) {!isAllowed && '🔒'}</span>
+              <span>📲 व्हाट्सएप सुप्रभात पंचांग कार्ड (सुविचार सहित)</span>
             </button>
           )}
 
@@ -590,7 +553,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             <button
               type="button"
               onClick={handleShare}
-              className="py-1.5 px-1 bg-[#1e7e34] hover:bg-[#155d27] text-white font-bold text-xs rounded-xl transition flex flex-col items-center justify-center gap-0.5 shadow-2xs cursor-pointer active:scale-95"
+              className="py-2 px-1 bg-[#1e7e34] hover:bg-[#155d27] text-white font-bold text-xs rounded-2xl transition flex flex-col items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 m3-touch"
               title="व्हाट्सएप पंचांग साझा करें"
             >
               <Share2 className="w-3.5 h-3.5 text-emerald-200" />
@@ -601,35 +564,29 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               type="button"
               onClick={handleDownloadTodayBhojpatra}
               disabled={isDownloadingPdf}
-              className="py-1.5 px-1 bg-[#8f2121] hover:bg-[#731919] text-[#fdf8eb] font-bold text-xs rounded-xl transition flex flex-col items-center justify-center gap-0.5 shadow-2xs disabled:opacity-50 cursor-pointer active:scale-95"
+              className="py-2 px-1 bg-[#8f2121] hover:bg-[#731919] text-[#fdf8eb] font-bold text-xs rounded-2xl transition flex flex-col items-center justify-center gap-1 shadow-2xs disabled:opacity-50 cursor-pointer active:scale-95 m3-touch"
               title="भोजपत्र PDF डाउनलोड करें"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span className="text-[10px]">{isDownloadingPdf ? 'तैयार…' : (!isAllowed ? 'भोजपत्र 🔒' : 'भोजपत्र PDF')}</span>
+              <Download className="w-3.5 h-3.5 text-[#ffd88a]" />
+              <span className="text-[10px] font-bold">{isDownloadingPdf ? 'तैयार…' : 'भोजपत्र PDF'}</span>
             </button>
 
             {onOpenUmaModal && (
               <button
                 type="button"
-                onClick={() => {
-                  if (!isAllowed) {
-                    onOpenSubscriptionModal?.("उमा AI दैवज्ञ परामर्श हेतु वार्षिक सदस्यता सक्रिय करें।");
-                    return;
-                  }
-                  onOpenUmaModal?.();
-                }}
-                className="py-1.5 px-1 bg-[#c27803] hover:bg-[#a66602] text-[#2a1303] font-bold text-xs rounded-xl transition flex flex-col items-center justify-center gap-0.5 shadow-2xs cursor-pointer active:scale-95"
-                title="उमा AI से परामर्श करें"
+                onClick={() => onOpenUmaModal()}
+                className="py-2 px-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-600 hover:to-yellow-600 text-stone-950 font-black text-xs rounded-2xl transition flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer active:scale-95 m3-touch uma-glow-badge"
+                title="उमा AI - सनातन दैवज्ञ परामर्श"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-[10px]">उमा AI {!isAllowed && '🔒'}</span>
+                <Sparkles className="w-3.5 h-3.5 text-stone-950 fill-stone-950" />
+                <span className="text-[10px] font-black">उमा AI ✨</span>
               </button>
             )}
 
             <button
               type="button"
               onClick={handleCopy}
-              className="py-1.5 px-1 bg-[#FAF2E4] hover:bg-[#F4E8D1] text-[#5C3A21] border border-[#8C6239]/40 font-bold text-xs rounded-xl transition flex flex-col items-center justify-center gap-0.5 shadow-2xs cursor-pointer active:scale-95"
+              className="py-2 px-1 bg-white/90 hover:bg-white text-[#5C3A21] border border-[#8C6239]/20 font-bold text-xs rounded-2xl transition flex flex-col items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 m3-touch"
               title="पंचांग टेक्स्ट कॉपी करें"
             >
               <Copy className="w-3.5 h-3.5 text-[#B56A00]" />

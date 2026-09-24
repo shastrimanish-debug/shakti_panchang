@@ -392,11 +392,6 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       : [];
 
   const handleDownloadMilanPdf = async () => {
-    if (!subStatus.entitled) {
-      setSubscriptionReason('विवाह मिलान पत्रिका PDF डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
-      setIsSubscriptionModalOpen(true);
-      return;
-    }
     if (!boyKundali || !girlKundali || !milanResult) {
       setFormError('वर और कन्या दोनों का नाम, जन्म तिथि और समय भरें।');
       return;
@@ -427,11 +422,6 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [isGeneratingSinglePdf, setIsGeneratingSinglePdf] = useState(false);
 
   const handleDownloadSinglePageKundaliPdf = async () => {
-    if (!subStatus.entitled) {
-      setSubscriptionReason('जन्मपत्रिका PDF डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
-      setIsSubscriptionModalOpen(true);
-      return;
-    }
     if (!k) {
       alert('कृपया पहले जन्म विवरण भरकर "जन्म पत्रिका बनाएं" पर क्लिक करें।');
       return;
@@ -472,11 +462,6 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   };
 
   const handleDownload59PagePdf = async () => {
-    if (!subStatus.entitled) {
-      setSubscriptionReason('सम्पूर्ण 59-पृष्ठीय महा-जन्मपत्रिका सचित्र PDF तैयार व डाउनलोड करने के लिए श्री शक्ति पंचांग की वार्षिक सदस्यता (₹99/वर्ष) आवश्यक है।');
-      setIsSubscriptionModalOpen(true);
-      return;
-    }
     if (!k) {
       alert('कृपया पहले जन्म विवरण भरकर "जन्म पत्रिका बनाएं" पर क्लिक करें।');
       return;
@@ -633,11 +618,11 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <button
                   type="button"
                   onClick={onOpenUmaModal}
-                  className="px-2.5 py-1.5 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:brightness-110 text-[#FFD88A] border border-[#B58738] text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer active:scale-95"
-                  title="उमा AI (वैदिक एलेक्सा) से इस कुंडली का गहन फलादेश व सात्विक उपाय पूछें"
+                  className="px-3 py-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black text-xs rounded-xl shadow-md border border-amber-300 transition flex items-center gap-1.5 cursor-pointer active:scale-95 uma-glow-badge m3-touch"
+                  title="उमा AI - वैदिक दैवज्ञ परामर्श"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#FFD88A]" />
-                  <span>उमा AI परामर्श</span>
+                  <Sparkles className="w-3.5 h-3.5 fill-stone-950 text-stone-950" />
+                  <span>उमा AI परामर्श ✨</span>
                 </button>
               )}
 
@@ -731,11 +716,11 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <button
                   type="button"
                   onClick={onOpenUmaModal}
-                  className="px-3 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:brightness-110 text-[#FFD88A] border border-[#B58738] text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3 py-2 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-md border border-amber-300 transition flex items-center gap-2 cursor-pointer active:scale-95 uma-glow-badge m3-touch"
                   title="उमा AI (वैदिक एलेक्सा) से परामर्श लें"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#FFD88A]" />
-                  <span>उमा AI परामर्श</span>
+                  <Sparkles className="w-4 h-4 fill-stone-950 text-stone-950" />
+                  <span>उमा AI परामर्श ✨</span>
                 </button>
               )}
 

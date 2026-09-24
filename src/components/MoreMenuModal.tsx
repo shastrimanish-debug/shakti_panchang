@@ -15,7 +15,6 @@ import {
   Share2,
   Award,
   Crown,
-  Lock,
 } from 'lucide-react';
 import { SavedLocation } from '../types';
 import { AppTheme, getAstrologerBranding } from '../services/storage';
@@ -66,72 +65,74 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
     onClose();
   };
 
-  const handlePremiumAction = (action: () => void, featureName: string) => {
-    if (!isEntitled) {
-      onClose();
-      onOpenSubscriptionModal?.(
-        `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। ${featureName} के लिए वार्षिक सदस्यता सक्रिय करें।`
-      );
-      return;
-    }
-    handleAction(action);
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-[#FAF2E4] text-[#3E2714] rounded-t-2xl sm:rounded-2xl border-t-2 sm:border-2 border-[#8C6239] shadow-2xl p-4 sm:p-5 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="w-full max-w-md bg-[#FAF2E4]/98 dark:bg-[#23140C]/98 backdrop-blur-2xl text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#8C6239]/40 shadow-[0_20px_60px_rgba(0,0,0,0.5)] p-4 sm:p-6 max-h-[88vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#8C6239]/30">
           <div className="flex items-center gap-2">
             <ShaktiLogo size={24} className="shrink-0" />
-            <h3 className="font-granth font-bold text-base text-[#5C3A21]">
+            <h3 className="font-granth font-black text-base text-[#5C3A21] dark:text-[#FFD88A]">
               अतिरिक्त सेवाएँ व विकल्प
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 hover:bg-[#F4E8D1] rounded-full text-[#8C6239] transition cursor-pointer"
+            className="p-1.5 hover:bg-[#F4E8D1] dark:hover:bg-stone-800 rounded-full text-[#8C6239] transition cursor-pointer m3-touch"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Subscription / VIP Status Card */}
+        {/* Big Prominent UMA AI Hero Card */}
         <div className="mt-3.5">
           <button
             type="button"
+            onClick={() => handleAction(onOpenUmaModal)}
+            className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black flex items-center justify-between shadow-lg border border-amber-300 transition cursor-pointer active:scale-95 uma-glow-badge m3-touch"
+          >
+            <div className="flex items-center gap-3 text-left">
+              <div className="w-10 h-10 rounded-full bg-stone-950 text-amber-400 flex items-center justify-center shadow-md">
+                <Sparkles className="w-5 h-5 fill-amber-400 text-amber-400" />
+              </div>
+              <div>
+                <div className="text-sm font-black tracking-wide text-stone-950">
+                  उमा AI वैदिक दैवज्ञ परामर्श ✨
+                </div>
+                <div className="text-[11px] text-stone-900 font-medium">
+                  कुंडली, मुहूर्त, गोचर, उपाय व प्रश्न विचार 100% सक्रिय
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] bg-stone-950 text-amber-300 px-3 py-1 rounded-full font-black shrink-0 shadow-xs">
+              परामर्श लें →
+            </span>
+          </button>
+        </div>
+
+        {/* Subscription / VIP Status Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
             onClick={() => handleAction(() => onOpenSubscriptionModal?.())}
-            className={`w-full p-3 rounded-xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 ${
-              isEntitled
-                ? 'bg-gradient-to-r from-[#5C3A21] to-[#462B17] text-[#FAF2E4] border-[#B56A00]'
-                : 'bg-gradient-to-r from-amber-900 to-amber-950 text-[#FAF2E4] border-amber-500'
-            }`}
+            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#5C3A21] to-[#462B17] text-[#FAF2E4] border-[#B56A00]"
           >
             <div className="flex items-center gap-2.5 text-left">
-              <div className="p-2 bg-[#B56A00] rounded-lg text-white shadow-2xs">
+              <div className="p-2 bg-[#B56A00] rounded-xl text-white shadow-2xs">
                 <Crown className="w-5 h-5 text-white" />
               </div>
               <div>
                 <div className="text-xs sm:text-sm font-bold flex items-center gap-1.5 text-[#FFD88A]">
-                  <span>वार्षिक सदस्यता व VIP</span>
-                  {!isEntitled && (
-                    <span className="text-[9px] bg-red-600 text-white px-1.5 py-0.2 rounded font-bold">
-                      लॉक
-                    </span>
-                  )}
+                  <span>सदस्यता स्थिति: VIP आजीवन सक्रिय</span>
                 </div>
                 <div className="text-[10px] text-[#D9C4A9]">
-                  {isEntitled
-                    ? status.kind === 'lifetime'
-                      ? 'आजीवन VIP सदस्यता सक्रिय'
-                      : `सक्रिय (${status.daysRemaining} दिन शेष) • ₹99/वर्ष`
-                    : '७ दिन समाप्त • केवल मुख्य पंचांग फ्री • ₹99/वर्ष'}
+                  समस्त 59-पृष्ठीय कुण्डली, विवाह मिलान, पंचांग PDF एवं उमा AI अनलॉक हैं
                 </div>
               </div>
             </div>
             <span className="text-[11px] bg-[#B56A00] text-white px-2.5 py-1 rounded-lg font-bold shrink-0">
-              {isEntitled ? 'विवरण' : 'सक्रिय करें'}
+              सक्रिय
             </span>
           </button>
         </div>
@@ -141,24 +142,23 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <div className="mt-2.5">
             <button
               type="button"
-              onClick={() => handlePremiumAction(onOpenWhatsAppPanchang, 'व्हाट्सएप पंचांग कार्ड')}
-              className="w-full p-2.5 bg-gradient-to-r from-[#25D366] to-[#1EBE5D] hover:from-[#20bd5a] hover:to-[#1aa852] text-white rounded-xl shadow-xs flex items-center justify-between transition cursor-pointer active:scale-95"
+              onClick={() => handleAction(onOpenWhatsAppPanchang)}
+              className="w-full p-2.5 bg-gradient-to-r from-[#25D366] to-[#1EBE5D] hover:from-[#20bd5a] hover:to-[#1aa852] text-white rounded-2xl shadow-xs flex items-center justify-between transition cursor-pointer active:scale-95 m3-touch"
             >
               <div className="flex items-center gap-2.5 text-left">
-                <div className="p-2 bg-white/20 rounded-lg text-white">
+                <div className="p-2 bg-white/20 rounded-xl text-white">
                   <Share2 className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="text-xs font-bold flex items-center gap-1">
                     <span>📲 व्हाट्सएप सुप्रभात पंचांग कार्ड</span>
-                    {!isEntitled && <Lock className="w-3 h-3 text-white" />}
                   </div>
                   <div className="text-[10px] text-white/90">
                     आज का पंचांग व सुविचार 1-क्लिक में शेयर करें
                   </div>
                 </div>
               </div>
-              <span className="text-[11px] bg-white text-[#1EBE5D] px-2 py-0.5 rounded-lg font-bold">
+              <span className="text-[11px] bg-white text-[#1EBE5D] px-2.5 py-1 rounded-lg font-bold">
                 शेयर करें
               </span>
             </button>
@@ -171,22 +171,22 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             <button
               type="button"
               onClick={() => handleAction(onOpenBrandingModal)}
-              className="w-full p-2.5 bg-[#F4E8D1] hover:bg-[#EBD8BD] border border-[#8C6239]/40 rounded-xl flex items-center justify-between text-left transition cursor-pointer active:scale-95"
+              className="w-full p-2.5 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/40 rounded-2xl flex items-center justify-between text-left transition cursor-pointer active:scale-95 m3-touch"
             >
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-[#5C3A21] rounded-lg text-[#FFD88A]">
+                <div className="p-2 bg-[#5C3A21] rounded-xl text-[#FFD88A]">
                   <Award className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1.5">
-                    <span>📇 पंडित जी / ज्योतिषी विज़िटिंग कार्ड</span>
+                  <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1.5">
+                    <span>📇 ज्योतिषी विज़िटिंग कार्ड व ब्रांडिंग</span>
                     {branding.enabled && (
                       <span className="text-[9px] bg-[#B56A00] text-white px-1.5 py-0.2 rounded font-medium">
                         सक्रिय
                       </span>
                     )}
                   </div>
-                  <div className="text-[10px] text-[#735133]">
+                  <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">
                     {branding.enabled
                       ? `${branding.name} • ${branding.phone || branding.city}`
                       : 'पंचांग कार्ड व कुंडली पर अपना नाम/नंबर जोड़ें'}
@@ -202,146 +202,130 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
         <div className="grid grid-cols-2 gap-2 my-3">
           <button
             type="button"
-            onClick={() => handlePremiumAction(() => onSelectTab('vratkatha'), 'व्रत कथा व आरती')}
-            className="flex items-center gap-2.5 p-2.5 bg-[#F4E8D1] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-xl text-left transition cursor-pointer active:scale-95 col-span-2 relative"
+            onClick={() => handleAction(() => onSelectTab('vratkatha'))}
+            className="flex items-center gap-2.5 p-2.5 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-2xl text-left transition cursor-pointer active:scale-95 col-span-2 relative m3-touch"
           >
-            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-lg">
+            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-xl">
               <BookOpen className="w-4 h-4 text-[#FFD88A]" />
             </div>
             <div className="flex-1">
-              <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>📖 व्रत कथा, पूजा विधि व आरती संग्रह</span>
-                {!isEntitled && <Lock className="w-3 h-3 text-[#B56A00]" />}
               </div>
-              <div className="text-[10px] text-[#735133]">सत्यनारायण, एकादशी, प्रदोष कथा व नित्य स्तोत्र</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">सत्यनारायण, एकादशी, प्रदोष कथा व नित्य स्तोत्र</div>
             </div>
           </button>
 
           <button
             type="button"
-            onClick={() => handlePremiumAction(() => onSelectTab('yatra'), 'यात्रा दिशाशूल')}
-            className="flex items-center gap-2 p-2 bg-[#F4E8D1] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-xl text-left transition cursor-pointer active:scale-95 relative"
+            onClick={() => handleAction(() => onSelectTab('yatra'))}
+            className="flex items-center gap-2 p-2 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch"
           >
-            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-lg">
+            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-xl">
               <Compass className="w-4 h-4 text-[#FFD88A]" />
             </div>
             <div>
-              <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>यात्रा दिशाशूल</span>
-                {!isEntitled && <Lock className="w-2.5 h-2.5 text-[#B56A00]" />}
               </div>
-              <div className="text-[10px] text-[#735133]">निवारण व उपाय</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">निवारण व उपाय</div>
             </div>
           </button>
 
           <button
             type="button"
-            onClick={() => handlePremiumAction(() => onSelectTab('milan'), 'कुंडली मिलान')}
-            className="flex items-center gap-2 p-2 bg-[#F4E8D1] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-xl text-left transition cursor-pointer active:scale-95 relative"
+            onClick={() => handleAction(() => onSelectTab('milan'))}
+            className="flex items-center gap-2 p-2 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch"
           >
-            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-lg">
+            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-xl">
               <Heart className="w-4 h-4 text-[#FFD88A]" />
             </div>
             <div>
-              <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>कुंडली मिलान</span>
-                {!isEntitled && <Lock className="w-2.5 h-2.5 text-[#B56A00]" />}
               </div>
-              <div className="text-[10px] text-[#735133]">अष्टकूट ३६ गुण</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">अष्टकूट ३६ गुण</div>
             </div>
           </button>
 
           <button
             type="button"
-            onClick={() => handlePremiumAction(() => onSelectTab('reminders'), 'दैनिक स्मृति')}
-            className="flex items-center gap-2 p-2 bg-[#F4E8D1] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-xl text-left transition cursor-pointer active:scale-95 relative"
+            onClick={() => handleAction(() => onSelectTab('reminders'))}
+            className="flex items-center gap-2 p-2 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch"
           >
-            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-lg">
+            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-xl">
               <Bell className="w-4 h-4 text-[#FFD88A]" />
             </div>
             <div>
-              <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>दैनिक स्मृति व उपाय</span>
-                {!isEntitled && <Lock className="w-2.5 h-2.5 text-[#B56A00]" />}
               </div>
-              <div className="text-[10px] text-[#735133]">व्रत-पर्व सूचना</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">व्रत-पर्व सूचना</div>
             </div>
           </button>
 
           <button
             type="button"
             onClick={() => handleAction(onToggleBookCover)}
-            className="flex items-center gap-2 p-2 bg-[#F4E8D1] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-xl text-left transition cursor-pointer active:scale-95"
+            className="flex items-center gap-2 p-2 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-2xl text-left transition cursor-pointer active:scale-95 m3-touch"
           >
-            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-lg">
+            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-xl">
               <BookOpen className="w-4 h-4 text-[#FFD88A]" />
             </div>
             <div>
-              <div className="text-xs font-bold text-[#5C3A21]">ग्रंथ मुखपृष्ठ</div>
-              <div className="text-[10px] text-[#735133]">पारंपरिक परिचय</div>
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A]">ग्रंथ मुखपृष्ठ</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">पारंपरिक परिचय</div>
             </div>
           </button>
         </div>
 
         {/* Quick Settings Bar */}
-        <div className="bg-[#F4E8D1] p-3 rounded-xl border border-[#8C6239]/30 space-y-2">
-          <div className="text-[11px] font-bold text-[#8C6239] uppercase tracking-wider">
+        <div className="bg-[#F4E8D1] dark:bg-[#341F14] p-3 rounded-2xl border border-[#8C6239]/30 space-y-2">
+          <div className="text-[11px] font-bold text-[#8C6239] dark:text-[#FFD88A] uppercase tracking-wider">
             सेटिंग्स व प्राथमिकताएँ
           </div>
 
           <div className="flex items-center justify-between text-xs py-1">
-            <span className="flex items-center gap-1.5 font-medium text-[#5C3A21]">
+            <span className="flex items-center gap-1.5 font-medium text-[#5C3A21] dark:text-[#FAF2E4]">
               <MapPin className="w-3.5 h-3.5 text-[#B56A00]" />
               स्थान: {currentLocation.name}
             </span>
             <button
               type="button"
               onClick={() => handleAction(onOpenLocationModal)}
-              className="px-2 py-0.5 bg-[#FAF2E4] border border-[#8C6239]/40 rounded font-bold text-[#5C3A21] cursor-pointer"
+              className="px-2.5 py-1 bg-[#FAF2E4] dark:bg-stone-800 border border-[#8C6239]/40 rounded-lg font-bold text-[#5C3A21] dark:text-[#FAF2E4] cursor-pointer m3-touch"
             >
               बदलें
             </button>
           </div>
 
           <div className="flex items-center justify-between text-xs py-1 border-t border-[#8C6239]/20">
-            <span className="flex items-center gap-1.5 font-medium text-[#5C3A21]">
+            <span className="flex items-center gap-1.5 font-medium text-[#5C3A21] dark:text-[#FAF2E4]">
               {theme === 'tamra' ? <Moon className="w-3.5 h-3.5 text-amber-500" /> : <Sun className="w-3.5 h-3.5 text-amber-600" />}
               थीम: {theme === 'tamra' ? 'ताम्र-रात्रि (डार्क)' : 'भोजपत्र (लाइट)'}
             </span>
             <button
               type="button"
               onClick={onToggleTheme}
-              className="px-2 py-0.5 bg-[#FAF2E4] border border-[#8C6239]/40 rounded font-bold text-[#5C3A21] cursor-pointer"
+              className="px-2.5 py-1 bg-[#FAF2E4] dark:bg-stone-800 border border-[#8C6239]/40 rounded-lg font-bold text-[#5C3A21] dark:text-[#FAF2E4] cursor-pointer m3-touch"
             >
               टॉगल करें
             </button>
           </div>
 
           <div className="flex items-center justify-between text-xs py-1 border-t border-[#8C6239]/20">
-            <span className="flex items-center gap-1.5 font-medium text-[#5C3A21]">
+            <span className="flex items-center gap-1.5 font-medium text-[#5C3A21] dark:text-[#FAF2E4]">
               {isAudioEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-600" /> : <VolumeX className="w-3.5 h-3.5 text-stone-500" />}
               पृष्ठ पलटने की ध्वनि: {isAudioEnabled ? 'चालू' : 'बंद'}
             </span>
             <button
               type="button"
               onClick={onToggleAudio}
-              className="px-2 py-0.5 bg-[#FAF2E4] border border-[#8C6239]/40 rounded font-bold text-[#5C3A21] cursor-pointer"
+              className="px-2.5 py-1 bg-[#FAF2E4] dark:bg-stone-800 border border-[#8C6239]/40 rounded-lg font-bold text-[#5C3A21] dark:text-[#FAF2E4] cursor-pointer m3-touch"
             >
               {isAudioEnabled ? 'बंद करें' : 'चालू करें'}
             </button>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 mt-3.5">
-          <button
-            type="button"
-            onClick={() => handlePremiumAction(onOpenUmaModal, 'उमा AI दैवज्ञ परामर्श')}
-            className="w-full py-2.5 px-3 bg-gradient-to-r from-[#B56A00] to-[#C67D24] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-          >
-            <Sparkles className="w-4 h-4 text-[#FFD88A]" />
-            <span>उमा AI से परामर्श {!isEntitled && '🔒'}</span>
-          </button>
         </div>
 
         {/* Sacred Brand Footer */}

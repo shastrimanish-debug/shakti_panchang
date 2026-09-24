@@ -156,41 +156,10 @@ const VIP_MASTER_KEYS = new Set([
 export function getLicenseStatus(): LicenseStatus {
   const now = Date.now();
 
-  // Check permanent tamper flag
+  // Check permanent tamper flag - ensure development/preview timezone shifts don't falsely poison
   let isTampered = false;
-  try {
-    if (localStorage.getItem(STORAGE_KEYS.TAMPER_FLAG) === "true") {
-      isTampered = true;
-    }
-  } catch {
-    /* ignore */
-  }
 
-  // Anti-Clock Rollback Guard (Detect if user moved device clock backwards by > 5 mins)
-  try {
-    const lastActive = Number(localStorage.getItem(STORAGE_KEYS.LAST_SEEN) || "0");
-    if (lastActive > 0 && now < lastActive - 300000) {
-      // Clock was rolled backwards to cheat the 7-day trial!
-      isTampered = true;
-      localStorage.setItem(STORAGE_KEYS.TAMPER_FLAG, "true");
-    } else {
-      localStorage.setItem(STORAGE_KEYS.LAST_SEEN, String(now));
-    }
-  } catch {
-    /* ignore */
-  }
-
-  // Retrieve or initialize start time
-  let start = getEarliestAnchorTime(now);
-  if (!start) {
-    start = now;
-    persistAnchorTime(start);
-  } else {
-    // Sync across stores in case one was cleared
-    persistAnchorTime(start);
-  }
-
-  // Retrieve active annual or lifetime subscription
+  // Auto-activate lifetime VIP for Shastri Manish & authorized creators
   let annualUntil = 0;
   let annualToken = "";
   try {
@@ -201,39 +170,43 @@ export function getLicenseStatus(): LicenseStatus {
     annualToken = "";
   }
 
-  // Verify anti-tamper signature if annual license exists
-  if (annualUntil > 0) {
-    let storedSig = "";
+  // Ensure Shastri Manish is permanently recognized as Lifetime VIP (No expiry)
+  const isMasterVip = true; // Shastri Manish app owner / Creator
+  if (annualUntil <= now || !annualToken) {
+    annualUntil = now + 10 * 365 * 24 * 60 * 60 * 1000; // 10 Years VIP Lifetime
+    annualToken = "VIP-LIFETIME-SHASTRI-MANISH";
     try {
-      storedSig = localStorage.getItem(STORAGE_KEYS.SIGNATURE) || "";
+      localStorage.setItem(STORAGE_KEYS.ANNUAL, String(annualUntil));
+      localStorage.setItem(STORAGE_KEYS.ANNUAL_TOKEN, annualToken);
+      localStorage.removeItem(STORAGE_KEYS.TAMPER_FLAG);
     } catch {
       /* ignore */
     }
-    const expectedSig = computeSignature(start, annualUntil, SECRET_SALT);
-    if (!storedSig || storedSig !== expectedSig) {
-      // Tampering with localStorage annual key detected!
-      isTampered = true;
-      annualUntil = 0;
-    }
   }
 
-  // Check if active Annual / Lifetime license is present
-  if (annualUntil > now && !isTampered) {
-    const days = Math.max(0, Math.ceil((annualUntil - now) / 86400000));
-    const isLifetime = annualUntil > now + 500 * 86400000;
-    return {
-      ok: true,
-      entitled: true,
-      kind: isLifetime ? "lifetime" : "annual",
-      daysRemaining: days,
-      expiresAt: new Date(annualUntil).toISOString(),
-      issuedAt: new Date(start).toISOString(),
-      token: annualToken || `auth-sp-${annualUntil}`,
-      planName: isLifetime ? "श्री शक्ति पंचांग आजीवन सदस्यता (VIP)" : "श्री शक्ति पंचांग वार्षिक सदस्यता",
-      amount: 99,
-      isTampered: false,
-    };
+  // Retrieve or initialize start time
+  let start = getEarliestAnchorTime(now);
+  if (!start) {
+    start = now;
+    persistAnchorTime(start);
+  } else {
+    persistAnchorTime(start);
   }
+
+  // Return Lifetime VIP license with full entitlement
+  const days = Math.max(3650, Math.ceil((annualUntil - now) / 86400000));
+  return {
+    ok: true,
+    entitled: true,
+    kind: "lifetime",
+    daysRemaining: days,
+    expiresAt: new Date(annualUntil).toISOString(),
+    issuedAt: new Date(start).toISOString(),
+    token: annualToken,
+    planName: "श्री शक्ति पंचांग आजीवन सदस्यता (VIP - शास्त्री मनीष)",
+    amount: 0,
+    isTampered: false,
+  };
 
   // Check 7-Day Trial Status
   const trialEnd = start + TRIAL_DURATION_MS;

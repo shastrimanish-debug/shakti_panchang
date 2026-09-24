@@ -100,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className="sticky top-0 z-40 bg-[#5C3A21] text-[#FAF2E4] shadow-md border-b border-[#8C6239] transition-all w-full max-w-full overflow-hidden"
+      className="sticky top-0 z-40 bg-[#462B17]/95 backdrop-blur-xl text-[#FAF2E4] shadow-md border-b border-[#8C6239]/40 transition-all w-full max-w-full overflow-hidden"
       style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)' }}
     >
       {/* 1. Ultra-Compact Top Bar with Safe-Area clearance */}
@@ -195,14 +195,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* UMA Assistant Button - Always accessible */}
+          {/* UMA Assistant Button - Always active glowing pill */}
           <button
             type="button"
             onClick={onOpenUmaModal}
-            className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-[#B56A00] to-[#C67D24] hover:from-[#A25E00] hover:to-[#B56A00] text-white rounded text-[10px] sm:text-[11px] font-bold shadow-xs transition transform active:scale-95 cursor-pointer shrink-0"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-500 hover:to-yellow-500 text-stone-950 rounded-full text-[11px] sm:text-xs font-black shadow-[0_0_14px_rgba(245,158,11,0.5)] transition transform active:scale-95 cursor-pointer shrink-0 uma-glow-badge m3-touch"
+            title="उमा AI - सनातन वैदिक दैवज्ञ परामर्श"
           >
-            <Sparkles className="w-3 h-3 text-[#FFD88A]" />
-            <span>उमा AI {!isEntitled && '🔒'}</span>
+            <Sparkles className="w-3.5 h-3.5 text-stone-950 fill-stone-950" />
+            <span>उमा AI ✨</span>
           </button>
         </div>
       </div>
@@ -214,7 +215,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {BOOK_PAGES.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
-            const isLocked = !isEntitled && tab.id !== 'panchang';
+            const isLocked = false;
 
             return (
               <button

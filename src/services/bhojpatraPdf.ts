@@ -299,7 +299,14 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
 
-  // Safely trigger browser file download without crashing if blocked
+  // 1. Direct jsPDF download (safest across all mobile and iframe environments)
+  try {
+    pdf.save(fileName);
+  } catch (saveErr) {
+    console.warn('pdf.save notice:', saveErr);
+  }
+
+  // 2. Also trigger DOM link download with blob URL
   try {
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -309,11 +316,9 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     link.click();
     setTimeout(() => {
       if (document.body.contains(link)) document.body.removeChild(link);
-    }, 500);
+    }, 600);
   } catch (e) {
-    try {
-      pdf.save(fileName);
-    } catch {}
+    /* ignore */
   }
 
   return {
@@ -595,7 +600,14 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
 
-  // Safely trigger browser file download without crashing if blocked
+  // 1. Direct jsPDF download
+  try {
+    pdf.save(fileName);
+  } catch (saveErr) {
+    console.warn('pdf.save notice:', saveErr);
+  }
+
+  // 2. Also trigger DOM link download with blob URL
   try {
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -605,11 +617,9 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
     link.click();
     setTimeout(() => {
       if (document.body.contains(link)) document.body.removeChild(link);
-    }, 500);
+    }, 600);
   } catch (e) {
-    try {
-      pdf.save(fileName);
-    } catch {}
+    /* ignore */
   }
 
   return {

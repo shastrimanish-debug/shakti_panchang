@@ -1683,7 +1683,14 @@ export async function generateExhaustive59PageKundaliPdf(
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
   
-  // Safely trigger standard browser download without blocking
+  // 1. Direct jsPDF download
+  try {
+    pdf.save(fileName);
+  } catch (saveErr) {
+    console.warn('Direct pdf.save fallback notice:', saveErr);
+  }
+
+  // 2. Safely trigger standard browser link download
   try {
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -1693,13 +1700,9 @@ export async function generateExhaustive59PageKundaliPdf(
     link.click();
     setTimeout(() => {
       if (document.body.contains(link)) document.body.removeChild(link);
-    }, 500);
+    }, 600);
   } catch (e) {
-    try {
-      pdf.save(fileName);
-    } catch (saveErr) {
-      console.warn('Direct pdf.save fallback notice:', saveErr);
-    }
+    /* ignore */
   }
 
   return {

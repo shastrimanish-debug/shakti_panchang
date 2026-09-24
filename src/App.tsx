@@ -362,10 +362,6 @@ export function App() {
             currentLocationName={currentLocation.name}
             onOpenLocation={() => setIsLocationModalOpen(true)}
             onOpenUma={() => {
-              if (!isEntitled) {
-                triggerSubscriptionModal("उमा AI परामर्श के लिए वार्षिक सदस्यता सक्रिय करें।");
-                return;
-              }
               setIsUmaModalOpen(true);
             }}
             onOpenPremium={() => {
@@ -373,8 +369,8 @@ export function App() {
             }}
           />
         ) : (
-          /* Mobile-Fit Card Container (No heavy padding or excessive border on mobile) */
-          <div className="w-full min-w-0 overflow-x-hidden bg-[#FAF2E4] sm:bhojpatra-leaf sm:border-2 sm:border-[#8C6239]/40 rounded-xl sm:rounded-2xl p-1.5 sm:p-4 md:p-5 relative shadow-xs">
+          /* Modern Material 3 Glassmorphic Card Container */
+          <div className="w-full min-w-0 overflow-x-hidden bg-white/80 dark:bg-[#2A180E]/85 backdrop-blur-xl border border-[#8C6239]/20 rounded-2xl sm:rounded-3xl p-2 sm:p-5 relative shadow-[0_8px_30px_rgba(92,58,33,0.08)]">
             {/* Desktop Chapter Title Ribbon (Hidden on mobile to maximize screen fit) */}
             <div className="hidden sm:flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[#8C6239]/20 text-[#5C3A21] text-xs">
               <div className="flex items-center gap-1.5 font-bold">
@@ -413,18 +409,10 @@ export function App() {
                   panchang={panchang}
                   onNavigateTab={handleSelectTab}
                   onOpenUmaModal={(query?: string) => {
-                    if (!isEntitled) {
-                      triggerSubscriptionModal("उमा AI परामर्श के लिए वार्षिक सदस्यता सक्रिय करें।");
-                      return;
-                    }
                     if (query) setUmaInitialPrompt(query);
                     setIsUmaModalOpen(true);
                   }}
                   onOpenWhatsAppPanchang={() => {
-                    if (!isEntitled) {
-                      triggerSubscriptionModal("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु वार्षिक सदस्यता सक्रिय करें।");
-                      return;
-                    }
                     setIsWhatsAppPanchangOpen(true);
                   }}
                   onOpenSubscriptionModal={triggerSubscriptionModal}
@@ -513,27 +501,19 @@ export function App() {
         )}
       </main>
 
-      {/* Floating UMA Assistant Pill (Desktop Only - Mobile has it in Top Bar, Panchang Actions & More Menu) */}
-      <aside aria-label="Floating Vedic Assistant" className="hidden sm:block fixed bottom-6 right-6 z-30">
+      {/* Floating UMA Assistant FAB */}
+      <aside aria-label="Floating Vedic Assistant" className="hidden sm:block fixed bottom-8 right-8 z-30">
         <button
           onClick={() => {
-            if (!isEntitled) {
-              triggerSubscriptionModal("उमा AI परामर्श के लिए वार्षिक सदस्यता सक्रिय करें।");
-              return;
-            }
             setIsUmaModalOpen(true);
           }}
-          className="flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-[#5C3A21] to-[#735133] hover:from-[#462B17] hover:to-[#5C3A21] text-[#FAF2E4] border-2 border-[#B56A00] rounded-full shadow-xl transition transform hover:scale-105 active:scale-95 group cursor-pointer"
+          className="flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black rounded-full shadow-[0_6px_25px_rgba(245,158,11,0.5)] transition transform hover:scale-105 active:scale-95 group cursor-pointer uma-glow-badge m3-touch border-2 border-white/60"
         >
-          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-[#B56A00] text-white">
-            <Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
-            <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
-            </span>
+          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-stone-950 text-amber-400">
+            <Sparkles className="w-3.5 h-3.5 fill-amber-400 group-hover:rotate-12 transition-transform" />
           </div>
-          <span className="text-xs font-bold font-granth tracking-wide pr-1">
-            उमा AI {!isEntitled && '🔒'}
+          <span className="text-xs font-black tracking-wide pr-1">
+            उमा AI परामर्श ✨
           </span>
         </button>
       </aside>
@@ -556,6 +536,7 @@ export function App() {
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
         onOpenMore={() => setIsMoreModalOpen(true)}
+        onOpenUma={() => setIsUmaModalOpen(true)}
       />
 
       {/* More Options Sheet / Modal */}
@@ -565,10 +546,6 @@ export function App() {
         onSelectTab={handleSelectTab}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
         onOpenUmaModal={() => {
-          if (!isEntitled) {
-            triggerSubscriptionModal("उमा AI परामर्श के लिए वार्षिक सदस्यता सक्रिय करें।");
-            return;
-          }
           setIsUmaModalOpen(true);
         }}
         onToggleBookCover={() => setIsBookOpen(false)}

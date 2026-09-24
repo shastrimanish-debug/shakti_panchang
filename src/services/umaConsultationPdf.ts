@@ -349,21 +349,30 @@ export async function downloadUmaConsultationPdf(
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
 
-  // Trigger safe download
+  // Direct jsPDF native save (most reliable across mobile and desktop browsers)
+  let savedNatively = false;
   try {
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = fileName;
-    link.target = '_self';
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      if (document.body.contains(link)) document.body.removeChild(link);
-    }, 500);
-  } catch {
+    pdf.save(fileName);
+    savedNatively = true;
+  } catch (saveErr) {
+    console.warn('Native pdf.save failed, falling back to blob anchor download:', saveErr);
+  }
+
+  // Safe fallback via <a> element if native save fails
+  if (!savedNatively) {
     try {
-      pdf.save(fileName);
-    } catch {}
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        if (document.body.contains(link)) document.body.removeChild(link);
+      }, 500);
+    } catch (linkErr) {
+      console.error('All PDF download triggers failed:', linkErr);
+    }
   }
 
   return {
