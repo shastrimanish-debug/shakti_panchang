@@ -18,6 +18,10 @@ import {
   calculatePanchakAndBhadra,
   calculateHoraTable,
 } from '../services/horaPanchakYogas';
+import {
+  getAuspiciousWindows,
+  getInauspiciousWindows,
+} from '../services/choghadiya';
 import { downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { PdfSuccessModal } from './PdfSuccessModal';
 
@@ -72,6 +76,15 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   const solar = panchang.solar;
   const fmt = (d: Date) => formatPlaceTime(d);
 
+  const weekdayNum = panchang.date.getDay();
+  const auspiciousWindows = getAuspiciousWindows(solar);
+  const inauspiciousWindows = getInauspiciousWindows(solar, weekdayNum);
+  const abhijitWindow = auspiciousWindows.find((w) => w.title === 'अभिजित मुहूर्त');
+  const rahuWindow = inauspiciousWindows.find((w) => w.title === 'राहु काल');
+
+  const dayDurationHours = (solar.sunset.getTime() - solar.sunrise.getTime()) / 3600000;
+  const nightDurationHours = (solar.nextSunrise.getTime() - solar.sunset.getTime()) / 3600000;
+
   const specialYogas = calculateSpecialYogas(panchang);
   const { panchak, bhadra } = calculatePanchakAndBhadra(panchang);
   const { dayHoras, nightHoras, currentActiveHora } = calculateHoraTable(solar, panchang.date);
@@ -98,8 +111,8 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
 🌅 सूर्योदय: ${fmt(solar.sunrise)} | सूर्यास्त: ${fmt(solar.sunset)}
 🌙 चंद्र राशि: ${panchang.lunarRashi} | सूर्य राशि: ${panchang.solarRashi}
-✨ अभिजित मुहूर्त: ${panchang.muhurat.abhijit ? `${fmt(panchang.muhurat.abhijit.start)} - ${fmt(panchang.muhurat.abhijit.end)}` : 'आज नहीं'}
-⚠️ राहुकाल: ${panchang.muhurat.rahukaal ? `${fmt(panchang.muhurat.rahukaal.start)} - ${fmt(panchang.muhurat.rahukaal.end)}` : '—'}
+✨ अभिजित मुहूर्त: ${abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} - ${fmt(abhijitWindow.end)}` : 'आज नहीं'}
+⚠️ राहुकाल: ${rahuWindow ? `${fmt(rahuWindow.start)} - ${fmt(rahuWindow.end)}` : '—'}
 
 🌸 शक्ति वैदिक पंचांग द्वारा प्रामाणिक गणना`;
   };
@@ -522,7 +535,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               <div
                 key={i}
                 className={`p-2.5 rounded-xl border flex items-center justify-between ${
-                  h.isCurrent
+                  h.isActive
                     ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-400 font-black shadow-sm'
                     : 'bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700'
                 }`}
@@ -554,7 +567,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 <div className="text-[11px] text-emerald-700 dark:text-emerald-300">विजय व सर्वकार्य सिद्धि</div>
               </div>
               <span className="font-mono font-black text-emerald-900 dark:text-emerald-200">
-                {panchang.muhurat.abhijit ? `${fmt(panchang.muhurat.abhijit.start)} - ${fmt(panchang.muhurat.abhijit.end)}` : 'आज नहीं'}
+                {abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} - ${fmt(abhijitWindow.end)}` : 'आज नहीं'}
               </span>
             </div>
 
@@ -564,7 +577,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 <div className="text-[11px] text-rose-700 dark:text-rose-300">शुभ कार्य वर्जित</div>
               </div>
               <span className="font-mono font-black text-rose-900 dark:text-rose-200">
-                {panchang.muhurat.rahukaal ? `${fmt(panchang.muhurat.rahukaal.start)} - ${fmt(panchang.muhurat.rahukaal.end)}` : '—'}
+                {rahuWindow ? `${fmt(rahuWindow.start)} - ${fmt(rahuWindow.end)}` : '—'}
               </span>
             </div>
           </div>
@@ -581,11 +594,11 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-stone-800 border border-amber-500/20">
               <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">दिनमान (Day Duration)</div>
-              <div className="font-black text-[#462B17] dark:text-amber-100">{solar.dayDurationHours.toFixed(2)} घंटे</div>
+              <div className="font-black text-[#462B17] dark:text-amber-100">{dayDurationHours.toFixed(2)} घंटे</div>
             </div>
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-stone-800 border border-amber-500/20">
               <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">रात्रिमान (Night Duration)</div>
-              <div className="font-black text-[#462B17] dark:text-amber-100">{(24 - solar.dayDurationHours).toFixed(2)} घंटे</div>
+              <div className="font-black text-[#462B17] dark:text-amber-100">{nightDurationHours.toFixed(2)} घंटे</div>
             </div>
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-stone-800 border border-amber-500/20">
               <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">अक्षांश (Latitude)</div>
