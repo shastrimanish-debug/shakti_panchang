@@ -37,28 +37,34 @@ import { MoonPhaseChart } from './MoonPhaseChart';
 import {
   calculateSpecialYogas,
   calculatePanchakAndBhadra,
+  calculateHoraTable,
 } from '../services/horaPanchakYogas';
 import { HoraChakraView } from './HoraChakraView';
 import { PanchakBhadraCard } from './PanchakBhadraCard';
+import { DailyGocharView } from './DailyGocharView';
 
-export type PanchangSubPage = 'main' | 'moon' | 'muhurat' | 'disha';
+export type PanchangSubPage = 'main' | 'gochar' | 'hora' | 'muhurat' | 'disha';
 
 const SUB_PAGES: { id: PanchangSubPage; label: string; icon: string; fullLabel: string }[] = [
   { id: 'main', label: 'मुख्य', icon: '🪔', fullLabel: 'मुख्य पंचांग (५ अंग)' },
-  { id: 'moon', label: 'चन्द्रमा', icon: '🌙', fullLabel: 'चन्द्र दर्शन व खगोल' },
-  { id: 'muhurat', label: 'मुहूर्त', icon: '⏳', fullLabel: 'शुभ मुहूर्त व चौघड़िया' },
-  { id: 'disha', label: 'दिशा', icon: '🧭', fullLabel: 'यात्रा, दिशाशूल व श्लोक' },
+  { id: 'gochar', label: 'गोचर', icon: '🪐', fullLabel: 'दैनिक नवग्रह गोचर चक्र' },
+  { id: 'hora', label: 'होरा', icon: '⏳', fullLabel: '२४ घंटे का दैनिक होरा चक्र' },
+  { id: 'muhurat', label: 'मुहूर्त', icon: '🛡️', fullLabel: 'शुभ मुहूर्त, चौघड़िया व पञ्चक' },
+  { id: 'disha', label: 'दिशा', icon: '🧭', fullLabel: 'दिशाशूल, चन्द्र दर्शन व खगोल' },
 ];
 
 interface PanchangViewProps {
   panchang: VedicPanchangData;
   onNavigateTab: (tab: string) => void;
-  onOpenUmaModal?: () => void;
+  onOpenUmaModal?: (query?: string) => void;
   onOpenWhatsAppPanchang?: () => void;
   locationName?: string;
   currentDate?: Date;
   onDateChange?: (date: Date) => void;
   onOpenLocationModal?: () => void;
+  latitude?: number;
+  longitude?: number;
+  timezoneHours?: number;
 }
 
 export const PanchangView: React.FC<PanchangViewProps> = ({
@@ -70,10 +76,13 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   currentDate,
   onDateChange,
   onOpenLocationModal,
+  latitude = 23.1765,
+  longitude = 75.7885,
+  timezoneHours = 5.5,
 }) => {
-  // Flutter-style 4-page mobile-fit architecture
+  // 5-page mobile-fit architecture (मुख्य, गोचर, होरा, मुहूर्त, दिशा)
   const [activeSubTab, setActiveSubTab] = useState<PanchangSubPage>('main');
-  const [muhuratSubTab, setMuhuratSubTab] = useState<'shubh' | 'hora' | 'panchak'>('shubh');
+  const [muhuratSubTab, setMuhuratSubTab] = useState<'shubh' | 'panchak'>('shubh');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
@@ -81,8 +90,8 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
   const specialYogas = calculateSpecialYogas(panchang);
   const { panchak, bhadra } = calculatePanchakAndBhadra(panchang);
-
   const solar = panchang.solar;
+  const { currentActiveHora } = calculateHoraTable(solar, currentDate || panchang.date);
   const weekday = panchang.date.getDay();
   const auspicious = getAuspiciousWindows(solar);
   const inauspicious = getInauspiciousWindows(solar, weekday);
@@ -355,6 +364,55 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             </div>
           </div>
 
+          {/* Quick Gochar & Hora Action Cards (1-Tap Fast Jump & Live Info) */}
+          <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+            {/* Gochar Snapshot Card */}
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('gochar')}
+              className="bg-gradient-to-br from-[#FFF8E1] to-[#FFE082]/60 hover:to-[#FFE082] border border-[#FFE082] rounded-xl p-2 text-left shadow-2xs transition cursor-pointer active:scale-98 group"
+              title="दैनिक प्रत्यक्ष नवग्रह गोचर चक्र देखें"
+            >
+              <div className="flex items-center justify-between text-[10px] font-bold text-[#8C6239]">
+                <span className="flex items-center gap-1">
+                  <span>🪐</span>
+                  <span>दैनिक ग्रह गोचर</span>
+                </span>
+                <ChevronRight className="w-3 h-3 text-[#B56A00] group-hover:translate-x-0.5 transition" />
+              </div>
+              <div className="text-xs font-black text-[#5C3A21] mt-0.5 truncate">
+                सूर्य: {panchang.solarRashi} • चंद्र: {panchang.lunarRashi}
+              </div>
+              <div className="text-[9px] text-[#B56A00] font-bold mt-0.5 flex items-center justify-between">
+                <span>नवग्रह चक्र व सारणी</span>
+                <span>खोलें →</span>
+              </div>
+            </button>
+
+            {/* Hora Snapshot Card */}
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('hora')}
+              className="bg-gradient-to-br from-[#FAF2E4] to-[#F4E8D1] hover:to-[#EBDDC1] border border-[#8C6239]/30 rounded-xl p-2 text-left shadow-2xs transition cursor-pointer active:scale-98 group"
+              title="२४ घंटे का दैनिक होरा चक्र देखें"
+            >
+              <div className="flex items-center justify-between text-[10px] font-bold text-[#8C6239]">
+                <span className="flex items-center gap-1">
+                  <span>⏳</span>
+                  <span>वर्तमान होरा चक्र</span>
+                </span>
+                <ChevronRight className="w-3 h-3 text-[#5C3A21] group-hover:translate-x-0.5 transition" />
+              </div>
+              <div className="text-xs font-black text-[#5C3A21] mt-0.5 truncate">
+                {currentActiveHora ? `${currentActiveHora.symbol} ${currentActiveHora.planet} की होरा` : '२४ घंटे होरा'}
+              </div>
+              <div className="text-[9px] text-[#8C6239] font-bold mt-0.5 flex items-center justify-between">
+                <span>दिन-रात्रि होरा सारणी</span>
+                <span>खोलें →</span>
+              </div>
+            </button>
+          </div>
+
           {/* 4 Anga 2x2 Grid (Ultra-Compact Mobile Fit) */}
           <div className="grid grid-cols-2 gap-1.5">
             {/* 1. नक्षत्र */}
@@ -499,7 +557,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             {onOpenUmaModal && (
               <button
                 type="button"
-                onClick={onOpenUmaModal}
+                onClick={() => onOpenUmaModal?.()}
                 className="py-1.5 px-1 bg-[#c27803] hover:bg-[#a66602] text-[#2a1303] font-bold text-xs rounded-xl transition flex flex-col items-center justify-center gap-0.5 shadow-2xs cursor-pointer active:scale-95"
                 title="उमा AI से परामर्श करें"
               >
@@ -546,139 +604,70 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* PAGE 2: 🌙 चन्द्र दर्शन एवं खगोल (D3.js Moon Phase, Ephemeris & Ayanamsha) */}
+      {/* PAGE 2: 🪐 दैनिक प्रत्यक्ष नवग्रह गोचर चक्र (Live Planetary Transit) */}
       {/* ========================================================================= */}
-      {activeSubTab === 'moon' && (
-        <div className="space-y-2.5 animate-in fade-in duration-150">
-          {/* D3.js Moon Phase & Current Tithi Progress Visualization */}
-          <MoonPhaseChart panchang={panchang} />
-
-          {/* Key Ephemeris Metrics */}
-          <div className="bg-white border border-[#8C6239]/25 rounded-xl p-3 space-y-2 shadow-2xs">
-            <div className="text-xs font-black text-[#5C3A21] border-b border-[#8C6239]/15 pb-1 flex items-center justify-between">
-              <span>खगोलीय रेखांश एवं अयनांश</span>
-              <span className="text-[10px] text-[#8C6239]">दृक-सिद्धान्त</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-[#FAF2E4]/80 p-2 rounded-lg border border-[#8C6239]/20">
-                <span className="text-[10px] font-bold text-[#8C6239] block">अयनांश</span>
-                <span className="font-bold text-[#5C3A21] mt-0.5 block">
-                  {panchang.ayanamshaName}
-                </span>
-                <span className="font-mono text-[11px] text-[#735133]">
-                  {panchang.ayanamsha.toFixed(4)}°
-                </span>
-              </div>
-
-              <div className="bg-[#FAF2E4]/80 p-2 rounded-lg border border-[#8C6239]/20">
-                <span className="text-[10px] font-bold text-[#8C6239] block">गणना इंजन</span>
-                <span className="font-bold text-[#5C3A21] mt-0.5 block">
-                  Astronomical Ephemeris
-                </span>
-                <span className="text-[10px] text-[#735133]">
-                  High-Precision VSOP87
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Boundaries Spans (यदि उपलब्ध हों) */}
-          {(panchang.tithiSpan || panchang.nakshatraSpan || panchang.yogaSpan || panchang.karanaSpan) && (
-            <div className="bg-white border border-[#8C6239]/25 rounded-xl p-3 space-y-1.5 shadow-2xs">
-              <div className="text-xs font-black text-[#5C3A21] border-b border-[#8C6239]/15 pb-1">
-                काल आरंभ–समाप्ति सीमाएँ
-              </div>
-              {panchang.tithiSpan && (
-                <div className="text-xs text-[#735133]">
-                  <span className="font-bold text-[#5C3A21]">तिथि: </span>
-                  {fmt(panchang.tithiSpan.start)} – {fmt(panchang.tithiSpan.end)} → {panchang.tithiSpan.nextName}
-                </div>
-              )}
-              {panchang.nakshatraSpan && (
-                <div className="text-xs text-[#735133]">
-                  <span className="font-bold text-[#5C3A21]">नक्षत्र: </span>
-                  {fmt(panchang.nakshatraSpan.start)} – {fmt(panchang.nakshatraSpan.end)} → {panchang.nakshatraSpan.nextName}
-                </div>
-              )}
-              {panchang.yogaSpan && (
-                <div className="text-xs text-[#735133]">
-                  <span className="font-bold text-[#5C3A21]">योग: </span>
-                  {fmt(panchang.yogaSpan.start)} – {fmt(panchang.yogaSpan.end)} → {panchang.yogaSpan.nextName}
-                </div>
-              )}
-              {panchang.karanaSpan && (
-                <div className="text-xs text-[#735133]">
-                  <span className="font-bold text-[#5C3A21]">करण: </span>
-                  {fmt(panchang.karanaSpan.start)} {panchang.karanaSpan.name}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Collapsible Calculation Options (गणना विकल्प) */}
-          <div className="pt-0.5">
-            <button
-              type="button"
-              onClick={() => setShowCalcOptions(!showCalcOptions)}
-              className="w-full py-1.5 px-3 bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl text-xs font-bold text-[#5C3A21] flex items-center justify-between cursor-pointer transition shadow-2xs"
-            >
-              <span className="flex items-center gap-1.5">
-                <Settings2 className="w-3.5 h-3.5 text-[#B56A00]" />
-                गणना विकल्प (अयनांश, राहु, भाव)
-              </span>
-              {showCalcOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {showCalcOptions && (
-              <div className="mt-1.5">
-                <CalcSettingsPanel compact={true} />
-              </div>
-            )}
-          </div>
-        </div>
+      {activeSubTab === 'gochar' && (
+        <DailyGocharView
+          date={currentDate || panchang.date}
+          locationName={locationName}
+          lat={latitude}
+          lon={longitude}
+          tzHours={timezoneHours}
+          onOpenUmaModal={onOpenUmaModal}
+        />
       )}
 
       {/* ========================================================================= */}
-      {/* PAGE 3: ⏳ शुभ मुहूर्त, चौघड़िया, होरा चक्र एवं पञ्चक-भद्रा */}
+      {/* PAGE 3: ⏳ दैनिक २४ घंटे होरा चक्र (24-Hour Hora Table) */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'hora' && (
+        <HoraChakraView
+          solar={solar}
+          date={currentDate || panchang.date}
+          locationName={locationName}
+          onOpenUmaModal={onOpenUmaModal}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* PAGE 4: 🛡️ शुभ मुहूर्त, चौघड़िया एवं पञ्चक-भद्रा */}
       {/* ========================================================================= */}
       {activeSubTab === 'muhurat' && (
         <div className="space-y-2.5 animate-in fade-in duration-150">
-          {/* Muhurat 3-Way Sub-Switcher */}
+          {/* Muhurat Sub-Switcher */}
           <div className="flex items-center gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-2xs">
             <button
               type="button"
               onClick={() => setMuhuratSubTab('shubh')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer text-center ${
+              className={`flex-1 py-1.5 px-1 rounded-lg text-xs font-black transition cursor-pointer text-center ${
                 muhuratSubTab === 'shubh'
                   ? 'bg-[#5C3A21] text-white shadow-xs'
                   : 'text-[#5C3A21] hover:bg-[#F4E8D1]'
               }`}
             >
-              ⏳ मुहूर्त व चौघड़िया
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMuhuratSubTab('hora')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer text-center ${
-                muhuratSubTab === 'hora'
-                  ? 'bg-[#5C3A21] text-white shadow-xs'
-                  : 'text-[#5C3A21] hover:bg-[#F4E8D1]'
-              }`}
-            >
-              🪐 होरा चक्र (२४ घंटे)
+              ⏳ शुभ मुहूर्त व चौघड़िया
             </button>
 
             <button
               type="button"
               onClick={() => setMuhuratSubTab('panchak')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer text-center ${
+              className={`flex-1 py-1.5 px-1 rounded-lg text-xs font-black transition cursor-pointer text-center ${
                 muhuratSubTab === 'panchak'
                   ? 'bg-[#5C3A21] text-white shadow-xs'
                   : 'text-[#5C3A21] hover:bg-[#F4E8D1]'
               }`}
             >
-              🛡️ पञ्चक व भद्रा
+              🛡️ पञ्चक व भद्रा विचार
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('hora')}
+              className="py-1.5 px-2 rounded-lg text-xs font-bold text-[#B56A00] hover:bg-[#F4E8D1] transition cursor-pointer text-center flex items-center justify-center gap-1 shrink-0"
+              title="२४ घंटे का सम्पूर्ण होरा चक्र खोलें"
+            >
+              <span>🪐 होरा</span>
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
 
@@ -841,12 +830,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             </div>
           )}
 
-          {/* Sub-View 2: 24-Hour Planetary Hora Chakra */}
-          {muhuratSubTab === 'hora' && (
-            <HoraChakraView solar={solar} date={currentDate || panchang.date} />
-          )}
-
-          {/* Sub-View 3: Panchak and Bhadra Analysis */}
+          {/* Sub-View 2: Panchak and Bhadra Analysis */}
           {muhuratSubTab === 'panchak' && (
             <PanchakBhadraCard panchak={panchak} bhadra={bhadra} />
           )}
@@ -854,10 +838,11 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* PAGE 4: 🧭 यात्रा, दिशाशूल एवं दैनिक सुभाषितम् (Disha Shool & Daily Shloka) */}
+      {/* PAGE 5: 🧭 यात्रा, दिशाशूल, चन्द्र दर्शन एवं खगोल */}
       {/* ========================================================================= */}
       {activeSubTab === 'disha' && (
         <div className="space-y-2.5 animate-in fade-in duration-150">
+          {/* Disha Shool Card */}
           <div className="bg-[#FFF4DC] border border-[#FFE082] rounded-xl p-3.5 shadow-xs">
             <div className="flex items-start gap-2.5">
               <Compass className="w-6 h-6 text-[#B56A00] shrink-0 mt-0.5" />
@@ -876,12 +861,79 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             </div>
           </div>
 
+          {/* D3.js Moon Phase & Current Tithi Progress Visualization */}
+          <MoonPhaseChart panchang={panchang} />
+
+          {/* Key Ephemeris Metrics */}
+          <div className="bg-white border border-[#8C6239]/25 rounded-xl p-3 space-y-2 shadow-2xs">
+            <div className="text-xs font-black text-[#5C3A21] border-b border-[#8C6239]/15 pb-1 flex items-center justify-between">
+              <span>खगोलीय रेखांश एवं अयनांश</span>
+              <span className="text-[10px] text-[#8C6239]">दृक-सिद्धान्त</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-[#FAF2E4]/80 p-2 rounded-lg border border-[#8C6239]/20">
+                <span className="text-[10px] font-bold text-[#8C6239] block">अयनांश</span>
+                <span className="font-bold text-[#5C3A21] mt-0.5 block">
+                  {panchang.ayanamshaName}
+                </span>
+                <span className="font-mono text-[11px] text-[#735133]">
+                  {panchang.ayanamsha.toFixed(4)}°
+                </span>
+              </div>
+
+              <div className="bg-[#FAF2E4]/80 p-2 rounded-lg border border-[#8C6239]/20">
+                <span className="text-[10px] font-bold text-[#8C6239] block">गणना इंजन</span>
+                <span className="font-bold text-[#5C3A21] mt-0.5 block">
+                  Astronomical Ephemeris
+                </span>
+                <span className="text-[10px] text-[#735133]">
+                  High-Precision VSOP87
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Boundaries Spans (यदि उपलब्ध हों) */}
+          {(panchang.tithiSpan || panchang.nakshatraSpan || panchang.yogaSpan || panchang.karanaSpan) && (
+            <div className="bg-white border border-[#8C6239]/25 rounded-xl p-3 space-y-1.5 shadow-2xs">
+              <div className="text-xs font-black text-[#5C3A21] border-b border-[#8C6239]/15 pb-1">
+                काल आरंभ–समाप्ति सीमाएँ
+              </div>
+              {panchang.tithiSpan && (
+                <div className="text-xs text-[#735133]">
+                  <span className="font-bold text-[#5C3A21]">तिथि: </span>
+                  {fmt(panchang.tithiSpan.start)} – {fmt(panchang.tithiSpan.end)} → {panchang.tithiSpan.nextName}
+                </div>
+              )}
+              {panchang.nakshatraSpan && (
+                <div className="text-xs text-[#735133]">
+                  <span className="font-bold text-[#5C3A21]">नक्षत्र: </span>
+                  {fmt(panchang.nakshatraSpan.start)} – {fmt(panchang.nakshatraSpan.end)} → {panchang.nakshatraSpan.nextName}
+                </div>
+              )}
+              {panchang.yogaSpan && (
+                <div className="text-xs text-[#735133]">
+                  <span className="font-bold text-[#5C3A21]">योग: </span>
+                  {fmt(panchang.yogaSpan.start)} – {fmt(panchang.yogaSpan.end)} → {panchang.yogaSpan.nextName}
+                </div>
+              )}
+              {panchang.karanaSpan && (
+                <div className="text-xs text-[#735133]">
+                  <span className="font-bold text-[#5C3A21]">करण: </span>
+                  {fmt(panchang.karanaSpan.start)} {panchang.karanaSpan.name}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Travel Advice Button */}
           <div className="bg-white border border-[#8C6239]/25 rounded-xl p-3 shadow-2xs space-y-1.5">
             <div className="text-xs font-black text-[#5C3A21]">यात्रा मार्गदर्शन</div>
             <div className="text-xs text-[#735133] leading-relaxed">
               शास्त्रानुसार जिस दिशा में शूल हो, उस दिशा में यात्रा करने से कार्य में विघ्न व विलंब हो सकता है। यदि अत्यंत आवश्यक हो, तो परिहार वस्तु ग्रहण करके पाँच पग पीछे हटकर शुभ मुहूर्त में प्रस्थान करें।
             </div>
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={() => onNavigateTab('yatra')}
@@ -890,6 +942,26 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 सम्पूर्ण यात्रा दिशाशूल व दिशा सलाह खोलें →
               </button>
             </div>
+          </div>
+
+          {/* Collapsible Calculation Options (गणना विकल्प) */}
+          <div className="pt-0.5">
+            <button
+              type="button"
+              onClick={() => setShowCalcOptions(!showCalcOptions)}
+              className="w-full py-1.5 px-3 bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl text-xs font-bold text-[#5C3A21] flex items-center justify-between cursor-pointer transition shadow-2xs"
+            >
+              <span className="flex items-center gap-1.5">
+                <Settings2 className="w-3.5 h-3.5 text-[#B56A00]" />
+                गणना विकल्प (अयनांश, राहु, भाव)
+              </span>
+              {showCalcOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {showCalcOptions && (
+              <div className="mt-1.5">
+                <CalcSettingsPanel compact={true} />
+              </div>
+            )}
           </div>
 
           {/* Daily Shloka Verse of Wisdom (दैनिक सुभाषितम्) */}
@@ -910,7 +982,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
         <div className="flex items-center gap-1 text-[11px] font-bold text-[#8C6239]">
           <Layers className="w-3 h-3 text-[#B56A00]" />
-          <span>पृष्ठ {currentSubPageIdx + 1}/4 : {SUB_PAGES[currentSubPageIdx].label}</span>
+          <span>पृष्ठ {currentSubPageIdx + 1}/{SUB_PAGES.length} : {SUB_PAGES[currentSubPageIdx].label}</span>
         </div>
 
         <button

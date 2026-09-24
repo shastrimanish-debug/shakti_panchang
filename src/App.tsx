@@ -100,6 +100,7 @@ export function App() {
   // Modals state
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [isUmaModalOpen, setIsUmaModalOpen] = useState<boolean>(false);
+  const [umaInitialPrompt, setUmaInitialPrompt] = useState<string | null>(null);
   const [isSavedProfilesModalOpen, setIsSavedProfilesModalOpen] = useState<boolean>(false);
   const [isWhatsAppPanchangOpen, setIsWhatsAppPanchangOpen] = useState<boolean>(false);
   const [isBrandingModalOpen, setIsBrandingModalOpen] = useState<boolean>(false);
@@ -311,8 +312,7 @@ export function App() {
             onOpenLocation={() => setIsLocationModalOpen(true)}
             onOpenUma={() => setIsUmaModalOpen(true)}
             onOpenPremium={() => {
-              setSubscriptionReason('वार्षिक सदस्यता सक्रिय करें और सभी विशेषाधिकार प्राप्त करें।');
-              setIsSubscriptionModalOpen(true);
+              setIsBrandingModalOpen(true);
             }}
           />
         ) : (
@@ -355,12 +355,18 @@ export function App() {
                 <PanchangView
                   panchang={panchang}
                   onNavigateTab={handleSelectTab}
-                  onOpenUmaModal={() => setIsUmaModalOpen(true)}
+                  onOpenUmaModal={(query?: string) => {
+                    if (query) setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
                   onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
                   locationName={currentLocation.name}
                   currentDate={currentDate}
                   onDateChange={setCurrentDate}
                   onOpenLocationModal={() => setIsLocationModalOpen(true)}
+                  latitude={currentLocation.latitude}
+                  longitude={currentLocation.longitude}
+                  timezoneHours={currentLocation.timezoneHours}
                 />
               )}
 
@@ -514,12 +520,16 @@ export function App() {
       {/* Dialog Modals */}
       <UmaAssistantModal
         isOpen={isUmaModalOpen}
-        onClose={() => setIsUmaModalOpen(false)}
+        onClose={() => {
+          setIsUmaModalOpen(false);
+          setUmaInitialPrompt(null);
+        }}
         panchang={panchang}
         activeKundali={activeKundali}
         onNavigateTab={handleSelectTab}
         isAudioEnabled={isAudioEnabled}
         locationName={currentLocation.name}
+        initialPrompt={umaInitialPrompt}
       />
 
       <LocationModal

@@ -3,7 +3,7 @@ import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
 import { askUma, AskUmaResponse } from '@/lib/uma';
-import { speakUma, stopUmaSpeech, isUmaSpeaking } from '@/lib/umaSpeech';
+import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech } from '@/lib/umaSpeech';
 import { analyzeKundali } from '../services/predictions';
 import { getAstrologerBranding } from '../services/storage';
 import {
@@ -62,6 +62,7 @@ interface UmaAssistantModalProps {
   onNavigateTab?: (tabId: string) => void;
   isAudioEnabled?: boolean;
   locationName?: string;
+  initialPrompt?: string | null;
 }
 
 const CATEGORY_TABS = [
@@ -177,6 +178,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   onNavigateTab,
   isAudioEnabled = true,
   locationName = 'वाराणसी, भारत',
+  initialPrompt,
 }) => {
   const initialGreeting = activeKundali
     ? `॥ श्री गणेशाय नमः ॥\nआयुष्मान भव! मैं उमा हूँ — आपकी सनातन वैदिक ज्योतिषाचार्य एवं दैवज्ञ मार्गदर्शिका।\n\nमैंने आपकी जन्मपत्रिका **${activeKundali.name}** (लग्न: ${activeKundali.lagnaRashi}, चंद्र राशि: ${activeKundali.moonRashi}, नक्षत्र: ${activeKundali.nakshatra}, वर्तमान महादशा: ${activeKundali.mahadasha}) का संपूर्ण संज्ञान ले लिया है। आप अपनी आजीविका, व्यापार, दांपत्य, स्वास्थ्य, धन, गोचर अथवा वर्तमान ग्रह दशा से संबंधित कोई भी प्रश्न पूछें। मैं शास्त्रोक्त फल, संस्कृत श्लोक एवं सात्विक वैदिक उपाय प्रस्तुत करूँगी।`
@@ -190,8 +192,14 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       timestamp: new Date(),
     },
   ]);
-  const [inputQuery, setInputQuery] = useState('');
+  const [inputQuery, setInputQuery] = useState(initialPrompt || '');
   const [activeCategory, setActiveCategory] = useState('all');
+
+  useEffect(() => {
+    if (isOpen && initialPrompt) {
+      setInputQuery(initialPrompt);
+    }
+  }, [isOpen, initialPrompt]);
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
