@@ -311,7 +311,7 @@ export function App() {
   }, [handlePrevPage, handleNextPage]);
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden relative bg-[#F4E8D1] text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
 
@@ -339,17 +339,17 @@ export function App() {
 
       {/* Floating Page Turn Toast Notice */}
       {pageTurnNotice && (
-        <div className="fixed top-28 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
-          <div className="px-4 py-2 bg-[#2C180C]/95 text-[#FAF2E4] border-2 border-[#B56A00] rounded-full shadow-2xl text-xs sm:text-sm font-bold font-granth flex items-center gap-2 backdrop-blur-xs">
-            <span className="text-[#FFD88A]">✦</span>
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+          <div className="px-4 py-2 bg-[#2C180C]/95 text-[#FAF2E4] border border-amber-500/50 rounded-full shadow-2xl text-xs sm:text-sm font-bold font-granth flex items-center gap-2 backdrop-blur-md">
+            <span className="text-amber-300">✦</span>
             <span>{pageTurnNotice}</span>
-            <span className="text-[#FFD88A]">✦</span>
+            <span className="text-amber-300">✦</span>
           </div>
         </div>
       )}
 
       {/* Main Vedic Content Presentation Area (Mobile Fit & Responsive) */}
-      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-1.5 sm:px-4 py-1 pb-20 sm:pb-12 min-w-0 overflow-x-hidden">
+      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-2 sm:px-4 py-2 pb-24 sm:pb-16 min-w-0 overflow-x-hidden">
         {!isBookOpen ? (
           <BookCover
             onOpenBook={(targetTabId) => {
@@ -370,7 +370,7 @@ export function App() {
           />
         ) : (
           /* Modern Material 3 Glassmorphic Card Container */
-          <div className="w-full min-w-0 overflow-x-hidden bg-white/80 dark:bg-[#2A180E]/85 backdrop-blur-xl border border-[#8C6239]/20 rounded-2xl sm:rounded-3xl p-2 sm:p-5 relative shadow-[0_8px_30px_rgba(92,58,33,0.08)]">
+          <div className="w-full min-w-0 overflow-x-hidden flutter-card p-3 sm:p-5 relative">
             {/* Desktop Chapter Title Ribbon (Hidden on mobile to maximize screen fit) */}
             <div className="hidden sm:flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[#8C6239]/20 text-[#5C3A21] text-xs">
               <div className="flex items-center gap-1.5 font-bold">

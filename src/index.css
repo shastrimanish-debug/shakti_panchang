@@ -30,6 +30,7 @@
     padding: 0;
     overscroll-behavior-x: none;
     -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent;
   }
 
   #root {
@@ -46,67 +47,91 @@
   }
 }
 
-.bhojpatra-bg {
-  background-color: #faf2de;
-  background-image: radial-gradient(#d6bd94 0.75px, transparent 0.75px), radial-gradient(#ecd4ad 0.75px, #faf2de 0.75px);
-  background-size: 30px 30px;
-  background-position: 0 0, 15px 15px;
+/* 🌟 Flutter Material 3 Depth & Shading System */
+.flutter-scaffold-bg {
+  background: radial-gradient(circle at 50% 0%, #fff7ea 0%, #f7edd8 40%, #eddcc0 100%);
+  background-attachment: fixed;
 }
 
-.bhojpatra-leaf {
-  background: linear-gradient(135deg, #fdf8eb 0%, #f7ebd0 50%, #f1e0be 100%);
-  border: 1px solid #d4b584;
-  position: relative;
-  box-shadow: 0 4px 15px -3px rgba(82, 45, 18, 0.12), 0 1px 3px rgba(82, 45, 18, 0.08), inset 0 0 12px rgba(184, 134, 11, 0.06);
+.flutter-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(184, 134, 11, 0.18);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 20px -2px rgba(92, 58, 33, 0.06), 0 2px 6px -1px rgba(92, 58, 33, 0.04);
 }
 
-.granth-border {
-  border: 2px solid #8f2121;
-  outline: 2px solid #c27803;
-  outline-offset: -5px;
+.flutter-card-elevated {
+  background: #ffffff;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(184, 134, 11, 0.16);
+  box-shadow: 0 8px 30px -4px rgba(92, 58, 33, 0.1), 0 3px 10px -2px rgba(92, 58, 33, 0.06);
 }
 
-.granth-book-spine {
-  box-shadow: inset 25px 0 35px -15px rgba(62, 34, 13, 0.18), inset 6px 0 10px rgba(62, 34, 13, 0.1);
+.flutter-hero-gradient {
+  background: linear-gradient(135deg, #4A2810 0%, #381E0C 50%, #2A1507 100%);
+  border: 1px solid rgba(255, 216, 138, 0.25);
+  box-shadow: 0 10px 30px -5px rgba(44, 24, 12, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15);
 }
 
-.shloka-banner {
-  background: linear-gradient(90deg, rgba(143, 33, 33, 0.08) 0%, rgba(194, 120, 3, 0.15) 50%, rgba(143, 33, 33, 0.08) 100%);
-  border-top: 1px solid #c27803;
-  border-bottom: 1px solid #c27803;
+.flutter-pill-tab {
+  transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* ताम्र-रात्रि मोड (Dark Bronze / Night Puja Theme) */
+.flutter-pill-tab-active {
+  background: linear-gradient(135deg, #5C3A21 0%, #462B17 100%);
+  color: #FFD88A;
+  box-shadow: 0 4px 14px rgba(70, 43, 23, 0.35);
+}
+
+/* Flutter Touch Ripple Feel */
+.m3-touch {
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.12s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.m3-touch:active {
+  transform: scale(0.965);
+}
+
+/* Glowing Jewel Badge */
+.uma-glow-badge {
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.55);
+  animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 6px 28px rgba(245, 158, 11, 0.75);
+    transform: scale(1.03);
+  }
+}
+
+/* Night / Bronze Theme */
 .tamra-theme {
   background-color: #17110e !important;
   color: #f7ebd0 !important;
 }
 
-.tamra-theme .bhojpatra-bg {
-  background-color: #17110e !important;
-  background-image: radial-gradient(#3a271c 0.75px, transparent 0.75px), radial-gradient(#291b13 0.75px, #17110e 0.75px) !important;
+.tamra-theme .flutter-scaffold-bg {
+  background: radial-gradient(circle at 50% 0%, #2A1A12 0%, #1D120B 50%, #120A06 100%) !important;
 }
 
-.tamra-theme .bhojpatra-leaf {
-  background: linear-gradient(135deg, #261b15 0%, #1e1510 50%, #160e0a 100%) !important;
-  border: 1px solid #734c26 !important;
-  box-shadow: 0 4px 20px -3px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(194, 120, 3, 0.12) !important;
+.tamra-theme .flutter-card {
+  background: rgba(36, 25, 19, 0.92) !important;
+  border-color: rgba(184, 122, 60, 0.25) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
 }
 
-.tamra-theme .granth-leaf-stack {
-  box-shadow: 
-    0 1px 1px rgba(0, 0, 0, 0.4),
-    0 4px 0 -1px #2a1c14,
-    0 5px 1px rgba(0, 0, 0, 0.4),
-    0 8px 0 -2px #20150e,
-    0 9px 2px rgba(0, 0, 0, 0.45),
-    0 12px 0 -3px #180f0a !important;
-}
-
-.tamra-theme .shloka-banner {
-  background: linear-gradient(90deg, rgba(143, 33, 33, 0.25) 0%, rgba(194, 120, 3, 0.3) 50%, rgba(143, 33, 33, 0.25) 100%) !important;
-  border-color: #b56a00 !important;
-  color: #ffd88a !important;
+.tamra-theme .flutter-card-elevated {
+  background: #231710 !important;
+  border-color: rgba(184, 122, 60, 0.3) !important;
 }
 
 .tamra-theme .bg-\[\#FAF2E4\],
@@ -139,140 +164,18 @@
   border-color: rgba(184, 122, 60, 0.35) !important;
 }
 
-.tamra-theme ::-webkit-scrollbar-track {
-  background: #241913 !important;
-}
-.tamra-theme ::-webkit-scrollbar-thumb {
-  background: #8c531d !important;
-}
-
-/* Custom Granth scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1e0be;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c27803;
-  border-radius: 4px;
+  background: #d4b584;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #8f2121;
-}
-
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 20s linear infinite;
-}
-
-/* Material 3 & Glassmorphic Modern App Enhancements */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(140, 98, 57, 0.16);
-  box-shadow: 0 4px 24px -2px rgba(92, 58, 33, 0.08), 0 1px 2px rgba(92, 58, 33, 0.04);
-}
-
-.glass-panel-warm {
-  background: rgba(250, 242, 228, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(140, 98, 57, 0.22);
-  box-shadow: 0 4px 24px -2px rgba(92, 58, 33, 0.09);
-}
-
-.m3-card {
-  border-radius: 1.25rem;
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-}
-
-.m3-touch {
-  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s ease;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.m3-touch:active {
-  transform: scale(0.96);
-}
-
-.uma-glow-badge {
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
-  animation: pulse-glow 2.5s infinite ease-in-out;
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 22px rgba(245, 158, 11, 0.7);
-  }
-}
-
-.tamra-theme .glass-panel {
-  background: rgba(36, 25, 19, 0.85) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-color: rgba(184, 122, 60, 0.25) !important;
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45) !important;
-}
-
-.tamra-theme .glass-panel-warm {
-  background: rgba(46, 32, 24, 0.88) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-color: rgba(184, 122, 60, 0.3) !important;
-}
-
-/* Authentic 3D Granth Page Turn Keyframes - Screen-Fit (Zero horizontal overflow) */
-@keyframes pageTurnForward {
-  0% {
-    opacity: 0.45;
-    transform: perspective(1000px) rotateY(-5deg) scale(0.99);
-  }
-  100% {
-    opacity: 1;
-    transform: perspective(1000px) rotateY(0deg) scale(1);
-  }
-}
-
-@keyframes pageTurnBackward {
-  0% {
-    opacity: 0.45;
-    transform: perspective(1000px) rotateY(5deg) scale(0.99);
-  }
-  100% {
-    opacity: 1;
-    transform: perspective(1000px) rotateY(0deg) scale(1);
-  }
-}
-
-.book-page-turn-forward {
-  animation: pageTurnForward 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
-  transform-origin: left center;
-}
-
-.book-page-turn-backward {
-  animation: pageTurnBackward 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
-  transform-origin: right center;
-}
-
-/* Granth leaf edges simulation */
-.granth-leaf-stack {
-  box-shadow: 
-    0 1px 1px rgba(140, 98, 57, 0.2),
-    0 4px 0 -1px #E5D2B8,
-    0 5px 1px rgba(140, 98, 57, 0.2),
-    0 8px 0 -2px #D9C4A9,
-    0 9px 2px rgba(140, 98, 57, 0.25),
-    0 12px 0 -3px #CAA882,
-    0 15px 25px rgba(44, 24, 16, 0.35);
+  background: #b56a00;
 }
