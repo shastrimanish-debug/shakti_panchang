@@ -349,7 +349,7 @@ export function App() {
       )}
 
       {/* Main Vedic Content Presentation Area (Mobile Fit & Responsive) */}
-      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-2 sm:px-4 py-2 pb-24 sm:pb-16 min-w-0 overflow-x-hidden">
+      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-2 sm:px-4 py-2 pb-10 min-w-0 overflow-x-hidden">
         {!isBookOpen ? (
           <BookCover
             onOpenBook={(targetTabId) => {
@@ -370,7 +370,7 @@ export function App() {
           />
         ) : (
           /* Modern Material 3 Glassmorphic Card Container */
-          <div className="w-full min-w-0 overflow-x-hidden flutter-card p-3 sm:p-5 relative">
+          <div className="w-full min-w-0 overflow-x-hidden flutter-card p-3 sm:p-5 relative shadow-xs border border-[#EADBCC]">
             {/* Desktop Chapter Title Ribbon (Hidden on mobile to maximize screen fit) */}
             <div className="hidden sm:flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[#8C6239]/20 text-[#5C3A21] text-xs">
               <div className="flex items-center gap-1.5 font-bold">
@@ -519,14 +519,14 @@ export function App() {
       </aside>
 
       {/* Traditional Bhojpatra Footer (Compact with bottom padding for mobile navigation bar) */}
-      <footer className="bg-[#462B17] text-[#D9C4A9] border-t border-[#8C6239] py-4 px-3 mb-16 sm:mb-0 text-center text-xs space-y-1">
-        <div className="font-granth text-xs sm:text-sm text-[#FAF2E4] tracking-wide">
+      <footer className="bg-[#F5ECE0] text-[#5C3A21] border-t border-[#DFCBB5] py-4 px-3 mb-24 sm:mb-8 text-center text-xs space-y-1 select-none">
+        <div className="font-granth text-xs sm:text-sm text-[#2C180C] font-black tracking-wide">
           ॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥
         </div>
-        <p className="text-[11px] text-[#A89279]">
+        <p className="text-[11px] text-[#6E472A] font-medium">
           शक्ति पंचांग • प्रामाणिक वैदिक खगोलशास्त्र एवं ज्योतिषीय पंचांग ग्रन्थ
         </p>
-        <p className="text-[10px] text-[#8C6239]">
+        <p className="text-[10px] text-[#8C4A00] font-semibold">
           गणना: सूर्य सिद्धान्त एवं लाहिरी अयनांश • स्थान: {currentLocation.name}
         </p>
       </footer>
