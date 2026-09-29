@@ -1,0 +1,7 @@
+{
+  "name": "Shakti Panchang & Vidvan Jyotish Uma",
+  "description": "Comprehensive Vedic Panchang, Kundali, Horoscope, Muhurat and AI Vedic Astrologer Uma.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
