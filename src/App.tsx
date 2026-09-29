@@ -962,7 +962,7 @@ export default function App() {
       {/* Footer */}
       <footer className="bg-stone-900 text-amber-200/70 text-center py-6 border-t border-amber-900 text-xs mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p>© 2026 शक्ति पंचांग & विद्वान ज्योतिष उमा. सर्वाधिकार सुरक्षित।</p>
+          <p>© 2026 शक्ति पंचांग & विद्वान ज्योतिष उमा (v1.0.8 V8). सर्वाधिकार सुरक्षित।</p>
           <div className="flex items-center gap-4 text-amber-300">
             <span>ॐ सर्वे भवन्तु सुखिनः</span>
             <span>•</span>
