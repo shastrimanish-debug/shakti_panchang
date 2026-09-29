@@ -1,14 +1,16 @@
-name: Build Android APK & AAB
+name: Build Android APK & AAB and Publish Release
 
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    tags:
+      - 'v*'
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,10 +49,15 @@ jobs:
             ./gradlew bundleRelease assembleRelease
           fi
 
-      - name: Upload Release Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release & Upload APK/AAB Assets
+        uses: softprops/action-gh-release@v2
         with:
-          name: release-apk-aab
-          path: |
+          tag_name: v1.0.8
+          name: "Shakti Panchang v1.0.8 (Play Store Ready)"
+          files: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/release/*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
