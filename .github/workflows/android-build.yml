@@ -30,11 +30,11 @@ jobs:
         npm install
         npm run build || true
 
-    - name: Generate Gradle Wrapper and Build Android App
+    - name: Build Android App (Gradle)
       run: |
-        gradle wrapper --gradle-version 8.5 || true
-        chmod +x gradlew 2>/dev/null || true
-        ./gradlew assembleDebug || gradle assembleDebug
+        cd android
+        chmod +x gradlew
+        ./gradlew assembleDebug
 
     - name: Find and Verify APK
       run: |
@@ -45,9 +45,7 @@ jobs:
       with:
         name: shakti-panchang-v1.0.8-apk
         path: |
-          app/build/outputs/apk/debug/*.apk
           **/build/outputs/apk/debug/*.apk
-          build/outputs/apk/debug/*.apk
           *.apk
         if-no-files-found: warn
 
@@ -55,9 +53,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          app/build/outputs/apk/debug/*.apk
           **/build/outputs/apk/debug/*.apk
-          build/outputs/apk/debug/*.apk
           *.apk
         tag_name: v1.0.8-release
         name: Shakti Panchang v1.0.8 Release
