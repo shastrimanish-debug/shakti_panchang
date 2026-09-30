@@ -1,0 +1,7 @@
+{
+  "name": "Shakti Panchang",
+  "description": "Fully loaded Hindu Calendar, Daily Panchang, Festivals, Muhurat, Rashi Bhavishya & Mantras",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

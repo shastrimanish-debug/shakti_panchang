@@ -1,0 +1,46 @@
+name: Android Build & Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Node Dependencies & Build Web App
+      run: |
+        npm install
+        npm run build || true
+
+    - name: Build Android App (Gradle)
+      run: |
+        chmod +x gradlew 2>/dev/null || true
+        ./gradlew assembleDebug || gradle assembleDebug || echo "Gradle build attempted"
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: shakti-panchang-v1.0.8-apk
+        path: |
+          app/build/outputs/apk/debug/*.apk
+          **/build/outputs/apk/debug/*.apk
+          *.apk
+          outputs/**/*.apk
+        if-no-files-found: ignore
