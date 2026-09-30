@@ -3,12 +3,13 @@ name: Android Build & Release
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -27,12 +28,16 @@ jobs:
     - name: Install Node Dependencies & Build Web App
       run: |
         npm install
-        npm run build || true
+        npm run build
 
     - name: Build Android App (Gradle)
       run: |
         chmod +x gradlew 2>/dev/null || true
-        ./gradlew assembleDebug || gradle assembleDebug || echo "Gradle build attempted"
+        ./gradlew assembleDebug || ./gradlew build || gradle assembleDebug
+
+    - name: Find and Verify APK
+      run: |
+        find . -name "*.apk" -ls
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
@@ -41,6 +46,22 @@ jobs:
         path: |
           app/build/outputs/apk/debug/*.apk
           **/build/outputs/apk/debug/*.apk
+          build/outputs/apk/debug/*.apk
           *.apk
-          outputs/**/*.apk
-        if-no-files-found: ignore
+        if-no-files-found: warn
+
+    - name: Publish to GitHub Releases
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          app/build/outputs/apk/debug/*.apk
+          **/build/outputs/apk/debug/*.apk
+          build/outputs/apk/debug/*.apk
+          *.apk
+        tag_name: v1.0.8
+        name: Shakti Panchang v1.0.8 Release
+        body: "Automatic Release for Shakti Panchang v1.0.8 containing the latest Vedic Panchang, Horoscope, Kundali, and precise astronomical engine."
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
