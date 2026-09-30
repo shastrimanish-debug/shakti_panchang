@@ -32,7 +32,7 @@ jobs:
 
     - name: Build Android App (Gradle)
       run: |
-        cd android
+        gradle wrapper --gradle-version 8.5
         chmod +x gradlew
         ./gradlew assembleDebug
 
