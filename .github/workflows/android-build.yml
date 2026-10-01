@@ -43,7 +43,7 @@ jobs:
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: shakti-panchang-v1.0.8-apk
+        name: shakti-panchang-v1.0.9-apk
         path: |
           **/build/outputs/apk/debug/*.apk
           *.apk
@@ -55,9 +55,9 @@ jobs:
         files: |
           **/build/outputs/apk/debug/*.apk
           *.apk
-        tag_name: v1.0.8-release
-        name: Shakti Panchang v1.0.8 Release
-        body: "Automatic Release for Shakti Panchang v1.0.8 APK containing full Vedic Panchang, Horoscope, and Jetpack Compose screens."
+        tag_name: v1.0.9-release
+        name: Shakti Panchang v1.0.9 Release (Complete Vedic Edition with Vastu & Upay)
+        body: "Automatic Release for Shakti Panchang v1.0.9 APK containing Full Vedic Panchang, Durga Saptashati Book Reader with Index, Vastu Shastra Guide, Miraculous Upay for Debt/Career/Education, and 40-Year Experienced Master Astrologer Uma AI."
         draft: false
         prerelease: false
         fail_on_unmatched_files: false
