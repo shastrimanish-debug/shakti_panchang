@@ -12,6 +12,8 @@ export type ActiveTab =
   | 'ratna'
   | 'mantra'
   | 'rashifal'
+  | 'upay'
+  | 'vastu'
   | 'uma';
 
 export interface PanchangData {

@@ -35,7 +35,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'gochar', label: 'ग्रह गोचर' },
     { id: 'ratna', label: 'रत्न विचार' },
     { id: 'mantra', label: 'मंत्र & स्तोत्र' },
-    { id: 'rashifal', label: 'दैनिक राशिफल' }
+    { id: 'rashifal', label: 'दैनिक राशिफल' },
+    { id: 'upay', label: 'चमत्कारिक उपाय' },
+    { id: 'vastu', label: 'वास्तु शास्त्र' },
+    { id: 'uma', label: 'उमा AI ज्योतिषी' }
   ];
 
   return (

@@ -10,6 +10,8 @@ import { KundaliView } from './components/KundaliView';
 import { VratKathaView } from './components/VratKathaView';
 import { ChoghadiyaView } from './components/ChoghadiyaView';
 import { SadeSatiView } from './components/SadeSatiView';
+import { UpayView } from './components/UpayView';
+import { VastuView } from './components/VastuView';
 import { UmaAssistantModal } from './components/UmaAssistantModal';
 import { LocationModal } from './components/LocationModal';
 import { Star, Shield, Sparkles, RefreshCw, Heart, Compass, CheckCircle2 } from 'lucide-react';
@@ -22,6 +24,19 @@ export default function App() {
   
   const [isUmaOpen, setIsUmaOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'uma') {
+      setIsUmaOpen(true);
+    }
+  }, [activeTab]);
+
+  const handleCloseUma = () => {
+    setIsUmaOpen(false);
+    if (activeTab === 'uma') {
+      setActiveTab('dashboard');
+    }
+  };
 
   // Rashifal state
   const [selectedRashi, setSelectedRashi] = useState('मेष (Aries)');
@@ -106,6 +121,14 @@ export default function App() {
 
         {activeTab === 'sadesati' && (
           <SadeSatiView />
+        )}
+
+        {activeTab === 'upay' && (
+          <UpayView />
+        )}
+
+        {activeTab === 'vastu' && (
+          <VastuView />
         )}
 
         {activeTab === 'milan' && (
@@ -273,7 +296,7 @@ export default function App() {
 
       <UmaAssistantModal 
         isOpen={isUmaOpen}
-        onClose={() => setIsUmaOpen(false)}
+        onClose={handleCloseUma}
       />
 
       <LocationModal 
