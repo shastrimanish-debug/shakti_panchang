@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Calendar, Sparkles, Clock, BookOpen, Heart, ArrowRight, Shield } from 'lucide-react';
+import { Sun, Moon, Calendar, Sparkles, Clock, BookOpen, Heart, ArrowRight, Shield, Compass, Star } from 'lucide-react';
 import { PanchangData, ActiveTab } from '../types';
 
 interface DashboardViewProps {
@@ -47,11 +47,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ panchang, setActiv
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {[
           { id: 'panchang', label: 'दैनिक पंचांग', icon: Sun, color: 'bg-orange-500 text-white' },
-          { id: 'festivals', label: 'व्रत व त्यौहार', icon: Calendar, color: 'bg-amber-600 text-white' },
+          { id: 'upay', label: 'चमत्कारिक उपाय', icon: Sparkles, color: 'bg-amber-700 text-white' },
+          { id: 'vastu', label: 'वास्तु शास्त्र', icon: Compass, color: 'bg-teal-600 text-white' },
+          { id: 'vrat', label: 'व्रत कथा & सप्तशती', icon: BookOpen, color: 'bg-indigo-600 text-white' },
           { id: 'kundali', label: 'जन्म कुंडली', icon: Shield, color: 'bg-red-600 text-white' },
-          { id: 'milan', label: 'गुण मिलान', icon: Heart, color: 'bg-pink-600 text-white' },
+          { id: 'rashifal', label: 'दैनिक राशिफल', icon: Star, color: 'bg-amber-600 text-white' },
+          { id: 'festivals', label: 'व्रत व त्यौहार', icon: Calendar, color: 'bg-orange-600 text-white' },
           { id: 'muhurat', label: 'शुभ मुहूर्त', icon: Clock, color: 'bg-emerald-600 text-white' },
-          { id: 'vrat', label: 'व्रत कथाएँ', icon: BookOpen, color: 'bg-indigo-600 text-white' },
+          { id: 'milan', label: 'गुण मिलान', icon: Heart, color: 'bg-pink-600 text-white' },
+          { id: 'mantra', label: 'मंत्र & स्तोत्र', icon: Sparkles, color: 'bg-purple-600 text-white' },
+          { id: 'gochar', label: 'ग्रह गोचर', icon: Sun, color: 'bg-yellow-600 text-white' },
+          { id: 'ratna', label: 'रत्न विचार', icon: Shield, color: 'bg-blue-600 text-white' },
         ].map((item) => {
           const Icon = item.icon;
           return (

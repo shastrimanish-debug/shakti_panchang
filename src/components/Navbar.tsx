@@ -91,7 +91,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  if (tab.id === 'uma') {
+                    onOpenUma();
+                  } else {
+                    setActiveTab(tab.id);
+                  }
+                }}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                   isActive 
                     ? 'bg-amber-500 text-stone-950 shadow-md font-bold' 
