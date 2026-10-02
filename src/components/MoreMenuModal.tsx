@@ -430,6 +430,14 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             सनातन शक्ति पंचांग • अचूक वैदिक गणना
           </span>
         </div>
+        <a
+          href="https://shastrimanish-debug.github.io/shakti_panchang/privacy.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center text-[11px] font-bold text-[#8C6239] underline pt-2"
+        >
+          गोपनीयता नीति
+        </a>
       </div>
     </div>
   );

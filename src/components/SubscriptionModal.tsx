@@ -4,13 +4,8 @@ import {
   Crown,
   Sparkles,
   X,
-  Smartphone,
   Lock,
-  Copy,
-  Check,
   ShieldCheck,
-  MessageCircle,
-  KeyRound,
   AlertTriangle,
 } from "lucide-react";
 import { useLicense } from "@/lib/license-client";
@@ -24,56 +19,37 @@ interface SubscriptionModalProps {
 
 export function SubscriptionModal({ isOpen, onClose, reason, locked }: SubscriptionModalProps) {
   const { status, activateAnnual, loading } = useLicense();
-  const [copiedUpi, setCopiedUpi] = useState(false);
-  const [paymentRef, setPaymentRef] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleCopyUpi = async () => {
-    try {
-      await navigator.clipboard.writeText("vedicshakti@upi");
-      setCopiedUpi(true);
-      setTimeout(() => setCopiedUpi(false), 2500);
-    } catch {
-      setCopiedUpi(false);
-    }
-  };
-
   const handleActivate = async () => {
-    const ref = paymentRef.trim().toUpperCase();
-    if (!ref || ref.length < 6) {
-      setError("कृपया मान्य UPI संदर्भ (UTR) या VIP लाइसेंस कोड दर्ज करें।");
-      return;
-    }
     setIsProcessing(true);
     setError(null);
     setSuccessMsg(null);
     try {
-      const next = await activateAnnual(ref);
+      const next = await activateAnnual();
       if (!next.entitled) {
-        setError("सदस्यता सक्रिय नहीं हो सकी। कृपया संदर्भ या कोड पुनः जाँचें।");
+        setError("सदस्यता सक्रिय नहीं हुई। Google Play में योजना जाँचें।");
         return;
       }
-      setSuccessMsg("बधाई हो! आपकी सदस्यता सफलतापूर्वक सक्रिय हो चुकी है।");
+      setSuccessMsg("बधाई हो। Google Play सदस्यता सक्रिय है।");
       setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
-      setError(err?.message || "सत्यापन विफल रहा। कृपया सही UTR या VIP कोड दर्ज करें।");
+      const message = String(err?.message || "");
+      if (message.toLowerCase().includes("cancel") || message.includes("रद्द")) {
+        setError("भुगतान रद्द हुआ।");
+      } else {
+        setError(message || "Google Play भुगतान पूरा नहीं हुआ।");
+      }
     } finally {
       setIsProcessing(false);
     }
   };
-
-  const upiDeepLink =
-    "upi://pay?pa=vedicshakti@upi&pn=ShaktiPanchang&am=99&cu=INR&tn=ShaktiPanchangAnnual";
-
-  const whatsappInquiryUrl = `https://wa.me/?text=${encodeURIComponent(
-    "प्रणाम! मुझे शक्ति सनातन पंचांग की वार्षिक सदस्यता (₹99/वर्ष) या VIP लाइसेंस कोड चाहिए। कृपया मार्गदर्शन करें।"
-  )}`;
 
   return (
     <div
@@ -206,89 +182,41 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
 
               {/* Payment & Activation Card */}
               <div className="border border-[#8C6239]/30 rounded-xl p-3.5 space-y-3 bg-white/80">
-                <div className="flex items-center justify-between text-xs font-bold text-[#5C3A21]">
-                  <span className="flex items-center gap-1">
-                    <Smartphone className="w-4 h-4 text-[#B56A00]" />
-                    UPI द्वारा तुरंत भुगतान (₹99)
-                  </span>
-                  <span className="text-[#B56A00] font-black">₹99 / वर्ष</span>
-                </div>
-
-                <div className="flex items-center justify-between bg-[#FDF9F3] border border-[#8C6239]/40 rounded-lg p-2 text-xs">
-                  <div>
-                    <div className="text-[10px] text-[#8C6239] font-bold">UPI ID</div>
-                    <div className="font-mono font-bold text-[#5C3A21]">vedicshakti@upi</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCopyUpi}
-                    className="flex items-center gap-1 px-2.5 py-1.5 bg-[#F4E8D1] hover:bg-[#EBD8BD] text-[#5C3A21] rounded-md font-bold cursor-pointer text-xs transition"
-                  >
-                    {copiedUpi ? <Check className="w-3.5 h-3.5 text-green-700" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copiedUpi ? "कॉपी हुआ" : "कॉपी"}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <a
-                    href={upiDeepLink}
-                    className="flex items-center justify-center gap-1.5 py-2 min-h-10 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-xs font-bold transition shadow-xs text-center"
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    UPI ऐप खोलें
-                  </a>
-                  <a
-                    href={whatsappInquiryUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 py-2 min-h-10 bg-[#25D366] hover:bg-[#1EBE5D] text-white rounded-xl text-xs font-bold transition shadow-xs text-center"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    व्हाट्सएप पर पूछें
-                  </a>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#8C6239] mb-1 flex items-center gap-1">
-                    <KeyRound className="w-3.5 h-3.5 text-[#B56A00]" />
-                    <span>भुगतान UTR (संदर्भ संख्या) अथवा VIP लाइसेंस कोड दर्ज करें:</span>
-                  </label>
-                  <div className="flex gap-1.5">
-                    <input
-                      value={paymentRef}
-                      onChange={(e) => setPaymentRef(e.target.value)}
-                      placeholder="उदा. 428912345678 या VIP कोड"
-                      className="flex-1 min-h-10 px-2.5 bg-white border border-[#8C6239]/40 rounded-lg text-xs font-mono outline-none text-[#5C3A21] uppercase focus:border-[#B56A00]"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleActivate}
-                      disabled={isProcessing || loading || !paymentRef.trim()}
-                      className="px-3.5 min-h-10 bg-[#B56A00] hover:bg-[#C27803] text-white rounded-lg text-xs font-bold disabled:opacity-50 cursor-pointer shadow-xs transition whitespace-nowrap"
-                    >
-                      {isProcessing ? "जाँच..." : "सक्रिय करें"}
-                    </button>
-                  </div>
-                </div>
-
+                <p className="text-xs font-bold text-[#5C3A21]">
+                  भुगतान सिर्फ Google Play से। UPI नंबर या कोड से ऐप नहीं खुलती।
+                </p>
+                <button
+                  type="button"
+                  onClick={handleActivate}
+                  disabled={isProcessing || loading}
+                  className="w-full min-h-11 py-2.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-sm font-bold disabled:opacity-50 cursor-pointer"
+                >
+                  {isProcessing ? "Play खुल रहा है..." : "Google Play पर ₹99 / वर्ष लें"}
+                </button>
+                <p className="text-[11px] text-[#735133] leading-relaxed">
+                  Play Console में सदस्यता का नाम shakti_annual रखें। कीमत ₹99 प्रति वर्ष, और ७ दिन का मुफ्त परीक्षण। डेटा मिटाने से ये सात दिन दोबारा शुरू नहीं होते।
+                </p>
                 {error && (
                   <p className="text-[11px] text-red-700 font-bold bg-red-50 p-2 rounded-lg border border-red-200">
                     {error}
                   </p>
                 )}
-
                 {successMsg && (
                   <p className="text-[11px] text-green-800 font-bold bg-green-50 p-2 rounded-lg border border-green-200">
                     {successMsg}
                   </p>
                 )}
-
                 <div className="pt-1 flex items-center justify-between text-[10px] text-[#8C6239] border-t border-[#8C6239]/20">
-                  <span className="flex items-center gap-1">
+                  <a
+                    className="flex items-center gap-1 underline"
+                    href="https://shastrimanish-debug.github.io/shakti_panchang/privacy.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <ShieldCheck className="w-3.5 h-3.5 text-[#B56A00]" />
-                    हस्ताक्षरित क्रिप्टोग्राफिक लाइसेंस
-                  </span>
-                  <span>शास्त्री मनीष • काशी-उज्जैन</span>
+                    गोपनीयता नीति
+                  </a>
+                  <span>Google Play बिलिंग</span>
                 </div>
               </div>
             </>

@@ -209,7 +209,6 @@ public class UmaVoicePlugin extends Plugin {
     private void enqueueNeural(PluginCall call, File file) {
         new Handler(Looper.getMainLooper()).post(() -> {
             if (neuralCancel.get() || speakCall != null && speakCall != call && voicePlayer != null) {
-                file.delete();
                 return;
             }
             speakCall = call;
@@ -241,13 +240,11 @@ public class UmaVoicePlugin extends Plugin {
             player.setOnCompletionListener(mp -> {
                 mp.release();
                 if (voicePlayer == mp) voicePlayer = null;
-                file.delete();
                 playNextNeural(call);
             });
             player.setOnErrorListener((mp, what, extra) -> {
                 mp.release();
                 if (voicePlayer == mp) voicePlayer = null;
-                file.delete();
                 playNextNeural(call);
                 return true;
             });
@@ -255,7 +252,6 @@ public class UmaVoicePlugin extends Plugin {
             if (sitarWanted) startSitar();
             player.start();
         } catch (Exception e) {
-            file.delete();
             playNextNeural(call);
         }
     }
@@ -299,7 +295,6 @@ public class UmaVoicePlugin extends Plugin {
         stopVoicePlayer();
         stopSitar();
         synchronized (neuralQueue) {
-            for (File file : neuralQueue) file.delete();
             neuralQueue.clear();
             neuralFinished = true;
         }

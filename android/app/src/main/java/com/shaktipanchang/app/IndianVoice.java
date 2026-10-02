@@ -34,13 +34,14 @@ public final class IndianVoice {
     public static File synthesize(Context context, String text) throws Exception {
         String spoken = text == null ? "" : text.trim();
         if (spoken.isEmpty()) throw new IllegalArgumentException("empty");
+        File cached = new File(context.getFilesDir(), "uma-" + cacheKey(spoken) + ".mp3");
+        if (cached.exists() && cached.length() > 400) return cached;
         byte[] mp3 = request(spoken);
         if (mp3.length < 400) throw new IllegalStateException("no audio");
-        File out = new File(context.getCacheDir(), "uma-" + System.currentTimeMillis() + ".mp3");
-        try (FileOutputStream fos = new FileOutputStream(out)) {
+        try (FileOutputStream fos = new FileOutputStream(cached)) {
             fos.write(mp3);
         }
-        return out;
+        return cached;
     }
 
     private static byte[] request(String text) throws Exception {
@@ -129,6 +130,13 @@ public final class IndianVoice {
         return audio.toByteArray();
     }
 
+    private static String cacheKey(String text) throws Exception {
+        byte[] hash = MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8));
+        StringBuilder hex = new StringBuilder();
+        for (int i = 0; i < 8; i++) hex.append(String.format(Locale.US, "%02x", hash[i]));
+        return hex.toString();
+    }
+
     private static String secMsGec() throws Exception {
         double ticks = System.currentTimeMillis() / 1000.0;
         ticks += 11644473600.0;
@@ -143,9 +151,9 @@ public final class IndianVoice {
 
     private static String escape(String text) {
         return text
-            .replace("&", "&")
-            .replace("<", "<")
-            .replace(">", ">")
+            .replace("&", "&" + "amp;")
+            .replace("<", "&" + "lt;")
+            .replace(">", "&" + "gt;")
             .replace("\"", "")
             .replace("*", "")
             .replace("#", "");

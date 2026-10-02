@@ -1,5 +1,6 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 export type LicenseKind = "trial" | "annual" | "lifetime";
 
@@ -30,6 +31,41 @@ const STORAGE_KEYS = {
 
 const SECRET_SALT = "ShaktiPanchang@VedicAstrology2026!ManishShastri";
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 Full Days (168 Hours)
+
+type NativeLicense = {
+  entitled?: boolean;
+  playOwned?: boolean;
+  kind?: string;
+  daysRemaining?: number;
+  expiresAt?: number;
+  issuedAt?: number;
+  tampered?: boolean;
+  reason?: string;
+};
+
+const PlayLicense = registerPlugin<{
+  status: () => Promise<NativeLicense>;
+  purchase: () => Promise<NativeLicense>;
+}>("PlayLicense");
+
+let nativeStatus: LicenseStatus | null = null;
+
+function mapNative(raw: NativeLicense): LicenseStatus {
+  const kind = raw.kind === "annual" || raw.kind === "trial" || raw.kind === "lifetime" ? raw.kind : "none";
+  return {
+    ok: true,
+    entitled: !!raw.entitled,
+    kind,
+    daysRemaining: Number(raw.daysRemaining) || 0,
+    expiresAt: new Date(Number(raw.expiresAt) || Date.now()).toISOString(),
+    issuedAt: new Date(Number(raw.issuedAt) || Date.now()).toISOString(),
+    token: raw.playOwned ? "play-annual" : "trial-device",
+    planName: raw.playOwned ? "श्री शक्ति पंचांग वार्षिक सदस्यता" : "श्री शक्ति पंचांग ७-दिवसीय निःशुल्क परीक्षण",
+    amount: 99,
+    reason: raw.reason || undefined,
+    isTampered: !!raw.tampered,
+  };
+}
 
 /**
  * Deterministic fast cryptographic hash for anti-tampering
@@ -139,16 +175,10 @@ function persistAnchorTime(start: number) {
 }
 
 /**
- * Master VIP Activation Keys for Shastri Manish & Authorized Pandits
+ * Master keys and UPI references no longer unlock the app.
+ * Payment is only through Google Play.
  */
-const VIP_MASTER_KEYS = new Set([
-  "SHASTRI-VIP-2026",
-  "SHASTRI-VIP-2027",
-  "VEDIC-SHAKTI-VIP",
-  "MANISH-SHASTRI-PRO",
-  "SHAKTI-VIP-LIFETIME",
-  "SHASTRI.MANISH@GMAIL.COM",
-]);
+const VIP_MASTER_KEYS = new Set<string>([]);
 
 function readTrialStart(now: number): number {
   const key = "sp_trial_start_v20";
@@ -189,44 +219,9 @@ function readTrialStart(now: number): number {
  * Compute current tamper-resistant trial / subscription status
  */
 export function getLicenseStatus(): LicenseStatus {
+  if (nativeStatus) return nativeStatus;
   const now = Date.now();
-
-  // Check permanent tamper flag - ensure development/preview timezone shifts don't falsely poison
-  let isTampered = false;
-
-  // Auto-activate lifetime VIP for Shastri Manish & authorized creators
-  let annualUntil = 0;
-  let annualToken = "";
-  try {
-    annualUntil = Number(localStorage.getItem(STORAGE_KEYS.ANNUAL) || "0");
-    annualToken = localStorage.getItem(STORAGE_KEYS.ANNUAL_TOKEN) || "";
-  } catch {
-    annualUntil = 0;
-    annualToken = "";
-  }
-
-  let start = readTrialStart(now);
-
-  const paid =
-    (annualToken.startsWith("VIP-") || annualToken.startsWith("UTR-")) && annualUntil > now;
-  if (paid) {
-    const days = Math.max(1, Math.ceil((annualUntil - now) / 86400000));
-    return {
-      ok: true,
-      entitled: true,
-      kind: annualToken.startsWith("VIP-") ? "lifetime" : "annual",
-      daysRemaining: days,
-      expiresAt: new Date(annualUntil).toISOString(),
-      issuedAt: new Date(start).toISOString(),
-      token: annualToken,
-      planName: annualToken.startsWith("VIP-")
-        ? "श्री शक्ति पंचांग आजीवन सदस्यता"
-        : "श्री शक्ति पंचांग वार्षिक सदस्यता",
-      amount: 99,
-      isTampered: false,
-    };
-  }
-
+  const start = readTrialStart(now);
   const trialEnd = start + TRIAL_DURATION_MS;
   const entitled = now < trialEnd;
   const daysRemaining = entitled ? Math.max(1, Math.ceil((trialEnd - now) / 86400000)) : 0;
@@ -243,7 +238,7 @@ export function getLicenseStatus(): LicenseStatus {
     amount: 99,
     reason: entitled
       ? undefined
-      : "७ दिन का परीक्षण समाप्त। ₹99 की वार्षिक सदस्यता के बिना यह ऐप बंद है।",
+      : "७ दिन का परीक्षण समाप्त। ₹99 की सदस्यता Google Play से लें।",
     isTampered: false,
   };
 }
@@ -260,7 +255,7 @@ type LicenseContextValue = {
   loading: boolean;
   refresh: () => Promise<LicenseStatus>;
   assertEntitled: () => Promise<LicenseStatus>;
-  activateAnnual: (activationCodeOrRef: string) => Promise<LicenseStatus>;
+  activateAnnual: (activationCodeOrRef?: string) => Promise<LicenseStatus>;
   isAllowed: (tabId: string, panchangSubPage?: string) => boolean;
 };
 
@@ -271,6 +266,13 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        nativeStatus = mapNative(await PlayLicense.status());
+      } catch {
+        nativeStatus = null;
+      }
+    }
     const next = getLicenseStatus();
     setStatus(next);
     setLoading(false);
@@ -296,45 +298,16 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const activateAnnual = useCallback(
-    async (codeOrRef: string) => {
-      const cleaned = codeOrRef.trim().toUpperCase();
-      const now = Date.now();
-      const start = getEarliestAnchorTime(now) || now;
-
-      // 1. VIP Master Key Check
-      if (VIP_MASTER_KEYS.has(cleaned)) {
-        const until = now + 10 * 365 * 86400000; // 10 Years Lifetime VIP
-        const signature = computeSignature(start, until, SECRET_SALT);
-        try {
-          localStorage.setItem(STORAGE_KEYS.ANNUAL, String(until));
-          localStorage.setItem(STORAGE_KEYS.ANNUAL_TOKEN, `VIP-${cleaned}`);
-          localStorage.setItem(STORAGE_KEYS.SIGNATURE, signature);
-          localStorage.removeItem(STORAGE_KEYS.TAMPER_FLAG);
-        } catch {
-          /* ignore */
-        }
-        return refresh();
+    async (_codeOrRef?: string) => {
+      if (!Capacitor.isNativePlatform()) {
+        throw new Error("₹99 की सदस्यता Google Play से ली जाती है। Play Store वाला ऐप खोलें।");
       }
-
-      // 2. UPI 12-digit UTR or Valid Reference (8 to 24 chars)
-      if (/^[A-Z0-9]{8,24}$/.test(cleaned)) {
-        const until = now + 365 * 86400000; // 365 Days
-        const signature = computeSignature(start, until, SECRET_SALT);
-        try {
-          localStorage.setItem(STORAGE_KEYS.ANNUAL, String(until));
-          localStorage.setItem(STORAGE_KEYS.ANNUAL_TOKEN, `UTR-${cleaned}`);
-          localStorage.setItem(STORAGE_KEYS.SIGNATURE, signature);
-          localStorage.removeItem(STORAGE_KEYS.TAMPER_FLAG);
-        } catch {
-          /* ignore */
-        }
-        return refresh();
-      }
-
-      // Invalid reference
-      throw new Error("अमान्य संदर्भ संख्या या लाइसेंस कोड। कृपया सही UPI UTR या VIP कोड दर्ज करें।");
+      nativeStatus = mapNative(await PlayLicense.purchase());
+      const next = getLicenseStatus();
+      setStatus(next);
+      return next;
     },
-    [refresh]
+    []
   );
 
   const isAllowed = useCallback(

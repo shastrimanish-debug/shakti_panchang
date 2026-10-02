@@ -17,6 +17,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(UmaVoicePlugin.class);
         registerPlugin(UmaDevicePlugin.class);
+        registerPlugin(PlayLicensePlugin.class);
         super.onCreate(savedInstanceState);
 
         boolean isDebuggable = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
