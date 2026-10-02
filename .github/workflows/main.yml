@@ -59,16 +59,13 @@ jobs:
         run: npm install
 
       - name: Download Web Dist Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: web-dist
           path: dist/
 
-      - name: Copy Web Dist into Android WebView Assets
-        run: |
-          mkdir -p android/app/src/main/assets
-          cp -r dist/* android/app/src/main/assets/
-          echo "Web assets successfully copied into android/app/src/main/assets/"
+      - name: Sync Capacitor Android
+        run: npx cap sync android
 
       - name: Build Android APK & AAB (Release & Play Store Bundle)
         run: |
