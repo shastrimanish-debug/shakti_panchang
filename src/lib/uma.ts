@@ -1,6 +1,7 @@
 import { KundaliData, PlanetPosition, VedicPanchangData } from "../types";
 import { getLicenseStatus } from "./license-client";
 import { calculateSadeSati } from "../services/sadesati";
+import { VRAT_KATHA_DATA } from "../data/vratKathaData";
 
 export interface UmaResponse {
   ok: boolean;
@@ -146,10 +147,13 @@ export async function generateUma({
 
     // 2.5 SHIV MAHIMANA STOTRA
     if (q.includes("महिम्न") || q.includes("शिव महिम्न") || q.includes("pushpdant") || q.includes("महिमान")) {
+      const stotra = VRAT_KATHA_DATA.find((item) => item.id === "shiv-mahimana-stotra");
       return {
         ok: true,
         source: "local_vedic",
-        text: `॥ श्री शिव महिम्न स्तोत्र (गंधर्वराज पुष्पदंत रचित) ॥\n\nमहिम्नः पारं ते परमविदुषो यद्यपि विधुः\nस्तुवन्तो ब्रह्माणो अपि हरनभयद्वेतयितुमः।\nतदस्यात्मनः क्लेशो हरसि महतां च प्रमदतः\nस्तवोह्यर्वाचीनः क्व च मम मतिः क च तव गुणान् ॥१॥\n\nअतीतपंथानं तव च महिमा वाङ्मनसयो-\nर्जगत्याः प्रणेता त्वमसि खलु सर्वेषु च विभो।\nकथं स्तुत्यः स्तुत्यः कथमपि च ते ध्यानविषयो\nभवेद् देव त्राहि प्रणतभयहारिन् शिव विभो ॥२॥\n\n**उमा का पुरोहितीय उपदेश:**\nशिव महिम्न स्तोत्र का पाठ गंधर्वराज पुष्पदंत ने किया था। इसके नित्य पाठ से मनुष्य के समस्त पाप नष्ट होते हैं और भगवान शिव की असीम कृपा प्राप्त होती है।`,
+        text: stotra
+          ? `॥ ${stotra.title} ॥\n\n${stotra.katha.join("\n\n")}`
+          : "शिव महिम्न स्तोत्र व्रत-कथा और आरती में पूरा रखा है।",
         actionPayload: { type: "open_panchang", label: "व्रत कथा व आरती देखें" }
       };
     }

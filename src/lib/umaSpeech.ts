@@ -118,7 +118,7 @@ export function buildUmaParts(text: string): UmaPart[] {
       pitch: path ? 0.88 : 1.05,
     });
   }
-  return parts.slice(0, 35);
+  return parts.slice(0, 420);
 }
 
 export function prepareUmaUtterance(text: string): string {

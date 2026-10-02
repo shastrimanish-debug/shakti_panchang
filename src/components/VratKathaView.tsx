@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
-  BookOpen, Sparkles, Share2, ArrowLeft, Search, CheckCircle2, Scroll 
+  BookOpen, Sparkles, Share2, ArrowLeft, Search, CheckCircle2, Scroll, Volume2, Square
 } from 'lucide-react';
 import { 
   VRAT_KATHA_DATA, 
   VRAT_KATHA_CATEGORIES, 
   VratKathaItem 
 } from '../data/vratKathaData';
+import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 
 interface VratKathaViewProps {
   onBackToPanchang: () => void;
@@ -16,6 +17,18 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedKathaId, setSelectedKathaId] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    stopUmaSpeech();
+    setIsSpeaking(false);
+  }, [selectedKathaId]);
+
+  useEffect(() => {
+    return () => {
+      stopUmaSpeech();
+    };
+  }, []);
 
   const filteredKatha = VRAT_KATHA_DATA.filter((item) => {
     const matchesCat = selectedCategory === 'all' || item.category === selectedCategory;
@@ -28,6 +41,19 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
 
   const activeKatha = VRAT_KATHA_DATA.find((k) => k.id === selectedKathaId) || null;
 
+  const handleSpeakKatha = (katha: VratKathaItem) => {
+    if (isSpeaking) {
+      stopUmaSpeech();
+      setIsSpeaking(false);
+      return;
+    }
+    const text = [katha.title, katha.shlok, `भावार्थ। ${katha.shlokMeaning}`, ...katha.katha].join('\n');
+    setIsSpeaking(true);
+    void speakUma(text, {
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
+  };
   const handleShareKatha = (katha: VratKathaItem) => {
     const text = `॥ ${katha.title} ॥\n\n${katha.subtitle}\n\nश्लोक:\n${katha.shlok}\n\nअर्थ: ${katha.shlokMeaning}\n\n(शक्ति पंचांग ऐप से साभार)`;
     if (navigator.share) {
@@ -75,13 +101,23 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
               <ArrowLeft className="w-4 h-4" />
               <span>सभी कथाओं की सूची पर जाएं</span>
             </button>
-            <button
-              onClick={() => handleShareKatha(activeKatha)}
-              className="p-2.5 rounded-2xl bg-amber-600 text-white shadow-md hover:bg-amber-700 transition"
-              title="कथा साझा करें"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSpeakKatha(activeKatha)}
+                className="px-3 py-2 rounded-2xl bg-[#5C3A21] text-[#FAF2E4] shadow-md hover:bg-[#462B17] transition flex items-center gap-1.5 text-xs font-bold"
+                title={isSpeaking ? 'पाठ रोकें' : 'उमा से पाठ सुनें'}
+              >
+                {isSpeaking ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                <span>{isSpeaking ? 'रोकें' : 'पाठ सुनें'}</span>
+              </button>
+              <button
+                onClick={() => handleShareKatha(activeKatha)}
+                className="p-2.5 rounded-2xl bg-amber-600 text-white shadow-md hover:bg-amber-700 transition"
+                title="कथा साझा करें"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2 text-center">
