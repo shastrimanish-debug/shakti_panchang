@@ -1,5 +1,6 @@
-import { KundaliData, VedicPanchangData } from "../types";
+import { KundaliData, PlanetPosition, VedicPanchangData } from "../types";
 import { getLicenseStatus } from "./license-client";
+import { calculateSadeSati } from "../services/sadesati";
 
 export interface UmaResponse {
   ok: boolean;
@@ -40,6 +41,65 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
     source: "local_vedic",
     actionPayload: localRes.actionPayload,
   };
+}
+
+function planetLine(p?: PlanetPosition): string {
+  if (!p) return "";
+  return `${p.planet} ${p.rashi} राशि में, लग्न से ${p.house}वें भाव में${p.isRetrograde ? " (वक्री)" : ""}`;
+}
+
+function occupants(kundali: KundaliData, house: number): string {
+  const names = (kundali.planets || []).filter((p) => p.house === house).map((p) => p.planet);
+  return names.length ? names.join(", ") : "कोई ग्रह नहीं";
+}
+
+function chartAnswer(kundali: KundaliData, query: string, panchang?: VedicPanchangData | null): string {
+  const q = query.toLowerCase();
+  const sun = kundali.planets?.find((p) => p.planet === "सूर्य");
+  const moon = kundali.planets?.find((p) => p.planet === "चंद्र");
+  const mars = kundali.planets?.find((p) => p.planet === "मंगल");
+  const mercury = kundali.planets?.find((p) => p.planet === "बुध");
+  const jupiter = kundali.planets?.find((p) => p.planet === "गुरु");
+  const venus = kundali.planets?.find((p) => p.planet === "शुक्र");
+  const saturn = kundali.planets?.find((p) => p.planet === "शनि");
+  let sadeLine = "";
+  try {
+    const sade = calculateSadeSati(kundali);
+    sadeLine = sade.isUnderSadeSati
+      ? `साढ़ेसाती चल रही है। ${sade.summary}`
+      : sade.isDhaiya
+        ? `ढैया है: ${sade.dhaiyaType || "शनि का विशेष गोचर"}। ${sade.summary}`
+        : `साढ़ेसाती नहीं है। शनि अभी ${sade.shaniCurrentRashi} में, चंद्र राशि से ${sade.shaniTransitHouse}वें भाव में।`;
+  } catch {
+    sadeLine = planetLine(saturn);
+  }
+
+  const head = `॥ ॐ श्री गणेशाय नमः ॥\n${kundali.name} जी, लग्न ${kundali.lagnaRashi}, चंद्र ${kundali.moonRashi} (${kundali.nakshatra}), महादशा ${kundali.mahadasha}, अंतरदशा ${kundali.antardasha}।`;
+  const today = panchang ? `\nआज ${panchang.weekday}, ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}।` : "";
+
+  if (/नौकरी|करियर|व्यापार|काम|धंधा|job|career/.test(q)) {
+    return `${head}${today}\n\nकर्म भाव (दसवाँ) में: ${occupants(kundali, 10)}।\n${planetLine(sun)}\n${planetLine(saturn)}\n${planetLine(mercury)}\n${planetLine(jupiter)}\n\nदशा ${kundali.mahadasha}/${kundali.antardasha} इसी कर्मफल को अभी खोल रही है।`;
+  }
+  if (/शादी|विवाह|दांपत्य|पति|पत्नी|प्रेम|मिलान/.test(q)) {
+    return `${head}\n\nसप्तम भाव में: ${occupants(kundali, 7)}।\n${planetLine(venus)}\n${planetLine(jupiter)}\nमांगलिक: ${kundali.isManglik ? `हाँ। ${kundali.manglikDescription || "मंगल दोष की शांति करें।"}` : "स्पष्ट मांगलिक दोष नहीं दिखता।"}`;
+  }
+  if (/पैसा|धन|ऋण|लोन/.test(q)) {
+    return `${head}\n\nद्वितीय भाव में: ${occupants(kundali, 2)}। एकादश भाव में: ${occupants(kundali, 11)}।\n${planetLine(jupiter)}\n${planetLine(venus)}`;
+  }
+  if (/सेहत|स्वास्थ्य|बीमार|रोग/.test(q)) {
+    return `${head}\n\nषष्ठ भाव में: ${occupants(kundali, 6)}। अष्टम में: ${occupants(kundali, 8)}।\n${planetLine(moon)}\n${planetLine(sun)}\n${sadeLine}\n\nयह चिकित्सा नहीं है। दशा में शरीर वाला भाव कमजोर हो तो जाँच कराएँ।`;
+  }
+  if (/शनि|साढ़े|ढैया/.test(q)) {
+    return `${head}\n${sadeLine}\n${planetLine(saturn)}\nउपाय: शनिवार को तिल का दीप और हनुमान चालीसा।`;
+  }
+  if (/मंगल|मांगलिक/.test(q)) {
+    return `${head}\n${planetLine(mars)}\n${kundali.isManglik ? `मांगलिक स्थिति है। ${kundali.manglikDescription || ""}` : "जन्म पत्रिका में मांगलिक दोष अंकित नहीं है।"}\nहनुमान उपासना इस ग्रह का सीधा उपाय है।`;
+  }
+
+  const graha = (kundali.planets || [])
+    .map((p) => `${p.planet}: ${p.rashi}, भाव ${p.house}${p.isRetrograde ? ", वक्री" : ""}`)
+    .join("\n");
+  return `${head}${today}\n\n${sadeLine}\n\nग्रह स्थिति:\n${graha}\n\nपूछें: नौकरी, विवाह, धन, स्वास्थ्य, शनि या मंगल। उत्तर इसी पत्रिका से होगा।`;
 }
 
 export async function generateUma({
@@ -84,6 +144,16 @@ export async function generateUma({
       };
     }
 
+    // Chart questions must win over the generic "आज" panchang reply.
+    if (kundali && /नौकरी|करियर|व्यापार|शादी|विवाह|दांपत्य|धन|पैसा|स्वास्थ्य|सेहत|शनि|साढ़े|मंगल|मांगलिक|दशा|कुंडली|लग्न/.test(q)) {
+      return {
+        ok: true,
+        source: "local_vedic",
+        text: chartAnswer(kundali, query, panchang),
+        actionPayload: { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" },
+      };
+    }
+
     // 3. PANCHANG / TITHI / SOMWAR
     if (q.includes("आज") || q.includes("सोमवार") || q.includes("कृष्ण") || q.includes("शुक्ल") || q.includes("पक्ष") || q.includes("तिथि") || q.includes("पंचांग")) {
       const wDay = panchang?.weekday || "सोमवार";
@@ -99,12 +169,28 @@ export async function generateUma({
 
     // 4. KUNDALI / PATRIKA
     if (q.includes("कुंडली") || q.includes("पत्री") || q.includes("पत्रिका") || q.includes("लग्न") || q.includes("दशा")) {
-      let analysis = kundali ? `आपके लग्न (${kundali.lagnaRashi}) और महादशा (${kundali.mahadasha}) के अनुसार` : `जन्म पत्रिका के अनुसार`;
+      if (kundali) {
+        return {
+          ok: true,
+          source: "local_vedic",
+          text: chartAnswer(kundali, query, panchang),
+          actionPayload: { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" },
+        };
+      }
       return {
         ok: true,
         source: "local_vedic",
-        text: `॥ ॐ श्री गणेशाय नमः ॥\n${analysis} ग्रहों की स्थिति अत्यंत स्पष्ट है। जीवन में आ रही बाधाओं के निवारण हेतु इष्टदेव की उपासना और संबंधित ग्रह के मंत्रों का अनुष्ठान करना श्रेयस्कर है।`,
-        actionPayload: { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" }
+        text: `॥ ॐ श्री गणेशाय नमः ॥\nयजमान, बिना जन्म तिथि, समय और स्थान के दशा नहीं खुलती। पहले कुंडली बनाएँ, फिर नौकरी, विवाह, धन या शनि पूछें।`,
+        actionPayload: { type: "open_kundali", label: "जन्मकुंडली बनाएँ" },
+      };
+    }
+
+    if (kundali) {
+      return {
+        ok: true,
+        source: "local_vedic",
+        text: chartAnswer(kundali, query, panchang),
+        actionPayload: { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" },
       };
     }
 

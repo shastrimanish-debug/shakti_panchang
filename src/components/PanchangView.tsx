@@ -213,6 +213,19 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       {/* ========================================================================= */}
       {activeSubTab === 'main' && (
         <div className="space-y-3 animate-in fade-in duration-150">
+          <div className="rounded-2xl border border-[#8C6239]/30 bg-white/80 p-3 text-xs text-[#3E2714] space-y-1">
+            <div className="font-bold text-[#5C3A21]">गणना प्रमाण — पंडित इसी से मिलाएँ</div>
+            <p>अयनांश: {panchang.ayanamshaName} • {panchang.ayanamsha.toFixed(4)}°</p>
+            <p>स्थान: {locationName} • अक्षांश {latitude.toFixed(4)} • देशांतर {longitude.toFixed(4)}</p>
+            <p>सूर्योदय {fmt(panchang.solar.sunrise)} • सूर्यास्त {fmt(panchang.solar.sunset)}</p>
+            {panchang.tithiSpan && (
+              <p>तिथि समाप्ति: {panchang.tithiSpan.nextName} {fmt(panchang.tithiSpan.end)} से</p>
+            )}
+            {panchang.nakshatraSpan && (
+              <p>नक्षत्र समाप्ति: {panchang.nakshatraSpan.nextName} {fmt(panchang.nakshatraSpan.end)} से</p>
+            )}
+            <p className="text-[#735133]">Drik या किसी दूसरे पंचांग से तिथि-समाप्ति और राहुकाल मिलाएँ। अंतर कुछ मिनट का हो तो अयनांश और स्थान जाँचें।</p>
+          </div>
           {/* Flutter Hero Tithi Card (Luminous Vedic Gold & Parchment) */}
           <div className="flutter-hero-gradient rounded-3xl p-4 sm:p-5 text-[#2C180C] shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />

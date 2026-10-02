@@ -22,6 +22,7 @@ interface WhatsAppPanchangModalProps {
   panchang: VedicPanchangData;
   location: SavedLocation;
   currentDate: Date;
+  personName?: string;
   onOpenBrandingModal?: () => void;
 }
 
@@ -74,6 +75,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   panchang,
   location,
   currentDate,
+  personName,
   onOpenBrandingModal,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -188,7 +190,8 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.fillStyle = '#735133';
     ctx.font = '24px sans-serif';
     const locName = location.name.split('(')[0].trim();
-    ctx.fillText(`स्थान: ${locName} • संवत्: ${panchang.samvat || '2083'} • ऋतु: ${panchang.masa || 'भाद्रपद'}`, W / 2, 275);
+    const who = personName ? `${personName} • ` : '';
+    ctx.fillText(`${who}स्थान: ${locName} • संवत्: ${panchang.samvat || '2083'}`, W / 2, 275);
 
     // Divider Line
     ctx.strokeStyle = '#8C6239';
@@ -425,7 +428,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [panchang, location, currentDate, branding, currentShloka]);
+  }, [panchang, location, currentDate, branding, currentShloka, personName]);
 
   useEffect(() => {
     if (isOpen) {

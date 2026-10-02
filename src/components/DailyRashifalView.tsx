@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
-import { RASHI_FORECASTS, RashiForecast } from '../data/rashifalData';
+import React, { useMemo, useState } from 'react';
+import { RASHI_FORECASTS } from '../data/rashifalData';
 import { Sparkles, Sun, Award, Share2, Star } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
+import { getStoredLocation } from '../services/storage';
+import { buildDailyRashifal } from '../services/dailyRashifal';
 
 export const DailyRashifalView: React.FC = () => {
   const [selectedRashiId, setSelectedRashiId] = useState<string>('mesh');
   const currentRashi = RASHI_FORECASTS.find((r) => r.id === selectedRashiId) || RASHI_FORECASTS[0];
+  const live = useMemo(() => {
+    const place = getStoredLocation();
+    return buildDailyRashifal(
+      currentRashi.id,
+      new Date(),
+      place.latitude,
+      place.longitude,
+      place.timezoneHours,
+    );
+  }, [currentRashi.id]);
 
   const handleShare = () => {
-    const text = `🌟 *दैनिक राशिफल - ${currentRashi.name}* 🌟\n\nसामान्य: ${currentRashi.prediction.general}\nकरियर: ${currentRashi.prediction.career}\nधन: ${currentRashi.prediction.wealth}\nउपाय: ${currentRashi.prediction.remedy}\n\nशक्ति पंचांग से साभार।`;
+    const text = `🌟 *${live.dateLabel} का राशिफल — ${currentRashi.name}* 🌟\nचंद्र गोचर: ${live.moonTransit}\n\nसामान्य: ${live.general}\nकरियर: ${live.career}\nधन: ${live.wealth}\nउपाय: ${live.remedy}\n\nग्रह स्थिति आज की गणना से। शक्ति पंचांग।`;
     openWhatsAppShare(text);
   };
 
@@ -67,7 +79,7 @@ export const DailyRashifalView: React.FC = () => {
                 {currentRashi.name} राशि फल
               </h3>
               <p className="text-xs text-[#735133]">
-                स्वामी: <strong className="text-[#5C3A21]">{currentRashi.lord}</strong> • तत्व: {currentRashi.element}
+                {live.dateLabel} • चंद्र गोचर: {live.moonTransit} • स्वामी {currentRashi.lord}
               </p>
             </div>
           </div>
@@ -101,25 +113,25 @@ export const DailyRashifalView: React.FC = () => {
               <Star className="w-3.5 h-3.5" />
               <span>सामान्य फलादेश</span>
             </h4>
-            <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.general}</p>
+            <p className="text-[#3E2714] leading-relaxed">{live.general}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-3 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
               <h4 className="font-bold text-[#5C3A21]">💼 करियर व व्यापार</h4>
-              <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.career}</p>
+              <p className="text-[#3E2714] leading-relaxed">{live.career}</p>
             </div>
             <div className="p-3 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
               <h4 className="font-bold text-[#5C3A21]">💰 धन व आर्थिक स्थिति</h4>
-              <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.wealth}</p>
+              <p className="text-[#3E2714] leading-relaxed">{live.wealth}</p>
             </div>
             <div className="p-3 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
               <h4 className="font-bold text-[#5C3A21]">❤️ प्रेम व परिवार</h4>
-              <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.love}</p>
+              <p className="text-[#3E2714] leading-relaxed">{live.love}</p>
             </div>
             <div className="p-3 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
               <h4 className="font-bold text-[#5C3A21]">🩺 स्वास्थ्य रक्षा</h4>
-              <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.health}</p>
+              <p className="text-[#3E2714] leading-relaxed">{live.health}</p>
             </div>
           </div>
 
@@ -129,7 +141,28 @@ export const DailyRashifalView: React.FC = () => {
               <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
               <span>आज का विशेष अचूक उपाय</span>
             </h4>
-            <p className="text-[#735133] leading-relaxed">{currentRashi.prediction.remedy}</p>
+            <p className="text-[#735133] leading-relaxed">{live.remedy}</p>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-[#8C6239]/20">
+            <table className="w-full text-xs text-[#3E2714]">
+              <thead className="bg-[#5C3A21] text-[#FAF2E4]">
+                <tr>
+                  <th className="text-left p-2">ग्रह</th>
+                  <th className="text-left p-2">आज की राशि</th>
+                  <th className="text-left p-2">आपकी राशि से भाव</th>
+                </tr>
+              </thead>
+              <tbody>
+                {live.rows.map((row) => (
+                  <tr key={row.planet} className="border-t border-[#8C6239]/15 bg-white">
+                    <td className="p-2 font-bold">{row.planet}{row.retrograde ? " वक्री" : ""}</td>
+                    <td className="p-2">{row.rashi}</td>
+                    <td className="p-2">{row.house}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

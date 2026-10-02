@@ -159,12 +159,15 @@ export function SubscriptionModal({ isOpen, onClose, reason }: SubscriptionModal
                   {status.entitled ? "७ दिन फ्री ट्रायल" : "ट्रायल समाप्त"}
                 </div>
                 <div className="text-[11px] text-[#8C6239] font-bold uppercase tracking-wider">
-                  सम्पूर्ण सनातन वैदिक ग्रन्थ
+                  एक साल का एक ही वादा
                 </div>
                 <div className="flex items-baseline justify-center gap-1 mt-0.5">
                   <span className="text-3xl sm:text-4xl font-black font-granth text-[#5C3A21]">₹99</span>
-                  <span className="text-xs font-bold text-[#8C6239]">/ वर्ष (₹8.25/माह)</span>
+                  <span className="text-xs font-bold text-[#8C6239]">/ वर्ष</span>
                 </div>
+                <p className="text-[12px] text-[#3E2714] mt-2 font-medium leading-relaxed">
+                  मुफ्त में केवल आज का पंचांग। ₹99 में शास्त्री मनीष की नाम वाली कुंडली PDF, मिलान पत्रिका, और सुबह ६ बजे का निजी उपाय।
+                </p>
                 {status.entitled && status.kind === "trial" ? (
                   <p className="text-[11px] text-[#735133] mt-1 font-medium">
                     आपकी निःशुल्क अवधि सक्रिय है — <span className="font-bold text-[#B56A00]">{status.daysRemaining} दिन शेष</span>।
@@ -180,22 +183,19 @@ export function SubscriptionModal({ isOpen, onClose, reason }: SubscriptionModal
               <div className="border border-[#8C6239]/30 rounded-xl p-3 bg-white/70">
                 <div className="text-[11px] font-bold text-[#5C3A21] mb-1.5 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-                  <span>सदस्यता में क्या अनलॉक होगा:</span>
+                  <span>₹99 में यही तीन काम पूरे होते हैं:</span>
                 </div>
-                <ul className="grid grid-cols-2 gap-1.5 text-[11px] text-[#5C3A21]">
+                <ul className="grid grid-cols-1 gap-1.5 text-[11px] text-[#5C3A21]">
                   {[
-                    "🪐 दैनिक प्रत्यक्ष ग्रह गोचर चक्र",
-                    "⏳ २४ घंटे का दैनिक होरा चक्र",
-                    "📜 सम्पूर्ण जन्म कुण्डली व PDF",
-                    "💖 अष्टकूट ३६ गुण मिलान",
-                    "⏱️ दिन व रात्रि चौघड़िया",
-                    "🧭 यात्रा दिशाशूल व परिहार",
-                    "🙏 व्रत कथाएँ व आरती संग्रह",
-                    "🤖 उमा AI विद्वान दैवज्ञ परामर्श",
+                    "📜 शास्त्री मनीष की कुंडली PDF और भोजपत्र",
+                    "💖 अष्टकूट मिलान पत्रिका",
+                    "🔔 सुबह ६ बजे तिथि, राहुकाल और एक उपाय",
+                    "🪐 आज के गोचर से राशिफल, स्थिर लेख नहीं",
+                    "🤖 उमा आपकी कुंडली पढ़कर उत्तर देगी",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-[#B56A00] shrink-0" />
-                      <span className="truncate">{item}</span>
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>

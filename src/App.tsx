@@ -23,6 +23,7 @@ import { BookCover } from './components/BookCover';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
+import { scheduleMorningBriefs } from './services/morningBrief';
 import { calculateKundali } from './services/kundali';
 import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES } from './constants/bookPages';
@@ -183,6 +184,16 @@ export function App() {
       currentLocation.timezoneHours
     );
   }, [currentDate, currentLocation]);
+
+  useEffect(() => {
+    scheduleMorningBriefs(
+      currentLocation.latitude,
+      currentLocation.longitude,
+      currentLocation.timezoneHours,
+      currentLocation.name,
+      activeKundali?.name,
+    );
+  }, [currentLocation, activeKundali?.name]);
 
   // Current page book meta
   const currentIndex = BOOK_PAGES.findIndex((p) => p.id === activeTab);
@@ -597,6 +608,7 @@ export function App() {
         panchang={panchang}
         location={currentLocation}
         currentDate={currentDate}
+        personName={activeKundali?.name}
         onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
       />
 
