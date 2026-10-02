@@ -3,6 +3,7 @@ import { VedicPanchangData, KundaliData } from '../types';
 import { getAstrologerBranding, AstrologerBranding } from './storage';
 import { waitForPdfFonts, type PdfResult } from './pdfFonts';
 import { PDF_MM_H, PDF_MM_W, PDF_PX_H, PDF_PX_W } from './pdfPage';
+import { deliverPdf, openExternal } from '../lib/device';
 
 export interface UmaConsultationPdfOptions {
   panchang: VedicPanchangData;
@@ -349,17 +350,14 @@ export async function downloadUmaConsultationPdf(
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
 
-  // Direct jsPDF native save (most reliable across mobile and desktop browsers)
-  let savedNatively = false;
+  let saved = false;
   try {
-    pdf.save(fileName);
-    savedNatively = true;
+    saved = await deliverPdf(pdf, fileName);
   } catch (saveErr) {
-    console.warn('Native pdf.save failed, falling back to blob anchor download:', saveErr);
+    console.warn('PDF share failed, falling back to download link:', saveErr);
   }
 
-  // Safe fallback via <a> element if native save fails
-  if (!savedNatively) {
+  if (!saved) {
     try {
       const link = document.createElement('a');
       link.href = blobUrl;
@@ -523,8 +521,8 @@ export function openWhatsAppShare(text: string, phoneNumber?: string) {
   }
 
   const url = cleanPhone
-    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`
-    : `https://api.whatsapp.com/send?text=${encoded}`;
+    ? `https://wa.me/${cleanPhone}?text=${encoded}`
+    : `https://wa.me/?text=${encoded}`;
 
-  window.open(url, '_blank');
+  void openExternal(url);
 }

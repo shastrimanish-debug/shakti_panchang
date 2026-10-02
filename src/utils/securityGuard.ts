@@ -46,30 +46,6 @@ export function initializeSecurityGuard(): void {
     }
   }, { capture: true });
 
-  // 3. Anti-Debugging timing check in production
-  if (isProd) {
-    let devToolsOpenCount = 0;
-    const checkDebugger = () => {
-      const start = performance.now();
-      // eslint-disable-next-line no-debugger
-      debugger;
-      const end = performance.now();
-      // If debugger is paused, the elapsed time will be significantly higher than normal execution
-      if (end - start > 150) {
-        devToolsOpenCount++;
-        if (devToolsOpenCount > 2) {
-          // Invalidate sensitive cache if active debugger is detected
-          try {
-            sessionStorage.clear();
-          } catch {
-            /* ignore */
-          }
-        }
-      }
-    };
-
-    // Run periodic check without hogging CPU
-    const timer = setInterval(checkDebugger, 4000);
-    window.addEventListener('unload', () => clearInterval(timer));
-  }
+  // 3. Do not run a debugger trap inside the Android WebView.
+  // A paused debugger statement freezes the whole panchang screen.
 }

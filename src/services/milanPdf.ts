@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { KundaliData } from "../types";
+import { deliverPdf } from "../lib/device";
 
 export function downloadMilanPdf(boy: KundaliData, girl: KundaliData, totalScore: number) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -70,5 +71,5 @@ export function downloadMilanPdf(boy: KundaliData, girl: KundaliData, totalScore
   doc.setFontSize(9);
   doc.text("ज्योतिषीय परामर्श: शक्ति पंचांग वैदिक इंजन द्वारा जनित रिपोर्ट।", pageWidth / 2, y, { align: "center" });
 
-  doc.save(`Kundali_Milan_${boy.name}_${girl.name}.pdf`);
+  void deliverPdf(doc, `Kundali_Milan_${boy.name}_${girl.name}.pdf`);
 }

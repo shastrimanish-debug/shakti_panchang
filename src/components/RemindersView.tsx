@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppReminder } from '../types';
 import { getStoredReminders, saveReminder, deleteReminder } from '../services/storage';
+import { scheduleNativeReminder, cancelNativeReminder } from '../lib/device';
 import { Bell, Clock, Trash2, Plus, Check } from 'lucide-react';
 
 export const RemindersView: React.FC = () => {
@@ -35,6 +36,7 @@ export const RemindersView: React.FC = () => {
     };
 
     saveReminder(newReminder);
+    scheduleNativeReminder(newReminder.id, newReminder.title, newReminder.body, newReminder.timestamp);
     refreshList();
 
     if ('Notification' in window && Notification.permission !== 'granted') {
@@ -47,6 +49,7 @@ export const RemindersView: React.FC = () => {
 
   const handleDelete = (id: string) => {
     deleteReminder(id);
+    cancelNativeReminder(id);
     refreshList();
   };
 

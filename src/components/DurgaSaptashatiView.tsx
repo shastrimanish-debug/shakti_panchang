@@ -32,9 +32,15 @@ export const DurgaSaptashatiView: React.FC = () => {
   const currentAnga = DURGA_ANGAS.find((a) => a.id === selectedAngaId) || DURGA_ANGAS[0];
 
   const handleCopyText = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const done = () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => done());
+      return;
+    }
+    done();
   };
 
   const handleShareWhatsApp = (title: string, summary: string) => {

@@ -5,6 +5,7 @@ import { DASHA_ORDER, DASHA_YEARS, getVedicRemedies } from './kundali';
 import { analyzeKundali } from './predictions';
 import { waitForPdfFonts } from './pdfFonts';
 import { PDF_MM_H, PDF_MM_W, PDF_PX_H, PDF_PX_W } from './pdfPage';
+import { deliverPdf } from '../lib/device';
 
 export interface PdfProgressCallback {
   (current: number, total: number, message: string): void;
@@ -1685,7 +1686,7 @@ export async function generateExhaustive59PageKundaliPdf(
   
   // 1. Direct jsPDF download
   try {
-    pdf.save(fileName);
+    void deliverPdf(pdf, fileName);
   } catch (saveErr) {
     console.warn('Direct pdf.save fallback notice:', saveErr);
   }

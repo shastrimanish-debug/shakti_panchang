@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import { VedicPanchangData, KundaliData } from '../types';
 import { triggerPdfDownload, waitForPdfFonts, type PdfResult } from './pdfFonts';
 import { PDF_MM_H, PDF_MM_W, PDF_PX_H, PDF_PX_W } from './pdfPage';
+import { deliverPdf } from '../lib/device';
 
 export interface BhojpatraPdfOptions {
   title?: string;
@@ -301,7 +302,7 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
 
   // 1. Direct jsPDF download (safest across all mobile and iframe environments)
   try {
-    pdf.save(fileName);
+    void deliverPdf(pdf, fileName);
   } catch (saveErr) {
     console.warn('pdf.save notice:', saveErr);
   }
@@ -602,7 +603,7 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
 
   // 1. Direct jsPDF download
   try {
-    pdf.save(fileName);
+    void deliverPdf(pdf, fileName);
   } catch (saveErr) {
     console.warn('pdf.save notice:', saveErr);
   }
