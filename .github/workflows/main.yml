@@ -266,31 +266,31 @@ jobs:
             --v1-signing-enabled true \
             --v2-signing-enabled true \
             --v3-signing-enabled true \
-            --out release-out/Shakti-Panchang-v1.0.10.apk \
+            --out release-out/Shakti-Panchang-v1.0.11.apk \
             "$APK"
-          "$APKSIGNER" verify --verbose --print-certs release-out/Shakti-Panchang-v1.0.10.apk
-          cp "$AAB" release-out/Shakti-Panchang-v1.0.10.aab
+          "$APKSIGNER" verify --verbose --print-certs release-out/Shakti-Panchang-v1.0.11.apk
+          cp "$AAB" release-out/Shakti-Panchang-v1.0.11.aab
           rm -f release-out/*.idsig
           ls -la release-out
 
       - name: Upload signed APK and AAB
         uses: actions/upload-artifact@v4
         with:
-          name: Shakti-Panchang-v1.0.10
+          name: Shakti-Panchang-v1.0.11
           path: release-out/*
           if-no-files-found: error
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.10
-          name: Shakti Panchang v1.0.10
+          tag_name: v1.0.11
+          name: Shakti Panchang v1.0.11
           overwrite_files: true
           target_commitish: ${{ github.sha }}
           files: release-out/*
           fail_on_unmatched_files: true
           body: |
-            Install **Shakti-Panchang-v1.0.10.apk** only.
+            Install **Shakti-Panchang-v1.0.11.apk** only.
 
             The previous `app-release-unsigned.apk` had no signature, so Android showed "App not installed as package appears to be invalid."
 
