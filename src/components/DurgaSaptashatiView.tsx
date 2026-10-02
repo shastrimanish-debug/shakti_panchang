@@ -18,6 +18,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
+import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 
 export const DurgaSaptashatiView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chapters' | 'angas' | 'kunjika' | 'aarti'>('chapters');
@@ -43,21 +44,17 @@ export const DurgaSaptashatiView: React.FC = () => {
 
   // Text to Speech playback for Sanskrit/Hindi
   const handleToggleSpeech = (textToRead: string) => {
-    if (!('speechSynthesis' in window)) return;
     if (isPlayingAudio) {
-      window.speechSynthesis.cancel();
+      stopUmaSpeech();
       setIsPlayingAudio(false);
       return;
     }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(textToRead);
-    utterance.lang = 'hi-IN';
-    utterance.rate = 0.85;
-    utterance.onend = () => setIsPlayingAudio(false);
-    utterance.onerror = () => setIsPlayingAudio(false);
-    window.speechSynthesis.speak(utterance);
     setIsPlayingAudio(true);
+    void speakUma(textToRead, {
+      rate: 0.85,
+      onEnd: () => setIsPlayingAudio(false),
+      onError: () => setIsPlayingAudio(false),
+    });
   };
 
   return (

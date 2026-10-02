@@ -471,6 +471,10 @@ export function App() {
                 <VastuView />
               )}
 
+              {activeTab === 'durga' && (
+                <DurgaSaptashatiView />
+              )}
+
               {activeTab === 'upay' && (
                 <UpayView
                   activeKundali={activeKundali}

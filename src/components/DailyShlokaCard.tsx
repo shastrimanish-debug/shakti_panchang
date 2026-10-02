@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getDailyShloka, DailyShloka, SHLOKAS } from '../constants/shlokas';
 import { BookOpen, Copy, Check, Volume2, VolumeX, Sparkles, RefreshCw } from 'lucide-react';
+import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 
 interface DailyShlokaCardProps {
   date?: Date;
@@ -19,9 +20,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
   // Clean up speech synthesis on unmount
   useEffect(() => {
     return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopUmaSpeech();
     };
   }, []);
 
@@ -48,33 +47,26 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
   };
 
   const handleSpeak = () => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      stopUmaSpeech();
       setIsSpeaking(false);
       return;
     }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(`${shloka.sanskrit}। भावार्थ। ${shloka.hindi}`);
-    utterance.lang = 'hi-IN';
-    utterance.rate = 0.85; // Slightly slower, respectful recitation pace
-    utterance.pitch = 1.0;
-
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
     setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
+    void speakUma(`${shloka.sanskrit}। भावार्थ। ${shloka.hindi}`, {
+      rate: 0.85,
+      pitch: 1,
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
   };
 
   const handleNextShloka = () => {
     const currentIndex = SHLOKAS.findIndex((s) => s.id === shloka.id);
     const nextIndex = (currentIndex + 1) % SHLOKAS.length;
     setShloka(SHLOKAS[nextIndex]);
-    if (isSpeaking && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+    if (isSpeaking) {
+      stopUmaSpeech();
       setIsSpeaking(false);
     }
   };
@@ -102,20 +94,18 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
 
         {/* Action Controls */}
         <div className="flex items-center gap-1">
-          {typeof window !== 'undefined' && 'speechSynthesis' in window && (
-            <button
-              type="button"
-              onClick={handleSpeak}
-              className={`p-1 rounded-md transition cursor-pointer ${
-                isSpeaking
-                  ? 'bg-[#B56A00] text-white shadow-2xs'
-                  : 'text-[#8C6239] hover:bg-[#F4E8D1]'
-              }`}
-              title={isSpeaking ? 'ध्वनि रोकें' : 'श्लोक सुनें'}
-            >
-              {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleSpeak}
+            className={`p-1 rounded-md transition cursor-pointer ${
+              isSpeaking
+                ? 'bg-[#B56A00] text-white shadow-2xs'
+                : 'text-[#8C6239] hover:bg-[#F4E8D1]'
+            }`}
+            title={isSpeaking ? 'ध्वनि रोकें' : 'श्लोक सुनें'}
+          >
+            {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          </button>
 
           <button
             type="button"

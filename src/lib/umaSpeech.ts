@@ -1,3 +1,6 @@
+import { Capacitor } from "@capacitor/core";
+import { TextToSpeech } from "@capacitor-community/text-to-speech";
+
 /** Speak Hindi & Sanskrit shlokas with melodious devotional tone from user action. */
 
 let unlocked = false;
@@ -73,33 +76,24 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     return;
   }
 
-  // Native mobile Capacitor TTS fallback
-  if (typeof window !== "undefined") {
-    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
-    if (cap?.isNativePlatform?.()) {
-      try {
-        const spec = "@capacitor-community/text-to-speech";
-        const mod = (await import(/* @vite-ignore */ spec)) as {
-          TextToSpeech: {
-            speak: (o: { text: string; lang: string; rate: number; pitch: number; volume: number }) => Promise<void>;
-            stop: () => Promise<void>;
-          };
-        };
-        isCurrentlySpeaking = true;
-        options?.onStart?.();
-        await mod.TextToSpeech.speak({
-          text: clean,
-          lang: "hi-IN",
-          rate: options?.rate ?? 0.88,
-          pitch: options?.pitch ?? 1.02,
-          volume: 1,
-        });
-        isCurrentlySpeaking = false;
-        options?.onEnd?.();
-        return;
-      } catch {
-        /* fall through to browser TTS */
-      }
+  // Android WebView has no working speechSynthesis. Use the native TTS engine.
+  if (Capacitor.isNativePlatform()) {
+    try {
+      isCurrentlySpeaking = true;
+      options?.onStart?.();
+      await TextToSpeech.speak({
+        text: clean,
+        lang: "hi-IN",
+        rate: options?.rate ?? 0.88,
+        pitch: options?.pitch ?? 1.02,
+        volume: 1,
+      });
+      isCurrentlySpeaking = false;
+      options?.onEnd?.();
+      return;
+    } catch {
+      isCurrentlySpeaking = false;
+      /* fall through to browser TTS */
     }
   }
 
@@ -159,6 +153,9 @@ export function stopUmaSpeech() {
   clearKeepAlive();
   isCurrentlySpeaking = false;
   currentUtterance = null;
+  if (Capacitor.isNativePlatform()) {
+    TextToSpeech.stop().catch(() => {});
+  }
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }

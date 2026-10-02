@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GITA_SHLOKAS, GitaShlokaItem } from '../data/gitaShlokas';
 import { BookOpen, Sparkles, Volume2, Share2 } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
+import { speakUma } from '../lib/umaSpeech';
 
 export const DailyGitaShlokaView: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -13,12 +14,7 @@ export const DailyGitaShlokaView: React.FC = () => {
   };
 
   const handleSpeak = () => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(shloka.sanskrit + '. ' + shloka.meaning);
-    utt.lang = 'hi-IN';
-    utt.rate = 0.8;
-    window.speechSynthesis.speak(utt);
+    void speakUma(`${shloka.sanskrit}। ${shloka.meaning}`, { rate: 0.8 });
   };
 
   return (

@@ -4,6 +4,7 @@ import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
 import { askUma, AskUmaResponse } from '@/lib/uma';
 import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech } from '@/lib/umaSpeech';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { analyzeKundali } from '../services/predictions';
 import { getAstrologerBranding } from '../services/storage';
 import {
@@ -41,6 +42,13 @@ import {
   Clock,
   Sparkle,
 } from 'lucide-react';
+
+interface UmaVoicePlugin {
+  listen: () => Promise<{ text: string }>;
+  stop: () => Promise<void>;
+}
+
+const UmaVoice = registerPlugin<UmaVoicePlugin>('UmaVoice');
 
 interface ChatMessage {
   id: string;
@@ -281,6 +289,37 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
   // Alexa Voice Speech Recognition (Hindi & English)
   const handleVoiceInput = async () => {
+    if (Capacitor.isNativePlatform()) {
+      if (isListening) {
+        try {
+          await UmaVoice.stop();
+        } catch {
+          /* already stopped */
+        }
+        setIsListening(false);
+        setVoiceTranscript('');
+        return;
+      }
+      setIsListening(true);
+      setVoiceTranscript('उमा सुन रही हैं... (बोलें)');
+      try {
+        const result = await UmaVoice.listen();
+        const text = (result?.text || '').trim();
+        setIsListening(false);
+        setVoiceTranscript('');
+        if (text) {
+          setInputQuery(text);
+          setAutoSpeak(true);
+          handleSubmit(text);
+        }
+      } catch {
+        setIsListening(false);
+        setVoiceTranscript('');
+        alert('माइक्रोफोन की अनुमति दें, फिर दोबारा माइक दबाकर बोलें।');
+      }
+      return;
+    }
+
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
