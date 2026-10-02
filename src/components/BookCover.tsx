@@ -106,6 +106,13 @@ export function BookCover({
             </button>
           )}
         </div>
+
+        {/* Powered by SHIV SHAKTI Footer */}
+        <div className="mt-5 pt-3 border-t border-[#8C6239]/20 text-center">
+          <p className="text-[11px] font-extrabold tracking-widest text-[#8C6239] dark:text-amber-300/80">
+            शक्ति पंचांग • <span className="text-[#B56A00] dark:text-amber-400">Powered by SHIV SHAKTI</span>
+          </p>
+        </div>
       </div>
     </div>
   );
