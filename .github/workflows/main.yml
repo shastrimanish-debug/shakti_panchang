@@ -1,4 +1,4 @@
-name: Build and Release Android APK
+name: Build Web App and Android APK
 
 on:
   push:
@@ -8,7 +8,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-web:
+    name: 🌐 Build Web App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies & Build Web App
+        run: |
+          npm install
+          npm run build
+
+      - name: Upload Web Dist Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+
+  build-android:
+    name: 📱 Build Android APK
+    needs: build-web
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -30,10 +55,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Dependencies & Build Web App
-        run: |
-          npm install
-          npm run build
+      - name: Download Web Dist Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
 
       - name: Copy Web Dist into Android WebView Assets
         run: |
@@ -74,8 +100,8 @@ jobs:
             *.apk
             *.aab
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.9-release' }}
-          name: "Shakti Panchang v1.0.9 Release (Code 9, Signed Release APK)"
-          body: "Automatic Release for Shakti Panchang APK containing complete Vedic Panchang, Durga Saptashati Book Reader with Index, 40-Year Experienced Master Astrologer Uma AI, Miraculous Upays, and Vastu Shastra."
+          name: "Shakti Panchang v1.0.9 Release (Code 9, Signed Release)"
+          body: "Automatic Release for Shakti Panchang containing complete Vedic Panchang, Durga Saptashati Book Reader with Index, 40-Year Experienced Master Astrologer Uma AI, Miraculous Upays, and Vastu Shastra."
           draft: false
           prerelease: false
         env:
