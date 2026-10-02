@@ -270,6 +270,7 @@ jobs:
             "$APK"
           "$APKSIGNER" verify --verbose --print-certs release-out/Shakti-Panchang-v1.0.10.apk
           cp "$AAB" release-out/Shakti-Panchang-v1.0.10.aab
+          rm -f release-out/*.idsig
           ls -la release-out
 
       - name: Upload signed APK and AAB
