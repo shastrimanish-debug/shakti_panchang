@@ -147,8 +147,10 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
             </h3>
             <div className="space-y-3 text-stone-800 dark:text-stone-200 leading-relaxed text-sm sm:text-base font-serif">
               {activeKatha.katha.map((paragraph, index) => (
-                <p key={index} className="p-4 rounded-2xl bg-white dark:bg-stone-900/90 border border-amber-500/25 shadow-sm">
-                  <span className="font-bold text-amber-700 dark:text-amber-400 mr-2">अध्याय {index + 1}:</span>
+                <p key={index} className="p-4 rounded-2xl bg-white dark:bg-stone-900/90 border border-amber-500/25 shadow-sm whitespace-pre-line">
+                  {activeKatha.category === 'aarti' ? null : (
+                    <span className="font-bold text-amber-700 dark:text-amber-400 mr-2">अध्याय {index + 1}:</span>
+                  )}
                   {paragraph}
                 </p>
               ))}
@@ -195,11 +197,11 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
                 className="group cursor-pointer bg-white/90 dark:bg-[#2A1508]/90 backdrop-blur-xl rounded-3xl p-5 border border-amber-500/30 shadow-lg hover:border-amber-500 transition hover:shadow-2xl flex flex-col justify-between"
               >
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase leading-snug">
                       {item.vedaSource}
                     </span>
-                    <span className="text-amber-600 dark:text-amber-400 group-hover:translate-x-1 transition text-xs font-bold">
+                    <span className="shrink-0 text-amber-600 dark:text-amber-400 group-hover:translate-x-1 transition text-xs font-bold">
                       पढ़ें →
                     </span>
                   </div>
@@ -210,8 +212,8 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
                     {item.subtitle}
                   </p>
                   {/* Shlok preview */}
-                  <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-stone-900/70 border border-amber-500/20 text-xs italic text-[#5C3A21] dark:text-amber-200 line-clamp-2">
-                    &quot;{item.shlok}&quot;
+                  <div className="p-3 rounded-2xl bg-[#FFF8EC] dark:bg-[#1A0E06] border border-amber-500/40 text-[13px] font-granth font-bold text-[#3E2714] dark:text-[#FFE7B0] leading-relaxed whitespace-pre-line">
+                    {item.shlok.replace(/।\s*/g, '।\n')}
                   </div>
                 </div>
 
