@@ -1,0 +1,138 @@
+import React, { useState } from 'react';
+import { RASHI_FORECASTS, RashiForecast } from '../data/rashifalData';
+import { Sparkles, Sun, Award, Share2, Star } from 'lucide-react';
+import { openWhatsAppShare } from '../services/umaConsultationPdf';
+
+export const DailyRashifalView: React.FC = () => {
+  const [selectedRashiId, setSelectedRashiId] = useState<string>('mesh');
+  const currentRashi = RASHI_FORECASTS.find((r) => r.id === selectedRashiId) || RASHI_FORECASTS[0];
+
+  const handleShare = () => {
+    const text = `🌟 *दैनिक राशिफल - ${currentRashi.name}* 🌟\n\nसामान्य: ${currentRashi.prediction.general}\nकरियर: ${currentRashi.prediction.career}\nधन: ${currentRashi.prediction.wealth}\nउपाय: ${currentRashi.prediction.remedy}\n\nशक्ति पंचांग से साभार।`;
+    openWhatsAppShare(text);
+  };
+
+  return (
+    <div className="w-full space-y-4 animate-in fade-in duration-200">
+      {/* Header */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#5C3A21] via-[#8C6239] to-[#5C3A21] text-[#FAF2E4] shadow-md border border-[#FFD88A]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-[#FAF2E4]/10 border border-[#FFD88A]/40 flex items-center justify-center shrink-0">
+            <Sun className="w-6 h-6 text-[#FFD88A]" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-bold font-granth text-[#FFD88A]">
+                दैनिक राशिफल (Daily Horoscope)
+              </h2>
+              <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">
+                ग्रह गोचर फलित
+              </span>
+            </div>
+            <p className="text-xs text-[#FAF2E4]/80 mt-0.5">
+              चंद्र राशि के अनुसार आज का दिन, करियर, धन, स्वास्थ्य एवं विशेष उपाय
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Rashi Selector Horizontal */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {RASHI_FORECASTS.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => setSelectedRashiId(r.id)}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+              selectedRashiId === r.id
+                ? 'bg-[#B56A00] text-white shadow-xs'
+                : 'bg-[#FAF2E4] text-[#5C3A21] border border-[#8C6239]/20 hover:bg-[#F4E8D1]'
+            }`}
+          >
+            <span>{r.symbol}</span>
+            <span>{r.name.split(' ')[0]}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Active Rashi Horoscope Card */}
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#FAF2E4] border border-[#8C6239]/25 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-[#8C6239]/20">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl p-2 rounded-2xl bg-[#5C3A21] text-[#FFD88A] shadow-inner font-granth">
+              {currentRashi.symbol}
+            </span>
+            <div>
+              <h3 className="text-lg sm:text-xl font-bold font-granth text-[#5C3A21]">
+                {currentRashi.name} राशि फल
+              </h3>
+              <p className="text-xs text-[#735133]">
+                स्वामी: <strong className="text-[#5C3A21]">{currentRashi.lord}</strong> • तत्व: {currentRashi.element}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleShare}
+            className="p-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">शेयर</span>
+          </button>
+        </div>
+
+        {/* Lucky info badges */}
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="p-2.5 rounded-xl bg-white border border-[#8C6239]/15">
+            <span className="font-bold text-[#8C6239]">शुभ रंग: </span>
+            <span className="text-[#3E2714]">{currentRashi.color}</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-white border border-[#8C6239]/15">
+            <span className="font-bold text-[#8C6239]">शुभ अंक: </span>
+            <span className="text-[#3E2714]">{currentRashi.number}</span>
+          </div>
+        </div>
+
+        {/* Predictions Sections */}
+        <div className="space-y-3 text-xs">
+          <div className="p-3.5 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
+            <h4 className="font-bold text-[#B56A00] flex items-center gap-1.5">
+              <Star className="w-3.5 h-3.5" />
+              <span>सामान्य फलादेश</span>
+            </h4>
+            <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.general}</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
+              <h4 className="font-bold text-[#5C3A21]">💼 करियर व व्यापार</h4>
+              <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.career}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
+              <h4 className="font-bold text-[#5C3A21]">💰 धन व आर्थिक स्थिति</h4>
+              <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.wealth}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
+              <h4 className="font-bold text-[#5C3A21]">❤️ प्रेम व परिवार</h4>
+              <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.love}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white border border-[#8C6239]/15 space-y-1">
+              <h4 className="font-bold text-[#5C3A21]">🩺 स्वास्थ्य रक्षा</h4>
+              <p className="text-[#3E2714] leading-relaxed">{currentRashi.prediction.health}</p>
+            </div>
+          </div>
+
+          {/* Remedy */}
+          <div className="p-3.5 rounded-xl bg-[#FBF0DD] border border-[#B56A00]/30 space-y-1">
+            <h4 className="font-bold text-[#5C3A21] flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
+              <span>आज का विशेष अचूक उपाय</span>
+            </h4>
+            <p className="text-[#735133] leading-relaxed">{currentRashi.prediction.remedy}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

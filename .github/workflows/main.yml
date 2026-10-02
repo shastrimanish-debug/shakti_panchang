@@ -1,0 +1,82 @@
+name: Build and Release Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies & Build Web App
+        run: |
+          npm install
+          npm run build
+
+      - name: Copy Web Dist into Android WebView Assets
+        run: |
+          mkdir -p android/app/src/main/assets
+          cp -r dist/* android/app/src/main/assets/
+          echo "Web assets successfully copied into android/app/src/main/assets/"
+
+      - name: Build Android APK & AAB (Release & Play Store Bundle)
+        run: |
+          cd android
+          chmod +x gradlew || true
+          ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon
+
+      - name: Copy APKs & AABs to Root Directory for Easy Access
+        run: |
+          find android/app/build/outputs -name "*.apk" -exec cp {} . \;
+          find android/app/build/outputs -name "*.aab" -exec cp {} . \;
+          ls -la *.apk *.aab
+
+      - name: Upload APK & AAB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shakti-panchang-apks
+          path: |
+            **/build/outputs/**/*.apk
+            **/build/outputs/**/*.aab
+            *.apk
+            *.aab
+          if-no-files-found: warn
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          files: |
+            **/build/outputs/**/*.apk
+            **/build/outputs/**/*.aab
+            *.apk
+            *.aab
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.9-release' }}
+          name: "Shakti Panchang v1.0.9 Release (Code 9, Signed Release APK)"
+          body: "Automatic Release for Shakti Panchang APK containing complete Vedic Panchang, Durga Saptashati Book Reader with Index, 40-Year Experienced Master Astrologer Uma AI, Miraculous Upays, and Vastu Shastra."
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
