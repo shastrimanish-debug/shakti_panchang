@@ -197,10 +197,21 @@ function readTrialStart(now: number): number {
   } catch {
     /* ignore */
   }
+  try {
+    const sess = Number(sessionStorage.getItem(key) || "0");
+    if (sess > 1000000000000 && (start === 0 || sess < start)) start = sess;
+  } catch {
+    /* ignore */
+  }
   if (!(start > 1000000000000 && start <= now + 60000)) start = now;
   const str = String(start);
   try {
     localStorage.setItem(key, str);
+  } catch {
+    /* ignore */
+  }
+  try {
+    sessionStorage.setItem(key, str);
   } catch {
     /* ignore */
   }
