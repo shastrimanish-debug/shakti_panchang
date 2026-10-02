@@ -1,13 +1,13 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
 
 interface UmaVoicePlugin {
-  speak(options: { text: string }): Promise<void>;
+  speak(options: { text?: string; parts?: { text: string; rate: number; pitch: number }[] }): Promise<void>;
   stopSpeaking(): Promise<void>;
 }
 
 const UmaVoice = registerPlugin<UmaVoicePlugin>("UmaVoice");
 
-/** Uma speaks as a 40-year-old Indian आचार्या: clear Sanskrit, unhurried Hindi. */
+/** Path is dakshin style. Everyday answers stay natural Hindi. */
 
 let unlocked = false;
 let isCurrentlySpeaking = false;
@@ -21,26 +21,101 @@ function clearKeepAlive() {
   }
 }
 
-/** Turn markdown and dandas into the pauses a Sanskrit scholar actually leaves. */
-export function prepareUmaUtterance(text: string): string {
-  const clean = text
+type UmaPart = { text: string; rate: number; pitch: number };
+
+function stripMarkup(text: string): string {
+  return text
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/\*(.*?)\*/g, "$1")
     .replace(/#{1,6}\s?/g, "")
     .replace(/[•▪●]/g, ", ")
-    .replace(/ॐ/g, "ओम्, ")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+}
+
+function isSanskritPath(chunk: string): boolean {
+  if (/[॥ॐ]/.test(chunk)) return true;
+  const visarga = (chunk.match(/ः/g) || []).length;
+  if (visarga >= 2) return true;
+  if (visarga >= 1 && /[।॥]/.test(chunk)) return true;
+  const hindi = /(है|हैं|था|थी|का |की |के |में |और |यह |आप |लिए |करें|बता|नहीं|होता|होती)/;
+  const letters = (chunk.match(/[\u0900-\u097F]/g) || []).length;
+  return letters > 24 && !hindi.test(chunk);
+}
+
+function visargaEcho(stem: string): string {
+  if (/[ाआ]$/.test(stem)) return "ह";
+  if (/[िइ]$/.test(stem)) return "हि";
+  if (/[ीई]$/.test(stem)) return "ही";
+  if (/[ुउ]$/.test(stem)) return "हु";
+  if (/[ूऊ]$/.test(stem)) return "हू";
+  if (/[ेए]$/.test(stem)) return "हे";
+  if (/[ोओ]$/.test(stem)) return "हो";
+  if (/[ैऐ]$/.test(stem)) return "हि";
+  if (/[ौऔ]$/.test(stem)) return "हु";
+  if (/[ृऋ]$/.test(stem)) return "रुह";
+  return "ह";
+}
+
+/** Dakshin patha: jña not gya, ru for ऋ, diphthong ऐ/औ, class nasal, echoed visarga. */
+function dakshinPath(text: string): string {
+  let spoken = text
+    .replace(/ॐ/g, "ओम्")
+    .replace(/ं([कखगघ])/g, "ङ्$1")
+    .replace(/ं([चछजझ])/g, "ञ्$1")
+    .replace(/ं([टठडढ])/g, "ण्$1")
+    .replace(/ं([तथदध])/g, "न्$1")
+    .replace(/ं([पफबभ])/g, "म्$1")
+    .replace(/(\S+?)ः/g, (_, stem: string) => `${stem}${visargaEcho(stem)}`)
+    .replace(/ज्ञ/g, "ज्न")
+    .replace(/ऋ/g, "रु")
+    .replace(/ॠ/g, "रू")
+    .replace(/ृ/g, "रु")
+    .replace(/ऐ/g, "अइ")
+    .replace(/औ/g, "अउ")
+    .replace(/ै/g, "इ")
+    .replace(/ौ/g, "उ")
     .replace(/॥+/g, ". ")
     .replace(/।/g, ", ")
-    .replace(/ऽ/g, ", ")
-    // Visarga must be heard, otherwise the shloka loses its svara.
-    .replace(/ः/g, "ह् ")
-    .replace(/\n+/g, ", ")
+    .replace(/ऽ/g, ", ");
+  spoken = spoken.replace(/([\u0900-\u097F]+)\s+(?=[\u0900-\u097F])/g, "$1, ");
+  return spoken.replace(/\s+/g, " ").replace(/,\s*,/g, ", ").trim();
+}
+
+function naturalHindi(text: string): string {
+  return text
+    .replace(/॥+/g, ". ")
+    .replace(/।/g, ", ")
     .replace(/\s+/g, " ")
     .trim();
+}
 
-  // A short breath after a long compound, the way path is recited.
-  const paced = clean.replace(/([\u0900-\u097F]{16,})/g, "$1,");
-  return paced.slice(0, 3500);
+export function buildUmaParts(text: string): UmaPart[] {
+  const clean = stripMarkup(text);
+  if (!clean) return [];
+  const chunks = clean
+    .split(/\n+|(?<=[।॥])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const parts: UmaPart[] = [];
+  for (const chunk of chunks) {
+    const path = isSanskritPath(chunk);
+    const spoken = (path ? dakshinPath(chunk) : naturalHindi(chunk)).slice(0, 700);
+    if (!spoken) continue;
+    parts.push({
+      text: spoken,
+      rate: path ? 0.66 : 0.98,
+      pitch: path ? 0.97 : 1,
+    });
+  }
+  return parts.slice(0, 28);
+}
+
+export function prepareUmaUtterance(text: string): string {
+  return buildUmaParts(text)
+    .map((p) => p.text)
+    .join(" ")
+    .slice(0, 3500);
 }
 
 export function pickHindiVoice(): SpeechSynthesisVoice | null {
@@ -79,25 +154,22 @@ export interface SpeakOptions {
 }
 
 export async function speakUma(text: string, options?: SpeakOptions): Promise<void> {
-  const clean = prepareUmaUtterance(text);
-
-  if (!clean) {
+  const parts = buildUmaParts(text);
+  if (!parts.length) {
     options?.onEnd?.();
     return;
   }
 
-  // Android WebView has no working speechSynthesis. Use the native TTS engine.
   if (Capacitor.isNativePlatform()) {
     try {
       isCurrentlySpeaking = true;
       options?.onStart?.();
-      await UmaVoice.speak({ text: clean });
+      await UmaVoice.speak({ parts });
       isCurrentlySpeaking = false;
       options?.onEnd?.();
       return;
     } catch {
       isCurrentlySpeaking = false;
-      /* fall through to browser TTS */
     }
   }
 
@@ -110,46 +182,46 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
   clearKeepAlive();
   synth.cancel();
   synth.resume();
-
-  const utter = new SpeechSynthesisUtterance(clean);
-  currentUtterance = utter; // Retain reference to prevent garbage collection in Chrome
-  utter.lang = "hi-IN";
-  utter.rate = options?.rate ?? 0.78;
-  utter.pitch = options?.pitch ?? 0.92;
-
   const voice = pickHindiVoice();
-  if (voice) utter.voice = voice;
+  let index = 0;
 
-  utter.onstart = () => {
-    isCurrentlySpeaking = true;
-    options?.onStart?.();
-    // Keep alive for long speeches in Chromium
-    clearKeepAlive();
-    keepAliveTimer = setInterval(() => {
-      if (synth.speaking && !synth.paused) {
-        synth.pause();
-        synth.resume();
+  const speakNext = () => {
+    const part = parts[index];
+    if (!part) {
+      clearKeepAlive();
+      isCurrentlySpeaking = false;
+      currentUtterance = null;
+      options?.onEnd?.();
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(part.text);
+    currentUtterance = utter;
+    utter.lang = "hi-IN";
+    utter.rate = part.rate;
+    utter.pitch = part.pitch;
+    if (voice) utter.voice = voice;
+    utter.onstart = () => {
+      if (index === 0) {
+        isCurrentlySpeaking = true;
+        options?.onStart?.();
       }
-    }, 10000);
-  };
-
-  utter.onend = () => {
-    clearKeepAlive();
-    isCurrentlySpeaking = false;
-    currentUtterance = null;
-    options?.onEnd?.();
-  };
-
-  utter.onerror = (e) => {
-    clearKeepAlive();
-    isCurrentlySpeaking = false;
-    currentUtterance = null;
-    options?.onError?.(e);
-    options?.onEnd?.();
+    };
+    utter.onend = () => {
+      index += 1;
+      speakNext();
+    };
+    utter.onerror = (e) => {
+      clearKeepAlive();
+      isCurrentlySpeaking = false;
+      currentUtterance = null;
+      options?.onError?.(e);
+      options?.onEnd?.();
+    };
+    synth.speak(utter);
   };
 
   if (!unlocked) unlockUmaSpeech();
-  synth.speak(utter);
+  speakNext();
 }
 
 export function stopUmaSpeech() {

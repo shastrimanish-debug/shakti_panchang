@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.json.JSONObject;
+
 @CapacitorPlugin(
     name = "UmaVoice",
     permissions = {
@@ -138,14 +140,14 @@ public class UmaVoicePlugin extends Plugin {
 
     @PluginMethod
     public void speak(PluginCall call) {
-        String text = call.getString("text", "");
-        if (text == null || text.trim().isEmpty()) {
+        List<SpeechPart> parts = readParts(call);
+        if (parts.isEmpty()) {
             call.resolve();
             return;
         }
         call.setKeepAlive(true);
         waitingSpeak.add(call);
-        ensureTts(() -> speakNow(call, text.trim()));
+        ensureTts(() -> speakNow(call, parts));
     }
 
     @PluginMethod
@@ -248,8 +250,8 @@ public class UmaVoicePlugin extends Plugin {
         return best;
     }
 
-    private void speakNow(PluginCall call, String text) {
-        if (tts == null) {
+    private void speakNow(PluginCall call, List<SpeechPart> parts) {
+        if (tts == null || parts.isEmpty()) {
             call.reject("Voice engine unavailable");
             return;
         }
@@ -259,13 +261,14 @@ public class UmaVoicePlugin extends Plugin {
         PluginCall previous = speakCall;
         speakCall = call;
         if (previous != null) previous.resolve();
-        String utteranceId = "uma-" + System.currentTimeMillis();
+
+        String lastId = "uma-" + System.currentTimeMillis() + "-" + (parts.size() - 1);
         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override public void onStart(String id) {}
 
             @Override
             public void onDone(String id) {
-                if (speakCall == call) {
+                if (lastId.equals(id) && speakCall == call) {
                     speakCall = null;
                     call.resolve();
                 }
@@ -279,10 +282,61 @@ public class UmaVoicePlugin extends Plugin {
                 }
             }
         });
-        int queued = tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-        if (queued == TextToSpeech.ERROR) {
-            speakCall = null;
-            call.reject("Could not speak");
+
+        for (int i = 0; i < parts.size(); i++) {
+            SpeechPart part = parts.get(i);
+            tts.setSpeechRate(part.rate);
+            tts.setPitch(part.pitch);
+            String id = "uma-" + (System.currentTimeMillis()) + "-" + i;
+            if (i == parts.size() - 1) id = lastId;
+            int mode = i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD;
+            int queued = tts.speak(part.text, mode, null, id);
+            if (queued == TextToSpeech.ERROR) {
+                speakCall = null;
+                call.reject("Could not speak");
+                return;
+            }
         }
+    }
+
+    private List<SpeechPart> readParts(PluginCall call) {
+        List<SpeechPart> parts = new ArrayList<>();
+        try {
+            if (call.getArray("parts") != null) {
+                for (int i = 0; i < call.getArray("parts").length(); i++) {
+                    JSONObject item = call.getArray("parts").getJSONObject(i);
+                    String text = item.optString("text", "").trim();
+                    if (text.isEmpty()) continue;
+                    SpeechPart part = new SpeechPart();
+                    part.text = text;
+                    part.rate = clamp((float) item.optDouble("rate", 0.98), 0.55f, 1.15f);
+                    part.pitch = clamp((float) item.optDouble("pitch", 1.0), 0.85f, 1.15f);
+                    parts.add(part);
+                }
+            }
+        } catch (Exception ignored) {
+            parts.clear();
+        }
+        if (parts.isEmpty()) {
+            String text = call.getString("text", "");
+            if (text != null && !text.trim().isEmpty()) {
+                SpeechPart part = new SpeechPart();
+                part.text = text.trim();
+                part.rate = 0.98f;
+                part.pitch = 1.0f;
+                parts.add(part);
+            }
+        }
+        return parts;
+    }
+
+    private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static class SpeechPart {
+        String text;
+        float rate;
+        float pitch;
     }
 }
