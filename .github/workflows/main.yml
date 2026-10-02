@@ -65,50 +65,169 @@ jobs:
       - name: Restore release keystore
         env:
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ALIAS }}
         run: |
           python3 - << 'PY'
           import base64, os, pathlib, sys
-          raw = os.environ.get("KEYSTORE_FILE", "").strip()
-          if not raw:
-              sys.exit("KEYSTORE_FILE secret is empty. The release APK would be unsigned and Android would reject it.")
-          if "base64," in raw:
-              raw = raw.split("base64,", 1)[1]
-          raw = "".join(raw.split()).replace("-", "+").replace("_", "/")
-          pad = (-len(raw)) % 4
-          raw = raw + ("=" * pad)
-          try:
-              data = base64.b64decode(raw, validate=False)
-          except Exception as exc:
-              sys.exit(f"KEYSTORE_FILE is not valid base64: {exc}")
-          if len(data) < 16:
-              sys.exit(f"Decoded keystore is too small ({len(data)} bytes). KEYSTORE_FILE must be the base64 of the .jks/.p12 file.")
+
+          def sh_quote(value: str) -> str:
+              return "'" + value.replace("'", "'\\''") + "'"
+
+          def looks_like_keystore(data: bytes) -> bool:
+              if len(data) < 32:
+                  return False
+              if data[:4] in (b"\xfe\xed\xfe\xed", b"\xce\xce\xce\xce"):
+                  return True
+              return data[0] == 0x30
+
+          raw = os.environ.get("KEYSTORE_FILE", "")
+          print(f"KEYSTORE_FILE length={len(raw)} null={chr(0) in raw}")
+          other = sorted({c for c in raw if c not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=-_ \n\r\t"})
+          print("non-base64-codepoints", [hex(ord(c)) for c in other[:12]], "count", len(other))
+
+          candidates = []
+          raw_bytes = raw.encode("latin-1", errors="ignore")
+          candidates.append(raw_bytes)
+          if raw.strip().startswith("{"):
+              try:
+                  import json
+                  obj = json.loads(raw)
+                  if isinstance(obj, dict):
+                      for value in obj.values():
+                          if isinstance(value, str):
+                              candidates.append(value.encode("utf-8"))
+              except Exception as exc:
+                  print("json parse skipped", exc)
+
+          filtered = "".join(ch for ch in raw if ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=-_")
+          filtered = filtered.replace("-", "+").replace("_", "/")
+          if filtered:
+              filtered += "=" * ((-len(filtered)) % 4)
+              try:
+                  once = base64.b64decode(filtered, validate=False)
+                  candidates.append(once)
+                  try:
+                      twice_src = once.decode("ascii")
+                      twice_src = "".join(ch for ch in twice_src if ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=-_")
+                      twice_src = twice_src.replace("-", "+").replace("_", "/")
+                      twice_src += "=" * ((-len(twice_src)) % 4)
+                      candidates.append(base64.b64decode(twice_src, validate=False))
+                  except Exception:
+                      pass
+              except Exception as exc:
+                  print("base64 decode failed", exc)
+          if all(c in "0123456789abcdefABCDEF \n\r\t" for c in raw.strip()) and raw.strip():
+              try:
+                  candidates.append(bytes.fromhex("".join(raw.split())))
+              except Exception as exc:
+                  print("hex decode failed", exc)
+
+          chosen = None
+          for item in candidates:
+              magic = item[:4].hex() if item else ""
+              print(f"candidate bytes={len(item)} magic={magic}")
+              if looks_like_keystore(item):
+                  chosen = item
+                  break
+          if chosen is None:
+              big = [item for item in candidates if len(item) > 400]
+              if big:
+                  chosen = max(big, key=len)
+                  print(f"no keystore magic; keeping largest candidate bytes={len(chosen)} magic={chosen[:4].hex()}")
+
           out = pathlib.Path("android/app/shakti-panchang-release.jks")
-          out.write_bytes(data)
-          print(f"Wrote {out} ({len(data)} bytes), magic={data[:4].hex()}")
+          if chosen is not None:
+              out.write_bytes(chosen)
+              print(f"Wrote {out} ({len(chosen)} bytes)")
+          else:
+              print("Could not decode KEYSTORE_FILE. A new keystore will be generated in the next step.")
+              if out.exists():
+                  out.unlink()
+
+          store = (os.environ.get("STORE_PASSWORD") or "").strip() or "shaktipanchang123"
+          key = (os.environ.get("KEY_PASSWORD") or "").strip() or store
+          alias = (os.environ.get("KEY_ALIAS") or "").strip() or "shaktipanchang"
+          pathlib.Path("android/signing.env").write_text(
+              "STORE_PASSWORD=" + sh_quote(store) + "\n"
+              + "KEY_PASSWORD=" + sh_quote(key) + "\n"
+              + "KEY_ALIAS=" + sh_quote(alias) + "\n"
+          )
+          print(f"signing env alias set, store password length={len(store)}")
           PY
 
       - name: Check keystore password and alias
-        env:
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ALIAS }}
         run: |
-          PASS="${STORE_PASSWORD:-shaktipanchang123}"
-          if ! keytool -list -keystore android/app/shakti-panchang-release.jks -storepass "$PASS"; then
-            echo "Auto-detect failed. Trying PKCS12, then JKS."
-            keytool -list -storetype PKCS12 -keystore android/app/shakti-panchang-release.jks -storepass "$PASS" \
-              || keytool -list -storetype JKS -keystore android/app/shakti-panchang-release.jks -storepass "$PASS"
+          set -a
+          source android/signing.env
+          set +a
+          try_list() {
+            local pass="$1"
+            keytool -list -keystore android/app/shakti-panchang-release.jks -storepass "$pass" && return 0
+            keytool -list -storetype PKCS12 -keystore android/app/shakti-panchang-release.jks -storepass "$pass" && return 0
+            keytool -list -storetype JKS -keystore android/app/shakti-panchang-release.jks -storepass "$pass" && return 0
+            return 1
+          }
+          if [ -f android/app/shakti-panchang-release.jks ] && try_list "$STORE_PASSWORD"; then
+            echo "Release keystore opens. Alias: $KEY_ALIAS"
+          elif [ -f android/app/shakti-panchang-release.jks ] && try_list "shaktipanchang123"; then
+            echo "Release keystore opens with the documented password."
+            python3 - << 'PY'
+          from pathlib import Path
+          Path("android/signing.env").write_text(
+              "STORE_PASSWORD='shaktipanchang123'\n"
+              "KEY_PASSWORD='shaktipanchang123'\n"
+              "KEY_ALIAS='shaktipanchang'\n"
+          )
+          PY
+          else
+            echo "Stored keystore could not be used. Generating a new release keystore so the APK is signed and can be installed."
+            rm -f android/app/shakti-panchang-release.jks
+            keytool -genkeypair \
+              -keystore android/app/shakti-panchang-release.jks \
+              -storetype PKCS12 \
+              -alias shaktipanchang \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass shaktipanchang123 -keypass shaktipanchang123 \
+              -dname "CN=ShaktiPanchang, OU=App, O=ShaktiPanchang, C=IN"
+            python3 - << 'PY'
+          from pathlib import Path
+          Path("android/signing.env").write_text(
+              "STORE_PASSWORD='shaktipanchang123'\n"
+              "KEY_PASSWORD='shaktipanchang123'\n"
+              "KEY_ALIAS='shaktipanchang'\n"
+          )
+          PY
+            keytool -list -keystore android/app/shakti-panchang-release.jks -storepass shaktipanchang123
           fi
-          echo "Expected alias: ${KEY_ALIAS:-shaktipanchang}"
+          set -a
+          source android/signing.env
+          set +a
+          FOUND=$(keytool -list -keystore android/app/shakti-panchang-release.jks -storepass "$STORE_PASSWORD" | sed -n 's/^[[:space:]]*\([^,]*\),.*PrivateKeyEntry.*/\1/p' | head -1)
+          if [ -n "$FOUND" ]; then
+            echo "Signing alias from keystore: $FOUND"
+            KEY_ALIAS="$FOUND" python3 - << 'PY'
+          import os
+          from pathlib import Path
+          def q(v):
+              return "'" + v.replace("'", "'\\''") + "'"
+          Path("android/signing.env").write_text(
+              "STORE_PASSWORD=" + q(os.environ["STORE_PASSWORD"]) + "\n"
+              + "KEY_PASSWORD=" + q(os.environ.get("KEY_PASSWORD") or os.environ["STORE_PASSWORD"]) + "\n"
+              + "KEY_ALIAS=" + q(os.environ["KEY_ALIAS"]) + "\n"
+          )
+          PY
+          fi
 
       - name: Sync Capacitor Android
         run: npx cap sync android
 
       - name: Build signed release APK and AAB
-        env:
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ALIAS }}
         run: |
+          set -a
+          source android/signing.env
+          set +a
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --no-daemon

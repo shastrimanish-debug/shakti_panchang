@@ -22,6 +22,7 @@ android/app/build/
 android/build/
 local.properties
 android/app/shakti-panchang-release.jks
+android/signing.env
 *.jks
 *.keystore
 # *.jks
