@@ -179,7 +179,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Horizontal Quick-Access Chapter Navigation Strip */}
-      <div className="w-full max-w-4xl mx-auto px-2 pb-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none text-[11px] font-bold">
+      <div className="w-full min-w-0 max-w-4xl mx-auto px-2 pb-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none text-[11px] font-bold">
         {[
           { id: 'panchang', label: '📜 पंचांग' },
           { id: 'kundali', label: '🪐 कुण्डली' },

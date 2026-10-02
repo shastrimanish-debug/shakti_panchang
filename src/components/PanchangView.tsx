@@ -216,7 +216,8 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
           <div className="rounded-2xl border border-[#8C6239]/30 bg-white/80 p-3 text-xs text-[#3E2714] space-y-1">
             <div className="font-bold text-[#5C3A21]">गणना प्रमाण — पंडित इसी से मिलाएँ</div>
             <p>अयनांश: {panchang.ayanamshaName} • {panchang.ayanamsha.toFixed(4)}°</p>
-            <p>स्थान: {locationName} • अक्षांश {latitude.toFixed(4)} • देशांतर {longitude.toFixed(4)}</p>
+            <p className="break-words">स्थान: {locationName}</p>
+            <p>अक्षांश {latitude.toFixed(4)} • देशांतर {longitude.toFixed(4)}</p>
             <p>सूर्योदय {fmt(panchang.solar.sunrise)} • सूर्यास्त {fmt(panchang.solar.sunset)}</p>
             {panchang.tithiSpan && (
               <p>तिथि समाप्ति: {panchang.tithiSpan.nextName} {fmt(panchang.tithiSpan.end)} से</p>
@@ -233,7 +234,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
             <div className="relative z-10">
               <div className="flex items-center justify-between text-xs font-bold text-[#7A4518]">
-                <span className="tracking-wide">{panchang.paksha} पक्ष • {panchang.masa} मास</span>
+                <span className="tracking-wide">{panchang.paksha} • {panchang.masa}</span>
                 <span className="font-mono text-[11px] bg-[#F5DEBE] text-[#6E3C12] px-2.5 py-0.5 rounded-full border border-[#E8C59D] font-bold shadow-2xs">
                   {panchang.samvat}
                 </span>

@@ -5,6 +5,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.view.WindowInsets;
 import android.webkit.WebView;
 
 import com.getcapacitor.BridgeActivity;
@@ -40,6 +42,18 @@ public class MainActivity extends BridgeActivity {
             if (!needed.isEmpty()) {
                 requestPermissions(needed.toArray(new String[0]), 4101);
             }
+        }
+
+        View content = findViewById(android.R.id.content);
+        if (content != null && Build.VERSION.SDK_INT >= 30) {
+            content.setOnApplyWindowInsetsListener((view, insets) -> {
+                android.graphics.Insets status = insets.getInsets(
+                    WindowInsets.Type.statusBars() | WindowInsets.Type.displayCutout()
+                );
+                view.setPadding(0, status.top, 0, 0);
+                return insets;
+            });
+            content.requestApplyInsets();
         }
     }
 }

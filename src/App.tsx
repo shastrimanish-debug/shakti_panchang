@@ -317,7 +317,7 @@ export function App() {
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       {licenseStatus.kind === "trial" && (
-        <div className="bg-[#B56A00] text-white text-center text-xs font-bold py-1.5">
+        <div className="bg-[#B56A00] text-white text-center text-xs font-bold px-3 py-1.5 leading-snug">
           परीक्षण: {licenseStatus.daysRemaining} दिन शेष। उसके बाद पूरी ऐप बंद।
         </div>
       )}
@@ -356,7 +356,7 @@ export function App() {
       )}
 
       {/* Main Vedic Content Presentation Area (Mobile Fit & Responsive) */}
-      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-2 sm:px-4 py-2 pb-36 sm:pb-32 min-w-0 overflow-x-hidden">
+      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-2 sm:px-4 py-2 pb-44 sm:pb-40 min-w-0 overflow-x-hidden">
         {!isBookOpen ? (
           <BookCover
             onOpenIndex={() => {
