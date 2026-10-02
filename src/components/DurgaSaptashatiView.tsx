@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DURGA_CHAPTERS, DURGA_ANGAS, DurgaChapter, DurgaAnga } from '../data/durgaSaptashatiData';
+import durgaPath from '../data/durgaPath.json';
 import {
   BookOpen,
   Sparkles,
@@ -20,6 +21,9 @@ import {
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 
+const PATH = durgaPath.chapters as Record<string, { n: number; text: string }[]>;
+const PAGE_SIZE = 10;
+
 export const DurgaSaptashatiView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chapters' | 'angas' | 'kunjika' | 'aarti'>('chapters');
   const [selectedChapterId, setSelectedChapterId] = useState<number>(1);
@@ -27,9 +31,15 @@ export const DurgaSaptashatiView: React.FC = () => {
   const [fontSize, setFontSize] = useState<number>(15);
   const [copied, setCopied] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [versePage, setVersePage] = useState(0);
 
   const currentChapter = DURGA_CHAPTERS.find((c) => c.id === selectedChapterId) || DURGA_CHAPTERS[0];
   const currentAnga = DURGA_ANGAS.find((a) => a.id === selectedAngaId) || DURGA_ANGAS[0];
+  const chapterVerses = PATH[String(selectedChapterId)] || [];
+  const pageCount = Math.max(1, Math.ceil(chapterVerses.length / PAGE_SIZE));
+  const safePage = Math.min(versePage, pageCount - 1);
+  const visibleVerses = chapterVerses.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+  const chapterPathText = chapterVerses.map((v) => v.text.replace(/\n/g, ' ')).join(' । ');
 
   const handleCopyText = (text: string) => {
     const done = () => {
@@ -177,7 +187,10 @@ export const DurgaSaptashatiView: React.FC = () => {
               <button
                 key={chap.id}
                 type="button"
-                onClick={() => setSelectedChapterId(chap.id)}
+                onClick={() => {
+                  setSelectedChapterId(chap.id);
+                  setVersePage(0);
+                }}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                   selectedChapterId === chap.id
                     ? 'bg-[#B56A00] text-white shadow-xs'
@@ -195,7 +208,7 @@ export const DurgaSaptashatiView: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#8C6239]/20 gap-2">
               <div>
                 <span className="text-[11px] font-bold text-[#B56A00] tracking-wider uppercase">
-                  {currentChapter.charitra} • {currentChapter.shlokaCount} श्लोक
+                  {currentChapter.charitra} • {chapterVerses.length} श्लोक • संपूर्ण पाठ
                 </span>
                 <h3 className="text-lg font-bold font-granth text-[#5C3A21]">
                   {currentChapter.title} : {currentChapter.hindiTitle}
@@ -207,9 +220,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    handleToggleSpeech(
-                      `${currentChapter.title}। ${currentChapter.hindiTitle}। ${currentChapter.summary}`
-                    )
+                    handleToggleSpeech(chapterPathText || currentChapter.summary)
                   }
                   className={`p-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                     isPlayingAudio
@@ -272,15 +283,27 @@ export const DurgaSaptashatiView: React.FC = () => {
 
             {/* Sanskrit Shloka Highlights */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider flex items-center gap-1.5">
-                <span>ॐ</span>
-                <span>प्रमुख संस्कृत मन्त्र व भावार्थ</span>
-              </h4>
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider flex items-center gap-1.5">
+                  <span>ॐ</span>
+                  <span>संपूर्ण संस्कृत पाठ • पृष्ठ {safePage + 1}/{pageCount}</span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleToggleSpeech(visibleVerses.map((v) => v.text.replace(/\n/g, ' ')).join(' । '))
+                  }
+                  className="px-2 py-1 rounded-lg bg-[#EADBCC] text-[#5C3A21] text-[11px] font-bold"
+                >
+                  यह पृष्ठ सुनाएँ
+                </button>
+              </div>
+              <p className="text-[11px] text-[#735133]">{durgaPath.source} कवच, अर्गला और कीलक अलग अंग हैं।</p>
 
               <div className="space-y-2.5">
-                {currentChapter.sanskritHighlights.map((shloka, idx) => (
+                {visibleVerses.map((shloka) => (
                   <div
-                    key={idx}
+                    key={shloka.n}
                     className="p-3.5 rounded-xl bg-gradient-to-b from-[#FFFDF9] to-[#FAF2E4] border border-[#8C6239]/20 space-y-2"
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -288,26 +311,39 @@ export const DurgaSaptashatiView: React.FC = () => {
                         style={{ fontSize: `${fontSize + 1}px` }}
                         className="font-granth font-bold text-[#5C3A21] whitespace-pre-line leading-relaxed"
                       >
-                        {shloka.shloka}
+                        <span className="text-[#B56A00] mr-2">{shloka.n}.</span>
+                        {shloka.text}
                       </p>
                       <button
                         type="button"
-                        onClick={() => handleCopyText(shloka.shloka + '\n' + shloka.meaning)}
+                        onClick={() => handleCopyText(shloka.text)}
                         className="p-1 rounded text-[#8C6239] hover:text-[#5C3A21] shrink-0"
                         title="प्रतिलिपि बनाएं"
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <p
-                      style={{ fontSize: `${fontSize - 1}px` }}
-                      className="text-[#735133] leading-relaxed pt-1.5 border-t border-[#8C6239]/15"
-                    >
-                      <strong className="text-[#5C3A21]">भावार्थ: </strong>
-                      {shloka.meaning}
-                    </p>
                   </div>
                 ))}
+              </div>
+              <div className="flex items-center justify-between text-xs font-bold">
+                <button
+                  type="button"
+                  disabled={safePage === 0}
+                  onClick={() => setVersePage((p) => Math.max(0, p - 1))}
+                  className="px-3 py-1.5 rounded-lg bg-[#EADBCC] text-[#5C3A21] disabled:opacity-40"
+                >
+                  पिछले श्लोक
+                </button>
+                <span className="text-[#8C6239]">{chapterVerses.length} में से {safePage * PAGE_SIZE + 1}–{Math.min(chapterVerses.length, (safePage + 1) * PAGE_SIZE)}</span>
+                <button
+                  type="button"
+                  disabled={safePage >= pageCount - 1}
+                  onClick={() => setVersePage((p) => p + 1)}
+                  className="px-3 py-1.5 rounded-lg bg-[#5C3A21] text-[#FAF2E4] disabled:opacity-40"
+                >
+                  अगले श्लोक
+                </button>
               </div>
             </div>
 
@@ -330,7 +366,10 @@ export const DurgaSaptashatiView: React.FC = () => {
               <button
                 type="button"
                 disabled={selectedChapterId === 1}
-                onClick={() => setSelectedChapterId((id) => Math.max(1, id - 1))}
+                onClick={() => {
+                  setSelectedChapterId((id) => Math.max(1, id - 1));
+                  setVersePage(0);
+                }}
                 className="px-3 py-1.5 rounded-lg bg-[#EADBCC] text-[#5C3A21] disabled:opacity-40 flex items-center gap-1 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -345,7 +384,8 @@ export const DurgaSaptashatiView: React.FC = () => {
                 type="button"
                 disabled={selectedChapterId === DURGA_CHAPTERS.length}
                 onClick={() =>
-                  setSelectedChapterId((id) => Math.min(DURGA_CHAPTERS.length, id + 1))
+                  setSelectedChapterId((id) => Math.min(DURGA_CHAPTERS.length, id + 1));
+                  setVersePage(0);
                 }
                 className="px-3 py-1.5 rounded-lg bg-[#5C3A21] text-[#FAF2E4] disabled:opacity-40 flex items-center gap-1 cursor-pointer"
               >
