@@ -212,10 +212,11 @@ public class UmaVoicePlugin extends Plugin {
         if (tts == null) return;
         tts.setLanguage(new Locale("hi", "IN"));
         Voice chosen = pickFemaleHindiVoice(tts.getVoices());
-        if (chosen != null) tts.setVoice(chosen);
-        // Slower than conversation, slightly lower than a young voice: a 40-year-old आचार्या.
-        tts.setSpeechRate(0.76f);
-        tts.setPitch(0.92f);
+        if (chosen != null) {
+            tts.setVoice(chosen);
+        }
+        tts.setSpeechRate(0.94f);
+        tts.setPitch(1.04f);
         if (Build.VERSION.SDK_INT >= 21) {
             tts.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -232,12 +233,15 @@ public class UmaVoicePlugin extends Plugin {
             if (voice == null || voice.getLocale() == null) continue;
             String lang = voice.getLocale().toLanguageTag().toLowerCase(Locale.ROOT);
             if (!lang.startsWith("hi")) continue;
+            Set<String> features = voice.getFeatures();
+            if (features != null && features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
             String name = voice.getName() == null ? "" : voice.getName().toLowerCase(Locale.ROOT);
-            int score = 10;
-            if (lang.contains("-in")) score += 15;
-            if (name.contains("hfc") || name.contains("hfd") || name.contains("hia")
-                || name.contains("female") || name.contains("wavenet-a") || name.contains("wavenet-d")) {
-                score += 80;
+            if (name.contains("en-") || name.startsWith("en")) continue;
+            int score = 20;
+            if (lang.equals("hi-in") || lang.contains("hi-in")) score += 40;
+            if (name.contains("hia") || name.contains("hfc") || name.contains("hfd")
+                || name.contains("female") || name.contains("-a-") || name.contains("wavenet-a")) {
+                score += 90;
             }
             if (name.contains("neural") || name.contains("wavenet") || name.contains("studio") || name.contains("network")) {
                 score += 30;
@@ -262,7 +266,13 @@ public class UmaVoicePlugin extends Plugin {
             return;
         }
         Voice chosen = pickFemaleHindiVoice(tts.getVoices());
-        if (chosen != null) tts.setVoice(chosen);
+        if (chosen == null) {
+            openHindiVoiceInstall();
+            call.reject("हिंदी आवाज़ इंस्टॉल नहीं है");
+            return;
+        }
+        tts.setLanguage(new Locale("hi", "IN"));
+        tts.setVoice(chosen);
         if (sitarWanted) startSitar();
         else stopSitar();
         waitingSpeak.remove(call);
@@ -306,6 +316,22 @@ public class UmaVoicePlugin extends Plugin {
                 stopSitar();
                 call.reject("Could not speak");
                 return;
+            }
+        }
+    }
+
+    private void openHindiVoiceInstall() {
+        try {
+            Intent install = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+            install.setPackage("com.google.android.tts");
+            install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(install);
+        } catch (Exception ignored) {
+            try {
+                Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.tts"));
+                market.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(market);
+            } catch (Exception ignoredAgain) {
             }
         }
     }

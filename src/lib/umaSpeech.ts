@@ -117,8 +117,8 @@ export function buildUmaParts(text: string): UmaPart[] {
     if (!spoken) continue;
     parts.push({
       text: spoken,
-      rate: path ? 0.82 : 1,
-      pitch: 1,
+      rate: path ? 0.9 : 0.96,
+      pitch: path ? 1.0 : 1.05,
     });
   }
   return parts.slice(0, 28);
@@ -183,8 +183,10 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
       isCurrentlySpeaking = false;
       options?.onEnd?.();
       return;
-    } catch {
+    } catch (err) {
       isCurrentlySpeaking = false;
+      options?.onError?.(err);
+      return;
     }
   }
 
