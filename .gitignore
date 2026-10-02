@@ -21,6 +21,9 @@ android/.gradle/
 android/app/build/
 android/build/
 local.properties
+android/app/shakti-panchang-release.jks
+*.jks
+*.keystore
 # *.jks
 .DS_Store
 .idea/

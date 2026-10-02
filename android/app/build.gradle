@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+def releaseKeystore = file('shakti-panchang-release.jks')
+
+def envOr = { String name, String fallback ->
+    def value = System.getenv(name)
+    return (value != null && value.trim()) ? value.trim() : fallback
+}
+
+def releaseStorePassword = envOr('STORE_PASSWORD', 'shaktipanchang123')
+def releaseKeyPassword = envOr('KEY_PASSWORD', releaseStorePassword)
+def releaseKeyAlias = envOr('KEY_ALIAS', envOr('ALIAS', 'shaktipanchang'))
+
 android {
     namespace = "com.shaktipanchang.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +18,8 @@ android {
         applicationId "com.shaktipanchang.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.0.8"
+        versionCode 10
+        versionName "1.0.10"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,25 +27,42 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // AGP embeds a dependency-info block that some phones reject as an invalid package.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = true
+    }
     signingConfigs {
         release {
-            if (file('shakti-panchang-release.jks').exists()) {
-                storeFile file('shakti-panchang-release.jks')
-                storePassword 'shaktipanchang123'
-                keyAlias 'shaktipanchang'
-                keyPassword 'shaktipanchang123'
+            if (releaseKeystore.exists() && releaseKeystore.length() > 0) {
+                storeFile releaseKeystore
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+                v1SigningEnabled true
+                v2SigningEnabled true
             }
         }
     }
     buildTypes {
         release {
-            if (file('shakti-panchang-release.jks').exists()) {
+            if (releaseKeystore.exists() && releaseKeystore.length() > 0) {
                 signingConfig signingConfigs.release
             }
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    def wantsRelease = taskGraph.allTasks.any { task ->
+        def n = task.name
+        n == 'assembleRelease' || n == 'bundleRelease' || n == 'packageRelease' || n == 'signReleaseBundle'
+    }
+    if (wantsRelease && !(releaseKeystore.exists() && releaseKeystore.length() > 0)) {
+        throw new GradleException('Release keystore android/app/shakti-panchang-release.jks is missing. Refusing to build an unsigned APK — Android shows that as "package appears to be invalid".')
     }
 }
 

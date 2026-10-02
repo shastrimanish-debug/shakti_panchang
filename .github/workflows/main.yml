@@ -3,8 +3,6 @@ name: Build Web App and Android APK
 on:
   push:
     branches: [ main, master ]
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -18,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Dependencies & Build Web App
         run: |
@@ -53,7 +51,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Dependencies
         run: npm install
@@ -64,50 +62,111 @@ jobs:
           name: web-dist
           path: dist/
 
+      - name: Restore release keystore
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+        run: |
+          python3 - << 'PY'
+          import base64, os, pathlib, sys
+          raw = os.environ.get("KEYSTORE_FILE", "").strip()
+          if not raw:
+              sys.exit("KEYSTORE_FILE secret is empty. The release APK would be unsigned and Android would reject it.")
+          if "base64," in raw:
+              raw = raw.split("base64,", 1)[1]
+          raw = "".join(raw.split()).replace("-", "+").replace("_", "/")
+          pad = (-len(raw)) % 4
+          raw = raw + ("=" * pad)
+          try:
+              data = base64.b64decode(raw, validate=False)
+          except Exception as exc:
+              sys.exit(f"KEYSTORE_FILE is not valid base64: {exc}")
+          if len(data) < 16:
+              sys.exit(f"Decoded keystore is too small ({len(data)} bytes). KEYSTORE_FILE must be the base64 of the .jks/.p12 file.")
+          out = pathlib.Path("android/app/shakti-panchang-release.jks")
+          out.write_bytes(data)
+          print(f"Wrote {out} ({len(data)} bytes), magic={data[:4].hex()}")
+          PY
+
+      - name: Check keystore password and alias
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ALIAS }}
+        run: |
+          PASS="${STORE_PASSWORD:-shaktipanchang123}"
+          if ! keytool -list -keystore android/app/shakti-panchang-release.jks -storepass "$PASS"; then
+            echo "Auto-detect failed. Trying PKCS12, then JKS."
+            keytool -list -storetype PKCS12 -keystore android/app/shakti-panchang-release.jks -storepass "$PASS" \
+              || keytool -list -storetype JKS -keystore android/app/shakti-panchang-release.jks -storepass "$PASS"
+          fi
+          echo "Expected alias: ${KEY_ALIAS:-shaktipanchang}"
+
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Copy Web Dist into Android WebView Assets
-        run: |
-          mkdir -p android/app/src/main/assets
-          cp -r dist/* android/app/src/main/assets/
-          echo "Web assets successfully copied into android/app/src/main/assets/"
-
-      - name: Build Android APK & AAB (Release & Play Store Bundle)
+      - name: Build signed release APK and AAB
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ALIAS }}
         run: |
           cd android
-          chmod +x gradlew || true
-          ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease --no-daemon
+          echo "---- outputs ----"
+          find app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' \) -printf '%s %p\n'
 
-      - name: Copy APKs & AABs to Root Directory for Easy Access
+      - name: Verify signature and publish only the signed files
         run: |
-          find android/app/build/outputs -name "*.apk" -exec cp {} . \;
-          find android/app/build/outputs -name "*.aab" -exec cp {} . \;
-          ls -la *.apk *.aab
+          set -euo pipefail
+          APK=$(find android/app/build/outputs/apk/release -name '*.apk' ! -name '*unsigned*' | head -1)
+          AAB=$(find android/app/build/outputs/bundle/release -name '*.aab' | head -1)
+          if [ -z "${APK:-}" ] || [ ! -f "$APK" ]; then
+            echo "Signed release APK was not produced. Refusing to upload an uninstallable package."
+            find android/app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' \)
+            exit 1
+          fi
+          unsigned=$(find android/app/build/outputs -name '*unsigned*.apk' || true)
+          if [ -n "$unsigned" ]; then
+            echo "Unsigned APK is still present; signing config was not applied."
+            echo "$unsigned"
+            exit 1
+          fi
+          APKSIGNER=$(find /usr/local/lib/android /opt "$HOME" /usr/lib/android-sdk -name apksigner -type f 2>/dev/null | sort | tail -1 || true)
+          if [ -z "$APKSIGNER" ]; then
+            echo "apksigner not found"
+            exit 1
+          fi
+          echo "Using $APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          mkdir -p release-out
+          cp "$APK" release-out/Shakti-Panchang-v1.0.10.apk
+          cp "$AAB" release-out/Shakti-Panchang-v1.0.10.aab
+          ls -la release-out
 
-      - name: Upload APK & AAB Artifact
+      - name: Upload signed APK and AAB
         uses: actions/upload-artifact@v4
         with:
-          name: shakti-panchang-apks
-          path: |
-            **/build/outputs/**/*.apk
-            **/build/outputs/**/*.aab
-            *.apk
-            *.aab
-          if-no-files-found: warn
+          name: Shakti-Panchang-v1.0.10
+          path: release-out/*
+          if-no-files-found: error
 
-      - name: Publish to GitHub Releases
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         with:
-          files: |
-            **/build/outputs/**/*.apk
-            **/build/outputs/**/*.aab
-            *.apk
-            *.aab
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.9-release' }}
-          name: "Shakti Panchang v1.0.9 Release (Code 9, Signed Release)"
-          body: "Automatic Release for Shakti Panchang containing complete Vedic Panchang, Durga Saptashati Book Reader with Index, 40-Year Experienced Master Astrologer Uma AI, Miraculous Upays, and Vastu Shastra."
+          tag_name: v1.0.10
+          name: Shakti Panchang v1.0.10
+          overwrite_files: true
+          target_commitish: ${{ github.sha }}
+          files: release-out/*
+          fail_on_unmatched_files: true
+          body: |
+            Install **Shakti-Panchang-v1.0.10.apk** only.
+
+            The previous `app-release-unsigned.apk` had no signature, so Android showed "App not installed as package appears to be invalid."
+
+            This build is signed with the release key (v1 + v2). If an older copy of the app is already installed and update is blocked, uninstall that copy once, then install this APK.
+
+            Do not install the `.aab` file on a phone. The AAB is only for Google Play.
           draft: false
           prerelease: false
         env:
