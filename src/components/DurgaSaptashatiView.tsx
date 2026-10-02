@@ -383,10 +383,10 @@ export const DurgaSaptashatiView: React.FC = () => {
               <button
                 type="button"
                 disabled={selectedChapterId === DURGA_CHAPTERS.length}
-                onClick={() =>
+                onClick={() => {
                   setSelectedChapterId((id) => Math.min(DURGA_CHAPTERS.length, id + 1));
                   setVersePage(0);
-                }
+                }}
                 className="px-3 py-1.5 rounded-lg bg-[#5C3A21] text-[#FAF2E4] disabled:opacity-40 flex items-center gap-1 cursor-pointer"
               >
                 <span>अगला अध्याय</span>
