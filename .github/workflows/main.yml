@@ -131,18 +131,15 @@ jobs:
               if looks_like_keystore(item):
                   chosen = item
                   break
-          if chosen is None:
-              big = [item for item in candidates if len(item) > 400]
-              if big:
-                  chosen = max(big, key=len)
-                  print(f"no keystore magic; keeping largest candidate bytes={len(chosen)} magic={chosen[:4].hex()}")
 
           out = pathlib.Path("android/app/shakti-panchang-release.jks")
           if chosen is not None:
               out.write_bytes(chosen)
-              print(f"Wrote {out} ({len(chosen)} bytes)")
+              print(f"Wrote secret keystore {out} ({len(chosen)} bytes)")
+          elif out.exists() and looks_like_keystore(out.read_bytes()):
+              print(f"KEYSTORE_FILE secret is not a keystore. Using committed {out} ({out.stat().st_size} bytes)")
           else:
-              print("Could not decode KEYSTORE_FILE. A new keystore will be generated in the next step.")
+              print("No usable keystore yet. The next step will generate one.")
               if out.exists():
                   out.unlink()
 
@@ -237,6 +234,9 @@ jobs:
       - name: Verify signature and publish only the signed files
         run: |
           set -euo pipefail
+          set -a
+          source android/signing.env
+          set +a
           APK=$(find android/app/build/outputs/apk/release -name '*.apk' ! -name '*unsigned*' | head -1)
           AAB=$(find android/app/build/outputs/bundle/release -name '*.aab' | head -1)
           if [ -z "${APK:-}" ] || [ ! -f "$APK" ]; then
@@ -256,9 +256,19 @@ jobs:
             exit 1
           fi
           echo "Using $APKSIGNER"
-          "$APKSIGNER" verify --verbose --print-certs "$APK"
           mkdir -p release-out
-          cp "$APK" release-out/Shakti-Panchang-v1.0.10.apk
+          # Gradle left v2 only. Some phones report that as an invalid package unless v1 is present too.
+          "$APKSIGNER" sign \
+            --ks android/app/shakti-panchang-release.jks \
+            --ks-pass "pass:${STORE_PASSWORD}" \
+            --key-pass "pass:${KEY_PASSWORD}" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out release-out/Shakti-Panchang-v1.0.10.apk \
+            "$APK"
+          "$APKSIGNER" verify --verbose --print-certs release-out/Shakti-Panchang-v1.0.10.apk
           cp "$AAB" release-out/Shakti-Panchang-v1.0.10.aab
           ls -la release-out
 
