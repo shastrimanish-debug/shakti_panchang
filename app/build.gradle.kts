@@ -45,6 +45,7 @@ android {
       storePassword = "shaktipanchang123"
       keyAlias = "shaktipanchang"
       keyPassword = "shaktipanchang123"
+      storeType = "PKCS12"
     }
   }
 
