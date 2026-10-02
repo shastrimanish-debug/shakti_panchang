@@ -1,7 +1,13 @@
-import { Capacitor } from "@capacitor/core";
-import { TextToSpeech } from "@capacitor-community/text-to-speech";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
-/** Speak Hindi & Sanskrit shlokas with melodious devotional tone from user action. */
+interface UmaVoicePlugin {
+  speak(options: { text: string }): Promise<void>;
+  stopSpeaking(): Promise<void>;
+}
+
+const UmaVoice = registerPlugin<UmaVoicePlugin>("UmaVoice");
+
+/** Uma speaks as a 40-year-old Indian आचार्या: clear Sanskrit, unhurried Hindi. */
 
 let unlocked = false;
 let isCurrentlySpeaking = false;
@@ -15,35 +21,50 @@ function clearKeepAlive() {
   }
 }
 
+/** Turn markdown and dandas into the pauses a Sanskrit scholar actually leaves. */
+export function prepareUmaUtterance(text: string): string {
+  const clean = text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/#{1,6}\s?/g, "")
+    .replace(/[•▪●]/g, ", ")
+    .replace(/ॐ/g, "ओम्, ")
+    .replace(/॥+/g, ". ")
+    .replace(/।/g, ", ")
+    .replace(/ऽ/g, ", ")
+    // Visarga must be heard, otherwise the shloka loses its svara.
+    .replace(/ः/g, "ह् ")
+    .replace(/\n+/g, ", ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // A short breath after a long compound, the way path is recited.
+  const paced = clean.replace(/([\u0900-\u097F]{16,})/g, "$1,");
+  return paced.slice(0, 3500);
+}
+
 export function pickHindiVoice(): SpeechSynthesisVoice | null {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices();
   if (!voices || voices.length === 0) return null;
-  // Prioritize natural Hindi neural voices if present
+  const female = /female|hia|hfc|hfd|neural|wavenet-a|wavenet-d|woman/i;
+  const male = /male|hid|hie|wavenet-b|wavenet-c/i;
   return (
-    voices.find((v) => v.lang.toLowerCase() === "hi-in" && /natural|online|google/i.test(v.name)) ||
+    voices.find((v) => v.lang.toLowerCase().startsWith("hi") && female.test(v.name) && !male.test(v.name)) ||
+    voices.find((v) => v.lang.toLowerCase() === "hi-in" && !male.test(v.name)) ||
     voices.find((v) => v.lang.toLowerCase().startsWith("hi")) ||
     voices.find((v) => /hindi|हिन्दी/i.test(v.name)) ||
-    voices.find((v) => v.lang.toLowerCase().includes("in")) ||
     null
   );
 }
 
 export function unlockUmaSpeech() {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
   unlocked = true;
+  if (Capacitor.isNativePlatform()) return;
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
   try {
     window.speechSynthesis.getVoices();
     window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
-    const u = new SpeechSynthesisUtterance("ॐ");
-    u.lang = "hi-IN";
-    u.volume = 0.5;
-    u.rate = 1;
-    const hi = pickHindiVoice();
-    if (hi) u.voice = hi;
-    currentUtterance = u;
-    window.speechSynthesis.speak(u);
   } catch {
     /* ignore */
   }
@@ -58,18 +79,7 @@ export interface SpeakOptions {
 }
 
 export async function speakUma(text: string, options?: SpeakOptions): Promise<void> {
-  // Convert markdown and Sanskrit danda to natural rhythmic pauses
-  const clean = text
-    .replace(/\*\*(.*?)\*\*/g, "$1")
-    .replace(/\*(.*?)\*/g, "$1")
-    .replace(/#{1,6}\s?/g, "")
-    .replace(/[•]/g, " ")
-    .replace(/॥/g, "। ")
-    .replace(/।/g, "। ")
-    .replace(/\n+/g, "। ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 1800);
+  const clean = prepareUmaUtterance(text);
 
   if (!clean) {
     options?.onEnd?.();
@@ -81,13 +91,7 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     try {
       isCurrentlySpeaking = true;
       options?.onStart?.();
-      await TextToSpeech.speak({
-        text: clean,
-        lang: "hi-IN",
-        rate: options?.rate ?? 0.88,
-        pitch: options?.pitch ?? 1.02,
-        volume: 1,
-      });
+      await UmaVoice.speak({ text: clean });
       isCurrentlySpeaking = false;
       options?.onEnd?.();
       return;
@@ -110,9 +114,8 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
   const utter = new SpeechSynthesisUtterance(clean);
   currentUtterance = utter; // Retain reference to prevent garbage collection in Chrome
   utter.lang = "hi-IN";
-  // Calm, melodious, authoritative Vedic pace
-  utter.rate = options?.rate ?? 0.88;
-  utter.pitch = options?.pitch ?? 1.02;
+  utter.rate = options?.rate ?? 0.78;
+  utter.pitch = options?.pitch ?? 0.92;
 
   const voice = pickHindiVoice();
   if (voice) utter.voice = voice;
@@ -154,7 +157,7 @@ export function stopUmaSpeech() {
   isCurrentlySpeaking = false;
   currentUtterance = null;
   if (Capacitor.isNativePlatform()) {
-    TextToSpeech.stop().catch(() => {});
+    UmaVoice.stopSpeaking().catch(() => {});
   }
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
