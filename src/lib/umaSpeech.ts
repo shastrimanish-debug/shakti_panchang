@@ -43,43 +43,15 @@ function isSanskritPath(chunk: string): boolean {
   return letters > 24 && !hindi.test(chunk);
 }
 
-function visargaEcho(stem: string): string {
-  if (/[ाआ]$/.test(stem)) return "ह";
-  if (/[िइ]$/.test(stem)) return "हि";
-  if (/[ीई]$/.test(stem)) return "ही";
-  if (/[ुउ]$/.test(stem)) return "हु";
-  if (/[ूऊ]$/.test(stem)) return "हू";
-  if (/[ेए]$/.test(stem)) return "हे";
-  if (/[ोओ]$/.test(stem)) return "हो";
-  if (/[ैऐ]$/.test(stem)) return "हि";
-  if (/[ौऔ]$/.test(stem)) return "हु";
-  if (/[ृऋ]$/.test(stem)) return "रुह";
-  return "ह";
-}
-
-/** Dakshin patha: jña not gya, ru for ऋ, diphthong ऐ/औ, class nasal, echoed visarga. */
+/** Dakshin pathashala: same Indian words, one flowing line, breath only at the danda. */
 function dakshinPath(text: string): string {
-  let spoken = text
+  return text
     .replace(/ॐ/g, "ओम्")
-    .replace(/ं([कखगघ])/g, "ङ्$1")
-    .replace(/ं([चछजझ])/g, "ञ्$1")
-    .replace(/ं([टठडढ])/g, "ण्$1")
-    .replace(/ं([तथदध])/g, "न्$1")
-    .replace(/ं([पफबभ])/g, "म्$1")
-    .replace(/(\S+?)ः/g, (_, stem: string) => `${stem}${visargaEcho(stem)}`)
-    .replace(/ज्ञ/g, "ज्न")
-    .replace(/ऋ/g, "रु")
-    .replace(/ॠ/g, "रू")
-    .replace(/ृ/g, "रु")
-    .replace(/ऐ/g, "अइ")
-    .replace(/औ/g, "अउ")
-    .replace(/ै/g, "इ")
-    .replace(/ौ/g, "उ")
     .replace(/॥+/g, ". ")
     .replace(/।/g, ", ")
-    .replace(/ऽ/g, ", ");
-  spoken = spoken.replace(/([\u0900-\u097F]+)\s+(?=[\u0900-\u097F])/g, "$1, ");
-  return spoken.replace(/\s+/g, " ").replace(/,\s*,/g, ", ").trim();
+    .replace(/ऽ/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function naturalHindi(text: string): string {
@@ -104,8 +76,8 @@ export function buildUmaParts(text: string): UmaPart[] {
     if (!spoken) continue;
     parts.push({
       text: spoken,
-      rate: path ? 0.66 : 0.98,
-      pitch: path ? 0.97 : 1,
+      rate: path ? 0.82 : 1,
+      pitch: 1,
     });
   }
   return parts.slice(0, 28);
