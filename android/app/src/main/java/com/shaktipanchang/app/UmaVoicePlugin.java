@@ -16,7 +16,9 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 
+import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -43,6 +45,8 @@ public class UmaVoicePlugin extends Plugin {
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private PluginCall speakCall;
+    private MediaPlayer sitar;
+    private boolean sitarWanted = false;
     private final List<Runnable> ttsQueue = new ArrayList<>();
     private final List<PluginCall> waitingSpeak = new ArrayList<>();
 
@@ -147,12 +151,14 @@ public class UmaVoicePlugin extends Plugin {
         }
         call.setKeepAlive(true);
         waitingSpeak.add(call);
+        sitarWanted = call.getBoolean("music", false);
         ensureTts(() -> speakNow(call, parts));
     }
 
     @PluginMethod
     public void stopSpeaking(PluginCall call) {
         if (tts != null) tts.stop();
+        stopSitar();
         PluginCall pending = speakCall;
         speakCall = null;
         if (pending != null) pending.resolve();
@@ -257,6 +263,8 @@ public class UmaVoicePlugin extends Plugin {
         }
         Voice chosen = pickFemaleHindiVoice(tts.getVoices());
         if (chosen != null) tts.setVoice(chosen);
+        if (sitarWanted) startSitar();
+        else stopSitar();
         waitingSpeak.remove(call);
         PluginCall previous = speakCall;
         speakCall = call;
@@ -270,6 +278,7 @@ public class UmaVoicePlugin extends Plugin {
             public void onDone(String id) {
                 if (lastId.equals(id) && speakCall == call) {
                     speakCall = null;
+                    stopSitar();
                     call.resolve();
                 }
             }
@@ -278,6 +287,7 @@ public class UmaVoicePlugin extends Plugin {
             public void onError(String id) {
                 if (speakCall == call) {
                     speakCall = null;
+                    stopSitar();
                     call.reject("Could not speak");
                 }
             }
@@ -293,9 +303,42 @@ public class UmaVoicePlugin extends Plugin {
             int queued = tts.speak(part.text, mode, null, id);
             if (queued == TextToSpeech.ERROR) {
                 speakCall = null;
+                stopSitar();
                 call.reject("Could not speak");
                 return;
             }
+        }
+    }
+
+    private void startSitar() {
+        try {
+            if (sitar != null && sitar.isPlaying()) return;
+            if (sitar == null) {
+                AssetFileDescriptor afd = getContext().getAssets().openFd("public/sitar-path.ogg");
+                sitar = new MediaPlayer();
+                sitar.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+                afd.close();
+                sitar.setLooping(true);
+                sitar.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build());
+                sitar.prepare();
+            }
+            sitar.setVolume(0.2f, 0.2f);
+            sitar.start();
+        } catch (Exception ignored) {
+            /* Music is optional. Path still speaks if the file is missing. */
+        }
+    }
+
+    private void stopSitar() {
+        try {
+            if (sitar != null && sitar.isPlaying()) {
+                sitar.pause();
+                sitar.seekTo(0);
+            }
+        } catch (Exception ignored) {
         }
     }
 

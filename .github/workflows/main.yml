@@ -266,17 +266,17 @@ jobs:
             --v1-signing-enabled true \
             --v2-signing-enabled true \
             --v3-signing-enabled true \
-            --out release-out/Shakti-Panchang-v1.0.16.apk \
+            --out release-out/Shakti-Panchang-v1.0.17.apk \
             "$APK"
-          "$APKSIGNER" verify --verbose --print-certs release-out/Shakti-Panchang-v1.0.16.apk
-          cp "$AAB" release-out/Shakti-Panchang-v1.0.16.aab
+          "$APKSIGNER" verify --verbose --print-certs release-out/Shakti-Panchang-v1.0.17.apk
+          cp "$AAB" release-out/Shakti-Panchang-v1.0.17.aab
           rm -f release-out/*.idsig
           ls -la release-out
 
       - name: Upload signed APK and AAB
         uses: actions/upload-artifact@v4
         with:
-          name: Shakti-Panchang-v1.0.16
+          name: Shakti-Panchang-v1.0.17
           path: release-out/*
           if-no-files-found: error
 
@@ -286,7 +286,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > /tmp/release-notes.md << 'EOF'
-          Install **Shakti-Panchang-v1.0.16.apk** only.
+          Install **Shakti-Panchang-v1.0.17.apk** only.
 
           Signed with the original release key. Do not install the .aab on a phone.
 
@@ -294,17 +294,17 @@ jobs:
           EOF
           ok=0
           for attempt in 1 2 3; do
-            if gh release view v1.0.16 >/dev/null 2>&1; then
-              if gh release upload v1.0.16 release-out/Shakti-Panchang-v1.0.16.apk release-out/Shakti-Panchang-v1.0.16.aab --clobber; then
+            if gh release view v1.0.17 >/dev/null 2>&1; then
+              if gh release upload v1.0.17 release-out/Shakti-Panchang-v1.0.17.apk release-out/Shakti-Panchang-v1.0.17.aab --clobber; then
                 ok=1
                 break
               fi
             else
-              if gh release create v1.0.16 \
-                release-out/Shakti-Panchang-v1.0.16.apk \
-                release-out/Shakti-Panchang-v1.0.16.aab \
+              if gh release create v1.0.17 \
+                release-out/Shakti-Panchang-v1.0.17.apk \
+                release-out/Shakti-Panchang-v1.0.17.aab \
                 --target "${{ github.sha }}" \
-                --title "Shakti Panchang v1.0.16" \
+                --title "Shakti Panchang v1.0.17" \
                 --notes-file /tmp/release-notes.md; then
                 ok=1
                 break
@@ -317,4 +317,4 @@ jobs:
             echo "Could not publish the GitHub release"
             exit 1
           fi
-          gh release view v1.0.16
+          gh release view v1.0.17

@@ -1,7 +1,7 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
 
 interface UmaVoicePlugin {
-  speak(options: { text?: string; parts?: { text: string; rate: number; pitch: number }[] }): Promise<void>;
+  speak(options: { text?: string; music?: boolean; parts?: { text: string; rate: number; pitch: number }[] }): Promise<void>;
   stopSpeaking(): Promise<void>;
 }
 
@@ -9,6 +9,47 @@ const UmaVoice = registerPlugin<UmaVoicePlugin>("UmaVoice");
 
 /** Path is dakshin style. Everyday answers stay natural Hindi. */
 
+let bed: HTMLAudioElement | null = null;
+let bedFade: ReturnType<typeof setInterval> | null = null;
+
+function wantsPathMusic(parts: { rate: number }[]): boolean {
+  return parts.some((part) => part.rate < 0.95);
+}
+
+function startPathBed() {
+  if (Capacitor.isNativePlatform() || typeof Audio === "undefined") return;
+  if (!bed) {
+    bed = new Audio("/sitar-path.ogg");
+    bed.loop = true;
+    bed.preload = "auto";
+  }
+  if (bedFade) clearInterval(bedFade);
+  bed.volume = 0.04;
+  void bed.play().catch(() => {});
+  bedFade = setInterval(() => {
+    if (!bed) return;
+    bed.volume = Math.min(0.22, bed.volume + 0.03);
+    if (bed.volume >= 0.22 && bedFade) {
+      clearInterval(bedFade);
+      bedFade = null;
+    }
+  }, 90);
+}
+
+function stopPathBed() {
+  if (!bed) return;
+  if (bedFade) clearInterval(bedFade);
+  bedFade = setInterval(() => {
+    if (!bed) return;
+    bed.volume = Math.max(0, bed.volume - 0.04);
+    if (bed.volume <= 0) {
+      bed.pause();
+      bed.currentTime = 0;
+      if (bedFade) clearInterval(bedFade);
+      bedFade = null;
+    }
+  }, 70);
+}
 let unlocked = false;
 let isCurrentlySpeaking = false;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
@@ -132,11 +173,13 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     return;
   }
 
+  const withMusic = wantsPathMusic(parts);
+
   if (Capacitor.isNativePlatform()) {
     try {
       isCurrentlySpeaking = true;
       options?.onStart?.();
-      await UmaVoice.speak({ parts });
+      await UmaVoice.speak({ parts, music: withMusic });
       isCurrentlySpeaking = false;
       options?.onEnd?.();
       return;
@@ -144,6 +187,8 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
       isCurrentlySpeaking = false;
     }
   }
+
+  if (withMusic) startPathBed();
 
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
     options?.onEnd?.();
@@ -161,6 +206,7 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     const part = parts[index];
     if (!part) {
       clearKeepAlive();
+      stopPathBed();
       isCurrentlySpeaking = false;
       currentUtterance = null;
       options?.onEnd?.();
@@ -184,6 +230,7 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     };
     utter.onerror = (e) => {
       clearKeepAlive();
+      stopPathBed();
       isCurrentlySpeaking = false;
       currentUtterance = null;
       options?.onError?.(e);
@@ -198,6 +245,7 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
 
 export function stopUmaSpeech() {
   clearKeepAlive();
+  stopPathBed();
   isCurrentlySpeaking = false;
   currentUtterance = null;
   if (Capacitor.isNativePlatform()) {
