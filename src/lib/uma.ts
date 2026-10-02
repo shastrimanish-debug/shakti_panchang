@@ -44,6 +44,23 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
   };
 }
 
+const DASHA_UPAY: Record<string, string> = {
+  सूर्य: "रविवार को सूर्य को जल चढ़ाएँ और ॐ घृणिः सूर्याय नमः जपें।",
+  चंद्र: "सोमवार को दूध या चाँदी दान करें और ॐ सोमाय नमः जपें।",
+  मंगल: "मंगलवार को हनुमान चालीसा पढ़ें और सिन्दूर चढ़ाएँ।",
+  राहु: "शनिवार को काले तिल दान करें और दुर्गा पाठ का एक अध्याय पढ़ें।",
+  गुरु: "गुरुवार को पीला चना दान करें और ॐ ग्रां ग्रीं ग्रौं सः गुरवे नमः जपें।",
+  शनि: "शनिवार को तिल का तेल और दीप लगाएँ, फिर हनुमान चालीसा पढ़ें।",
+  बुध: "बुधवार को हरी वस्तु दान करें और ॐ बुं बुधाय नमः जपें।",
+  केतु: "मंगलवार को गणेश जी को दूर्वा चढ़ाएँ और भूरे कुत्ते को भोजन दें।",
+  शुक्र: "शुक्रवार को सफेद मिठाई दान करें और ॐ शुक्राय नमः जपें।",
+};
+
+export function dashaRemedy(kundali: KundaliData): string {
+  const upay = DASHA_UPAY[kundali.mahadasha] || "इष्टदेव का नाम लें।";
+  return `आपकी ${kundali.mahadasha} महादशा में, ${kundali.antardasha} अंतरदशा चल रही है। इस दशा का उपाय: ${upay}`;
+}
+
 function planetLine(p?: PlanetPosition): string {
   if (!p) return "";
   return `${p.planet} ${p.rashi} राशि में, लग्न से ${p.house}वें भाव में${p.isRetrograde ? " (वक्री)" : ""}`;
@@ -75,7 +92,7 @@ function chartAnswer(kundali: KundaliData, query: string, panchang?: VedicPancha
     sadeLine = planetLine(saturn);
   }
 
-  const head = `॥ ॐ श्री गणेशाय नमः ॥\n${kundali.name} जी, लग्न ${kundali.lagnaRashi}, चंद्र ${kundali.moonRashi} (${kundali.nakshatra}), महादशा ${kundali.mahadasha}, अंतरदशा ${kundali.antardasha}।`;
+  const head = `॥ ॐ श्री गणेशाय नमः ॥\n${dashaRemedy(kundali)}\n${kundali.name} जी, लग्न ${kundali.lagnaRashi}, चंद्र ${kundali.moonRashi} (${kundali.nakshatra})।`;
   const today = panchang ? `\nआज ${panchang.weekday}, ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}।` : "";
 
   if (/नौकरी|करियर|व्यापार|काम|धंधा|job|career/.test(q)) {

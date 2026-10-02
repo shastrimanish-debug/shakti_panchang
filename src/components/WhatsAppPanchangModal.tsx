@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { VedicPanchangData, SavedLocation } from '../types';
 import { getAstrologerBranding, AstrologerBranding } from '../services/storage';
+import { getAuspiciousWindows, getInauspiciousWindows } from '../services/choghadiya';
+import { openExternal } from '../lib/device';
 
 interface WhatsAppPanchangModalProps {
   isOpen: boolean;
@@ -272,8 +274,18 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.stroke();
 
     ctx.textAlign = 'center';
-    const sRise = panchang.solar ? panchang.solar.sunrise.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '06:15';
-    const sSet = panchang.solar ? panchang.solar.sunset.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '18:22';
+    const sRise = panchang.solar ? panchang.solar.sunrise.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+    const sSet = panchang.solar ? panchang.solar.sunset.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+    const weekday = panchang.date.getDay();
+    const rahuWin = panchang.solar
+      ? getInauspiciousWindows(panchang.solar, weekday).find((w) => w.title.includes('राहु'))
+      : undefined;
+    const abhijitWin = panchang.solar
+      ? getAuspiciousWindows(panchang.solar).find((w) => w.title.includes('अभिजित'))
+      : undefined;
+    const clock = (d: Date) => d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const rahuStr = rahuWin ? `${clock(rahuWin.start)} – ${clock(rahuWin.end)}` : 'आज नहीं';
+    const abhijitStr = abhijitWin ? `${clock(abhijitWin.start)} – ${clock(abhijitWin.end)}` : 'आज नहीं';
 
     // 3 sections in sun box
     const sec1 = leftX + (W - 150) * 0.18;
@@ -299,8 +311,8 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.fillText('⚠️ राहुकाल', sec3, sunBoxY + 42);
     ctx.fillStyle = '#FAF2E4';
     ctx.font = 'bold 26px sans-serif';
-    const rahuStr = '12:20 - 13:50';
-    ctx.fillText(rahuStr, sec3, sunBoxY + 84);
+    const rahuStrDrawn = rahuStr;
+    ctx.fillText(rahuStrDrawn, sec3, sunBoxY + 84);
 
     // 8. Shubh Muhurat / Abhijit Bar
     const muhuratY = 740;
@@ -320,7 +332,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.textAlign = 'right';
     ctx.fillStyle = '#3E2714';
     ctx.font = 'bold 25px sans-serif';
-    ctx.fillText('11:56 AM – 12:45 PM (सर्वकार्य सिद्धि)', W - leftX - 25, muhuratY + 47);
+    ctx.fillText(abhijitStr, W - leftX - 25, muhuratY + 47);
 
     // 9. Daily Sacred Subhashita / Shloka Box
     const shlokaY = 835;
@@ -404,7 +416,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.fillStyle = '#FFD88A';
       ctx.font = 'bold 36px serif';
       ctx.textAlign = 'center';
-      ctx.fillText('सनातन शक्ति पंचांग', W / 2, footerY + 70);
+      ctx.fillText('शक्ति पंचांग', W / 2, footerY + 70);
 
       ctx.fillStyle = '#FAF2E4';
       ctx.font = '24px sans-serif';
@@ -450,34 +462,14 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   const locShort = location.name.split('(')[0].trim();
 
   const getShareText = () => {
-    let txt = `*॥ श्री गणेशाय नमः ॥*\n`;
-    txt += `*दैनिक वैदिक पञ्चाङ्गम् — शक्ति पंचांग*\n`;
-    txt += `📅 *दिनांक:* ${dateFormatted}\n`;
-    txt += `📍 *स्थान:* ${locShort}\n`;
-    txt += `──────────────────\n`;
-    txt += `🌙 *तिथि:* ${panchang.tithi} (${panchang.paksha})\n`;
-    txt += `⭐ *नक्षत्र:* ${panchang.nakshatra} (चरण ${panchang.pada})\n`;
-    txt += `☸ *योग:* ${panchang.yoga}\n`;
-    txt += `⚡ *करण:* ${panchang.karana}\n`;
-    txt += `🌅 *सूर्योदय:* ${panchang.solar ? panchang.solar.sunrise.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '06:15'}\n`;
-    txt += `🌄 *सूर्यास्त:* ${panchang.solar ? panchang.solar.sunset.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '18:22'}\n`;
-    txt += `✨ *अभिजित मुहूर्त:* 11:56 AM – 12:45 PM\n`;
-    txt += `⚠️ *राहुकाल:* 12:20 PM – 01:50 PM\n`;
-    txt += `──────────────────\n`;
-    txt += `📖 *सुभाषित:* ${currentShloka.shloka}\n`;
-    txt += `(अर्थ: ${currentShloka.meaning})\n`;
-
-    if (branding.enabled && branding.name) {
-      txt += `──────────────────\n`;
-      txt += `🙏 *ज्योतिषीय परामर्श सौजन्य:* ${branding.name}\n`;
-      if (branding.title) txt += `🎖️ ${branding.title}\n`;
-      if (branding.phone) txt += `📞 संपर्क: ${branding.phone}\n`;
-      if (branding.city) txt += `📍 ${branding.city}\n`;
-    } else {
-      txt += `──────────────────\n`;
-      txt += `सनातन शक्ति पंचांग — प्रामाणिक वैदिक पंचांग\n`;
-    }
-    return txt;
+    const weekday = panchang.date.getDay();
+    const rahuWin = panchang.solar
+      ? getInauspiciousWindows(panchang.solar, weekday).find((w) => w.title.includes('राहु'))
+      : undefined;
+    const clock = (d: Date) => d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const rahu = rahuWin ? `${clock(rahuWin.start)} से ${clock(rahuWin.end)}` : 'ऐप में देखें';
+    const who = personName ? `${personName}\n` : '';
+    return `आज ${panchang.tithi}\n${who}${locShort}\nराहुकाल ${rahu}\nशक्ति पंचांग`;
   };
 
   const handleShareWhatsApp = async () => {
@@ -507,7 +499,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
     // Direct WhatsApp Web / Mobile intent
     const encodedText = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+    void openExternal(`https://api.whatsapp.com/send?text=${encodedText}`);
   };
 
   const handleDownloadImage = () => {

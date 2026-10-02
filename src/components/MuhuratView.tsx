@@ -17,15 +17,25 @@ import {
 
 interface MuhuratViewProps {
   panchang: VedicPanchangData;
+  placeName?: string;
+  latitude?: number;
+  longitude?: number;
+  timezoneHours?: number;
 }
 
-export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
+export const MuhuratView: React.FC<MuhuratViewProps> = ({
+  panchang,
+  placeName,
+  latitude = 23.1765,
+  longitude = 75.7885,
+  timezoneHours,
+}) => {
   const [selectedActivity, setSelectedActivity] = useState(MUHURAT_ACTIVITIES[0]);
-  const [subPage, setSubPage] = useState<'annual_table' | 'today' | 'windows' | 'guidance'>('annual_table');
+  const [subPage, setSubPage] = useState<'annual_table' | 'today' | 'windows' | 'guidance'>('today');
   const weekday = panchang.date.getDay();
   const shoolDirection = DISHASHOOL_MAP[weekday];
   const guidance = getMuhuratGuidance(selectedActivity, panchang, shoolDirection);
-  const dailyRows = getDailyMuhuratDetails(panchang);
+  const dailyRows = getDailyMuhuratDetails(panchang, latitude, longitude, timezoneHours);
 
   return (
     <div className="space-y-2 sm:space-y-3 animate-in fade-in duration-200">
@@ -82,11 +92,21 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
       </div>
 
       {/* When Annual Table is selected */}
-      {subPage === 'annual_table' && <AnnualMuhuratTableView />}
+      {subPage === 'annual_table' && (
+        <AnnualMuhuratTableView
+          latitude={latitude}
+          longitude={longitude}
+          timezoneHours={timezoneHours}
+          placeName={placeName}
+        />
+      )}
 
       {/* When other sub-pages are selected */}
       {subPage !== 'annual_table' && (
         <div className="space-y-4">
+          <p className="text-xs font-bold text-[#5C3A21] bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl px-3 py-2">
+            {placeName || 'आपका शहर'} के सूर्योदय से। उज्जैन का स्थिर घड़ी-समय नहीं।
+          </p>
           {/* Activity Selector */}
           <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3 sm:p-4 shadow-xs">
             <label className="block text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2">

@@ -38,5 +38,8 @@ public class ReminderReceiver extends BroadcastReceiver {
 
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) nm.notify(nid, builder.build());
+        if (intent.getBooleanExtra("morning", false)) {
+            UmaDevicePlugin.armNextMorning(context);
+        }
     }
 }

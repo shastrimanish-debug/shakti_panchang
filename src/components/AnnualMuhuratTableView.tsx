@@ -6,6 +6,7 @@ import {
   getAnnualMuhurats,
   HINDI_MONTHS_NAMES,
 } from '../services/muhuratTable';
+import { citySunriseWindow } from '../services/muhurat';
 import {
   Calendar,
   Clock,
@@ -18,7 +19,17 @@ import {
   Star,
 } from 'lucide-react';
 
-export const AnnualMuhuratTableView: React.FC = () => {
+export const AnnualMuhuratTableView: React.FC<{
+  latitude?: number;
+  longitude?: number;
+  timezoneHours?: number;
+  placeName?: string;
+}> = ({
+  latitude = 23.1765,
+  longitude = 75.7885,
+  timezoneHours,
+  placeName,
+}) => {
   const [selectedCategory, setSelectedCategory] = useState<MuhuratCategory>('vivah');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedMonth, setSelectedMonth] = useState<number>(-1); // -1 = all months
@@ -238,10 +249,10 @@ export const AnnualMuhuratTableView: React.FC = () => {
                 <div className="bg-[#F4E8D1] p-2 rounded-lg border border-[#8C6239]/20">
                   <span className="text-[10px] text-[#8C6239] font-bold uppercase flex items-center gap-1">
                     <Clock className="w-3 h-3 text-[#B56A00]" />
-                    <span>शुभ मुहूर्त समय (Time Window)</span>
+                    <span>आपके शहर का समय ({placeName || 'चुना हुआ स्थान'})</span>
                   </span>
                   <div className="text-xs sm:text-sm font-black text-[#5C3A21] mt-0.5">
-                    {item.timeWindowHindi}
+                    {citySunriseWindow(item.rawDate, latitude, longitude, timezoneHours)}
                   </div>
                 </div>
 

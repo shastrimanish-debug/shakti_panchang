@@ -450,7 +450,13 @@ export function App() {
               )}
 
               {activeTab === 'muhurat' && (
-                <MuhuratView panchang={panchang} />
+                <MuhuratView
+                  panchang={panchang}
+                  placeName={currentLocation.name}
+                  latitude={currentLocation.latitude}
+                  longitude={currentLocation.longitude}
+                  timezoneHours={currentLocation.timezoneHours}
+                />
               )}
 
               {activeTab === 'yatra' && (

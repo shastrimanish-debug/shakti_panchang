@@ -91,6 +91,89 @@ public class UmaDevicePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void scheduleMorningQueue(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 33 && getPermissionState("notifications") != PermissionState.GRANTED) {
+            requestPermissionForAlias("notifications", call, "morningPerms");
+            return;
+        }
+        saveMorningQueue(call);
+    }
+
+    @PermissionCallback
+    private void morningPerms(PluginCall call) {
+        saveMorningQueue(call);
+    }
+
+    private void saveMorningQueue(PluginCall call) {
+        String queue = call.getString("queue", "[]");
+        getContext().getSharedPreferences("sp_alarms", Context.MODE_PRIVATE)
+            .edit()
+            .putString("morning_queue", queue)
+            .apply();
+        armNextMorning(getContext());
+        JSObject ret = new JSObject();
+        ret.put("ok", true);
+        call.resolve(ret);
+    }
+
+    public static void armNextMorning(Context ctx) {
+        try {
+            SharedPreferences sp = ctx.getSharedPreferences("sp_alarms", Context.MODE_PRIVATE);
+            JSONArray arr = new JSONArray(sp.getString("morning_queue", "[]"));
+            long now = System.currentTimeMillis();
+            JSONObject next = null;
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject item = arr.getJSONObject(i);
+                long at = item.optLong("at");
+                if (at < now + 1000) continue;
+                if (next == null || at < next.optLong("at")) next = item;
+            }
+            if (next == null) return;
+            ensureChannel(ctx);
+            int nid = alarmId(next.optString("id"));
+            Intent intent = new Intent(ctx, ReminderReceiver.class);
+            intent.putExtra("title", next.optString("title"));
+            intent.putExtra("body", next.optString("body"));
+            intent.putExtra("nid", nid);
+            intent.putExtra("morning", true);
+            PendingIntent pi = PendingIntent.getBroadcast(
+                ctx,
+                880061,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) return;
+            long at = next.optLong("at");
+            fireExact(am, at, pi);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void fireExact(AlarmManager am, long at, PendingIntent pi) {
+        try {
+            if (Build.VERSION.SDK_INT >= 31) {
+                if (am.canScheduleExactAlarms()) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+                    return;
+                }
+            } else if (Build.VERSION.SDK_INT >= 23) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+                return;
+            } else {
+                am.setExact(AlarmManager.RTC_WAKEUP, at, pi);
+                return;
+            }
+        } catch (SecurityException ignored) {
+        }
+        if (Build.VERSION.SDK_INT >= 23) {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+        } else {
+            am.set(AlarmManager.RTC_WAKEUP, at, pi);
+        }
+    }
+
+    @PluginMethod
     public void scheduleReminder(PluginCall call) {
         if (Build.VERSION.SDK_INT >= 33 && getPermissionState("notifications") != PermissionState.GRANTED) {
             requestPermissionForAlias("notifications", call, "reminderPerms");

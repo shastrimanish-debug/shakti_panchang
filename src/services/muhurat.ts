@@ -1,6 +1,7 @@
 import { VedicPanchangData } from '../types';
 import { getDayChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from './choghadiya';
 import { formatPlaceTime } from './engine/time';
+import { calculateVedicPanchang } from './astronomy';
 
 export const MUHURAT_ACTIVITIES = [
   'सामान्य शुभ कार्य',
@@ -206,8 +207,13 @@ export interface DailyMuhuratRow {
 }
 
 /** Today's named Vedic muhurat windows with Hindi labels and clock times. */
-export function getDailyMuhuratDetails(panchang: VedicPanchangData): DailyMuhuratRow[] {
-  const fmt = (d: Date) => formatPlaceTime(d);
+export function getDailyMuhuratDetails(
+  panchang: VedicPanchangData,
+  latitude = 23.1765,
+  longitude = 75.7885,
+  timezoneHours?: number,
+): DailyMuhuratRow[] {
+  const fmt = (d: Date) => formatPlaceTime(d, latitude, longitude, timezoneHours);
   const solar = panchang.solar;
   const weekday = panchang.date.getDay();
   const dayLen = solar.sunset.getTime() - solar.sunrise.getTime();
@@ -267,4 +273,23 @@ export function getDailyMuhuratDetails(panchang: VedicPanchangData): DailyMuhura
   }
 
   return rows;
+}
+
+/** Abhijit and sunrise for a calendar date at the user's city, not a fixed Ujjain clock. */
+export function citySunriseWindow(
+  rawDate: string,
+  latitude: number,
+  longitude: number,
+  timezoneHours?: number,
+): string {
+  const [y, m, d] = rawDate.split('-').map((n) => Number(n));
+  if (!y || !m || !d) return '';
+  const noon = new Date(y, m - 1, d, 12, 0, 0);
+  const day = calculateVedicPanchang(noon, latitude, longitude, timezoneHours ?? 5.5);
+  const rise = formatPlaceTime(day.solar.sunrise, latitude, longitude, timezoneHours);
+  const abhijit = getAuspiciousWindows(day.solar).find((w) => w.title.includes('अभिजित'));
+  const ab = abhijit
+    ? `${formatPlaceTime(abhijit.start, latitude, longitude, timezoneHours)} से ${formatPlaceTime(abhijit.end, latitude, longitude, timezoneHours)}`
+    : 'इस वार को त्याज्य';
+  return `सूर्योदय ${rise} · आपके शहर में अभिजित ${ab}`;
 }

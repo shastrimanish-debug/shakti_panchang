@@ -1,6 +1,6 @@
 import { calculateVedicPanchang } from "./astronomy";
 import { getInauspiciousWindows } from "./choghadiya";
-import { scheduleNativeReminder } from "../lib/device";
+import { scheduleMorningQueue } from "../lib/device";
 
 const RASHI_UPAY: Record<string, string> = {
   मेष: "हनुमान को सिन्दूर और ॐ क्रां क्रीं क्रौं सः भौमाय नमः।",
@@ -32,14 +32,15 @@ export function scheduleMorningBriefs(
   if (typeof window === "undefined") return;
   const stamp = `${placeName}|${personName || ""}|${lagnaRashi || ""}|${new Date().toDateString()}`;
   try {
-    if (localStorage.getItem("sp_morning_brief_v2") === stamp) return;
+    if (localStorage.getItem("sp_morning_brief_v3") === stamp) return;
   } catch {
     /* still schedule */
   }
 
   const tz = timezoneHours ?? 5.5;
   const rashiName = Object.keys(RASHI_UPAY).find((name) => lagnaRashi?.startsWith(name));
-  for (let i = 0; i < 60; i++) {
+  const items: { id: string; title: string; body: string; at: number }[] = [];
+  for (let i = 0; i < 21; i++) {
     const morning = new Date();
     morning.setDate(morning.getDate() + i);
     morning.setHours(6, 0, 0, 0);
@@ -51,15 +52,19 @@ export function scheduleMorningBriefs(
     const upay = rashiName
       ? `${rashiName} लग्न का उपाय: ${RASHI_UPAY[rashiName]}`
       : `${panchang.lunarRashi} चंद्र राशि का उपाय: ${RASHI_UPAY[panchang.lunarRashi] || "इष्टदेव का स्मरण।"}`;
-    const title = `${who}आज ${panchang.tithi}`;
-    const body = `आज ${panchang.tithi}, राहुकाल ${rahuStr}। ${upay}`;
-    const id = `brief-${morning.getFullYear()}-${morning.getMonth() + 1}-${morning.getDate()}`;
-    scheduleNativeReminder(id, title, body, morning.getTime());
+    items.push({
+      id: `brief-${morning.getFullYear()}-${morning.getMonth() + 1}-${morning.getDate()}`,
+      title: `${who}आज ${panchang.tithi}`,
+      body: `आज ${panchang.tithi}, राहुकाल ${rahuStr}। ${upay}`,
+      at: morning.getTime(),
+    });
   }
-
-  try {
-    localStorage.setItem("sp_morning_brief_v2", stamp);
-  } catch {
-    /* ignore */
-  }
+  void scheduleMorningQueue(items).then((ok) => {
+    if (!ok) return;
+    try {
+      localStorage.setItem("sp_morning_brief_v3", stamp);
+    } catch {
+      /* ignore */
+    }
+  });
 }

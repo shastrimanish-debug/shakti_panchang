@@ -16,10 +16,11 @@ import {
   getAstrologerBranding,
 } from '../services/storage';
 import { useLicense } from '@/lib/license-client';
-import { calculateVedicPanchang, RASHIS, NAKSHATRAS } from '../services/astronomy';
+import { calculateVedicPanchang, RASHIS, NAKSHATRAS, calculateVargaSign } from '../services/astronomy';
 import { createQuickKundaliFromRashiNakshatra } from '../services/milan';
 import { downloadMilanBhojpatraPdf, downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { generateExhaustive59PageKundaliPdf } from '../services/exhaustiveKundaliPdf';
+import { dashaRemedy } from '../lib/uma';
 import { analyzeKundali, professionalPdfAnswer } from '../services/predictions';
 import { CalcSettingsPanel } from './CalcSettingsPanel';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
@@ -866,8 +867,28 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         </div>
       )}
 
-      {/* Sub-Navigation Tabs */}
+      {k && (
+        <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 space-y-2">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <div className="text-[10px] font-bold text-[#8C6239]">लग्न</div>
+              <div className="text-sm font-black text-[#3E2714]">{k.lagnaRashi}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-[#8C6239]">नवमांश लग्न</div>
+              <div className="text-sm font-black text-[#3E2714]">{RASHIS[calculateVargaSign(k.lagnaDegree, 9)] || '—'}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-[#8C6239]">चल रही दशा</div>
+              <div className="text-sm font-black text-[#B56A00]">{k.mahadasha}</div>
+            </div>
+          </div>
+          <p className="text-xs text-[#5C3A21] leading-relaxed">{dashaRemedy(k)}</p>
+        </div>
+      )}
+
       <CalcSettingsPanel compact />
+      {/* Sub-Navigation Tabs */}
       <div className="flex border-b border-[#8C6239]/30 overflow-x-auto no-scrollbar gap-1">
         {[
           { id: 'phalit', label: 'फलादेश (Prediction)', icon: Sparkles },

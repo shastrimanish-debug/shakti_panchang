@@ -4,6 +4,7 @@ interface UmaDevicePlugin {
   sharePdf(options: { base64: string; fileName: string }): Promise<void>;
   openUrl(options: { url: string }): Promise<void>;
   scheduleReminder(options: { id: string; title: string; body: string; timestamp: number }): Promise<void>;
+  scheduleMorningQueue(options: { queue: string }): Promise<{ ok: boolean }>;
   cancelReminder(options: { id: string }): Promise<void>;
 }
 
@@ -54,6 +55,15 @@ export async function openExternal(url: string): Promise<void> {
     }
   }
   window.open(url, "_blank");
+}
+
+export function scheduleMorningQueue(
+  items: { id: string; title: string; body: string; at: number }[],
+): Promise<boolean> {
+  if (!Capacitor.isNativePlatform() || items.length === 0) return Promise.resolve(false);
+  return UmaDevice.scheduleMorningQueue({ queue: JSON.stringify(items) })
+    .then(() => true)
+    .catch(() => false);
 }
 
 export function scheduleNativeReminder(id: string, title: string, body: string, timestamp: number) {
