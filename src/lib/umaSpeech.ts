@@ -75,21 +75,18 @@ function stripMarkup(text: string): string {
 }
 
 function isSanskritPath(chunk: string): boolean {
-  if (/[॥ॐ]/.test(chunk)) return true;
-  const visarga = (chunk.match(/ः/g) || []).length;
-  if (visarga >= 2) return true;
-  if (visarga >= 1 && /[।॥]/.test(chunk)) return true;
+  if (/[॥ॐः।]/.test(chunk)) return true;
   const hindi = /(है|हैं|था|थी|का |की |के |में |और |यह |आप |लिए |करें|बता|नहीं|होता|होती)/;
   const letters = (chunk.match(/[\u0900-\u097F]/g) || []).length;
-  return letters > 24 && !hindi.test(chunk);
+  return letters > 10 && !hindi.test(chunk);
 }
 
 /** Dakshin pathashala: same Indian words, one flowing line, breath only at the danda. */
 function dakshinPath(text: string): string {
   return text
-    .replace(/ॐ/g, "ओम्")
-    .replace(/॥+/g, ". ")
-    .replace(/।/g, ", ")
+    .replace(/ॐ/g, "ओ३म्...")
+    .replace(/॥+/g, "..... ")
+    .replace(/।/g, "... ")
     .replace(/ऽ/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -117,11 +114,11 @@ export function buildUmaParts(text: string): UmaPart[] {
     if (!spoken) continue;
     parts.push({
       text: spoken,
-      rate: path ? 0.76 : 0.96,
-      pitch: path ? 0.90 : 1.05,
+      rate: path ? 0.62 : 0.96,
+      pitch: path ? 0.88 : 1.05,
     });
   }
-  return parts.slice(0, 28);
+  return parts.slice(0, 35);
 }
 
 export function prepareUmaUtterance(text: string): string {
