@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* System dark mode must not darken cards while the app theme stays light. */
+@custom-variant dark (&:where(.tamra-theme, .tamra-theme *));
+
 @theme {
   --color-parchment: #faf2e4;
   --color-parchment-deep: #f4e8d1;
@@ -211,8 +214,12 @@
 
 .tamra-theme .text-\[\#5C3A21\],
 .tamra-theme .text-\[\#2C1810\],
-.tamra-theme .text-\[\#2c1810\] {
-  color: #faeedb !important;
+.tamra-theme .text-\[\#2c1810\],
+.tamra-theme .text-\[\#462B17\],
+.tamra-theme .text-\[\#3E2714\],
+.tamra-theme .text-\[\#462b17\],
+.tamra-theme .text-\[\#3e2714\] {
+  color: #fff6e4 !important;
 }
 
 .tamra-theme .text-\[\#735133\],

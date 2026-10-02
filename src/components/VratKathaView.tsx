@@ -241,14 +241,14 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
                       पढ़ें →
                     </span>
                   </div>
-                  <h3 className="text-lg font-black font-granth text-[#462B17] dark:text-amber-200 group-hover:text-amber-700 transition">
+                  <h3 className="text-lg font-black font-granth text-[#3E2714] dark:text-[#FFF6E4] group-hover:text-amber-700 dark:group-hover:text-[#FFE7B0] transition">
                     {item.title}
                   </h3>
                   <p className="text-xs text-stone-600 dark:text-stone-300 font-semibold line-clamp-1">
                     {item.subtitle}
                   </p>
                   {/* Shlok preview */}
-                  <div className="p-3 rounded-2xl bg-[#FFF8EC] dark:bg-[#1A0E06] border border-amber-500/40 text-[13px] font-granth font-bold text-[#3E2714] dark:text-[#FFE7B0] leading-relaxed whitespace-pre-line">
+                  <div className="p-3 rounded-2xl bg-[#FFF8EC] dark:bg-[#140C07] border border-amber-500/40 text-[13px] font-granth font-bold text-[#3E2714] dark:text-[#FFF6E4] leading-relaxed whitespace-pre-line">
                     {item.shlok.replace(/।\s*/g, '।\n')}
                   </div>
                 </div>
