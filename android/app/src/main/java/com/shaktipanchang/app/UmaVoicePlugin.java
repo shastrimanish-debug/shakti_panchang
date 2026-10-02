@@ -27,10 +27,12 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.json.JSONObject;
 
@@ -47,6 +49,10 @@ public class UmaVoicePlugin extends Plugin {
     private boolean ttsReady = false;
     private PluginCall speakCall;
     private MediaPlayer sitar;
+    private MediaPlayer voicePlayer;
+    private final List<File> neuralQueue = new ArrayList<>();
+    private boolean neuralFinished = false;
+    private final AtomicBoolean neuralCancel = new AtomicBoolean(false);
     private boolean sitarWanted = false;
     private final List<Runnable> ttsQueue = new ArrayList<>();
     private final List<PluginCall> waitingSpeak = new ArrayList<>();
@@ -151,15 +157,152 @@ public class UmaVoicePlugin extends Plugin {
             return;
         }
         call.setKeepAlive(true);
-        waitingSpeak.add(call);
         sitarWanted = call.getBoolean("music", false);
-        ensureTts(() -> speakNow(call, parts));
+        neuralCancel.set(false);
+        synchronized (neuralQueue) {
+            neuralQueue.clear();
+            neuralFinished = false;
+        }
+        stopVoicePlayer();
+        new Thread(() -> speakIndian(call, parts)).start();
+    }
+
+    private void speakIndian(PluginCall call, List<SpeechPart> parts) {
+        boolean started = false;
+        try {
+            String all = joinParts(parts);
+            int from = 0;
+            while (from < all.length() && !neuralCancel.get()) {
+                int to = Math.min(all.length(), from + 700);
+                if (to < all.length()) {
+                    int space = all.lastIndexOf(' ', to);
+                    if (space > from + 200) to = space;
+                }
+                String chunk = all.substring(from, to).trim();
+                from = to;
+                if (chunk.isEmpty()) continue;
+                File file = IndianVoice.synthesize(getContext(), chunk);
+                started = true;
+                enqueueNeural(call, file);
+            }
+            finishNeural(call, started);
+        } catch (Exception e) {
+            if (!started && !neuralCancel.get()) {
+                waitingSpeak.add(call);
+                ensureTts(() -> speakNow(call, parts));
+            } else {
+                finishNeural(call, true);
+            }
+        }
+    }
+
+    private String joinParts(List<SpeechPart> parts) {
+        StringBuilder sb = new StringBuilder();
+        for (SpeechPart part : parts) {
+            if (part.text == null || part.text.isEmpty()) continue;
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(part.text);
+        }
+        return sb.toString();
+    }
+
+    private void enqueueNeural(PluginCall call, File file) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            if (neuralCancel.get() || speakCall != null && speakCall != call && voicePlayer != null) {
+                file.delete();
+                return;
+            }
+            speakCall = call;
+            synchronized (neuralQueue) {
+                neuralQueue.add(file);
+            }
+            if (voicePlayer == null) playNextNeural(call);
+        });
+    }
+
+    private void playNextNeural(PluginCall call) {
+        File file;
+        synchronized (neuralQueue) {
+            if (neuralQueue.isEmpty()) {
+                if (neuralFinished) completeNeural(call);
+                return;
+            }
+            file = neuralQueue.remove(0);
+        }
+        try {
+            stopVoicePlayer();
+            MediaPlayer player = new MediaPlayer();
+            voicePlayer = player;
+            player.setDataSource(file.getAbsolutePath());
+            player.setAudioAttributes(new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build());
+            player.setOnCompletionListener(mp -> {
+                mp.release();
+                if (voicePlayer == mp) voicePlayer = null;
+                file.delete();
+                playNextNeural(call);
+            });
+            player.setOnErrorListener((mp, what, extra) -> {
+                mp.release();
+                if (voicePlayer == mp) voicePlayer = null;
+                file.delete();
+                playNextNeural(call);
+                return true;
+            });
+            player.prepare();
+            if (sitarWanted) startSitar();
+            player.start();
+        } catch (Exception e) {
+            file.delete();
+            playNextNeural(call);
+        }
+    }
+
+    private void finishNeural(PluginCall call, boolean started) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            synchronized (neuralQueue) {
+                neuralFinished = true;
+            }
+            if (started && voicePlayer == null) completeNeural(call);
+            if (!started) {
+                call.reject("voice failed");
+            }
+        });
+    }
+
+    private void completeNeural(PluginCall call) {
+        stopSitar();
+        if (speakCall == call) speakCall = null;
+        call.resolve();
+    }
+
+    private void stopVoicePlayer() {
+        if (voicePlayer != null) {
+            try {
+                voicePlayer.stop();
+            } catch (Exception ignored) {
+            }
+            try {
+                voicePlayer.release();
+            } catch (Exception ignored) {
+            }
+            voicePlayer = null;
+        }
     }
 
     @PluginMethod
     public void stopSpeaking(PluginCall call) {
+        neuralCancel.set(true);
         if (tts != null) tts.stop();
+        stopVoicePlayer();
         stopSitar();
+        synchronized (neuralQueue) {
+            for (File file : neuralQueue) file.delete();
+            neuralQueue.clear();
+            neuralFinished = true;
+        }
         PluginCall pending = speakCall;
         speakCall = null;
         if (pending != null) pending.resolve();
