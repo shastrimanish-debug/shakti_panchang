@@ -456,10 +456,10 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 type="button"
                 onClick={() => onOpenUmaModal()}
                 className="py-2.5 px-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-600 hover:to-yellow-600 text-stone-950 font-black text-xs rounded-2xl transition flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer active:scale-95 m3-touch uma-glow-badge"
-                title="उमा AI - सनातन दैवज्ञ परामर्श"
+                title="उमा - सनातन दैवज्ञ परामर्श"
               >
                 <Sparkles className="w-4 h-4 text-stone-950 fill-stone-950" />
-                <span className="text-[10px] font-black">उमा AI ✨</span>
+                <span className="text-[10px] font-black">उमा ✨</span>
               </button>
             )}
 

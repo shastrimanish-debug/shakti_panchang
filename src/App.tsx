@@ -192,8 +192,9 @@ export function App() {
       currentLocation.timezoneHours,
       currentLocation.name,
       activeKundali?.name,
+      activeKundali?.lagnaRashi,
     );
-  }, [currentLocation, activeKundali?.name]);
+  }, [currentLocation, activeKundali?.name, activeKundali?.lagnaRashi]);
 
   // Current page book meta
   const currentIndex = BOOK_PAGES.findIndex((p) => p.id === activeTab);
@@ -299,10 +300,26 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePrevPage, handleNextPage]);
 
+  if (!isEntitled) {
+    return (
+      <SubscriptionModal
+        isOpen
+        locked
+        onClose={() => {}}
+        reason="७ दिन का परीक्षण समाप्त। ₹99 की सदस्यता के बिना यह ऐप बंद है।"
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
+      {licenseStatus.kind === "trial" && (
+        <div className="bg-[#B56A00] text-white text-center text-xs font-bold py-1.5">
+          परीक्षण: {licenseStatus.daysRemaining} दिन शेष। उसके बाद पूरी ऐप बंद।
+        </div>
+      )}
 
       {/* Heritage Top Navigation Bar with Page Flip Controls */}
       <Navbar
@@ -471,7 +488,10 @@ export function App() {
               )}
 
               {activeTab === 'rashifal' && (
-                <DailyRashifalView />
+                <DailyRashifalView
+                  personName={activeKundali?.name}
+                  lagnaRashi={activeKundali?.lagnaRashi}
+                />
               )}
 
               {activeTab === 'gita' && (
@@ -541,7 +561,7 @@ export function App() {
             <Sparkles className="w-3.5 h-3.5 fill-amber-400 group-hover:rotate-12 transition-transform" />
           </div>
           <span className="text-xs font-black tracking-wide pr-1">
-            उमा AI परामर्श ✨
+            उमा परामर्श ✨
           </span>
         </button>
       </aside>

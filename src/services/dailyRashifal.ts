@@ -1,6 +1,20 @@
 import { PlanetPosition } from "../types";
 import { calculatePlanetPositions, RASHIS } from "./astronomy";
-import { RASHI_FORECASTS } from "../data/rashifalData";
+
+export const RASHI_META = [
+  { id: "mesh", name: "मेष", symbol: "♈", lord: "मंगल" },
+  { id: "vrishabh", name: "वृषभ", symbol: "♉", lord: "शुक्र" },
+  { id: "mithun", name: "मिथुन", symbol: "♊", lord: "बुध" },
+  { id: "kark", name: "कर्क", symbol: "♋", lord: "चंद्र" },
+  { id: "simh", name: "सिंह", symbol: "♌", lord: "सूर्य" },
+  { id: "kanya", name: "कन्या", symbol: "♍", lord: "बुध" },
+  { id: "tula", name: "तुला", symbol: "♎", lord: "शुक्र" },
+  { id: "vrishchik", name: "वृश्चिक", symbol: "♏", lord: "मंगल" },
+  { id: "dhanu", name: "धनु", symbol: "♐", lord: "गुरु" },
+  { id: "makar", name: "मकर", symbol: "♑", lord: "शनि" },
+  { id: "kumbh", name: "कुंभ", symbol: "♒", lord: "शनि" },
+  { id: "meen", name: "मीन", symbol: "♓", lord: "गुरु" },
+];
 
 export interface GocharRow {
   planet: string;
@@ -89,7 +103,7 @@ export function buildDailyRashifal(
   timezoneHours = 5.5,
 ): DailyRashifal {
   const janma = RASHI_INDEX[rashiId] ?? 0;
-  const meta = RASHI_FORECASTS.find((r) => r.id === rashiId);
+  const meta = RASHI_META.find((r) => r.id === rashiId);
   const planets = calculatePlanetPositions(date, latitude, longitude, timezoneHours);
   const moon = planets.find((p) => p.planet === "चंद्र");
   const rows: GocharRow[] = planets.map((p) => ({
@@ -106,12 +120,12 @@ export function buildDailyRashifal(
   return {
     dateLabel,
     moonTransit: moon ? `${moon.rashi} (${moon.nakshatra})` : RASHIS[janma],
-    general: `${weekday}, ${dateLabel}। जन्म राशि ${meta?.name.split(" ")[0] || RASHIS[janma]}। ${sentence(moon, janma)} चंद्र का गोचर हर ढाई दिन में बदलता है, इसलिए यह फल कल वही नहीं रहेगा।`,
+    general: `${weekday}, ${dateLabel}। लग्न ${meta?.name || RASHIS[janma]}। ${sentence(moon, janma)} यह फल आज के गोचर से है, कल वही नहीं रहेगा।`,
     career: pick(planets, ["सूर्य", "बुध", "गुरु"]).map((p) => sentence(p, janma)).join(" "),
     wealth: pick(planets, ["शुक्र", "गुरु"]).map((p) => sentence(p, janma)).join(" "),
     love: sentence(planets.find((p) => p.planet === "शुक्र"), janma),
     health: pick(planets, ["शनि", "मंगल"]).map((p) => sentence(p, janma)).join(" "),
-    remedy: afflicted ? `${afflicted.planet} आज सबसे अधिक ध्यान माँग रहा है। ${MANTRA[afflicted.planet] || meta?.prediction.remedy || ""}` : meta?.prediction.remedy || "",
+    remedy: afflicted ? `${afflicted.planet} आज सबसे अधिक ध्यान माँग रहा है। ${MANTRA[afflicted.planet] || ""}` : "",
     rows,
   };
 }

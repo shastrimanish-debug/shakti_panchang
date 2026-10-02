@@ -102,7 +102,7 @@ export function BookCover({
               className="min-h-12 mt-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-stone-950 font-black px-5 hover:brightness-105 transition cursor-pointer shadow-[0_6px_25px_rgba(245,158,11,0.5)] active:scale-97 m3-touch border border-white"
             >
               <Sparkles className="w-5 h-5 fill-stone-950 text-stone-950" />
-              <span>उमा AI से परामर्श लें ✨</span>
+              <span>उमा से परामर्श लें ✨</span>
             </button>
           )}
         </div>

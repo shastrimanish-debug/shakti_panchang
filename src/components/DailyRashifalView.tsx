@@ -1,13 +1,19 @@
-import React, { useMemo, useState } from 'react';
-import { RASHI_FORECASTS } from '../data/rashifalData';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Sparkles, Sun, Award, Share2, Star } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { getStoredLocation } from '../services/storage';
-import { buildDailyRashifal } from '../services/dailyRashifal';
+import { buildDailyRashifal, RASHI_META } from '../services/dailyRashifal';
 
-export const DailyRashifalView: React.FC = () => {
-  const [selectedRashiId, setSelectedRashiId] = useState<string>('mesh');
-  const currentRashi = RASHI_FORECASTS.find((r) => r.id === selectedRashiId) || RASHI_FORECASTS[0];
+export const DailyRashifalView: React.FC<{ personName?: string; lagnaRashi?: string }> = ({
+  personName,
+  lagnaRashi,
+}) => {
+  const matched = RASHI_META.find((r) => lagnaRashi?.startsWith(r.name));
+  const [selectedRashiId, setSelectedRashiId] = useState<string>(matched?.id || 'mesh');
+  useEffect(() => {
+    if (matched) setSelectedRashiId(matched.id);
+  }, [matched?.id]);
+  const currentRashi = RASHI_META.find((r) => r.id === selectedRashiId) || RASHI_META[0];
   const live = useMemo(() => {
     const place = getStoredLocation();
     return buildDailyRashifal(
@@ -50,7 +56,7 @@ export const DailyRashifalView: React.FC = () => {
 
       {/* Rashi Selector Horizontal */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {RASHI_FORECASTS.map((r) => (
+        {RASHI_META.map((r) => (
           <button
             key={r.id}
             type="button"
@@ -76,7 +82,7 @@ export const DailyRashifalView: React.FC = () => {
             </span>
             <div>
               <h3 className="text-lg sm:text-xl font-bold font-granth text-[#5C3A21]">
-                {currentRashi.name} राशि फल
+                {personName ? `${personName} — लग्न ${lagnaRashi}` : currentRashi.name} राशि फल
               </h3>
               <p className="text-xs text-[#735133]">
                 {live.dateLabel} • चंद्र गोचर: {live.moonTransit} • स्वामी {currentRashi.lord}
@@ -97,12 +103,12 @@ export const DailyRashifalView: React.FC = () => {
         {/* Lucky info badges */}
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="p-2.5 rounded-xl bg-white border border-[#8C6239]/15">
-            <span className="font-bold text-[#8C6239]">शुभ रंग: </span>
-            <span className="text-[#3E2714]">{currentRashi.color}</span>
+            <span className="font-bold text-[#8C6239]">स्वामी: </span>
+            <span className="text-[#3E2714]">{currentRashi.lord}</span>
           </div>
           <div className="p-2.5 rounded-xl bg-white border border-[#8C6239]/15">
-            <span className="font-bold text-[#8C6239]">शुभ अंक: </span>
-            <span className="text-[#3E2714]">{currentRashi.number}</span>
+            <span className="font-bold text-[#8C6239]">आधार: </span>
+            <span className="text-[#3E2714]">{personName ? `${personName} का लग्न` : "चुनी हुई राशि"}</span>
           </div>
         </div>
 

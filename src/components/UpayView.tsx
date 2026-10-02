@@ -232,7 +232,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
                     className="px-3 py-1 bg-gradient-to-r from-[#B56A00] to-[#8C6239] text-white rounded-lg font-bold text-[11px] flex items-center gap-1 shadow-xs cursor-pointer"
                   >
                     <Sparkles className="w-3 h-3 text-amber-200" />
-                    <span>उमा AI से परामर्श लें</span>
+                    <span>उमा से परामर्श लें</span>
                   </button>
                 )}
               </div>

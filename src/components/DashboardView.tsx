@@ -54,7 +54,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-stone-950 font-black text-xs shadow-lg hover:brightness-105 transition flex items-center gap-2"
           >
             <Sparkles className="w-4 h-4" />
-            <span>उमा AI से आज का मार्गदर्शन लें</span>
+            <span>उमा से आज का मार्गदर्शन लें</span>
           </button>
           <button
             onClick={onOpenConnect}

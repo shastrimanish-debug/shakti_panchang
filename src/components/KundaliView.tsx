@@ -619,10 +619,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   type="button"
                   onClick={onOpenUmaModal}
                   className="px-3 py-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black text-xs rounded-xl shadow-md border border-amber-300 transition flex items-center gap-1.5 cursor-pointer active:scale-95 uma-glow-badge m3-touch"
-                  title="उमा AI - वैदिक दैवज्ञ परामर्श"
+                  title="उमा - वैदिक दैवज्ञ परामर्श"
                 >
                   <Sparkles className="w-3.5 h-3.5 fill-stone-950 text-stone-950" />
-                  <span>उमा AI परामर्श ✨</span>
+                  <span>उमा परामर्श ✨</span>
                 </button>
               )}
 
@@ -717,10 +717,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   type="button"
                   onClick={onOpenUmaModal}
                   className="px-3 py-2 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-md border border-amber-300 transition flex items-center gap-2 cursor-pointer active:scale-95 uma-glow-badge m3-touch"
-                  title="उमा AI (वैदिक एलेक्सा) से परामर्श लें"
+                  title="उमा (वैदिक एलेक्सा) से परामर्श लें"
                 >
                   <Sparkles className="w-4 h-4 fill-stone-950 text-stone-950" />
-                  <span>उमा AI परामर्श ✨</span>
+                  <span>उमा परामर्श ✨</span>
                 </button>
               )}
 

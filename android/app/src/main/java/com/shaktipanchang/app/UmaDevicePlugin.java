@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Base64;
@@ -24,6 +25,9 @@ import com.getcapacitor.annotation.PermissionCallback;
 
 import java.io.File;
 import java.io.FileOutputStream;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 @CapacitorPlugin(
     name = "UmaDevice",
@@ -142,6 +146,7 @@ public class UmaDevicePlugin extends Plugin {
         if (am != null) {
             am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
         }
+        persistAlarm(getContext(), id, title, body, at);
         JSObject ret = new JSObject();
         ret.put("ok", true);
         call.resolve(ret);
@@ -162,5 +167,56 @@ public class UmaDevicePlugin extends Plugin {
 
     private static int alarmId(String id) {
         return id == null ? 1 : (id.hashCode() & 0x7fffffff);
+    }
+
+    private static void persistAlarm(Context ctx, String id, String title, String body, long when) {
+        try {
+            SharedPreferences sp = ctx.getSharedPreferences("sp_alarms", Context.MODE_PRIVATE);
+            JSONArray arr = new JSONArray(sp.getString("items", "[]"));
+            JSONArray next = new JSONArray();
+            long now = System.currentTimeMillis();
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject old = arr.getJSONObject(i);
+                if (id.equals(old.optString("id"))) continue;
+                if (old.optLong("at") < now - 3600000L) continue;
+                next.put(old);
+            }
+            JSONObject item = new JSONObject();
+            item.put("id", id);
+            item.put("title", title);
+            item.put("body", body);
+            item.put("at", when);
+            next.put(item);
+            sp.edit().putString("items", next.toString()).apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void restoreAlarms(Context ctx) {
+        try {
+            SharedPreferences sp = ctx.getSharedPreferences("sp_alarms", Context.MODE_PRIVATE);
+            JSONArray arr = new JSONArray(sp.getString("items", "[]"));
+            AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) return;
+            long now = System.currentTimeMillis();
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject item = arr.getJSONObject(i);
+                long at = item.optLong("at");
+                if (at < now + 1000) continue;
+                int nid = alarmId(item.optString("id"));
+                Intent intent = new Intent(ctx, ReminderReceiver.class);
+                intent.putExtra("title", item.optString("title"));
+                intent.putExtra("body", item.optString("body"));
+                intent.putExtra("nid", nid);
+                PendingIntent pi = PendingIntent.getBroadcast(
+                    ctx,
+                    nid,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                );
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+            }
+        } catch (Exception ignored) {
+        }
     }
 }

@@ -170,10 +170,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             onClick={onOpenUmaModal}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-500 hover:to-yellow-500 text-stone-950 rounded-xl text-xs font-black shadow-sm transition transform active:scale-95 cursor-pointer shrink-0 border border-amber-300 m3-touch"
-            title="उमा AI - वैदिक दैवज्ञ परामर्श"
+            title="उमा - वैदिक दैवज्ञ परामर्श"
           >
             <Sparkles className="w-3.5 h-3.5 fill-stone-950 text-stone-950" />
-            <span className="font-extrabold">उमा AI ✨</span>
+            <span className="font-extrabold">उमा ✨</span>
           </button>
         </div>
       </div>

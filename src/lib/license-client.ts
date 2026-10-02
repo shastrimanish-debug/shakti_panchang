@@ -150,6 +150,41 @@ const VIP_MASTER_KEYS = new Set([
   "SHASTRI.MANISH@GMAIL.COM",
 ]);
 
+function readTrialStart(now: number): number {
+  const key = "sp_trial_start_v20";
+  let start = 0;
+  try {
+    start = Number(localStorage.getItem(key) || "0");
+  } catch {
+    start = 0;
+  }
+  try {
+    if (typeof document !== "undefined" && document.cookie) {
+      const match = document.cookie.match(/_sp_t20=([0-9]+)/);
+      const saved = match ? Number(match[1]) : 0;
+      if (saved > 1000000000000 && (start === 0 || saved < start)) start = saved;
+    }
+  } catch {
+    /* ignore */
+  }
+  if (!(start > 1000000000000 && start <= now + 60000)) start = now;
+  const str = String(start);
+  try {
+    localStorage.setItem(key, str);
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (typeof document !== "undefined") {
+      const expires = new Date(now + 365 * 86400000).toUTCString();
+      document.cookie = `_sp_t20=${str}; expires=${expires}; path=/; SameSite=Lax`;
+    }
+  } catch {
+    /* ignore */
+  }
+  return start;
+}
+
 /**
  * Compute current tamper-resistant trial / subscription status
  */
@@ -170,48 +205,31 @@ export function getLicenseStatus(): LicenseStatus {
     annualToken = "";
   }
 
-  // Ensure Shastri Manish is permanently recognized as Annual VIP (365 Days)
-  const isMasterVip = true; // Shastri Manish app owner / Creator
-  if (annualUntil <= now || !annualToken) {
-    annualUntil = now + 365 * 24 * 60 * 60 * 1000; // 365 Days Annual Subscription
-    annualToken = "ANNUAL-SUB-SHASTRI-MANISH";
-    try {
-      localStorage.setItem(STORAGE_KEYS.ANNUAL, String(annualUntil));
-      localStorage.setItem(STORAGE_KEYS.ANNUAL_TOKEN, annualToken);
-      localStorage.removeItem(STORAGE_KEYS.TAMPER_FLAG);
-    } catch {
-      /* ignore */
-    }
+  let start = readTrialStart(now);
+
+  const paid =
+    (annualToken.startsWith("VIP-") || annualToken.startsWith("UTR-")) && annualUntil > now;
+  if (paid) {
+    const days = Math.max(1, Math.ceil((annualUntil - now) / 86400000));
+    return {
+      ok: true,
+      entitled: true,
+      kind: annualToken.startsWith("VIP-") ? "lifetime" : "annual",
+      daysRemaining: days,
+      expiresAt: new Date(annualUntil).toISOString(),
+      issuedAt: new Date(start).toISOString(),
+      token: annualToken,
+      planName: annualToken.startsWith("VIP-")
+        ? "श्री शक्ति पंचांग आजीवन सदस्यता"
+        : "श्री शक्ति पंचांग वार्षिक सदस्यता",
+      amount: 99,
+      isTampered: false,
+    };
   }
 
-  // Retrieve or initialize start time
-  let start = getEarliestAnchorTime(now);
-  if (!start) {
-    start = now;
-    persistAnchorTime(start);
-  } else {
-    persistAnchorTime(start);
-  }
-
-  // Return Annual VIP license with 365 days maximum
-  const days = Math.min(365, Math.max(1, Math.ceil((annualUntil - now) / 86400000)));
-  return {
-    ok: true,
-    entitled: true,
-    kind: "annual",
-    daysRemaining: days,
-    expiresAt: new Date(annualUntil).toISOString(),
-    issuedAt: new Date(start).toISOString(),
-    token: annualToken,
-    planName: "श्री शक्ति पंचांग वार्षिक सदस्यता (365 दिन)",
-    amount: 99,
-    isTampered: false,
-  };
-
-  // Check 7-Day Trial Status
   const trialEnd = start + TRIAL_DURATION_MS;
-  const daysRemaining = Math.max(0, Math.ceil((trialEnd - now) / 86400000));
-  const entitled = !isTampered && now < trialEnd;
+  const entitled = now < trialEnd;
+  const daysRemaining = entitled ? Math.max(1, Math.ceil((trialEnd - now) / 86400000)) : 0;
 
   return {
     ok: true,
@@ -223,39 +241,18 @@ export function getLicenseStatus(): LicenseStatus {
     token: entitled ? `trial-sp-${start}` : "expired",
     planName: "श्री शक्ति पंचांग ७-दिवसीय निःशुल्क परीक्षण",
     amount: 99,
-    reason: isTampered
-      ? "सुरक्षा उल्लंघन: समय परिवर्तन या छेड़छाड़ का प्रयास। केवल पंचांग मुख्य पृष्ठ उपलब्ध है।"
-      : entitled
+    reason: entitled
       ? undefined
-      : "७-दिवसीय निःशुल्क परीक्षण समाप्त। केवल पंचांग का मुख्य पृष्ठ उपलब्ध है।",
-    isTampered,
+      : "७ दिन का परीक्षण समाप्त। ₹99 की वार्षिक सदस्यता के बिना यह ऐप बंद है।",
+    isTampered: false,
   };
 }
 
 /**
- * Check if a specific tab or subpage is permitted
- * STRICT RULE: If trial is expired, ONLY tab 'panchang' and subpage 'main' is permitted!
+ * Trial is the whole app for 7 days. After that nothing opens until ₹99 is paid.
  */
-export function isFeaturePermitted(
-  status: LicenseStatus,
-  tabId: string,
-  panchangSubPage?: string
-): boolean {
-  // If subscribed or trial is active, everything is unlocked
-  if (status.entitled) {
-    return true;
-  }
-
-  // TRIAL EXPIRED: Only 'panchang' tab and 'main' subpage is allowed!
-  if (tabId === "panchang") {
-    if (!panchangSubPage || panchangSubPage === "main") {
-      return true; // Panchang main page is ALWAYS free & accessible
-    }
-    return false; // Gochar, Hora, Muhurat, Disha are locked
-  }
-
-  // All other tabs (choghadiya, kundali, matchmaking, yatra, etc.) are strictly locked
-  return false;
+export function isFeaturePermitted(status: LicenseStatus, _tabId?: string, _panchangSubPage?: string): boolean {
+  return status.entitled;
 }
 
 type LicenseContextValue = {

@@ -19,9 +19,10 @@ interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
   reason?: string;
+  locked?: boolean;
 }
 
-export function SubscriptionModal({ isOpen, onClose, reason }: SubscriptionModalProps) {
+export function SubscriptionModal({ isOpen, onClose, reason, locked }: SubscriptionModalProps) {
   const { status, activateAnnual, loading } = useLicense();
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [paymentRef, setPaymentRef] = useState("");
@@ -91,10 +92,11 @@ export function SubscriptionModal({ isOpen, onClose, reason }: SubscriptionModal
                 शक्ति पंचांग वार्षिक सदस्यता
               </h3>
               <p className="text-[11px] text-[#D9C4A9]">
-                ७ दिन निःशुल्क • उसके बाद केवल पंचांग मुख्य पृष्ठ फ्री
+                ७ दिन पूरी ऐप • फिर बंद, जब तक ₹99 न हो
               </p>
             </div>
           </div>
+          {!locked && (
           <button
             type="button"
             onClick={onClose}
@@ -103,6 +105,7 @@ export function SubscriptionModal({ isOpen, onClose, reason }: SubscriptionModal
           >
             <X className="w-5 h-5" />
           </button>
+          )}
         </div>
 
         {/* Content */}
@@ -166,7 +169,7 @@ export function SubscriptionModal({ isOpen, onClose, reason }: SubscriptionModal
                   <span className="text-xs font-bold text-[#8C6239]">/ वर्ष</span>
                 </div>
                 <p className="text-[12px] text-[#3E2714] mt-2 font-medium leading-relaxed">
-                  मुफ्त में केवल आज का पंचांग। ₹99 में शास्त्री मनीष की नाम वाली कुंडली PDF, मिलान पत्रिका, और सुबह ६ बजे का निजी उपाय।
+                  ७ दिन पूरी ऐप खुली है। उसके बाद बंद। ₹99 में शास्त्री मनीष की कुंडली PDF, मिलान पत्रिका, और सुबह का उपाय — एक साल।
                 </p>
                 {status.entitled && status.kind === "trial" ? (
                   <p className="text-[11px] text-[#735133] mt-1 font-medium">
@@ -174,7 +177,7 @@ export function SubscriptionModal({ isOpen, onClose, reason }: SubscriptionModal
                   </p>
                 ) : (
                   <p className="text-[11px] text-[#8C3A00] mt-1 font-bold">
-                    ७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। अब केवल पंचांग मुख्य पृष्ठ फ्री रहेगा। गोचर, होरा, कुण्डली, चौघड़िया, मिलान व उमा AI के लिए सदस्यता लें।
+                    ७ दिन का परीक्षण समाप्त। जब तक ₹99 की वार्षिक सदस्यता सक्रिय नहीं होती, यह ऐप बंद रहेगी।
                   </p>
                 )}
               </div>

@@ -107,7 +107,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div>
                 <div className="text-sm font-black tracking-wide text-stone-950">
-                  उमा AI वैदिक दैवज्ञ परामर्श ✨
+                  उमा वैदिक दैवज्ञ परामर्श ✨
                 </div>
                 <div className="text-[11px] text-stone-900 font-medium">
                   कुंडली, मुहूर्त, गोचर, उपाय व प्रश्न विचार 100% सक्रिय
@@ -136,7 +136,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                   <span>सदस्यता स्थिति: VIP आजीवन सक्रिय</span>
                 </div>
                 <div className="text-[10px] text-[#D9C4A9]">
-                  समस्त 59-पृष्ठीय कुण्डली, विवाह मिलान, पंचांग PDF एवं उमा AI अनलॉक हैं
+                  समस्त 59-पृष्ठीय कुण्डली, विवाह मिलान, पंचांग PDF एवं उमा अनलॉक हैं
                 </div>
               </div>
             </div>

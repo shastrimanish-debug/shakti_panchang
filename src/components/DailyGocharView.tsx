@@ -344,7 +344,7 @@ export const DailyGocharView: React.FC<DailyGocharViewProps> = ({
             type="button"
             onClick={() => onOpenUmaModal(`आज का नवग्रह गोचर (सूर्य ${gocharData.planets.find((p) => p.planet === 'सूर्य')?.rashi} में, चंद्र ${gocharData.moonRashi} में) का संपूर्ण फलित प्रभाव और सात्विक उपाय बताएं।`)}
             className="py-2 px-3 bg-gradient-to-r from-[#B56A00] to-[#8C6239] hover:from-[#9c5a00] hover:to-[#734f2d] text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-98"
-            title="उमा AI से आज के गोचर का फल पूछें"
+            title="उमा से आज के गोचर का फल पूछें"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-200" />
             <span>उमा से गोचर फल पूछें</span>

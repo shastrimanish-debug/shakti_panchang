@@ -77,12 +77,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               type="button"
               onClick={onOpenUma}
               className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 text-stone-950 flex items-center justify-center shadow-[0_4px_18px_rgba(245,158,11,0.55)] border-2 border-white transition-all cursor-pointer active:scale-90 hover:scale-105 uma-glow-badge"
-              title="उमा AI - प्राचीन सनातन ज्योतिषीय परामर्श"
+              title="उमा - प्राचीन सनातन ज्योतिषीय परामर्श"
             >
               <Sparkles className="w-5 h-5 text-stone-950 fill-stone-950" />
             </button>
             <span className="text-[9px] font-black text-[#5C3A21] mt-1 tracking-wider leading-none">
-              उमा AI
+              उमा
             </span>
           </div>
         )}

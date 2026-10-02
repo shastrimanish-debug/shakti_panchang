@@ -114,6 +114,22 @@ export async function generateUma({
   try {
     const q = (query || "").toLowerCase().trim();
 
+    if (!kundali) {
+      return {
+        ok: true,
+        source: "local_vedic",
+        text: "॥ ॐ श्री गणेशाय नमः ॥\nयजमान, मैं उमा हूँ। बिना आपकी जन्म कुंडली के दशा, उपाय या फल नहीं बताऊँगी। पहले नाम, जन्म तिथि, समय और स्थान भरें।",
+        actionPayload: { type: "open_kundali", label: "जन्मकुंडली बनाएँ" },
+      };
+    }
+
+    return {
+      ok: true,
+      source: "local_vedic",
+      text: chartAnswer(kundali, query, panchang),
+      actionPayload: { type: "open_kundali", label: "जन्मकुंडली देखें" },
+    };
+
     // 0. Greeting & Introduction
     if (q.includes("नमस्ते") || q.includes("हेलो") || q.includes("hello") || q.includes("hi") || q.includes("परिचय") || q.includes("तुम कौन हो") || q.includes("प्रणाम")) {
       return {
