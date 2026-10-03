@@ -1,0 +1,29 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Optical ring -->
+    <path
+        android:strokeColor="#F97316"
+        android:strokeWidth="2.8"
+        android:fillColor="#00000000"
+        android:pathData="M54,28 A26,26 0 1,1 53.9,28" />
+    <!-- Gradient accent ring arc -->
+    <path
+        android:strokeColor="#EA580C"
+        android:strokeWidth="3.8"
+        android:fillColor="#00000000"
+        android:pathData="M76,38 A26,26 0 0,1 76,70" />
+    <!-- Central Pro Play Triangle -->
+    <path
+        android:fillColor="#F97316"
+        android:pathData="M46,38 L70,54 L46,70 Z" />
+    <!-- VFX sparkle flares -->
+    <path
+        android:fillColor="#EA580C"
+        android:pathData="M54,22 L55.5,26.5 L60,28 L55.5,29.5 L54,34 L52.5,29.5 L48,28 L52.5,26.5 Z" />
+    <path
+        android:fillColor="#FB923C"
+        android:pathData="M78,66 L79,69 L82,70 L79,71 L78,74 L77,71 L74,70 L77,69 Z" />
+</vector>

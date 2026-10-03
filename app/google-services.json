@@ -1,0 +1,25 @@
+{
+  "project_info": {
+    "project_number": "123456789012",
+    "project_id": "vfxpro-app",
+    "storage_bucket": "vfxpro-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123456789012:android:abcdef1234567890",
+        "android_client_info": {
+          "package_name": "com.aistudio.vfxpro.rkmw"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "fake_api_key_for_build"
+        }
+      ],
+      "services": {}
+    }
+  ],
+  "configuration_version": "1"
+}

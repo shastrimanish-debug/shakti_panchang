@@ -1,0 +1,6 @@
+{
+  "name": "VFX Pro",
+  "description": "Next-Gen Pro Video & VFX Editor for mobile featuring timeline preview, multi-tab workspace, and professional creative controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
