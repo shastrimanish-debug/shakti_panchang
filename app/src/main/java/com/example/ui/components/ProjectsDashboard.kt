@@ -427,77 +427,163 @@ fun ProjectsDashboard(
         }
       }
 
-      // 2. "CREATE NEW" Section Title + Studio Floating Card
+      // 2. CapCut & InShot Style Massive "New Project" Hero Banner Card + Quick Actions
       item {
         Column(modifier = Modifier.fillMaxWidth()) {
-          Text(
-            text = "CREATE NEW",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.5.sp,
-            color = currentTheme.textColor.copy(alpha = 0.85f),
-            modifier = Modifier.padding(start = 4.dp, bottom = 10.dp)
-          )
-
           Card(
-            shape = RoundedCornerShape(26.dp),
-            colors = CardDefaults.cardColors(containerColor = currentTheme.surfaceColor),
-            border = BorderStroke(1.dp, currentTheme.surfaceRaised),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
             modifier = Modifier
               .fillMaxWidth()
-              .testTag("hero_creation_hub")
+              .shadow(12.dp, RoundedCornerShape(28.dp))
+              .clickable {
+                pickVideoLauncher.launch(
+                  PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
+                )
+              }
+              .testTag("hero_new_project_card")
           ) {
-            Row(
+            Box(
               modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 22.dp),
-              horizontalArrangement = Arrangement.SpaceEvenly,
-              verticalAlignment = Alignment.CenterVertically
+                .background(
+                  Brush.linearGradient(
+                    colors = listOf(
+                      Color(0xFF2563EB), // Vibrant Blue
+                      Color(0xFF7C3AED), // Violet
+                      Color(0xFFEC4899)  // Pink
+                    )
+                  )
+                )
+                .padding(26.dp)
             ) {
-              // 1. Video Action (Primary Theme Circle)
-              VfxSignatureHeroButton(
-                icon = Icons.Default.Movie,
-                label = "Video",
-                circleColor = currentTheme.primaryColor,
-                textColor = currentTheme.textColor,
-                hasRecentsBadge = true,
-                testTag = "btn_hero_video",
-                onClick = {
-                  // Show the VFX Drafts / New dialog
-                  showDraftsSheet = true
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Column(modifier = Modifier.weight(1f)) {
+                  Surface(
+                    color = Color.White.copy(alpha = 0.25f),
+                    shape = RoundedCornerShape(8.dp)
+                  ) {
+                    Text(
+                      text = "🎬 PRO VIDEO EDITOR",
+                      fontSize = 10.sp,
+                      fontWeight = FontWeight.ExtraBold,
+                      color = Color.White,
+                      modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                  }
+                  Spacer(modifier = Modifier.height(10.dp))
+                  Text(
+                    text = "New Project",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
+                  )
+                  Spacer(modifier = Modifier.height(4.dp))
+                  Text(
+                    text = "Select clips & start editing instantly",
+                    fontSize = 13.sp,
+                    color = Color.White.copy(alpha = 0.85f)
+                  )
                 }
-              )
+                Spacer(modifier = Modifier.width(16.dp))
+                Surface(
+                  shape = CircleShape,
+                  color = Color.White,
+                  modifier = Modifier.size(60.dp)
+                ) {
+                  Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                      imageVector = Icons.Default.Add,
+                      contentDescription = "New Project",
+                      tint = Color(0xFF2563EB),
+                      modifier = Modifier.size(36.dp)
+                    )
+                  }
+                }
+              }
+            }
+          }
 
-              // 2. Photo Action (Accent Theme Circle)
-              VfxSignatureHeroButton(
-                icon = Icons.Default.Image,
-                label = "Photo",
-                circleColor = currentTheme.accentColor,
-                textColor = currentTheme.textColor,
-                hasRecentsBadge = true,
-                testTag = "btn_hero_photo",
-                onClick = {
+          Spacer(modifier = Modifier.height(14.dp))
+
+          // Quick Action Row: Video, Photo, Collage
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+          ) {
+            // Video Drafts
+            Surface(
+              shape = RoundedCornerShape(18.dp),
+              color = currentTheme.surfaceColor,
+              border = BorderStroke(1.dp, currentTheme.surfaceRaised),
+              modifier = Modifier
+                .weight(1f)
+                .clickable { showDraftsSheet = true }
+                .testTag("btn_quick_video")
+            ) {
+              Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+              ) {
+                Icon(Icons.Default.Movie, contentDescription = null, tint = currentTheme.primaryColor, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Drafts", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = currentTheme.textColor)
+              }
+            }
+
+            // Photo Editor
+            Surface(
+              shape = RoundedCornerShape(18.dp),
+              color = currentTheme.surfaceColor,
+              border = BorderStroke(1.dp, currentTheme.surfaceRaised),
+              modifier = Modifier
+                .weight(1f)
+                .clickable {
                   pickPhotoLauncher.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                   )
                 }
-              )
+                .testTag("btn_quick_photo")
+            ) {
+              Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+              ) {
+                Icon(Icons.Default.Image, contentDescription = null, tint = currentTheme.accentColor, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Photo", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = currentTheme.textColor)
+              }
+            }
 
-              // 3. Collage Action (Primary Dark Theme Circle)
-              VfxSignatureHeroButton(
-                icon = Icons.Default.GridView,
-                label = "Collage",
-                circleColor = currentTheme.primaryDark,
-                textColor = currentTheme.textColor,
-                hasRecentsBadge = false,
-                testTag = "btn_hero_collage",
-                onClick = {
+            // Collage Maker
+            Surface(
+              shape = RoundedCornerShape(18.dp),
+              color = currentTheme.surfaceColor,
+              border = BorderStroke(1.dp, currentTheme.surfaceRaised),
+              modifier = Modifier
+                .weight(1f)
+                .clickable {
                   pickMultipleLauncher.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
                   )
                 }
-              )
+                .testTag("btn_quick_collage")
+            ) {
+              Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+              ) {
+                Icon(Icons.Default.GridView, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Collage", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = currentTheme.textColor)
+              }
             }
           }
         }
