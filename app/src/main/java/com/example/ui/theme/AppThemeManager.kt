@@ -63,6 +63,18 @@ enum class AppStudioTheme(
   val accentColor: Color,
   val textColor: Color = Color.White
 ) {
+  COOL_GRAPHITE(
+    id = "cool_graphite",
+    displayName = "Cool Graphite (Default)",
+    description = "Soothing Pro Slate, Charcoal & Soft Sky",
+    primaryColor = Color(0xFF38BDF8),
+    primaryDark = Color(0xFF0284C7),
+    backgroundColor = Color(0xFF10141C),
+    surfaceColor = Color(0xFF181E29),
+    surfaceRaised = Color(0xFF232B3A),
+    accentColor = Color(0xFF818CF8),
+    textColor = Color(0xFFF1F5F9)
+  ),
   CYBER_CYAN(
     id = "cyber_cyan",
     displayName = "Cyber Cyan (Default Pro)",
@@ -227,7 +239,7 @@ enum class AppStudioTheme(
  * Global Theme Controller for dynamic live switching across all screens
  */
 object AppThemeManager {
-  private val _currentTheme = MutableStateFlow(AppStudioTheme.CYBER_CYAN)
+  private val _currentTheme = MutableStateFlow(AppStudioTheme.COOL_GRAPHITE)
   val currentTheme = _currentTheme.asStateFlow()
 
   fun setTheme(theme: AppStudioTheme) {
