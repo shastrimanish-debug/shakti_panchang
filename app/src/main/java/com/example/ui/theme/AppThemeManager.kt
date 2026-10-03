@@ -194,6 +194,30 @@ enum class AppStudioTheme(
     surfaceColor = Color(0xFF1C1610),
     surfaceRaised = Color(0xFF2E241B),
     accentColor = Color(0xFFFDBA74)
+  ),
+  CAPCUT_PRISTINE_LIGHT(
+    id = "capcut_light",
+    displayName = "CapCut Pristine Light ✨",
+    description = "Ultra-Clean Pro White & Vibrant Blue",
+    primaryColor = Color(0xFF2563EB),
+    primaryDark = Color(0xFF1D4ED8),
+    backgroundColor = Color(0xFFF8FAFC),
+    surfaceColor = Color(0xFFFFFFFF),
+    surfaceRaised = Color(0xFFF1F5F9),
+    accentColor = Color(0xFF06B6D4),
+    textColor = Color(0xFF0F172A)
+  ),
+  INSHOT_SUNSHINE_LIGHT(
+    id = "inshot_sunshine",
+    displayName = "InShot Sunshine Peach 🍑",
+    description = "Feel-Good Warm Peach, Rose & Coral",
+    primaryColor = Color(0xFFF43F5E),
+    primaryDark = Color(0xFFE11D48),
+    backgroundColor = Color(0xFFFFFBFB),
+    surfaceColor = Color(0xFFFFFFFF),
+    surfaceRaised = Color(0xFFFFF1F2),
+    accentColor = Color(0xFFFB923C),
+    textColor = Color(0xFF1C1917)
   );
 
   val sheetBorder: Color get() = primaryColor.copy(alpha = 0.25f)
