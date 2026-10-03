@@ -31,6 +31,8 @@ import com.example.ClipType
 import com.example.MediaClip
 import com.example.MediaTrack
 import com.example.TrackType
+import com.example.billing.ProAccess
+import com.example.ui.components.interpolateKeyframeValue
 import com.example.ui.components.ExportBitrate
 import com.example.ui.components.ExportFrameRate
 import com.example.ui.components.ExportResolution
@@ -49,9 +51,31 @@ import kotlin.math.sin
  * into a fully-compliant MPEG-4 (H.264/AVC) video file and saves it directly to the
  * user's local Android Gallery (MediaStore Movies/VFXPro).
  */
+data class BurnedWatermark(
+  val text: String,
+  val position: String,
+  val opacity: Float,
+  val logo: Bitmap? = null
+)
+
 object MediaCodecVideoExporter {
   private const val TAG = "MediaCodecExporter"
   private const val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC // "video/avc"
+
+  private fun orientedSize(resolution: ExportResolution, canvasRatio: String): Pair<Int, Int> {
+    val longSide = maxOf(resolution.width, resolution.height)
+    val shortSide = minOf(resolution.width, resolution.height)
+    fun even(v: Int) = (v - (v % 2)).coerceAtLeast(2)
+    return when (canvasRatio) {
+      "9:16" -> even(shortSide) to even(longSide)
+      "1:1" -> even(shortSide) to even(shortSide)
+      "4:5" -> even(shortSide) to even((shortSide * 5f / 4f).toInt())
+      "3:4" -> even(shortSide) to even((shortSide * 4f / 3f).toInt())
+      "4:3" -> even(longSide) to even((longSide * 3f / 4f).toInt())
+      "21:9" -> even(longSide) to even((longSide * 9f / 21f).toInt())
+      else -> even(longSide) to even(shortSide)
+    }
+  }
 
   suspend fun exportProject(
     context: Context,
@@ -59,6 +83,12 @@ object MediaCodecVideoExporter {
     resolution: ExportResolution = ExportResolution.FHD_1080P,
     frameRate: ExportFrameRate = ExportFrameRate.FPS_30,
     bitrate: ExportBitrate = ExportBitrate.MEDIUM,
+    watermarkEnabled: Boolean = true,
+    watermarkText: String = "VFX Pro",
+    watermarkPosition: String = "Bottom-Right",
+    watermarkOpacity: Float = 0.85f,
+    watermarkLogoUri: String? = null,
+    canvasRatio: String = "16:9",
     onProgress: (Float) -> Unit = {}
   ): ExportResult = withContext(Dispatchers.IO) {
     onProgress(0.05f)
@@ -67,18 +97,19 @@ object MediaCodecVideoExporter {
     val fileName = "VFXPro_${timeStamp}.mp4"
     val folderName = "Movies/VFXPro"
 
-    // Fast, compliant HD 720p / 480p encoding resolutions
-    val candidateResolutions = listOf(
-      Pair(1280, 720),
-      Pair(854, 480)
-    )
-
-    val fps = 20.coerceAtMost(frameRate.fps)
-    val bitRateBps = when (bitrate) {
+    val fps = frameRate.fps.coerceIn(8, 60)
+    var bitRateBps = when (bitrate) {
       ExportBitrate.LOW -> 3_000_000
       ExportBitrate.MEDIUM -> 6_000_000
       ExportBitrate.HIGH -> 10_000_000
     }
+    val resScale = when {
+      resolution.width >= 3000 -> 3.2f
+      resolution.width >= 1920 -> 1.5f
+      else -> 1f
+    }
+    val fpsScale = if (fps >= 50) 1.5f else 1f
+    bitRateBps = (bitRateBps * resScale * fpsScale).toInt()
 
     // Determine timeline duration across all video/image/vfx clips
     val allClips = tracks.flatMap { it.clips }
@@ -87,16 +118,45 @@ object MediaCodecVideoExporter {
     val maxVisualClipEnd = allVisualClips.maxOfOrNull { it.startTimeMs + it.durationMs } ?: 0L
     val maxAnyClipEnd = allClips.maxOfOrNull { it.startTimeMs + it.durationMs } ?: 0L
     val maxClipEnd = if (maxVisualClipEnd > 0L) maxVisualClipEnd else maxAnyClipEnd
-    val projectDurationMs = maxClipEnd.coerceIn(3000L, 180000L) // Support full project multi-clip duration
-    val effectiveFps = if (projectDurationMs > 30000L) 15 else fps
-    val totalFrames = ((projectDurationMs * effectiveFps) / 1000L).toInt().coerceIn(20, 80)
+    val projectDurationMs = maxClipEnd.coerceIn(1000L, 600_000L)
+    // Keep the full timeline. If 60fps would create too many frames, drop fps instead of cutting the video.
+    var effectiveFps = fps
+    var totalFrames = ((projectDurationMs * effectiveFps) / 1000L).toInt()
+    if (totalFrames > 12_000) {
+      effectiveFps = ((12_000L * 1000L) / projectDurationMs).toInt().coerceIn(12, fps)
+      totalFrames = ((projectDurationMs * effectiveFps) / 1000L).toInt().coerceIn(12, 12_000)
+    }
+
+    val pro = ProAccess.isPro.value
+    val logo = if (pro && watermarkEnabled && !watermarkLogoUri.isNullOrBlank()) {
+      decodeBounded(context, watermarkLogoUri, 512)
+    } else {
+      null
+    }
+    val stamp = if (pro && !watermarkEnabled) {
+      null
+    } else {
+      BurnedWatermark(
+        text = if (pro) watermarkText else "VFX Pro",
+        position = if (pro) watermarkPosition else "Bottom-Right",
+        opacity = if (pro) watermarkOpacity.coerceIn(0.2f, 1f) else 0.9f,
+        logo = logo
+      )
+    }
+
+    // Try the real chosen size first, in the project canvas ratio.
+    val requestedPair = orientedSize(resolution, canvasRatio)
+    val fallback1080 = orientedSize(ExportResolution.FHD_1080P, canvasRatio)
+    val fallback720 = orientedSize(ExportResolution.HD_720P, canvasRatio)
+    val candidateResolutions = listOf(requestedPair, fallback1080, fallback720, Pair(854, 480)).distinct()
 
     val tempFile = File(context.cacheDir, "temp_export_${System.currentTimeMillis()}.mp4")
 
     var encoderSucceeded = false
     var lastError: Exception? = null
+    var encodedWidth = candidateResolutions.first().first
+    var encodedHeight = candidateResolutions.first().second
 
-    // Try candidate resolutions in case high resolutions (e.g. 4K) aren't supported by hardware encoder
     for ((width, height) in candidateResolutions) {
       if (tempFile.exists()) tempFile.delete()
       try {
@@ -111,22 +171,30 @@ object MediaCodecVideoExporter {
           bitRate = bitRateBps,
           totalFrames = totalFrames,
           projectDurationMs = projectDurationMs,
+          watermark = stamp,
           onProgress = { p ->
-            // Scale progress from 10% to 80%
             val scaledProgress = 0.10f + (p * 0.70f)
             onProgress(scaledProgress)
           }
         )
         if (tempFile.exists() && tempFile.length() > 1024) {
           encoderSucceeded = true
+          encodedWidth = width
+          encodedHeight = height
           Log.i(TAG, "MediaCodec encoding succeeded! File size: ${tempFile.length()} bytes")
           break
         }
+      } catch (oom: OutOfMemoryError) {
+        Log.w(TAG, "Out of memory at ${width}x${height}, trying a smaller size")
+        lastError = RuntimeException("Out of memory at ${width}x${height}", oom)
+        System.gc()
       } catch (e: Exception) {
         Log.w(TAG, "Failed encoding with ${width}x${height}, trying next candidate: ${e.message}")
         lastError = e
       }
     }
+
+    logo?.let { if (!it.isRecycled) it.recycle() }
 
     if (!encoderSucceeded || !tempFile.exists() || tempFile.length() <= 1024) {
       Log.e(TAG, "MediaCodec encoding failed for all configurations", lastError)
@@ -139,7 +207,7 @@ object MediaCodecVideoExporter {
     onProgress(0.85f)
 
     // Merge audio into exported video (handles audio track clips, video mute states, and extracted audio)
-    val audioToMux = prepareAudioForExport(context, tracks)
+    val audioToMux = TimelineAudioMixer.mixToM4a(context, tracks, projectDurationMs)
     val finalFile = if (audioToMux != null) {
       val remuxedFile = File(context.cacheDir, "vfx_final_${System.currentTimeMillis()}.mp4")
       try {
@@ -184,8 +252,8 @@ object MediaCodecVideoExporter {
       fileName = fileName,
       folderName = folderName,
       durationMs = projectDurationMs,
-      width = candidateResolutions.first().first,
-      height = candidateResolutions.first().second
+      width = encodedWidth,
+      height = encodedHeight
     )
 
     // Clean up temporary cache files
@@ -252,6 +320,7 @@ object MediaCodecVideoExporter {
     bitRate: Int,
     totalFrames: Int,
     projectDurationMs: Long,
+    watermark: BurnedWatermark?,
     onProgress: (Float) -> Unit
   ) {
     var codec: MediaCodec? = null
@@ -265,20 +334,14 @@ object MediaCodecVideoExporter {
       .sortedBy { it.startTimeMs }
 
     // Cache MediaMetadataRetriever for each video clip URI
-    val retrievers = mutableMapOf<String, MediaMetadataRetriever>()
+    val decoders = mutableMapOf<String, FastFrameDecoder>()
     for (clip in visualClips) {
       val uri = clip.uri ?: continue
-      if (clip.type == ClipType.VIDEO && !retrievers.containsKey(uri)) {
+      if (clip.type == ClipType.VIDEO && !decoders.containsKey(uri)) {
         try {
-          val r = MediaMetadataRetriever()
-          if (uri.startsWith("file://") || uri.startsWith("file:")) {
-            r.setDataSource(uri.removePrefix("file://").removePrefix("file:"))
-          } else {
-            r.setDataSource(context, Uri.parse(uri))
-          }
-          retrievers[uri] = r
+          decoders[uri] = FastFrameDecoder(context, uri, maxOf(width, height))
         } catch (e: Exception) {
-          Log.w(TAG, "Could not open retriever for clip ${clip.id}: ${e.message}")
+          Log.w(TAG, "Could not open decoder for clip ${clip.id}: ${e.message}")
         }
       }
     }
@@ -289,13 +352,7 @@ object MediaCodecVideoExporter {
       val uri = clip.uri ?: continue
       if (clip.type == ClipType.IMAGE && !imageBitmaps.containsKey(uri)) {
         try {
-          val bmp = if (uri.startsWith("file://") || uri.startsWith("file:")) {
-            BitmapFactory.decodeFile(uri.removePrefix("file://").removePrefix("file:"))
-          } else {
-            context.contentResolver.openInputStream(Uri.parse(uri))?.use {
-              BitmapFactory.decodeStream(it)
-            }
-          }
+          val bmp = decodeBounded(context, uri, maxOf(width, height))
           if (bmp != null) imageBitmaps[uri] = bmp
         } catch (e: Exception) {
           Log.w(TAG, "Could not decode image clip ${clip.id}: ${e.message}")
@@ -304,6 +361,8 @@ object MediaCodecVideoExporter {
     }
 
     val cachedVideoFrames = mutableMapOf<String, Pair<Long, Bitmap>>()
+    var frameBitmap: Bitmap? = null
+    var scratchBitmap: Bitmap? = null
 
     try {
       codec = MediaCodec.createEncoderByType(MIME_TYPE)
@@ -325,8 +384,8 @@ object MediaCodecVideoExporter {
       val frameDurationUs = 1_000_000L / fps
 
       // Pre-allocated rendering buffers for zero-allocation frame processing
-      val frameBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-      val canvas = Canvas(frameBitmap)
+      frameBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+      val canvas = Canvas(frameBitmap!!)
       val paint = Paint(Paint.ANTI_ALIAS_FLAG)
       val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
@@ -342,7 +401,8 @@ object MediaCodecVideoExporter {
         textAlign = Paint.Align.RIGHT
       }
 
-      val argbBuffer = IntArray(width * height)
+      scratchBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+      val scratchCanvas = Canvas(scratchBitmap!!)
       val yuvBuffer = ByteArray(width * height * 3 / 2)
 
       for (frameIndex in 0 until totalFrames) {
@@ -363,15 +423,18 @@ object MediaCodecVideoExporter {
           height = height,
           frameIndex = frameIndex,
           totalFrames = totalFrames,
-          retrievers = retrievers,
+          decoders = decoders,
           imageBitmaps = imageBitmaps,
-          cachedVideoFrames = cachedVideoFrames
+          cachedVideoFrames = cachedVideoFrames,
+          frameBitmap = frameBitmap!!,
+          scratch = scratchBitmap!!,
+          scratchCanvas = scratchCanvas,
+          watermark = watermark
         )
 
         // 2. Convert ARGB frameBitmap to YUV420 buffer
         convertBitmapToYuv420(
-          bitmap = frameBitmap,
-          argb = argbBuffer,
+          bitmap = frameBitmap!!,
           outputYuv = yuvBuffer,
           width = width,
           height = height,
@@ -420,14 +483,15 @@ object MediaCodecVideoExporter {
       }
 
       Log.i(TAG, "Completed video encoding! Total frames written to muxer: ${muxerState.framesWritten}, target was $totalFrames")
-      frameBitmap.recycle()
     } finally {
+      frameBitmap?.let { if (!it.isRecycled) it.recycle() }
+      scratchBitmap?.let { if (!it.isRecycled) it.recycle() }
       for (p in cachedVideoFrames.values) {
         try { if (!p.second.isRecycled) p.second.recycle() } catch (_: Exception) {}
       }
       cachedVideoFrames.clear()
-      for (r in retrievers.values) {
-        try { r.release() } catch (_: Exception) {}
+      for (decoder in decoders.values) {
+        try { decoder.close() } catch (_: Exception) {}
       }
       for (b in imageBitmaps.values) {
         try { if (!b.isRecycled) b.recycle() } catch (_: Exception) {}
@@ -522,78 +586,30 @@ object MediaCodecVideoExporter {
     height: Int,
     frameIndex: Int,
     totalFrames: Int,
-    retrievers: Map<String, MediaMetadataRetriever>,
+    decoders: Map<String, FastFrameDecoder>,
     imageBitmaps: Map<String, Bitmap>,
-    cachedVideoFrames: MutableMap<String, Pair<Long, Bitmap>>
+    cachedVideoFrames: MutableMap<String, Pair<Long, Bitmap>>,
+    frameBitmap: Bitmap,
+    scratch: Bitmap,
+    scratchCanvas: Canvas,
+    watermark: BurnedWatermark?
   ) {
-    // 1. Draw base background from active clip
     var mediaDrawn = false
-
-    // Identify which clip is currently active on the timeline at timeMs
-    val activeClip = visualClips.firstOrNull {
+    val mainClips = visualClips.filter { !it.id.startsWith("pip_") }
+    val activeClip = mainClips.firstOrNull {
       timeMs >= it.startTimeMs && timeMs < (it.startTimeMs + it.durationMs)
-    } ?: visualClips.lastOrNull { timeMs >= it.startTimeMs } ?: visualClips.firstOrNull()
+    } ?: mainClips.lastOrNull { timeMs >= it.startTimeMs } ?: mainClips.firstOrNull()
 
-    if (activeClip != null && !activeClip.uri.isNullOrEmpty()) {
-      val clipStart = activeClip.startTimeMs
-      val speed = activeClip.speed.coerceIn(0.25f, 4f)
-      val localTimeMs = (((timeMs - clipStart).coerceAtLeast(0L)) * speed).toLong()
-      val frameTimeUs = localTimeMs * 1000L
-
-      if (activeClip.type == ClipType.VIDEO) {
-        val r = retrievers[activeClip.uri]
-        if (r != null) {
-          try {
-            val cached = cachedVideoFrames[activeClip.uri]
-            val videoFrame: Bitmap? = if (cached != null && kotlin.math.abs(frameTimeUs - cached.first) < 160_000L && !cached.second.isRecycled) {
-              cached.second
-            } else {
-              val extracted = r.getFrameAtTime(frameTimeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                ?: r.getFrameAtTime(frameTimeUs, MediaMetadataRetriever.OPTION_CLOSEST)
-              if (extracted != null) {
-                cached?.second?.let { if (!it.isRecycled) it.recycle() }
-                cachedVideoFrames[activeClip.uri] = Pair(frameTimeUs, extracted)
-              }
-              extracted ?: cached?.second
-            }
-
-            if (videoFrame != null && !videoFrame.isRecycled) {
-              val srcRect = Rect(0, 0, videoFrame.width, videoFrame.height)
-              val dstRect = calculateFitRect(videoFrame.width, videoFrame.height, width, height)
-              canvas.save()
-              if (activeClip.isFlippedHorizontal) {
-                canvas.scale(-1f, 1f, width / 2f, height / 2f)
-              }
-              if (activeClip.rotation != 0f) {
-                canvas.rotate(activeClip.rotation, width / 2f, height / 2f)
-              }
-              canvas.drawColor(Color.BLACK)
-              canvas.drawBitmap(videoFrame, srcRect, dstRect, paint)
-              canvas.restore()
-              mediaDrawn = true
-            }
-          } catch (e: Exception) {
-            Log.w(TAG, "Frame extraction error at $timeMs ms for clip ${activeClip.id}: ${e.message}")
-          }
-        }
-      } else if (activeClip.type == ClipType.IMAGE) {
-        val bmp = imageBitmaps[activeClip.uri]
-        if (bmp != null && !bmp.isRecycled) {
-          val srcRect = Rect(0, 0, bmp.width, bmp.height)
-          val dstRect = calculateFitRect(bmp.width, bmp.height, width, height)
-          canvas.save()
-          if (activeClip.isFlippedHorizontal) {
-            canvas.scale(-1f, 1f, width / 2f, height / 2f)
-          }
-          if (activeClip.rotation != 0f) {
-            canvas.rotate(activeClip.rotation, width / 2f, height / 2f)
-          }
-          canvas.drawColor(Color.BLACK)
-          canvas.drawBitmap(bmp, srcRect, dstRect, paint)
-          canvas.restore()
-          mediaDrawn = true
-        }
-      }
+    val transition = findTransition(mainClips, timeMs)
+    if (transition != null) {
+      val (from, to, progress, kind) = transition
+      paintTransition(
+        context, canvas, scratchCanvas, scratch, paint, from, to, progress, kind,
+        timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames
+      )
+      mediaDrawn = true
+    } else if (activeClip != null && !activeClip.uri.isNullOrEmpty()) {
+      mediaDrawn = drawClipMedia(context, canvas, paint, activeClip, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames)
     }
 
     // Dynamic cinematic background if no media or fallback
@@ -619,31 +635,359 @@ object MediaCodecVideoExporter {
       canvas.drawCircle(width / 2f + xOffset * 0.5f, height / 2f + yOffset * 0.5f, width * 0.35f, paint)
     }
 
-    // 2. Apply clip filters & effects (B&W, Sepia, Vivid, Vintage, Cyberpunk)
-    if (activeClip != null && activeClip.filterEffect != "Normal") {
-      applyFilterToCanvas(canvas, activeClip.filterEffect, width, height)
+    if (activeClip != null && applyGrade(frameBitmap, scratch, activeClip)) {
+      val copyPaint = Paint()
+      canvas.drawBitmap(scratch, 0f, 0f, copyPaint)
     }
 
-    // 3. Render active text overlays / titles with custom fonts and colors
+    for (pip in visualClips) {
+      if (!pip.id.startsWith("pip_")) continue
+      if (timeMs < pip.startTimeMs || timeMs >= pip.startTimeMs + pip.durationMs) continue
+      val left = width * 0.64f
+      val top = height * 0.06f
+      drawClipMedia(
+        context, canvas, paint, pip, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames,
+        clear = false,
+        dest = RectF(left, top, width * 0.96f, top + height * 0.24f)
+      )
+    }
+
     val activeTextClips = tracks.flatMap { it.clips }.filter {
-      (it.type == ClipType.TEXT || it.title.isNotEmpty()) &&
-        timeMs in it.startTimeMs..(it.startTimeMs + it.durationMs)
+      it.type == ClipType.TEXT && timeMs in it.startTimeMs..(it.startTimeMs + it.durationMs)
     }
     for (textClip in activeTextClips) {
-      val text = textClip.title.ifEmpty { "VFX Studio" }
+      val text = textClip.title
+      if (text.isBlank()) continue
+      val isSticker = textClip.textDesign == "Sticker" || textClip.id.startsWith("sticker_")
       val x = width / 2f + (textClip.textOffsetX * (width / 400f))
-      val y = height * 0.82f + (textClip.textOffsetY * (height / 400f))
+      val y = if (isSticker) {
+        height * 0.42f + (textClip.textOffsetY * (height / 400f))
+      } else {
+        height * 0.82f + (textClip.textOffsetY * (height / 400f))
+      }
       try {
         textPaint.typeface = com.example.ui.theme.AppFonts.getTypeface(context, textClip.fontStyle)
       } catch (_: Exception) {}
       try {
         textPaint.color = textClip.color.toArgb()
       } catch (_: Exception) {}
+      textPaint.textAlign = Paint.Align.CENTER
+      textPaint.textSize = if (isSticker) {
+        (height * 0.14f * textClip.textScale).coerceIn(64f, 280f)
+      } else {
+        (height * 0.045f * textClip.textScale).coerceIn(28f, 96f)
+      }
       canvas.drawText(text, x, y, textPaint)
     }
 
-    // 4. Subtle watermark in corner
-    canvas.drawText("VFX PRO", width - 40f, height - 40f, watermarkPaint)
+    if (watermark != null) {
+      val margin = 36f
+      val onLeft = watermark.position.contains("Left")
+      val onTop = watermark.position.contains("Top")
+      val alpha = (watermark.opacity.coerceIn(0.15f, 1f) * 255f).toInt()
+      val logo = watermark.logo
+      if (logo != null && !logo.isRecycled) {
+        val side = (width * 0.16f).coerceIn(72f, 320f)
+        val left = if (onLeft) margin else width - margin - side
+        val top = if (onTop) margin else height - margin - side
+        val logoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.alpha = alpha }
+        canvas.drawBitmap(logo, null, RectF(left, top, left + side, top + side), logoPaint)
+      }
+      if (watermark.text.isNotBlank()) {
+        watermarkPaint.textAlign = if (onLeft) Paint.Align.LEFT else Paint.Align.RIGHT
+        watermarkPaint.alpha = alpha
+        val x = if (onLeft) margin else width - margin
+        val y = if (onTop) {
+          margin + watermarkPaint.textSize + if (logo != null) (width * 0.16f) else 0f
+        } else {
+          height - margin
+        }
+        canvas.drawText(watermark.text, x, y, watermarkPaint)
+      }
+    }
+  }
+
+  private data class TransitionHit(
+    val from: MediaClip,
+    val to: MediaClip,
+    val progress: Float,
+    val kind: String
+  )
+
+  private fun findTransition(clips: List<MediaClip>, timeMs: Long): TransitionHit? {
+    if (clips.size < 2) return null
+    for (i in 0 until clips.size - 1) {
+      val from = clips[i]
+      val to = clips[i + 1]
+      if (from.transitionType.equals("None", true)) continue
+      val boundary = from.startTimeMs + from.durationMs
+      val half = from.transitionDurationMs.coerceIn(120L, 2000L)
+      val start = boundary - half
+      val end = boundary + half
+      if (timeMs in start until end && end > start) {
+        val progress = (timeMs - start).toFloat() / (end - start).toFloat()
+        return TransitionHit(from, to, progress.coerceIn(0f, 1f), from.transitionType)
+      }
+    }
+    return null
+  }
+
+  private fun paintTransition(
+    context: Context,
+    canvas: Canvas,
+    scratchCanvas: Canvas,
+    scratch: Bitmap,
+    paint: Paint,
+    from: MediaClip,
+    to: MediaClip,
+    progress: Float,
+    kind: String,
+    timeMs: Long,
+    width: Int,
+    height: Int,
+    decoders: Map<String, FastFrameDecoder>,
+    imageBitmaps: Map<String, Bitmap>,
+    cachedVideoFrames: MutableMap<String, Pair<Long, Bitmap>>
+  ) {
+    val name = kind.lowercase(Locale.ROOT)
+    val blackDip = name.contains("black") || name.contains("dip")
+    val slideLeft = name.contains("left") || name.contains("whip")
+    val slideRight = name.contains("right")
+    val slideUp = name.contains("up")
+    val slideDown = name.contains("down")
+    canvas.drawColor(Color.BLACK)
+    if (blackDip) {
+      if (progress < 0.5f) {
+        drawClipMedia(context, canvas, paint, from, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames, clear = false)
+        val cover = (progress * 2f * 255f).toInt().coerceIn(0, 255)
+        canvas.drawColor(Color.argb(cover, 0, 0, 0))
+      } else {
+        drawClipMedia(context, canvas, paint, to, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames, clear = false)
+        val cover = ((1f - (progress - 0.5f) * 2f) * 255f).toInt().coerceIn(0, 255)
+        canvas.drawColor(Color.argb(cover, 0, 0, 0))
+      }
+      return
+    }
+    val spin = name.contains("spin")
+    val zoom = name.contains("zoom")
+    if (spin || zoom) {
+      canvas.drawColor(Color.BLACK)
+      drawClipMedia(context, canvas, paint, from, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames, clear = false)
+      canvas.save()
+      val scale = 0.35f + 0.65f * progress
+      canvas.scale(scale, scale, width / 2f, height / 2f)
+      if (spin) canvas.rotate((1f - progress) * 360f, width / 2f, height / 2f)
+      paint.alpha = (progress * 255f).toInt().coerceIn(0, 255)
+      drawClipMedia(context, canvas, paint, to, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames, clear = false)
+      paint.alpha = 255
+      canvas.restore()
+      return
+    }
+    val dx = when {
+      slideLeft -> -width * progress
+      slideRight -> width * progress
+      else -> 0f
+    }
+    val dy = when {
+      slideUp -> -height * progress
+      slideDown -> height * progress
+      else -> 0f
+    }
+    val slideX = when {
+      slideRight -> -width.toFloat()
+      slideLeft -> width.toFloat()
+      else -> 0f
+    }
+    val slideY = when {
+      slideDown -> -height.toFloat()
+      slideUp -> height.toFloat()
+      else -> 0f
+    }
+    if (dx != 0f || dy != 0f || slideX != 0f || slideY != 0f) {
+      canvas.save()
+      canvas.translate(dx, dy)
+      drawClipMedia(context, canvas, paint, from, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames, clear = false)
+      canvas.restore()
+      canvas.save()
+      canvas.translate(dx + slideX, dy + slideY)
+      drawClipMedia(context, canvas, paint, to, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames, clear = false)
+      canvas.restore()
+      return
+    }
+    drawClipMedia(context, scratchCanvas, paint, from, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames, clear = true)
+    drawClipMedia(context, canvas, paint, to, timeMs, width, height, decoders, imageBitmaps, cachedVideoFrames, clear = true)
+    val fade = Paint().apply { alpha = ((1f - progress) * 255f).toInt().coerceIn(0, 255) }
+    canvas.drawBitmap(scratch, 0f, 0f, fade)
+  }
+
+  private fun drawClipMedia(
+    context: Context,
+    canvas: Canvas,
+    paint: Paint,
+    clip: MediaClip,
+    timeMs: Long,
+    width: Int,
+    height: Int,
+    decoders: Map<String, FastFrameDecoder>,
+    imageBitmaps: Map<String, Bitmap>,
+    cachedVideoFrames: MutableMap<String, Pair<Long, Bitmap>>,
+    clear: Boolean = true,
+    dest: RectF? = null
+  ): Boolean {
+    val uri = clip.uri ?: return false
+    val frame = if (clip.type == ClipType.IMAGE || clip.isFrozen && imageBitmaps.containsKey(uri)) {
+      imageBitmaps[uri]
+    } else if (clip.type == ClipType.VIDEO || clip.type == ClipType.VFX) {
+      val decoder = decoders[uri] ?: return false
+      val frameTimeUs = sourceTimeUs(clip, timeMs)
+      val cacheKey = clip.id
+      val cached = cachedVideoFrames[cacheKey]
+      if (cached != null && kotlin.math.abs(frameTimeUs - cached.first) < 25_000L && !cached.second.isRecycled) {
+        cached.second
+      } else {
+        val raw = decoder.frameAt(frameTimeUs)
+        if (raw == null) {
+          cached?.second
+        } else {
+          val safe = raw.copy(Bitmap.Config.ARGB_8888, false)
+          val extracted = scaleDown(safe, width, height)
+          if (extracted != null) {
+            if (cached != null && cached.second != extracted && !cached.second.isRecycled) cached.second.recycle()
+            cachedVideoFrames[cacheKey] = Pair(frameTimeUs, extracted)
+          }
+          extracted ?: cached?.second
+        }
+      }
+    } else {
+      imageBitmaps[uri]
+    }
+    if (frame == null || frame.isRecycled) return false
+    val src = cropSourceRect(frame.width, frame.height, clip.cropRatio, clip.cropZoom)
+    val dst = dest ?: calculateFitRect(src.width(), src.height(), width, height)
+    val kfScale = interpolateKeyframeValue(clip.transformKeyframes["Scale"].orEmpty(), timeMs, 1f).coerceIn(0.05f, 8f)
+    val kfX = interpolateKeyframeValue(clip.transformKeyframes["Position X"].orEmpty(), timeMs, 0f)
+    val kfY = interpolateKeyframeValue(clip.transformKeyframes["Position Y"].orEmpty(), timeMs, 0f)
+    val kfOpacity = (interpolateKeyframeValue(clip.transformKeyframes["Opacity"].orEmpty(), timeMs, 100f) / 100f).coerceIn(0f, 1f)
+    val kfRot = interpolateKeyframeValue(clip.transformKeyframes["Rotation"].orEmpty(), timeMs, 0f)
+    canvas.save()
+    if (clear) canvas.drawColor(Color.BLACK)
+    val cx = dst.centerX() + kfX * (width / 720f)
+    val cy = dst.centerY() + kfY * (height / 720f)
+    canvas.translate(kfX * (width / 720f), kfY * (height / 720f))
+    val flip = if (clip.isFlippedHorizontal) -1f else 1f
+    val zoom = if (clip.cropZoom > 1.01f && clip.cropRatio == "Fit") clip.cropZoom.coerceIn(1f, 3f) else 1f
+    canvas.scale(flip * zoom * kfScale, zoom * kfScale, cx, cy)
+    val rot = clip.rotation + kfRot
+    if (rot != 0f) canvas.rotate(rot, cx, cy)
+    paint.colorFilter = null
+    paint.alpha = (kfOpacity * 255f).toInt().coerceIn(0, 255)
+    canvas.drawBitmap(frame, src, dst, paint)
+    paint.alpha = 255
+    canvas.restore()
+    return true
+  }
+
+  private fun sourceTimeUs(clip: MediaClip, timeMs: Long): Long {
+    val speed = clip.speed.coerceIn(0.25f, 4f)
+    val local = ((timeMs - clip.startTimeMs).coerceAtLeast(0L) * speed).toLong()
+    val start = clip.trimStartMs.coerceAtLeast(0L)
+    val end = if (clip.trimEndMs > start) clip.trimEndMs else start + (clip.durationMs * speed).toLong()
+    val sourceMs = when {
+      clip.isFrozen -> start
+      clip.isReversed -> (end - local).coerceAtLeast(start)
+      else -> start + local
+    }
+    return sourceMs * 1000L
+  }
+
+  private fun cropSourceRect(bmpW: Int, bmpH: Int, ratio: String, zoom: Float): Rect {
+    val aspect = when (ratio) {
+      "16:9" -> 16f / 9f
+      "9:16" -> 9f / 16f
+      "1:1" -> 1f
+      "4:5" -> 4f / 5f
+      "3:4" -> 3f / 4f
+      "2:3" -> 2f / 3f
+      "4:3" -> 4f / 3f
+      "21:9" -> 21f / 9f
+      else -> bmpW.toFloat() / bmpH.toFloat()
+    }
+    var cropW = bmpW.toFloat()
+    var cropH = bmpH.toFloat()
+    if (cropW / cropH > aspect) cropW = cropH * aspect else cropH = cropW / aspect
+    val z = if (ratio == "Fit") 1f else zoom.coerceIn(1f, 3f)
+    cropW /= z
+    cropH /= z
+    val left = ((bmpW - cropW) / 2f).toInt().coerceAtLeast(0)
+    val top = ((bmpH - cropH) / 2f).toInt().coerceAtLeast(0)
+    val right = (left + cropW).toInt().coerceAtMost(bmpW).coerceAtLeast(left + 2)
+    val bottom = (top + cropH).toInt().coerceAtMost(bmpH).coerceAtLeast(top + 2)
+    return Rect(left, top, right, bottom)
+  }
+
+  private fun applyGrade(src: Bitmap, dst: Bitmap, clip: MediaClip): Boolean {
+    val matrix = gradeMatrix(clip) ?: return false
+    val filtered = Canvas(dst)
+    val gradePaint = Paint().apply { colorFilter = ColorMatrixColorFilter(matrix) }
+    filtered.drawBitmap(src, 0f, 0f, gradePaint)
+    return true
+  }
+
+  private fun gradeMatrix(clip: MediaClip): ColorMatrix? {
+    val name = clip.filterEffect.lowercase(Locale.ROOT)
+    val neutralName = name.isBlank() || name == "normal" || name == "none"
+    val neutralGrade = clip.brightness == 0f && clip.contrast == 0f && clip.saturation == 0f && clip.warmth == 0f
+    if (neutralName && neutralGrade) return null
+    val matrix = ColorMatrix()
+    when {
+      name.contains("b&w") || name.contains("mono") || name.contains("noir") || name.contains("silver") || name.contains("black") ->
+        matrix.setSaturation(0f)
+      name.contains("sepia") || name.contains("vintage") || name.contains("8mm") || name.contains("vhs") || name.contains("polaroid") || name.contains("lomo") ->
+        matrix.set(floatArrayOf(
+          0.393f, 0.769f, 0.189f, 0f, 12f,
+          0.349f, 0.686f, 0.168f, 0f, 8f,
+          0.272f, 0.534f, 0.131f, 0f, 4f,
+          0f, 0f, 0f, 1f, 0f
+        ))
+      name.contains("cyber") || name.contains("neon") || name.contains("glitch") ->
+        matrix.set(floatArrayOf(
+          1.25f, 0f, 0.35f, 0f, 16f,
+          0f, 1.1f, 0.45f, 0f, 8f,
+          0.45f, 0f, 1.4f, 0f, 22f,
+          0f, 0f, 0f, 1f, 0f
+        ))
+      name.contains("vivid") || name.contains("punch") || name.contains("pop") -> {
+        val sat = ColorMatrix()
+        sat.setSaturation(1.55f)
+        matrix.postConcat(sat)
+      }
+      name.contains("cool") || name.contains("teal") || name.contains("cine") ->
+        matrix.set(floatArrayOf(
+          0.9f, 0f, 0f, 0f, 0f,
+          0f, 1.05f, 0.05f, 0f, 4f,
+          0.05f, 0.08f, 1.15f, 0f, 10f,
+          0f, 0f, 0f, 1f, 0f
+        ))
+    }
+    if (clip.saturation != 0f) {
+      val sat = ColorMatrix()
+      sat.setSaturation((1f + clip.saturation / 50f).coerceIn(0f, 2.2f))
+      matrix.postConcat(sat)
+    }
+    if (clip.contrast != 0f || clip.brightness != 0f || clip.warmth != 0f) {
+      val c = (1f + clip.contrast / 50f).coerceIn(0.4f, 1.8f)
+      val b = clip.brightness * 2.2f
+      val w = clip.warmth * 1.4f
+      val t = 128f * (1f - c)
+      val adjust = ColorMatrix(floatArrayOf(
+        c, 0f, 0f, 0f, t + b + w,
+        0f, c, 0f, 0f, t + b,
+        0f, 0f, c, 0f, t + b - w,
+        0f, 0f, 0f, 1f, 0f
+      ))
+      matrix.postConcat(adjust)
+    }
+    return matrix
   }
 
   private fun calculateFitRect(srcW: Int, srcH: Int, dstW: Int, dstH: Int): RectF {
@@ -696,15 +1040,47 @@ object MediaCodecVideoExporter {
   /**
    * Optimized ARGB to YUV420 (NV12 / I420) buffer converter.
    */
+  private fun scaleDown(source: Bitmap?, maxW: Int, maxH: Int): Bitmap? {
+    if (source == null) return null
+    if (source.width <= maxW * 2 && source.height <= maxH * 2) return source
+    val scaled = Bitmap.createScaledBitmap(source, maxW.coerceAtLeast(2), maxH.coerceAtLeast(2), true)
+    if (scaled != source && !source.isRecycled) source.recycle()
+    return scaled
+  }
+
+  private fun decodeBounded(context: Context, uri: String, maxEdge: Int): Bitmap? {
+    return try {
+      val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+      openStream(context, uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+      if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+      var sample = 1
+      while (bounds.outWidth / sample > maxEdge || bounds.outHeight / sample > maxEdge) {
+        sample *= 2
+      }
+      val opts = BitmapFactory.Options().apply { inSampleSize = sample.coerceAtLeast(1) }
+      openStream(context, uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+    } catch (e: Exception) {
+      Log.w(TAG, "Bounded decode failed: ${e.message}")
+      null
+    }
+  }
+
+  private fun openStream(context: Context, uri: String): java.io.InputStream? {
+    return if (uri.startsWith("file://") || uri.startsWith("file:")) {
+      java.io.FileInputStream(uri.removePrefix("file://").removePrefix("file:"))
+    } else {
+      context.contentResolver.openInputStream(Uri.parse(uri))
+    }
+  }
+
   private fun convertBitmapToYuv420(
     bitmap: Bitmap,
-    argb: IntArray,
     outputYuv: ByteArray,
     width: Int,
     height: Int,
     colorFormat: Int
   ) {
-    bitmap.getPixels(argb, 0, width, 0, 0, width, height)
+    val row = IntArray(width)
     val isSemiPlanar = (colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar ||
       colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible)
 
@@ -718,9 +1094,9 @@ object MediaCodecVideoExporter {
     var vIndex = vOffset
 
     for (j in 0 until height) {
-      val rowOffset = j * width
+      bitmap.getPixels(row, 0, width, 0, j, width, 1)
       for (i in 0 until width) {
-        val c = argb[rowOffset + i]
+        val c = row[i]
         val r = (c shr 16) and 0xFF
         val g = (c shr 8) and 0xFF
         val b = c and 0xFF

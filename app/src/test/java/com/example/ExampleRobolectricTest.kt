@@ -10,7 +10,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
-import com.example.ui.components.ClipFloatingContextMenu
+import com.example.billing.ProAccess
 import com.example.ui.components.PlaybackControls
 import com.example.ui.components.PropertiesInspectorContent
 import com.example.ui.components.TimelineView
@@ -244,6 +244,12 @@ class ExampleRobolectricTest {
   fun `watermark toggle, custom text, and branding config`() {
     val viewModel = PlaybackViewModel()
 
+    ProAccess.debugOverride(false)
+    viewModel.setWatermarkEnabled(true)
+    viewModel.setWatermarkEnabled(false)
+    assertEquals(true, viewModel.watermarkEnabled.value)
+
+    ProAccess.debugOverride(true)
     viewModel.setWatermarkConfig(
       text = "@my_channel",
       position = "Top-Right",
@@ -258,6 +264,7 @@ class ExampleRobolectricTest {
 
     viewModel.setWatermarkEnabled(true)
     assertEquals(true, viewModel.watermarkEnabled.value)
+    ProAccess.debugOverride(false)
   }
 
   @Test

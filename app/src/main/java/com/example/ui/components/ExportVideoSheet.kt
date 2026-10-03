@@ -71,7 +71,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
+import android.app.Activity
 import androidx.compose.ui.platform.LocalContext
+import com.example.ads.ExportAdGate
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import com.example.MediaTrack
@@ -142,6 +144,12 @@ enum class ExportBitrate(val label: String, val mbps: String, val desc: String, 
 fun ExportVideoBottomSheet(
   onDismiss: () -> Unit,
   tracks: List<MediaTrack> = emptyList(),
+  watermarkEnabled: Boolean = true,
+  watermarkText: String = "VFX Pro",
+  watermarkPosition: String = "Bottom-Right",
+  watermarkOpacity: Float = 0.85f,
+  watermarkLogoUri: String? = null,
+  canvasRatio: String = "16:9",
   onExportToGallery: (resolution: ExportResolution, frameRate: ExportFrameRate, bitrate: ExportBitrate, estSizeMb: Int) -> Unit = { _, _, _, _ -> },
   modifier: Modifier = Modifier
 ) {
@@ -754,34 +762,44 @@ fun ExportVideoBottomSheet(
               )
             )
             .clickable {
-              isExporting = true
-              exportResult = null
-              scope.launch {
-                val res = GalleryExporter.saveVideoToGallery(
-                  context = context,
-                  tracks = tracks,
-                  resolution = selectedResolution,
-                  frameRate = selectedFrameRate,
-                  bitrate = currentBitrate,
-                  onProgress = { p ->
-                    exportProgress = p
-                    exportStage = when {
-                      p < 0.25f -> "Processing visual & audio clips..."
-                      p < 0.65f -> "Encoding video frames (${(p * 100).toInt()}%)..."
-                      p < 0.90f -> "Saving to Movies/VFXPro in Gallery..."
-                      else -> "Finalizing media scan in Gallery..."
+              val startExport: () -> Unit = {
+                isExporting = true
+                exportResult = null
+                scope.launch {
+                  val res = GalleryExporter.saveVideoToGallery(
+                    context = context,
+                    tracks = tracks,
+                    resolution = selectedResolution,
+                    frameRate = selectedFrameRate,
+                    bitrate = currentBitrate,
+                    watermarkEnabled = watermarkEnabled,
+                    watermarkText = watermarkText,
+                    watermarkPosition = watermarkPosition,
+                    watermarkOpacity = watermarkOpacity,
+                    watermarkLogoUri = watermarkLogoUri,
+                    canvasRatio = canvasRatio,
+                    onProgress = { p ->
+                      exportProgress = p
+                      exportStage = when {
+                        p < 0.25f -> "Processing visual & audio clips..."
+                        p < 0.65f -> "Encoding video frames (${(p * 100).toInt()}%)..."
+                        p < 0.90f -> "Saving to Movies/VFXPro in Gallery..."
+                        else -> "Finalizing media scan in Gallery..."
+                      }
                     }
-                  }
-                )
-                isExporting = false
-                exportResult = res
-                onExportToGallery(
-                  selectedResolution,
-                  selectedFrameRate,
-                  currentBitrate,
-                  calculatedSizeMb
-                )
+                  )
+                  isExporting = false
+                  exportResult = res
+                  onExportToGallery(
+                    selectedResolution,
+                    selectedFrameRate,
+                    currentBitrate,
+                    calculatedSizeMb
+                  )
+                }
               }
+              val activity = context as? Activity
+              if (activity != null) ExportAdGate.showThen(activity, startExport) else startExport()
             }
             .testTag("btn_export_to_gallery"),
           contentAlignment = Alignment.Center

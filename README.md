@@ -33,6 +33,21 @@
 
 ---
 
+## Play Store: free with ads, lifetime unlock
+
+The app stays free. Ads (home banner + an ad before export) and a burned-in **VFX Pro** watermark stay on until a **one-time** purchase. This is not a subscription.
+
+1. Play Console → Monetize → Products → **In-app products** → Create.
+2. Product ID: `lifetime_no_ads_no_watermark`
+3. US price: **$0.99** (the $1 tier; use $1.00 if a custom price is available).
+4. Override **India to ₹99**. Do not leave auto-convert (~₹95 at the 3 Oct 2026 rate of 1 USD = ₹96.13).
+5. Other countries: apply Play’s local prices from the US tier (about $1).
+6. Replace the test AdMob app id in `strings.xml` (`admob_app_id`) and the unit ids in `AdUnits` before release.
+
+The purchase is tied to the Google account. **Restore purchase** brings it back on a new phone. Lifetime owners get no ads, can turn the watermark off, set their own channel name, or place a logo image. Export uses the chosen size, including 4K and 9:16 or 1:1 canvas, and the chosen frame rate, including 60fps. Filters, reverse, freeze-frame, crossfade, dip-to-black, stickers, and text are burned into the file. Video audio and music are mixed with volume and a short fade. Auto captions listen to the clip with an on-device Hindi, English, or Spanish speech model (downloaded once).
+
+---
+
 ## Tech Stack & Architecture
 
 - **Language**: [Kotlin 2.0+](https://kotlinlang.org/)

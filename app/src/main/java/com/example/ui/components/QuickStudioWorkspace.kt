@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import com.example.billing.ProAccess
+
 import android.net.Uri
 import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -232,6 +234,7 @@ fun QuickStudioWorkspace(
   val autoBgBlurEnabled by viewModel.autoBgBlurEnabled.collectAsState()
   val globalBgBlurIntensity by viewModel.globalBgBlurIntensity.collectAsState()
   val activeCaptionStyle by viewModel.activeCaptionStyle.collectAsState()
+  val captionStatus by viewModel.captionStatus.collectAsState()
   val doodleStrokes by viewModel.doodleStrokes.collectAsState()
   val beatMarkers by viewModel.beatMarkers.collectAsState()
   val isBeatSyncEnabled by viewModel.isBeatSyncEnabled.collectAsState()
@@ -243,10 +246,18 @@ fun QuickStudioWorkspace(
   val watermarkText by viewModel.watermarkText.collectAsState()
   val watermarkPosition by viewModel.watermarkPosition.collectAsState()
   val watermarkOpacity by viewModel.watermarkOpacity.collectAsState()
+  val watermarkLogoUri by viewModel.watermarkLogoUri.collectAsState()
+  val isLifetime by ProAccess.isPro.collectAsState()
+  val shownWatermark = !isLifetime || watermarkEnabled
+  val shownWatermarkText = if (isLifetime) watermarkText else "VFX Pro"
+  val shownWatermarkPosition = if (isLifetime) watermarkPosition else "Bottom-Right"
+  val shownWatermarkOpacity = if (isLifetime) watermarkOpacity else 0.9f
+  val shownWatermarkLogo = if (isLifetime && watermarkEnabled) watermarkLogoUri else null
   val textClips = remember(tracks) {
     tracks.firstOrNull { it.type == TrackType.TEXT }?.clips ?: emptyList()
   }
   var activeSheet by remember { mutableStateOf<QuickSheetType?>(null) }
+  var showLifetimeSheet by remember { mutableStateOf(false) }
   var showAddTextDialog by remember { mutableStateOf(false) }
   var showAddMediaPickerSheet by remember { mutableStateOf(false) }
   var showThemePickerSheet by remember { mutableStateOf(false) }
@@ -516,10 +527,11 @@ fun QuickStudioWorkspace(
         beatMarkers = beatMarkers,
         showSafeZone = showSafeZone,
         safeZonePlatform = safeZonePlatform,
-        watermarkEnabled = watermarkEnabled,
-        watermarkText = watermarkText,
-        watermarkPosition = watermarkPosition,
-        watermarkOpacity = watermarkOpacity,
+        watermarkEnabled = shownWatermark,
+        watermarkText = shownWatermarkText,
+        watermarkPosition = shownWatermarkPosition,
+        watermarkOpacity = shownWatermarkOpacity,
+        watermarkLogoUri = shownWatermarkLogo,
         onWatermarkClick = { activeSheet = QuickSheetType.WATERMARK },
         onUpdateTextTransform = { id, dx, dy -> viewModel.updateTextTransform(id, dx, dy) },
         onTogglePlayPause = { viewModel.togglePlayPause() },
@@ -1497,7 +1509,8 @@ fun QuickStudioWorkspace(
         },
         onClearAll = {
           viewModel.clearAutoCaptions()
-        }
+        },
+        statusMessage = captionStatus
       )
     }
     QuickSheetType.SMART_CUTOUT -> {
@@ -1573,6 +1586,8 @@ fun QuickStudioWorkspace(
         watermarkText = watermarkText,
         watermarkPosition = watermarkPosition,
         watermarkOpacity = watermarkOpacity,
+        watermarkLogoUri = watermarkLogoUri,
+        isPro = isLifetime,
         onDismiss = { activeSheet = null },
         onSaveConfig = { enabled, text, pos, opacity ->
           viewModel.setWatermarkEnabled(enabled)
@@ -1580,10 +1595,19 @@ fun QuickStudioWorkspace(
         },
         onRemoveWatermark = {
           viewModel.setWatermarkEnabled(false)
-        }
+        },
+        onRequestUnlock = {
+          activeSheet = null
+          showLifetimeSheet = true
+        },
+        onLogoChange = { viewModel.setWatermarkLogo(it) }
       )
     }
     null -> {}
+  }
+
+  if (showLifetimeSheet) {
+    LifetimeUnlockSheet(onDismiss = { showLifetimeSheet = false })
   }
 
   // Add Text Caption Dialog
@@ -1989,6 +2013,7 @@ private fun QuickPreviewPlayer(
   watermarkText: String = "VFX Pro",
   watermarkPosition: String = "Bottom-Right",
   watermarkOpacity: Float = 0.85f,
+  watermarkLogoUri: String? = null,
   onWatermarkClick: () -> Unit = {},
   onUpdateTextTransform: (String, Float, Float) -> Unit = { _, _, _ -> },
   onTogglePlayPause: () -> Unit,
@@ -2039,6 +2064,14 @@ private fun QuickPreviewPlayer(
     modifier = modifier.testTag("quick_preview_card")
   ) {
     Box(modifier = Modifier.fillMaxSize()) {
+      val previewAudio = clips.filter { it.type == ClipType.AUDIO && !it.uri.isNullOrBlank() }
+      OverlayTimelineAudioPlayer(
+        audioClips = previewAudio,
+        audioTracksMuted = false,
+        isPlaying = isPlaying,
+        currentPositionMs = currentPositionMs,
+        occupiedVideoUri = activeClip?.uri
+      )
       // 1. STUDIO AUTO BACKGROUND BLUR LAYER:
       // Scaled, cropped, frosted blurred background behind the main video
       if (hasVisualClips && activeClip != null) {
@@ -2157,7 +2190,7 @@ private fun QuickPreviewPlayer(
         val transTranslationX = when (if (isTransitionActive) activeClip.transitionType else "None") {
           "Slide Left", "Whip Pan" -> (1f - transProgress) * 500f
           "Slide Right" -> -(1f - transProgress) * 500f
-          "Glitch" -> if (transProgress < 0.85f && (relTimeMs / 60) % 2 == 0L) ((-12..12).random()).toFloat() else 0f
+          "Glitch" -> if (transProgress < 0.85f && (relTimeMs / 60) % 2 == 0L) ((relTimeMs / 60) % 7 - 3) * 4f else 0f
           else -> 0f
         }
 
@@ -2173,150 +2206,39 @@ private fun QuickPreviewPlayer(
         val finalAlpha = kfOpacity * transAlpha
         val finalRotation = (activeClip.rotation + kfRotation + transRotation) % 360f
 
-        var videoErrorOccurred by remember(activeClip.id, uri) { mutableStateOf(false) }
+        val previewPitch = when (activeClip.voiceEffect) {
+          "Chipmunk" -> 1.6f
+          "Deep Male" -> 0.7f
+          "Robot" -> 0.85f
+          else -> activeClip.voicePitch.coerceIn(0.5f, 2f)
+        }
 
-        if (isRealUri && isVideoFormat && !activeClip.isFrozen && !videoErrorOccurred) {
-          Box(
-            modifier = Modifier
-              .fillMaxSize()
-              .graphicsLayer {
-                scaleX = if (activeClip.isFlippedHorizontal) -1f else 1f
-              }
-          ) {
-            VideoThumbnailView(
+        if (isRealUri && isVideoFormat) {
+          Box(modifier = Modifier.fillMaxSize()) {
+            TimelineVideoSurface(
               uri = uri,
+              isPlaying = isPlaying,
+              timelinePositionMs = currentPositionMs,
+              clipStartMs = activeClip.startTimeMs,
+              clipDurationMs = activeClip.durationMs,
+              isReversed = activeClip.isReversed,
+              volume = if (activeClip.isMuted) 0f else activeClip.volume,
+              speed = activeClip.speed,
+              pitch = previewPitch,
+              trimStartMs = activeClip.trimStartMs,
+              isFrozen = activeClip.isFrozen,
               modifier = Modifier
                 .fillMaxSize()
+                .clickable { onTogglePlayPause() }
                 .graphicsLayer {
-                  scaleX = if (activeClip.isFlippedHorizontal) -1f else 1f
-                  rotationZ = activeClip.rotation
+                  rotationZ = finalRotation
+                  scaleX = finalScaleX
+                  scaleY = finalScaleY
+                  translationX = finalTranslationX
+                  translationY = finalTranslationY
+                  alpha = finalAlpha
                 }
             )
-
-            var videoMediaPlayer by remember(activeClip.id, uri) { mutableStateOf<android.media.MediaPlayer?>(null) }
-
-            androidx.compose.runtime.key(activeClip.id, uri) {
-              AndroidView(
-                factory = { ctx: android.content.Context ->
-                  VideoView(ctx).apply {
-                    layoutParams = android.view.ViewGroup.LayoutParams(
-                      android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                      android.view.ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                    scaleX = if (activeClip.isFlippedHorizontal) -1f else 1f
-                    rotation = activeClip.rotation
-                    try {
-                      setVideoURI(Uri.parse(uri))
-                    } catch (e: Exception) {
-                      android.util.Log.e("QuickPreviewPlayer", "Error setVideoURI: ${e.message}")
-                      videoErrorOccurred = true
-                    }
-
-                    setOnPreparedListener { mp ->
-                      videoMediaPlayer = mp
-                      mp.isLooping = false
-                      val effectiveVol = if (activeClip.isMuted) 0f else activeClip.volume.coerceIn(0f, 2f)
-                      try {
-                        mp.setVolume(effectiveVol, effectiveVol)
-                      } catch (_: Exception) {}
-                      try {
-                        val pitchVal = when (activeClip.voiceEffect) {
-                          "Chipmunk" -> 1.75f
-                          "Deep Male" -> 0.65f
-                          "Robot" -> 0.9f
-                          else -> activeClip.voicePitch
-                        }
-                        mp.playbackParams = mp.playbackParams
-                          .setSpeed(activeClip.speed.coerceIn(0.25f, 3.0f))
-                          .setPitch(pitchVal.coerceIn(0.5f, 2.0f))
-                      } catch (_: Exception) {}
-                      val rawOffset = (currentPositionMs - activeClip.startTimeMs).coerceAtLeast(0L)
-                      val expectedPos = if (activeClip.isReversed) {
-                        (activeClip.durationMs - rawOffset).coerceIn(0L, activeClip.durationMs)
-                      } else {
-                        rawOffset
-                      }
-                      val relativeSeek = expectedPos.toInt()
-                      if (relativeSeek > 0 && relativeSeek < mp.duration) {
-                        seekTo(relativeSeek)
-                      } else {
-                        seekTo(1)
-                      }
-                      if (isPlaying) {
-                        start()
-                      }
-                    }
-                    setOnCompletionListener {
-                      // Seamless multi-clip joining: Advance to next clip on completion
-                      val visualClipsList = clips.filter { it.type == ClipType.VIDEO || it.type == ClipType.IMAGE || it.type == ClipType.VFX }
-                      val nextClip = visualClipsList.firstOrNull { it.startTimeMs > activeClip.startTimeMs }
-                      if (nextClip != null) {
-                        onSeek(nextClip.startTimeMs)
-                      } else {
-                        onSeek(0L)
-                      }
-                    }
-                    setOnErrorListener { _, what, extra ->
-                      android.util.Log.e("QuickPreviewPlayer", "VideoView Error what=$what extra=$extra")
-                      videoErrorOccurred = true
-                      true
-                    }
-                  }
-                },
-                update = { videoView ->
-                  try {
-                    videoView.scaleX = if (activeClip.isFlippedHorizontal) -1f else 1f
-                    val effectiveVol = if (activeClip.isMuted) 0f else activeClip.volume.coerceIn(0f, 2f)
-                    try {
-                      videoMediaPlayer?.setVolume(effectiveVol, effectiveVol)
-                    } catch (_: Exception) {}
-                    if (isPlaying && !videoView.isPlaying) {
-                      videoView.start()
-                    } else if (!isPlaying && videoView.isPlaying) {
-                      videoView.pause()
-                    }
-                    val currentPos = videoView.currentPosition.toLong()
-                    val rawOffset = (currentPositionMs - activeClip.startTimeMs).coerceAtLeast(0L)
-                    val expectedPos = if (activeClip.isReversed) {
-                      (activeClip.durationMs - rawOffset).coerceIn(0L, activeClip.durationMs)
-                    } else {
-                      rawOffset
-                    }
-                    if (kotlin.math.abs(currentPos - expectedPos) > 1200 && !isPlaying) {
-                      videoView.seekTo(expectedPos.toInt().coerceAtLeast(1))
-                    }
-                  } catch (_: Exception) {}
-                },
-                modifier = Modifier
-                  .fillMaxSize()
-                  .clickable { onTogglePlayPause() }
-                  .graphicsLayer {
-                    rotationZ = finalRotation
-                    scaleX = finalScaleX
-                    scaleY = finalScaleY
-                    translationX = finalTranslationX
-                    translationY = finalTranslationY
-                    alpha = finalAlpha
-                  }
-              )
-
-              LaunchedEffect(activeClip.isMuted, activeClip.volume, videoMediaPlayer) {
-                val effectiveVol = if (activeClip.isMuted) 0f else activeClip.volume.coerceIn(0f, 2f)
-                try {
-                  videoMediaPlayer?.setVolume(effectiveVol, effectiveVol)
-                } catch (_: Exception) {}
-              }
-
-              DisposableEffect(activeClip.id, uri) {
-                onDispose {
-                  try {
-                    videoMediaPlayer?.stop()
-                    videoMediaPlayer?.release()
-                  } catch (_: Exception) {}
-                  videoMediaPlayer = null
-                }
-              }
-            }
 
             if (isTransitionActive && activeClip.transitionType == "Fade to Black") {
               Box(
@@ -2333,7 +2255,7 @@ private fun QuickPreviewPlayer(
               )
             }
           }
-        } else if (isRealUri && (!isVideoFormat || activeClip.isFrozen)) {
+        } else if (isRealUri && !isVideoFormat) {
           Box(
             modifier = Modifier
               .fillMaxSize()
@@ -3827,7 +3749,7 @@ private fun QuickPreviewPlayer(
       }
 
       // Watermark Overlay Badge (VFX Pro Signature Style with 'x' button)
-      if (watermarkEnabled && watermarkText.isNotBlank()) {
+      if (watermarkEnabled && (watermarkText.isNotBlank() || !watermarkLogoUri.isNullOrBlank())) {
         val wmAlign = when (watermarkPosition) {
           "Bottom-Left" -> Alignment.BottomStart
           "Top-Right" -> Alignment.TopEnd
@@ -3853,19 +3775,29 @@ private fun QuickPreviewPlayer(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
           ) {
-            Box(
-              modifier = Modifier
-                .size(7.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFEC4899).copy(alpha = watermarkOpacity))
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-              text = watermarkText,
-              color = Color.White.copy(alpha = watermarkOpacity),
-              fontSize = 10.sp,
-              fontWeight = FontWeight.Bold
-            )
+            if (!watermarkLogoUri.isNullOrBlank()) {
+              AsyncImage(
+                model = watermarkLogoUri,
+                contentDescription = "Watermark logo",
+                modifier = Modifier.size(22.dp).clip(RoundedCornerShape(3.dp))
+              )
+              Spacer(modifier = Modifier.width(4.dp))
+            }
+            if (watermarkText.isNotBlank()) {
+              Box(
+                modifier = Modifier
+                  .size(7.dp)
+                  .clip(CircleShape)
+                  .background(Color(0xFFEC4899).copy(alpha = watermarkOpacity))
+              )
+              Spacer(modifier = Modifier.width(4.dp))
+              Text(
+                text = watermarkText,
+                color = Color.White.copy(alpha = watermarkOpacity),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+              )
+            }
             Spacer(modifier = Modifier.width(5.dp))
             Text(
               text = "×",

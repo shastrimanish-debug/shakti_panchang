@@ -17,6 +17,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -57,6 +58,9 @@ fun TimelineVideoSurface(
   volume: Float,
   speed: Float,
   modifier: Modifier = Modifier,
+  pitch: Float = 1f,
+  trimStartMs: Long = 0L,
+  isFrozen: Boolean = false,
   onError: () -> Unit = {}
 ) {
   val appContext = LocalContext.current.applicationContext
@@ -74,6 +78,7 @@ fun TimelineVideoSurface(
     val listener = object : Player.Listener {
       override fun onPlayerError(error: PlaybackException) {
         Log.e("TimelineVideo", "playback failed: ${error.errorCodeName} ${error.message}")
+        onError()
       }
     }
     player.addListener(listener)
@@ -86,6 +91,9 @@ fun TimelineVideoSurface(
   val playingState = rememberUpdatedState(isPlaying)
   val volumeState = rememberUpdatedState(volume.coerceIn(0f, 1f))
   val speedState = rememberUpdatedState(speed.coerceIn(0.25f, 3f))
+  val pitchState = rememberUpdatedState(pitch.coerceIn(0.5f, 2f))
+  val trimState = rememberUpdatedState(trimStartMs.coerceAtLeast(0L))
+  val frozenState = rememberUpdatedState(isFrozen)
   val posState = rememberUpdatedState(timelinePositionMs)
   val startState = rememberUpdatedState(clipStartMs)
   val durState = rememberUpdatedState(clipDurationMs)
@@ -94,24 +102,38 @@ fun TimelineVideoSurface(
   LaunchedEffect(player) {
     while (true) {
       val raw = (posState.value - startState.value).coerceAtLeast(0L)
-      val duration = durState.value.coerceAtLeast(0L)
-      val expected = if (revState.value) (duration - raw).coerceIn(0L, duration) else raw
-      player.volume = volumeState.value
+      val duration = durState.value.coerceAtLeast(1L)
       val speed = speedState.value
-      if (player.playbackParameters.speed != speed) {
-        player.setPlaybackSpeed(speed)
+      val trim = trimState.value
+      val frozen = frozenState.value
+      val media = if (frozen) {
+        trim
+      } else if (revState.value) {
+        (trim + duration - (raw * speed).toLong()).coerceAtLeast(trim)
+      } else {
+        trim + (raw * speed).toLong()
       }
-      val drift = kotlin.math.abs(player.currentPosition - expected)
-      val playing = playingState.value
-      val inside = expected < duration - 120L
+      player.volume = volumeState.value
+      val pitchNow = pitchState.value
+      val params = player.playbackParameters
+      if (kotlin.math.abs(params.speed - speed) > 0.02f || kotlin.math.abs(params.pitch - pitchNow) > 0.02f) {
+        player.playbackParameters = PlaybackParameters(speed, pitchNow)
+      }
+      val drift = kotlin.math.abs(player.currentPosition - media)
+      val playing = playingState.value && !frozen && !revState.value
       val ended = player.playbackState == Player.STATE_ENDED || player.playbackState == Player.STATE_IDLE
-      if (!playing && drift > 80L) {
-        player.seekTo(expected.coerceAtMost(duration))
-      } else if (playing && inside && (ended || drift > 700L)) {
-        player.seekTo(expected)
+      if (frozen || revState.value) {
+        player.playWhenReady = false
+        if (drift > 50L) player.seekTo(media)
+      } else if (!playing && drift > 70L) {
+        player.seekTo(media)
+      } else if (playing && (ended || drift > 450L)) {
+        player.seekTo(media)
+        player.playWhenReady = true
+      } else {
+        player.playWhenReady = playing
       }
-      player.playWhenReady = playing && inside
-      delay(120)
+      delay(if (revState.value) 70L else 100L)
     }
   }
 

@@ -1,5 +1,13 @@
 package com.example.ui.components
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -1765,7 +1773,8 @@ fun QuickAutoCaptionsSheet(
   onRemoveCaption: (clipId: String) -> Unit,
   onAddCustomCaption: (text: String, startMs: Long) -> Unit,
   onApplyStyle: (style: String) -> Unit,
-  onClearAll: () -> Unit
+  onClearAll: () -> Unit,
+  statusMessage: String = ""
 ) {
   var selectedLanguage by remember { mutableStateOf("English (US)") }
   var selectedStyle by remember { mutableStateOf(activeStyle) }
@@ -1917,6 +1926,11 @@ fun QuickAutoCaptionsSheet(
       }
 
       Spacer(modifier = Modifier.height(16.dp))
+
+      if (statusMessage.isNotBlank()) {
+        Text(statusMessage, fontSize = 12.sp, color = Color(0xFF6B7280))
+        Spacer(modifier = Modifier.height(8.dp))
+      }
 
       // 3. Generate Auto-Captions Button
       Button(
@@ -3911,14 +3925,27 @@ fun QuickWatermarkSheet(
   watermarkText: String,
   watermarkPosition: String,
   watermarkOpacity: Float,
+  watermarkLogoUri: String? = null,
+  isPro: Boolean = false,
   onDismiss: () -> Unit,
   onSaveConfig: (Boolean, String, String, Float) -> Unit,
-  onRemoveWatermark: () -> Unit
+  onRemoveWatermark: () -> Unit,
+  onRequestUnlock: () -> Unit = {},
+  onLogoChange: (String?) -> Unit = {}
 ) {
   var isEnabled by remember { mutableStateOf(watermarkEnabled) }
   var textValue by remember { mutableStateOf(watermarkText) }
   var selectedPosition by remember { mutableStateOf(watermarkPosition) }
   var opacityValue by remember { mutableFloatStateOf(watermarkOpacity) }
+  val context = LocalContext.current
+  val pickLogo = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+    if (uri != null) {
+      try {
+        context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+      } catch (_: Exception) {}
+      onLogoChange(uri.toString())
+    }
+  }
 
   val positions = listOf("Bottom-Right", "Bottom-Left", "Top-Right", "Top-Left")
 
@@ -3959,7 +3986,7 @@ fun QuickWatermarkSheet(
               color = Color.White
             )
             Text(
-              text = "Add custom logo or toggle off freely",
+              text = if (isPro) "Your brand, or no mark at all" else "Free exports keep the VFX Pro mark",
               fontSize = 12.sp,
               color = Color(0xFF9CA3AF)
             )
@@ -3987,11 +4014,16 @@ fun QuickWatermarkSheet(
         ) {
           Column {
             Text("Enable Watermark", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-            Text("Display watermark tag on preview & export", fontSize = 11.sp, color = Color(0xFF9CA3AF))
+            Text(
+              if (isPro) "Display watermark tag on preview & export" else "Locked on until lifetime unlock",
+              fontSize = 11.sp,
+              color = Color(0xFF9CA3AF)
+            )
           }
           Switch(
-            checked = isEnabled,
-            onCheckedChange = { isEnabled = it },
+            checked = if (isPro) isEnabled else true,
+            onCheckedChange = { if (isPro) isEnabled = it },
+            enabled = isPro,
             colors = SwitchDefaults.colors(
               checkedThumbColor = Color.White,
               checkedTrackColor = Color(0xFFEC4899)
@@ -4049,6 +4081,36 @@ fun QuickWatermarkSheet(
 
       Spacer(modifier = Modifier.height(16.dp))
 
+      if (isPro) {
+        Text("LOGO IMAGE", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF9CA3AF))
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+          if (!watermarkLogoUri.isNullOrBlank()) {
+            AsyncImage(
+              model = watermarkLogoUri,
+              contentDescription = "Logo",
+              modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp))
+            )
+          }
+          OutlinedButton(
+            onClick = { pickLogo.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            border = BorderStroke(1.dp, Color(0xFFEC4899)),
+            shape = RoundedCornerShape(10.dp)
+          ) {
+            Text("Add logo", color = Color.White, fontWeight = FontWeight.Bold)
+          }
+          if (!watermarkLogoUri.isNullOrBlank()) {
+            TextButton(onClick = { onLogoChange(null) }) {
+              Text("Remove", color = Color(0xFFEC4899))
+            }
+          }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+      }
+
       // Opacity Slider
       Text("OPACITY: ${(opacityValue * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF9CA3AF))
       Slider(
@@ -4072,21 +4134,34 @@ fun QuickWatermarkSheet(
         // Free Remove Watermark Button
         OutlinedButton(
           onClick = {
-            isEnabled = false
-            onRemoveWatermark()
-            onDismiss()
+            if (isPro) {
+              isEnabled = false
+              onRemoveWatermark()
+              onDismiss()
+            } else {
+              onRequestUnlock()
+            }
           },
           border = BorderStroke(1.dp, Color(0xFFEC4899)),
           shape = RoundedCornerShape(12.dp),
           modifier = Modifier.weight(1f).height(46.dp).testTag("btn_remove_watermark_free")
         ) {
-          Text("Free Remove", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEC4899))
+          Text(
+            if (isPro) "Remove" else "Unlock",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFEC4899)
+          )
         }
 
         Button(
           onClick = {
-            onSaveConfig(isEnabled, textValue.ifBlank { "VFX Pro" }, selectedPosition, opacityValue)
-            onDismiss()
+            if (!isPro) {
+              onRequestUnlock()
+            } else {
+              onSaveConfig(isEnabled, textValue, selectedPosition, opacityValue)
+              onDismiss()
+            }
           },
           colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC4899)),
           shape = RoundedCornerShape(12.dp),
@@ -4094,7 +4169,7 @@ fun QuickWatermarkSheet(
         ) {
           Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
           Spacer(modifier = Modifier.width(6.dp))
-          Text("Save Watermark", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+          Text(if (isPro) "Save Watermark" else "Go lifetime", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
       }
 

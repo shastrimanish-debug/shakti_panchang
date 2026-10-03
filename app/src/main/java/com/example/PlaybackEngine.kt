@@ -1,5 +1,7 @@
 package com.example
 
+import com.example.billing.ProAccess
+
 import android.net.Uri
 import android.widget.VideoView
 import androidx.compose.animation.core.RepeatMode
@@ -75,6 +77,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import android.os.SystemClock
 
 /**
  * Step 20: Track classification for multi-track NLE layers
@@ -403,6 +406,7 @@ class PlaybackViewModel : ViewModel() {
   val autoBgBlurEnabled = MutableStateFlow(true)
   val globalBgBlurIntensity = MutableStateFlow(35f) // 0f to 100f
   val activeCaptionStyle = MutableStateFlow("Hormozi Viral")
+  val captionStatus = MutableStateFlow("")
   val activeFilter = MutableStateFlow("Normal")
   val brightness = MutableStateFlow(0f)
   val contrast = MutableStateFlow(1f)
@@ -433,6 +437,7 @@ class PlaybackViewModel : ViewModel() {
   val watermarkText = MutableStateFlow("VFX Pro")
   val watermarkPosition = MutableStateFlow("Bottom-Right") // "Bottom-Right", "Bottom-Left", "Top-Right", "Top-Left"
   val watermarkOpacity = MutableStateFlow(0.85f)
+  val watermarkLogoUri = MutableStateFlow<String?>(null)
 
   private var playbackJob: Job? = null
 
@@ -535,58 +540,74 @@ class PlaybackViewModel : ViewModel() {
     customScript: List<String>? = null
   ) {
     activeCaptionStyle.value = style
-    val totalMs = _totalDurationMs.value.coerceAtLeast(6000L)
-
-    val phrases = if (!customScript.isNullOrEmpty()) {
-      customScript
-    } else when (language) {
-      "Hindi / Hinglish" -> listOf(
-        "Dosto, aaj ka yeh video bohot special hai!",
-        "Dekho kaise VFX Pro me cutting-edge studio features use karte hain.",
-        "Auto Background Blur aur Auto Captions ab ek click me!",
-        "Timeline par smooth playback aur instant sync.",
-        "Agar video acchi lagi toh abhi like aur share karo!",
-        "Next tutorial me dekhenge advanced Speed Ramping."
-      )
-      "Spanish" -> listOf(
-        "¡Hola a todos! Bienvenidos a este nuevo video.",
-        "Hoy vamos a crear efectos cinematográficos increíbles.",
-        "Mira cómo editamos todo en tiempo real con VFX Pro.",
-        "Subtítulos automáticos y desenfoque de fondo activo.",
-        "¡No olvides suscribirte para más tutoriales geniales!"
-      )
-      else -> listOf(
-        "Hey everyone! Welcome back to another video.",
-        "Today we are taking video editing to the next level.",
-        "Check out this instant auto-background blur feature!",
-        "AI captions automatically synced with the voiceover.",
-        "Smooth real-time playback and keyframe precision.",
-        "Make sure to smash that like button and subscribe!"
-      )
+    if (!customScript.isNullOrEmpty()) {
+      applyCaptionLines(customScript.mapIndexed { index, phrase ->
+        val totalMs = _totalDurationMs.value.coerceAtLeast(6000L)
+        val phraseDuration = (totalMs / customScript.size).coerceIn(1800L, 4500L)
+        val startMs = (index * phraseDuration).coerceAtMost((totalMs - 1000L).coerceAtLeast(0L))
+        phrase to startMs
+      }, style, language)
+      return
     }
-
-    val phraseDuration = (totalMs / phrases.size).coerceIn(1800L, 4500L)
-    val captionClips = phrases.mapIndexed { index, phrase ->
-      val startMs = (index * phraseDuration).coerceAtMost((totalMs - 1000L).coerceAtLeast(0L))
-      val dur = phraseDuration.coerceAtMost((totalMs - startMs).coerceAtLeast(1000L))
-      val clipColor = when (style) {
-        "Beast Dynamic", "Beast Pop" -> Color(0xFF22C55E)
-        "Cinematic Minimal" -> Color.White
-        "Neon Karaoke", "Karaoke Wave" -> Color(0xFF06B6D4)
-        "Cyber Boxed" -> Color(0xFFEAB308)
-        else -> Color(0xFFFACC15) // Hormozi Yellow
+    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+      captionStatus.value = when {
+        language.contains("Hindi", true) -> "Hindi speech model. Pehli baar download hoga, phir offline."
+        else -> "Speech model download / sun rahe hain..."
       }
+      val app = com.example.VfxProApp.instance
+      val duration = _totalDurationMs.value.coerceAtLeast(1000L)
+      val heard = com.example.util.HindiSpeechCaptioner.transcribe(app, tracks.value, duration, language)
+      kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+        if (heard.isEmpty()) {
+          captionStatus.value = com.example.util.HindiSpeechCaptioner.lastError
+            ?: "Caption nahi bani. Internet pehli baar chahiye, aur video mein awaaz honi chahiye."
+        } else {
+          val clipColor = captionColor(style)
+          val captionClips = heard.mapIndexed { index, line ->
+            MediaClip(
+              id = "caption_${System.currentTimeMillis()}_$index",
+              type = ClipType.TEXT,
+              startTimeMs = line.startMs,
+              durationMs = line.durationMs,
+              color = clipColor,
+              title = line.text,
+              textDesign = style
+            )
+          }
+          putCaptionClips(captionClips)
+          captionStatus.value = "${heard.size} lines. Edit kar sakte ho."
+          saveSnapshot("Generated Auto Captions ($language, $style)")
+        }
+      }
+    }
+  }
+
+  private fun captionColor(style: String): Color = when (style) {
+    "Beast Dynamic", "Beast Pop" -> Color(0xFF22C55E)
+    "Cinematic Minimal" -> Color.White
+    "Neon Karaoke", "Karaoke Wave" -> Color(0xFF06B6D4)
+    "Cyber Boxed" -> Color(0xFFEAB308)
+    else -> Color(0xFFFACC15)
+  }
+
+  private fun applyCaptionLines(lines: List<Pair<String, Long>>, style: String, language: String) {
+    val clipColor = captionColor(style)
+    val captionClips = lines.mapIndexed { index, (phrase, startMs) ->
       MediaClip(
         id = "caption_${System.currentTimeMillis()}_$index",
         type = ClipType.TEXT,
         startTimeMs = startMs,
-        durationMs = dur,
+        durationMs = 2200L,
         color = clipColor,
         title = phrase,
         textDesign = style
       )
     }
+    putCaptionClips(captionClips)
+    saveSnapshot("Generated Auto Captions ($language, $style)")
+  }
 
+  private fun putCaptionClips(captionClips: List<MediaClip>) {
     val hasTextTrack = tracks.value.any { it.type == TrackType.TEXT }
     if (hasTextTrack) {
       tracks.value = tracks.value.map { track ->
@@ -603,7 +624,6 @@ class PlaybackViewModel : ViewModel() {
       )
       tracks.value = tracks.value + textTrack
     }
-    saveSnapshot("Generated Auto Captions ($language, $style)")
   }
 
   fun updateCaptionText(clipId: String, newText: String) {
@@ -1479,15 +1499,19 @@ class PlaybackViewModel : ViewModel() {
         val target = track.clips[index]
         val createdId = "freeze_${System.currentTimeMillis()}"
         newId = createdId
+        val intoClip = (playheadMs - target.startTimeMs).coerceIn(0L, target.durationMs)
+        val sourceMs = target.trimStartMs + (intoClip * target.speed.coerceAtLeast(0.25f)).toLong()
         val freezeClip = MediaClip(
           id = createdId,
           type = target.type,
           startTimeMs = target.startTimeMs + target.durationMs,
           durationMs = freezeDurationMs,
           color = Color(0xFF06B6D4),
-          title = "❄️ Freeze_${target.title.substringBeforeLast('.')}.jpg",
+          title = "Freeze ${target.title.substringBeforeLast('.')}",
           uri = target.uri,
-          isFrozen = true
+          isFrozen = true,
+          trimStartMs = sourceMs,
+          speed = 1f
         )
         val updated = track.clips.toMutableList()
         updated.add(index + 1, freezeClip)
@@ -2597,6 +2621,7 @@ class PlaybackViewModel : ViewModel() {
   }
 
   fun setWatermarkEnabled(enabled: Boolean) {
+    if (!enabled && !ProAccess.isPro.value) return
     watermarkEnabled.value = enabled
     saveSnapshot(if (enabled) "Enabled Watermark" else "Removed Watermark")
   }
@@ -2606,6 +2631,12 @@ class PlaybackViewModel : ViewModel() {
     watermarkPosition.value = position
     watermarkOpacity.value = opacity
     saveSnapshot("Updated Watermark Config")
+  }
+
+  fun setWatermarkLogo(uri: String?) {
+    if (!ProAccess.isPro.value) return
+    watermarkLogoUri.value = uri
+    saveSnapshot(if (uri == null) "Removed watermark logo" else "Set watermark logo")
   }
 
   fun resetTimelineScale() {
@@ -2688,15 +2719,20 @@ class PlaybackViewModel : ViewModel() {
   private fun startPlaybackLoop() {
     playbackJob?.cancel()
     playbackJob = viewModelScope.launch {
-      val frameIntervalMs = 50L // ~20 updates per second for smooth state tick
+      var lastTick = SystemClock.elapsedRealtime()
       while (isActive && _isPlaying.value) {
-        delay(frameIntervalMs)
-        val nextPos = _currentPositionMs.value + frameIntervalMs
-        if (nextPos >= _totalDurationMs.value) {
-          _currentPositionMs.value = 0L // loop back to start
-        } else {
-          _currentPositionMs.value = nextPos
+        delay(32L)
+        val now = SystemClock.elapsedRealtime()
+        val step = (now - lastTick).coerceIn(1L, 80L)
+        lastTick = now
+        val duration = _totalDurationMs.value
+        val nextPos = _currentPositionMs.value + step
+        if (duration <= 0L || nextPos >= duration) {
+          _currentPositionMs.value = duration.coerceAtLeast(0L)
+          _isPlaying.value = false
+          break
         }
+        _currentPositionMs.value = nextPos
       }
     }
   }

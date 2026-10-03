@@ -77,6 +77,12 @@ object GalleryExporter {
     resolution: ExportResolution = ExportResolution.FHD_1080P,
     frameRate: ExportFrameRate = ExportFrameRate.FPS_30,
     bitrate: ExportBitrate = ExportBitrate.MEDIUM,
+    watermarkEnabled: Boolean = true,
+    watermarkText: String = "VFX Pro",
+    watermarkPosition: String = "Bottom-Right",
+    watermarkOpacity: Float = 0.85f,
+    watermarkLogoUri: String? = null,
+    canvasRatio: String = "16:9",
     onProgress: (Float) -> Unit = {}
   ): ExportResult = withContext(Dispatchers.IO) {
     try {
@@ -87,6 +93,12 @@ object GalleryExporter {
         resolution = resolution,
         frameRate = frameRate,
         bitrate = bitrate,
+        watermarkEnabled = watermarkEnabled,
+        watermarkText = watermarkText,
+        watermarkPosition = watermarkPosition,
+        watermarkOpacity = watermarkOpacity,
+        watermarkLogoUri = watermarkLogoUri,
+        canvasRatio = canvasRatio,
         onProgress = onProgress
       )
       if (result.success) {

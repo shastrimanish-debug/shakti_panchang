@@ -407,9 +407,21 @@ fun VfxMainDashboard(
   // Step 25: Export Video Bottom Sheet
   if (showExportBottomSheet) {
     val currentTracks by playbackViewModel.tracks.collectAsState()
+    val wmOn by playbackViewModel.watermarkEnabled.collectAsState()
+    val wmText by playbackViewModel.watermarkText.collectAsState()
+    val wmPos by playbackViewModel.watermarkPosition.collectAsState()
+    val wmOpacity by playbackViewModel.watermarkOpacity.collectAsState()
+    val wmLogo by playbackViewModel.watermarkLogoUri.collectAsState()
+    val canvasRatio by playbackViewModel.canvasRatio.collectAsState()
     ExportVideoBottomSheet(
       onDismiss = { showExportBottomSheet = false },
       tracks = currentTracks,
+      watermarkEnabled = wmOn,
+      watermarkText = wmText,
+      watermarkPosition = wmPos,
+      watermarkOpacity = wmOpacity,
+      watermarkLogoUri = wmLogo,
+      canvasRatio = canvasRatio,
       onExportToGallery = { res, fps, bitrate, estSize ->
         scope.launch {
           snackbarHostState.showSnackbar("Video exported & saved to Gallery! (Movies/VFXPro)")

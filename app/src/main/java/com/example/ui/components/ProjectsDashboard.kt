@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -85,6 +84,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ads.StudioBannerAd
+import com.example.billing.ProAccess
+import com.example.billing.ProBillingManager
 import com.example.data.AppDatabase
 import com.example.data.ProjectEntity
 import com.example.data.ProjectRepository
@@ -124,10 +126,12 @@ fun ProjectsDashboard(
   val repository = remember { ProjectRepository(AppDatabase.getDatabase(context).projectDao()) }
   val dbProjects by repository.allProjects.collectAsState(initial = emptyList())
   val currentTheme by AppThemeManager.currentTheme.collectAsState()
+  val isLifetime by ProAccess.isPro.collectAsState()
+  val lifetimePrice by ProBillingManager.priceLabel.collectAsState()
+  var showLifetimeSheet by remember { mutableStateOf(false) }
 
   var showDraftsSheet by remember { mutableStateOf(false) }
   var showThemePickerSheet by remember { mutableStateOf(false) }
-  var showVipSheet by remember { mutableStateOf(false) }
 
   val timeFormat = remember { java.text.SimpleDateFormat("yyyy-MM-dd\nHH:mm", java.util.Locale.getDefault()) }
   val fullTimeFormat = remember { java.text.SimpleDateFormat("MMM dd, yyyy • hh:mm a", java.util.Locale.getDefault()) }
@@ -231,7 +235,7 @@ fun ProjectsDashboard(
       modifier = Modifier
         .fillMaxSize()
         .testTag("projects_dashboard"),
-      contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+      contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = if (isLifetime) 16.dp else 84.dp),
       verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
       // 1. VFX Pro Studio Header: Stylized Brand Logo + Theme Picker + Settings
@@ -275,11 +279,28 @@ fun ProjectsDashboard(
             }
           }
 
-          // Right Icons: Theme Switcher Palette + Settings Gear
+          // Right Icons: lifetime price, theme, settings
           Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
           ) {
+            if (!isLifetime) {
+              Surface(
+                color = currentTheme.primaryColor,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                  .clickable { showLifetimeSheet = true }
+                  .testTag("btn_home_lifetime")
+              ) {
+                Text(
+                  text = lifetimePrice.substringBefore("·").trim(),
+                  fontSize = 12.sp,
+                  fontWeight = FontWeight.Black,
+                  color = Color.Black,
+                  modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                )
+              }
+            }
             // Theme Switcher button (10+ custom themes)
             IconButton(
               onClick = { showThemePickerSheet = true },
@@ -398,95 +419,6 @@ fun ProjectsDashboard(
                     fontSize = 11.sp,
                     fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
                     color = if (isSelected) theme.primaryColor else currentTheme.textColor.copy(alpha = 0.8f)
-                  )
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // 1.8 VFX Pro VIP Pass Banner Card (InShot & CapCut Style Subscription Upsell)
-      item {
-        Card(
-          shape = RoundedCornerShape(24.dp),
-          colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-          modifier = Modifier
-            .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(24.dp))
-            .clickable { showVipSheet = true }
-            .testTag("vip_pass_banner")
-        ) {
-          Box(
-            modifier = Modifier
-              .fillMaxWidth()
-              .background(
-                Brush.horizontalGradient(
-                  colors = listOf(
-                    currentTheme.primaryColor,
-                    currentTheme.accentColor,
-                    Color(0xFFF59E0B)
-                  )
-                )
-              )
-              .padding(20.dp)
-          ) {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically
-            ) {
-              Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                  Icon(
-                    imageVector = Icons.Default.Stars,
-                    contentDescription = null,
-                    tint = Color.Black,
-                    modifier = Modifier.size(20.dp)
-                  )
-                  Spacer(modifier = Modifier.width(6.dp))
-                  Text(
-                    text = "VFX PRO VIP PASS",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.2.sp,
-                    color = Color.Black
-                  )
-                  Spacer(modifier = Modifier.width(8.dp))
-                  Surface(
-                    color = Color.Black,
-                    shape = RoundedCornerShape(6.dp)
-                  ) {
-                    Text(
-                      text = "SAVE 80%",
-                      fontSize = 9.sp,
-                      fontWeight = FontWeight.ExtraBold,
-                      color = Color(0xFFFBBF24),
-                      modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                  }
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                  text = "Unlock 4K 60FPS, No Watermark, AI Cutout, InShot-style Seamless Join, & 10+ Studio Themes!",
-                  fontSize = 12.sp,
-                  fontWeight = FontWeight.SemiBold,
-                  color = Color.Black.copy(alpha = 0.85f),
-                  lineHeight = 16.sp
-                )
-              }
-              Spacer(modifier = Modifier.width(12.dp))
-              Surface(
-                shape = CircleShape,
-                color = Color.Black,
-                modifier = Modifier.size(44.dp)
-              ) {
-                Box(contentAlignment = Alignment.Center) {
-                  Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Upgrade",
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
                   )
                 }
               }
@@ -770,11 +702,14 @@ fun ProjectsDashboard(
         onDismiss = { showThemePickerSheet = false }
       )
     }
-    // VFX Pro VIP Subscription Modal Sheet
-    if (showVipSheet) {
-      VipSubscriptionModalSheet(
-        currentTheme = currentTheme,
-        onDismiss = { showVipSheet = false }
+    if (showLifetimeSheet) {
+      LifetimeUnlockSheet(onDismiss = { showLifetimeSheet = false })
+    }
+    if (!isLifetime) {
+      StudioBannerAd(
+        modifier = Modifier
+          .align(Alignment.BottomCenter)
+          .testTag("home_banner_ad")
       )
     }
   }
@@ -1233,191 +1168,5 @@ private fun VfxDraftListItem(
         }
       }
     }
-  }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun VipSubscriptionModalSheet(
-  currentTheme: com.example.ui.theme.AppStudioTheme,
-  onDismiss: () -> Unit,
-  modifier: Modifier = Modifier
-) {
-  val context = LocalContext.current
-  var selectedPlan by remember { mutableStateOf("lifetime") }
-
-  ModalBottomSheet(
-    onDismissRequest = onDismiss,
-    containerColor = currentTheme.surfaceColor,
-    contentColor = currentTheme.textColor,
-    modifier = modifier.testTag("sheet_vip_subscription")
-  ) {
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(24.dp)
-        .navigationBarsPadding(),
-      horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          Icon(
-            imageVector = Icons.Default.Stars,
-            contentDescription = null,
-            tint = currentTheme.primaryColor,
-            modifier = Modifier.size(28.dp)
-          )
-          Spacer(modifier = Modifier.width(8.dp))
-          Text(
-            text = "VFX PRO VIP PASS",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Black,
-            color = currentTheme.textColor
-          )
-        }
-        IconButton(onClick = onDismiss) {
-          Icon(Icons.Default.Close, contentDescription = "Close", tint = currentTheme.textColor)
-        }
-      }
-
-      Spacer(modifier = Modifier.height(16.dp))
-
-      Text(
-        text = "Experience the ultimate pro video editing power like CapCut & InShot with zero limits.",
-        fontSize = 13.sp,
-        color = currentTheme.textColor.copy(alpha = 0.8f),
-        textAlign = TextAlign.Center
-      )
-
-      Spacer(modifier = Modifier.height(20.dp))
-
-      // Feature Checklists
-      Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-      ) {
-        VipFeatureRow(icon = "👑", title = "4K 60FPS Ultra HD Export without Watermark", theme = currentTheme)
-        VipFeatureRow(icon = "🎬", title = "InShot-Style Seamless Multi-Clip Audio & Video Joining", theme = currentTheme)
-        VipFeatureRow(icon = "🤖", title = "AI Smart Cutout, Background Removal & Body Effects", theme = currentTheme)
-        VipFeatureRow(icon = "🎨", title = "All 10+ Studio Themes (CapCut Light, InShot Peach, Cyber Cyan)", theme = currentTheme)
-      }
-
-      Spacer(modifier = Modifier.height(24.dp))
-
-      // Pricing Cards
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-      ) {
-        // Monthly Plan
-        Card(
-          shape = RoundedCornerShape(16.dp),
-          colors = CardDefaults.cardColors(
-            containerColor = if (selectedPlan == "monthly") currentTheme.primaryColor.copy(alpha = 0.15f) else currentTheme.surfaceRaised
-          ),
-          border = BorderStroke(
-            width = if (selectedPlan == "monthly") 2.dp else 1.dp,
-            color = if (selectedPlan == "monthly") currentTheme.primaryColor else currentTheme.surfaceRaised
-          ),
-          modifier = Modifier
-            .weight(1f)
-            .clickable { selectedPlan = "monthly" }
-        ) {
-          Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-          ) {
-            Text(text = "MONTHLY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = currentTheme.textColor.copy(alpha = 0.7f))
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(text = "₹299", fontSize = 22.sp, fontWeight = FontWeight.Black, color = currentTheme.primaryColor)
-            Text(text = "/month", fontSize = 10.sp, color = currentTheme.textColor.copy(alpha = 0.6f))
-          }
-        }
-
-        // Lifetime VIP Pass (Best Value)
-        Card(
-          shape = RoundedCornerShape(16.dp),
-          colors = CardDefaults.cardColors(
-            containerColor = if (selectedPlan == "lifetime") currentTheme.primaryColor.copy(alpha = 0.25f) else currentTheme.surfaceRaised
-          ),
-          border = BorderStroke(
-            width = if (selectedPlan == "lifetime") 2.dp else 1.dp,
-            color = if (selectedPlan == "lifetime") currentTheme.primaryColor else currentTheme.surfaceRaised
-          ),
-          modifier = Modifier
-            .weight(1f)
-            .clickable { selectedPlan = "lifetime" }
-        ) {
-          Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-          ) {
-            Surface(
-              color = currentTheme.primaryColor,
-              shape = RoundedCornerShape(4.dp)
-            ) {
-              Text(text = "BEST VALUE", fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "₹999", fontSize = 22.sp, fontWeight = FontWeight.Black, color = currentTheme.primaryColor)
-            Text(text = "Lifetime Pass", fontSize = 10.sp, color = currentTheme.textColor.copy(alpha = 0.6f))
-          }
-        }
-      }
-
-      Spacer(modifier = Modifier.height(24.dp))
-
-      // Subscribe CTA Button
-      Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = currentTheme.primaryColor,
-        modifier = Modifier
-          .fillMaxWidth()
-          .height(54.dp)
-          .clickable {
-            android.widget.Toast.makeText(context, "🎉 Welcome to VFX Pro VIP! All features unlocked successfully!", android.widget.Toast.LENGTH_LONG).show()
-            onDismiss()
-          }
-          .testTag("btn_subscribe_vip")
-      ) {
-        Box(contentAlignment = Alignment.Center) {
-          Text(
-            text = "🚀 Claim VIP & Unlock Everything",
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Black,
-            color = Color.Black
-          )
-        }
-      }
-
-      Spacer(modifier = Modifier.height(12.dp))
-      Text(
-        text = "Cancel anytime. Secure checkout via Google Play.",
-        fontSize = 11.sp,
-        color = currentTheme.textColor.copy(alpha = 0.5f),
-        textAlign = TextAlign.Center
-      )
-    }
-  }
-}
-
-@Composable
-fun VipFeatureRow(icon: String, title: String, theme: com.example.ui.theme.AppStudioTheme) {
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier.fillMaxWidth()
-  ) {
-    Text(text = icon, fontSize = 18.sp)
-    Spacer(modifier = Modifier.width(12.dp))
-    Text(
-      text = title,
-      fontSize = 13.sp,
-      fontWeight = FontWeight.Medium,
-      color = theme.textColor.copy(alpha = 0.9f)
-    )
   }
 }
