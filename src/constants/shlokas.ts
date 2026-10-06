@@ -1,6 +1,11 @@
 import bnPack from './shloka-extra/bn.json';
+import knPack from './shloka-extra/kn.json';
+import mlPack from './shloka-extra/ml.json';
 import mrPack from './shloka-extra/mr.json';
+import orPack from './shloka-extra/or.json';
+import paPack from './shloka-extra/pa.json';
 import taPack from './shloka-extra/ta.json';
+import tePack from './shloka-extra/te.json';
 
 type ExtraPack = {
   daily: Record<string, string>;
@@ -11,6 +16,11 @@ const EXTRA: Record<string, ExtraPack> = {
   mr: mrPack as ExtraPack,
   bn: bnPack as ExtraPack,
   ta: taPack as ExtraPack,
+  te: tePack as ExtraPack,
+  kn: knPack as ExtraPack,
+  ml: mlPack as ExtraPack,
+  pa: paPack as ExtraPack,
+  or: orPack as ExtraPack,
 };
 
 export type ShlokaChrome = {
