@@ -379,8 +379,8 @@ export function calculateVedicPanchang(
     const moonDelta = Math.abs(normalize360(moonSidereal - normalize360(meeus.Moon.tropicalLon - ayanamsa)));
     const wrap = (x: number) => (x > 180 ? 360 - x : x);
     engineCheck = {
-      primary: "XALEN / astronomy-engine",
-      secondary: "मीयस (मुफ़्त)",
+      primary: "मुख्य गणना",
+      secondary: "जाँच",
       sunDeltaArcsec: wrap(sunDelta) * 3600,
       moonDeltaArcsec: wrap(moonDelta) * 3600,
     };
@@ -420,7 +420,7 @@ export function calculateVedicPanchang(
     dayWindows: [windows.brahma, windows.abhijit, windows.pradosh, windows.nishith],
     engineCheck,
     calculationNote:
-      'XALEN (astronomy-engine) + मीयस जाँच। सूर्योदय अपवर्तन सहित। तिथि-नक्षत्र प्रारंभ/समाप्ति सूर्योदय-आधारित। Swiss Ephemeris नहीं।',
+      "सूर्योदय अपवर्तन सहित। तिथि-नक्षत्र प्रारंभ/समाप्ति सूर्योदय-आधारित।",
   };
 }
 

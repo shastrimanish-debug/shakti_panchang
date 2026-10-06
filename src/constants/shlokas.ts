@@ -1,3 +1,254 @@
+import bnPack from './shloka-extra/bn.json';
+import mrPack from './shloka-extra/mr.json';
+import taPack from './shloka-extra/ta.json';
+
+type ExtraPack = {
+  daily: Record<string, string>;
+  gita: Record<string, { meaning: string; reflection: string }>;
+};
+
+const EXTRA: Record<string, ExtraPack> = {
+  mr: mrPack as ExtraPack,
+  bn: bnPack as ExtraPack,
+  ta: taPack as ExtraPack,
+};
+
+export type ShlokaChrome = {
+  title: string;
+  badge: string;
+  meaningLabel: string;
+  copiedMsg: string;
+  source: string;
+  listen: string;
+  stop: string;
+  copy: string;
+  next: string;
+  gitaTitle: string;
+  gitaBadge: string;
+  gitaSub: string;
+  chapter: string;
+  verse: string;
+  meaningHead: string;
+  reflectHead: string;
+  meaningWord: string;
+};
+
+const CHROME: Record<string, ShlokaChrome> = {
+  hi: {
+    title: 'दैनिक सुभाषितम्',
+    badge: 'आज का श्लोक',
+    meaningLabel: 'हिन्दी भावार्थ:',
+    copiedMsg: 'श्लोक व भावार्थ कॉपी हो गया!',
+    source: 'स्रोत: ',
+    listen: 'श्लोक सुनें',
+    stop: 'ध्वनि रोकें',
+    copy: 'श्लोक व भावार्थ कॉपी करें',
+    next: 'अन्य सुभाषित देखें',
+    gitaTitle: 'श्रीमद्भगवद्गीता ज्ञान',
+    gitaBadge: 'दिव्य वाणी',
+    gitaSub: 'जीवन दर्शन, कर्मयोग एवं भगवान श्रीकृष्ण के अमर उपदेश',
+    chapter: 'अध्याय',
+    verse: 'श्लोक',
+    meaningHead: 'सरल भावार्थ',
+    reflectHead: 'जीवन में चिंतन',
+    meaningWord: 'अर्थ',
+  },
+  en: {
+    title: 'Daily Subhashitam',
+    badge: 'Verse of the Day',
+    meaningLabel: 'Meaning:',
+    copiedMsg: 'Verse and meaning copied!',
+    source: 'Source: ',
+    listen: 'Listen to the verse',
+    stop: 'Stop speech',
+    copy: 'Copy verse and meaning',
+    next: 'Another verse',
+    gitaTitle: 'Bhagavad Gita wisdom',
+    gitaBadge: 'Divine words',
+    gitaSub: 'A view of life, karma yoga, and Krishna’s teaching',
+    chapter: 'Chapter',
+    verse: 'Verse',
+    meaningHead: 'Meaning',
+    reflectHead: 'Reflection',
+    meaningWord: 'Meaning',
+  },
+  gu: {
+    title: 'દૈનિક સુભાષિતમ્',
+    badge: 'આજનો શ્લોક',
+    meaningLabel: 'ગુજરાતી ભાવાર્થ:',
+    copiedMsg: 'શ્લોક અને ભાવાર્થ કોપી થઈ ગયો!',
+    source: 'સંદર્ભ: ',
+    listen: 'શ્લોક સાંભળો',
+    stop: 'અવાજ રોકો',
+    copy: 'શ્લોક અને અર્થ કોપી કરો',
+    next: 'બીજો શ્લોક',
+    gitaTitle: 'શ્રીમદ્ભગવદ્ગીતા જ્ઞાન',
+    gitaBadge: 'દિવ્ય વાણી',
+    gitaSub: 'જીવન દર્શન, કર્મયોગ અને શ્રીકૃષ્ણના ઉપદેશ',
+    chapter: 'અધ્યાય',
+    verse: 'શ્લોક',
+    meaningHead: 'સરળ ભાવાર્થ',
+    reflectHead: 'જીવનમાં ચિંતન',
+    meaningWord: 'અર્થ',
+  },
+  mr: {
+    title: 'दैनिक सुभाषितम्',
+    badge: 'आजचा श्लोक',
+    meaningLabel: 'मराठी भावार्थ:',
+    copiedMsg: 'श्लोक आणि भावार्थ कॉपी झाला!',
+    source: 'संदर्भ: ',
+    listen: 'श्लोक ऐका',
+    stop: 'आवाज थांबवा',
+    copy: 'श्लोक आणि अर्थ कॉपी करा',
+    next: 'दुसरा श्लोक',
+    gitaTitle: 'श्रीमद्भगवद्गीता ज्ञान',
+    gitaBadge: 'दिव्य वाणी',
+    gitaSub: 'जीवनदर्शन, कर्मयोग आणि श्रीकृष्णाचे उपदेश',
+    chapter: 'अध्याय',
+    verse: 'श्लोक',
+    meaningHead: 'सोपा भावार्थ',
+    reflectHead: 'जीवनातील चिंतन',
+    meaningWord: 'अर्थ',
+  },
+  bn: {
+    title: 'দৈনিক সুভাষিতম্',
+    badge: 'আজকের শ্লোক',
+    meaningLabel: 'বাংলা ভাবার্থ:',
+    copiedMsg: 'শ্লোক ও ভাবার্থ কপি হয়েছে!',
+    source: 'সূত্র: ',
+    listen: 'শ্লোক শুনুন',
+    stop: 'আওয়াজ বন্ধ',
+    copy: 'শ্লোক ও অর্থ কপি করুন',
+    next: 'অন্য শ্লোক',
+    gitaTitle: 'শ্রীমদ্ভগবদ্গীতা জ্ঞান',
+    gitaBadge: 'দিব্য বাণী',
+    gitaSub: 'জীবনদর্শন, কর্মযোগ ও শ্রীকৃষ্ণের উপদেশ',
+    chapter: 'অধ্যায়',
+    verse: 'শ্লোক',
+    meaningHead: 'সহজ ভাবার্থ',
+    reflectHead: 'জীবনে চিন্তন',
+    meaningWord: 'অর্থ',
+  },
+  ta: {
+    title: 'இன்றைய சுபாஷிதம்',
+    badge: 'இன்றைய சுலோகம்',
+    meaningLabel: 'தமிழ் பொருள்:',
+    copiedMsg: 'சுலோகமும் பொருளும் நகலானது!',
+    source: 'மூலம்: ',
+    listen: 'சுலோகம் கேளுங்கள்',
+    stop: 'ஒலியை நிறுத்து',
+    copy: 'சுலோகமும் பொருளும் நகலெடு',
+    next: 'வேறு சுலோகம்',
+    gitaTitle: 'பகவத் கீதை ஞானம்',
+    gitaBadge: 'தெய்வ வாக்கு',
+    gitaSub: 'வாழ்க்கை நோக்கு, கர்ம யோகம், கிருஷ்ணரின் உபதேசம்',
+    chapter: 'அத்தியாயம்',
+    verse: 'சுலோகம்',
+    meaningHead: 'எளிய பொருள்',
+    reflectHead: 'வாழ்க்கை சிந்தனை',
+    meaningWord: 'பொருள்',
+  },
+  te: {
+    title: 'నేటి సుభాషితం',
+    badge: 'నేటి శ్లోకం',
+    meaningLabel: 'తెలుగు భావం:',
+    copiedMsg: 'శ్లోకం మరియు భావం కాపీ అయ్యాయి!',
+    source: 'మూలం: ',
+    listen: 'శ్లోకం వినండి',
+    stop: 'ఆపు',
+    copy: 'శ్లోకం మరియు అర్థం కాపీ చేయండి',
+    next: 'మరో శ్లోకం',
+    gitaTitle: 'భగవద్గీత జ్ఞానం',
+    gitaBadge: 'దివ్య వాణి',
+    gitaSub: 'జీవన దృష్టి, కర్మయోగం, శ్రీకృష్ణుని ఉపదేశం',
+    chapter: 'అధ్యాయం',
+    verse: 'శ్లోకం',
+    meaningHead: 'సులభ భావం',
+    reflectHead: 'జీవిత చింతన',
+    meaningWord: 'అర్థం',
+  },
+  kn: {
+    title: 'ಇಂದಿನ ಸುಭಾಷಿತ',
+    badge: 'ಇಂದಿನ ಶ್ಲೋಕ',
+    meaningLabel: 'ಕನ್ನಡ ಭಾವಾರ್ಥ:',
+    copiedMsg: 'ಶ್ಲೋಕ ಮತ್ತು ಅರ್ಥ ನಕಲಾಯಿತು!',
+    source: 'ಮೂಲ: ',
+    listen: 'ಶ್ಲೋಕ ಕೇಳಿ',
+    stop: 'ಧ್ವನಿ ನಿಲ್ಲಿಸಿ',
+    copy: 'ಶ್ಲೋಕ ಮತ್ತು ಅರ್ಥ ನಕಲಿಸಿ',
+    next: 'ಇನ್ನೊಂದು ಶ್ಲೋಕ',
+    gitaTitle: 'ಭಗವದ್ಗೀತೆ ಜ್ಞಾನ',
+    gitaBadge: 'ದಿವ್ಯ ವಾಣಿ',
+    gitaSub: 'ಜೀವನ ದೃಷ್ಟಿ, ಕರ್ಮಯೋಗ ಮತ್ತು ಕೃಷ್ಣನ ಉಪದೇಶ',
+    chapter: 'ಅಧ್ಯಾಯ',
+    verse: 'ಶ್ಲೋಕ',
+    meaningHead: 'ಸರಳ ಅರ್ಥ',
+    reflectHead: 'ಜೀವನ ಚಿಂತನೆ',
+    meaningWord: 'ಅರ್ಥ',
+  },
+  ml: {
+    title: 'ഇന്നത്തെ സുഭാഷിതം',
+    badge: 'ഇന്നത്തെ ശ്ലോകം',
+    meaningLabel: 'മലയാള അർത്ഥം:',
+    copiedMsg: 'ശ്ലോകവും അർത്ഥവും പകർത്തി!',
+    source: 'സ്രോതസ്: ',
+    listen: 'ശ്ലോകം കേൾക്കുക',
+    stop: 'ശബ്ദം നിർത്തുക',
+    copy: 'ശ്ലോകവും അർത്ഥവും പകർത്തുക',
+    next: 'മറ്റൊരു ശ്ലോകം',
+    gitaTitle: 'ഭഗവദ്ഗീതാ ജ്ഞാനം',
+    gitaBadge: 'ദിവ്യവാണി',
+    gitaSub: 'ജീവിതദർശനം, കർമയോഗം, കൃഷ്ണോപദേശം',
+    chapter: 'അധ്യായം',
+    verse: 'ശ്ലോകം',
+    meaningHead: 'ലളിത അർത്ഥം',
+    reflectHead: 'ജീവിത ചിന്ത',
+    meaningWord: 'അർത്ഥം',
+  },
+  pa: {
+    title: 'ਅੱਜ ਦਾ ਸੁਭਾਸ਼ਿਤ',
+    badge: 'ਅੱਜ ਦਾ ਸ਼ਲੋਕ',
+    meaningLabel: 'ਪੰਜਾਬੀ ਅਰਥ:',
+    copiedMsg: 'ਸ਼ਲੋਕ ਅਤੇ ਅਰਥ ਕਾਪੀ ਹੋ ਗਏ!',
+    source: 'ਸਰੋਤ: ',
+    listen: 'ਸ਼ਲੋਕ ਸੁਣੋ',
+    stop: 'ਆਵਾਜ਼ ਰੋਕੋ',
+    copy: 'ਸ਼ਲੋਕ ਅਤੇ ਅਰਥ ਕਾਪੀ ਕਰੋ',
+    next: 'ਹੋਰ ਸ਼ਲੋਕ',
+    gitaTitle: 'ਭਗਵਦ ਗੀਤਾ ਗਿਆਨ',
+    gitaBadge: 'ਦਿਵਿਆ ਬਾਣੀ',
+    gitaSub: 'ਜੀਵਨ ਦ੍ਰਿਸ਼ਟੀ, ਕਰਮ ਯੋਗ ਅਤੇ ਕ੍ਰਿਸ਼ਨ ਦਾ ਉਪਦੇਸ਼',
+    chapter: 'ਅਧਿਆਇ',
+    verse: 'ਸ਼ਲੋਕ',
+    meaningHead: 'ਸਰਲ ਅਰਥ',
+    reflectHead: 'ਜੀਵਨ ਚਿੰਤਨ',
+    meaningWord: 'ਅਰਥ',
+  },
+  or: {
+    title: 'ଆଜିର ସୁଭାଷିତ',
+    badge: 'ଆଜିର ଶ୍ଳୋକ',
+    meaningLabel: 'ଓଡ଼ିଆ ଅର୍ଥ:',
+    copiedMsg: 'ଶ୍ଳୋକ ଓ ଅର୍ଥ କପି ହେଲା!',
+    source: 'ଉତ୍ସ: ',
+    listen: 'ଶ୍ଳୋକ ଶୁଣନ୍ତୁ',
+    stop: 'ଧ୍ୱନି ବନ୍ଦ',
+    copy: 'ଶ୍ଳୋକ ଓ ଅର୍ଥ କପି କରନ୍ତୁ',
+    next: 'ଅନ୍ୟ ଶ୍ଳୋକ',
+    gitaTitle: 'ଭଗବଦ୍ଗୀତା ଜ୍ଞାନ',
+    gitaBadge: 'ଦିବ୍ୟ ବାଣୀ',
+    gitaSub: 'ଜୀବନ ଦର୍ଶନ, କର୍ମଯୋଗ ଓ କୃଷ୍ଣଙ୍କ ଉପଦେଶ',
+    chapter: 'ଅଧ୍ୟାୟ',
+    verse: 'ଶ୍ଳୋକ',
+    meaningHead: 'ସରଳ ଅର୍ଥ',
+    reflectHead: 'ଜୀବନ ଚିନ୍ତନ',
+    meaningWord: 'ଅର୍ଥ',
+  },
+};
+
+export function shlokaChrome(lang: string): ShlokaChrome {
+  return CHROME[lang] ?? CHROME.en;
+}
+
 export interface DailyShloka {
   id: number;
   sanskrit: string;
@@ -12,39 +263,46 @@ export function getLocalizedDailyShloka(
   shloka: DailyShloka,
   lang: string
 ): { sanskrit: string; meaning: string; source: string; title: string; badge: string; meaningLabel: string; copiedMsg: string } {
-  if (lang === 'gu') {
-    return {
-      sanskrit: shloka.sanskrit,
-      meaning: shloka.gujarati || shloka.hindi,
-      source: shloka.source,
-      title: 'દૈનિક સુભાષિતમ્',
-      badge: 'આજનો શ્લોક',
-      meaningLabel: 'ગુજરાતી ભાવાર્થ:',
-      copiedMsg: 'શ્લોક અને ભાવાર્થ કોપી થઈ ગયો!',
-    };
-  }
-  if (lang === 'en') {
-    return {
-      sanskrit: shloka.sanskrit,
-      meaning: shloka.english || shloka.hindi,
-      source: shloka.source,
-      title: 'Daily Subhashitam',
-      badge: 'Verse of the Day',
-      meaningLabel: 'English Meaning & Reflection:',
-      copiedMsg: 'Verse and reflection copied to clipboard!',
-    };
-  }
+  const chrome = shlokaChrome(lang);
+  const extra = EXTRA[lang]?.daily[String(shloka.id)];
+  const meaning =
+    lang === 'hi'
+      ? shloka.hindi
+      : lang === 'gu'
+        ? shloka.gujarati || shloka.english || shloka.hindi
+        : lang === 'en'
+          ? shloka.english || shloka.hindi
+          : extra || shloka.english || shloka.hindi;
   return {
     sanskrit: shloka.sanskrit,
-    meaning: shloka.hindi,
+    meaning,
     source: shloka.source,
-    title: 'दैनिक सुभाषितम्',
-    badge: 'आज का श्लोक',
-    meaningLabel: 'हिन्दी भावार्थ:',
-    copiedMsg: 'श्लोक व भावार्थ कॉपी हो गया!',
+    title: chrome.title,
+    badge: chrome.badge,
+    meaningLabel: chrome.meaningLabel,
+    copiedMsg: chrome.copiedMsg,
   };
 }
 
+export function localizedGitaText(
+  id: number,
+  lang: string,
+  hindiMeaning: string,
+  hindiReflection: string,
+  guMeaning?: string,
+  guReflection?: string,
+  enMeaning?: string,
+  enReflection?: string,
+) {
+  const extra = EXTRA[lang]?.gita[String(id)];
+  if (lang === 'hi') return { meaning: hindiMeaning, reflection: hindiReflection };
+  if (lang === 'gu') return { meaning: guMeaning || enMeaning || hindiMeaning, reflection: guReflection || enReflection || hindiReflection };
+  if (lang === 'en') return { meaning: enMeaning || hindiMeaning, reflection: enReflection || hindiReflection };
+  return {
+    meaning: extra?.meaning || enMeaning || hindiMeaning,
+    reflection: extra?.reflection || enReflection || hindiReflection,
+  };
+}
 export const SHLOKAS: DailyShloka[] = [
   {
     id: 1,

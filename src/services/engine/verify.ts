@@ -70,7 +70,6 @@ export function verifyEngines(date: Date): EngineVerify {
     ayanamshaName: settings.ayanamsha,
     rows,
     maxDeltaArcsec,
-    note:
-      "ग्रह स्थिति मुख्य इंजन XALEN (VSOP87) से। जाँच पट्टी सूर्य-चंद्र-राहु पर मीयस से मिलाती है। बुध-शनि केवल XALEN। Swiss Ephemeris नहीं।",
+    note: "ग्रह स्थिति की जाँच सूर्य, चंद्र और राहु पर की जाती है।",
   };
 }

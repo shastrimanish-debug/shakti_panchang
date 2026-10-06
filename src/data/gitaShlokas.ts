@@ -67,22 +67,18 @@ export const GITA_SHLOKAS: GitaShlokaItem[] = [
   }
 ];
 
+import { localizedGitaText } from '../constants/shlokas';
+
 export function getLocalizedGitaShloka(shloka: GitaShlokaItem, lang: string): { meaning: string; reflection: string } {
-  if (lang === 'gu') {
-    return {
-      meaning: shloka.meaning_gu || shloka.meaning,
-      reflection: shloka.reflection_gu || shloka.reflection,
-    };
-  }
-  if (lang === 'en') {
-    return {
-      meaning: shloka.meaning_en || shloka.meaning,
-      reflection: shloka.reflection_en || shloka.reflection,
-    };
-  }
-  return {
-    meaning: shloka.meaning,
-    reflection: shloka.reflection,
-  };
+  return localizedGitaText(
+    shloka.id,
+    lang,
+    shloka.meaning,
+    shloka.reflection,
+    shloka.meaning_gu,
+    shloka.reflection_gu,
+    shloka.meaning_en,
+    shloka.reflection_en,
+  );
 }
 

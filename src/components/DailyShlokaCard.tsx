@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDailyShloka, DailyShloka, SHLOKAS, getLocalizedDailyShloka } from '../constants/shlokas';
+import { getDailyShloka, DailyShloka, SHLOKAS, getLocalizedDailyShloka, shlokaChrome } from '../constants/shlokas';
 import { BookOpen, Copy, Check, Volume2, VolumeX, Sparkles, RefreshCw } from 'lucide-react';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { useLanguage } from '../i18n';
@@ -15,6 +15,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const loc = getLocalizedDailyShloka(shloka, language);
+  const chrome = shlokaChrome(language);
 
   // Update shloka when date changes
   useEffect(() => {
@@ -106,7 +107,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
                 ? 'bg-[#B56A00] text-white shadow-2xs'
                 : 'text-[#8C6239] hover:bg-[#F4E8D1]'
             }`}
-            title={isSpeaking ? (language === 'en' ? 'Stop Speech' : language === 'gu' ? 'અવાજ રોકો' : 'ध्वनि रोकें') : (language === 'en' ? 'Listen Shloka' : language === 'gu' ? 'શ્લોક સાંભળો' : 'श्लोक सुनें')}
+            title={isSpeaking ? chrome.stop : chrome.listen}
           >
             {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
           </button>
@@ -119,7 +120,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
                 ? 'bg-emerald-700 text-white shadow-2xs'
                 : 'text-[#8C6239] hover:bg-[#F4E8D1]'
             }`}
-            title={language === 'en' ? 'Copy Shloka & Meaning' : language === 'gu' ? 'શ્લોક અને અર્થ કોપી કરો' : 'श्लोक व भावार्थ कॉपी करें'}
+            title={chrome.copy}
           >
             {copied ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5 text-[#8C6239]" />}
           </button>
@@ -128,7 +129,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
             type="button"
             onClick={handleNextShloka}
             className="p-1 rounded-md text-[#8C6239] hover:bg-[#F4E8D1] transition cursor-pointer"
-            title={language === 'en' ? 'Next Verse' : language === 'gu' ? 'બીજો શ્લોક જુઓ' : 'अन्य सुभाषित देखें'}
+            title={chrome.next}
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
@@ -157,7 +158,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
       <div className="flex items-center justify-between pt-2 text-[10px] text-[#8C6239] font-bold">
         <span className="flex items-center gap-1">
           <BookOpen className="w-3 h-3 text-[#B56A00]" />
-          <span>{language === 'en' ? 'Source: ' : language === 'gu' ? 'સંદર્ભ: ' : 'स्रोत: '}{shloka.source}</span>
+          <span>{chrome.source}{shloka.source}</span>
         </span>
         {copied && (
           <span className="text-emerald-800 text-[10px] font-bold animate-in fade-in">

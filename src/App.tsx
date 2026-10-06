@@ -39,6 +39,7 @@ import { SubscriptionModal } from './components/SubscriptionModal';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { useLicense } from './lib/license-client';
 import { useTranslation, useLanguage } from './i18n';
+import { getLocalizedDailyShloka, SHLOKAS } from './constants/shlokas';
 import {
   Sparkles,
   BookOpen,
@@ -647,6 +648,9 @@ export function App() {
         <div className="font-granth text-xs sm:text-sm text-[#2C180C] font-black tracking-wide">
           {t('footer.shloka', '॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥')}
         </div>
+        <p className="text-[11px] text-[#6E472A] font-medium max-w-xl mx-auto">
+          {getLocalizedDailyShloka(SHLOKAS.find((item) => item.id === 6) ?? SHLOKAS[0], currentLang).meaning}
+        </p>
         <p className="text-[11px] text-[#6E472A] font-medium">
           {t('footer.tagline', 'शक्ति पंचांग • प्रामाणिक वैदिक खगोलशास्त्र एवं ज्योतिषीय पंचांग ग्रन्थ')}
         </p>

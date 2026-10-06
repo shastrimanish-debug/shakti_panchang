@@ -28,7 +28,7 @@ export function CalcSettingsPanel({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3 space-y-2.5">
-      <div className="text-xs font-black text-[#5C3A21]">गणना विकल्प (मुफ़्त इंजन)</div>
+      <div className="text-xs font-black text-[#5C3A21]">गणना विकल्प</div>
       <div className={`grid gap-2 ${compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-3"}`}>
         <label className="text-[11px] font-bold text-[#8C6239] space-y-1">
           <span>अयनांश</span>
@@ -73,9 +73,6 @@ export function CalcSettingsPanel({ compact = false }: { compact?: boolean }) {
           </select>
         </label>
       </div>
-      <p className="text-[10px] text-[#735133] leading-relaxed">
-        मुख्य: XALEN / astronomy-engine • जाँच: मीयस • Swiss नहीं (लाइसेंस नहीं)
-      </p>
     </div>
   );
 }
