@@ -12,6 +12,11 @@ import { DurgaSaptashatiView } from './components/DurgaSaptashatiView';
 import { VastuView } from './components/VastuView';
 import { UpayView } from './components/UpayView';
 import { NumerologyView } from './components/NumerologyView';
+import { PalmistryView } from './components/PalmistryView';
+import { TarotView } from './components/TarotView';
+import { GemologyView } from './components/GemologyView';
+import { FaceReadingView } from './components/FaceReadingView';
+import { IChingView } from './components/IChingView';
 import { GranthIndexView } from './components/GranthIndexView';
 import { DailyRashifalView } from './components/DailyRashifalView';
 import { DailyGitaShlokaView } from './components/DailyGitaShlokaView';
@@ -530,6 +535,51 @@ export function App() {
                 <NumerologyView
                   activeKundali={activeKundali}
                   onOpenKundaliTab={() => handleSelectTab('kundali')}
+                  onOpenUmaWithQuery={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                />
+              )}
+
+              {activeTab === 'palmistry' && (
+                <PalmistryView
+                  onOpenUmaWithQuery={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                />
+              )}
+
+              {activeTab === 'tarot' && (
+                <TarotView
+                  onOpenUmaWithQuery={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                />
+              )}
+
+              {activeTab === 'gemology' && (
+                <GemologyView
+                  onOpenUmaWithQuery={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                />
+              )}
+
+              {activeTab === 'face_reading' && (
+                <FaceReadingView
+                  onOpenUmaWithQuery={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                />
+              )}
+
+              {activeTab === 'iching' && (
+                <IChingView
                   onOpenUmaWithQuery={(query) => {
                     setUmaInitialPrompt(query);
                     setIsUmaModalOpen(true);

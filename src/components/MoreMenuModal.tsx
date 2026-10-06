@@ -18,6 +18,10 @@ import {
   Flame,
   Home,
   Globe,
+  Hand,
+  Coins,
+  Eye,
+  Lock,
 } from 'lucide-react';
 import { SavedLocation } from '../types';
 import { AppTheme, getAstrologerBranding } from '../services/storage';
@@ -395,6 +399,117 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.granthDesc', 'पारंपरिक परिचय')}</div>
             </div>
           </button>
+        </div>
+
+        {/* VIP Spiritual Modules Section */}
+        <div className="my-3 space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-black text-amber-800 dark:text-amber-300 uppercase tracking-widest flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span>{t('spiritual.vipSectionTitle', 'प्रीमियम दिव्य विधाएं (Spiritual Modules)')}</span>
+            </span>
+            <span className="text-[10px] bg-gradient-to-r from-amber-600 to-yellow-500 text-stone-950 px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-2xs">
+              {t('spiritual.vipBadge', 'VIP $1')}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {/* 1. Palmistry */}
+            <button
+              type="button"
+              onClick={() => handleAction(() => onSelectTab('palmistry'))}
+              className="flex items-center gap-2 p-2.5 bg-[#FAF2E4] dark:bg-[#2A1508] hover:bg-[#EBD8BD] border border-amber-600/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch shadow-2xs"
+            >
+              <div className="p-2 bg-gradient-to-br from-[#5C3A21] to-[#8C6239] text-[#FAF2E4] rounded-xl shadow-xs shrink-0">
+                <Hand className="w-4 h-4 text-[#FFD88A]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] truncate">
+                  {t('palmistry.title', 'हस्तरेखा दर्शन')}
+                </div>
+                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] truncate">
+                  {t('palmistry.subtitleShort', 'कैमरा स्कैन व रेखा विचार')}
+                </div>
+              </div>
+            </button>
+
+            {/* 2. Tarot Card Reading */}
+            <button
+              type="button"
+              onClick={() => handleAction(() => onSelectTab('tarot'))}
+              className="flex items-center gap-2 p-2.5 bg-[#FAF2E4] dark:bg-[#2A1508] hover:bg-[#EBD8BD] border border-purple-500/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch shadow-2xs"
+            >
+              <div className="p-2 bg-gradient-to-br from-[#311847] to-[#5C2B72] text-[#FAF2E4] rounded-xl shadow-xs shrink-0">
+                <Sparkles className="w-4 h-4 text-purple-200" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] truncate">
+                  {t('tarot.title', 'टैरो कार्ड रीडिंग')}
+                </div>
+                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] truncate">
+                  {t('tarot.subtitleShort', '२२ मेजर अरकाना फलादेश')}
+                </div>
+              </div>
+            </button>
+
+            {/* 3. Gemology */}
+            <button
+              type="button"
+              onClick={() => handleAction(() => onSelectTab('gemology'))}
+              className="flex items-center gap-2 p-2.5 bg-[#FAF2E4] dark:bg-[#2A1508] hover:bg-[#EBD8BD] border border-emerald-500/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch shadow-2xs"
+            >
+              <div className="p-2 bg-gradient-to-br from-[#1C3A27] to-[#2D5A3E] text-[#FAF2E4] rounded-xl shadow-xs shrink-0">
+                <Award className="w-4 h-4 text-emerald-200" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] truncate">
+                  {t('gemology.title', 'वैदिक रत्न विज्ञान')}
+                </div>
+                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] truncate">
+                  {t('gemology.subtitleShort', '९ रत्न, उपरत्न व धातु')}
+                </div>
+              </div>
+            </button>
+
+            {/* 4. Face Reading */}
+            <button
+              type="button"
+              onClick={() => handleAction(() => onSelectTab('face_reading'))}
+              className="flex items-center gap-2 p-2.5 bg-[#FAF2E4] dark:bg-[#2A1508] hover:bg-[#EBD8BD] border border-amber-600/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch shadow-2xs"
+            >
+              <div className="p-2 bg-gradient-to-br from-[#5C3A21] to-[#8C6239] text-[#FAF2E4] rounded-xl shadow-xs shrink-0">
+                <Eye className="w-4 h-4 text-[#FFD88A]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] truncate">
+                  {t('faceReading.title', 'सामुद्रिक मुख लक्षण')}
+                </div>
+                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] truncate">
+                  {t('faceReading.subtitleShort', 'मुख आकृति व प्राण ओजस')}
+                </div>
+              </div>
+            </button>
+
+            {/* 5. I-Ching */}
+            <button
+              type="button"
+              onClick={() => handleAction(() => onSelectTab('iching'))}
+              className="flex items-center gap-2 p-2.5 bg-[#FAF2E4] dark:bg-[#2A1508] hover:bg-[#EBD8BD] border border-purple-500/30 rounded-2xl text-left transition cursor-pointer active:scale-95 col-span-2 relative m3-touch shadow-2xs"
+            >
+              <div className="p-2 bg-gradient-to-br from-[#20152B] to-[#3B2252] text-[#FAF2E4] rounded-xl shadow-xs shrink-0">
+                <Coins className="w-4 h-4 text-purple-200" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center justify-between">
+                  <span>{t('iching.title', 'आई-चिंग दैवज्ञ परामर्श (I-Ching Oracle)')}</span>
+                  <span className="text-[10px] font-normal text-amber-600 dark:text-amber-400">☯️ ६४ षट्कोण</span>
+                </div>
+                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] truncate">
+                  {t('iching.subtitleShort', 'प्राचीन ३ कांस्य मुद्रा उछाल द्वारा दिव्य निर्णय व मार्गदर्शन')}
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Quick Settings Bar */}

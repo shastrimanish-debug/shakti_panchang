@@ -13,6 +13,10 @@ import {
   Home,
   Flame,
   Star,
+  Hand,
+  Coins,
+  Award,
+  Eye,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -179,6 +183,56 @@ export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
     icon: Sparkles,
     screenTitle: '🔢 वैदिक अंक ज्योतिष व लो शू',
   },
+  {
+    id: 'palmistry',
+    title: 'वैदिक हस्तरेखा दर्शन',
+    label: 'हस्तरेखा',
+    pageNumber: 16,
+    chapter: '',
+    desc: 'कैमरा AI स्कैन • प्रमुख रेखाएं • पर्वत',
+    icon: Hand,
+    screenTitle: '✋ वैदिक हस्तरेखा दर्शन',
+  },
+  {
+    id: 'tarot',
+    title: 'टैरो कार्ड परामर्श',
+    label: 'टैरो कार्ड',
+    pageNumber: 17,
+    chapter: '',
+    desc: '२२ मेजर अरकाना • १ व ३ कार्ड प्रसार',
+    icon: Sparkles,
+    screenTitle: '🔮 टैरो कार्ड रीडिंग',
+  },
+  {
+    id: 'gemology',
+    title: 'वैदिक रत्न विज्ञान',
+    label: 'रत्न विज्ञान',
+    pageNumber: 18,
+    chapter: '',
+    desc: 'नवरत्न • उपरत्न • परीक्षण • धारण विधि',
+    icon: Award,
+    screenTitle: '💎 वैदिक रत्न विज्ञान',
+  },
+  {
+    id: 'face_reading',
+    title: 'सामुद्रिक मुख लक्षण शास्त्र',
+    label: 'मुख लक्षण',
+    pageNumber: 19,
+    chapter: '',
+    desc: 'ललाट • नयन • नासिका • ओष्ठ • प्राण ओजस',
+    icon: Eye,
+    screenTitle: '👤 सामुद्रिक मुख लक्षण',
+  },
+  {
+    id: 'iching',
+    title: 'आई-चिंग दैवज्ञ परामर्श',
+    label: 'आई-चिंग',
+    pageNumber: 20,
+    chapter: '',
+    desc: '३ कांस्य मुद्रा • ६४ षट्कोण • दिव्य संकेत',
+    icon: Coins,
+    screenTitle: '☯️ आई-चिंग दैवज्ञ परामर्श',
+  },
 ];
 
 export const BOOK_PAGES: BookPageItem[] = [
@@ -332,6 +386,56 @@ export const BOOK_PAGES: BookPageItem[] = [
     icon: Sparkles,
     screenTitle: '🔢 वैदिक अंक ज्योतिष एवं लो शू',
   },
+  {
+    id: 'palmistry',
+    title: 'वैदिक हस्तरेखा दर्शन एवं सामुद्रिक शास्त्र',
+    label: 'हस्तरेखा',
+    pageNumber: 16,
+    chapter: 'षोडश अध्याय',
+    desc: 'कैमरा AI स्कैन, जीवन, हृदय, मस्तिष्क, भाग्य रेखाएं व पर्वत',
+    icon: Hand,
+    screenTitle: '✋ वैदिक हस्तरेखा दर्शन',
+  },
+  {
+    id: 'tarot',
+    title: 'टैरो कार्ड रीडिंग एवं दिव्य मार्गदर्शन',
+    label: 'टैरो कार्ड',
+    pageNumber: 17,
+    chapter: 'सप्तदश अध्याय',
+    desc: '२२ मेजर अरकाना कार्ड्स, दैनिक १ कार्ड व त्रिकाल प्रसार',
+    icon: Sparkles,
+    screenTitle: '🔮 टैरो कार्ड रीडिंग',
+  },
+  {
+    id: 'gemology',
+    title: 'वैदिक रत्न विज्ञान एवं रत्नोपचार',
+    label: 'रत्न विज्ञान',
+    pageNumber: 18,
+    chapter: 'अष्टादश अध्याय',
+    desc: '९ नवरत्न, उपरत्न, प्रामाणिकता परीक्षण, धातु व धारण विधि',
+    icon: Award,
+    screenTitle: '💎 वैदिक रत्न विज्ञान',
+  },
+  {
+    id: 'face_reading',
+    title: 'सामुद्रिक मुख लक्षण शास्त्र',
+    label: 'मुख लक्षण',
+    pageNumber: 19,
+    chapter: 'एकोनविंशति अध्याय',
+    desc: 'ललाट, नयन, नासिका, ओष्ठ, चिबुक लक्षण एवं प्राण ओजस स्कोर',
+    icon: Eye,
+    screenTitle: '👤 सामुद्रिक मुख लक्षण',
+  },
+  {
+    id: 'iching',
+    title: 'आई-चिंग दैवज्ञ परामर्श (परिवर्तन की पुस्तक)',
+    label: 'आई-चिंग',
+    pageNumber: 20,
+    chapter: 'विंशति अध्याय',
+    desc: '३ कांस्य मुद्रा उछाल, ६४ षट्कोण, यिन-यांग व व्यावहारिक निर्णय',
+    icon: Coins,
+    screenTitle: '☯️ आई-चिंग दैवज्ञ परामर्श',
+  },
 ];
 
 const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
@@ -424,6 +528,36 @@ const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string;
     label: 'Numerology',
     desc: 'Root, Destiny & Name numbers, 3x3 Lo Shu matrix & remedies',
     screenTitle: '🔢 Vedic Numerology & Lo Shu',
+  },
+  palmistry: {
+    title: 'Vedic Palmistry & Samudrika Shastra',
+    label: 'Palmistry',
+    desc: 'Camera AI palm scanner, life, heart, head, fate lines & mounts',
+    screenTitle: '✋ Vedic Palmistry',
+  },
+  tarot: {
+    title: 'Mystical Tarot Divination & Guidance',
+    label: 'Tarot Cards',
+    desc: '22 Major Arcana archetypes, daily focus & 3-card time spread',
+    screenTitle: '🔮 Tarot Guidance',
+  },
+  gemology: {
+    title: 'Vedic Gemology & Navaratna Therapy',
+    label: 'Gemology',
+    desc: '9 Precious gemstones, substitutes, testing, metals & wearing rituals',
+    screenTitle: '💎 Vedic Gemology',
+  },
+  face_reading: {
+    title: 'Samudrika Face Reading (Mukha Lakshana)',
+    label: 'Face Reading',
+    desc: 'Camera AI facial zone scan, features, ojas vitality & temperamental profile',
+    screenTitle: '👤 Face Reading',
+  },
+  iching: {
+    title: 'I-Ching Oracle (The Book of Changes)',
+    label: 'I-Ching Oracle',
+    desc: '3 Bronze coin toss, 64 King Wen hexagrams & strategic counsel',
+    screenTitle: '☯️ I-Ching Oracle',
   },
   shiva: {
     title: 'Sacred Shiva Mahimna Stotra',
@@ -536,6 +670,36 @@ const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string;
     desc: 'મૂળાંક, ભાગ્યાંક, નામાંક, લો-શૂ ગ્રીડ, રાજયોગ અને સચોટ ઉપાયો',
     screenTitle: '🔢 વૈદિક અંક જ્યોતિષ અને લો-શૂ',
   },
+  palmistry: {
+    title: 'વૈદિક હસ્તરેખા દર્શન અને સામુદ્રિક શાસ્ત્ર',
+    label: 'હસ્તરેખા',
+    desc: 'કેમેરા AI સ્કેન, જીવન, હૃદય, મસ્તક, ભાગ્ય રેખાઓ અને પર્વતો',
+    screenTitle: '✋ વૈદિક હસ્તરેખા દર્શન',
+  },
+  tarot: {
+    title: 'ટેરો કાર્ડ રીડિંગ અને દિવ્ય માર્ગદર્શન',
+    label: 'ટેરો કાર્ડ',
+    desc: '૨૨ મેજર અરકાના કાર્ડ્સ, ૧ અને ૩ કાર્ડ ત્રિકાળ પ્રસાર',
+    screenTitle: '🔮 ટેરો કાર્ડ રીડિંગ',
+  },
+  gemology: {
+    title: 'વૈદિક રત્ન વિજ્ઞાન અને રત્નોપચાર',
+    label: 'રત્ન વિજ્ઞાન',
+    desc: '૯ નવરત્ન, ઉપરત્ન, અસલી-નકલી પરિક્ષણ અને ધારણ વિધિ',
+    screenTitle: '💎 વૈદિક રત્ન વિજ્ઞાન',
+  },
+  face_reading: {
+    title: 'સામુદ્રિક મુખ લક્ષણ શાસ્ત્ર',
+    label: 'મુખ લક્ષણ',
+    desc: 'લલાટ, નેત્ર, નાસિકા, ઓષ્ઠ, દાઢી લક્ષણો અને પ્રાણ ઓજસ સ્કોર',
+    screenTitle: '👤 સામુદ્રિક મુખ લક્ષણ',
+  },
+  iching: {
+    title: 'આઈ-ચિંગ દૈવજ્ઞ વિધા (પરિવર્તનનું પુસ્તક)',
+    label: 'આઈ-ચિંગ',
+    desc: '૩ કાંસાના સિક્કા ઉછાળ, ૬૪ ષટ્કોણ, યિન-યાંગ અને વ્યાવહારિક નિર્ણય',
+    screenTitle: '☯️ આઈ-ચિંગ દૈવજ્ઞ પરામર્શ',
+  },
   shiva: {
     title: 'શ્રી શિવ મહિમ્ન સ્તોત્ર',
     label: 'શિવ સ્તોત્ર',
@@ -576,7 +740,12 @@ export function getLocalizedBookPage(page: BookPageItem, lang: string): BookPage
   }
   if (lang === 'gu') {
     const guMeta = BOOK_PAGE_GU[page.id];
-    const guChapters = ['પ્રથમ અધ્યાય', 'દ્વિતીય અધ્યાય', 'તૃતીય અધ્યાય', 'ચતુર્થ અધ્યાય', 'પંચમ અધ્યાય', 'ષષ્ઠ અધ્યાય', 'સપ્તમ અધ્યાય', 'અષ્ટમ અધ્યાય', 'નવમ અધ્યાય', 'દશમ અધ્યાય', 'એકાદશ અધ્યાય', 'દ્વાદશ અધ્યાય', 'ત્રયોદશ અધ્યાય', 'ચતુર્દશ અધ્યાય', 'પંચદશ અધ્યાય', 'ષોડશ અધ્યાય', 'સપ્તદશ અધ્યાય'];
+    const guChapters = [
+      'પ્રથમ અધ્યાય', 'દ્વિતીય અધ્યાય', 'તૃતીય અધ્યાય', 'ચતુર્થ અધ્યાય', 'પંચમ અધ્યાય',
+      'ષષ્ઠ અધ્યાય', 'સપ્તમ અધ્યાય', 'અષ્ટમ અધ્યાય', 'નવમ અધ્યાય', 'દશમ અધ્યાય',
+      'એકાદશ અધ્યાય', 'દ્વાદશ અધ્યાય', 'ત્રયોદશ અધ્યાય', 'ચતુર્દશ અધ્યાય', 'પંચદશ અધ્યાય',
+      'ષોડશ અધ્યાય', 'સપ્તદશ અધ્યાય', 'અષ્ટાદશ અધ્યાય', 'एकोનવિંશતિ અધ્યાય', 'વિંશતિ અધ્યાય'
+    ];
     const chapterName = guChapters[page.pageNumber - 1] || `અધ્યાય ${page.pageNumber}`;
     if (!guMeta) {
       return {
