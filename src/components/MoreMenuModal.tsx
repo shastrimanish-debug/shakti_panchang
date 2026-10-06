@@ -22,7 +22,7 @@ import {
 import { SavedLocation } from '../types';
 import { AppTheme, getAstrologerBranding } from '../services/storage';
 import { useLicense } from '../lib/license-client';
-import { useTranslation, getCurrentLanguage } from '../i18n';
+import { useLanguage } from '../i18n';
 
 interface MoreMenuModalProps {
   isOpen: boolean;
@@ -61,8 +61,8 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   isAudioEnabled,
   onToggleAudio,
 }) => {
-  const { t } = useTranslation();
-  const currentLang = getCurrentLanguage();
+  const { t, currentOption } = useLanguage();
+  const currentLang = currentOption;
   const { status } = useLicense();
   const isEntitled = status.entitled;
 
@@ -235,11 +235,11 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                   <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">
                     {branding.enabled
                       ? `${branding.name} • ${branding.phone || branding.city}`
-                      : 'पंचांग कार्ड व कुंडली पर अपना नाम/नंबर जोड़ें'}
+                      : t('more.brandingDefaultDesc', 'पंचांग कार्ड व कुंडली पर अपना नाम/नंबर जोड़ें')}
                   </div>
                 </div>
               </div>
-              <span className="text-xs text-[#B56A00] font-bold">सेट करें →</span>
+              <span className="text-xs text-[#B56A00] font-bold">{t('more.setBtn', 'सेट करें')} →</span>
             </button>
           </div>
         )}
@@ -260,7 +260,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                 <span>🔱 {t('nav.durga', 'श्री दुर्गा सप्तशती (सम्पूर्ण १३ अध्याय)')}</span>
                 <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">{t('common.newBadge', 'नया')}</span>
               </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">कवच, अर्गला, कीलक, सिद्ध कुंजिका स्तोत्र व आरती सहित</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.durgaDesc', 'कवच, अर्गला, कीलक, सिद्ध कुंजिका स्तोत्र व आरती सहित')}</div>
             </div>
           </button>
 
@@ -277,7 +277,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>{t('nav.upay', 'चमत्कारी उपाय')}</span>
               </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">ग्रह शांति व लाल किताब</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.upayDesc', 'ग्रह शांति व लाल किताब')}</div>
             </div>
           </button>
 
@@ -294,7 +294,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>{t('nav.vastu', 'वास्तु शास्त्र')}</span>
               </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">८ दिशाएं व बिना तोड़-फोड़ टिप्स</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.vastuDesc', '८ दिशाएं व बिना तोड़-फोड़ टिप्स')}</div>
             </div>
           </button>
 
@@ -310,7 +310,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>📖 {t('nav.vratkatha', 'व्रत कथा, पूजा विधि व आरती संग्रह')}</span>
               </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">सत्यनारायण, एकादशी, प्रदोष कथा व नित्य स्तोत्र</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.vratkathaDesc', 'सत्यनारायण, एकादशी, प्रदोष कथा व नित्य स्तोत्र')}</div>
             </div>
           </button>
 
@@ -326,7 +326,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>{t('nav.yatra', 'यात्रा दिशाशूल')}</span>
               </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">निवारण व उपाय</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.yatraDesc', 'निवारण व उपाय')}</div>
             </div>
           </button>
 
@@ -342,7 +342,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>{t('nav.milan', 'कुंडली मिलान')}</span>
               </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">अष्टकूट ३६ गुण</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.milanDesc', 'अष्टकूट ३६ गुण')}</div>
             </div>
           </button>
 
@@ -358,7 +358,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
                 <span>{t('nav.reminders', 'दैनिक स्मृति व उपाय')}</span>
               </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">व्रत-पर्व सूचना</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.remindersDesc', 'व्रत-पर्व सूचना')}</div>
             </div>
           </button>
 
@@ -372,7 +372,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
             <div>
               <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A]">{t('more.granthaIndex', 'ग्रंथ मुखपृष्ठ')}</div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">पारंपरिक परिचय</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.granthDesc', 'पारंपरिक परिचय')}</div>
             </div>
           </button>
         </div>
@@ -386,14 +386,14 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <div className="flex items-center justify-between text-xs py-1">
             <span className="flex items-center gap-1.5 font-medium text-[#5C3A21] dark:text-[#FAF2E4]">
               <MapPin className="w-3.5 h-3.5 text-[#B56A00]" />
-              स्थान: {currentLocation.name}
+              {t('more.locationPrefix', 'स्थान')}: {currentLocation.name}
             </span>
             <button
               type="button"
               onClick={() => handleAction(onOpenLocationModal)}
               className="px-2.5 py-1 bg-[#FAF2E4] dark:bg-stone-800 border border-[#8C6239]/40 rounded-lg font-bold text-[#5C3A21] dark:text-[#FAF2E4] cursor-pointer m3-touch"
             >
-              {t('common.select', 'बदलें')}
+              {t('more.changeBtn', 'बदलें')}
             </button>
           </div>
 
@@ -455,7 +455,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               onClick={onToggleAudio}
               className="px-2.5 py-1 bg-[#FAF2E4] dark:bg-stone-800 border border-[#8C6239]/40 rounded-lg font-bold text-[#5C3A21] dark:text-[#FAF2E4] cursor-pointer m3-touch"
             >
-              {isAudioEnabled ? t('common.close', 'बंद करें') : t('common.active', 'चालू करें')}
+              {isAudioEnabled ? t('more.turnOff', 'बंद करें') : t('more.turnOn', 'चालू करें')}
             </button>
           </div>
         </div>
@@ -473,7 +473,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           rel="noopener noreferrer"
           className="block text-center text-[11px] font-bold text-[#8C6239] underline pt-2"
         >
-          गोपनीयता नीति
+          {t('more.privacyPolicy', 'गोपनीयता नीति')}
         </a>
       </div>
     </div>

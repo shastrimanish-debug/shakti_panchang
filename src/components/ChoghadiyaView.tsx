@@ -20,7 +20,7 @@ import {
   ChevronRight,
   Award,
 } from 'lucide-react';
-import { useTranslation } from '../i18n';
+import { useLanguage } from '../i18n';
 import { trVedic, trPlanet, trWeekday, trChoghadiyaMeaning } from '../i18n/vedicTranslate';
 
 interface ChoghadiyaViewProps {
@@ -30,7 +30,7 @@ interface ChoghadiyaViewProps {
 type ChoghadiyaSubPage = 'table' | 'windows';
 
 export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [subPage, setSubPage] = useState<ChoghadiyaSubPage>('table');
   const [period, setPeriod] = useState<'day' | 'night'>('day');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -266,7 +266,7 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
           <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3.5 shadow-xs">
             <h3 className="text-sm font-bold font-granth text-[#5C3A21] mb-2.5 flex items-center gap-1.5">
               <AlertTriangle className="w-4 h-4 text-rose-700" />
-              <span>{t('choghadiya.inauspiciousWindows', 'દૈનિક વર્જિત સમય (Inauspicious Windows - ત્યાજ્ય કાળ)')}</span>
+              <span>{t('choghadiya.inauspiciousWindows', 'दैनिक त्याज्य काल (Inauspicious Windows)')}</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {inauspiciousWindows.map((item, idx) => (

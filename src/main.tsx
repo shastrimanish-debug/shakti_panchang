@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './i18n';
+import { LanguageProvider } from './i18n';
 import { App } from './App';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
@@ -36,7 +37,9 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <LicenseProvider>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </LicenseProvider>
   </React.StrictMode>
 );

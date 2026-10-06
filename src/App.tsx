@@ -32,7 +32,7 @@ import { MoreMenuModal } from './components/MoreMenuModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { useLicense } from './lib/license-client';
-import { useTranslation, getInitialLanguage } from './i18n';
+import { useTranslation, useLanguage } from './i18n';
 import {
   Sparkles,
   BookOpen,
@@ -88,8 +88,8 @@ export function App() {
   const [pageTurnNotice, setPageTurnNotice] = useState<string | null>(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(true);
   const [theme, setTheme] = useState<AppTheme>(() => getStoredTheme());
-  // Book open/closed state (false: showing Grand Granth Cover Page on startup)
-  const [isBookOpen, setIsBookOpen] = useState<boolean>(false);
+  // Book open/closed state (true: showing Panchang content directly on startup)
+  const [isBookOpen, setIsBookOpen] = useState<boolean>(true);
   const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
 
   // Apply Theme (Shvet-Clean Light, Tamra-Ratri Dark, or Bhojpatra Parchment)
@@ -123,24 +123,8 @@ export function App() {
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState<boolean>(false);
   const [subscriptionReason, setSubscriptionReason] = useState<string>('');
-  const { t, i18n } = useTranslation();
-  const [currentLang, setCurrentLang] = useState<string>(() => i18n.language || getInitialLanguage());
-
-  useEffect(() => {
-    const handleLangChange = (lng: string) => {
-      setCurrentLang(lng);
-    };
-    const handleCustomChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail) setCurrentLang(detail);
-    };
-    i18n.on('languageChanged', handleLangChange);
-    window.addEventListener('shakti_language_change', handleCustomChange);
-    return () => {
-      i18n.off('languageChanged', handleLangChange);
-      window.removeEventListener('shakti_language_change', handleCustomChange);
-    };
-  }, [i18n]);
+  const { t } = useTranslation();
+  const { language: currentLang, setLanguage } = useLanguage();
 
   // Strict Subscription & Anti-Mod State
   const { status: licenseStatus } = useLicense();
@@ -334,7 +318,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
+    <div key={`app-root-${currentLang}`} className="min-h-screen w-full max-w-full overflow-x-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       {licenseStatus.kind === "trial" && (
@@ -643,8 +627,8 @@ export function App() {
       <LanguageSelectorModal
         isOpen={isLanguageModalOpen}
         onClose={() => setIsLanguageModalOpen(false)}
-        onLanguageSelected={(lang) => {
-          setCurrentLang(lang.code);
+        onLanguageSelected={async (lang) => {
+          await setLanguage(lang.code);
         }}
       />
 

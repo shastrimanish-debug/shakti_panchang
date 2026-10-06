@@ -128,5 +128,6 @@ export function useAppLanguage() {
   };
 }
 
+export { LanguageProvider, useLanguage } from './LanguageContext';
 export { useTranslation };
 export default i18n;

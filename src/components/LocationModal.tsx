@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { SavedLocation } from "../types";
 import { searchPlaces, reverseGeocode } from "../lib/geocode";
+import { useLanguage } from "../i18n";
 import {
   getUserCustomLocations,
   saveUserCustomLocation,
@@ -45,9 +46,11 @@ export function LocationModal({
   onClose,
   currentLocation,
   onSelectLocation,
-  title = "स्थान / शहर / वैश्विक नगर चुनें",
+  title,
   persistGlobal = true,
 }: LocationModalProps) {
+  const { t } = useLanguage();
+  const modalTitle = title || t('location.title', 'स्थान / शहर / वैश्विक नगर चुनें');
   const [activeTab, setActiveTab] = useState<ModalTab>("search");
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<SavedLocation[]>([]);
@@ -267,10 +270,10 @@ export function LocationModal({
             <Globe className="w-5 h-5 text-[#E69A33] shrink-0" />
             <div className="min-w-0">
               <h3 className="font-bold text-sm sm:text-base font-granth text-[#FAF2E4] truncate">
-                {title}
+                {modalTitle}
               </h3>
               <p className="text-[11px] text-[#D9C4A9] truncate">
-                वर्तमान: {currentLocation.name} (UTC{currentLocation.timezoneHours !== undefined ? (currentLocation.timezoneHours >= 0 ? `+${currentLocation.timezoneHours}` : currentLocation.timezoneHours) : "+5.5"})
+                {t('location.currentPrefix', 'वर्तमान:')} {currentLocation.name} (UTC{currentLocation.timezoneHours !== undefined ? (currentLocation.timezoneHours >= 0 ? `+${currentLocation.timezoneHours}` : currentLocation.timezoneHours) : "+5.5"})
               </p>
             </div>
           </div>
@@ -278,7 +281,7 @@ export function LocationModal({
             type="button"
             onClick={onClose}
             className="p-1.5 text-[#D9C4A9] hover:text-[#FAF2E4] rounded-lg cursor-pointer transition active:scale-95 shrink-0"
-            aria-label="बंद करें"
+            aria-label={t('location.close', 'बंद करें')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -288,10 +291,10 @@ export function LocationModal({
         <div className="flex border-b border-[#8C6239]/20 bg-[#F4E8D1] px-2 pt-2 gap-1 text-xs font-bold overflow-x-auto no-scrollbar shrink-0">
           {(
             [
-              ["search", "त्वरित खोज", Search],
-              ["directory", "विश्व नगर", Globe2],
-              ["pilgrimage", "तीर्थ स्थल", Sparkles],
-              ["custom", "कस्टम निर्देशांक", Plus],
+              ["search", t('location.quickSearch', 'त्वरित खोज'), Search],
+              ["directory", t('location.worldCities', 'विश्व नगर'), Globe2],
+              ["pilgrimage", t('location.pilgrimages', 'तीर्थ स्थल'), Sparkles],
+              ["custom", t('location.customCoords', 'कस्टम निर्देशांक'), Plus],
             ] as const
           ).map(([id, label, Icon]) => (
             <button
@@ -331,13 +334,13 @@ export function LocationModal({
                 ) : (
                   <Compass className="w-4 h-4 text-[#B56A00]" />
                 )}
-                {gpsLoading ? "GPS खोजा जा रहा है..." : "वर्तमान GPS स्थान से सेट करें"}
+                {gpsLoading ? t('location.detectingGps', 'GPS खोजा जा रहा है...') : t('location.detectGps', 'वर्तमान GPS स्थान से सेट करें')}
               </button>
               <div className="relative">
                 <Search className="w-4 h-4 text-[#8C6239] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="search"
-                  placeholder="विश्व का कोई भी शहर लिखें — London, New York, Ayodhya, Dubai, Toronto, Ujjain..."
+                  placeholder={t('location.searchPlaceholder', 'विश्व का कोई भी शहर लिखें — London, New York, Ayodhya, Dubai, Toronto, Ujjain...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full min-h-10 pl-9 pr-10 py-1.5 bg-white border-2 border-[#8C6239]/40 focus:border-[#B56A00] rounded-lg text-sm font-semibold text-[#5C3A21] placeholder:text-[#8C6239]/70 outline-none shadow-inner"

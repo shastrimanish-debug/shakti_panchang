@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation, SUPPORTED_LANGUAGES, setAppLanguage, LanguageOption } from '../i18n';
+import { useLanguage, SUPPORTED_LANGUAGES, LanguageOption } from '../i18n';
 import { Globe, Check, Search, X, Sparkles } from 'lucide-react';
 
 interface LanguageSelectorModalProps {
@@ -13,12 +13,10 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
   onClose,
   onLanguageSelected,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { language: currentLangCode, setLanguage, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
 
   if (!isOpen) return null;
-
-  const currentLangCode = i18n.language || 'hi';
 
   const filteredLanguages = SUPPORTED_LANGUAGES.filter(
     (l) =>
@@ -28,7 +26,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
   );
 
   const handleSelect = async (lang: LanguageOption) => {
-    await setAppLanguage(lang.code);
+    await setLanguage(lang.code);
     onLanguageSelected?.(lang);
     onClose();
   };
@@ -49,7 +47,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
             </div>
             <div>
               <h3 className="font-granth font-black text-base sm:text-lg text-[#5C3A21] dark:text-[#FFD88A] leading-tight">
-                {t('common.selectLanguageModalTitle', 'Choose Language / ભાષા પસંદ કરો')}
+                {t('common.selectLanguageModalTitle', 'Choose Language / भाषा चुनें')}
               </h3>
               <p className="text-[11px] text-stone-500 dark:text-stone-400">
                 {t('common.selectLanguageModalSubtitle', '10+ Regional & Global NRI Languages Supported')}
@@ -133,7 +131,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
         <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
           <span className="flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            Automatic synchronization with Panchang and PDF export
+            {t('common.syncNote', 'Automatic synchronization with Panchang and PDF export')}
           </span>
           <button
             type="button"
@@ -147,3 +145,4 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
     </div>
   );
 };
+

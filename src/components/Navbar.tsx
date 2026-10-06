@@ -13,7 +13,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { AppTheme } from '../services/storage';
-import { useTranslation, getCurrentLanguage } from '../i18n';
+import { useTranslation, useLanguage } from '../i18n';
 
 interface NavbarProps {
   currentLocation: SavedLocation;
@@ -48,8 +48,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   theme,
   onToggleTheme,
 }) => {
-  const { t, i18n } = useTranslation();
-  const currentLang = getCurrentLanguage();
+  const { t } = useTranslation();
+  const { language, currentOption } = useLanguage();
 
   const handlePrevDay = () => {
     const d = new Date(currentDate);
@@ -67,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     onDateChange(new Date());
   };
 
-  const dateLocale = i18n.language === 'en' ? 'en-US' : i18n.language === 'gu' ? 'gu-IN' : 'hi-IN';
+  const dateLocale = language === 'en' ? 'en-US' : language === 'gu' ? 'gu-IN' : 'hi-IN';
   const formattedDate = currentDate.toLocaleDateString(dateLocale, {
     day: 'numeric',
     month: 'short',
@@ -110,7 +110,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Globe className="w-3.5 h-3.5 text-[#8C4A00]" />
               <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider">
-                {currentLang.code}
+                {currentOption.code}
               </span>
             </button>
           )}

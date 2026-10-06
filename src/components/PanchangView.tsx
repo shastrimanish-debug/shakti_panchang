@@ -24,7 +24,7 @@ import {
 } from '../services/choghadiya';
 import { downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { PdfSuccessModal } from './PdfSuccessModal';
-import { useTranslation } from '../i18n';
+import { useLanguage } from '../i18n';
 import { trVedic, trRashi, trPlanet, trWeekday } from '../i18n/vedicTranslate';
 
 // Sub-pages inside Panchang tab
@@ -55,7 +55,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   latitude = 23.1765,
   longitude = 75.7885,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t, language } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<PanchangSubPage>('main');
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -95,29 +95,30 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
   const buildPanchangShareText = () => {
     const loc = locationName ? ` (${locationName})` : '';
-    const dateStr = panchang.date.toLocaleDateString('hi-IN', {
+    const dateLocale = language === 'en' ? 'en-US' : language === 'gu' ? 'gu-IN' : 'hi-IN';
+    const dateStr = panchang.date.toLocaleDateString(dateLocale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
-    return `॥ श्री गणेशाय नमः ॥
-🕉️ सनातन शक्ति पंचांग${loc}
-📅 दिनांक: ${dateStr}, ${panchang.weekday}
-🚩 संवत्: ${panchang.samvat}
-🌕 मास/पक्ष: ${panchang.masa} मास, ${panchang.paksha} पक्ष
+    return `${t('panchang.shlokaGanesh', '॥ श्री गणेशाय नमः ॥')}
+🕉️ ${t('panchang.shareHeader', 'सनातन शक्ति पंचांग')}${loc}
+📅 ${t('panchang.shareDate', 'दिनांक')}: ${dateStr}, ${trWeekday(panchang.weekday)}
+🚩 ${t('panchang.shareSamvat', 'संवत्')}: ${trVedic(panchang.samvat)}
+🌕 ${t('panchang.shareMasaPaksha', 'मास/पक्ष')}: ${trVedic(panchang.masa)} ${t('panchang.masa', 'मास')}, ${trVedic(panchang.paksha)} ${t('panchang.paksha', 'पक्ष')}
 
-१. तिथि: ${panchang.tithi} (${panchang.tithiSpan ? fmt(panchang.tithiSpan.end) + ' तक' : ''})
-२. नक्षत्र: ${panchang.nakshatra} (चरण ${panchang.pada})
-३. योग: ${panchang.yoga}
-४. करण: ${panchang.karana}
-५. वार: ${panchang.weekday}
+१. ${t('panchang.shareTithi', 'तिथि')}: ${trVedic(panchang.tithi)} (${panchang.tithiSpan ? fmt(panchang.tithiSpan.end) + ' ' + t('panchang.endsAt', 'तक') : ''})
+२. ${t('panchang.shareNakshatra', 'नक्षत्र')}: ${trVedic(panchang.nakshatra)} (${t('panchang.pada', 'चरण')} ${panchang.pada})
+३. ${t('panchang.shareYoga', 'योग')}: ${trVedic(panchang.yoga)}
+४. ${t('panchang.shareKarana', 'करण')}: ${trVedic(panchang.karana)}
+५. ${t('panchang.shareWeekday', 'वार')}: ${trWeekday(panchang.weekday)}
 
-🌅 सूर्योदय: ${fmt(solar.sunrise)} | सूर्यास्त: ${fmt(solar.sunset)}
-🌙 चंद्र राशि: ${panchang.lunarRashi} | सूर्य राशि: ${panchang.solarRashi}
-✨ अभिजित मुहूर्त: ${abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} - ${fmt(abhijitWindow.end)}` : 'आज नहीं'}
-⚠️ राहुकाल: ${rahuWindow ? `${fmt(rahuWindow.start)} - ${fmt(rahuWindow.end)}` : '—'}
+🌅 ${t('panchang.sunrise', 'सूर्योदय')}: ${fmt(solar.sunrise)} | ${t('panchang.sunset', 'सूर्यास्त')}: ${fmt(solar.sunset)}
+🌙 ${t('panchang.moonSign', 'चंद्र राशि')}: ${trRashi(panchang.lunarRashi)} | ${t('panchang.sunSign', 'सूर्य राशि')}: ${trRashi(panchang.solarRashi)}
+✨ ${t('panchang.shareAbhijit', 'अभिजित मुहूर्त')}: ${abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} - ${fmt(abhijitWindow.end)}` : t('panchang.notToday', 'आज नहीं')}
+⚠️ ${t('panchang.shareRahuKaal', 'राहुकाल')}: ${rahuWindow ? `${fmt(rahuWindow.start)} - ${fmt(rahuWindow.end)}` : '—'}
 
-🌸 शक्ति वैदिक पंचांग द्वारा प्रामाणिक गणना`;
+🌸 ${t('panchang.shareFooter', 'शक्ति वैदिक पंचांग द्वारा प्रामाणिक गणना')}`;
   };
 
   const handleShare = async () => {
@@ -125,7 +126,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `सनातन शक्ति पंचांग - ${panchang.weekday}`,
+          title: `${t('panchang.shareHeader', 'सनातन शक्ति पंचांग')} - ${trWeekday(panchang.weekday)}`,
           text,
         });
         return;
@@ -133,7 +134,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
     }
     try {
       await navigator.clipboard.writeText(text);
-      setShareNotice('पंचांग विवरण कॉपी किया गया!');
+      setShareNotice(t('panchang.shareCopiedToast', 'पंचांग विवरण कॉपी किया गया!'));
       setTimeout(() => setShareNotice(null), 3000);
     } catch {}
   };
@@ -141,7 +142,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(buildPanchangShareText());
-      setShareNotice('पंचांग कॉपी हो गया!');
+      setShareNotice(t('panchang.shareCopiedToast', 'पंचांग विवरण कॉपी किया गया!'));
       setTimeout(() => setShareNotice(null), 2500);
     } catch {}
   };
@@ -150,9 +151,9 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
     try {
       setIsDownloadingPdf(true);
       const res = await downloadBhojpatraPdf({
-        title: `दैनिक_भोजपत्र_पंचांग_${panchang.weekday}`,
+        title: `Panchang_${panchang.weekday}`,
         panchang,
-        query: `दैनिक पंचांग — ${panchang.weekday}, ${panchang.tithi}`,
+        query: `${t('panchang.pdfQuery', 'दैनिक पंचांग')} — ${trWeekday(panchang.weekday)}, ${trVedic(panchang.tithi)}`,
         answer: buildPanchangShareText(),
         locationName,
         date: panchang.date,
@@ -164,7 +165,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
         blobUrl: res.blobUrl,
         blob: res.blob,
         pageCount: res.pageCount,
-        title: `दैनिक भोजपत्र पंचांग (${panchang.weekday}, ${panchang.tithi})`,
+        title: `${t('panchang.pdfSuccessTitle', 'दैनिक भोजपत्र पंचांग')} (${trWeekday(panchang.weekday)}, ${trVedic(panchang.tithi)})`,
       });
     } catch (err) {
       console.error('Bhojpatra PDF generation error:', err);
