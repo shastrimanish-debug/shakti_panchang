@@ -59,6 +59,7 @@ export const gu = {
     uma: "ઉમા AI",
     hora: "હોરા ચક્ર",
     calendar: "માસિક કેલેન્ડર",
+    numerology: "અંક જ્યોતિષ",
   },
   panchang: {
     shlokaGanesh: "॥ શ્રી ગણેશાય નમઃ ॥",

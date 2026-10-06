@@ -61,7 +61,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   isAudioEnabled,
   onToggleAudio,
 }) => {
-  const { t, currentOption } = useLanguage();
+  const { t, currentOption, language } = useLanguage();
   const currentLang = currentOption;
   const { status } = useLicense();
   const isEntitled = status.entitled;
@@ -261,6 +261,26 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                 <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">{t('common.newBadge', 'नया')}</span>
               </div>
               <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.durgaDesc', 'कवच, अर्गला, कीलक, सिद्ध कुंजिका स्तोत्र व आरती सहित')}</div>
+            </div>
+          </button>
+
+          {/* वैदिक अंक ज्योतिष व लो शू चक्र */}
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('numerology'))}
+            className="flex items-center gap-2.5 p-2.5 bg-gradient-to-r from-[#FAF2E4] to-[#FBF0DD] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#B56A00]/40 rounded-2xl text-left transition cursor-pointer active:scale-95 col-span-2 relative m3-touch shadow-2xs"
+          >
+            <div className="p-2 bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-xl shadow-xs">
+              <Sparkles className="w-5 h-5 text-amber-200" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center justify-between">
+                <span>🔢 {language === 'en' ? 'Vedic Numerology & Lo Shu Grid' : language === 'gu' ? 'વૈદિક અંક જ્યોતિષ અને લો-શૂ' : 'वैदिक अंक ज्योतिष व लो शू चक्र'}</span>
+                <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">100% सक्रिय</span>
+              </div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">
+                {language === 'en' ? 'Mulank, Bhagyank, Namank, Lo Shu Matrix & Upays' : language === 'gu' ? 'મૂળાંક, ભાગ્યાંક, નામાંક, લો-શૂ અને સચોટ ઉપાય' : 'मूलांक, भाग्यांक, नामांक, कुआ अंक, लो शू ग्रिड व सम्पूर्ण अंक उपाय'}
+              </div>
             </div>
           </button>
 

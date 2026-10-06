@@ -59,6 +59,7 @@ export const en = {
     uma: "Uma AI",
     hora: "Hora Chakra",
     calendar: "Kalnirnay Calendar",
+    numerology: "Numerology",
   },
   panchang: {
     shlokaGanesh: "॥ Shree Ganeshaya Namah ॥",

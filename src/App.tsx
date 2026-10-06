@@ -11,6 +11,7 @@ import { VratKathaView } from './components/VratKathaView';
 import { DurgaSaptashatiView } from './components/DurgaSaptashatiView';
 import { VastuView } from './components/VastuView';
 import { UpayView } from './components/UpayView';
+import { NumerologyView } from './components/NumerologyView';
 import { GranthIndexView } from './components/GranthIndexView';
 import { DailyRashifalView } from './components/DailyRashifalView';
 import { DailyGitaShlokaView } from './components/DailyGitaShlokaView';
@@ -516,6 +517,17 @@ export function App() {
 
               {activeTab === 'upay' && (
                 <UpayView
+                  activeKundali={activeKundali}
+                  onOpenKundaliTab={() => handleSelectTab('kundali')}
+                  onOpenUmaWithQuery={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                />
+              )}
+
+              {activeTab === 'numerology' && (
+                <NumerologyView
                   activeKundali={activeKundali}
                   onOpenKundaliTab={() => handleSelectTab('kundali')}
                   onOpenUmaWithQuery={(query) => {

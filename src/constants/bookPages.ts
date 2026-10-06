@@ -169,6 +169,16 @@ export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
     icon: Bell,
     screenTitle: '🔔 उमा Reminder',
   },
+  {
+    id: 'numerology',
+    title: 'अंक ज्योतिष',
+    label: 'अंक शास्त्र',
+    pageNumber: 15,
+    chapter: '',
+    desc: 'मूलांक • भाग्यांक • लो शू चक्र • अंक उपाय',
+    icon: Sparkles,
+    screenTitle: '🔢 वैदिक अंक ज्योतिष व लो शू',
+  },
 ];
 
 export const BOOK_PAGES: BookPageItem[] = [
@@ -312,6 +322,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     icon: Bell,
     screenTitle: '🔔 उमा Reminder',
   },
+  {
+    id: 'numerology',
+    title: 'वैदिक अंक ज्योतिष एवं लो शू चक्र',
+    label: 'अंक ज्योतिष',
+    pageNumber: 15,
+    chapter: 'पंचदश अध्याय',
+    desc: 'मूलांक, भाग्यांक, नामांक, कुआ अंक, लो शू ग्रिड, राजयोग व उपाय',
+    icon: Sparkles,
+    screenTitle: '🔢 वैदिक अंक ज्योतिष एवं लो शू',
+  },
 ];
 
 const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
@@ -398,6 +418,12 @@ const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string;
     label: 'Reminders',
     desc: 'Daily prayer, japa, sadhana & sacred reminders',
     screenTitle: '🔔 Spiritual Reminders',
+  },
+  numerology: {
+    title: 'Vedic Numerology & Lo Shu Grid',
+    label: 'Numerology',
+    desc: 'Root, Destiny & Name numbers, 3x3 Lo Shu matrix & remedies',
+    screenTitle: '🔢 Vedic Numerology & Lo Shu',
   },
   shiva: {
     title: 'Sacred Shiva Mahimna Stotra',
@@ -503,6 +529,12 @@ const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string;
     label: 'રિમાઇન્ડર',
     desc: 'નિત્ય પૂજા, જપ, સાધના અને વ્યક્તિગત ધાર્મિક સંકલ્પ',
     screenTitle: '🔔 ઉમા Reminder',
+  },
+  numerology: {
+    title: 'વૈદિક અંક જ્યોતિષ અને લો-શૂ ચક્ર',
+    label: 'અંક જ્યોતિષ',
+    desc: 'મૂળાંક, ભાગ્યાંક, નામાંક, લો-શૂ ગ્રીડ, રાજયોગ અને સચોટ ઉપાયો',
+    screenTitle: '🔢 વૈદિક અંક જ્યોતિષ અને લો-શૂ',
   },
   shiva: {
     title: 'શ્રી શિવ મહિમ્ન સ્તોત્ર',

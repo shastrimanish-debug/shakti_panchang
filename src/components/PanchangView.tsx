@@ -480,7 +480,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
           {/* Navigation Links */}
           {onNavigateTab && (
-            <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => onNavigateTab('festivals')}
@@ -498,6 +498,16 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 title="व्रत कथा, पूजा विधि एवं आरती संग्रह"
               >
                 <span>{t('panchang.vratKathaAartiBtn', '📖 व्रत कथा व आरती')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigateTab('numerology')}
+                className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center justify-center gap-2 py-2.5 bg-amber-50 dark:bg-stone-800/80 border border-amber-500/30 rounded-2xl transition cursor-pointer shadow-sm active:scale-98 m3-touch col-span-2 sm:col-span-1"
+                title="मूलांक, भाग्यांक, लो शू ग्रिड व अंक उपाय"
+              >
+                <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span>🔢 अंक ज्योतिष व लो शू</span>
               </button>
             </div>
           )}
