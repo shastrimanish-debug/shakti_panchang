@@ -26,6 +26,7 @@ import {
   Moon
 } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
+import { useLanguage } from '../i18n';
 
 interface UpayViewProps {
   activeKundali: KundaliData | null;
@@ -38,6 +39,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
   onOpenKundaliTab,
   onOpenUmaWithQuery
 }) => {
+  const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'kundali_based' | 'all_planets' | 'doshas' | 'miracle'>('kundali_based');
   const [selectedPlanetName, setSelectedPlanetName] = useState<string>('सूर्य');
   const [selectedDoshaId, setSelectedDoshaId] = useState<string>('manglik');
@@ -118,14 +120,22 @@ export const UpayView: React.FC<UpayViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg sm:text-xl font-bold font-granth text-[#FFD88A]">
-                ग्रह शांति, लाल किताब व चमत्कारी उपाय
+                {language === 'en'
+                  ? 'Planetary Remedies, Lal Kitab & Sacred Upays'
+                  : language === 'gu'
+                  ? 'ગ્રહ શાંતિ, લાલ કિતાબ અને ચમત્કારી ઉપાયો'
+                  : 'ग्रह शांति, लाल किताब व चमत्कारी उपाय'}
               </h2>
               <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">
-                व्यक्तिगत ज्योतिषीय परामर्श
+                {language === 'en' ? 'Personalized Astrology' : language === 'gu' ? 'વ્યક્તિગત જ્યોતિષ પરામર્શ' : 'व्यक्तिगत ज्योतिषीय परामर्श'}
               </span>
             </div>
             <p className="text-xs text-[#FAF2E4]/80 mt-0.5">
-              कुंडली के कमजोर ग्रहों के उपाय, वैदिक महामंत्र, दान, रत्न एवं तात्कालिक कष्ट निवारण टोटके
+              {language === 'en'
+                ? 'Vedic remedies for afflicted planets, potent mantras, sacred donations, gems and Lal Kitab guidance.'
+                : language === 'gu'
+                ? 'કુંડળીના નબળા ગ્રહોના ઉપાયો, વૈદિક મહામંત્રો, દાન, રત્નો અને કષ્ટ નિવારણના ટોટકા.'
+                : 'कुंडली के कमजोर ग्रहों के उपाय, वैदिक महामंत्र, दान, रत्न एवं तात्कालिक कष्ट निवारण टोटके'}
             </p>
           </div>
         </div>
@@ -143,7 +153,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
           }`}
         >
           <Award className="w-3.5 h-3.5 text-[#FFD88A]" />
-          <span>मेरी कुंडली अनुसार उपाय</span>
+          <span>{language === 'en' ? 'My Kundali Remedies' : language === 'gu' ? 'મારી કુંડળી અનુસાર ઉપાય' : 'मेरी कुंडली अनुसार उपाय'}</span>
         </button>
 
         <button
@@ -156,7 +166,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
           }`}
         >
           <Sun className="w-3.5 h-3.5 text-[#FFD88A]" />
-          <span>९ नवग्रह सम्पूर्ण उपाय</span>
+          <span>{language === 'en' ? '9 Navagraha Remedies' : language === 'gu' ? '૯ નવગ્રહ સંપૂર્ણ ઉપાય' : '९ नवग्रह सम्पूर्ण उपाय'}</span>
         </button>
 
         <button
@@ -169,7 +179,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
           }`}
         >
           <ShieldAlert className="w-3.5 h-3.5 text-rose-300" />
-          <span>दोष निवारण (मांगलिक/कालसर्प)</span>
+          <span>{language === 'en' ? 'Dosha Remedies (Manglik/Kalsarp)' : language === 'gu' ? 'દોષ નિવારણ (માંગલિક/કાલસર્પ)' : 'दोष निवारण (मांगलिक/कालसर्प)'}</span>
         </button>
 
         <button
@@ -182,7 +192,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-          <span>चमत्कारी टोटके</span>
+          <span>{language === 'en' ? 'Miraculous Totkas' : language === 'gu' ? 'ચમત્કારી ટોટકા' : 'चमत्कारी टोटके'}</span>
         </button>
       </div>
 
@@ -195,10 +205,14 @@ export const UpayView: React.FC<UpayViewProps> = ({
                 <Sparkles className="w-6 h-6" />
               </div>
               <h3 className="text-base font-bold font-granth text-[#5C3A21]">
-                अपनी जन्म कुंडली लोड करें
+                {language === 'en' ? 'Load Your Birth Chart (Kundali)' : language === 'gu' ? 'તમારી જન્મ કુંડળી લોડ કરો' : 'अपनी जन्म कुंडली लोड करें'}
               </h3>
               <p className="text-xs text-[#735133] max-w-md mx-auto leading-relaxed">
-                आपकी जन्म पत्रिका में कौन सा ग्रह नीच, अस्त या पीड़ित है — इसका सटीक विश्लेषण देख उस ग्रह के विशेष वैदिक व लाल किताब उपाय जानने के लिए अपनी कुंडली बनाएं।
+                {language === 'en'
+                  ? 'Analyze debilitated, combust or afflicted planets in your horoscope to unlock customized Vedic and Lal Kitab remedies.'
+                  : language === 'gu'
+                  ? 'તમારી જન્મ પત્રિકામાં કયો ગ્રહ નીચ, અસ્ત કે પીડિત છે — તેનું સચોટ વિશ્લેષણ જોઈ તે ગ્રહના વિશેષ વૈદિક તથા લાલ કિતાબ ઉપાય જાણવા માટે તમારી કુંડળી બનાવો.'
+                  : 'आपकी जन्म पत्रिका में कौन सा ग्रह नीच, अस्त या पीड़ित है — इसका सटीक विश्लेषण देख उस ग्रह के विशेष वैदिक व लाल किताब उपाय जानने के लिए अपनी कुंडली बनाएं।'}
               </p>
               {onOpenKundaliTab && (
                 <button
@@ -206,7 +220,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
                   onClick={onOpenKundaliTab}
                   className="px-5 py-2 bg-[#5C3A21] hover:bg-[#432A16] text-[#FAF2E4] text-xs font-bold rounded-xl transition cursor-pointer shadow-xs inline-flex items-center gap-1.5"
                 >
-                  <span>कुंडली टैब पर जाएं व विवरण भरें</span>
+                  <span>{language === 'en' ? 'Go to Kundali Tab & Enter Details' : language === 'gu' ? 'કુંડળી ટેબ પર જાઓ અને વિગતો ભરો' : 'कुंडली टैब पर जाएं व विवरण भरें'}</span>
                 </button>
               )}
             </div>
@@ -360,18 +374,26 @@ export const UpayView: React.FC<UpayViewProps> = ({
             {/* Mantras Box */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="p-3 rounded-xl bg-white border border-[#8C6239]/20 space-y-1">
-                <span className="font-bold text-[#8C6239] block">वैदिक / पौराणिक मंत्र:</span>
+                <span className="font-bold text-[#8C6239] block">
+                  {language === 'en' ? 'Vedic / Puranic Mantra:' : language === 'gu' ? 'વૈદિક / પૌરાણિક મંત્ર:' : 'वैदिक / पौराणिक मंत्र:'}
+                </span>
                 <p className="font-granth font-bold text-sm text-[#5C3A21]">
                   {currentPlanetDetail.mantra}
                 </p>
-                <span className="text-[10px] text-[#735133]">जप संख्या: {currentPlanetDetail.japaCount}</span>
+                <span className="text-[10px] text-[#735133]">
+                  {language === 'en' ? 'Japa Count: ' : language === 'gu' ? 'જપ સંખ્યા: ' : 'जप संख्या: '}{currentPlanetDetail.japaCount}
+                </span>
               </div>
               <div className="p-3 rounded-xl bg-white border border-[#8C6239]/20 space-y-1">
-                <span className="font-bold text-[#8C6239] block">तांत्रिक बीज मंत्र:</span>
+                <span className="font-bold text-[#8C6239] block">
+                  {language === 'en' ? 'Tantric Beej Mantra:' : language === 'gu' ? 'તાંત્રિક બીજ મંત્ર:' : 'तांत्रिक बीज मंत्र:'}
+                </span>
                 <p className="font-granth font-bold text-sm text-[#B56A00]">
                   {currentPlanetDetail.beejMantra}
                 </p>
-                <span className="text-[10px] text-[#735133]">शुभ रंग: {currentPlanetDetail.favorableColor}</span>
+                <span className="text-[10px] text-[#735133]">
+                  {language === 'en' ? 'Auspicious Color: ' : language === 'gu' ? 'શુભ રંગ: ' : 'शुभ रंग: '}{currentPlanetDetail.favorableColor}
+                </span>
               </div>
             </div>
 
@@ -379,7 +401,9 @@ export const UpayView: React.FC<UpayViewProps> = ({
             <div className="space-y-1.5 text-xs">
               <h4 className="font-bold text-rose-900 flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-rose-700" />
-                <span>ग्रह कमजोर होने के प्रमुख शास्त्रीय लक्षण:</span>
+                <span>
+                  {language === 'en' ? 'Symptoms of Planetary Affliction:' : language === 'gu' ? 'ગ્રહ નબળો હોવાના મુખ્ય શાસ્ત્રોક્ત લક્ષણો:' : 'ग्रह कमजोर होने के प्रमुख शास्त्रीय लक्षण:'}
+                </span>
               </h4>
               <ul className="space-y-1 text-rose-800 list-disc list-inside bg-rose-50/80 p-3 rounded-xl border border-rose-200">
                 {currentPlanetDetail.weakSymptoms.map((sym, idx) => (
@@ -392,7 +416,9 @@ export const UpayView: React.FC<UpayViewProps> = ({
             <div className="space-y-1.5 text-xs">
               <h4 className="font-bold text-[#5C3A21] flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#B56A00]" />
-                <span>शास्त्रोक्त वैदिक उपाय:</span>
+                <span>
+                  {language === 'en' ? 'Authentic Vedic Remedies:' : language === 'gu' ? 'શાસ્ત્રોક્ત વૈદિક ઉપાયો:' : 'शास्त्रोक्त वैदिक उपाय:'}
+                </span>
               </h4>
               <ul className="space-y-1 text-[#3E2714] list-disc list-inside bg-white p-3 rounded-xl border border-[#8C6239]/15">
                 {currentPlanetDetail.vedicRemedies.map((rem, idx) => (
@@ -407,7 +433,9 @@ export const UpayView: React.FC<UpayViewProps> = ({
             <div className="space-y-1.5 text-xs">
               <h4 className="font-bold text-amber-900 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-                <span>लाल किताब के सिद्ध चमत्कारी टोटके:</span>
+                <span>
+                  {language === 'en' ? 'Lal Kitab Potent Remedies:' : language === 'gu' ? 'લાલ કિતાબના સિદ્ધ ચમત્કારી ઉપાયો:' : 'लाल किताब के सिद्ध चमत्कारी टोटके:'}
+                </span>
               </h4>
               <ul className="space-y-1 text-amber-950 list-disc list-inside bg-amber-50/80 p-3 rounded-xl border border-amber-200">
                 {currentPlanetDetail.lalKitabRemedies.map((totka, idx) => (
@@ -421,22 +449,30 @@ export const UpayView: React.FC<UpayViewProps> = ({
             {/* Gemstone, Rudraksha, Charity */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               <div className="p-2.5 rounded-xl bg-white border border-[#8C6239]/15">
-                <span className="font-bold text-[#8C6239] block">दान सामग्री:</span>
+                <span className="font-bold text-[#8C6239] block">
+                  {language === 'en' ? 'Charity Items:' : language === 'gu' ? 'દાન સામગ્રી:' : 'दान सामग्री:'}
+                </span>
                 <span className="text-[#3E2714]">{currentPlanetDetail.charityItems.join(', ')}</span>
               </div>
               <div className="p-2.5 rounded-xl bg-white border border-[#8C6239]/15">
-                <span className="font-bold text-[#8C6239] block">रत्न परामर्श:</span>
+                <span className="font-bold text-[#8C6239] block">
+                  {language === 'en' ? 'Gemstone Guidance:' : language === 'gu' ? 'રત્ન પરામર્શ:' : 'रत्न परामर्श:'}
+                </span>
                 <span className="text-[#3E2714]">{currentPlanetDetail.gemstone}</span>
               </div>
               <div className="p-2.5 rounded-xl bg-white border border-[#8C6239]/15">
-                <span className="font-bold text-[#8C6239] block">रुद्राक्ष:</span>
+                <span className="font-bold text-[#8C6239] block">
+                  {language === 'en' ? 'Rudraksha:' : language === 'gu' ? 'રુદ્રાક્ષ:' : 'रुद्राक्ष:'}
+                </span>
                 <span className="text-[#3E2714]">{currentPlanetDetail.rudraksha}</span>
               </div>
             </div>
 
             {/* Strict Prohibitions */}
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs">
-              <span className="font-bold text-red-900 block mb-1">विशेष वर्जित कार्य (क्या न करें):</span>
+              <span className="font-bold text-red-900 block mb-1">
+                {language === 'en' ? 'Strict Prohibitions (What to Avoid):' : language === 'gu' ? 'વિશેષ વર્જિત કાર્ય (શું ન કરવું):' : 'विशेष वर्जित कार्य (क्या न करें):'}
+              </span>
               <ul className="space-y-0.5 text-red-800 list-disc list-inside">
                 {currentPlanetDetail.strictAvoid.map((a, idx) => (
                   <li key={idx}>{a}</li>

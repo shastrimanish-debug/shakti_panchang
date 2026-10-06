@@ -30,7 +30,7 @@ interface ChoghadiyaViewProps {
 type ChoghadiyaSubPage = 'table' | 'windows';
 
 export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [subPage, setSubPage] = useState<ChoghadiyaSubPage>('table');
   const [period, setPeriod] = useState<'day' | 'night'>('day');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -139,7 +139,11 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
                   {formatTime(current.start)} - {formatTime(current.end)}
                 </div>
                 <div className="text-[11px] font-bold text-[#B56A00]">
-                  {t('choghadiya.minRemaining', { min: remainingMinutes, defaultValue: `लगभग ${remainingMinutes} मिनट शेष` })}
+                  {language === 'en'
+                    ? `Approx. ${remainingMinutes} mins remaining`
+                    : language === 'gu'
+                    ? `આશરે ${remainingMinutes} મિનિટ બાકી`
+                    : `लगभग ${remainingMinutes} मिनट शेष`}
                 </div>
               </div>
             </div>

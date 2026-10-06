@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { KundaliData, SavedLocation } from '../types';
 import { calculateSadeSati, calculateDailyTransits, SadeSatiStatus, PlanetTransitInfo } from '../services/sadesati';
 import { Shield, AlertTriangle, Sparkles, CheckCircle, Info, Clock, Calendar, ArrowRight } from 'lucide-react';
+import { useLanguage } from '../i18n';
 
 interface SadeSatiViewProps {
   activeKundali: KundaliData | null;
@@ -14,12 +15,15 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
   currentLocation,
   onNavigateToKundali,
 }) => {
+  const { language } = useLanguage();
   const [transitDate, setTransitDate] = useState<string>(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
 
   const selectedDate = new Date(transitDate);
+
+  const locale = language === 'gu' ? 'gu-IN' : language === 'en' ? 'en-US' : 'hi-IN';
 
   if (!activeKundali) {
     return (
@@ -28,10 +32,18 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
           🪐
         </div>
         <h3 className="font-granth font-bold text-[#5C3A21] text-base sm:text-lg">
-          शनि साढ़े साती एवं गोचर विचार
+          {language === 'en'
+            ? 'Saturn Sade Sati & Planetary Transits'
+            : language === 'gu'
+            ? 'શનિ સાડાસાતી અને ગોચર વિચાર'
+            : 'शनि साढ़े साती एवं गोचर विचार'}
         </h3>
         <p className="text-xs sm:text-sm text-[#735133] max-w-md mx-auto leading-relaxed">
-          साढ़े साती व दैनिक गोचर फल देखने के लिए पहले अपनी जन्म पत्रिका का विवरण दर्ज करें।
+          {language === 'en'
+            ? 'Please create or load your birth horoscope to view your personal Saturn Sade Sati phase and daily planetary transits.'
+            : language === 'gu'
+            ? 'સાડાસાતી અને દૈનિક ગોચર ફળ જોવા માટે પહેલાં તમારી જન્મ કુંડળીની વિગતો દાખલ કરો.'
+            : 'साढ़े साती व दैनिक गोचर फल देखने के लिए पहले अपनी जन्म पत्रिका का विवरण दर्ज करें।'}
         </p>
         {onNavigateToKundali && (
           <button
@@ -39,7 +51,7 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
             onClick={onNavigateToKundali}
             className="px-4 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-lg text-xs font-bold transition cursor-pointer shadow-xs inline-flex items-center gap-1.5"
           >
-            <span>कुंडली विवरण भरें</span>
+            <span>{language === 'en' ? 'Enter Horoscope Details' : language === 'gu' ? 'કુંડળી વિગતો ભરો' : 'कुंडली विवरण भरें'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         )}
@@ -62,11 +74,12 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
             <div className="font-bold text-xs sm:text-sm text-[#5C3A21] flex items-center gap-2">
               <span>{activeKundali.name}</span>
               <span className="bg-[#5C3A21] text-[#FFD88A] px-2 py-0.5 rounded text-[10px] font-bold">
-                चंद्र राशि: {activeKundali.moonRashi}
+                {language === 'en' ? 'Moon Sign: ' : language === 'gu' ? 'ચંદ્ર રાશિ: ' : 'चंद्र राशि: '}{activeKundali.moonRashi}
               </span>
             </div>
             <div className="text-[11px] text-[#735133] mt-0.5">
-              वर्तमान शनि गोचर: <strong className="text-[#5C3A21]">{sadeSati.shaniCurrentRashi} राशि</strong> (चंद्र से {sadeSati.shaniTransitHouse}वां भाव)
+              {language === 'en' ? 'Current Saturn Transit: ' : language === 'gu' ? 'વર્તમાન શનિ ગોચર: ' : 'वर्तमान शनि गोचर: '}
+              <strong className="text-[#5C3A21]">{sadeSati.shaniCurrentRashi} {language === 'en' ? 'Sign' : 'રાશિ'}</strong> ({language === 'en' ? `House ${sadeSati.shaniTransitHouse} from Moon` : `ચંદ્રથી ${sadeSati.shaniTransitHouse}મો ભાવ`})
             </div>
           </div>
         </div>
@@ -74,7 +87,9 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
         {/* Date Picker for Transit */}
         <div className="flex items-center gap-1.5 bg-[#F4E8D1] px-2.5 py-1.5 rounded-lg border border-[#8C6239]/30">
           <Calendar className="w-3.5 h-3.5 text-[#B56A00]" />
-          <span className="text-[11px] font-bold text-[#5C3A21]">गोचर तिथि:</span>
+          <span className="text-[11px] font-bold text-[#5C3A21]">
+            {language === 'en' ? 'Transit Date:' : language === 'gu' ? 'ગોચર તારીખ:' : 'गोचर तिथि:'}
+          </span>
           <input
             type="date"
             value={transitDate}
@@ -105,10 +120,10 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
             )}
             <h3 className="font-granth font-bold text-sm sm:text-base">
               {sadeSati.isUnderSadeSati
-                ? `शनि साढ़े साती सक्रिय — ${sadeSati.activePhase?.name || ''}`
+                ? (language === 'en' ? `Saturn Sade Sati Active — ${sadeSati.activePhase?.name || ''}` : language === 'gu' ? `શનિ સાડાસાતી સક્રિય — ${sadeSati.activePhase?.name || ''}` : `शनि साढ़े साती सक्रिय — ${sadeSati.activePhase?.name || ''}`)
                 : sadeSati.isDhaiya
-                ? `शनि ढैया सक्रिय — ${sadeSati.dhaiyaType}`
-                : 'साढ़े साती व ढैया से पूर्णतः मुक्त!'}
+                ? (language === 'en' ? `Saturn Dhaiya Active — ${sadeSati.dhaiyaType}` : language === 'gu' ? `શનિ ઢૈયા સક્રિય — ${sadeSati.dhaiyaType}` : `शनि ढैया सक्रिय — ${sadeSati.dhaiyaType}`)
+                : (language === 'en' ? 'Completely Free from Sade Sati & Dhaiya!' : language === 'gu' ? 'સાડાસાતી અને ઢૈયાથી સંપૂર્ણ મુક્ત!' : 'साढ़े साती व ढैया से पूर्णतः मुक्त!')}
             </h3>
           </div>
 
@@ -121,7 +136,11 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
                 : 'bg-emerald-700 text-white shadow-xs'
             }`}
           >
-            {sadeSati.isUnderSadeSati ? 'साढ़े साती प्रभाव' : sadeSati.isDhaiya ? 'ढैया प्रभाव' : 'शुभ गोचर'}
+            {language === 'en'
+              ? (sadeSati.isUnderSadeSati ? 'Sade Sati Active' : sadeSati.isDhaiya ? 'Dhaiya Active' : 'Favorable Transit')
+              : language === 'gu'
+              ? (sadeSati.isUnderSadeSati ? 'સાડાસાતી પ્રભાવ' : sadeSati.isDhaiya ? 'ઢૈયા પ્રભાવ' : 'શુભ ગોચર')
+              : (sadeSati.isUnderSadeSati ? 'साढ़े साती प्रभाव' : sadeSati.isDhaiya ? 'ढैया प्रभाव' : 'शुभ गोचर')}
           </span>
         </div>
 
@@ -135,9 +154,17 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
         <div className="flex items-center justify-between">
           <h4 className="font-granth font-bold text-xs sm:text-sm text-[#5C3A21] flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-[#B56A00]" />
-            साढ़े साती के तीनों चरण (3 Phases Cycle for {activeKundali.moonRashi} Rashi)
+            <span>
+              {language === 'en'
+                ? `3 Phases Cycle of Sade Sati (${activeKundali.moonRashi} Sign)`
+                : language === 'gu'
+                ? `સાડાસાતીના ત્રણ ચરણ (${activeKundali.moonRashi} રાશિ માટે)`
+                : `साढ़े साती के तीनों चरण (${activeKundali.moonRashi} Rashi)`}
+            </span>
           </h4>
-          <span className="text-[10px] text-[#8C6239] font-bold">प्रत्येक चरण = 2.5 वर्ष</span>
+          <span className="text-[10px] text-[#8C6239] font-bold">
+            {language === 'en' ? 'Each Phase = 2.5 Years' : language === 'gu' ? 'દરેક ચરણ = ૨.૫ વર્ષ' : 'प्रत्येक चरण = 2.5 वर्ष'}
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -154,18 +181,18 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
                 <span className="text-xs font-black text-[#5C3A21]">{phase.name}</span>
                 {phase.isActive && (
                   <span className="bg-rose-700 text-white px-2 py-0.5 rounded text-[9px] font-black uppercase animate-pulse">
-                    वर्तमान में सक्रिय
+                    {language === 'en' ? 'Active Now' : language === 'gu' ? 'હાલ સક્રિય' : 'वर्तमान में सक्रिय'}
                   </span>
                 )}
               </div>
               <div className="text-[11px] text-[#B56A00] font-bold mt-1">
-                शनि राशि: {phase.shaniRashi} ({phase.startApprox} से {phase.endApprox})
+                {language === 'en' ? 'Saturn in: ' : language === 'gu' ? 'શનિ રાશિ: ' : 'शनि राशि: '}{phase.shaniRashi} ({phase.startApprox} {language === 'en' ? 'to' : language === 'gu' ? 'થી' : 'से'} {phase.endApprox})
               </div>
               <div className="text-[10px] text-[#735133] mt-1.5 leading-relaxed">
                 {phase.description}
               </div>
               <div className="text-[10px] font-bold text-[#8C6239] mt-2 pt-1 border-t border-[#8C6239]/20">
-                शरीर पर प्रभाव: {phase.bodyImpact}
+                {language === 'en' ? 'Impact on Body: ' : language === 'gu' ? 'શરીર પર પ્રભાવ: ' : 'शरीर पर प्रभाव: '}{phase.bodyImpact}
               </div>
             </div>
           ))}
@@ -177,34 +204,42 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
         <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] font-bold text-xs sm:text-sm flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Sparkles className="w-4 h-4 text-[#FFD88A]" />
-            <span>दैनिक ग्रह गोचर फल (Transits from Natal Moon: {activeKundali.moonRashi})</span>
+            <span>
+              {language === 'en'
+                ? `Daily Planetary Transits (from Moon: ${activeKundali.moonRashi})`
+                : language === 'gu'
+                ? `દૈનિક ગ્રહ ગોચર ફળ (જન્મ ચંદ્રથી: ${activeKundali.moonRashi})`
+                : `दैनिक ग्रह गोचर फल (Transits from Natal Moon: ${activeKundali.moonRashi})`}
+            </span>
           </div>
-          <span className="text-[10px] text-[#FFD88A] font-bold">दिनांक: {selectedDate.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <span className="text-[10px] text-[#FFD88A] font-bold">
+            {language === 'en' ? 'Date: ' : language === 'gu' ? 'તારીખ: ' : 'दिनांक: '}{selectedDate.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
+          </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F4E8D1] text-[#5C3A21] border-b border-[#8C6239]/30">
               <tr>
-                <th className="py-2.5 px-3">ग्रह (Planet)</th>
-                <th className="py-2.5 px-3">वर्तमान राशि</th>
-                <th className="py-2.5 px-3">चंद्र से भाव</th>
-                <th className="py-2.5 px-3">प्रभाव</th>
-                <th className="py-2.5 px-3">गोचर फल व शास्त्रोक्त प्रभाव</th>
+                <th className="py-2.5 px-3">{language === 'en' ? 'Planet' : language === 'gu' ? 'ગ્રહ' : 'ग्रह (Planet)'}</th>
+                <th className="py-2.5 px-3">{language === 'en' ? 'Current Sign' : language === 'gu' ? 'વર્તમાન રાશિ' : 'वर्तमान राशि'}</th>
+                <th className="py-2.5 px-3">{language === 'en' ? 'House from Moon' : language === 'gu' ? 'ચંદ્રથી ભાવ' : 'चंद्र से भाव'}</th>
+                <th className="py-2.5 px-3">{language === 'en' ? 'Nature' : language === 'gu' ? 'પ્રભાવ' : 'प्रभाव'}</th>
+                <th className="py-2.5 px-3">{language === 'en' ? 'Transit Prediction' : language === 'gu' ? 'ગોચર ફળ અને શાસ્ત્રીય પ્રભાવ' : 'गोचर फल व शास्त्रोक्त प्रभाव'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#8C6239]/20">
               {transits.map((item, idx) => (
                 <tr key={idx} className="hover:bg-[#F4E8D1]/60">
                   <td className="py-2.5 px-3 font-bold text-[#5C3A21] flex items-center gap-1.5">
-                    <span>{item.planet}</span>
+                    <span>{language === 'en' ? item.englishName : item.planet}</span>
                     <span className="text-[10px] text-[#8C6239] font-normal">({item.englishName})</span>
                   </td>
                   <td className="py-2.5 px-3 font-semibold text-[#5C3A21]">
                     {item.currentRashi} ({item.currentDegree.toFixed(1)}°)
                   </td>
                   <td className="py-2.5 px-3 font-bold text-[#B56A00]">
-                    {item.houseFromMoon}वां भाव
+                    {language === 'en' ? `House ${item.houseFromMoon}` : `${item.houseFromMoon}મો ભાવ`}
                   </td>
                   <td className="py-2.5 px-3">
                     <span
@@ -216,7 +251,7 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
                           : 'bg-amber-100 text-amber-800'
                       }`}
                     >
-                      {item.nature}
+                      {language === 'en' ? (item.nature === 'शुभ' ? 'Favorable' : item.nature === 'अशुभ' ? 'Afflicted' : 'Neutral') : item.nature}
                     </span>
                   </td>
                   <td className="py-2.5 px-3 text-[#5C3A21] leading-relaxed max-w-xs sm:max-w-md">
@@ -233,7 +268,13 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
       <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-xs space-y-3">
         <h4 className="font-granth font-bold text-xs sm:text-sm text-[#5C3A21] flex items-center gap-2">
           <Shield className="w-4 h-4 text-[#B56A00]" />
-          शनि साढ़े साती एवं ढैया के अचूक वैदिक परिहार व उपाय
+          <span>
+            {language === 'en'
+              ? 'Potent Vedic Remedies for Saturn Sade Sati & Dhaiya'
+              : language === 'gu'
+              ? 'શનિ સાડાસાતી અને ઢૈયાના અચૂક વૈદિક ઉપાયો અને પરિહાર'
+              : 'शनि साढ़े साती एवं ढैया के अचूक वैदिक परिहार व उपाय'}
+          </span>
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">

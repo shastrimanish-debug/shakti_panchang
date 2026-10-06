@@ -24,8 +24,10 @@ import {
 } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { DigitalCompass } from './DigitalCompass';
+import { useLanguage } from '../i18n';
 
 export const VastuView: React.FC = () => {
+  const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'directions' | 'rooms' | 'tips' | 'compass'>('directions');
   const [selectedDirection, setSelectedDirection] = useState<string>('ishan');
   const [selectedRoom, setSelectedRoom] = useState<string>('main_door');
@@ -34,7 +36,7 @@ export const VastuView: React.FC = () => {
   const currentRoom = VASTU_ROOM_GUIDES.find((r) => r.id === selectedRoom) || VASTU_ROOM_GUIDES[0];
 
   const handleShareTip = (title: string, purpose: string) => {
-    const text = `🏡 *वास्तु परामर्श - ${title}* 🏡\n\nउद्देश्य: ${purpose}\n\nसनातन शक्ति पंचांग वास्तु परामर्श से साभार।`;
+    const text = `🏡 *${language === 'en' ? 'Vastu Guidance' : language === 'gu' ? 'વાસ્તુ પરામર્શ' : 'वास्तु परामर्श'} - ${title}* 🏡\n\n${language === 'en' ? 'Purpose: ' : language === 'gu' ? 'ઉદ્દેશ્ય: ' : 'उद्देश्य: '}${purpose}\n\n(${language === 'en' ? 'Shakti Panchang' : language === 'gu' ? 'શક્તિ પંચાંગ' : 'सनातन शक्ति पंचांग'})`;
     openWhatsAppShare(text);
   };
 
@@ -49,14 +51,22 @@ export const VastuView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg sm:text-xl font-bold font-granth text-[#FFD88A]">
-                वैदिक वास्तु शास्त्र व चमत्कारी टिप्स
+                {language === 'en'
+                  ? 'Vedic Vastu Shastra & Miraculous Tips'
+                  : language === 'gu'
+                  ? 'વૈદિક વાસ્તુ શાસ્ત્ર અને ચમત્કારી ટિપ્સ'
+                  : 'वैदिक वास्तु शास्त्र व चमत्कारी टिप्स'}
               </h2>
               <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">
-                विश्वकर्मा संहिता
+                {language === 'en' ? 'Vishwakarma Samhita' : language === 'gu' ? 'વિશ્વકર્મા સંહિતા' : 'विश्वकर्मा संहिता'}
               </span>
             </div>
             <p className="text-xs text-[#FAF2E4]/80 mt-0.5">
-              ८ दिशाएं, पंचमहाभूत, गृह निर्माण के नियम व बिना तोड़-फोड़ के चमत्कारी वास्तु उपाय
+              {language === 'en'
+                ? '8 cardinal directions, five elements, home design principles & remedies without demolition'
+                : language === 'gu'
+                ? '૮ દિશાઓ, પંચમહાભૂત, ગૃહ નિર્માણના નિયમો અને તોડફોડ વગરના સરળ વાસ્તુ ઉપાયો'
+                : '८ दिशाएं, पंचमहाभूत, गृह निर्माण के नियम व बिना तोड़-फोड़ के चमत्कारी वास्तु उपाय'}
             </p>
           </div>
         </div>
@@ -74,7 +84,7 @@ export const VastuView: React.FC = () => {
           }`}
         >
           <Compass className="w-3.5 h-3.5 text-[#FFD88A]" />
-          <span>८ दिशाएं व तत्व</span>
+          <span>{language === 'en' ? '8 Directions & Elements' : language === 'gu' ? '૮ દિશાઓ અને તત્વ' : '८ दिशाएं व तत्व'}</span>
         </button>
 
         <button
@@ -87,7 +97,7 @@ export const VastuView: React.FC = () => {
           }`}
         >
           <Home className="w-3.5 h-3.5 text-[#FFD88A]" />
-          <span>कमरे व मुख्य द्वार</span>
+          <span>{language === 'en' ? 'Rooms & Main Entrance' : language === 'gu' ? 'ઓરડા અને મુખ્ય દ્વાર' : 'कमरे व मुख्य द्वार'}</span>
         </button>
 
         <button
@@ -100,7 +110,7 @@ export const VastuView: React.FC = () => {
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-          <span>चमत्कारी वास्तु टिप्स</span>
+          <span>{language === 'en' ? 'Miraculous Vastu Tips' : language === 'gu' ? 'ચમત્કારી વાસ્તુ ટિપ્સ' : 'चमत्कारी वास्तु टिप्स'}</span>
         </button>
 
         <button
@@ -113,7 +123,7 @@ export const VastuView: React.FC = () => {
           }`}
         >
           <Compass className="w-3.5 h-3.5 text-emerald-300" />
-          <span>डिजिटल कम्पास</span>
+          <span>{language === 'en' ? 'Digital Compass' : language === 'gu' ? 'ડિજિટલ કંપાસ' : 'डिजिटल कम्पास'}</span>
         </button>
       </div>
 
@@ -124,7 +134,7 @@ export const VastuView: React.FC = () => {
           <div className="p-3 sm:p-4 rounded-2xl bg-[#FAF2E4] border border-[#8C6239]/20 shadow-xs">
             <h3 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <span>🧭</span>
-              <span>वास्तु मंडल दिशा चक्र (दिशा का चयन करें)</span>
+              <span>{language === 'en' ? 'Vastu Mandala Direction Wheel (Select Direction)' : language === 'gu' ? 'વાસ્તુ મંડળ દિશા ચક્ર (દિશા પસંદ કરો)' : 'वास्तु मंडल दिशा चक्र (दिशा का चयन करें)'}</span>
             </h3>
 
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
@@ -142,7 +152,7 @@ export const VastuView: React.FC = () => {
                     }`}
                   >
                     <span className="font-bold font-granth text-xs sm:text-sm">
-                      {dir.hindiName.split(' ')[0]}
+                      {language === 'en' ? dir.name : dir.hindiName.split(' ')[0]}
                     </span>
                     <span className="text-[10px] opacity-80">{dir.ruler.split('/')[0]}</span>
                     <span className="text-[9px] px-1 rounded bg-[#B56A00]/20 text-[#B56A00]">
@@ -159,19 +169,19 @@ export const VastuView: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#8C6239]/20 gap-2">
               <div>
                 <span className="text-[11px] font-bold text-[#B56A00] tracking-wider uppercase">
-                  तत्व: {currentDir.element} • स्वामी ग्रह: {currentDir.planet}
+                  {language === 'en' ? 'Element: ' : language === 'gu' ? 'તત્વ: ' : 'तत्व: '}{currentDir.element} • {language === 'en' ? 'Ruler: ' : language === 'gu' ? 'સ્વામી ગ્રહ: ' : 'स्वामी ग्रह: '}{currentDir.planet}
                 </span>
                 <h3 className="text-lg font-bold font-granth text-[#5C3A21]">
                   {currentDir.hindiName} ({currentDir.name})
                 </h3>
                 <p className="text-xs text-[#735133] mt-0.5">
-                  अधिपति देवता: <strong className="text-[#5C3A21]">{currentDir.ruler}</strong>
+                  {language === 'en' ? 'Presiding Deity: ' : language === 'gu' ? 'અધિપતિ દેવતા: ' : 'अधिपति देवता: '}<strong className="text-[#5C3A21]">{currentDir.ruler}</strong>
                 </p>
               </div>
 
               <div className="text-right">
                 <span className="text-[11px] font-bold px-2 py-1 rounded bg-amber-100 text-amber-900 border border-amber-300">
-                  शुभ रंग: {currentDir.color}
+                  {language === 'en' ? 'Color: ' : language === 'gu' ? 'શુભ રંગ: ' : 'शुभ रंग: '}{currentDir.color}
                 </span>
               </div>
             </div>
@@ -181,7 +191,7 @@ export const VastuView: React.FC = () => {
               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1.5">
                 <h4 className="font-bold text-emerald-900 flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                  <span>इस दिशा में क्या होना चाहिए (शुभ निर्माण)</span>
+                  <span>{language === 'en' ? 'Recommended Construction (Auspicious)' : language === 'gu' ? 'આ દિશામાં શું હોવું જોઈએ (શુભ નિર્માણ)' : 'इस दिशा में क्या होना चाहिए (शुभ निर्माण)'}</span>
                 </h4>
                 <ul className="space-y-1 text-emerald-800 list-disc list-inside">
                   {currentDir.idealFor.map((item, idx) => (
@@ -193,7 +203,7 @@ export const VastuView: React.FC = () => {
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-1.5">
                 <h4 className="font-bold text-rose-900 flex items-center gap-1.5">
                   <AlertTriangle className="w-4 h-4 text-rose-700" />
-                  <span>क्या कदापि न बनाएं (वर्जित निर्माण)</span>
+                  <span>{language === 'en' ? 'Strictly Avoid (Inauspicious)' : language === 'gu' ? 'શું ક્યારેય ન બનાવવું (વર્જિત નિર્માણ)' : 'क्या कदापि न बनाएं (वर्जित निर्माण)'}</span>
                 </h4>
                 <ul className="space-y-1 text-rose-800 list-disc list-inside">
                   {currentDir.avoid.map((item, idx) => (
@@ -207,7 +217,7 @@ export const VastuView: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-[#FBF0DD] border border-[#B56A00]/30 space-y-1 text-xs">
               <h4 className="font-bold text-[#5C3A21] flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-                <span>इस दिशा का दोष निवारक उपाय</span>
+                <span>{language === 'en' ? 'Vastu Remedy for this Direction' : language === 'gu' ? 'આ દિશાનો દોષ નિવારક ઉપાય' : 'इस दिशा का दोष निवारक उपाय'}</span>
               </h4>
               <p className="text-[#735133] leading-relaxed">{currentDir.remedy}</p>
             </div>
@@ -240,7 +250,7 @@ export const VastuView: React.FC = () => {
           <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF2E4] border border-[#8C6239]/25 shadow-xs space-y-4">
             <div className="pb-3 border-b border-[#8C6239]/20">
               <span className="text-[11px] font-bold text-[#B56A00] tracking-wider uppercase">
-                सर्वोत्तम दिशा: {currentRoom.bestDirection}
+                {language === 'en' ? 'Best Direction: ' : language === 'gu' ? 'સર્વોત્તમ દિશા: ' : 'सर्वोत्तम दिशा: '}{currentRoom.bestDirection}
               </span>
               <h3 className="text-lg font-bold font-granth text-[#5C3A21] mt-0.5">
                 {currentRoom.title}
@@ -252,7 +262,7 @@ export const VastuView: React.FC = () => {
             <div className="space-y-2 text-xs">
               <h4 className="font-bold text-[#8C6239] uppercase tracking-wider flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#B56A00]" />
-                <span>महत्वपूर्ण वास्तु नियम व व्यवस्था</span>
+                <span>{language === 'en' ? 'Key Vastu Rules & Alignment' : language === 'gu' ? 'મહત્વપૂર્ણ વાસ્તુ નિયમો અને વ્યવસ્થા' : 'महत्वपूर्ण वास्तु नियम व व्यवस्था'}</span>
               </h4>
               <ul className="space-y-1.5 text-[#3E2714] list-disc list-inside bg-white p-3.5 rounded-xl border border-[#8C6239]/15">
                 {currentRoom.rules.map((rule, idx) => (
@@ -267,7 +277,7 @@ export const VastuView: React.FC = () => {
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs space-y-1">
               <h4 className="font-bold text-amber-900 flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
-                <span>दोष होने पर क्या दुष्प्रभाव होता है?</span>
+                <span>{language === 'en' ? 'Adverse Effects of Defect:' : language === 'gu' ? 'દોષ હોવા પર શી આડઅસર થાય?' : 'दोष होने पर क्या दुष्प्रभाव होता है?'}</span>
               </h4>
               <p className="text-amber-800 leading-relaxed">{currentRoom.doshaConsequence}</p>
             </div>
@@ -276,7 +286,7 @@ export const VastuView: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#FBF0DD] to-[#F4E8D1] border border-[#B56A00]/30 text-xs space-y-1.5">
               <h4 className="font-bold text-[#5C3A21] flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-[#B56A00]" />
-                <span>बिना तोड़-फोड़ के चमत्कारी उपाय</span>
+                <span>{language === 'en' ? 'Remedies without Demolition' : language === 'gu' ? 'તોડફોડ વગરના ચમત્કારી ઉપાયો' : 'बिना तोड़-फोड़ के चमत्कारी उपाय'}</span>
               </h4>
               <p className="text-[#735133] leading-relaxed">
                 {currentRoom.remedyWithoutDemolition}

@@ -1,4 +1,7 @@
-import { VratKathaItem, VRAT_KATHA_CATEGORIES, VRAT_KATHA_DATA } from '../data/vratKathaData';
+# -*- coding: utf-8 -*-
+import json
+
+data_ts_header = """import { VratKathaItem, VRAT_KATHA_CATEGORIES, VRAT_KATHA_DATA } from '../data/vratKathaData';
 
 export const VRAT_KATHA_CATEGORIES_LOCALIZED: Record<string, { id: string; label: string }[]> = {
   hi: [
@@ -44,7 +47,9 @@ export const KATHA_TRANSLATIONS: Record<
     gu: LocalizedKathaItemEntry;
     en: LocalizedKathaItemEntry;
   }
-> = {
+> = """
+
+translations = {
   "satyanarayan-katha": {
     "gu": {
       "title": "શ્રી સત્યનારાયણ વ્રત કથા (સ્કંદપુરાણ રેવાખંડ, સાતેય અધ્યાય ગુજરાતીમાં)",
@@ -280,9 +285,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "સંત રામદાસ ભક્તિ સંગ્રહ",
       "shlokMeaning": "સુખ આપનારા અને દુઃખ હરનારા, સર્વ વિઘ્નોનું નિવારણ કરનારા અને પ્રેમની વૃષ્ટિ કરનારા ગણેશજીની અમે આરતી ઉતારીએ છીએ.",
       "description": "મહારાષ્ટ્ર અને સમગ્ર ભારતમાં ગણેશોત્સવ દરમિયાન ગવાતી પરમ લોકપ્રિય આરતી. આ આરતીના ગાનથી ઘરમાં મંગલકારી ઊર્જા અને સમૃદ્ધિનો સંચાર થાય છે.",
-      "rules": [
-        "પંચારતી કે ઘીનો દીવો પ્રગટાવી મોદકનો ભોગ ધરાવો."
-      ],
+      "rules": ["પંચારતી કે ઘીનો દીવો પ્રગટાવી મોદકનો ભોગ ધરાવો."],
       "kathaSummary": [
         "॥ પ્રથમ કડી ॥\nસુખકર્તા દુઃખહર્તા વાર્તા વિઘ્નાચી। નુરવી પૂર્વી પ્રેમ કૃપા જયાચી। સર્વાંગી સુંદર ઉટી શિંદુરાચી। કંઠી ઝળકે માળ મુક્તાફળાંચી॥\nજય દેવ જય દેવ જય મંગલમૂર્તી! દર્શનમાત્રે મનકામના પૂર્તી॥\n(અર્થ: હે ગણેશજી, આપ સુખના દાતા અને દુઃખોના નાશક છો. આપના દર્શન માત્રથી ભક્તોના મનોરથ પૂર્ણ થાય છે.)",
         "॥ દ્વિતીય કડી ॥\nરત્નખચિત ફરા તુજ ગૌરીકુમરા। ચંદનાચી ઉટી કુંકુમકેશરા। હીરાજડિત મુકુટ શોભતો બરા। રુણઝુણતી નૂપુરે ચરણી ઘાગરિયાં॥\n(અર્થ: માતા ગૌરીના પુત્ર, આપના લલાટે ચંદન અને કંકુ-કેસરનું તિલક શોભે છે. આપના મસ્તક પર હીરાજડિત મુગટ અને ચરણોમાં ઝાંઝર ઝણકે છે.)",
@@ -295,9 +298,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "Sant Ramdas Devotional Treasury",
       "shlokMeaning": "O Lord who creates auspicious joy, removes all suffering, and fulfills desires of devotees with infinite love and mercy, victory unto You.",
       "description": "The quintessential Marathi Ganesh Aarti sung in homes and temples worldwide during Ganesh Chaturthi, radiating uplifting spiritual vitality and joyous blessings.",
-      "rules": [
-        "Wave a pure ghee lamp in circular motions and offer modakas with wholehearted devotion."
-      ],
+      "rules": ["Wave a pure ghee lamp in circular motions and offer modakas with wholehearted devotion."],
       "kathaSummary": [
         "॥ Stanza 1: The Bestower of Auspicious Joy ॥\n'Sukhkarta Dukhharta Varta Vighnachi...' - You create joy, dispel sorrows, and conquer all obstacles. Your holy body is adorned with vermilion and radiant pearl necklaces. Victory unto You, O Mangalamurti! Mere sight of You fulfills all aspirations.",
         "॥ Stanza 2: The Splendor of Mother Gauri's Son ॥\n'Ratnakhachita Phara Tuj Gaurikumara...' - Adorned with jeweled seats, fragrant sandalwood, saffron, and diamonds in Your crown. Sweet anklets tinkle at Your divine feet as You bless the assembly.",
@@ -312,9 +313,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "શુક્લ યજુર્વેદ અને શિવ સ્તુતિ",
       "shlokMeaning": "જેમનું શરીર કપૂર સમાન ઉજ્જવળ છે, જે કરુણાના સાક્ષાત્ અવતાર છે, સંસારના સારરૂપ છે અને ભુજંગહાર ધારણ કરે છે, તેવા ભગવાન શિવને હું માતા ભવાની સાથે પ્રણામ કરું છું.",
       "description": "કોઈપણ આરતી કે પૂજનના અંતમાં બોલવામાં આવતી પરમ પવિત્ર સ્તુતિ અને દેવતાઓને પુષ્પ અર્પણ કરવાની વૈદિક મંત્રપુષ્પાંજલિ.",
-      "rules": [
-        "હાથમાં પુષ્પ અને અક્ષત ધારણ કરી બંને હાથ જોડી મંત્ર પઢો અને અંતમાં ભગવાનના ચરણોમાં પુષ્પ અર્પણ કરો."
-      ],
+      "rules": ["હાથમાં પુષ્પ અને અક્ષત ધારણ કરી બંને હાથ જોડી મંત્ર પઢો અને અંતમાં ભગવાનના ચરણોમાં પુષ્પ અર્પણ કરો."],
       "kathaSummary": [
         "॥ ભાગ ૧: કર્પૂરગૌરં સ્તુતિ ॥\n'કર્પૂરગૌરં કરુણાવતારં સંસારસારં ભુજગેન્દ્રહારમ્। સદાવસન્તં હૃદયારવિન્દે ભવં ભવાનીસહિતં નમામિ॥' - કપૂર જેવા શ્વેત અને કરુણામય મહાદેવ મારા હૃદયકમળમાં માતા પાર્વતી સાથે સદાય નિવાસ કરો.",
         "॥ ભાગ ૨: વૈદિક મંત્રપુષ્પાંજલિ ॥\n'ૐ યજ્ઞેન યજ્ઞમયજન્ત દેવાસ્તાનિ ધર્માણિ પ્રથમાન્યાસન્। તે હ નાકં મહિમાનઃ સચન્ત યત્ર પૂર્વે સાધ્યાઃ સન્તિ દેવાઃ॥' - દેવતાઓએ યજ્ઞ દ્વારા બ્રહ્માંડનું પોષણ કર્યું. એ જ ધર્મ સર્વોપરી છે. જ્યાં પૂર્વકાળના દેવતાઓ નિવાસ કરે છે, તે પરમધામને આપણે પ્રાપ્ત કરીએ.",
@@ -327,9 +326,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "Shukla Yajurveda & Shiva Stuti",
       "shlokMeaning": "Pure white as camphor, incarnation of compassion, essence of worldly existence, garlanded by the serpent king—I bow to Lord Shiva alongside Mother Bhavani.",
       "description": "The timeless verses chanted at the conclusion of every Aarti and Puja ceremony to offer fragrant flowers and seek cosmic peace.",
-      "rules": [
-        "Hold fresh flowers and unbroken rice grains in cupped hands and gently offer them at the deity's feet."
-      ],
+      "rules": ["Hold fresh flowers and unbroken rice grains in cupped hands and gently offer them at the deity's feet."],
       "kathaSummary": [
         "॥ Part 1: The Hymn of Pure Compassion ॥\n'Karpura Gauram Karunavataram Samsarasaram Bhujagendra Haram...' - Salutations to Lord Shiva, luminous like camphor, who abides forever within the lotus of the devotee's heart together with Mother Bhavani.",
         "॥ Part 2: Vedic Invocation of Righteous Action ॥\n'Om Yajnena Yajnam Ayajanta Devastani Dharmani Prathamanyasan...' - By sacred worship the divine guardians sustained the cosmos. May we attain that supreme spiritual realm where noble seers and devas dwell in perpetual light.",
@@ -344,9 +341,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "પારંપરિક સનાતન આરતી સંગ્રહ",
       "shlokMeaning": "જય ગણેશ, જય ગણેશ, જય ગણેશ દેવા! માતા જેમની પાર્વતી અને પિતા મહાદેવ છે, તેવા વિઘ્નહર્તા ગણેશજીની અમે આરતી ઉતારીએ છીએ.",
       "description": "કોઈપણ પૂજા, વિધિ કે શુભ કાર્યના આરંભ અને સમાપને ગવાતી સર્વશ્રેષ્ઠ ગણેશ આરતી. આ આરતી ગાવાથી સર્વ વિઘ્નો નાશ પામે છે.",
-      "rules": [
-        "ઘીનો દીવો પ્રગટાવી આરતી કરો અને મોદક કે લાડુનો પ્રસાદ ધરાવો."
-      ],
+      "rules": ["ઘીનો દીવો પ્રગટાવી આરતી કરો અને મોદક કે લાડુનો પ્રસાદ ધરાવો."],
       "kathaSummary": [
         "॥ પ્રથમ કડી ॥\nજય ગણેશ જય ગણેશ જય ગણેશ દેવા। માતા જાકી પાર્વતી પિતા મહાદેવા॥\nએક દન્ત દયાવન્ત ચાર ભુજાધારી। માથે સિન્દૂર સોહે મૂસે કી સવારી॥\n(અર્થ: હે ગણેશજી, આપ એકદંત, દયાળુ અને ચાર ભુજાવાળા છો. આપના મસ્તકે સિંદૂર શોભે છે અને આપ ઉંદર પર સવારી કરો છો.)",
         "॥ દ્વિતીય કડી ॥\nપાન ચઢે ફૂલ ચઢે ઔર ચઢે મેવા। લડુઅન કા ભોગ લગે સન્ત કરેં સેવા॥\nઅંધન કો આંખ દેત કોઢિન કો કાયા। બાંઝન કો પુત્ર દેત નિર્ધન કો માયા॥\n(અર્થ: આપ ભક્તોને પાન, પુષ્પ અને લાડુનો ભોગ સ્વીકારી અંધજનને દૃષ્ટિ, નિઃસંતાનને પુત્ર અને ગરીબને ધન પ્રદાન કરો છો.)",
@@ -359,9 +354,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "Traditional Sanatan Aarti Collection",
       "shlokMeaning": "Victory to Lord Ganesha, whose mother is Goddess Parvati and father is Lord Shiva. We perform Aarti unto the remover of all obstacles.",
       "description": "The beloved universal Aarti sung at the beginning and conclusion of all auspicious Vedic rituals, invoking joy, intellect, and worldly success.",
-      "rules": [
-        "Light a camphor or pure ghee lamp, ring the bell, and offer modak sweets."
-      ],
+      "rules": ["Light a camphor or pure ghee lamp, ring the bell, and offer modak sweets."],
       "kathaSummary": [
         "॥ Stanza 1: The Divine Lineage & Radiant Form ॥\n'Jai Ganesh Jai Ganesh Jai Ganesh Deva...' - Victory to Lord Ganesha, beloved son of Goddess Parvati and Lord Shiva. With single tusk, compassionate eyes, four mighty hands, vermilion forehead, riding upon His humble mouse.",
         "॥ Stanza 2: The Offerings & Miracles of Grace ॥\n'Paan Chadhe Phool Chadhe Aur Chadhe Meva...' - We offer betel leaves, fragrant blossoms, dry fruits, and sacred modakas. You bestow sight to the blind, health to the afflicted, children to the childless, and prosperity to the impoverished.",
@@ -376,9 +369,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "શિવ પુરાણ સંગ્રહ",
       "shlokMeaning": "ૐ જય શિવ ઓમકારા, ભોલે હર શિવ ઓમકારા! બ્રહ્મા, વિષ્ણુ અને સદાશિવ અર્ધાંગી ધારા.",
       "description": "ભોળાનાથ મહાદેવની દિવ્ય આરતી. સોમવારે અને પ્રદોષના દિવસે આ આરતી ગાવાથી મનોકામનાઓ પૂર્ણ થાય છે અને માનસિક શાંતિ મળે છે.",
-      "rules": [
-        "બિલ્વપત્ર, ગંગાજળ અર્પણ કરી કપૂરથી આરતી કરો."
-      ],
+      "rules": ["બિલ્વપત્ર, ગંગાજળ અર્પણ કરી કપૂરથી આરતી કરો."],
       "kathaSummary": [
         "॥ પ્રથમ કડી ॥\nૐ જય શિવ ઓમકારા, ભોલે હર શિવ ઓમકારા। બ્રહ્મા વિષ્ણુ સદાશિવ અર્ધાંગી ધારા॥\n(અર્થ: ૐકાર સ્વરૂપ ભગવાન શિવની જય હો! આપનામાં જ બ્રહ્મા, વિષ્ણુ અને મહેશ ત્રણેય દિવ્ય શક્તિઓ સમાયેલી છે.)",
         "॥ દ્વિતીય કડી ॥\nએકાનન ચતુરનન પંચાનન રાજે। હંસાસન ગરુડાસન વૃષવાહન સાજે॥\nબે ભુજ ચાર ચતુર્ભુજ દસ ભુજ અતિ સોહે। ત્રિગુણ રૂપ નિરખતા ત્રિભુવન જન મોહે॥\n(અર્થ: એક મુખ (વિષ્ણુ), ચાર મુખ (બ્રહ્મા) અને પાંચ મુખ (શિવ) સાથે આપ નંદી પર બિરાજમાન છો. આપનું ત્રિગુણ સ્વરૂપ ત્રણેય લોકને મોહિત કરે છે.)",
@@ -391,9 +382,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "Shiva Purana Collection",
       "shlokMeaning": "Glory to Lord Shiva, the embodiment of Omkara! Brahma, Vishnu, and Sadashiva unite in His cosmic harmony.",
       "description": "The sublime evening hymn to Lord Shiva sung in temples worldwide, bringing profound peace, fearless confidence, and spiritual liberation.",
-      "rules": [
-        "Offer Bilva leaves and holy water, performing Aarti with pure burning camphor."
-      ],
+      "rules": ["Offer Bilva leaves and holy water, performing Aarti with pure burning camphor."],
       "kathaSummary": [
         "॥ Stanza 1: The Cosmic Harmony of Omkara ॥\n'Om Jai Shiv Omkara, Bhole Har Shiv Omkara...' - Hail Lord Shiva, the eternal cosmic resonance. In You converge Brahma the creator, Vishnu the preserver, and Sadashiva the supreme liberator.",
         "॥ Stanza 2: The Multi-Faced Cosmic Forms ॥\n'Ekanana Chaturanana Panchanana Raje...' - Manifesting as single-faced, four-faced, and five-faced; mounted on swan, eagle, and Nandi bull; with two, four, and ten arms holding trident, drum, and fire. The three worlds revere Your cosmic dance.",
@@ -408,9 +397,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "શ્રી સૂક્ત અને પદ્મ પુરાણ",
       "shlokMeaning": "ૐ જય લક્ષ્મી માતા, મૈયા જય લક્ષ્મી માતા! તુમકો નિશદિન સેવત, હરિ વિષ્ણુ વિધાતા.",
       "description": "દીપાવલી, શુક્રવાર અને ધનતેરસના દિવસે ગવાતી માતા લક્ષ્મીની પરમ પવિત્ર આરતી. આનાથી ઘરમાં કદી દરિદ્રતા આવતી નથી.",
-      "rules": [
-        "કમળનું પુષ્પ, અક્ષત, ખીર અર્પણ કરી ઘીના દીવાથી આરતી કરો."
-      ],
+      "rules": ["કમળનું પુષ્પ, અક્ષત, ખીર અર્પણ કરી ઘીના દીવાથી આરતી કરો."],
       "kathaSummary": [
         "॥ પ્રથમ કડી ॥\nૐ જય લક્ષ્મી માતા, મૈયા જય લક્ષ્મી માતા। તુમકો નિશદિન સેવત, હરિ વિષ્ણુ વિધાતા॥\n(અર્થ: હે મહાલક્ષ્મી માતા, આપની જય હો! ભગવાન શ્રી હરિ વિષ્ણુ સદાય આપની સેવા અને આરાધના કરે છે.)",
         "॥ દ્વિતીય કડી ॥\nઉમા રમા બ્રહ્માણી, તુમ હી જગમાતા। સૂર્ય-ચન્દ્રમા ધ્યાવત, નારદ ઋષિ ગાતા॥\nદુર્ગારૂપ નિરંજની, સુખ-સમ્પત્તિ દાતા। જો કોઈ તુમકો ધ્યાવત, ઋદ્ધિ-સિદ્ધિ ધન પાતા॥\n(અર્થ: આપ જ પાર્વતી, લક્ષ્મી અને સરસ્વતી રૂપે સમસ્ત સંસારના માતા છો. આપની કૃપાથી સાધકને સુખ, સમૃદ્ધિ અને અખંડ ઐશ્વર્ય મળે છે.)",
@@ -423,9 +410,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "Shri Suktam & Padma Purana",
       "shlokMeaning": "Glory to Mother Lakshmi, served continuously by Lord Vishnu, bestower of spiritual and material abundance.",
       "description": "The radiant hymn dedicated to Goddess Lakshmi sung on Diwali, Fridays, and Dhanteras to invite auspiciousness, harmony, and righteous prosperity.",
-      "rules": [
-        "Offer fresh lotus or red flowers, milk sweets, and perform Aarti with a pure ghee wick."
-      ],
+      "rules": ["Offer fresh lotus or red flowers, milk sweets, and perform Aarti with a pure ghee wick."],
       "kathaSummary": [
         "॥ Stanza 1: Sovereign Consort of Lord Vishnu ॥\n'Om Jai Lakshmi Mata, Maiya Jai Lakshmi Mata...' - Victory to Mother Lakshmi, reverently served day and night by Lord Vishnu and the cosmic guardians.",
         "॥ Stanza 2: The Mother of Cosmic Manifestations ॥\n'Uma Rama Brahmani, Tum Hi Jagmata...' - You embody Uma, Rama, and Brahmani as the single mother of all realms. Sages and celestial lights meditate upon Your boundless grace.",
@@ -440,9 +425,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "રામચરિતમાનસ સંગ્રહ",
       "shlokMeaning": "આરતી કરો પવનપુત્ર હનુમાન લાલાની, જે દુષ્ટોનું દલન કરનારા અને શ્રી રામના પરમ ભક્ત છે.",
       "description": "સંકટમોચન હનુમાનજીની આ આરતી મંગળવાર અને શનિવારે ગાવાથી સર્વ ભય, રોગ, શનિદોષ અને નકારાત્મક શક્તિઓ નાશ પામે છે.",
-      "rules": [
-        "સિંદૂર, ચમેલીનું તેલ, લાલ પુષ્પ અને બૂંદી/ગોળ-ચણાનો ભોગ ધરાવો."
-      ],
+      "rules": ["સિંદૂર, ચમેલીનું તેલ, લાલ પુષ્પ અને બૂંદી/ગોળ-ચણાનો ભોગ ધરાવો."],
       "kathaSummary": [
         "॥ પ્રથમ કડી ॥\nઆરતી કીજૈ હનુમાન લલા કી। દુષ્ટ દલન રઘુનાથ કલા કી॥\nજાકે બલ સે ગિરિવર કાંપે। રોગ દોષ જાકે ઢિંગ ન ચાંપે॥\n(અર્થ: પવનપુત્ર હનુમાનજીની આરતી કરો, જેમના બાહુબળથી પર્વતો પણ ધ્રૂજે છે અને જેમનું સ્મરણ કરવાથી રોગ અને દોષ ક્યારેય નજીક આવતા નથી.)",
         "॥ દ્વિતીય કડી ॥\nઅંજની પુત્ર મહા બલદાઈ। સન્તન કે પ્રભુ સદા સહાઈ॥\nદે બીરા રઘુનાથ પઠાએ। લંકા સો કોટ સમુદ્ર લંઘાએ॥\nલંકા સી કોટ સમુદ્ર સી ખાઈ। જાત પવનસુત બાર ન લાઈ॥\n(અર્થ: અંજની માતાના પુત્ર હનુમાનજી સંતોના સદા સહાયક છે. શ્રી રામની આજ્ઞા પાળી તેમણે એક છલાંગમાં વિશાળ સમુદ્ર પાર કરી લંકા બાળી નાખી.)",
@@ -455,9 +438,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "Ramcharitmanas Collection",
       "shlokMeaning": "Perform Aarti unto the beloved Son of the Wind, Lord Hanuman, who destroys distress, overcomes negative forces, and gladdens Lord Rama.",
       "description": "The powerful protective hymn to Lord Hanuman sung on Tuesdays and Saturdays to dispel anxieties, ward off planetary afflictions, and cultivate immense inner strength.",
-      "rules": [
-        "Offer vermilion, jasmine oil, red flowers, and sweets made from jaggery and gram."
-      ],
+      "rules": ["Offer vermilion, jasmine oil, red flowers, and sweets made from jaggery and gram."],
       "kathaSummary": [
         "॥ Stanza 1: The Matchless Valor of the Son of Wind ॥\n'Aarti Kije Hanuman Lala Ki, Dusht Dalan Raghunath Kala Ki...' - Perform Aarti unto beloved child Hanuman, dispeller of wicked forces. Before His prowess mighty mountains tremble, and no disease or negative affliction dare approach His devotee.",
         "॥ Stanza 2: Crossing the Ocean & Incinerating Lanka ॥\n'Anjani Putra Maha Baldai...' - Mother Anjana's valiant son, ever the champion of righteous seekers. Undertaking Lord Rama's mission, He leaped across the vast ocean effortlessly and reduced demon king Ravana's arrogant fortress to ashes.",
@@ -616,9 +597,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "સનાતન શિવ સ્તુતિ પરંપરા",
       "shlokMeaning": "હે શિવ! આપના અપરંપાર મહિમાની સ્તુતિ કરવા બ્રહ્માદિ દેવો પણ અસમર્થ છે, તો મારી આ વાણી જો આપનું ગુણગાન કરે તો તેમાં કોઈ દોષ નથી.",
       "description": "પુષ્પદંત નામના ગંધર્વે રચેલું શિવ મહિમ્ન સ્તોત્ર સંસ્કૃત સાહિત્યનું સૌથી સુંદર અને શક્તિશાળી સ્તોત્ર ગણાય છે. આ સ્તોત્રના નિયમિત પાઠથી સર્વ પાપ નષ્ટ થાય છે.",
-      "rules": [
-        "પ્રભાતે કે પ્રદોષ કાળમાં શિવલિંગ સામે બેસી પવિત્ર મનથી પાઠ કરો."
-      ],
+      "rules": ["પ્રભાતે કે પ્રદોષ કાળમાં શિવલિંગ સામે બેસી પવિત્ર મનથી પાઠ કરો."],
       "kathaSummary": [
         "॥ ભાગ ૧: પુષ્પદંત ગંધર્વ અને રાજા ચિત્રરથનું શિવ-ઉદ્યાન ॥\nદેવરાજ ઇન્દ્રની સભાનો મુખ્ય ગાયક પુષ્પદંત ગંધર્વ શિવજીનો પરમ ભક્ત હતો. કાશીના રાજા ચિત્રરથના સુંદર બગીચામાંથી રોજ તાજા ફૂલો ચૂંટી તે શિવપૂજા કરતો. અદ્રશ્ય થવાની વિદ્યાના કારણે કોઈ તેને પકડી શકતું નહોતું.",
         "॥ ભાગ ૨: શિવ નિર્માલ્યનું ઉલ્લંઘન અને શક્તિ-હરણ ॥\nચોરી પકડવા રાજાએ બગીચાના રસ્તા પર ભગવાન શિવ પર ચઢાવેલા નિર્માલ્ય બિલ્વપત્ર અને પુષ્પો પાથરી દીધા. અજાણતા પુષ્પદંતના પગ શિવ નિર્માલ્ય પર પડ્યા અને તેનું ઘોર અપમાન થતાં તેની અદ્રશ્ય થવાની અને ઉડવાની દિવ્ય શક્તિ તત્કાળ નાશ પામી.",
@@ -631,9 +610,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "Sanatan Shaiva Stuti Tradition",
       "shlokMeaning": "O Lord Shiva! If even Brahma and the great gods cannot fathom the outer boundaries of Your glory, then my humble effort to praise You is blameless.",
       "description": "Composed by Gandharva king Pushpadanta, this hymn is universally acknowledged as one of the most sublime philosophical and poetic masterpieces in Sanskrit.",
-      "rules": [
-        "Chant in the peaceful morning twilight or during Pradosha before a consecrated Shivalinga."
-      ],
+      "rules": ["Chant in the peaceful morning twilight or during Pradosha before a consecrated Shivalinga."],
       "kathaSummary": [
         "॥ Part 1: Pushpadanta's Invisible Theft in King Chitraratha's Garden ॥\nPushpadanta, the celestial king of Gandharvas, was an ardent devotee of Lord Shiva. Each dawn he used his power of invisibility to pluck divine blossoms from King Chitraratha's royal gardens to worship Mahadeva, baffling the royal guards.",
         "॥ Part 2: The Desecration of Nirmalya & Loss of Mystic Powers ॥\nTo catch the unseen intruder, the wise king scattered previously offered sacred Bilva leaves (Nirmalya) across garden paths. Unwittingly stepping upon the sanctified offerings, Pushpadanta committed sacrilege and instantly forfeited his celestial flying powers.",
@@ -648,9 +625,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "સનાતન સ્મૃતિ અને નિત્યકર્મ વિધિ",
       "shlokMeaning": "હાથના અગ્રભાગમાં લક્ષ્મી, મધ્યમાં સરસ્વતી અને મૂળમાં બ્રહ્મા-ગોવિંદનો વાસ છે, તેથી પ્રભાતે હથેળીઓનું દર્શન કરવું જોઈએ.",
       "description": "સવારથી રાત સુધી આપણા રોજીંદા કાર્યોને પવિત્ર યજ્ઞ બનાવતા દૈનિક શ્લોકો. જાગતી વખતે, પૃથ્વી સ્પર્શ, સ્નાન, ભોજન અને રાત્રે સૂતી વખતના મંત્રો.",
-      "rules": [
-        "રોજ સવારે પથારીમાં જાગતાં જ હથેળીઓ જોડી આંખો ખોલો."
-      ],
+      "rules": ["રોજ સવારે પથારીમાં જાગતાં જ હથેળીઓ જોડી આંખો ખોલો."],
       "kathaSummary": [
         "॥ ૧. પ્રભાત કર દર્શન શ્લોક ॥\n'કરાગ્રે વસતે લક્ષ્મીઃ કરમધ્યે સરસ્વતી। કરમૂલે સ્થિતો બ્રહ્મા પ્રભાતે કરદર્શનમ્॥'\n(અર્થ: હથેળીના અગ્રભાગમાં ધનદાત્રી લક્ષ્મી, મધ્યમાં વિદ્યાદાત્રી સરસ્વતી અને મૂળમાં બ્રહ્મા-વિષ્ણુ રહે છે. સવારે ઊઠતાં જ પોતાના હાથનું દર્શન કરી દિવસનો પ્રારંભ કરો.)",
         "॥ ૨. પૃથ્વી ક્ષમા યાચના શ્લોક ॥\n'સમુદ્રવસને દેવી પર્વતસ્તનમંડલે। વિષ્ણુપત્નિ નમસ્તુભ્યં પાદસ્પર્શં ક્ષમસ્વમે॥'\n(અર્થ: સમુદ્ર રૂપી વસ્ત્રો ધારણ કરનારી અને વિષ્ણુપ્રિયા એવી પૃથ્વી માતા! મારા પગ આપના પર મૂકવા બદલ મને ક્ષમા કરો.)",
@@ -664,9 +639,7 @@ export const KATHA_TRANSLATIONS: Record<
       "vedaSource": "Sanatan Smriti & Nityakarma Traditions",
       "shlokMeaning": "At the fingertips dwells Lakshmi, in the palm dwells Saraswati, at the base dwells Govinda; therefore contemplate your palms upon awakening.",
       "description": "The essential daily mantras for contemplation upon rising, stepping on Mother Earth, taking meals, and surrendering to sleep at night.",
-      "rules": [
-        "Open your eyes at dawn directly facing joined palms and recite the Karadarshana verse."
-      ],
+      "rules": ["Open your eyes at dawn directly facing joined palms and recite the Karadarshana verse."],
       "kathaSummary": [
         "॥ 1. Morning Palm Contemplation (Karadarshana) ॥\n'Karagre Vasate Lakshmi Kara-madhye Saraswati, Kara-mule Tu Govindah Prabhate Karadarshanam.'\n(Meaning: At the tips of my fingers resides Lakshmi; in the middle dwells Saraswati; at the base rests Govinda. I gaze upon my palms at dawn to align my deeds with righteousness and virtue.)",
         "॥ 2. Reverence & Forgiveness to Mother Earth ॥\n'Samudra Vasane Devi Parvata Stana Mandale, Vishnu Patni Namastubhyam Pada Sparsham Kshamasva Me.'\n(Meaning: O Mother Earth, robed by the vast oceans, sacred consort of Lord Vishnu, please forgive me as my feet step upon You today.)",
@@ -676,6 +649,8 @@ export const KATHA_TRANSLATIONS: Record<
     }
   }
 }
+
+footer_ts = """
 
 export function getLocalizedVratKathaItem(item: VratKathaItem, lang: string): VratKathaItem {
   if (lang === 'hi') {
@@ -696,3 +671,11 @@ export function getLocalizedVratKathaItem(item: VratKathaItem, lang: string): Vr
     katha: trans.kathaSummary && trans.kathaSummary.length > 0 ? trans.kathaSummary : item.katha,
   };
 }
+"""
+
+with open('src/services/vratKathaMultilingual.ts', 'w', encoding='utf-8') as f:
+    f.write(data_ts_header)
+    f.write(json.dumps(translations, indent=2, ensure_ascii=False))
+    f.write(footer_ts)
+
+print("Successfully written vratKathaMultilingual.ts with all 18 items!")

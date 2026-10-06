@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { saveAppReminder } from '../services/storage';
 import { getGoogleCalendarUrl, generateSingleEventICS, downloadICSBlob } from '../services/calendarExport';
+import { useLanguage } from '../i18n';
+import { trVedic } from '../i18n/vedicTranslate';
 
 interface KalnirnayMonthViewProps {
   currentDate: Date;
@@ -31,6 +33,7 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
   onDateSelect,
   onNavigateToReminders,
 }) => {
+  const { language } = useLanguage();
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear() || 2026);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() || 8); // 0-indexed
   const [selectedDayNumber, setSelectedDayNumber] = useState<number>(currentDate.getDate() || 1);
@@ -71,6 +74,38 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
     'नवम्बर (कार्तिक - मार्गशीर्ष)',
     'दिसम्बर (मार्गशीर्ष - पौष)',
   ];
+
+  const GUJARATI_MONTHS = [
+    'જાન્યુઆરી (પોષ - મહા)',
+    'ફેબ્રુઆરી (મહા - ફાગણ)',
+    'માર્ચ (ફાગણ - ચૈત્ર)',
+    'એપ્રિલ (ચૈત્ર - વૈશાખ)',
+    'મે (વૈશાખ - જેઠ)',
+    'જૂન (જેઠ - અષાઢ)',
+    'જુલાઈ (અષાઢ - શ્રાવણ)',
+    'ઓગસ્ટ (શ્રાવણ - ભાદરવો)',
+    'સપ્ટેમ્બર (ભાદરવો - આસો)',
+    'ઓક્ટોબર (આસો - કારતક)',
+    'નવેમ્બર (કારતક - માગશર)',
+    'ડિસેમ્બર (માગશર - પોષ)',
+  ];
+
+  const ENGLISH_MONTHS = [
+    'January (Pausha - Magha)',
+    'February (Magha - Phalguna)',
+    'March (Phalguna - Chaitra)',
+    'April (Chaitra - Vaishakha)',
+    'May (Vaishakha - Jyeshtha)',
+    'June (Jyeshtha - Ashadha)',
+    'July (Ashadha - Shravana)',
+    'August (Shravana - Bhadrapada)',
+    'September (Bhadrapada - Ashwin)',
+    'October (Ashwin - Kartika)',
+    'November (Kartika - Margashirsha)',
+    'December (Margashirsha - Pausha)',
+  ];
+
+  const localizedMonthOptions = language === 'gu' ? GUJARATI_MONTHS : language === 'en' ? ENGLISH_MONTHS : HINDI_MONTHS;
 
   // Navigation handlers
   const handlePrevMonth = () => {
@@ -147,11 +182,15 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-[#B56A00]" />
               <h2 className="text-base sm:text-xl font-bold font-granth text-[#5C3A21]">
-                मासिक पंचांग (Monthly Calendar)
+                {language === 'gu'
+                  ? 'માસિક પંચાંગ કેલેન્ડર'
+                  : language === 'en'
+                  ? 'Monthly Panchang Calendar'
+                  : 'मासिक पंचांग (Monthly Calendar)'}
               </h2>
             </div>
             <p className="text-xs text-[#735133] mt-0.5">
-              {monthData.monthNameHindi} • विक्रम संवत {monthData.vikramSamvat} • शक संवत {selectedYear - 78}
+              {trVedic(monthData.monthNameHindi)} • {language === 'gu' ? 'વિક્રમ સંવત' : language === 'en' ? 'Vikram Samvat' : 'विक्रम संवत'} {monthData.vikramSamvat} • {language === 'gu' ? 'શક સંવત' : language === 'en' ? 'Shaka Samvat' : 'शक संवत'} {selectedYear - 78}
             </p>
           </div>
 
@@ -161,10 +200,10 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
               type="button"
               onClick={handlePrevMonth}
               className="p-1.5 sm:px-2.5 sm:py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer active:scale-95"
-              title="पिछला माह"
+              title={language === 'gu' ? 'પાછલો માસ' : language === 'en' ? 'Previous Month' : 'पिछला माह'}
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">पिछला माह</span>
+              <span className="hidden sm:inline">{language === 'gu' ? 'પાછલો માસ' : language === 'en' ? 'Prev' : 'पिछला माह'}</span>
             </button>
 
             <button
@@ -172,16 +211,16 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
               onClick={handleGoToday}
               className="px-2.5 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] border border-[#B56A00] text-xs font-bold rounded-lg transition shadow-xs cursor-pointer active:scale-95"
             >
-              आज
+              {language === 'gu' ? 'આજે' : language === 'en' ? 'Today' : 'आज'}
             </button>
 
             <button
               type="button"
               onClick={handleNextMonth}
               className="p-1.5 sm:px-2.5 sm:py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer active:scale-95"
-              title="अगला माह"
+              title={language === 'gu' ? 'આગલો માસ' : language === 'en' ? 'Next Month' : 'अगला माह'}
             >
-              <span className="hidden sm:inline">अगला माह</span>
+              <span className="hidden sm:inline">{language === 'gu' ? 'આગલો માસ' : language === 'en' ? 'Next' : 'अगला माह'}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -190,20 +229,20 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
         {/* Dropdowns for Year & Month Jump */}
         <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-[#8C6239]/20">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-bold text-[#5C3A21]">माह:</label>
+            <label className="text-xs font-bold text-[#5C3A21]">{language === 'gu' ? 'માસ:' : language === 'en' ? 'Month:' : 'माह:'}</label>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="bg-[#F4E8D1] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-[#B56A00] outline-hidden cursor-pointer"
             >
-              {HINDI_MONTHS.map((mName, idx) => (
+              {localizedMonthOptions.map((mName, idx) => (
                 <option key={idx} value={idx}>
                   {mName}
                 </option>
               ))}
             </select>
 
-            <label className="text-xs font-bold text-[#5C3A21] ml-1">वर्ष:</label>
+            <label className="text-xs font-bold text-[#5C3A21] ml-1">{language === 'gu' ? 'વર્ષ:' : language === 'en' ? 'Year:' : 'वर्ष:'}</label>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -211,7 +250,7 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
             >
               {yearOptions.map((y) => (
                 <option key={y} value={y}>
-                  {y} ई.
+                  {y} {language === 'en' ? 'CE' : 'ई.'}
                 </option>
               ))}
             </select>
@@ -219,14 +258,14 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
 
           {/* Filter Pills */}
           <div className="flex flex-wrap items-center gap-1 text-xs">
-            <span className="text-[11px] font-bold text-[#8C6239] mr-1 hidden sm:inline">फ़िल्टर:</span>
+            <span className="text-[11px] font-bold text-[#8C6239] mr-1 hidden sm:inline">{language === 'gu' ? 'ફિલ્ટર:' : language === 'en' ? 'Filter:' : 'फ़िल्टर:'}</span>
             {[
-              { id: 'all', label: 'सभी दिन' },
-              { id: 'ekadashi', label: 'एकादशी व्रत' },
-              { id: 'pradosh', label: 'प्रदोष व्रत' },
-              { id: 'purnima_amavasya', label: 'पूर्णिमा / अमावस्या' },
-              { id: 'festivals', label: 'पर्व व त्यौहार' },
-              { id: 'sunday', label: 'रविवार अवकाश' },
+              { id: 'all', label: language === 'gu' ? 'બધા દિવસો' : language === 'en' ? 'All Days' : 'सभी दिन' },
+              { id: 'ekadashi', label: language === 'gu' ? 'એકાદશી વ્રત' : language === 'en' ? 'Ekadashi' : 'एकादशी व्रत' },
+              { id: 'pradosh', label: language === 'gu' ? 'પ્રદોષ વ્રત' : language === 'en' ? 'Pradosh' : 'प्रदोष व्रत' },
+              { id: 'purnima_amavasya', label: language === 'gu' ? 'પૂનમ / અમાસ' : language === 'en' ? 'Purnima / Amavasya' : 'पूर्णिमा / अमावस्या' },
+              { id: 'festivals', label: language === 'gu' ? 'પર્વ અને તહેવારો' : language === 'en' ? 'Festivals' : 'पर्व व त्यौहार' },
+              { id: 'sunday', label: language === 'gu' ? 'રવિવાર રજા' : language === 'en' ? 'Sundays' : 'रविवार अवकाश' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -250,34 +289,35 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
         {/* Days Header */}
         <div className="grid grid-cols-7 border-b-2 border-[#8C6239]/40 text-center text-xs font-black">
           <div className="py-2.5 bg-[#8B1E1E] text-white border-r border-[#8C6239]/30">
-            <span className="block sm:hidden">रवि</span>
-            <span className="hidden sm:block">रविवार (Sun)</span>
+            <span className="block sm:hidden">{language === 'gu' ? 'રવિ' : language === 'en' ? 'Sun' : 'रवि'}</span>
+            <span className="hidden sm:block">{language === 'gu' ? 'રવિવાર (Sun)' : language === 'en' ? 'Sunday' : 'रविवार (Sun)'}</span>
           </div>
           <div className="py-2.5 bg-[#5C3A21] text-[#FFD88A] border-r border-[#8C6239]/30">
-            <span className="block sm:hidden">सोम</span>
-            <span className="hidden sm:block">सोमवार (Mon)</span>
+            <span className="block sm:hidden">{language === 'gu' ? 'સોમ' : language === 'en' ? 'Mon' : 'सोम'}</span>
+            <span className="hidden sm:block">{language === 'gu' ? 'સોમવાર (Mon)' : language === 'en' ? 'Monday' : 'सोमवार (Mon)'}</span>
           </div>
           <div className="py-2.5 bg-[#5C3A21] text-[#FFD88A] border-r border-[#8C6239]/30">
-            <span className="block sm:hidden">मंगल</span>
-            <span className="hidden sm:block">मंगलवार (Tue)</span>
+            <span className="block sm:hidden">{language === 'gu' ? 'મંગળ' : language === 'en' ? 'Tue' : 'मंगल'}</span>
+            <span className="hidden sm:block">{language === 'gu' ? 'મંગળવાર (Tue)' : language === 'en' ? 'Tuesday' : 'मंगलवार (Tue)'}</span>
           </div>
           <div className="py-2.5 bg-[#5C3A21] text-[#FFD88A] border-r border-[#8C6239]/30">
-            <span className="block sm:hidden">बुध</span>
-            <span className="hidden sm:block">बुधवार (Wed)</span>
+            <span className="block sm:hidden">{language === 'gu' ? 'બુધ' : language === 'en' ? 'Wed' : 'बुध'}</span>
+            <span className="hidden sm:block">{language === 'gu' ? 'બુધવાર (Wed)' : language === 'en' ? 'Wednesday' : 'बुधवार (Wed)'}</span>
           </div>
           <div className="py-2.5 bg-[#5C3A21] text-[#FFD88A] border-r border-[#8C6239]/30">
-            <span className="block sm:hidden">गुरु</span>
-            <span className="hidden sm:block">गुरुवार (Thu)</span>
+            <span className="block sm:hidden">{language === 'gu' ? 'ગુરુ' : language === 'en' ? 'Thu' : 'गुरु'}</span>
+            <span className="hidden sm:block">{language === 'gu' ? 'ગુરુવાર (Thu)' : language === 'en' ? 'Thursday' : 'गुरुवार (Thu)'}</span>
           </div>
           <div className="py-2.5 bg-[#5C3A21] text-[#FFD88A] border-r border-[#8C6239]/30">
-            <span className="block sm:hidden">शुक्र</span>
-            <span className="hidden sm:block">शुक्रवार (Fri)</span>
+            <span className="block sm:hidden">{language === 'gu' ? 'શુક્ર' : language === 'en' ? 'Fri' : 'शुक्र'}</span>
+            <span className="hidden sm:block">{language === 'gu' ? 'શુક્રવાર (Fri)' : language === 'en' ? 'Friday' : 'शुक्रवार (Fri)'}</span>
           </div>
           <div className="py-2.5 bg-[#5C3A21] text-[#FFD88A]">
-            <span className="block sm:hidden">शनि</span>
-            <span className="hidden sm:block">शनिवार (Sat)</span>
+            <span className="block sm:hidden">{language === 'gu' ? 'શનિ' : language === 'en' ? 'Sat' : 'शनि'}</span>
+            <span className="hidden sm:block">{language === 'gu' ? 'શનિવાર (Sat)' : language === 'en' ? 'Saturday' : 'शनिवार (Sat)'}</span>
           </div>
         </div>
+
 
         {/* Days Grid Cells */}
         <div className="grid grid-cols-7 divide-x divide-y divide-[#8C6239]/20 bg-[#FDFBF7]">
@@ -384,7 +424,7 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
                   {/* Additional event count pill if multiple */}
                   {day.festivals.length > 1 && (
                     <div className="text-[8px] text-[#8C6239] font-bold text-center">
-                      +{day.festivals.length - 1} और
+                      +{day.festivals.length - 1} {language === 'gu' ? 'વધુ' : language === 'en' ? 'more' : 'और'}
                     </div>
                   )}
                 </div>
@@ -394,26 +434,26 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
         </div>
       </div>
 
-      {/* 3. Selected Day Detailed Sheet (दैनिक विस्तृत पत्रक) */}
+      {/* 3. Selected Day Detailed Sheet (દૈનિક વિગતવાર પત્રક) */}
       {selectedDay && (
         <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#8C6239]/20 pb-3">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-black text-[#B56A00]">
-                  {selectedDay.dayNumber} {monthData.monthNameHindi.split(' ')[0]} {selectedYear}
+                  {selectedDay.dayNumber} {localizedMonthOptions[selectedMonth].split(' ')[0]} {selectedYear}
                 </span>
                 <span className="text-xs font-bold px-2 py-0.5 bg-[#5C3A21] text-[#FFD88A] rounded-md">
-                  {selectedDay.weekdayName}
+                  {trVedic(selectedDay.weekdayName)}
                 </span>
                 {selectedDay.isToday && (
                   <span className="text-xs font-bold px-2 py-0.5 bg-emerald-700 text-white rounded-md">
-                    आज का दिन
+                    {language === 'gu' ? 'આજનો દિવસ' : language === 'en' ? 'Today' : 'आज का दिन'}
                   </span>
                 )}
               </div>
               <p className="text-xs text-[#735133] mt-0.5">
-                {selectedDay.paksha} • तिथि: <strong>{selectedDay.tithiName}</strong> • नक्षत्र: <strong>{selectedDay.nakshatra}</strong> • चंद्र राशि: <strong>{selectedDay.moonRashi}</strong>
+                {trVedic(selectedDay.paksha)} • {language === 'gu' ? 'તિથિ:' : language === 'en' ? 'Tithi:' : 'तिथि:'} <strong>{trVedic(selectedDay.tithiName)}</strong> • {language === 'gu' ? 'નક્ષત્ર:' : language === 'en' ? 'Nakshatra:' : 'नक्षत्र:'} <strong>{trVedic(selectedDay.nakshatra)}</strong> • {language === 'gu' ? 'ચંદ્ર રાશિ:' : language === 'en' ? 'Moon Sign:' : 'चंद्र राशि:'} <strong>{trVedic(selectedDay.moonRashi)}</strong>
               </p>
             </div>
 
@@ -424,10 +464,10 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
                   type="button"
                   onClick={() => onDateSelect(selectedDay.date)}
                   className="px-3 py-1.5 bg-[#8B1E1E] hover:bg-[#701515] text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-                  title="इस तिथि का संपूर्ण दैनिक पंचांग देखें"
+                  title="View Daily Panchang"
                 >
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>दैनिक पंचांग देखें</span>
+                  <span>{language === 'gu' ? 'દૈનિક પંચાંગ જુઓ' : language === 'en' ? 'View Daily Panchang' : 'दैनिक पंचांग देखें'}</span>
                 </button>
               )}
 
@@ -435,17 +475,17 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
                 type="button"
                 onClick={() => handleAddReminder(selectedDay)}
                 className="px-2.5 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer active:scale-95"
-                title="इस व्रत या पर्व का रिमाइंडर जोड़ें"
+                title="Add Reminder"
               >
                 {addedReminderId === String(selectedDay.dayNumber) ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-700" />
-                    <span className="text-emerald-700">जोड़ा गया!</span>
+                    <span className="text-emerald-700">{language === 'gu' ? 'ઉમેરાઈ ગયું!' : language === 'en' ? 'Added!' : 'जोड़ा गया!'}</span>
                   </>
                 ) : (
                   <>
                     <Bell className="w-3.5 h-3.5 text-[#B56A00]" />
-                    <span>रिमाइंडर</span>
+                    <span>{language === 'gu' ? 'રિમાઇન્ડર' : language === 'en' ? 'Reminder' : 'रिमाइंडर'}</span>
                   </>
                 )}
               </button>
@@ -454,10 +494,10 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
                 type="button"
                 onClick={() => handleExportICS(selectedDay)}
                 className="px-2.5 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer active:scale-95"
-                title=".ICS कैलेंडर फ़ाइल डाउनलोड करें"
+                title="Download .ICS Calendar"
               >
                 <Download className="w-3.5 h-3.5 text-[#5C3A21]" />
-                <span>कैलेंडर (.ics)</span>
+                <span>{language === 'gu' ? 'કેલેન્ડર (.ics)' : language === 'en' ? 'Calendar (.ics)' : 'कैलेंडर (.ics)'}</span>
               </button>
             </div>
           </div>
@@ -466,8 +506,13 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
           <div className="space-y-2.5">
             <h4 className="text-xs font-bold font-granth text-[#5C3A21] uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-[#B56A00]" />
-              इस तिथि के पावन पर्व, व्रत एवं धार्मिक महत्व
+              {language === 'gu'
+                ? 'આ તિથિના પાવન પર્વ, વ્રત અને ધાર્મિક મહત્વ'
+                : language === 'en'
+                ? 'Sacred Festivals, Vrats and Significance for this Date'
+                : 'इस तिथि के पावन पर्व, व्रत एवं धार्मिक महत्व'}
             </h4>
+
 
             {selectedDay.festivals.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">

@@ -22,6 +22,8 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedKathaId, setSelectedKathaId] = useState<string | null>(null);
 
+  const [copyToast, setCopyToast] = useState<string | null>(null);
+
   const categories = useMemo(() => getLocalizedVratCategories(language), [language]);
 
   const localizedKathas = useMemo(() => {
@@ -54,12 +56,22 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({ onBackToPanchang }
         : language === 'gu' 
         ? 'વ્રત કથા અને શ્લોક ક્લિપબોર્ડ પર કોપી થઈ ગયા છે!' 
         : 'व्रत कथा एवं श्लोक क्लिपबोर्ड पर कॉपी हो गया है!';
-      alert(copiedMsg);
+      setCopyToast(copiedMsg);
+      setTimeout(() => setCopyToast(null), 2500);
     }
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-4 space-y-5 animate-in fade-in zoom-in-95 duration-200 pb-32">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-4 space-y-5 animate-in fade-in zoom-in-95 duration-200 pb-32 relative">
+      {/* Toast Notice */}
+      {copyToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="px-4 py-2 bg-emerald-800 text-white rounded-full shadow-2xl text-xs sm:text-sm font-bold flex items-center gap-2 border border-emerald-500">
+            <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+            <span>{copyToast}</span>
+          </div>
+        </div>
+      )}
       {/* Header Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#5C3A21] via-[#754622] to-[#381E0C] rounded-3xl p-6 text-[#FAF2E4] shadow-xl border border-amber-500/40 flex items-center justify-between">
         <div>

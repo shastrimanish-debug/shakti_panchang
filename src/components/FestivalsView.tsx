@@ -228,8 +228,11 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const currentLang = i18n.language || 'hi';
+  const localeCode = currentLang === 'gu' ? 'gu-IN' : currentLang === 'en' ? 'en-US' : 'hi-IN';
+
   const fmtDate = (d: Date) =>
-    d.toLocaleDateString('hi-IN', {
+    d.toLocaleDateString(localeCode, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -240,7 +243,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
     <div className="space-y-4 animate-in fade-in duration-300">
       {upcomingHindi.length > 0 && (
         <div className="bg-[#FAF2E4] border-2 border-[#B56A00]/50 rounded-xl p-3 shadow-xs">
-          <h3 className="text-sm font-black font-granth text-[#5C3A21] mb-2">{t('festivals.upcomingFestivals', 'આગામી હિન્દુ તહેવાર તિથિઓ')}</h3>
+          <h3 className="text-sm font-black font-granth text-[#5C3A21] mb-2">{t('festivals.upcomingFestivals', 'Upcoming Hindu Festivals')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {upcomingHindi.map((f) => (
               <button
@@ -251,7 +254,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
               >
                 <span className="font-black text-[#5C3A21] text-sm">{trVedic(f.hindiName)}</span>
                 <span className="text-[11px] font-bold text-[#8C6239] shrink-0">
-                  {f.date.toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', weekday: 'short' })}
+                  {f.date.toLocaleDateString(localeCode, { day: 'numeric', month: 'long', weekday: 'short' })}
                 </span>
               </button>
             ))}
