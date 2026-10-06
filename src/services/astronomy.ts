@@ -334,13 +334,13 @@ export function calculateVedicPanchang(
         ? 'पूर्णिमा'
         : 'अमावस्या'
       : TITHIS[tithiInPaksha - 1];
-  const tithiProgress = (diff % 12) / 12;
+  let tithiProgress = (diff % 12) / 12;
 
   // Nakshatra calculation (each nakshatra is 360 / 27 = 13°20')
   const nakSpan = 360 / 27;
   const nakIdx = Math.floor(moonSidereal / nakSpan) % 27;
-  const nakProgress = (moonSidereal % nakSpan) / nakSpan;
-  const pada = Math.floor(nakProgress * 4) + 1;
+  let nakProgress = (moonSidereal % nakSpan) / nakSpan;
+  let pada = Math.floor(nakProgress * 4) + 1;
 
   // Yoga calculation (each yoga is 13°20' of Moon + Sun)
   const sum = normalize360(sunSidereal + moonSidereal);
@@ -387,6 +387,22 @@ export function calculateVedicPanchang(
   } catch {
     spans = undefined;
   }
+
+  // नाम सूर्योदय वाली तिथि/नक्षत्र का रहता है। व्यतीत प्रतिशत उसी अवधि में
+  // चुने हुए क्षण का बीता हिस्सा है — सूर्योदय का कोण नहीं।
+  const elapsed = (span: { start: Date; end: Date } | undefined, fallback: number) => {
+    if (!span) return fallback;
+    const start = span.start.getTime();
+    const end = span.end.getTime();
+    if (!(end > start)) return fallback;
+    const now = date.getTime();
+    if (now <= start) return 0;
+    if (now >= end) return 1;
+    return (now - start) / (end - start);
+  };
+  tithiProgress = elapsed(spans?.tithiSpan, tithiProgress);
+  nakProgress = elapsed(spans?.nakshatraSpan, nakProgress);
+  pada = Math.min(4, Math.floor(Math.min(nakProgress, 0.999999) * 4) + 1);
 
   return {
     date,

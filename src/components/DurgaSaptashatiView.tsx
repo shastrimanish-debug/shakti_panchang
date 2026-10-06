@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { DURGA_CHAPTERS, DURGA_ANGAS, DurgaChapter, DurgaAnga } from '../data/durgaSaptashatiData';
+import { DURGA_CHAPTERS, DURGA_ANGAS } from '../data/durgaSaptashatiData';
+import { localizeAnga, localizeChapter, saptUi } from '../data/saptashatiLocale';
 import durgaPath from '../data/durgaPath.json';
 import {
   BookOpen,
@@ -27,6 +28,7 @@ const PAGE_SIZE = 10;
 
 export const DurgaSaptashatiView: React.FC = () => {
   const { language, t } = useLanguage();
+  const ui = saptUi(language);
   const [activeTab, setActiveTab] = useState<'chapters' | 'angas' | 'kunjika' | 'aarti'>('chapters');
   const [selectedChapterId, setSelectedChapterId] = useState<number>(1);
   const [selectedAngaId, setSelectedAngaId] = useState<string>('kavach');
@@ -37,6 +39,8 @@ export const DurgaSaptashatiView: React.FC = () => {
 
   const currentChapter = DURGA_CHAPTERS.find((c) => c.id === selectedChapterId) || DURGA_CHAPTERS[0];
   const currentAnga = DURGA_ANGAS.find((a) => a.id === selectedAngaId) || DURGA_ANGAS[0];
+  const chapterText = localizeChapter(currentChapter, language);
+  const angaText = localizeAnga(currentAnga, language);
   const chapterVerses = PATH[String(selectedChapterId)] || [];
   const pageCount = Math.max(1, Math.ceil(chapterVerses.length / PAGE_SIZE));
   const safePage = Math.min(versePage, pageCount - 1);
@@ -56,7 +60,7 @@ export const DurgaSaptashatiView: React.FC = () => {
   };
 
   const handleShareWhatsApp = (title: string, summary: string) => {
-    const text = `🔱 *${language === 'gu' ? 'શ્રી દુર્ગા સપ્તશતી' : language === 'en' ? 'Shri Durga Saptashati' : 'श्री दुर्गा सप्तशती'} - ${title}* 🔱\n\n${summary}\n\n(${t('common.appName', 'શક્તિ પંચાંગ')})`;
+    const text = `🔱 *${ui.shareTitle} - ${title}* 🔱\n\n${summary}\n\n(${t('common.appName', 'शक्ति पंचांग')})`;
     openWhatsAppShare(text);
   };
 
@@ -86,22 +90,14 @@ export const DurgaSaptashatiView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg sm:text-xl font-bold font-granth text-[#FFD88A]">
-                {language === 'gu'
-                  ? 'શ્રી દુર્ગા સપ્તશતી (ચંડી પાઠ)'
-                  : language === 'en'
-                  ? 'Shri Durga Saptashati (Chandi Path)'
-                  : 'श्री दुर्गा सप्तशती (चण्डी पाठ)'}
+                {ui.title}
               </h2>
               <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">
-                {language === 'gu' ? 'માર્કંડેય પુરાણ' : language === 'en' ? 'Markandeya Purana' : 'मार्कण्डेय पुराण'}
+                {ui.badge}
               </span>
             </div>
             <p className="text-xs text-[#FAF2E4]/80 mt-0.5">
-              {language === 'gu'
-                ? 'સમસ્ત વિપત્તિ નાશક, વિજય પ્રદાયક ૧૩ અધ્યાય, કવચ, અર્ગલા, કીલક અને સિદ્ધ કુંજિકા સ્તોત્ર'
-                : language === 'en'
-                ? 'Complete 13 Sacred Chapters, Kavach, Argala, Kilak & Siddha Kunjika Stotra'
-                : 'समस्त विपत्ति नाशक, विजय प्रदायक १३ अध्याय, कवच, अर्गला, कीलक व सिद्ध कुंजिका स्तोत्र'}
+              {ui.subtitle}
             </p>
           </div>
         </div>
@@ -112,7 +108,7 @@ export const DurgaSaptashatiView: React.FC = () => {
             type="button"
             onClick={() => setFontSize((s) => Math.max(13, s - 1))}
             className="p-1.5 rounded-lg bg-[#FAF2E4]/10 hover:bg-[#FAF2E4]/20 text-[#FAF2E4] text-xs flex items-center gap-1"
-            title={language === 'gu' ? 'ફોન્ટ નાના કરો' : language === 'en' ? 'Zoom Out' : 'फ़ॉन्ट छोटा करें'}
+            title={ui.zoomOut}
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
@@ -120,7 +116,7 @@ export const DurgaSaptashatiView: React.FC = () => {
             type="button"
             onClick={() => setFontSize((s) => Math.min(22, s + 1))}
             className="p-1.5 rounded-lg bg-[#FAF2E4]/10 hover:bg-[#FAF2E4]/20 text-[#FAF2E4] text-xs flex items-center gap-1"
-            title={language === 'gu' ? 'ફોન્ટ મોટા કરો' : language === 'en' ? 'Zoom In' : 'फ़ॉन्ट बड़ा करें'}
+            title={ui.zoomIn}
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
@@ -139,7 +135,7 @@ export const DurgaSaptashatiView: React.FC = () => {
           }`}
         >
           <BookOpen className="w-3.5 h-3.5 text-[#FFD88A]" />
-          <span>{language === 'gu' ? '૧૩ સંપૂર્ણ અધ્યાય' : language === 'en' ? '13 Complete Chapters' : '१३ सम्पूर्ण अध्याय'}</span>
+          <span>{ui.tabChapters}</span>
         </button>
 
         <button
@@ -152,7 +148,7 @@ export const DurgaSaptashatiView: React.FC = () => {
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5 text-[#FFD88A]" />
-          <span>{language === 'gu' ? 'કવચ, અર્ગલા અને કીલક' : language === 'en' ? 'Kavach, Argala & Kilak' : 'कवच, अर्गला व कीलक'}</span>
+          <span>{ui.tabAngas}</span>
         </button>
 
         <button
@@ -168,7 +164,7 @@ export const DurgaSaptashatiView: React.FC = () => {
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-          <span>{language === 'gu' ? 'સિદ્ધ કુંજિકા સ્તોત્ર' : language === 'en' ? 'Siddha Kunjika Stotra' : 'सिद्ध कुंजिका स्तोत्र'}</span>
+          <span>{ui.tabKunjika}</span>
         </button>
 
         <button
@@ -184,7 +180,7 @@ export const DurgaSaptashatiView: React.FC = () => {
           }`}
         >
           <Flame className="w-3.5 h-3.5 text-amber-400" />
-          <span>{language === 'gu' ? 'મા અંબે આરતી' : language === 'en' ? 'Maa Ambe Aarti' : 'माँ अम्बे आरती'}</span>
+          <span>{ui.tabAarti}</span>
         </button>
       </div>
 
@@ -208,7 +204,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                     : 'bg-[#FAF2E4] text-[#5C3A21] border border-[#8C6239]/20 hover:bg-[#F4E8D1]'
                 }`}
               >
-                {language === 'gu' ? `અધ્યાય ${chap.id}` : language === 'en' ? `Chapter ${chap.id}` : `अध्याय ${chap.id}`}
+                {ui.chapter(chap.id)}
               </button>
             ))}
           </div>
@@ -219,11 +215,10 @@ export const DurgaSaptashatiView: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#8C6239]/20 gap-2">
               <div>
                 <span className="text-[11px] font-bold text-[#B56A00] tracking-wider uppercase">
-                  {currentChapter.charitra} • {chapterVerses.length}{' '}
-                  {language === 'gu' ? 'શ્લોકો • સંપૂર્ણ પાઠ' : language === 'en' ? 'Verses • Complete Recitation' : 'श्लोक • संपूर्ण पाठ'}
+                  {chapterText.charitra} • {chapterVerses.length} {ui.versesMeta}
                 </span>
                 <h3 className="text-lg font-bold font-granth text-[#5C3A21]">
-                  {currentChapter.title} : {currentChapter.hindiTitle}
+                  {chapterText.title}: {chapterText.heading}
                 </h3>
               </div>
 
@@ -232,7 +227,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    handleToggleSpeech(chapterPathText || currentChapter.summary)
+                    handleToggleSpeech(chapterPathText || chapterText.summary)
                   }
                   className={`p-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                     isPlayingAudio
@@ -244,12 +239,12 @@ export const DurgaSaptashatiView: React.FC = () => {
                   {isPlayingAudio ? (
                     <>
                       <VolumeX className="w-3.5 h-3.5" />
-                      <span>{language === 'gu' ? 'રોકો' : language === 'en' ? 'Stop' : 'रोकें'}</span>
+                      <span>{ui.stop}</span>
                     </>
                   ) : (
                     <>
                       <Volume2 className="w-3.5 h-3.5" />
-                      <span>{language === 'gu' ? 'પાઠ સાંભળો' : language === 'en' ? 'Listen' : 'पाठ सुनें'}</span>
+                      <span>{ui.listen}</span>
                     </>
                   )}
                 </button>
@@ -258,8 +253,8 @@ export const DurgaSaptashatiView: React.FC = () => {
                   type="button"
                   onClick={() =>
                     handleShareWhatsApp(
-                      currentChapter.title + ' ' + currentChapter.hindiTitle,
-                      currentChapter.summary
+                      chapterText.title + ' ' + chapterText.heading,
+                      chapterText.summary
                     )
                   }
                   className="p-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer"
@@ -275,9 +270,9 @@ export const DurgaSaptashatiView: React.FC = () => {
               <Award className="w-4 h-4 text-[#B56A00] shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-[#8C6239]">
-                  {language === 'gu' ? 'અધ્યાય પાઠનું ફળ: ' : language === 'en' ? 'Chapter Merit & Fruit: ' : 'अध्याय पाठ का फल: '}
+                  {ui.fruit}
                 </span>
-                <span>{currentChapter.phala}</span>
+                <span>{chapterText.phala}</span>
               </div>
             </div>
 
@@ -286,14 +281,14 @@ export const DurgaSaptashatiView: React.FC = () => {
               <h4 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
                 <span>
-                  {language === 'gu' ? 'અધ્યાયનો સંક્ષિપ્ત સાર' : language === 'en' ? 'Chapter Summary' : 'अध्याय का सार संक्षेप'}
+                  {ui.summaryHead}
                 </span>
               </h4>
               <p
                 style={{ fontSize: `${fontSize}px` }}
                 className="text-[#3E2714] leading-relaxed bg-white/70 p-3.5 rounded-xl border border-[#8C6239]/15"
               >
-                {currentChapter.summary}
+                {chapterText.summary}
               </p>
             </div>
 
@@ -303,11 +298,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                 <h4 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider flex items-center gap-1.5">
                   <span>ॐ</span>
                   <span>
-                    {language === 'gu'
-                      ? `સંપૂર્ણ સંસ્કૃત પાઠ • પૃષ્ઠ ${safePage + 1}/${pageCount}`
-                      : language === 'en'
-                      ? `Complete Sanskrit Text • Page ${safePage + 1}/${pageCount}`
-                      : `संपूर्ण संस्कृत पाठ • पृष्ठ ${safePage + 1}/${pageCount}`}
+                    {ui.path(safePage + 1, pageCount)}
                   </span>
                 </h4>
                 <button
@@ -317,15 +308,11 @@ export const DurgaSaptashatiView: React.FC = () => {
                   }
                   className="px-2 py-1 rounded-lg bg-[#EADBCC] text-[#5C3A21] text-[11px] font-bold"
                 >
-                  {language === 'gu' ? 'આ પૃષ્ઠ સાંભળો' : language === 'en' ? 'Recite Page' : 'यह पृष्ठ सुनाएँ'}
+                  {ui.recitePage}
                 </button>
               </div>
               <p className="text-[11px] text-[#735133]">
-                {language === 'gu'
-                  ? 'કવચ, અર્ગલા અને કીલક સ્વતંત્ર અંગો છે.'
-                  : language === 'en'
-                  ? 'Kavach, Argala and Kilak are distinct preparatory Angas.'
-                  : `${durgaPath.source} कवच, अर्गला और कीलक अलग अंग हैं।`}
+                {ui.angaNote}
               </p>
 
               <div className="space-y-2.5">
@@ -346,7 +333,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                         type="button"
                         onClick={() => handleCopyText(shloka.text)}
                         className="p-1 rounded text-[#8C6239] hover:text-[#5C3A21] shrink-0"
-                        title={language === 'gu' ? 'કોપી કરો' : language === 'en' ? 'Copy Verse' : 'प्रतिलिपि बनाएं'}
+                        title={ui.copy}
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </button>
@@ -361,14 +348,14 @@ export const DurgaSaptashatiView: React.FC = () => {
                   onClick={() => setVersePage((p) => Math.max(0, p - 1))}
                   className="px-3 py-1.5 rounded-lg bg-[#EADBCC] text-[#5C3A21] disabled:opacity-40"
                 >
-                  {language === 'gu' ? 'પાછલા શ્લોકો' : language === 'en' ? 'Previous Verses' : 'पिछले श्लोक'}
+                  {ui.prevVerses}
                 </button>
                 <span className="text-[#8C6239]">
-                  {language === 'gu'
-                    ? `${chapterVerses.length} માંથી ${safePage * PAGE_SIZE + 1}–${Math.min(chapterVerses.length, (safePage + 1) * PAGE_SIZE)}`
-                    : language === 'en'
-                    ? `${safePage * PAGE_SIZE + 1}–${Math.min(chapterVerses.length, (safePage + 1) * PAGE_SIZE)} of ${chapterVerses.length}`
-                    : `${chapterVerses.length} में से ${safePage * PAGE_SIZE + 1}–${Math.min(chapterVerses.length, (safePage + 1) * PAGE_SIZE)}`}
+                  {ui.range(
+                    safePage * PAGE_SIZE + 1,
+                    Math.min(chapterVerses.length, (safePage + 1) * PAGE_SIZE),
+                    chapterVerses.length
+                  )}
                 </span>
                 <button
                   type="button"
@@ -376,7 +363,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                   onClick={() => setVersePage((p) => p + 1)}
                   className="px-3 py-1.5 rounded-lg bg-[#5C3A21] text-[#FAF2E4] disabled:opacity-40"
                 >
-                  {language === 'gu' ? 'આગળના શ્લોકો' : language === 'en' ? 'Next Verses' : 'अगले श्लोक'}
+                  {ui.nextVerses}
                 </button>
               </div>
 
@@ -385,14 +372,10 @@ export const DurgaSaptashatiView: React.FC = () => {
             {/* Detailed Narrative points */}
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider">
-                {language === 'gu'
-                  ? 'અધ્યાયના મુખ્ય કથા બિંદુઓ'
-                  : language === 'en'
-                  ? 'Key Narrative Highlights'
-                  : 'अध्याय की विस्तृत कथा बिंदु'}
+                {ui.points}
               </h4>
               <ul className="space-y-1.5 text-xs text-[#3E2714] list-disc list-inside bg-white/50 p-3 rounded-xl border border-[#8C6239]/15">
-                {currentChapter.detailedDescription.map((item, idx) => (
+                {chapterText.details.map((item, idx) => (
                   <li key={idx} className="leading-relaxed">
                     {item}
                   </li>
@@ -412,15 +395,11 @@ export const DurgaSaptashatiView: React.FC = () => {
                 className="px-3 py-1.5 rounded-lg bg-[#EADBCC] text-[#5C3A21] disabled:opacity-40 flex items-center gap-1 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
-                <span>{language === 'gu' ? 'પાછલો અધ્યાય' : language === 'en' ? 'Previous Chapter' : 'पिछला अध्याय'}</span>
+                <span>{ui.prevChapter}</span>
               </button>
 
               <span className="text-[#8C6239]">
-                {language === 'gu'
-                  ? `અધ્યાય ${selectedChapterId} / ${DURGA_CHAPTERS.length}`
-                  : language === 'en'
-                  ? `Chapter ${selectedChapterId} of ${DURGA_CHAPTERS.length}`
-                  : `अध्याय ${selectedChapterId} / ${DURGA_CHAPTERS.length}`}
+                {ui.chapterOf(selectedChapterId, DURGA_CHAPTERS.length)}
               </span>
 
               <button
@@ -432,7 +411,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                 }}
                 className="px-3 py-1.5 rounded-lg bg-[#5C3A21] text-[#FAF2E4] disabled:opacity-40 flex items-center gap-1 cursor-pointer"
               >
-                <span>{language === 'gu' ? 'આગળનો અધ્યાય' : language === 'en' ? 'Next Chapter' : 'अगला अध्याय'}</span>
+                <span>{ui.nextChapter}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -461,7 +440,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                         : 'bg-[#FAF2E4] text-[#5C3A21] border border-[#8C6239]/25 hover:bg-[#F4E8D1]'
                     }`}
                   >
-                    {anga.name}
+                    {localizeAnga(anga, language).name}
                   </button>
                 );
               })}
@@ -475,7 +454,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                 <h3 className="text-lg font-bold font-granth text-[#5C3A21]">
                   {currentAnga.title}
                 </h3>
-                <p className="text-xs text-[#735133] mt-0.5">{currentAnga.desc}</p>
+                <p className="text-xs text-[#735133] mt-0.5">{angaText.desc}</p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -485,7 +464,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                     handleToggleSpeech(
                       currentAnga.title +
                         '।' +
-                        currentAnga.verses.map((v) => v.sanskrit + '। ' + v.hindi).join('। ')
+                        angaText.verses.map((v) => v.sanskrit + '। ' + v.meaning).join('। ')
                     )
                   }
                   className={`p-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
@@ -497,19 +476,19 @@ export const DurgaSaptashatiView: React.FC = () => {
                   {isPlayingAudio ? (
                     <>
                       <VolumeX className="w-3.5 h-3.5" />
-                      <span>{language === 'gu' ? 'રોકો' : language === 'en' ? 'Stop' : 'रोकें'}</span>
+                      <span>{ui.stop}</span>
                     </>
                   ) : (
                     <>
                       <Volume2 className="w-3.5 h-3.5" />
-                      <span>{language === 'gu' ? 'પાઠ સાંભળો' : language === 'en' ? 'Listen' : 'पाठ सुनें'}</span>
+                      <span>{ui.listen}</span>
                     </>
                   )}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => handleShareWhatsApp(currentAnga.title, currentAnga.desc)}
+                  onClick={() => handleShareWhatsApp(currentAnga.title, angaText.desc)}
                   className="p-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer"
                   title="Share"
                 >
@@ -523,16 +502,16 @@ export const DurgaSaptashatiView: React.FC = () => {
               <Award className="w-4 h-4 text-[#B56A00] shrink-0" />
               <div>
                 <span className="font-bold text-[#8C6239]">
-                  {language === 'gu' ? 'મહાત્મ્ય અને ફળ: ' : language === 'en' ? 'Significance & Fruit: ' : 'माहात्म्य व फल: '}
+                  {ui.significance}
                 </span>
-                <span>{currentAnga.significance}</span>
+                <span>{angaText.significance}</span>
               </div>
             </div>
 
 
             {/* Verses list */}
             <div className="space-y-3">
-              {currentAnga.verses.map((verse, idx) => (
+              {angaText.verses.map((verse, idx) => (
                 <div
                   key={idx}
                   className="p-3.5 rounded-xl bg-white border border-[#8C6239]/20 space-y-2 shadow-2xs"
@@ -546,7 +525,7 @@ export const DurgaSaptashatiView: React.FC = () => {
                     </p>
                     <button
                       type="button"
-                      onClick={() => handleCopyText(verse.sanskrit + '\n\n' + verse.hindi)}
+                      onClick={() => handleCopyText(verse.sanskrit + '\n\n' + verse.meaning)}
                       className="p-1 rounded text-[#8C6239] hover:text-[#5C3A21] shrink-0"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -557,9 +536,9 @@ export const DurgaSaptashatiView: React.FC = () => {
                     className="text-[#735133] leading-relaxed pt-2 border-t border-[#8C6239]/15"
                   >
                     <strong className="text-[#5C3A21]">
-                      {language === 'en' ? 'Meaning: ' : language === 'gu' ? 'અર્થ: ' : 'अर्थ: '}
+                      {ui.meaning}
                     </strong>
-                    {verse.hindi}
+                    {verse.meaning}
                   </p>
                 </div>
               ))}
@@ -570,7 +549,7 @@ export const DurgaSaptashatiView: React.FC = () => {
 
       {copied && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-800 text-white text-xs font-bold rounded-full shadow-lg">
-          {language === 'en' ? 'Verse copied to clipboard!' : language === 'gu' ? 'શ્લોક ક્લિપબોર્ડ પર કોપી થઈ ગયો!' : 'श्लोक प्रतिलिपि हो गया!'}
+          {ui.copied}
         </div>
       )}
     </div>

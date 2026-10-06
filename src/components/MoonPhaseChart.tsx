@@ -339,7 +339,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('fill', '#E5A024')
       .attr('font-size', '11px')
       .attr('font-weight', '700')
-      .text(`तिथि व्यतीत: ${tithiProgressPct}% (${(elongationDeg % 12).toFixed(1)}° / 12°)`);
+      .text(`तिथि व्यतीत: ${tithiProgressPct}% (${(tithiProgress * 12).toFixed(1)}° / 12°)`);
 
     // Top Header In-SVG Label
     svg.append('text')
@@ -462,7 +462,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
                 <span className="text-[11px] text-[#8C6239] font-medium">रेखांश</span>
               </div>
               <span className="text-[10px] text-[#735133] block mt-1">
-                १ तिथि = १२° (वर्तमान: {(elongationDeg % 12).toFixed(2)}°)
+                १ तिथि = १२° (व्यतीत: {(tithiProgress * 12).toFixed(2)}°)
               </span>
             </div>
           </div>
