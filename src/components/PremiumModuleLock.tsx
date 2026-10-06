@@ -13,7 +13,6 @@ interface PremiumModuleLockProps {
 }
 
 export const PremiumModuleLock: React.FC<PremiumModuleLockProps> = ({
-  moduleId,
   titleKey,
   descKey,
   featureKeys,
@@ -23,15 +22,7 @@ export const PremiumModuleLock: React.FC<PremiumModuleLockProps> = ({
   const { t } = useTranslation();
   const { status } = useLicense();
 
-  const storageKey = `sp_spiritual_unlocked_${moduleId}`;
-  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
-    // If user has trial/annual license, or has explicitly unlocked this module
-    if (status.entitled) return true;
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(storageKey) === 'true';
-    }
-    return false;
-  });
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => status.entitled);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -42,26 +33,13 @@ export const PremiumModuleLock: React.FC<PremiumModuleLockProps> = ({
   }, [status.entitled]);
 
   const handleUnlockForDollar = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(storageKey, 'true');
-    }
-    setIsUnlocked(true);
-    setToastMessage(t('spiritual.unlockSuccess', 'Premium Unlocked Successfully!'));
-    setTimeout(() => setToastMessage(null), 3500);
-
     if (onOpenSubscriptionModal) {
-      // Also notify license modal if applicable
+      onOpenSubscriptionModal();
+      return;
     }
-  };
-
-  const handleToggleLockForTest = () => {
-    const nextState = !isUnlocked;
     if (typeof window !== 'undefined') {
-      localStorage.setItem(storageKey, String(nextState));
+      window.dispatchEvent(new CustomEvent('shakti-open-subscription'));
     }
-    setIsUnlocked(nextState);
-    setToastMessage(nextState ? t('spiritual.testUnlocked', 'Unlocked for Preview') : t('spiritual.testLocked', 'Locked State Activated'));
-    setTimeout(() => setToastMessage(null), 2500);
   };
 
   if (isUnlocked) {
@@ -82,15 +60,6 @@ export const PremiumModuleLock: React.FC<PremiumModuleLockProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
             <span>{t('spiritual.unlockedBadge', 'VIP Premium Module Active')}</span>
           </div>
-          <button
-            type="button"
-            onClick={handleToggleLockForTest}
-            className="text-[10px] text-[#8C6239] hover:underline flex items-center gap-1 cursor-pointer font-medium"
-            title="Toggle locked state to test locked UI"
-          >
-            <Lock className="w-3 h-3" />
-            <span>{t('spiritual.previewLockState', 'View Lock Screen')}</span>
-          </button>
         </div>
 
         {children}
@@ -156,7 +125,7 @@ export const PremiumModuleLock: React.FC<PremiumModuleLockProps> = ({
               className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-[0_6px_22px_rgba(245,158,11,0.5)] border border-amber-200 transition-all cursor-pointer active:scale-95 uma-glow-badge"
             >
               <Unlock className="w-4 h-4 text-stone-950" />
-              <span>{t('spiritual.unlockCTA', 'Unlock Premium for $1')}</span>
+              <span>{t('spiritual.unlockCTA', 'Unlock with ₹99 annual membership')}</span>
             </button>
 
             <div className="flex items-center justify-center gap-3 text-[11px] text-[#FAF2E4]/70 pt-1">

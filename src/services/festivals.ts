@@ -1,13 +1,123 @@
-import * as Astronomy from 'astronomy-engine';
 import { FestivalItem } from '../types';
-import { getSunMoonSidereal, RASHIS } from './astronomy';
+import { getSunMoonSidereal } from './astronomy';
 
 // Cache generated festivals per year for zero-latency retrieval
 const YEAR_FESTIVALS_CACHE = new Map<number, FestivalItem[]>();
 
+type WatchPoint = 'sunrise' | 'madhyahna' | 'aparahna' | 'pradosh' | 'nishita';
+
+function norm360(deg: number): number {
+  const n = deg % 360;
+  return n < 0 ? n + 360 : n;
+}
+
+function tithiIndex(date: Date): number {
+  const { sunSidereal, moonSidereal } = getSunMoonSidereal(date);
+  return Math.floor(norm360(moonSidereal - sunSidereal) / 12);
+}
+
+function sunRashiIndex(date: Date): number {
+  return Math.floor(getSunMoonSidereal(date).sunSidereal / 30) % 12;
+}
+
+/** IST civil noon, so the calendar day does not drift with the server timezone. */
+function civilNoon(year: number, month: number, day: number): Date {
+  return new Date(year, month, day, 12, 0, 0);
+}
+
+function watchInstant(year: number, month: number, day: number, when: WatchPoint): Date {
+  // Hours are UTC equivalents of India Standard Time.
+  if (when === 'sunrise') return new Date(Date.UTC(year, month, day, 0, 50, 0));
+  if (when === 'madhyahna') return new Date(Date.UTC(year, month, day, 6, 40, 0));
+  if (when === 'aparahna') return new Date(Date.UTC(year, month, day, 9, 30, 0));
+  if (when === 'pradosh') return new Date(Date.UTC(year, month, day, 13, 10, 0));
+  // Nishita of this civil date = midnight that ends the day (00:00 IST next morning).
+  return new Date(Date.UTC(year, month, day, 18, 30, 0));
+}
+
+/**
+ * First IST civil day in an inclusive window whose chosen muhurta
+ * falls in `tithi` (0 = Shukla Pratipada ... 29 = Amavasya).
+ * Optional sidereal sun rashi keeps a wide window from grabbing the wrong month.
+ */
+function findTithiDay(
+  year: number,
+  fromMonth: number,
+  fromDay: number,
+  toMonth: number,
+  toDay: number,
+  tithi: number,
+  when: WatchPoint,
+  sunRashi?: number,
+): Date | null {
+  const cursor = civilNoon(year, fromMonth, fromDay);
+  const end = civilNoon(year, toMonth, toDay);
+  while (cursor.getTime() <= end.getTime()) {
+    const month = cursor.getMonth();
+    const day = cursor.getDate();
+    const instant = watchInstant(year, month, day, when);
+    if (tithiIndex(instant) === tithi && (sunRashi === undefined || sunRashiIndex(instant) === sunRashi)) {
+      return civilNoon(year, month, day);
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return null;
+}
+
+function addDays(base: Date, days: number): Date {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+/** IST calendar day when sidereal Sun crosses `targetDeg` (0 = Mesha). */
+function solarIngressDate(year: number, targetDeg: number, fromMonth: number, toMonth: number): Date {
+  let lo = Date.UTC(year, fromMonth, 1);
+  let hi = Date.UTC(year, toMonth, 28, 18);
+  const rel = (t: number) => {
+    const sun = getSunMoonSidereal(new Date(t)).sunSidereal;
+    if (targetDeg === 0) return sun > 180 ? sun - 360 : sun;
+    return sun - targetDeg;
+  };
+  if (!(rel(lo) < 0 && rel(hi) >= 0)) {
+    lo = Date.UTC(year, fromMonth, 1) - 20 * 86400000;
+    hi = Date.UTC(year, toMonth, 28) + 20 * 86400000;
+  }
+  for (let i = 0; i < 48; i++) {
+    const mid = (lo + hi) / 2;
+    if (rel(mid) < 0) lo = mid;
+    else hi = mid;
+  }
+  const ist = new Date(hi + 5.5 * 3600000);
+  return civilNoon(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate());
+}
+
+const TITHI = {
+  pratipada: 0,
+  dwitiya: 1,
+  tritiya: 2,
+  chaturthi: 3,
+  panchami: 4,
+  shashthi: 5,
+  ashtami: 7,
+  navami: 8,
+  dashami: 9,
+  ekadashi: 10,
+  trayodashi: 12,
+  chaturdashi: 13,
+  purnima: 14,
+  krishnaChaturthi: 18,
+  krishnaAshtami: 22,
+  krishnaTrayodashi: 27,
+  krishnaChaturdashi: 28,
+  amavasya: 29,
+};
+
 /**
  * Calculates all authentic Vedic Hindu festivals, fasts, and sacred tithis
  * for ANY Gregorian year (1900 to 2150) using high-precision astronomical engine.
+ * Dates follow the muhurta on which the tithi is actually observed
+ * (sunrise, midday, afternoon, pradosh or nishita) — not "new moon instant + N days".
  */
 export function getFestivalsForYear(year: number): FestivalItem[] {
   if (YEAR_FESTIVALS_CACHE.has(year)) {
@@ -15,154 +125,64 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
   }
 
   const festivals: FestivalItem[] = [];
+  const on = (
+    fromMonth: number,
+    fromDay: number,
+    toMonth: number,
+    toDay: number,
+    tithi: number,
+    when: WatchPoint,
+    sunRashi?: number,
+  ) => findTithiDay(year, fromMonth, fromDay, toMonth, toDay, tithi, when, sunRashi);
 
-  // Helper to safely construct local Date at noon to prevent TZ edge-cases
-  const makeDate = (y: number, m: number, d: number) => new Date(y, m, d, 12, 0, 0);
+  const push = (item: FestivalItem | null) => {
+    if (item && item.date) festivals.push(item);
+  };
 
-  // -------------------------------------------------------------
-  // 1. SOLAR FESTIVALS (संक्रांति आधारित पर्व)
-  // -------------------------------------------------------------
-  // A. Makar Sankranti (Ingress of Sidereal Sun into 270 deg / Makar)
-  let msDay = 14;
-  for (let d = 13; d <= 16; d++) {
-    const testDate = new Date(Date.UTC(year, 0, d, 6, 0));
-    const { sunSidereal } = getSunMoonSidereal(testDate);
-    if (sunSidereal >= 270 && sunSidereal < 272) {
-      msDay = d;
-      break;
-    }
-  }
-  const makarSankrantiDate = makeDate(year, 0, msDay);
-  const lohriDate = makeDate(year, 0, msDay - 1);
+  const makar = solarIngressDate(year, 270, 0, 0);
+  const mesha = solarIngressDate(year, 0, 3, 3);
 
-  festivals.push({
+  push({
     id: `fest-${year}-lohri`,
-    date: lohriDate,
+    date: addDays(makar, -1),
     name: 'Lohri',
     hindiName: 'लोहड़ी',
     type: 'पर्व',
     description: 'पंजाब व उत्तर भारत का प्रमुख अग्नि पूजन व नवान्न उत्सव, मकर संक्रांति से पूर्व संध्या पर उल्लास।',
   });
-
-  festivals.push({
+  push({
     id: `fest-${year}-makar-sankranti`,
-    date: makarSankrantiDate,
+    date: makar,
     name: 'Makar Sankranti',
     hindiName: 'मकर संक्रांति',
     type: 'पर्व',
     description: 'सूर्य देव का धनु से मकर राशि में प्रवेश, उत्तरायण पुण्य काल, पवित्र गंगा स्नान, तिल-गुड़ एवं खिचड़ी दान का महापर्व।',
   });
-
-  // B. Baisakhi / Mesha Sankranti (Around April 13-14)
-  let baisakhiDay = 13;
-  for (let d = 13; d <= 15; d++) {
-    const testDate = new Date(Date.UTC(year, 3, d, 6, 0));
-    const { sunSidereal } = getSunMoonSidereal(testDate);
-    if (sunSidereal >= 0 && sunSidereal < 2) {
-      baisakhiDay = d;
-      break;
-    }
-  }
-  festivals.push({
+  push({
     id: `fest-${year}-baisakhi`,
-    date: makeDate(year, 3, baisakhiDay),
+    date: mesha,
     name: 'Baisakhi / Mesha Sankranti',
     hindiName: 'बैसाखी (मेष संक्रांति)',
     type: 'पर्व',
     description: 'सौर नववर्ष, सूर्य का मेष राशि में प्रवेश, खालसा पंथ स्थापना दिवस एवं रबी फसल कटाई का उत्सव।',
   });
 
-  // -------------------------------------------------------------
-  // 2. ASTRONOMICAL LUNAR CYCLES (अमावस्या एवं पूर्णिमा संकलन)
-  // -------------------------------------------------------------
-  // Scan moon phases from Dec 15 of previous year to Jan 15 of next year
-  const searchStart = new Date(Date.UTC(year - 1, 11, 10));
-  const searchEnd = new Date(Date.UTC(year + 1, 0, 20));
-
-  // Collect All Amavasyas with Sun's Sidereal Zodiac Sign
-  const amavasyas: { date: Date; sunRashi: string; rashiIndex: number }[] = [];
-  let curAm = searchStart;
-  while (curAm < searchEnd) {
-    const am = Astronomy.SearchMoonPhase(0, curAm, 35);
-    if (!am) break;
-    const amDate = new Date(am.date.getTime() + 5.5 * 3600000); // Convert to IST
-    const { sunSidereal } = getSunMoonSidereal(am.date);
-    const rashiIdx = Math.floor(sunSidereal / 30) % 12;
-    amavasyas.push({
-      date: makeDate(amDate.getFullYear(), amDate.getMonth(), amDate.getDate()),
-      sunRashi: RASHIS[rashiIdx],
-      rashiIndex: rashiIdx,
-    });
-    curAm = new Date(am.date.getTime() + 20 * 86400000);
-  }
-
-  // Collect All Purnimas
-  const purnimas: { date: Date; moonRashi: string; rashiIndex: number }[] = [];
-  let curPu = searchStart;
-  while (curPu < searchEnd) {
-    const pu = Astronomy.SearchMoonPhase(180, curPu, 35);
-    if (!pu) break;
-    const puDate = new Date(pu.date.getTime() + 5.5 * 3600000);
-    const { moonSidereal } = getSunMoonSidereal(pu.date);
-    const rashiIdx = Math.floor(moonSidereal / 30) % 12;
-    purnimas.push({
-      date: makeDate(puDate.getFullYear(), puDate.getMonth(), puDate.getDate()),
-      moonRashi: RASHIS[rashiIdx],
-      rashiIndex: rashiIdx,
-    });
-    curPu = new Date(pu.date.getTime() + 20 * 86400000);
-  }
-
-  // Helper to add days to a Date
-  const addDays = (base: Date, days: number) => {
-    const d = new Date(base);
-    d.setDate(d.getDate() + days);
-    return d;
-  };
-
-  // -------------------------------------------------------------
-  // 3. MAP LUNISOLAR MONTHS FOR THE YEAR
-  // -------------------------------------------------------------
-  // Amavasyas by Sun Rashi in current year:
-  // Kumbha (कुंभ) -> Phalguna Amavasya
-  // Meena (मीन) -> Chaitra Amavasya
-  // Mesha (मेष) -> Vaishakha Amavasya
-  // Vrishabha (वृषभ) -> Jyeshtha Amavasya
-  // Mithuna (मिथुन) -> Ashadha Amavasya
-  // Karka (कर्क) -> Shravana Amavasya
-  // Simha (सिंह) -> Bhadrapada Amavasya
-  // Kanya (कन्या) -> Ashwin Amavasya (Mahalaya)
-  // Tula (तुला) -> Kartika Amavasya (Diwali)
-  // Vrischika (वृश्चिक) -> Margashirsha Amavasya
-  // Dhanu (धनु) -> Pausha Amavasya
-  // Makar (मकर) -> Magha Amavasya (Mauni Amavasya)
-
-  const findAmavasya = (rashi: string) => {
-    return amavasyas.find((a) => a.sunRashi === rashi && a.date.getFullYear() === year)?.date ||
-      amavasyas.find((a) => a.sunRashi === rashi)?.date;
-  };
-
-  const findPurnimaInMonth = (approxMonth: number) => {
-    return purnimas.find((p) => p.date.getFullYear() === year && p.date.getMonth() === approxMonth)?.date;
-  };
-
-  // A. MAGHA & PHALGUNA (Jan / Feb / March)
-  const maghaAm = findAmavasya('मकर');
-  if (maghaAm && maghaAm.getFullYear() === year) {
-    festivals.push({
+  const mauni = on(0, 10, 0, 28, TITHI.amavasya, 'sunrise', 9);
+  if (mauni) {
+    push({
       id: `fest-${year}-mauni-amavasya`,
-      date: maghaAm,
+      date: mauni,
       name: 'Mauni Amavasya',
       hindiName: 'मौनी अमावस्या',
       type: 'अमावस्या',
       description: 'माघ कृष्ण अमावस्या, मौन व्रत, त्रिवेणी संगम व पवित्र नदियों में स्नान का महापुण्यकारी दिवस।',
     });
-
-    // Vasant Panchami is Shukla Panchami (approx 5 days after Magha Amavasya)
-    const vasantDate = addDays(maghaAm, 5);
-    festivals.push({
+  }
+  const vasant = on(0, 15, 1, 5, TITHI.panchami, 'sunrise');
+  if (vasant) {
+    push({
       id: `fest-${year}-vasant-panchami`,
-      date: vasantDate,
+      date: vasant,
       name: 'Vasant Panchami',
       hindiName: 'वसंत पंचमी (सरस्वती पूजा)',
       type: 'पर्व',
@@ -170,47 +190,21 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     });
   }
 
-  // Magha Purnima
-  const maghaPu = findPurnimaInMonth(1) || findPurnimaInMonth(0);
-  if (maghaPu && maghaPu.getFullYear() === year) {
-    festivals.push({
-      id: `fest-${year}-magha-purnima`,
-      date: maghaPu,
-      name: 'Magha Purnima',
-      hindiName: 'माघ पूर्णिमा (माघी पूर्णिमा)',
-      type: 'पूर्णिमा',
-      description: 'माघ मास का अंतिम महापुण्य स्नान, प्रयागराज कल्पवास का समापन एवं सत्यनारायण पूजन।',
-    });
-  }
-
-  // Phalguna Amavasya & Maha Shivratri
-  const phalgunaAm = findAmavasya('कुंभ');
-  if (phalgunaAm && phalgunaAm.getFullYear() === year) {
-    // Maha Shivratri is Krishna Chaturdashi (1 day before Phalguna Amavasya)
-    const shivratriDate = addDays(phalgunaAm, -1);
-    festivals.push({
+  const shivratri = on(1, 8, 2, 5, TITHI.krishnaChaturdashi, 'nishita');
+  if (shivratri) {
+    push({
       id: `fest-${year}-maha-shivratri`,
-      date: shivratriDate,
+      date: shivratri,
       name: 'Maha Shivratri',
       hindiName: 'महाशिवरात्रि',
       type: 'व्रत',
       description: 'फाल्गुन कृष्ण चतुर्दशी, देवाधिदेव महादेव व माता पार्वती का महाकल्याणकारी विवाह उत्सव एवं चार प्रहर रुद्राभिषेक।',
     });
-
-    festivals.push({
-      id: `fest-${year}-phalguna-amavasya`,
-      date: phalgunaAm,
-      name: 'Phalguna Amavasya',
-      hindiName: 'फाल्गुन अमावस्या',
-      type: 'अमावस्या',
-      description: 'फाल्गुन मास की दर्श अमावस्या, पितरों का तर्पण व शांति कर्म।',
-    });
   }
 
-  // Phalguna Purnima (Holi / Holika Dahan)
-  const holiPurnima = findPurnimaInMonth(2) || purnimas.find((p) => p.date.getFullYear() === year && p.date.getMonth() === 1 && p.date.getDate() > 20)?.date;
-  if (holiPurnima && holiPurnima.getFullYear() === year) {
-    festivals.push({
+  const holiPurnima = on(1, 20, 2, 12, TITHI.purnima, 'sunrise');
+  if (holiPurnima) {
+    push({
       id: `fest-${year}-holika-dahan`,
       date: holiPurnima,
       name: 'Holika Dahan',
@@ -218,8 +212,7 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       type: 'पर्व',
       description: 'फाल्गुन पूर्णिमा की संध्या, भक्त प्रह्लाद की रक्षा, अधर्म व काम-क्रोध की आहुति एवं अग्नि पूजन।',
     });
-
-    festivals.push({
+    push({
       id: `fest-${year}-holi`,
       date: addDays(holiPurnima, 1),
       name: 'Holi / Dhulandi',
@@ -229,38 +222,32 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     });
   }
 
-  // B. CHAITRA (March / April)
-  // Chaitra Navratri / Hindu New Year begins 1 day after Phalguna Amavasya (or Meena Amavasya cycle)
-  const chaitraStartAm = phalgunaAm || findAmavasya('कुंभ');
-  if (chaitraStartAm && chaitraStartAm.getFullYear() === year) {
-    const navratriStart = addDays(chaitraStartAm, 1);
+  const chaitraStart = on(2, 12, 3, 8, TITHI.pratipada, 'madhyahna', 11) || on(2, 12, 3, 8, TITHI.pratipada, 'madhyahna');
+  if (chaitraStart) {
     const samvatYear = year + 57;
-
-    festivals.push({
+    push({
       id: `fest-${year}-chaitra-navratri-start`,
-      date: navratriStart,
+      date: chaitraStart,
       name: 'Chaitra Navratri / Hindu New Year',
       hindiName: `चैत्र नवरात्रि / नव संवत्सरारंभ (वि॰सं॰ ${samvatYear})`,
       type: 'पर्व',
       description: `विक्रम संवत् ${samvatYear} का शुभारंभ, गुड़ी पड़वा, उगादी, घटस्थापना एवं शक्ति स्वरूपा मां दुर्गा की नवदिवसीय उपासना।`,
     });
-
-    // Ram Navami is 8 days after Navratri start (Navami tithi)
-    const ramNavamiDate = addDays(navratriStart, 8);
-    festivals.push({
+  }
+  const ramNavami = on(2, 20, 3, 8, TITHI.navami, 'madhyahna');
+  if (ramNavami) {
+    push({
       id: `fest-${year}-ram-navami`,
-      date: ramNavamiDate,
+      date: ramNavami,
       name: 'Ram Navami',
       hindiName: 'श्री राम नवमी',
       type: 'पर्व',
-      description: 'चैत्र शुक्ल नवमी, मर्यादा पुरुषोत्तम भगवान श्री रामचंद्र जी का पावन अवतरण दिवस।',
+      description: 'चैत्र शुक्ल नवमी, मध्याह्न में मर्यादा पुरुषोत्तम भगवान श्री रामचंद्र जी का पावन अवतरण दिवस।',
     });
   }
-
-  // Chaitra Purnima (Hanuman Jayanti)
-  const chaitraPu = findPurnimaInMonth(3) || findPurnimaInMonth(2);
-  if (chaitraPu && chaitraPu.getFullYear() === year) {
-    festivals.push({
+  const chaitraPu = on(2, 25, 3, 12, TITHI.purnima, 'sunrise');
+  if (chaitraPu) {
+    push({
       id: `fest-${year}-hanuman-jayanti`,
       date: chaitraPu,
       name: 'Hanuman Jayanti',
@@ -270,49 +257,44 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     });
   }
 
-  // C. VAISHAKHA & JYESHTHA (April / May / June)
-  const chaitraAm = findAmavasya('मीन');
-  if (chaitraAm && chaitraAm.getFullYear() === year) {
-    // Akshaya Tritiya: Vaishakha Shukla Tritiya (3 days after Chaitra Amavasya)
-    const akshayaDate = addDays(chaitraAm, 3);
-    festivals.push({
+  const akshaya = on(3, 12, 4, 5, TITHI.tritiya, 'sunrise');
+  if (akshaya) {
+    push({
       id: `fest-${year}-akshaya-tritiya`,
-      date: akshayaDate,
+      date: akshaya,
       name: 'Akshaya Tritiya',
       hindiName: 'अक्षय तृतीया (आखा तीज)',
       type: 'पर्व',
       description: 'वैशाख शुक्ल तृतीया, अबूझ सिद्ध मुहूर्त, परशुराम जयंती, स्वर्ण क्रय व अक्षय पुण्य अर्जन।',
     });
   }
-
-  // Vaishakha Purnima (Buddha Purnima)
-  const vaishakhaPu = findPurnimaInMonth(4) || findPurnimaInMonth(3);
-  if (vaishakhaPu && vaishakhaPu.getFullYear() === year) {
-    festivals.push({
+  const buddha = on(3, 25, 4, 12, TITHI.purnima, 'sunrise');
+  if (buddha) {
+    push({
       id: `fest-${year}-buddha-purnima`,
-      date: vaishakhaPu,
+      date: buddha,
       name: 'Buddha Purnima / Vaishakha Purnima',
       hindiName: 'बुद्ध पूर्णिमा (वैशाख पूर्णिमा)',
       type: 'पर्व',
       description: 'भगवान बुद्ध का जन्म, ज्ञान प्राप्ति व महापरिनिर्वाण दिवस, सत्यनारायण व्रत व जल दान।',
     });
   }
-
-  // Ganga Dussehra & Nirjala Ekadashi (Jyeshtha)
-  const vaishakhaAm = findAmavasya('मेष');
-  if (vaishakhaAm && vaishakhaAm.getFullYear() === year) {
-    festivals.push({
+  const ganga = on(4, 20, 5, 15, TITHI.dashami, 'sunrise');
+  if (ganga) {
+    push({
       id: `fest-${year}-ganga-dussehra`,
-      date: addDays(vaishakhaAm, 10),
+      date: ganga,
       name: 'Ganga Dussehra',
       hindiName: 'गंगा दशहरा',
       type: 'पर्व',
       description: 'ज्येष्ठ शुक्ल दशमी, मां पतितपाविनी भागीरथी गंगा का स्वर्ग से भूतल पर अवतरण दिवस।',
     });
-
-    festivals.push({
+  }
+  const nirjala = on(4, 25, 5, 20, TITHI.ekadashi, 'sunrise');
+  if (nirjala) {
+    push({
       id: `fest-${year}-nirjala-ekadashi`,
-      date: addDays(vaishakhaAm, 11),
+      date: nirjala,
       name: 'Nirjala Ekadashi',
       hindiName: 'निर्जला एकादशी (भीमसेनी एकादशी)',
       type: 'एकादशी',
@@ -320,111 +302,116 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     });
   }
 
-  // D. ASHADHA & SHRAVANA (June / July / August)
-  const jyeshthaAm = findAmavasya('वृषभ');
-  if (jyeshthaAm && jyeshthaAm.getFullYear() === year) {
-    festivals.push({
+  const rath = on(6, 5, 6, 22, TITHI.dwitiya, 'sunrise');
+  if (rath) {
+    push({
       id: `fest-${year}-jagannath-rath-yatra`,
-      date: addDays(jyeshthaAm, 2),
+      date: rath,
       name: 'Jagannath Rath Yatra',
       hindiName: 'जगन्नाथ रथयात्रा',
       type: 'पर्व',
       description: 'आषाढ़ शुक्ल द्वितीया, पुरी में महाप्रभु श्री जगन्नाथ, बलभद्र व सुभद्रा की भव्य रथयात्रा।',
     });
-
-    festivals.push({
+  }
+  const devshayani = on(6, 10, 6, 28, TITHI.ekadashi, 'sunrise');
+  if (devshayani) {
+    push({
       id: `fest-${year}-devshayani-ekadashi`,
-      date: addDays(jyeshthaAm, 11),
+      date: devshayani,
       name: 'Devshayani Ekadashi',
       hindiName: 'देवशयनी एकादशी (आषाढ़ी एकादशी)',
       type: 'एकादशी',
       description: 'आषाढ़ शुक्ल एकादशी, भगवान श्री विष्णु का योगनिद्रा में शयन, चातुर्मास महाव्रत का शुभारंभ।',
     });
   }
-
-  // Ashadha Purnima (Guru Purnima)
-  const ashadhaPu = findPurnimaInMonth(6) || findPurnimaInMonth(5);
-  if (ashadhaPu && ashadhaPu.getFullYear() === year) {
-    festivals.push({
+  const guruPu = on(6, 15, 7, 8, TITHI.purnima, 'sunrise');
+  if (guruPu) {
+    push({
       id: `fest-${year}-guru-purnima`,
-      date: ashadhaPu,
+      date: guruPu,
       name: 'Guru Purnima',
       hindiName: 'गुरु पूर्णिमा (व्यास पूर्णिमा)',
       type: 'पर्व',
       description: 'आषाढ़ पूर्णिमा, महर्षि वेदव्यास जी की जयंती, गुरुजनों के प्रति श्रद्धा व पादपूजन का पावन पर्व।',
     });
   }
-
-  // Hariyali Teej & Nag Panchami (Shravana)
-  const ashadhaAm = findAmavasya('मिथुन');
-  if (ashadhaAm && ashadhaAm.getFullYear() === year) {
-    festivals.push({
+  const hariyali = guruPu ? on(guruPu.getMonth(), guruPu.getDate(), guruPu.getMonth() === 6 ? 7 : guruPu.getMonth(), Math.min(28, guruPu.getDate() + 8), TITHI.tritiya, 'sunrise') : on(7, 1, 7, 15, TITHI.tritiya, 'sunrise');
+  if (hariyali) {
+    push({
       id: `fest-${year}-hariyali-teej`,
-      date: addDays(ashadhaAm, 3),
+      date: hariyali,
       name: 'Hariyali Teej',
       hindiName: 'हरियाली तीज',
       type: 'व्रत',
       description: 'श्रावण शुक्ल तृतीया, सुहागिनों द्वारा भगवान शिव व माता पार्वती का पूजन, अखंड सौभाग्य का व्रत।',
     });
-
-    festivals.push({
+  }
+  const nag = guruPu
+    ? on(guruPu.getMonth(), guruPu.getDate(), 7, 20, TITHI.panchami, 'sunrise')
+    : on(7, 1, 7, 20, TITHI.panchami, 'sunrise');
+  if (nag) {
+    push({
       id: `fest-${year}-nag-panchami`,
-      date: addDays(ashadhaAm, 5),
+      date: nag,
       name: 'Nag Panchami',
       hindiName: 'नाग पंचमी',
       type: 'पर्व',
       description: 'श्रावण शुक्ल पंचमी, नाग देवताओं की पूजा, कालसर्प दोष निवारण एवं दुग्ध अर्पण।',
     });
   }
-
-  // Shravana Purnima (Raksha Bandhan)
-  const shravanaPu = findPurnimaInMonth(7) || findPurnimaInMonth(8);
-  if (shravanaPu && shravanaPu.getFullYear() === year) {
-    festivals.push({
+  const rakhi = on(7, 15, 8, 5, TITHI.purnima, 'sunrise');
+  if (rakhi) {
+    push({
       id: `fest-${year}-raksha-bandhan`,
-      date: shravanaPu,
+      date: rakhi,
       name: 'Raksha Bandhan',
       hindiName: 'रक्षाबंधन',
       type: 'पर्व',
       description: 'श्रावण पूर्णिमा, भाई-बहन के अटूट स्नेह का प्रतीक, रक्षा सूत्र व कजरी पूर्णिमा।',
     });
-
-    // Krishna Janmashtami is approx 8 days after Shravana Purnima (Bhadrapada Krishna Ashtami)
-    const janmashtamiDate = addDays(shravanaPu, 8);
-    festivals.push({
+  }
+  const janmashtami = on(7, 25, 8, 12, TITHI.krishnaAshtami, 'nishita');
+  if (janmashtami) {
+    push({
       id: `fest-${year}-krishna-janmashtami`,
-      date: janmashtamiDate,
+      date: janmashtami,
       name: 'Krishna Janmashtami',
       hindiName: 'श्री कृष्ण जन्माष्टमी',
       type: 'पर्व',
-      description: 'भाद्रपद कृष्ण अष्टमी, रोहिणी नक्षत्र, भगवान योगेश्वर श्री कृष्ण का पावन प्राकट्योत्सव।',
+      description: 'भाद्रपद कृष्ण अष्टमी, निशीथ काल, भगवान योगेश्वर श्री कृष्ण का पावन प्राकट्योत्सव।',
     });
   }
 
-  // E. BHADRAPADA & ASHWIN (August / September / October)
-  const shravanaAm = findAmavasya('कर्क') || findAmavasya('सिंह');
-  if (shravanaAm && shravanaAm.getFullYear() === year) {
-    festivals.push({
+  const ganesh = on(8, 5, 8, 22, TITHI.chaturthi, 'madhyahna');
+  const hartalikaFound = on(8, 1, 8, 18, TITHI.tritiya, 'pradosh');
+  const hartalika = ganesh && hartalikaFound && hartalikaFound.getTime() >= ganesh.getTime()
+    ? addDays(ganesh, -1)
+    : hartalikaFound;
+  if (hartalika) {
+    push({
       id: `fest-${year}-hartalika-teej`,
-      date: addDays(shravanaAm, 3),
+      date: hartalika,
       name: 'Hartalika Teej',
       hindiName: 'हरतालिका तीज',
       type: 'व्रत',
       description: 'भाद्रपद शुक्ल तृतीया, अखंड सौभाग्य व सुयोग्य वर प्राप्ति हेतु माता पार्वती व शिवजी का निर्जल व्रत।',
     });
-
-    festivals.push({
+  }
+  if (ganesh) {
+    push({
       id: `fest-${year}-ganesh-chaturthi`,
-      date: addDays(shravanaAm, 4),
+      date: ganesh,
       name: 'Ganesh Chaturthi',
       hindiName: 'गणेश चतुर्थी (विनायक चतुर्थी)',
       type: 'पर्व',
       description: 'भाद्रपद शुक्ल चतुर्थी, प्रथम पूज्य विघ्नहर्ता भगवान श्री गणेश का जन्मोत्सव एवं दसोत्सव स्थापना।',
     });
-
-    festivals.push({
+  }
+  const anant = on(8, 16, 9, 2, TITHI.chaturdashi, 'sunrise');
+  if (anant) {
+    push({
       id: `fest-${year}-anant-chaturdashi`,
-      date: addDays(shravanaAm, 14),
+      date: anant,
       name: 'Anant Chaturdashi',
       hindiName: 'अनंत चतुर्दशी (गणेश विसर्जन)',
       type: 'पर्व',
@@ -432,96 +419,99 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     });
   }
 
-  // Pitru Paksha & Shardiya Navratri
-  const bhadrapadaPu = findPurnimaInMonth(8) || findPurnimaInMonth(7);
-  if (bhadrapadaPu && bhadrapadaPu.getFullYear() === year) {
-    festivals.push({
+  const bhadraPu = on(8, 10, 9, 5, TITHI.purnima, 'sunrise');
+  if (bhadraPu) {
+    push({
       id: `fest-${year}-pitru-paksha-start`,
-      date: bhadrapadaPu,
+      date: bhadraPu,
       name: 'Pitru Paksha Start',
       hindiName: 'पितृ पक्ष (श्राद्ध महालय) आरंभ',
       type: 'पर्व',
       description: 'भाद्रपद पूर्णिमा से आश्विन अमावस्या तक, पूर्वजों के प्रति कृतज्ञता, तर्पण व पिंडदान का 16 दिवसीय काल।',
     });
   }
-
-  // Sarva Pitru Amavasya (Mahalaya - Sun in Kanya)
-  const ashwinAm = findAmavasya('कन्या');
-  if (ashwinAm && ashwinAm.getFullYear() === year) {
-    festivals.push({
+  const mahalaya = on(9, 1, 9, 18, TITHI.amavasya, 'sunrise');
+  if (mahalaya) {
+    push({
       id: `fest-${year}-sarva-pitru-amavasya`,
-      date: ashwinAm,
+      date: mahalaya,
       name: 'Sarva Pitru Amavasya',
       hindiName: 'सर्वपितृ अमावस्या (महालया विसर्जन)',
       type: 'अमावस्या',
       description: 'आश्विन कृष्ण अमावस्या, समस्त ज्ञात-अज्ञात पितरों के श्राद्ध, तर्पण व विदाई का परम पावन दिन।',
     });
-
-    // Shardiya Navratri begins day after Mahalaya
-    const shardiyaStart = addDays(ashwinAm, 1);
-    festivals.push({
+  }
+  const shardiya = on(9, 6, 9, 18, TITHI.pratipada, 'sunrise') || on(9, 6, 9, 18, TITHI.pratipada, 'madhyahna');
+  if (shardiya) {
+    push({
       id: `fest-${year}-shardiya-navratri-start`,
-      date: shardiyaStart,
+      date: shardiya,
       name: 'Shardiya Navratri Ghatasthapana',
       hindiName: 'शारदीय नवरात्रि घटस्थापना',
       type: 'पर्व',
       description: 'आश्विन शुक्ल प्रतिपदा, कलश स्थापना, देवी भगवती के नौ रूपों की दिव्य आराधना का शुभारंभ।',
     });
-
-    festivals.push({
+  }
+  const durgaAshtami = on(9, 14, 9, 24, TITHI.ashtami, 'sunrise');
+  if (durgaAshtami) {
+    push({
       id: `fest-${year}-durga-ashtami`,
-      date: addDays(shardiyaStart, 7),
+      date: durgaAshtami,
       name: 'Durga Ashtami (Maha Ashtami)',
       hindiName: 'दुर्गा महाष्टमी (महागौरी पूजन)',
       type: 'पर्व',
       description: 'आश्विन शुक्ल अष्टमी, मां महागौरी पूजन, कन्या पूजन व संधि पूजा।',
     });
-
-    festivals.push({
+  }
+  const mahaNavami = on(9, 15, 9, 25, TITHI.navami, 'madhyahna');
+  if (mahaNavami) {
+    push({
       id: `fest-${year}-maha-navami`,
-      date: addDays(shardiyaStart, 8),
+      date: mahaNavami,
       name: 'Maha Navami',
       hindiName: 'महानवमी (सिद्धिदात्री पूजन)',
       type: 'पर्व',
       description: 'आश्विन शुक्ल नवमी, मां सिद्धिदात्री पूजन, हवन, पूर्णाहुति व कन्या भोजन।',
     });
-
-    festivals.push({
+  }
+  const dussehra = on(9, 16, 9, 26, TITHI.dashami, 'aparahna');
+  if (dussehra) {
+    push({
       id: `fest-${year}-dussehra`,
-      date: addDays(shardiyaStart, 9),
+      date: dussehra,
       name: 'Dussehra / Vijayadashami',
       hindiName: 'दशहरा (विजयादशमी)',
       type: 'पर्व',
       description: 'अधर्म पर धर्म व रावण पर भगवान श्री राम की विजय, अपराजिता पूजन एवं शस्त्र पूजन का महापर्व।',
     });
   }
-
-  // Sharad Purnima (Ashwin Purnima)
-  const ashwinPu = findPurnimaInMonth(9) || findPurnimaInMonth(10);
-  if (ashwinPu && ashwinPu.getFullYear() === year) {
-    festivals.push({
+  const sharad = on(9, 18, 10, 2, TITHI.purnima, 'pradosh');
+  if (sharad) {
+    push({
       id: `fest-${year}-sharad-purnima`,
-      date: ashwinPu,
+      date: sharad,
       name: 'Sharad Purnima',
       hindiName: 'शरद पूर्णिमा (कोजागरी / रास पूर्णिमा)',
       type: 'पूर्णिमा',
       description: 'आश्विन पूर्णिमा, 16 कलाओं से युक्त अमृतमयी चंद्र किरणें, खीर का भोग एवं महालक्ष्मी का पृथ्वी भ्रमण।',
     });
-
-    // Karwa Chauth is 4 days after Sharad Purnima (Kartik Krishna Chaturthi)
-    festivals.push({
+  }
+  const karwa = on(9, 22, 10, 6, TITHI.krishnaChaturthi, 'pradosh');
+  if (karwa) {
+    push({
       id: `fest-${year}-karwa-chauth`,
-      date: addDays(ashwinPu, 4),
+      date: karwa,
       name: 'Karwa Chauth',
       hindiName: 'करवा चौथ (कर्क चतुर्थी)',
       type: 'व्रत',
       description: 'कार्तिक कृष्ण चतुर्थी, सुहागिनों द्वारा पति की दीर्घायु हेतु चंद्र दर्शन पर्यंत निर्जला व्रत।',
     });
-
-    // Ahoi Ashtami (8 days after Sharad Purnima)
-    festivals.push({
+  }
+  const ahoi = on(9, 25, 10, 8, TITHI.krishnaAshtami, 'sunrise');
+  if (ahoi) {
+    push({
       id: `fest-${year}-ahoi-ashtami`,
-      date: addDays(ashwinPu, 8),
+      date: ahoi,
       name: 'Ahoi Ashtami',
       hindiName: 'अहोई अष्टमी',
       type: 'व्रत',
@@ -529,85 +519,83 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     });
   }
 
-  // F. KARTIKA & DEEPOTSAV (October / November)
-  // Diwali: Amavasya with Sun in Tula (तुला)
-  const kartikaAm = findAmavasya('तुला');
-  if (kartikaAm && kartikaAm.getFullYear() === year) {
-    // Dhanteras: 2 days before Diwali (Trayodashi)
-    festivals.push({
+  const dhanteras = on(10, 1, 10, 12, TITHI.krishnaTrayodashi, 'pradosh', 6);
+  if (dhanteras) {
+    push({
       id: `fest-${year}-dhanteras`,
-      date: addDays(kartikaAm, -2),
+      date: dhanteras,
       name: 'Dhanteras',
       hindiName: 'धनतेरस (धन्वंतरि जयंती / कुबेर पूजन)',
       type: 'पर्व',
       description: 'कार्तिक कृष्ण त्रयोदशी, आरोग्य के देव भगवान धन्वंतरि प्राकट्य दिवस, यम दीपदान व नवीन धातु क्रय।',
     });
-
-    // Narak Chaturdashi / Choti Diwali
-    festivals.push({
+  }
+  const narak = on(10, 2, 10, 14, TITHI.krishnaChaturdashi, 'pradosh', 6);
+  if (narak) {
+    push({
       id: `fest-${year}-narak-chaturdashi`,
-      date: addDays(kartikaAm, -1),
+      date: narak,
       name: 'Narak Chaturdashi / Roop Chaudas',
       hindiName: 'नरक चतुर्दशी (छोटी दीवाली / रूप चौदस)',
       type: 'पर्व',
       description: 'कार्तिक कृष्ण चतुर्दशी, भगवान श्री कृष्ण द्वारा नरकासुर वध स्मृति, यम तर्पण एवं उबटन स्नान।',
     });
-
-    // Diwali (Lakshmi Puja)
-    festivals.push({
+  }
+  const diwali = on(10, 3, 10, 16, TITHI.amavasya, 'pradosh', 6);
+  if (diwali) {
+    push({
       id: `fest-${year}-diwali`,
-      date: kartikaAm,
+      date: diwali,
       name: 'Diwali',
       hindiName: 'दीपावली (महालक्ष्मी पूजन)',
       type: 'पर्व',
       description: 'कार्तिक अमावस्या, प्रकाश का महापर्व, धन-धान्य व ऐश्वर्य प्रदाता भगवती महालक्ष्मी व श्री गणेश का महापूजन।',
     });
-
-    // Govardhan Puja / Annakut (Day after Diwali)
-    festivals.push({
+    const govardhan = on(10, diwali.getDate(), 10, 18, TITHI.pratipada, 'aparahna') || addDays(diwali, 1);
+    push({
       id: `fest-${year}-govardhan-puja`,
-      date: addDays(kartikaAm, 1),
+      date: govardhan,
       name: 'Govardhan Puja / Annakut',
       hindiName: 'गोवर्धन पूजा / अन्नकूट महोत्सव',
       type: 'पर्व',
       description: 'कार्तिक शुक्ल प्रतिपदा, प्रकृति व गौ संवर्धन, भगवान श्री कृष्ण द्वारा इंद्र दंभ दलन व गोवर्धन धारण स्मृति।',
     });
-
-    // Bhai Dooj (2 days after Diwali)
-    festivals.push({
+    const bhaiDooj = on(10, diwali.getDate(), 10, 20, TITHI.dwitiya, 'madhyahna') || addDays(diwali, 2);
+    push({
       id: `fest-${year}-bhai-dooj`,
-      date: addDays(kartikaAm, 2),
+      date: bhaiDooj,
       name: 'Bhai Dooj',
       hindiName: 'भाई दूज (यम द्वितीया)',
       type: 'पर्व',
       description: 'कार्तिक शुक्ल द्वितीया, यमुना जी द्वारा यमराज के सत्कार की स्मृति, भाई के दीर्घायु हेतु तिलक पर्व।',
     });
-
-    // Chhath Puja (6 days after Diwali)
-    festivals.push({
-      id: `fest-${year}-chhath-puja`,
-      date: addDays(kartikaAm, 6),
-      name: 'Chhath Puja',
-      hindiName: 'छठ पूजा (सूर्य षष्ठी संध्या अर्घ्य)',
-      type: 'व्रत',
-      description: 'कार्तिक शुक्ल षष्ठी, भगवान भास्कर व छठी मइया का 36 घंटे का निर्जला महापर्व, अस्ताचलगामी सूर्य को अर्घ्य।',
-    });
-
-    // Dev Uthani Ekadashi (11 days after Diwali)
-    festivals.push({
-      id: `fest-${year}-dev-uthani-ekadashi`,
-      date: addDays(kartikaAm, 11),
-      name: 'Dev Uthani Ekadashi / Tulsi Vivah',
-      hindiName: 'देवउठनी एकादशी (प्रबोधिनी / तुलसी विवाह)',
-      type: 'एकादशी',
-      description: 'कार्तिक शुक्ल एकादशी, श्री हरि विष्णु का योगनिद्रा से जागरण, चातुर्मास समापन एवं तुलसी-शालिग्राम विवाह।',
-    });
+    const chhath = on(10, diwali.getDate(), 10, 22, TITHI.shashthi, 'pradosh');
+    if (chhath) {
+      push({
+        id: `fest-${year}-chhath-puja`,
+        date: chhath,
+        name: 'Chhath Puja',
+        hindiName: 'छठ पूजा (सूर्य षष्ठी संध्या अर्घ्य)',
+        type: 'व्रत',
+        description: 'कार्तिक शुक्ल षष्ठी, भगवान भास्कर व छठी मइया का 36 घंटे का निर्जला महापर्व, अस्ताचलगामी सूर्य को अर्घ्य।',
+      });
+    }
+    const uthani = on(10, diwali.getDate(), 11, 5, TITHI.ekadashi, 'sunrise');
+    if (uthani) {
+      push({
+        id: `fest-${year}-dev-uthani-ekadashi`,
+        date: uthani,
+        name: 'Dev Uthani Ekadashi / Tulsi Vivah',
+        hindiName: 'देवउठनी एकादशी (प्रबोधिनी / तुलसी विवाह)',
+        type: 'एकादशी',
+        description: 'कार्तिक शुक्ल एकादशी, श्री हरि विष्णु का योगनिद्रा से जागरण, चातुर्मास समापन एवं तुलसी-शालिग्राम विवाह।',
+      });
+    }
   }
 
-  // Kartik Purnima (Dev Diwali)
-  const kartikPu = findPurnimaInMonth(10) || findPurnimaInMonth(11);
-  if (kartikPu && kartikPu.getFullYear() === year) {
-    festivals.push({
+  const kartikPu = on(10, 15, 11, 5, TITHI.purnima, 'sunrise');
+  if (kartikPu) {
+    push({
       id: `fest-${year}-kartik-purnima`,
       date: kartikPu,
       name: 'Kartik Purnima / Dev Diwali',
@@ -616,23 +604,20 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       description: 'कार्तिक पूर्णिमा, भगवान शिव द्वारा त्रिपुरासुर संहार, काशी में देवताओं की दीपावली एवं पवित्र गंगा स्नान।',
     });
   }
-
-  // G. MARGASHIRSHA & PAUSHA (November / December)
-  const margashirshaAm = findAmavasya('वृश्चिक');
-  if (margashirshaAm && margashirshaAm.getFullYear() === year) {
-    festivals.push({
+  const gita = on(11, 1, 11, 20, TITHI.ekadashi, 'sunrise');
+  if (gita) {
+    push({
       id: `fest-${year}-gita-jayanti`,
-      date: addDays(margashirshaAm, 11),
+      date: gita,
       name: 'Gita Jayanti / Mokshada Ekadashi',
       hindiName: 'गीता जयंती / मोक्षदा एकादशी',
       type: 'एकादशी',
       description: 'मार्गशीर्ष शुक्ल एकादशी, कुरुक्षेत्र के समर में योगेश्वर श्री कृष्ण द्वारा अर्जुन को श्रीमद्भगवद्गीता उपदेश दिवस।',
     });
   }
-
-  const paushaPu = findPurnimaInMonth(11) || findPurnimaInMonth(0);
-  if (paushaPu && paushaPu.getFullYear() === year) {
-    festivals.push({
+  const paushaPu = on(11, 10, 11, 31, TITHI.purnima, 'sunrise');
+  if (paushaPu) {
+    push({
       id: `fest-${year}-paush-purnima`,
       date: paushaPu,
       name: 'Paush Purnima',
@@ -642,14 +627,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     });
   }
 
-  // Sort all festivals strictly by chronological date
   festivals.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  // Deduplicate by ID just in case
   const uniqueMap = new Map<string, FestivalItem>();
   festivals.forEach((f) => uniqueMap.set(f.id, f));
   const result = Array.from(uniqueMap.values());
-
   YEAR_FESTIVALS_CACHE.set(year, result);
   return result;
 }
@@ -676,10 +657,6 @@ export function filterFestivals(
   });
 }
 
-/**
- * Search across a span of 200 years (e.g., 1925 to 2125)
- * for a specific festival name, e.g. "दीवाली", "होली", "शिवरात्रि", "करवा चौथ"
- */
 export interface CenturySearchResult {
   year: number;
   festival: FestivalItem;
@@ -696,7 +673,6 @@ export function searchFestivalsAcrossCenturies(
     return [];
   }
 
-  // Synonym expansions for common Indian festival queries
   const synonyms: string[] = [cleanQ];
   if (cleanQ.includes('दिवाली') || cleanQ.includes('diwali')) synonyms.push('दीपावली', 'महालक्ष्मी');
   if (cleanQ.includes('दीपावली')) synonyms.push('दिवाली', 'diwali');
@@ -718,29 +694,16 @@ export function searchFestivalsAcrossCenturies(
       const nameL = f.name.toLowerCase();
       const hindiL = f.hindiName.toLowerCase();
       const descL = f.description.toLowerCase();
-
       const matchesQ =
         !cleanQ ||
-        synonyms.some(
-          (syn) =>
-            nameL.includes(syn) ||
-            hindiL.includes(syn) ||
-            descL.includes(syn)
-        );
-
+        synonyms.some((syn) => nameL.includes(syn) || hindiL.includes(syn) || descL.includes(syn));
       const matchesT = type === 'all' || f.type === type;
-      if (matchesQ && matchesT) {
-        results.push({ year: y, festival: f });
-      }
+      if (matchesQ && matchesT) results.push({ year: y, festival: f });
     }
   }
-
   return results;
 }
 
-/**
- * Return upcoming festivals starting from today or fromDate
- */
 export function getUpcomingFestivals(count = 6, fromDate = new Date()): FestivalItem[] {
   const y = fromDate.getFullYear();
   const all = [...getFestivalsForYear(y), ...getFestivalsForYear(y + 1)];
@@ -751,8 +714,8 @@ export function getUpcomingFestivals(count = 6, fromDate = new Date()): Festival
     .slice(0, count);
 }
 
-// Backward compatibility export
 export const MAJOR_FESTIVALS_2025_2026: FestivalItem[] = [
   ...getFestivalsForYear(2025),
   ...getFestivalsForYear(2026),
 ];
+

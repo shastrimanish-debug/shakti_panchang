@@ -100,10 +100,11 @@ export function getNightChoghadiya(solar: SolarTimes, weekday: number): Choghadi
   });
 }
 
-// 1-based index (0-7 parts of day from sunrise)
-const RAHU_KAAL_PARTS: Record<number, number> = { 1: 1, 2: 6, 3: 4, 4: 5, 5: 2, 6: 3, 0: 7 };
-const YAMAGANDA_PARTS: Record<number, number> = { 1: 4, 2: 3, 3: 2, 4: 1, 5: 0, 6: 6, 0: 5 };
-const GULIK_PARTS: Record<number, number> = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1, 0: 0 };
+// 0-based segment of the day (sunrise → sunset split into 8).
+// Rahu verified against Ujjain. Yamaganda and Gulika were one segment late.
+const RAHU_KAAL_PARTS: Record<number, number> = { 0: 7, 1: 1, 2: 6, 3: 4, 4: 5, 5: 2, 6: 3 };
+const YAMAGANDA_PARTS: Record<number, number> = { 0: 4, 1: 3, 2: 2, 3: 1, 4: 0, 5: 6, 6: 5 };
+const GULIK_PARTS: Record<number, number> = { 0: 6, 1: 5, 2: 4, 3: 3, 4: 2, 5: 1, 6: 0 };
 
 /**
  * Calculates inauspicious windows (Rahu Kaal, Yamaganda, Gulik Kaal)

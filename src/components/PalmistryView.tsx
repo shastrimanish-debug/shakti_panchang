@@ -45,17 +45,15 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({ onOpenUmaWithQuery
     setCapturedImage(captured);
 
     // Simulate progressive computer-vision line detection
+    let progress = 15;
     const interval = setInterval(() => {
-      setScanProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          const result = generatePalmAnalysis(selectedHand);
-          setAnalysisResult(result);
-          setScanState('analyzed');
-          return 100;
-        }
-        return prev + 25;
-      });
+      progress = Math.min(100, progress + 25);
+      setScanProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
+        setAnalysisResult(generatePalmAnalysis(selectedHand));
+        setScanState('analyzed');
+      }
     }, 450);
   };
 

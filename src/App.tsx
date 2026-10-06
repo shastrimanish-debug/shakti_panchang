@@ -165,6 +165,12 @@ export function App() {
     setIsSubscriptionModalOpen(true);
   }, []);
 
+  useEffect(() => {
+    const open = () => triggerSubscriptionModal();
+    window.addEventListener('shakti-open-subscription', open);
+    return () => window.removeEventListener('shakti-open-subscription', open);
+  }, [triggerSubscriptionModal]);
+
   // Guard Effect: If trial is expired or revoked while on another tab, immediately snap back to 'panchang'
   useEffect(() => {
     if (!isEntitled && activeTab !== 'panchang') {

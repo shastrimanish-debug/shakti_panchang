@@ -280,6 +280,39 @@ export function calculatePlanetPositions(
 /**
  * Calculates Full Vedic Panchang Data for a given date and location
  */
+const CHANDRA_YEAR_CACHE = new Map<number, Date>();
+
+/** IST noon of Chaitra Shukla Pratipada — lunar new year (Gudi Padwa / Ugadi). */
+function chaitraNewYear(gregorianYear: number): Date {
+  const cached = CHANDRA_YEAR_CACHE.get(gregorianYear);
+  if (cached) return cached;
+  let found = new Date(gregorianYear, 2, 22, 12, 0, 0);
+  for (let day = 12; day <= 40; day++) {
+    const noon = new Date(Date.UTC(gregorianYear, 2, day, 6, 40, 0));
+    const { sunSidereal, moonSidereal } = getSunMoonSidereal(noon);
+    const tithi = Math.floor(normalize360(moonSidereal - sunSidereal) / 12);
+    const sunRashi = Math.floor(sunSidereal / 30) % 12;
+    if (tithi === 0 && (sunRashi === 11 || sunRashi === 0)) {
+      const ist = new Date(noon.getTime() + 5.5 * 3600000);
+      found = new Date(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate(), 12, 0, 0);
+      break;
+    }
+  }
+  CHANDRA_YEAR_CACHE.set(gregorianYear, found);
+  return found;
+}
+
+function hinduEra(date: Date): { vikram: number; saka: number } {
+  const year = date.getFullYear();
+  const start = chaitraNewYear(year);
+  const civil = new Date(year, date.getMonth(), date.getDate(), 12, 0, 0);
+  const started = civil.getTime() >= start.getTime();
+  return {
+    vikram: year + (started ? 57 : 56),
+    saka: year - (started ? 78 : 79),
+  };
+}
+
 export function calculateVedicPanchang(
   date: Date,
   lat: number = 23.1765,
@@ -331,9 +364,9 @@ export function calculateVedicPanchang(
   const sunRashiIdx = Math.floor(sunSidereal / 30) % 12;
   const moonRashiIdx = Math.floor(moonSidereal / 30) % 12;
   const weekday = WEEKDAYS[date.getDay()];
-
-  const vikramSamvat = date.getFullYear() + 57;
-  const sakaSamvat = date.getFullYear() - 78;
+  const era = hinduEra(date);
+  const vikramSamvat = era.vikram;
+  const sakaSamvat = era.saka;
   const masa = MASAS[sunRashiIdx];
   const settings = getCalcSettings();
   const windows = dayMuhuratWindows(solar);

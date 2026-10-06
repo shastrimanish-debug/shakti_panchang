@@ -45,20 +45,49 @@ function phase(date: Date, kind: "tithi" | "nak" | "yoga"): number {
   return normalize360(moon + sun);
 }
 
-function findCrossing(left: Date, right: Date, target: number, kind: "tithi" | "nak" | "yoga"): Date {
-  let lo = left.getTime();
-  let hi = right.getTime();
-  const tgt = normalize360(target);
-  for (let i = 0; i < 28; i++) {
-    const mid = (lo + hi) / 2;
-    const p = phase(new Date(mid), kind);
-    let d = p - tgt;
-    if (d > 180) d -= 360;
-    if (d < -180) d += 360;
-    if (d < 0) lo = mid;
-    else hi = mid;
+function angForward(from: number, target: number): number {
+  return (normalize360(target) - normalize360(from) + 360) % 360;
+}
+
+/** Next time the chosen angle, moving forward, lands on `target`. */
+function findForward(from: Date, target: number, kind: "tithi" | "nak" | "yoga"): Date {
+  const start = from.getTime();
+  let prevT = start;
+  let prevRemain = angForward(phase(new Date(prevT), kind), target);
+  if (prevRemain < 0.02) return new Date(start);
+  const horizon = start + 50 * 3600000;
+  const step = 12 * 60000;
+  for (let t = start + step; t <= horizon; t += step) {
+    const remain = angForward(phase(new Date(t), kind), target);
+    if (remain > prevRemain + 0.4) {
+      let lo = prevT;
+      let hi = t;
+      for (let i = 0; i < 28; i++) {
+        const mid = (lo + hi) / 2;
+        const r = angForward(phase(new Date(mid), kind), target);
+        if (r > 180) hi = mid;
+        else lo = mid;
+      }
+      return new Date((lo + hi) / 2);
+    }
+    prevT = t;
+    prevRemain = remain;
   }
-  return new Date((lo + hi) / 2);
+  return new Date(prevT);
+}
+
+/** Most recent time at or before `from` when the angle was `target`. */
+function findBackward(from: Date, target: number, kind: "tithi" | "nak" | "yoga"): Date {
+  const begin = from.getTime() - 50 * 3600000;
+  let cursor = begin;
+  let last = new Date(begin);
+  for (let n = 0; n < 6 && cursor <= from.getTime(); n++) {
+    const hit = findForward(new Date(cursor), target, kind);
+    if (hit.getTime() > from.getTime() + 1000) break;
+    last = hit;
+    cursor = hit.getTime() + 20 * 60000;
+  }
+  return last;
 }
 
 function tithiName(idx: number): string {
@@ -81,25 +110,23 @@ export function computeDayBoundaries(date: Date, sunrise: Date, nextSunrise: Dat
   yogaSpan: PanchangSpan;
   karanaSpan: PanchangSpan;
 } {
-  const probe = new Date(sunrise.getTime() + 6 * 3600000);
-  const dayStart = new Date(sunrise.getTime() - 18 * 3600000);
-  const dayEnd = new Date(nextSunrise.getTime() + 18 * 3600000);
+  const step = 360 / 27;
   const tithiPhase = phase(sunrise, "tithi");
   const nakPhase = phase(sunrise, "nak");
   const yogaPhase = phase(sunrise, "yoga");
   const tithiIdx = Math.floor(tithiPhase / 12);
-  const nakIdx = Math.floor(nakPhase / (360 / 27));
-  const yogaIdx = Math.floor(yogaPhase / (360 / 27));
+  const nakIdx = Math.floor(nakPhase / step);
+  const yogaIdx = Math.floor(yogaPhase / step);
   const karIdx = Math.floor(tithiPhase / 6);
 
-  const tithiStart = findCrossing(dayStart, probe, tithiIdx * 12, "tithi");
-  const tithiEnd = findCrossing(probe, dayEnd, (tithiIdx + 1) * 12, "tithi");
-  const nakStart = findCrossing(dayStart, probe, nakIdx * (360 / 27), "nak");
-  const nakEnd = findCrossing(probe, dayEnd, (nakIdx + 1) * (360 / 27), "nak");
-  const yogaStart = findCrossing(dayStart, probe, yogaIdx * (360 / 27), "yoga");
-  const yogaEnd = findCrossing(probe, dayEnd, (yogaIdx + 1) * (360 / 27), "yoga");
-  const karStart = findCrossing(dayStart, probe, karIdx * 6, "tithi");
-  const karEnd = findCrossing(probe, dayEnd, (karIdx + 1) * 6, "tithi");
+  const tithiStart = findBackward(sunrise, (tithiIdx % 30) * 12, "tithi");
+  const tithiEnd = findForward(new Date(sunrise.getTime() + 1000), ((tithiIdx + 1) % 30) * 12, "tithi");
+  const nakStart = findBackward(sunrise, (nakIdx % 27) * step, "nak");
+  const nakEnd = findForward(new Date(sunrise.getTime() + 1000), ((nakIdx + 1) % 27) * step, "nak");
+  const yogaStart = findBackward(sunrise, (yogaIdx % 27) * step, "yoga");
+  const yogaEnd = findForward(new Date(sunrise.getTime() + 1000), ((yogaIdx + 1) % 27) * step, "yoga");
+  const karStart = findBackward(sunrise, (karIdx % 60) * 6, "tithi");
+  const karEnd = findForward(new Date(sunrise.getTime() + 1000), ((karIdx + 1) % 60) * 6, "tithi");
 
   return {
     tithiSpan: {

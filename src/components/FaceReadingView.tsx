@@ -41,17 +41,15 @@ export const FaceReadingView: React.FC<FaceReadingViewProps> = ({ onOpenUmaWithQ
     const captured = await captureSpiritualScanPhoto('face');
     setCapturedImage(captured);
 
+    let progress = 20;
     const interval = setInterval(() => {
-      setScanProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          const result = generateFaceReadingAnalysis();
-          setAnalysisResult(result);
-          setScanState('analyzed');
-          return 100;
-        }
-        return prev + 20;
-      });
+      progress = Math.min(100, progress + 20);
+      setScanProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
+        setAnalysisResult(generateFaceReadingAnalysis());
+        setScanState('analyzed');
+      }
     }, 400);
   };
 
