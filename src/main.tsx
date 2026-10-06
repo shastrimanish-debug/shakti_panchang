@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import './i18n';
 import { LanguageProvider } from './i18n';
 import { App } from './App';
@@ -7,6 +8,11 @@ import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 import { LicenseProvider } from './lib/license-client';
 import { initializeSecurityGuard } from './utils/securityGuard';
+
+// Initialize Capacitor PWA Elements for web camera modal support
+if (typeof window !== 'undefined') {
+  defineCustomElements(window);
+}
 
 // Initialize anti-tamper and security safeguards
 initializeSecurityGuard();

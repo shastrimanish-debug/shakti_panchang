@@ -10,6 +10,16 @@
 
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
+
+// Ensure Capacitor PWA elements are registered on the client
+if (typeof window !== 'undefined') {
+  try {
+    defineCustomElements(window);
+  } catch {
+    // Silently continue if already defined
+  }
+}
 
 // =========================================================================
 // 1. CAPACITOR CAMERA HARDWARE INTEGRATION HELPER
