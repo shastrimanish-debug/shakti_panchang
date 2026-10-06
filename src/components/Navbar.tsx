@@ -67,7 +67,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     onDateChange(new Date());
   };
 
-  const formattedDate = currentDate.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'hi-IN', {
+  const dateLocale = i18n.language === 'en' ? 'en-US' : i18n.language === 'gu' ? 'gu-IN' : 'hi-IN';
+  const formattedDate = currentDate.toLocaleDateString(dateLocale, {
     day: 'numeric',
     month: 'short',
   });

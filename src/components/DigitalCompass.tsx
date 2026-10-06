@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Compass, RotateCw, AlertTriangle, ShieldCheck, Smartphone } from 'lucide-react';
+import { useTranslation } from '../i18n';
+import { trVedic } from '../i18n/vedicTranslate';
 
 interface DigitalCompassProps {
   shoolDirectionName: string; // e.g. 'पूर्व', 'पश्चिम', 'उत्तर', 'दक्षिण'
@@ -37,6 +39,7 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
   targetDirectionName = 'पूर्व',
   isDirectionBlocked = false,
 }) => {
+  const { t } = useTranslation();
   const [deviceHeading, setDeviceHeading] = useState<number>(0);
   const [hasSensor, setHasSensor] = useState<boolean>(false);
   const [sensorActive, setSensorActive] = useState<boolean>(false);
@@ -135,10 +138,10 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
           </div>
           <div>
             <h3 className="font-granth text-xs sm:text-base font-bold text-[#5C3A21] leading-none">
-              सजीव डिजिटल दिशा-सूचक (Live Vedic Compass)
+              {t('compass.title', 'સજીવ ડિજિટલ દિશા-સૂચક (Live Vedic Compass)')}
             </h3>
             <p className="text-[9px] sm:text-[11px] text-[#735133] mt-0.5 line-clamp-1">
-              शास्त्रोक्त अष्ट-दिक्पाल, दिशाशूल चेतावनी एवं सजीव कोण मापक
+              {t('compass.subtitle', 'શાસ્ત્રોક્ત અષ્ટ-દિગ્પાલ, દિશાશૂળ ચેતવણી અને સજીવ ખૂણા માપક')}
             </p>
           </div>
         </div>
@@ -152,7 +155,7 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
               className="px-2 py-0.5 bg-[#B56A00] hover:bg-[#8C5200] text-white text-[10px] sm:text-xs font-bold rounded-md shadow-xs flex items-center gap-1 transition cursor-pointer"
             >
               <Smartphone className="w-3 h-3" />
-              <span>सेंसर सक्रिय</span>
+              <span>{t('compass.activateSensor', 'સેન્સર સક્રિય')}</span>
             </button>
           )}
 
@@ -163,7 +166,7 @@ export const DigitalCompass: React.FC<DigitalCompassProps> = ({
                 : 'bg-amber-100 text-amber-800 border-amber-300'
             }`}
           >
-            {sensorActive ? '● लाइव सेंसर' : '○ मैनुअल'}
+            {sensorActive ? t('compass.liveSensor', '● લાઈવ સેન્સર') : t('compass.manual', '○ મેન્યુઅલ')}
           </span>
         </div>
       </div>

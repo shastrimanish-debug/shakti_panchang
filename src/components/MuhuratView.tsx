@@ -3,6 +3,8 @@ import { VedicPanchangData } from '../types';
 import { MUHURAT_ACTIVITIES, getMuhuratGuidance, getDailyMuhuratDetails } from '../services/muhurat';
 import { DISHASHOOL_MAP } from '../services/disha';
 import { AnnualMuhuratTableView } from './AnnualMuhuratTableView';
+import { useTranslation } from '../i18n';
+import { trVedic, trWeekday } from '../i18n/vedicTranslate';
 import {
   Sparkles,
   CheckCircle2,
@@ -20,6 +22,7 @@ interface MuhuratViewProps {
 }
 
 export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
+  const { t } = useTranslation();
   const [selectedActivity, setSelectedActivity] = useState(MUHURAT_ACTIVITIES[0]);
   const [subPage, setSubPage] = useState<'annual_table' | 'today' | 'windows' | 'guidance'>('annual_table');
   const weekday = panchang.date.getDay();
@@ -41,7 +44,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
           }`}
         >
           <Calendar className="w-3.5 h-3.5 text-amber-300" />
-          <span>विवाह/गृहप्रवेश सारणी</span>
+          <span>{t('muhurat.annualTableTab', 'विवाह/गृहप्रवेश सारणी')}</span>
         </button>
         <button
           type="button"
@@ -53,7 +56,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
-          <span>आज के मुहूर्त</span>
+          <span>{t('muhurat.todayTab', 'आज के मुहूर्त')}</span>
         </button>
         <button
           type="button"
@@ -65,7 +68,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
-          <span>कार्य अनुसार</span>
+          <span>{t('muhurat.byActivityTab', 'कार्य अनुसार')}</span>
         </button>
         <button
           type="button"
@@ -77,7 +80,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
-          <span>वैदिक नियम</span>
+          <span>{t('muhurat.vedicRulesTab', 'वैदिक नियम')}</span>
         </button>
       </div>
 
@@ -90,7 +93,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
           {/* Activity Selector */}
           <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3 sm:p-4 shadow-xs">
             <label className="block text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2">
-              कार्य का चयन करें (Select Activity for Muhurat Guidance)
+              {t('muhurat.selectActivity', 'कार्य का चयन करें')}
             </label>
             <div className="flex flex-wrap gap-1.5">
               {MUHURAT_ACTIVITIES.map((act) => {
@@ -105,7 +108,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
                         : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#FAF2E4] border border-[#8C6239]/30'
                     }`}
                   >
-                    {act}
+                    {trVedic(act)}
                   </button>
                 );
               })}
@@ -117,9 +120,9 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
             {/* Header Status */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-3">
               <div>
-                <div className="text-xs font-bold text-[#8C6239]">चयनित कार्य</div>
+                <div className="text-xs font-bold text-[#8C6239]">{t('muhurat.selectedActivity', 'चयनित कार्य')}</div>
                 <h2 className="text-xl sm:text-2xl font-black font-granth text-[#5C3A21]">
-                  {guidance.activity} मुहूर्त
+                  {trVedic(guidance.activity)} {t('muhurat.title', 'मुहूर्त')}
                 </h2>
               </div>
               <div className={`px-3 py-1 rounded-lg border font-black text-xs sm:text-sm ${guidance.statusColor}`}>
@@ -131,10 +134,10 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
           <div className="space-y-3">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {[
-                ['वार', panchang.weekday],
-                ['तिथि', `${panchang.paksha} ${panchang.tithi}`],
-                ['नक्षत्र', panchang.nakshatra],
-                ['योग / करण', `${panchang.yoga} · ${panchang.karana}`],
+                [t('panchang.weekday', 'वार'), trWeekday(panchang.weekday)],
+                [t('panchang.tithi', 'तिथि'), `${trVedic(panchang.paksha)} ${trVedic(panchang.tithi)}`],
+                [t('panchang.nakshatra', 'नक्षत्र'), trVedic(panchang.nakshatra)],
+                [t('panchang.yoga', 'योग') + ' / ' + t('panchang.karana', 'करण'), `${trVedic(panchang.yoga)} · ${trVedic(panchang.karana)}`],
               ].map(([k, v]) => (
                 <div key={k} className="bg-[#F4E8D1] border border-[#8C6239]/25 rounded-lg p-2">
                   <div className="text-[10px] font-bold text-[#8C6239] uppercase">{k}</div>
@@ -143,7 +146,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
               ))}
             </div>
             <div className="text-[11px] font-bold text-[#8C6239]">
-              दिशाशूल आज: {shoolDirection} · स्थानीय सूर्योदय–सूर्यास्त से गणना
+              {t('yatra.shoolDirection', 'दिशाशूल')}: {trVedic(shoolDirection)}
             </div>
             <div className="divide-y divide-[#8C6239]/15 border border-[#8C6239]/25 rounded-xl overflow-hidden">
               {dailyRows.map((row) => (
@@ -154,7 +157,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
                   }`}
                 >
                   <div>
-                    <div className="font-black text-[#3E2714]">{row.title}</div>
+                    <div className="font-black text-[#3E2714]">{trVedic(row.title)}</div>
                     <div className="text-[11px] text-[#735133]">{row.note}</div>
                   </div>
                   <div
@@ -177,7 +180,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
               <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4">
                 <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wider mb-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                  उपलब्ध शुभ समय विंडो (Suitable Windows)
+                  {t('muhurat.suitableWindowsTitle', 'ઉપલબ્ધ શુભ સમય વિન્ડો (Suitable Windows)')}
                 </div>
                 {guidance.suitableWindows.length > 0 ? (
                   <div className="space-y-2">
@@ -186,7 +189,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
                         key={idx}
                         className="bg-white/80 p-2.5 rounded-lg border border-emerald-200 flex justify-between items-center text-xs"
                       >
-                        <span className="font-semibold text-emerald-950">{w.title}</span>
+                        <span className="font-semibold text-emerald-950">{trVedic(w.title)}</span>
                         <span className="font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
                           {w.start} - {w.end}
                         </span>
@@ -194,14 +197,14 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-emerald-800 italic">आज विशेष शुभ विंडो सीमित है।</p>
+                  <p className="text-xs text-emerald-800 italic">{t('muhurat.limitedSuitableWindows', 'આજે વિશેષ શુભ વિન્ડો મર્યાદિત છે.')}</p>
                 )}
               </div>
 
               <div className="bg-rose-50/70 border border-rose-200 rounded-xl p-4">
                 <div className="flex items-center gap-2 text-rose-900 font-bold text-xs uppercase tracking-wider mb-2.5">
                   <AlertTriangle className="w-4 h-4 text-rose-700" />
-                  त्याज्य समय (Avoid Windows)
+                  {t('muhurat.avoidWindowsTitle', 'ત્યાજ્ય સમય (Avoid Windows)')}
                 </div>
                 <div className="space-y-2">
                   {guidance.avoidWindows.map((w, idx) => (
@@ -209,7 +212,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
                       key={idx}
                       className="bg-white/80 p-2.5 rounded-lg border border-rose-200 flex justify-between items-center text-xs"
                     >
-                      <span className="font-semibold text-rose-950">{w.title}</span>
+                      <span className="font-semibold text-rose-950">{trVedic(w.title)}</span>
                       <span className="font-black text-rose-800 bg-rose-100 px-2 py-0.5 rounded">
                         {w.start} - {w.end}
                       </span>
@@ -221,13 +224,13 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
 
             {/* Bottom Pagination */}
             <div className="flex items-center justify-between p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-lg">
-              <span className="text-xs font-bold text-[#8C6239]">पृष्ठ 1 / 2 (शुभ-अशुभ समय)</span>
+              <span className="text-xs font-bold text-[#8C6239]">{t('muhurat.page1of2', 'પૃષ્ઠ ૧ / ૨ (શુભ-અશુભ સમય)')}</span>
               <button
                 type="button"
                 onClick={() => setSubPage('guidance')}
                 className="px-3 py-1 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
               >
-                <span>अगला: २. वैदिक नियम व विचार</span>
+                <span>{t('muhurat.nextVedicRules', 'આગળ: ૨. વૈદિક નિયમો અને વિચાર')}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -241,13 +244,13 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
             <div className="bg-[#F4E8D1] p-4 rounded-lg border border-[#8C6239]/20">
               <h4 className="text-xs font-bold uppercase tracking-wider text-[#5C3A21] mb-2 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-                पंचांग एवं ज्योतिषीय विचार (Panchang Astrological Factors)
+                {t('muhurat.astrologyFactorsTitle', 'પંચાંગ અને જ્યોતિષીય વિચાર (Panchang Astrological Factors)')}
               </h4>
               <ul className="space-y-1.5 text-xs sm:text-sm text-[#5C3A21]">
                 {guidance.reasons.map((r, idx) => (
                   <li key={idx} className="flex items-start gap-2">
                     <span className="text-[#B56A00] font-bold">•</span>
-                    <span>{r}</span>
+                    <span>{trVedic(r)}</span>
                   </li>
                 ))}
               </ul>
@@ -257,13 +260,13 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
             <div className="bg-[#F4E8D1]/70 border border-[#8C6239]/30 rounded-xl p-4">
               <h4 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                शुभ फल हेतु आवश्यक वैदिक सुझाव (Guidelines)
+                {t('muhurat.guidelinesTitle', 'શુભ ફળ હેતુ આવશ્યક વૈદિક સૂચનો (Guidelines)')}
               </h4>
               <ul className="space-y-1.5 text-xs sm:text-sm text-[#5C3A21]">
                 {guidance.recommendations.map((rec, idx) => (
                   <li key={idx} className="flex items-start gap-2">
                     <span className="text-[#8C6239] font-bold">✓</span>
-                    <span>{rec}</span>
+                    <span>{trVedic(rec)}</span>
                   </li>
                 ))}
               </ul>
@@ -277,9 +280,9 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
                 className="px-3 py-1 bg-[#FAF2E4] border border-[#8C6239]/40 hover:bg-white text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
-                <span>पिछला: १. शुभ व त्याज्य समय</span>
+                <span>{t('muhurat.prevSuitableWindows', 'પાછળ: ૧. શુભ અને ત્યાજ્ય સમય')}</span>
               </button>
-              <span className="text-xs font-bold text-[#8C6239]">पृष्ठ 2 / 2</span>
+              <span className="text-xs font-bold text-[#8C6239]">{t('muhurat.page2of2', 'પૃષ્ઠ ૨ / ૨')}</span>
             </div>
           </div>
         )}

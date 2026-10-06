@@ -29,6 +29,8 @@ import {
   downloadICSBlob,
   getGoogleCalendarUrl,
 } from '../services/calendarExport';
+import { useTranslation } from '../i18n';
+import { trVedic } from '../i18n/vedicTranslate';
 
 interface FestivalsViewProps {
   currentDate: Date;
@@ -41,6 +43,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
   onNavigateToReminders,
   onDateSelect,
 }) => {
+  const { t, i18n } = useTranslation();
   // Selected Year for single-year view (default to currentDate's year or 2026)
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear() || 2026);
 
@@ -148,12 +151,12 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
   }, [filteredYearList, currentYearPage]);
 
   const categories = [
-    { id: 'all', label: 'सभी पर्व व व्रत' },
-    { id: 'पर्व', label: 'प्रमुख पर्व' },
-    { id: 'व्रत', label: 'व्रत' },
-    { id: 'एकादशी', label: 'एकादशी' },
-    { id: 'पूर्णिमा', label: 'पूर्णिमा' },
-    { id: 'अमावस्या', label: 'अमावस्या' },
+    { id: 'all', label: t('festivals.catAll', 'सभी पर्व व व्रत') },
+    { id: 'पर्व', label: t('festivals.catMajor', 'प्रमुख पर्व') },
+    { id: 'व्रत', label: t('festivals.catVrat', 'व्रत') },
+    { id: 'एकादशी', label: t('festivals.catEkadashi', 'एकादशी') },
+    { id: 'पूर्णिमा', label: t('festivals.catPurnima', 'पूर्णिमा') },
+    { id: 'अमावस्या', label: t('festivals.catAmavasya', 'अमावस्या') },
   ];
 
   const quickCenturyPills = [
@@ -237,7 +240,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
     <div className="space-y-4 animate-in fade-in duration-300">
       {upcomingHindi.length > 0 && (
         <div className="bg-[#FAF2E4] border-2 border-[#B56A00]/50 rounded-xl p-3 shadow-xs">
-          <h3 className="text-sm font-black font-granth text-[#5C3A21] mb-2">आगामी हिंदी त्योहार तिथियाँ</h3>
+          <h3 className="text-sm font-black font-granth text-[#5C3A21] mb-2">{t('festivals.upcomingFestivals', 'આગામી હિન્દુ તહેવાર તિથિઓ')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {upcomingHindi.map((f) => (
               <button
@@ -246,7 +249,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                 onClick={() => onDateSelect?.(f.date)}
                 className="flex items-center justify-between gap-2 text-left px-2.5 py-1.5 rounded-lg bg-[#F4E8D1] border border-[#8C6239]/25 hover:bg-white cursor-pointer"
               >
-                <span className="font-black text-[#5C3A21] text-sm">{f.hindiName}</span>
+                <span className="font-black text-[#5C3A21] text-sm">{trVedic(f.hindiName)}</span>
                 <span className="text-[11px] font-bold text-[#8C6239] shrink-0">
                   {f.date.toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', weekday: 'short' })}
                 </span>
@@ -263,11 +266,11 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
             <div className="flex items-center gap-2">
               <span className="text-base sm:text-lg text-[#B56A00] font-bold">ॐ</span>
               <h2 className="text-base sm:text-xl font-black font-granth text-[#5C3A21]">
-                सनातन पर्व, व्रत एवं उत्सव संकलन (1925 से 2125)
+                {t('festivals.centuryArchiveTitle', 'સનાતન પર્વ, વ્રત અને ઉત્સવ સંગ્રહ (૧૯૨૫ થી ૨૧૨૫)')}
               </h2>
             </div>
             <p className="text-[11px] sm:text-xs text-[#735133] mt-0.5">
-              खगोलीय गणना आधारित पिछले 100 वर्ष (1925 से) एवं आगामी 100 वर्ष (2125 तक) का प्रामाणिक 200-वर्षीय पंचांग संग्रह
+              {t('festivals.centuryArchiveDesc', 'ખગોળીય ગણતરી આધારિત પાછલા ૧૦૦ વર્ષ અને આગામી ૧૦૦ વર્ષનો પ્રામાણિક ૨૦૦-વાર્ષિક પંચાંગ સંગ્રહ')}
             </p>
           </div>
 
@@ -277,7 +280,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
               className="px-2.5 py-1 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 rounded-lg text-xs font-bold text-[#5C3A21] flex items-center gap-1.5 transition cursor-pointer"
             >
               <Bell className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span>रिमाइंडर</span>
+              <span>{t('festivals.remindersBtn', 'રિમાઇન્ડર')}</span>
             </button>
           </div>
         </div>
@@ -302,7 +305,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
             }`}
           >
             <Calendar className="w-4 h-4 text-[#B56A00]" />
-            <span>🗓️ मासिक पंचांग (Monthly Calendar)</span>
+            <span>🗓️ {t('festivals.calendarView', 'માસિક પંચાંગ')}</span>
           </button>
 
           <button
@@ -315,7 +318,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
             }`}
           >
             <Sparkles className="w-4 h-4 text-[#B56A00]" />
-            <span>📅 वार्षिक पर्व सूची ({selectedYear})</span>
+            <span>📅 {t('festivals.yearList', 'વાર્ષિક પર્વ યાદી')} ({selectedYear})</span>
           </button>
 
           <button
@@ -328,7 +331,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
             }`}
           >
             <History className="w-4 h-4 text-[#B56A00]" />
-            <span>🔍 200 वर्षों में महा-खोज</span>
+            <span>🔍 {t('festivals.centurySearch', '૨૦૦ વર્ષોમાં મહા-શોધ')}</span>
           </button>
         </div>
 

@@ -25,6 +25,7 @@ import {
 import { downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { PdfSuccessModal } from './PdfSuccessModal';
 import { useTranslation } from '../i18n';
+import { trVedic, trRashi, trPlanet, trWeekday } from '../i18n/vedicTranslate';
 
 // Sub-pages inside Panchang tab
 export type PanchangSubPage = 'main' | 'gochar' | 'hora' | 'muhurat_quick' | 'khagol';
@@ -44,14 +45,6 @@ interface PanchangViewProps {
   timezoneHours?: number;
 }
 
-const SUB_PAGES: { id: PanchangSubPage; label: string; fullLabel: string; icon: string }[] = [
-  { id: 'main', label: 'मुख्य', fullLabel: 'मुख्य अंग', icon: '🪔' },
-  { id: 'gochar', label: 'गोचर', fullLabel: 'दैनिक ग्रह गोचर', icon: '🪐' },
-  { id: 'hora', label: 'होरा', fullLabel: '२४ घंटे होरा चक्र', icon: '⏳' },
-  { id: 'muhurat_quick', label: 'मुहूर्त', fullLabel: 'शुभ-अशुभ मुहूर्त', icon: '✨' },
-  { id: 'khagol', label: 'खगोल', fullLabel: 'सूर्य-चन्द्र खगोल', icon: '🔭' },
-];
-
 export const PanchangView: React.FC<PanchangViewProps> = ({
   panchang,
   onNavigateTab,
@@ -62,7 +55,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   latitude = 23.1765,
   longitude = 75.7885,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState<PanchangSubPage>('main');
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -74,6 +67,14 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
     pageCount: number;
     title: string;
   } | null>(null);
+
+  const SUB_PAGES: { id: PanchangSubPage; label: string; fullLabel: string; icon: string }[] = [
+    { id: 'main', label: t('panchang.subMain', 'मुख्य'), fullLabel: t('panchang.subMainFull', 'मुख्य अंग'), icon: '🪔' },
+    { id: 'gochar', label: t('panchang.subGochar', 'गोचर'), fullLabel: t('panchang.subGocharFull', 'दैनिक ग्रह गोचर'), icon: '🪐' },
+    { id: 'hora', label: t('panchang.subHora', 'होरा'), fullLabel: t('panchang.subHoraFull', '२४ घंटे होरा चक्र'), icon: '⏳' },
+    { id: 'muhurat_quick', label: t('panchang.subMuhuratQuick', 'मुहूर्त'), fullLabel: t('panchang.subMuhuratQuickFull', 'शुभ-अशुभ मुहूर्त'), icon: '✨' },
+    { id: 'khagol', label: t('panchang.subKhagol', 'खगोल'), fullLabel: t('panchang.subKhagolFull', 'सूर्य-चन्द्र खगोल'), icon: '🔭' },
+  ];
 
   const solar = panchang.solar;
   const fmt = (d: Date) => formatPlaceTime(d);
@@ -216,17 +217,17 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       {activeSubTab === 'main' && (
         <div className="space-y-3 animate-in fade-in duration-150">
           <div className="rounded-2xl border border-[#8C6239]/30 bg-white/80 p-3 text-xs text-[#3E2714] space-y-1">
-            <div className="font-bold text-[#5C3A21]">गणना प्रमाण — पंडित इसी से मिलाएँ</div>
-            <p>अयनांश: {panchang.ayanamshaName} • {panchang.ayanamsha.toFixed(4)}°</p>
-            <p>स्थान: {locationName} • अक्षांश {latitude.toFixed(4)} • देशांतर {longitude.toFixed(4)}</p>
-            <p>सूर्योदय {fmt(panchang.solar.sunrise)} • सूर्यास्त {fmt(panchang.solar.sunset)}</p>
+            <div className="font-bold text-[#5C3A21]">{t('panchang.verificationProof', 'गणना प्रमाण — पंडित इसी से मिलाएँ')}</div>
+            <p>{t('panchang.ayanamsha', 'अयनांश')}: {panchang.ayanamshaName} • {panchang.ayanamsha.toFixed(4)}°</p>
+            <p>{t('panchang.location', 'स्थान')}: {locationName} • {t('panchang.latitude', 'अक्षांश')} {latitude.toFixed(4)} • {t('panchang.longitude', 'देशांतर')} {longitude.toFixed(4)}</p>
+            <p>{t('panchang.sunrise', 'सूर्योदय')} {fmt(panchang.solar.sunrise)} • {t('panchang.sunset', 'सूर्यास्त')} {fmt(panchang.solar.sunset)}</p>
             {panchang.tithiSpan && (
-              <p>तिथि समाप्ति: {panchang.tithiSpan.nextName} {fmt(panchang.tithiSpan.end)} से</p>
+              <p>{t('panchang.tithiEndsAt', 'तिथि समाप्ति')}: {trVedic(panchang.tithiSpan.nextName)} {fmt(panchang.tithiSpan.end)}</p>
             )}
             {panchang.nakshatraSpan && (
-              <p>नक्षत्र समाप्ति: {panchang.nakshatraSpan.nextName} {fmt(panchang.nakshatraSpan.end)} से</p>
+              <p>{t('panchang.nakshatraEndsAt', 'नक्षत्र समाप्ति')}: {trVedic(panchang.nakshatraSpan.nextName)} {fmt(panchang.nakshatraSpan.end)}</p>
             )}
-            <p className="text-[#735133]">Drik या किसी दूसरे पंचांग से तिथि-समाप्ति और राहुकाल मिलाएँ। अंतर कुछ मिनट का हो तो अयनांश और स्थान जाँचें।</p>
+            <p className="text-[#735133]">{t('panchang.drikVerificationNote')}</p>
           </div>
           {/* Flutter Hero Tithi Card (Luminous Vedic Gold & Parchment) */}
           <div className="flutter-hero-gradient rounded-3xl p-4 sm:p-5 text-[#2C180C] shadow-sm relative overflow-hidden">
@@ -235,20 +236,20 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
             <div className="relative z-10">
               <div className="flex items-center justify-between text-xs font-bold text-[#7A4518]">
-                <span className="tracking-wide">{panchang.paksha} पक्ष • {panchang.masa} मास</span>
+                <span className="tracking-wide">{trVedic(panchang.paksha)} {t('panchang.paksha', 'पक्ष')} • {trVedic(panchang.masa)} {t('panchang.masa', 'मास')}</span>
                 <span className="font-mono text-[11px] bg-[#F5DEBE] text-[#6E3C12] px-2.5 py-0.5 rounded-full border border-[#E8C59D] font-bold shadow-2xs">
-                  {panchang.samvat}
+                  {trVedic(panchang.samvat)}
                 </span>
               </div>
 
               <div className="mt-2 flex items-baseline justify-between">
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-black font-granth text-[#3B190B] tracking-wide">
-                    {panchang.tithi}
+                    {trVedic(panchang.tithi)}
                   </h2>
                   {panchang.tithiSpan && (
                     <span className="text-xs text-[#6A3C1C] font-semibold">
-                      समाप्ति: {fmt(panchang.tithiSpan.end)} तक
+                      {t('panchang.endsAt', 'समाप्ति')}: {fmt(panchang.tithiSpan.end)}
                     </span>
                   )}
                 </div>
@@ -256,7 +257,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                   <span className="text-sm font-black text-[#8C4A00] font-mono">
                     {(panchang.tithiProgress * 100).toFixed(0)}%
                   </span>
-                  <div className="text-[10px] text-[#6E472A] font-semibold">व्यतीत</div>
+                  <div className="text-[10px] text-[#6E472A] font-semibold">{t('panchang.elapsed', 'व्यतीत')}</div>
                 </div>
               </div>
 
@@ -283,12 +284,12 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-black text-[#3B190B]">{y.name}</div>
-                      <div className="text-[10px] text-[#6E472A] truncate">{y.description}</div>
+                      <div className="font-black text-[#3B190B]">{trVedic(y.name)}</div>
+                      <div className="text-[10px] text-[#6E472A] truncate">{trVedic(y.description)}</div>
                     </div>
                   </div>
                   <span className="text-[10px] font-black px-2.5 py-1 rounded-xl bg-amber-500 text-stone-950 shrink-0 shadow-xs">
-                    सक्रिय योग
+                    {t('panchang.activeYoga', 'सक्रिय योग')}
                   </span>
                 </div>
               ))}
@@ -306,8 +307,8 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                   : 'bg-white border-[#EADBCC] text-[#3B2312]'
               }`}
             >
-              <span className="font-bold">⚡ पञ्चक:</span>
-              <span className="font-black truncate ml-1">{panchak.isActive ? panchak.typeNameHindi : 'पञ्चक मुक्त'}</span>
+              <span className="font-bold">⚡ {t('panchang.panchak', 'पञ्चक')}:</span>
+              <span className="font-black truncate ml-1">{panchak.isActive ? trVedic(panchak.typeNameHindi) : t('panchang.noPanchak', 'पञ्चक मुक्त')}</span>
             </div>
 
             <div
@@ -319,8 +320,8 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                   : 'bg-white border-[#EADBCC] text-[#3B2312]'
               }`}
             >
-              <span className="font-bold">🛡️ भद्रा:</span>
-              <span className="font-black truncate ml-1">{bhadra.isActive ? `${bhadra.vas} (${bhadra.nature === 'varjya' ? 'वर्जित' : 'शुभ'})` : 'भद्रा मुक्त'}</span>
+              <span className="font-bold">🛡️ {t('panchang.bhadra', 'भद्रा')}:</span>
+              <span className="font-black truncate ml-1">{bhadra.isActive ? `${trVedic(bhadra.vas)} (${bhadra.nature === 'varjya' ? t('panchang.varjya', 'वर्जित') : t('panchang.shubh', 'शुभ')})` : t('panchang.noBhadra', 'भद्रा मुक्त')}</span>
             </div>
           </div>
 
@@ -329,59 +330,59 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
             {/* 1. नक्षत्र */}
             <div className="flutter-card p-3 shadow-xs hover:border-[#DFCBB5] transition bg-white">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wide">🌟 नक्षत्र</span>
+                <span className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wide">🌟 {t('panchang.nakshatra', 'नक्षत्र')}</span>
                 <span className="text-[10px] font-bold text-[#8C4A00] font-mono">
                   {(panchang.nakshatraProgress * 100).toFixed(0)}%
                 </span>
               </div>
               <div className="text-sm font-black text-[#2A160C] mt-1 truncate">
-                {panchang.nakshatra}
+                {trVedic(panchang.nakshatra)}
               </div>
               <div className="text-[11px] text-[#5C3A21] font-semibold">
-                चरण {panchang.pada}
+                {t('panchang.pada', 'चरण')} {panchang.pada}
               </div>
             </div>
 
             {/* 2. योग */}
             <div className="flutter-card p-3 shadow-xs hover:border-[#DFCBB5] transition bg-white">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wide">☯️ योग</span>
+                <span className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wide">☯️ {t('panchang.yoga', 'योग')}</span>
                 <span className="text-[10px] font-mono text-[#6E472A] font-semibold">
                   {panchang.yogaNumber}/27
                 </span>
               </div>
               <div className="text-sm font-black text-[#2A160C] mt-1 truncate">
-                {panchang.yoga}
+                {trVedic(panchang.yoga)}
               </div>
               <div className="text-[11px] text-[#5C3A21] font-semibold">
-                दैनिक योग
+                {t('panchang.dailyYoga', 'दैनिक योग')}
               </div>
             </div>
 
             {/* 3. करण */}
             <div className="flutter-card p-3 shadow-xs hover:border-[#DFCBB5] transition bg-white">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wide">⚡ करण</span>
+                <span className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wide">⚡ {t('panchang.karana', 'करण')}</span>
                 <span className="text-[10px] font-mono text-[#6E472A] font-semibold">
-                  करण {panchang.karanaNumber}
+                  {t('panchang.karana', 'करण')} {panchang.karanaNumber}
                 </span>
               </div>
               <div className="text-sm font-black text-[#2A160C] mt-1 truncate">
-                {panchang.karana}
+                {trVedic(panchang.karana)}
               </div>
               <div className="text-[11px] text-[#5C3A21] font-semibold">
-                आधा तिथि मान
+                {t('panchang.halfTithiSpan', 'आधा तिथि मान')}
               </div>
             </div>
 
             {/* 4. वार एवं राशि */}
             <div className="flutter-card p-3 shadow-xs hover:border-[#DFCBB5] transition bg-white">
-              <div className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wide">♈ चन्द्र व सूर्य राशि</div>
+              <div className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wide">♈ {t('panchang.moonAndSunSign', 'चन्द्र व सूर्य राशि')}</div>
               <div className="text-sm font-black text-[#2A160C] mt-1 truncate">
-                चंद्र: {panchang.lunarRashi}
+                {t('panchang.moonSign', 'चंद्र')}: {trRashi(panchang.lunarRashi)}
               </div>
               <div className="text-[11px] text-[#5C3A21] font-semibold truncate">
-                सूर्य: {panchang.solarRashi}
+                {t('panchang.sunSign', 'सूर्य')}: {trRashi(panchang.solarRashi)}
               </div>
             </div>
           </div>
@@ -389,30 +390,30 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
           {/* Sun & Moon Timings 4-Col Ribbon */}
           <div className="grid grid-cols-4 gap-1.5 p-2 rounded-2xl bg-white border border-[#EADBCC] shadow-xs text-center">
             <div className="p-1.5 rounded-xl bg-[#FFF6EB] border border-[#F4DFC8]">
-              <div className="text-[10px] font-bold text-[#8C4A00]">सूर्योदय</div>
+              <div className="text-[10px] font-bold text-[#8C4A00]">{t('panchang.sunrise', 'सूर्योदय')}</div>
               <div className="text-xs font-black font-mono text-[#2A160C] mt-0.5">
                 {fmt(solar.sunrise)}
               </div>
             </div>
 
             <div className="p-1.5 rounded-xl bg-[#FFF6EB] border border-[#F4DFC8]">
-              <div className="text-[10px] font-bold text-[#8C4A00]">सूर्यास्त</div>
+              <div className="text-[10px] font-bold text-[#8C4A00]">{t('panchang.sunset', 'सूर्यास्त')}</div>
               <div className="text-xs font-black font-mono text-[#2A160C] mt-0.5">
                 {fmt(solar.sunset)}
               </div>
             </div>
 
             <div className="p-1.5 rounded-xl bg-[#FFF6EB] border border-[#F4DFC8]">
-              <div className="text-[10px] font-bold text-[#8C4A00]">मध्याह्न</div>
+              <div className="text-[10px] font-bold text-[#8C4A00]">{t('panchang.solarNoon', 'मध्याह्न')}</div>
               <div className="text-xs font-black font-mono text-[#2A160C] mt-0.5">
                 {fmt(solar.solarNoon)}
               </div>
             </div>
 
             <div className="p-1.5 rounded-xl bg-[#FFF6EB] border border-[#F4DFC8]">
-              <div className="text-[10px] font-bold text-[#8C4A00]">चन्द्र राशि</div>
+              <div className="text-[10px] font-bold text-[#8C4A00]">{t('panchang.moonSign', 'चन्द्र राशि')}</div>
               <div className="text-xs font-black text-[#2A160C] mt-0.5 truncate">
-                {panchang.lunarRashi}
+                {trRashi(panchang.lunarRashi)}
               </div>
             </div>
           </div>
@@ -426,7 +427,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               title="दैनिक पंचांग व सुविचार व्हाट्सएप पर शेयर करें"
             >
               <Share2 className="w-4 h-4 text-white" />
-              <span>📲 व्हाट्सएप सुप्रभात पंचांग कार्ड (सुविचार सहित)</span>
+              <span>{t('panchang.whatsAppCardButton', '📲 व्हाट्सएप सुप्रभात पंचांग कार्ड (सुविचार सहित)')}</span>
             </button>
           )}
 
@@ -439,7 +440,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               title="व्हाट्सएप पंचांग साझा करें"
             >
               <Share2 className="w-4 h-4 text-emerald-200" />
-              <span className="text-[10px]">साझा करें</span>
+              <span className="text-[10px]">{t('panchang.shareBtn', 'साझा करें')}</span>
             </button>
 
             <button
@@ -450,7 +451,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               title="भोजपत्र PDF डाउनलोड करें"
             >
               <Download className="w-4 h-4 text-amber-200" />
-              <span className="text-[10px] font-bold">{isDownloadingPdf ? 'तैयार…' : 'भोजपत्र PDF'}</span>
+              <span className="text-[10px] font-bold">{isDownloadingPdf ? t('common.loading', 'तैयार…') : t('panchang.bhojpatraPdfBtn', 'भोजपत्र PDF')}</span>
             </button>
 
             {onOpenUmaModal && (
@@ -461,7 +462,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 title="उमा - सनातन दैवज्ञ परामर्श"
               >
                 <Sparkles className="w-4 h-4 text-stone-950 fill-stone-950" />
-                <span className="text-[10px] font-black">उमा ✨</span>
+                <span className="text-[10px] font-black">{t('nav.uma', 'उमा')} ✨</span>
               </button>
             )}
 
@@ -472,7 +473,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               title="पंचांग टेक्स्ट कॉपी करें"
             >
               <Copy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span className="text-[10px]">कॉपी</span>
+              <span className="text-[10px]">{t('panchang.copyBtn', 'कॉपी')}</span>
             </button>
           </div>
 
@@ -486,7 +487,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 title="पूरे महीने के व्रत, त्यौहार और तिथियाँ मासिक पंचांग में देखें"
               >
                 <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <span>🗓️ मासिक पंचांग</span>
+                <span>{t('panchang.monthlyCalendarBtn', '🗓️ मासिक पंचांग')}</span>
               </button>
 
               <button
@@ -495,7 +496,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
                 className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center justify-center gap-2 py-2.5 bg-amber-50 dark:bg-stone-800/80 border border-amber-500/30 rounded-2xl transition cursor-pointer shadow-sm active:scale-98 m3-touch"
                 title="व्रत कथा, पूजा विधि एवं आरती संग्रह"
               >
-                <span>📖 व्रत कथा व आरती</span>
+                <span>{t('panchang.vratKathaAartiBtn', '📖 व्रत कथा व आरती')}</span>
               </button>
             </div>
           )}
@@ -507,7 +508,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
         <div className="flutter-card p-4 space-y-3 animate-in fade-in duration-150 bg-white">
           <div className="flex items-center justify-between border-b border-[#EADBCC] pb-2">
             <h3 className="text-sm font-black text-[#3B190B] flex items-center gap-1.5">
-              <span>🪐 प्रत्यक्ष नवग्रह गोचर स्थिति</span>
+              <span>{t('panchang.transitHeading', '🪐 प्रत्यक्ष नवग्रह गोचर स्थिति')}</span>
             </h3>
             <span className="text-[10px] text-[#8C4A00] font-bold">
               {locationName}
@@ -516,16 +517,16 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
             <div className="p-2.5 rounded-xl bg-[#FFF8ED] border border-[#F0DCBE]">
-              <div className="text-[10px] text-[#8C4A00] font-bold">सूर्य (Sun)</div>
-              <div className="font-black text-[#2C180C] text-sm mt-0.5">{panchang.solarRashi}</div>
+              <div className="text-[10px] text-[#8C4A00] font-bold">{t('panchang.sunSign', 'सूर्य (Sun)')}</div>
+              <div className="font-black text-[#2C180C] text-sm mt-0.5">{trRashi(panchang.solarRashi)}</div>
             </div>
             <div className="p-2.5 rounded-xl bg-[#FFF8ED] border border-[#F0DCBE]">
-              <div className="text-[10px] text-[#8C4A00] font-bold">चन्द्र (Moon)</div>
-              <div className="font-black text-[#2C180C] text-sm mt-0.5">{panchang.lunarRashi}</div>
+              <div className="text-[10px] text-[#8C4A00] font-bold">{t('panchang.moonSign', 'चन्द्र (Moon)')}</div>
+              <div className="font-black text-[#2C180C] text-sm mt-0.5">{trRashi(panchang.lunarRashi)}</div>
             </div>
             <div className="p-2.5 rounded-xl bg-[#FFF8ED] border border-[#F0DCBE]">
-              <div className="text-[10px] text-[#8C4A00] font-bold">नक्षत्र</div>
-              <div className="font-black text-[#2C180C] text-sm mt-0.5">{panchang.nakshatra} ({panchang.pada})</div>
+              <div className="text-[10px] text-[#8C4A00] font-bold">{t('panchang.nakshatra', 'नक्षत्र')}</div>
+              <div className="font-black text-[#2C180C] text-sm mt-0.5">{trVedic(panchang.nakshatra)} ({t('panchang.pada', 'चरण')} {panchang.pada})</div>
             </div>
           </div>
         </div>
@@ -536,11 +537,11 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
         <div className="flutter-card p-4 space-y-3 animate-in fade-in duration-150 bg-white">
           <div className="flex items-center justify-between border-b border-[#EADBCC] pb-2">
             <h3 className="text-sm font-black text-[#3B190B] flex items-center gap-1.5">
-              <span>⏳ दैनिक २४ घंटे होरा चक्र</span>
+              <span>{t('panchang.horaHeading', '⏳ दैनिक २४ घंटे होरा चक्र')}</span>
             </h3>
             {currentActiveHora && (
               <span className="text-[11px] font-black text-[#8C4A00] bg-[#FBF0DD] border border-[#E8C59D] px-2 py-0.5 rounded-full">
-                वर्तमान: {currentActiveHora.planet}
+                {t('panchang.currentHora', 'वर्तमान')}: {trPlanet(currentActiveHora.planet)}
               </span>
             )}
           </div>
@@ -557,7 +558,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-[10px] text-[#8C4A00] font-bold">#{i + 1}</span>
-                  <span className="font-bold">{h.symbol} {h.planet} होरा</span>
+                  <span className="font-bold">{h.symbol} {trPlanet(h.planet)} {t('panchang.subHora', 'होरा')}</span>
                 </div>
                 <span className="font-mono text-[11px] text-[#5C3A21] font-semibold">
                   {fmt(h.start)} - {fmt(h.end)}
@@ -572,24 +573,24 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       {activeSubTab === 'muhurat_quick' && (
         <div className="flutter-card p-4 space-y-3 animate-in fade-in duration-150 bg-white">
           <h3 className="text-sm font-black text-[#3B190B] border-b border-[#EADBCC] pb-2">
-            ✨ दैनिक मुख्य शुभ व अशुभ काल
+            {t('panchang.quickMuhuratHeading', '✨ दैनिक मुख्य शुभ व अशुभ काल')}
           </h3>
 
           <div className="space-y-2 text-xs">
             <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center justify-between">
               <div>
-                <div className="font-black text-emerald-950">अभिजित मुहूर्त (सर्वश्रेष्ठ)</div>
-                <div className="text-[11px] text-emerald-800 font-medium">विजय व सर्वकार्य सिद्धि</div>
+                <div className="font-black text-emerald-950">{t('panchang.abhijitBest', 'अभिजित मुहूर्त (सर्वश्रेष्ठ)')}</div>
+                <div className="text-[11px] text-emerald-800 font-medium">{t('panchang.abhijitSuccess', 'विजय व सर्वकार्य सिद्धि')}</div>
               </div>
               <span className="font-mono font-black text-emerald-950 text-xs">
-                {abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} - ${fmt(abhijitWindow.end)}` : 'आज नहीं'}
+                {abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} - ${fmt(abhijitWindow.end)}` : t('panchang.notToday', 'आज नहीं')}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-rose-50 border border-rose-300 flex items-center justify-between">
               <div>
-                <div className="font-black text-rose-950">राहुकाल (त्याज्य काल)</div>
-                <div className="text-[11px] text-rose-800 font-medium">शुभ कार्य वर्जित</div>
+                <div className="font-black text-rose-950">{t('panchang.rahuKaalVarjya', 'राहुकाल (त्याज्य काल)')}</div>
+                <div className="text-[11px] text-rose-800 font-medium">{t('panchang.rahuKaalAvoid', 'शुभ कार्य वर्जित')}</div>
               </div>
               <span className="font-mono font-black text-rose-950 text-xs">
                 {rahuWindow ? `${fmt(rahuWindow.start)} - ${fmt(rahuWindow.end)}` : '—'}
@@ -603,24 +604,24 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       {activeSubTab === 'khagol' && (
         <div className="flutter-card p-4 space-y-3 animate-in fade-in duration-150">
           <h3 className="text-sm font-black text-[#462B17] dark:text-amber-200 border-b border-amber-500/20 pb-2">
-            🔭 सूर्य व चन्द्र खगोलीय स्थिति
+            {t('panchang.astronomyHeading', '🔭 सूर्य व चन्द्र खगोलीय स्थिति')}
           </h3>
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-stone-800 border border-amber-500/20">
-              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">दिनमान (Day Duration)</div>
-              <div className="font-black text-[#462B17] dark:text-amber-100">{dayDurationHours.toFixed(2)} घंटे</div>
+              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">{t('panchang.dayDuration', 'दिनमान (Day Duration)')}</div>
+              <div className="font-black text-[#462B17] dark:text-amber-100">{dayDurationHours.toFixed(2)} {t('panchang.hoursUnit', 'घंटे')}</div>
             </div>
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-stone-800 border border-amber-500/20">
-              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">रात्रिमान (Night Duration)</div>
-              <div className="font-black text-[#462B17] dark:text-amber-100">{nightDurationHours.toFixed(2)} घंटे</div>
+              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">{t('panchang.nightDuration', 'रात्रिमान (Night Duration)')}</div>
+              <div className="font-black text-[#462B17] dark:text-amber-100">{nightDurationHours.toFixed(2)} {t('panchang.hoursUnit', 'घंटे')}</div>
             </div>
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-stone-800 border border-amber-500/20">
-              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">अक्षांश (Latitude)</div>
+              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">{t('panchang.latitude', 'अक्षांश (Latitude)')}</div>
               <div className="font-mono font-black text-[#462B17] dark:text-amber-100">{latitude.toFixed(4)}° N</div>
             </div>
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-stone-800 border border-amber-500/20">
-              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">देशांतर (Longitude)</div>
+              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">{t('panchang.longitude', 'देशांतर (Longitude)')}</div>
               <div className="font-mono font-black text-[#462B17] dark:text-amber-100">{longitude.toFixed(4)}° E</div>
             </div>
           </div>

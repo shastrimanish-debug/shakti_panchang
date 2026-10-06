@@ -49,10 +49,10 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
             </div>
             <div>
               <h3 className="font-granth font-black text-base sm:text-lg text-[#5C3A21] dark:text-[#FFD88A] leading-tight">
-                {t('common.selectLanguage', 'Choose Language / भाषा चुनें')}
+                {t('common.selectLanguageModalTitle', 'Choose Language / ભાષા પસંદ કરો')}
               </h3>
               <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                10+ Regional & Global NRI Languages Supported
+                {t('common.selectLanguageModalSubtitle', '10+ Regional & Global NRI Languages Supported')}
               </p>
             </div>
           </div>
@@ -72,7 +72,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('common.search', 'Search language or script...')}
+            placeholder={t('common.searchLangPlaceholder', 'Search language or script...')}
             className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl bg-[#F5ECE0] dark:bg-stone-900 border border-[#DFCBB5] dark:border-stone-800 text-[#2C180C] dark:text-[#FAF2E4] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
           />
         </div>

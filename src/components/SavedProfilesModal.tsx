@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { KundaliData } from '../types';
 import { getSavedKundaliProfiles, deleteSavedKundaliProfile } from '../services/storage';
 import { BookMarked, X, Trash2 } from 'lucide-react';
+import { useTranslation } from '../i18n';
+import { trRashi, trVedic } from '../i18n/vedicTranslate';
 
 interface SavedProfilesModalProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
   onClose,
   onSelectProfile,
 }) => {
+  const { t, i18n } = useTranslation();
   const [profiles, setProfiles] = useState<KundaliData[]>([]);
 
   const loadList = () => {
@@ -35,7 +38,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
   };
 
   const formatDate = (d: Date) =>
-    d.toLocaleDateString('hi-IN', {
+    d.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'hi-IN', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -48,7 +51,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
         <div className="bg-[#5C3A21] text-[#FAF2E4] p-3.5 flex items-center justify-between border-b-2 border-[#8C6239]">
           <div className="flex items-center gap-2">
             <BookMarked className="w-5 h-5 text-[#E69A33]" />
-            <h3 className="font-bold text-base font-granth">सहेजी गई जन्म कुंडलियाँ</h3>
+            <h3 className="font-bold text-base font-granth">{t('savedProfiles.title', 'સાચવેલી જન્મ કુંડળીઓ')}</h3>
           </div>
           <button
             onClick={onClose}
@@ -76,13 +79,13 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
                     {formatDate(p.birthDate)} • {p.birthTime} • {p.birthPlace}
                   </div>
                   <div className="text-[11px] font-bold text-[#B56A00] mt-1">
-                    लग्न: {p.lagnaRashi} • चंद्र: {p.moonRashi} ({p.nakshatra})
+                    {t('savedProfiles.lagna', 'લગ્ન')}: {trRashi(p.lagnaRashi)} • {t('savedProfiles.moon', 'ચંદ્ર')}: {trRashi(p.moonRashi)} ({trVedic(p.nakshatra)})
                   </div>
                 </div>
                 <button
                   onClick={(e) => handleDelete(e, p)}
                   className="p-1.5 text-rose-700 hover:bg-rose-100 rounded-lg transition cursor-pointer"
-                  title="हटाएँ"
+                  title={t('savedProfiles.remove', 'કાઢી નાખો')}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -90,7 +93,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
             ))
           ) : (
             <div className="text-center py-10 text-xs text-[#8C6239]">
-              कोई सहेजी गई कुंडली नहीं मिली। कुंडली बनाकर उसे यहाँ सुरक्षित रखा जा सकता है।
+              {t('savedProfiles.empty', 'કોઈ સાચવેલી કુંડળી મળી નથી. કુંડળી બનાવીને તેને અહીં સાચવી શકાય છે.')}
             </div>
           )}
         </div>

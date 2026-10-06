@@ -26,13 +26,13 @@ import { calculateVedicPanchang } from './services/astronomy';
 import { scheduleMorningBriefs } from './services/morningBrief';
 import { calculateKundali } from './services/kundali';
 import { SavedLocation, KundaliData } from './types';
-import { BOOK_PAGES } from './constants/bookPages';
+import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
 import { BottomNavBar } from './components/BottomNavBar';
 import { MoreMenuModal } from './components/MoreMenuModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { useLicense } from './lib/license-client';
-import { useTranslation } from './i18n';
+import { useTranslation, getInitialLanguage } from './i18n';
 import {
   Sparkles,
   BookOpen,
@@ -123,7 +123,24 @@ export function App() {
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState<boolean>(false);
   const [subscriptionReason, setSubscriptionReason] = useState<string>('');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [currentLang, setCurrentLang] = useState<string>(() => i18n.language || getInitialLanguage());
+
+  useEffect(() => {
+    const handleLangChange = (lng: string) => {
+      setCurrentLang(lng);
+    };
+    const handleCustomChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) setCurrentLang(detail);
+    };
+    i18n.on('languageChanged', handleLangChange);
+    window.addEventListener('shakti_language_change', handleCustomChange);
+    return () => {
+      i18n.off('languageChanged', handleLangChange);
+      window.removeEventListener('shakti_language_change', handleCustomChange);
+    };
+  }, [i18n]);
 
   // Strict Subscription & Anti-Mod State
   const { status: licenseStatus } = useLicense();
@@ -202,18 +219,18 @@ export function App() {
 
   // Current page book meta
   const currentIndex = BOOK_PAGES.findIndex((p) => p.id === activeTab);
-  const currentTabMeta = BOOK_PAGES[currentIndex] || BOOK_PAGES[0];
+  const currentTabMeta = getLocalizedBookPage(BOOK_PAGES[currentIndex] || BOOK_PAGES[0], currentLang);
   const prevIndex = (currentIndex - 1 + BOOK_PAGES.length) % BOOK_PAGES.length;
   const nextIndex = (currentIndex + 1) % BOOK_PAGES.length;
-  const prevTabMeta = BOOK_PAGES[prevIndex];
-  const nextTabMeta = BOOK_PAGES[nextIndex];
+  const prevTabMeta = getLocalizedBookPage(BOOK_PAGES[prevIndex], currentLang);
+  const nextTabMeta = getLocalizedBookPage(BOOK_PAGES[nextIndex], currentLang);
 
   // Show temporary toast notice when turning pages
   const notifyPageTurn = useCallback((pageTitle: string, pageNum: number) => {
-    setPageTurnNotice(`📖 पृष्ठ ${pageNum} : ${pageTitle}`);
+    setPageTurnNotice(`📖 ${t('book.page', 'पृष्ठ')} ${pageNum} : ${pageTitle}`);
     const timer = setTimeout(() => setPageTurnNotice(null), 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [t]);
 
   // Navigate to previous page
   const handlePrevPage = useCallback(() => {
@@ -222,11 +239,11 @@ export function App() {
       return;
     }
     setTurnDirection('backward');
-    const prev = BOOK_PAGES[prevIndex];
+    const prev = getLocalizedBookPage(BOOK_PAGES[prevIndex], currentLang);
     setActiveTab(prev.id);
     if (isAudioEnabled) playTactilePageTurnSound();
     notifyPageTurn(prev.label, prev.pageNumber);
-  }, [prevIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal]);
+  }, [prevIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal, currentLang]);
 
   // Navigate to next page
   const handleNextPage = useCallback(() => {
@@ -235,11 +252,11 @@ export function App() {
       return;
     }
     setTurnDirection('forward');
-    const next = BOOK_PAGES[nextIndex];
+    const next = getLocalizedBookPage(BOOK_PAGES[nextIndex], currentLang);
     setActiveTab(next.id);
     if (isAudioEnabled) playTactilePageTurnSound();
     notifyPageTurn(next.label, next.pageNumber);
-  }, [nextIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal]);
+  }, [nextIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal, currentLang]);
 
   // Navigate directly to a tab
   const handleSelectTab = useCallback(
@@ -322,12 +339,13 @@ export function App() {
       <OfflineIndicator />
       {licenseStatus.kind === "trial" && (
         <div className="bg-[#B56A00] text-white text-center text-xs font-bold py-1.5">
-          परीक्षण: {licenseStatus.daysRemaining} दिन शेष। उसके बाद पूरी ऐप बंद।
+          {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष।` })}
         </div>
       )}
 
       {/* Heritage Top Navigation Bar with Page Flip Controls */}
       <Navbar
+        key={`navbar-${currentLang}`}
         currentLocation={currentLocation}
         currentDate={currentDate}
         onDateChange={setCurrentDate}
@@ -396,7 +414,7 @@ export function App() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold text-[#8C6239]">
-                  📖 पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}
+                  📖 {t('book.page', 'पृष्ठ')} {currentTabMeta.pageNumber} / {BOOK_PAGES.length}
                 </span>
                 <button
                   type="button"
@@ -405,16 +423,16 @@ export function App() {
                     if (isAudioEnabled) playTactilePageTurnSound();
                   }}
                   className="px-2 py-0.5 bg-[#8C6239] hover:bg-[#5C3A21] text-[#FAF2E4] rounded text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
-                  title="ग्रन्थ मुखपृष्ठ खोलें"
+                  title={t('book.openCoverTitle', 'ग्रन्थ मुखपृष्ठ खोलें')}
                 >
-                  <span>📕 मुखपृष्ठ</span>
+                  <span>📕 {t('book.coverBtn', 'मुखपृष्ठ')}</span>
                 </button>
               </div>
             </div>
 
             {/* Main Active Page View */}
             <div
-              key={activeTab}
+              key={`${activeTab}-${currentLang}`}
               className={`w-full min-w-0 overflow-x-hidden ${
                 turnDirection === 'forward'
                   ? 'book-page-turn-forward'
@@ -530,14 +548,14 @@ export function App() {
                 type="button"
                 onClick={handlePrevPage}
                 className="flex items-center gap-1 px-3 py-1.5 bg-[#FAF2E4] hover:bg-[#EBD8BD] text-[#2C1810] border border-[#8C6239]/40 rounded-xl font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs m3-touch"
-                title={`पिछला पृष्ठ: ${prevTabMeta.label}`}
+                title={`${t('common.prev', 'पिछला')}: ${prevTabMeta.label}`}
               >
                 <ChevronLeft className="w-4 h-4 text-[#B56A00]" />
-                <span>‹ पिछला ({prevTabMeta.label})</span>
+                <span>‹ {t('common.prev', 'पिछला')} ({prevTabMeta.label})</span>
               </button>
 
               <div className="font-granth text-xs font-bold text-[#8C6239] text-center px-1">
-                <span>पृष्ठ {currentTabMeta.pageNumber} / {BOOK_PAGES.length}</span>
+                <span>{t('book.page', 'पृष्ठ')} {currentTabMeta.pageNumber} / {BOOK_PAGES.length}</span>
                 <span className="text-[#B56A00] font-normal block sm:inline sm:ml-1.5">• {currentTabMeta.label}</span>
               </div>
 
@@ -545,9 +563,9 @@ export function App() {
                 type="button"
                 onClick={handleNextPage}
                 className="flex items-center gap-1 px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] border border-[#B56A00] rounded-xl font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs m3-touch"
-                title={`अगला पृष्ठ: ${nextTabMeta.label}`}
+                title={`${t('common.next', 'अगला')}: ${nextTabMeta.label}`}
               >
-                <span>अगला ({nextTabMeta.label}) ›</span>
+                <span>{t('common.next', 'अगला')} ({nextTabMeta.label}) ›</span>
                 <ChevronRight className="w-4 h-4 text-[#FFD88A]" />
               </button>
             </div>
@@ -567,7 +585,7 @@ export function App() {
             <Sparkles className="w-3.5 h-3.5 fill-amber-400 group-hover:rotate-12 transition-transform" />
           </div>
           <span className="text-xs font-black tracking-wide pr-1">
-            उमा परामर्श ✨
+            {t('uma.title', 'उमा परामर्श')} ✨
           </span>
         </button>
       </aside>
@@ -575,13 +593,13 @@ export function App() {
       {/* Traditional Bhojpatra Footer (Compact with bottom padding for mobile navigation bar) */}
       <footer className="bg-[#F5ECE0] text-[#5C3A21] border-t border-[#DFCBB5] py-4 px-3 mb-24 sm:mb-8 text-center text-xs space-y-1 select-none">
         <div className="font-granth text-xs sm:text-sm text-[#2C180C] font-black tracking-wide">
-          ॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥
+          {t('footer.shloka', '॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥')}
         </div>
         <p className="text-[11px] text-[#6E472A] font-medium">
-          शक्ति पंचांग • प्रामाणिक वैदिक खगोलशास्त्र एवं ज्योतिषीय पंचांग ग्रन्थ
+          {t('footer.tagline', 'शक्ति पंचांग • प्रामाणिक वैदिक खगोलशास्त्र एवं ज्योतिषीय पंचांग ग्रन्थ')}
         </p>
         <p className="text-[10px] text-[#8C4A00] font-semibold">
-          गणना: सूर्य सिद्धान्त एवं लाहिरी अयनांश • स्थान: {currentLocation.name}
+          {t('footer.calcMethod', 'गणना: सूर्य सिद्धान्त एवं लाहिरी अयनांश')} • {t('panchang.location', 'स्थान')}: {currentLocation.name}
         </p>
       </footer>
 
@@ -625,6 +643,9 @@ export function App() {
       <LanguageSelectorModal
         isOpen={isLanguageModalOpen}
         onClose={() => setIsLanguageModalOpen(false)}
+        onLanguageSelected={(lang) => {
+          setCurrentLang(lang.code);
+        }}
       />
 
       {/* Subscription & VIP Activation Modal */}

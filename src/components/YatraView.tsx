@@ -3,6 +3,8 @@ import { VedicPanchangData, SavedLocation } from '../types';
 import { COMMON_INDIAN_CITIES, calculateYatraShool } from '../services/disha';
 import { Compass, MapPin, Navigation, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 import { DigitalCompass } from './DigitalCompass';
+import { useTranslation } from '../i18n';
+import { trVedic, trWeekday } from '../i18n/vedicTranslate';
 
 interface YatraViewProps {
   panchang: VedicPanchangData;
@@ -10,6 +12,7 @@ interface YatraViewProps {
 }
 
 export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation }) => {
+  const { t } = useTranslation();
   const [origin, setOrigin] = useState<SavedLocation>(currentLocation);
   const defaultDest =
     COMMON_INDIAN_CITIES.find((c) => c.name.includes('Varanasi')) ||
@@ -40,13 +43,13 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
       <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-2.5 sm:p-4 shadow-xs">
         <h3 className="text-xs sm:text-sm font-bold font-granth text-[#5C3A21] mb-2 flex items-center gap-1.5">
           <Compass className="w-4 h-4 text-[#B56A00]" />
-          यात्रा मार्ग एवं दिशाशूल कैलकुलेटर
+          {t('yatra.title', 'यात्रा मार्ग एवं दिशाशूल कैलकुलेटर')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label className="block text-[10px] sm:text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1 flex items-center gap-1">
               <MapPin className="w-3 h-3 text-emerald-600" />
-              प्रस्थान स्थल (Origin)
+              {t('yatra.origin', 'प्रस्थान स्थल (Origin)')}
             </label>
             <select
               value={origin.name}
@@ -67,7 +70,7 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
           <div>
             <label className="block text-[10px] sm:text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1 flex items-center gap-1">
               <MapPin className="w-3 h-3 text-rose-600" />
-              गंतव्य स्थल (Destination)
+              {t('yatra.destination', 'गंतव्य स्थल (Destination)')}
             </label>
             <select
               value={destination.name}
@@ -89,9 +92,9 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
 
       {/* Live Vedic Digital Compass */}
       <DigitalCompass
-        shoolDirectionName={result.shoolDirection}
+        shoolDirectionName={trVedic(result.shoolDirection)}
         targetBearing={result.bearing}
-        targetDirectionName={result.direction}
+        targetDirectionName={trVedic(result.direction)}
         isDirectionBlocked={result.isDirectionBlocked}
       />
 
@@ -103,15 +106,15 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
               <Navigation className="w-4 h-4 text-amber-400" />
             </div>
             <div>
-              <div className="text-[10px] sm:text-xs font-bold text-[#8C6239]">यात्रा दिशा</div>
+              <div className="text-[10px] sm:text-xs font-bold text-[#8C6239]">{t('yatra.bearing', 'यात्रा दिशा')}</div>
               <div className="text-sm sm:text-base font-black font-granth text-[#5C3A21]">
-                {result.direction} दिशा ({result.bearing.toFixed(0)}°)
+                {trVedic(result.direction)} ({result.bearing.toFixed(0)}°)
               </div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] sm:text-xs font-bold text-[#8C6239]">अनुमानित दूरी</div>
-            <div className="text-xs sm:text-sm font-black text-[#5C3A21]">~{result.distanceKm} कि.मी.</div>
+            <div className="text-[10px] sm:text-xs font-bold text-[#8C6239]">{t('yatra.distance', 'अनुमानित दूरी')}</div>
+            <div className="text-xs sm:text-sm font-black text-[#5C3A21]">~{result.distanceKm} km</div>
           </div>
         </div>
 
@@ -133,8 +136,8 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
           <div className="space-y-1">
             <div className="text-sm font-bold">
               {result.isDirectionBlocked
-                ? `दिशाशूल बाधा: आज ${panchang.weekday} को ${result.shoolDirection} दिशा में दिशाशूल है!`
-                : `दिशा अनुकूल: आज ${result.direction} दिशा यात्रा के लिए अनुकूल है।`}
+                ? `${t('yatra.blocked', 'दिशाशूल बाधा')}: ${trWeekday(panchang.weekday)} — ${trVedic(result.shoolDirection)}`
+                : `${t('yatra.safe', 'दिशा अनुकूल')}: ${trVedic(result.direction)}`}
             </div>
             <p className="text-xs">{result.message}</p>
           </div>
@@ -144,7 +147,7 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
         <div className="bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl p-4">
           <h4 className="text-xs font-bold text-[#5C3A21] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
             <Sparkles className="w-4 h-4 text-[#B56A00]" />
-            पारंपरिक दिशाशूल परिहार (Vedic Travel Remedy)
+            {t('yatra.remedy', 'पारंपरिक दिशाशूल परिहार')}
           </h4>
           <p className="text-xs sm:text-sm text-[#5C3A21] font-medium leading-relaxed">
             {result.remedy}
@@ -154,7 +157,7 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
         {/* Safe Travel Windows (Choghadiya) */}
         <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4">
           <h4 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2">
-            आज प्रस्थान हेतु शुभ चौघड़िया समय (Safe Travel Windows)
+            {t('choghadiya.auspiciousWindows', 'आज प्रस्थान हेतु शुभ चौघड़िया समय')}
           </h4>
           {result.suitablePeriods.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -164,7 +167,7 @@ export const YatraView: React.FC<YatraViewProps> = ({ panchang, currentLocation 
                   className="bg-[#F4E8D1] p-2.5 rounded-lg border border-[#8C6239]/20 flex justify-between items-center text-xs"
                 >
                   <span className="font-bold text-[#5C3A21]">
-                    {p.hindiName} ({p.name})
+                    {trVedic(p.hindiName)} ({p.name})
                   </span>
                   <span className="font-black text-[#B56A00]">
                     {formatTime(p.start)} - {formatTime(p.end)}

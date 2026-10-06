@@ -6,6 +6,8 @@ import {
   getAnnualMuhurats,
   HINDI_MONTHS_NAMES,
 } from '../services/muhuratTable';
+import { useTranslation } from '../i18n';
+import { trVedic, trWeekday } from '../i18n/vedicTranslate';
 import {
   Calendar,
   Clock,
@@ -19,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export const AnnualMuhuratTableView: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<MuhuratCategory>('vivah');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedMonth, setSelectedMonth] = useState<number>(-1); // -1 = all months
@@ -34,35 +37,35 @@ export const AnnualMuhuratTableView: React.FC = () => {
   );
 
   const handleShareWhatsApp = () => {
-    let text = `🕉️ *सनातन शक्ति पंचांग — ${activeCategoryMeta.title} (${selectedYear})*\n\n`;
-    text += `📌 *श्रेणी:* ${activeCategoryMeta.shortTitle}\n`;
+    let text = `🕉️ *${t('common.appName', 'શક્તિ પંચાંગ')} — ${trVedic(activeCategoryMeta.title)} (${selectedYear})*\n\n`;
+    text += `📌 *${t('muhurat.categoryTitle', 'શ્રેણી')}:* ${trVedic(activeCategoryMeta.shortTitle)}\n`;
     if (selectedMonth >= 0) {
-      text += `📅 *माह:* ${HINDI_MONTHS_NAMES[selectedMonth + 1]}\n`;
+      text += `📅 *${t('panchang.masa', 'માસ')}:* ${trVedic(HINDI_MONTHS_NAMES[selectedMonth + 1])}\n`;
     }
-    text += `✨ *कुल शुभ मुहूर्त:* ${muhuratList.length}\n`;
+    text += `✨ *${t('muhurat.auspiciousDatesCount', 'કુલ શુભ મુહૂર્ત')}:* ${muhuratList.length}\n`;
     text += `═════════════════════\n\n`;
 
     muhuratList.forEach((m, idx) => {
-      text += `*${idx + 1}. ${m.dateStr} (${m.weekdayHindi})*\n`;
-      text += `   ⏳ *समय:* ${m.timeWindowHindi}\n`;
-      text += `   🌙 *तिथि:* ${m.tithiHindi}\n`;
-      text += `   ⭐ *नक्षत्र:* ${m.nakshatraHindi}\n`;
-      if (m.lagnaHindi) text += `   🏛️ *लग्न:* ${m.lagnaHindi}\n`;
-      if (m.specialYoga) text += `   ✨ *योग:* ${m.specialYoga}\n`;
-      text += `   📖 ${m.vedicGuidance}\n\n`;
+      text += `*${idx + 1}. ${m.dateStr} (${trWeekday(m.weekdayHindi)})*\n`;
+      text += `   ⏳ *${t('muhurat.timeWindow', 'સમય')}:* ${trVedic(m.timeWindowHindi)}\n`;
+      text += `   🌙 *${t('panchang.tithi', 'તિથિ')}:* ${trVedic(m.tithiHindi)}\n`;
+      text += `   ⭐ *${t('panchang.nakshatra', 'નક્ષત્ર')}:* ${trVedic(m.nakshatraHindi)}\n`;
+      if (m.lagnaHindi) text += `   🏛️ *${t('muhurat.lagna', 'લગ્ન')}:* ${trVedic(m.lagnaHindi)}\n`;
+      if (m.specialYoga) text += `   ✨ *${t('panchang.yoga', 'યોગ')}:* ${trVedic(m.specialYoga)}\n`;
+      text += `   📖 ${trVedic(m.vedicGuidance)}\n\n`;
     });
 
     text += `═════════════════════\n`;
-    text += `🪔 *सटीक वैदिक पंचांग एवं मुहूर्त दर्शन हेतु:* शक्ति पंचांग\n`;
+    text += `🪔 *${t('footer.tagline', 'સચોટ વૈદિક પંચાંગ અને મુહૂર્ત')}:* ${t('common.appName', 'શક્તિ પંચાંગ')}\n`;
 
     const encoded = encodeURIComponent(text);
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
   };
 
   const handleCopyList = () => {
-    let text = `सनातन शक्ति पंचांग — ${activeCategoryMeta.title} (${selectedYear})\n\n`;
+    let text = `${t('common.appName', 'શક્તિ પંચાંગ')} — ${trVedic(activeCategoryMeta.title)} (${selectedYear})\n\n`;
     muhuratList.forEach((m, idx) => {
-      text += `${idx + 1}. ${m.dateStr} (${m.weekdayHindi}) - ${m.timeWindowHindi} | तिथि: ${m.tithiHindi} | नक्षत्र: ${m.nakshatraHindi}\n`;
+      text += `${idx + 1}. ${m.dateStr} (${trWeekday(m.weekdayHindi)}) - ${trVedic(m.timeWindowHindi)} | ${t('panchang.tithi', 'તિથિ')}: ${trVedic(m.tithiHindi)} | ${t('panchang.nakshatra', 'નક્ષત્ર')}: ${trVedic(m.nakshatraHindi)}\n`;
     });
     navigator.clipboard.writeText(text);
     setIsCopied(true);
@@ -74,8 +77,8 @@ export const AnnualMuhuratTableView: React.FC = () => {
       {/* Category Horizontal Selector */}
       <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-2 shadow-xs">
         <div className="text-[10px] sm:text-[11px] font-bold text-[#8C6239] uppercase tracking-wider mb-1 flex items-center justify-between">
-          <span>मुहूर्त सारणी श्रेणी चुनें</span>
-          <span className="text-[10px] text-[#5C3A21] font-semibold">शास्त्रोक्त निर्णय</span>
+          <span>{t('muhurat.categoryTitle', 'મુહૂર્ત સારણી શ્રેણી પસંદ કરો')}</span>
+          <span className="text-[10px] text-[#5C3A21] font-semibold">{t('muhurat.shastraDecision', 'શાસ્ત્રોક્ત નિર્ણય')}</span>
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
           {MUHURAT_CATEGORIES.map((cat) => {
@@ -93,7 +96,7 @@ export const AnnualMuhuratTableView: React.FC = () => {
               >
                 <span className="text-sm leading-none">{cat.icon}</span>
                 <span className="text-[10px] sm:text-[11px] font-bold leading-tight line-clamp-1">
-                  {cat.shortTitle}
+                  {trVedic(cat.shortTitle)}
                 </span>
               </button>
             );
@@ -101,11 +104,11 @@ export const AnnualMuhuratTableView: React.FC = () => {
         </div>
       </div>
 
-      {/* Year & Action Buttons Row (Combined for zero vertical waste) */}
+      {/* Year & Action Buttons Row */}
       <div className="flex items-center justify-between gap-1.5 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl px-2 py-1.5 shadow-xs">
         {/* Year Toggle */}
         <div className="flex items-center gap-1">
-          <span className="text-[11px] font-bold text-[#8C6239]">वर्ष:</span>
+          <span className="text-[11px] font-bold text-[#8C6239]">{t('common.year', 'વર્ષ:')}</span>
           <div className="inline-flex rounded-lg border border-[#8C6239]/30 p-0.5 bg-[#F4E8D1]">
             {[2026, 2027].map((yr) => (
               <button
@@ -132,7 +135,7 @@ export const AnnualMuhuratTableView: React.FC = () => {
             className="flex items-center justify-center gap-1 px-2 py-1 bg-[#F4E8D1] hover:bg-[#EBD8BD] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg text-[11px] font-bold transition cursor-pointer active:scale-95"
           >
             {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-            <span>{isCopied ? 'कॉपी हो गया' : 'कॉपी सूची'}</span>
+            <span>{isCopied ? t('common.copied', 'કૉપિ કર્યું') : t('common.copy', 'કૉપિ')}</span>
           </button>
           <button
             type="button"
@@ -140,7 +143,7 @@ export const AnnualMuhuratTableView: React.FC = () => {
             className="flex items-center justify-center gap-1 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[11px] font-bold transition cursor-pointer shadow-xs active:scale-95"
           >
             <Share2 className="w-3 h-3" />
-            <span>व्हाट्सएप शेयर</span>
+            <span>{t('common.shareWhatsApp', 'WhatsApp શેર')}</span>
           </button>
         </div>
       </div>
@@ -150,6 +153,7 @@ export const AnnualMuhuratTableView: React.FC = () => {
         {HINDI_MONTHS_NAMES.map((name, idx) => {
           const mIndex = idx === 0 ? -1 : idx - 1;
           const isSelected = selectedMonth === mIndex;
+          const displayName = idx === 0 ? t('muhurat.allMonths', 'તમામ માસ') : trVedic(name);
           return (
             <button
               key={name}
@@ -161,28 +165,28 @@ export const AnnualMuhuratTableView: React.FC = () => {
                   : 'bg-[#FAF2E4] text-[#8C6239] border border-[#8C6239]/30 hover:bg-[#F4E8D1]'
               }`}
             >
-              {name}
+              {displayName}
             </button>
           );
         })}
       </div>
 
-      {/* Category Banner with Counts (Compact & Screen-Fit) */}
+      {/* Category Banner with Counts */}
       <div className="bg-gradient-to-r from-[#FAF2E4] via-[#F4E8D1] to-[#FAF2E4] border border-[#8C6239]/40 rounded-xl px-2.5 py-1.5 shadow-xs flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <span className="text-xl">{activeCategoryMeta.icon}</span>
           <div>
             <h3 className="text-xs sm:text-sm font-black font-granth text-[#5C3A21] leading-tight">
-              {activeCategoryMeta.title} ({selectedYear})
+              {trVedic(activeCategoryMeta.title)} ({selectedYear})
             </h3>
             <p className="text-[10px] text-[#735133] leading-tight line-clamp-1">
-              {activeCategoryMeta.desc}
+              {trVedic(activeCategoryMeta.desc)}
             </p>
           </div>
         </div>
         <div className="text-right shrink-0">
           <span className="bg-[#B56A00] text-white text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full shadow-xs">
-            {muhuratList.length} शुभ तिथियाँ
+            {muhuratList.length} {t('muhurat.auspiciousDatesCount', 'શુભ તિથિઓ')}
           </span>
         </div>
       </div>
@@ -190,9 +194,9 @@ export const AnnualMuhuratTableView: React.FC = () => {
       {/* Muhurat Cards List */}
       {muhuratList.length === 0 ? (
         <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 text-center text-[#8C6239]">
-          <p className="text-xs sm:text-sm font-bold">चयनित अवधि में कोई शुभ मुहूर्त नहीं है।</p>
+          <p className="text-xs sm:text-sm font-bold">{t('muhurat.noMuhuratFound', 'પસંદ કરેલ સમયગાળામાં કોઈ શુભ મુહૂર્ત નથી.')}</p>
           <p className="text-[11px] text-[#735133] mt-0.5">
-            कृपया अन्य माह अथवा वर्ष 2026/2027 का चयन करें।
+            {t('muhurat.chooseAnotherMonth', 'કૃપા કરી અન્ય માસ અથવા વર્ષ ૨૦૨૬/૨૦૨૭ પસંદ કરો.')}
           </p>
         </div>
       ) : (
@@ -213,7 +217,7 @@ export const AnnualMuhuratTableView: React.FC = () => {
                       {item.dateStr}
                     </h4>
                     <span className="text-[10px] text-[#8C6239] font-bold">
-                      ({item.weekdayHindi})
+                      ({trWeekday(item.weekdayHindi)})
                     </span>
                   </div>
                 </div>
@@ -222,12 +226,12 @@ export const AnnualMuhuratTableView: React.FC = () => {
                   {item.specialYoga && (
                     <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
                       <Sparkles className="w-3 h-3 text-amber-700" />
-                      <span>{item.specialYoga}</span>
+                      <span>{trVedic(item.specialYoga)}</span>
                     </span>
                   )}
                   <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-700" />
-                    <span>उत्तम मुहूर्त</span>
+                    <span>{trVedic('उत्तम मुहूर्त')}</span>
                   </span>
                 </div>
               </div>
@@ -238,10 +242,10 @@ export const AnnualMuhuratTableView: React.FC = () => {
                 <div className="bg-[#F4E8D1] p-2 rounded-lg border border-[#8C6239]/20">
                   <span className="text-[10px] text-[#8C6239] font-bold uppercase flex items-center gap-1">
                     <Clock className="w-3 h-3 text-[#B56A00]" />
-                    <span>शुभ मुहूर्त समय (Time Window)</span>
+                    <span>{t('muhurat.timeWindow', 'શુભ મુહૂર્ત સમય')}</span>
                   </span>
                   <div className="text-xs sm:text-sm font-black text-[#5C3A21] mt-0.5">
-                    {item.timeWindowHindi}
+                    {trVedic(item.timeWindowHindi)}
                   </div>
                 </div>
 
@@ -249,10 +253,10 @@ export const AnnualMuhuratTableView: React.FC = () => {
                 <div className="bg-[#F4E8D1] p-2 rounded-lg border border-[#8C6239]/20">
                   <span className="text-[10px] text-[#8C6239] font-bold uppercase flex items-center gap-1">
                     <Star className="w-3 h-3 text-[#B56A00]" />
-                    <span>तिथि एवं नक्षत्र</span>
+                    <span>{t('panchang.tithi', 'તિથિ')} & {t('panchang.nakshatra', 'નક્ષત્ર')}</span>
                   </span>
                   <div className="text-xs font-bold text-[#5C3A21] mt-0.5">
-                    {item.tithiHindi} • {item.nakshatraHindi}
+                    {trVedic(item.tithiHindi)} • {trVedic(item.nakshatraHindi)}
                   </div>
                 </div>
               </div>
@@ -260,15 +264,15 @@ export const AnnualMuhuratTableView: React.FC = () => {
               {/* Shubh Lagna if present */}
               {item.lagnaHindi && (
                 <div className="flex items-center gap-1 text-[11px] text-[#5C3A21]">
-                  <span className="font-bold text-[#8C6239]">🏛️ प्रशस्त लग्न:</span>
-                  <span className="font-semibold">{item.lagnaHindi}</span>
+                  <span className="font-bold text-[#8C6239]">🏛️ {t('muhurat.lagna', 'લગ્ન')}:</span>
+                  <span className="font-semibold">{trVedic(item.lagnaHindi)}</span>
                 </div>
               )}
 
               {/* Guidance / Remark */}
               <p className="text-[11px] text-[#735133] leading-relaxed pt-1 border-t border-[#8C6239]/15">
-                <span className="font-bold text-[#5C3A21]">शास्त्रोक्त परामर्श: </span>
-                {item.vedicGuidance}
+                <span className="font-bold text-[#5C3A21]">{t('muhurat.guidance', 'માર્ગદર્શન:')} </span>
+                {trVedic(item.vedicGuidance)}
               </p>
             </div>
           ))}

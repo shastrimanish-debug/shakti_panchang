@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next, useTranslation } from 'react-i18next';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { en } from './locales/en';
 import { hi } from './locales/hi';
 import { gu } from './locales/gu';
@@ -26,21 +27,17 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', script: 'Kannada', region: 'Karnataka', flag: '🇮🇳' },
   { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', script: 'Malayalam', region: 'Kerala / Gulf', flag: '🇮🇳' },
   { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', script: 'Gurmukhi', region: 'Punjab / Canada / UK', flag: '🇮🇳' },
-  { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ', script: 'Odia', region: 'Odisha', flag: '🇮🇳' },
+  { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼િଆ', script: 'Odia', region: 'Odisha', flag: '🇮🇳' },
 ];
 
 const STORAGE_KEY = 'shakti_app_language';
 
-// Detect initial language: saved preference > browser language > default to 'hi'
+// Detect initial language: saved preference > default to 'hi' (Hindi)
 export const getInitialLanguage = (): string => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) {
       return saved;
-    }
-    const navLang = navigator.language.split('-')[0].toLowerCase();
-    if (SUPPORTED_LANGUAGES.some((l) => l.code === navLang)) {
-      return navLang;
     }
   }
   return 'hi';
@@ -65,7 +62,7 @@ i18n
   .init({
     resources,
     lng: getInitialLanguage(),
-    fallbackLng: 'hi',
+    fallbackLng: 'en',
     interpolation: {
       escapeValue: false, // React already does escaping
     },
@@ -80,6 +77,7 @@ export const setAppLanguage = async (langCode: string): Promise<void> => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, langCode);
       document.documentElement.lang = langCode;
+      window.dispatchEvent(new CustomEvent('shakti_language_change', { detail: langCode }));
     }
   }
 };
@@ -91,6 +89,44 @@ export const getCurrentLanguage = (): LanguageOption => {
     SUPPORTED_LANGUAGES[0]
   );
 };
+
+export function useAppLanguage() {
+  const { t } = useTranslation();
+  const [langCode, setLangCode] = useState<string>(() => i18n.language || getInitialLanguage());
+
+  useEffect(() => {
+    const handleLangChange = (lng: string) => {
+      setLangCode(lng);
+    };
+    const handleCustomEvent = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) setLangCode(detail);
+    };
+    i18n.on('languageChanged', handleLangChange);
+    window.addEventListener('shakti_language_change', handleCustomEvent);
+    return () => {
+      i18n.off('languageChanged', handleLangChange);
+      window.removeEventListener('shakti_language_change', handleCustomEvent);
+    };
+  }, []);
+
+  const changeLanguage = useCallback(async (code: string) => {
+    await setAppLanguage(code);
+    setLangCode(code);
+  }, []);
+
+  const currentOption = useMemo(() => {
+    return SUPPORTED_LANGUAGES.find((l) => l.code === langCode) || SUPPORTED_LANGUAGES[0];
+  }, [langCode]);
+
+  return {
+    t,
+    i18n,
+    language: langCode,
+    currentOption,
+    changeLanguage,
+  };
+}
 
 export { useTranslation };
 export default i18n;

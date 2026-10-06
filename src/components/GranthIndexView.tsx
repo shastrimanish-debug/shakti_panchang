@@ -1,7 +1,8 @@
 import React from 'react';
-import { BOOK_PAGES } from '../constants/bookPages';
+import { BOOK_PAGES, getLocalizedBookPages } from '../constants/bookPages';
 import { BookOpen, Sparkles, ChevronRight, ArrowLeft, Calendar, Flame, Home, Clock, Compass, Heart, Gift, Bell } from 'lucide-react';
 import { ShaktiLogo } from './ShaktiLogo';
+import { useTranslation } from '../i18n';
 
 interface GranthIndexViewProps {
   onSelectTab: (tabId: string) => void;
@@ -12,6 +13,10 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
   onSelectTab,
   onReturnToCover,
 }) => {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || 'hi';
+  const localizedPages = getLocalizedBookPages(BOOK_PAGES, currentLang);
+
   return (
     <div className="w-full space-y-5 animate-in fade-in zoom-in-95 duration-200">
       {/* Top Grand Granth Header */}
@@ -21,13 +26,13 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
         </div>
 
         <p className="text-xs sm:text-sm font-black tracking-widest text-[#FFD88A] uppercase">
-          ॥ श्री गणेशाय नमः ॥ • काशी-उज्जैन परंपरा
+          {t('book.heading', '॥ श्री गणेशाय नमः ॥ • काशी-उज्जैन परंपरा')}
         </p>
         <h2 className="text-2xl sm:text-3xl font-bold font-granth text-[#FFD88A] mt-1">
-          सनातन शक्ति पंचांग – ग्रंथ अनुक्रमणिका
+          {t('granth.title', 'सनातन शक्ति पंचांग – ग्रंथ अनुक्रमणिका')}
         </h2>
         <p className="text-xs sm:text-sm text-[#FAF2E4]/90 mt-1 max-w-lg mx-auto">
-          वैदिक पंचांग, जन्म कुण्डली, दुर्गा सप्तशती, वास्तु शास्त्र, ग्रह शांति व समस्त अध्यायों की सूची। अपनी रुचि का अध्याय चुनें:
+          {t('granth.subtitle', 'वैदिक पंचांग, जन्म कुण्डली, दुर्गा सप्तशती, वास्तु शास्त्र, ग्रह शांति व समस्त अध्यायों की सूची। अपनी रुचि का अध्याय चुनें:')}
         </p>
 
         <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
@@ -37,14 +42,14 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
             className="px-4 py-2 bg-[#FAF2E4]/15 hover:bg-[#FAF2E4]/25 text-[#FAF2E4] border border-[#FFD88A]/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             <ArrowLeft className="w-4 h-4 text-[#FFD88A]" />
-            <span>📕 ग्रंथ मुखपृष्ठ पर लौटें</span>
+            <span>{t('granth.returnToCover', '📕 ग्रंथ मुखपृष्ठ पर लौटें')}</span>
           </button>
         </div>
       </div>
 
       {/* Chapters Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {BOOK_PAGES.map((page) => {
+        {localizedPages.map((page) => {
           const Icon = page.icon || BookOpen;
           const isNew = ['durga', 'upay', 'vastu'].includes(page.id);
 
@@ -62,11 +67,11 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-[#B56A00] uppercase tracking-wider">
-                      {page.chapter} • पृष्ठ {page.pageNumber}
+                      {page.chapter} • {t('book.page', 'पृष्ठ')} {page.pageNumber}
                     </span>
                     {isNew && (
                       <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-600 text-white font-black">
-                        विशेष नया
+                        {t('granth.specialNew', 'विशेष नया')}
                       </span>
                     )}
                   </div>
@@ -90,7 +95,7 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
       {/* Return footer */}
       <div className="p-4 rounded-2xl bg-[#FAF2E4] border border-[#8C6239]/20 text-center flex items-center justify-between">
         <span className="text-xs text-[#735133] font-bold">
-          ✦ सनातन शक्ति पंचांग ग्रंथ • सर्वाधिकार सुरक्षित ✦
+          {t('granth.allRights', '✦ सनातन शक्ति पंचांग ग्रंथ • सर्वाधिकार सुरक्षित ✦')}
         </span>
         <button
           type="button"
@@ -98,7 +103,7 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
           className="px-3.5 py-1.5 bg-[#5C3A21] text-[#FAF2E4] rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>मुखपृष्ठ</span>
+          <span>{t('granth.coverBtn', 'मुखपृष्ठ')}</span>
         </button>
       </div>
     </div>

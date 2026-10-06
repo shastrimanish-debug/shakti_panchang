@@ -21,6 +21,7 @@ import {
   Award,
 } from 'lucide-react';
 import { useTranslation } from '../i18n';
+import { trVedic, trPlanet, trWeekday, trChoghadiyaMeaning } from '../i18n/vedicTranslate';
 
 interface ChoghadiyaViewProps {
   panchang: VedicPanchangData;
@@ -64,11 +65,11 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
   const getNatureText = (nature: ChoghadiyaItem['nature']) => {
     switch (nature) {
       case 'auspicious':
-        return 'शुभ';
+        return t('choghadiya.auspicious', 'शुभ');
       case 'neutral':
-        return 'मध्यम (चल)';
+        return t('choghadiya.neutral', 'मध्यम (चल)');
       default:
-        return 'अशुभ (त्याज्य)';
+        return t('choghadiya.inauspicious', 'अशुभ (त्याज्य)');
     }
   };
 
@@ -86,7 +87,7 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
           }`}
         >
           <Clock className={`w-3.5 h-3.5 ${subPage === 'table' ? 'text-[#FFD88A]' : 'text-[#8C6239]'}`} />
-          <span>चौघड़िया तालिका</span>
+          <span>{t('choghadiya.tableTab', 'चौघड़िया तालिका')}</span>
         </button>
         <button
           type="button"
@@ -98,7 +99,7 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
           }`}
         >
           <Sparkles className={`w-3.5 h-3.5 ${subPage === 'windows' ? 'text-[#FFD88A]' : 'text-[#8C6239]'}`} />
-          <span>विशिष्ट शुभाशुभ काल</span>
+          <span>{t('choghadiya.windowsTab', 'विशिष्ट शुभाशुभ काल')}</span>
         </button>
       </div>
 
@@ -118,27 +119,27 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
                 </div>
                 <div>
                   <div className="text-[10px] font-bold text-[#8C6239] uppercase tracking-wider">
-                    वर्तमान चालू चौघड़िया
+                    {t('choghadiya.currentChoghadiya', 'वर्तमान चालू चौघड़िया')}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-lg sm:text-xl font-black font-granth text-[#5C3A21]">
-                      {current.hindiName}
+                      {trVedic(current.hindiName)}
                     </span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold border ${getBadgeStyle(current.nature)}`}>
                       {getNatureText(current.nature)}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#735133] mt-0.2">{current.meaning}</p>
+                  <p className="text-[11px] text-[#735133] mt-0.2">{trChoghadiyaMeaning(current.meaning, current.hindiName)}</p>
                 </div>
               </div>
 
               <div className="bg-[#FAF2E4] px-3 py-1.5 rounded-lg border border-[#8C6239]/30 text-right">
-                <div className="text-[10px] font-semibold text-[#8C6239]">समय सीमा</div>
+                <div className="text-[10px] font-semibold text-[#8C6239]">{t('choghadiya.timeRange', 'समय सीमा')}</div>
                 <div className="text-xs sm:text-sm font-black text-[#5C3A21]">
                   {formatTime(current.start)} - {formatTime(current.end)}
                 </div>
                 <div className="text-[11px] font-bold text-[#B56A00]">
-                  लगभग {remainingMinutes} मिनट शेष
+                  {t('choghadiya.minRemaining', { min: remainingMinutes, defaultValue: `लगभग ${remainingMinutes} मिनट शेष` })}
                 </div>
               </div>
             </div>
@@ -157,7 +158,7 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
                 }`}
               >
                 <Sun className="w-3.5 h-3.5 text-amber-500" />
-                <span>दिन (Day)</span>
+                <span>{t('choghadiya.day', 'दिन')}</span>
               </button>
               <button
                 type="button"
@@ -169,11 +170,11 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
                 }`}
               >
                 <Moon className="w-3.5 h-3.5 text-indigo-400" />
-                <span>रात (Night)</span>
+                <span>{t('choghadiya.night', 'रात')}</span>
               </button>
             </div>
             <span className="text-[11px] text-[#735133]">
-              {panchang.weekday} • {period === 'day' ? 'सूर्योदय से सूर्यास्त' : 'सूर्यास्त से सूर्योदय'}
+              {trWeekday(panchang.weekday)} • {period === 'day' ? t('choghadiya.daySpan', 'सूर्योदय से सूर्यास्त') : t('choghadiya.nightSpan', 'सूर्यास्त से सूर्योदय')}
             </span>
           </div>
 
@@ -183,11 +184,11 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#5C3A21] text-[#FAF2E4] text-[11px] uppercase tracking-wider">
                   <tr>
-                    <th className="py-2.5 px-3">चौघड़िया</th>
-                    <th className="py-2.5 px-3">प्रकृति</th>
-                    <th className="py-2.5 px-3">समय अवधि</th>
-                    <th className="py-2.5 px-3">स्वामी</th>
-                    <th className="py-2.5 px-3">फल व प्रभाव</th>
+                    <th className="py-2.5 px-3">{t('choghadiya.colChoghadiya', 'चौघड़िया')}</th>
+                    <th className="py-2.5 px-3">{t('choghadiya.colNature', 'प्रकृति')}</th>
+                    <th className="py-2.5 px-3">{t('choghadiya.colTime', 'समय अवधि')}</th>
+                    <th className="py-2.5 px-3">{t('choghadiya.colRuler', 'स्वामी')}</th>
+                    <th className="py-2.5 px-3">{t('choghadiya.colEffect', 'फल व प्रभाव')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#8C6239]/20">
@@ -209,7 +210,7 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
                             {isActive && (
                               <span className="w-2 h-2 rounded-full bg-[#B56A00] animate-ping" />
                             )}
-                            <span>{item.hindiName}</span>
+                            <span>{trVedic(item.hindiName)}</span>
                           </div>
                         </td>
                         <td className="py-2 px-3">
@@ -224,8 +225,8 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
                         <td className="py-2 px-3 whitespace-nowrap text-[#5C3A21] font-medium text-[11px]">
                           {formatTime(item.start)} - {formatTime(item.end)}
                         </td>
-                        <td className="py-2 px-3 text-[#735133]">{item.ruler}</td>
-                        <td className="py-2 px-3 text-[#5C3A21]">{item.meaning}</td>
+                        <td className="py-2 px-3 text-[#735133]">{trPlanet(item.ruler)}</td>
+                        <td className="py-2 px-3 text-[#5C3A21]">{trChoghadiyaMeaning(item.meaning, item.hindiName)}</td>
                       </tr>
                     );
                   })}
@@ -243,19 +244,19 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
           <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3.5 shadow-xs">
             <h3 className="text-sm font-bold font-granth text-[#5C3A21] mb-2.5 flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-[#B56A00]" />
-              <span>दैनिक शुभ मुहूर्त (Auspicious Windows)</span>
+              <span>{t('choghadiya.auspiciousWindows', 'दैनिक शुभ मुहूर्त (Auspicious Windows)')}</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {auspiciousWindows.map((item, idx) => (
                 <div key={idx} className="bg-[#F4E8D1] p-2.5 rounded-lg border border-[#8C6239]/20">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-bold text-xs text-[#5C3A21]">{item.title}</span>
+                    <span className="font-bold text-xs text-[#5C3A21]">{trVedic(item.title)}</span>
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                   </div>
                   <div className="text-xs font-black text-[#B56A00]">
                     {formatTime(item.start)} - {formatTime(item.end)}
                   </div>
-                  <p className="text-[10px] text-[#735133] mt-0.5">{item.description}</p>
+                  <p className="text-[10px] text-[#735133] mt-0.5">{trVedic(item.description)}</p>
                 </div>
               ))}
             </div>
@@ -265,19 +266,19 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
           <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3.5 shadow-xs">
             <h3 className="text-sm font-bold font-granth text-[#5C3A21] mb-2.5 flex items-center gap-1.5">
               <AlertTriangle className="w-4 h-4 text-rose-700" />
-              <span>दैनिक वर्जित समय (Inauspicious Windows - त्याज्य काल)</span>
+              <span>{t('choghadiya.inauspiciousWindows', 'દૈનિક વર્જિત સમય (Inauspicious Windows - ત્યાજ્ય કાળ)')}</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {inauspiciousWindows.map((item, idx) => (
                 <div key={idx} className="bg-rose-50/70 p-2.5 rounded-lg border border-rose-200">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-bold text-xs text-rose-900">{item.title}</span>
+                    <span className="font-bold text-xs text-rose-900">{trVedic(item.title)}</span>
                     <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
                   </div>
                   <div className="text-xs font-black text-rose-800">
                     {formatTime(item.start)} - {formatTime(item.end)}
                   </div>
-                  <p className="text-[10px] text-rose-700 mt-0.5">{item.description}</p>
+                  <p className="text-[10px] text-rose-700 mt-0.5">{trVedic(item.description)}</p>
                 </div>
               ))}
             </div>
@@ -293,11 +294,11 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
           className="flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF2E4] hover:bg-[#F4E8D1] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg font-bold transition cursor-pointer active:scale-95 shadow-xs"
         >
           <ChevronLeft className="w-3.5 h-3.5 text-[#B56A00]" />
-          <span>{subPage === 'table' ? 'शुभ मुहूर्त' : 'चौघड़िया तालिका'}</span>
+          <span>{subPage === 'table' ? t('choghadiya.windowsTab', 'शुभ मुहूर्त') : t('choghadiya.tableTab', 'चौघड़िया तालिका')}</span>
         </button>
 
         <span className="font-granth text-xs font-bold text-[#8C6239]">
-          {subPage === 'table' ? 'पृष्ठ १ / २' : 'पृष्ठ २ / २'}
+          {subPage === 'table' ? t('choghadiya.page1of2', 'पृष्ठ १ / २') : t('choghadiya.page2of2', 'पृष्ठ २ / २')}
         </span>
 
         <button
@@ -305,7 +306,7 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
           onClick={() => setSubPage(subPage === 'table' ? 'windows' : 'table')}
           className="flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF2E4] hover:bg-[#F4E8D1] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg font-bold transition cursor-pointer active:scale-95 shadow-xs"
         >
-          <span>{subPage === 'table' ? 'शुभ मुहूर्त' : 'चौघड़िया तालिका'}</span>
+          <span>{subPage === 'table' ? t('choghadiya.windowsTab', 'शुभ मुहूर्त') : t('choghadiya.tableTab', 'चौघड़िया तालिका')}</span>
           <ChevronRight className="w-3.5 h-3.5 text-[#B56A00]" />
         </button>
       </div>
