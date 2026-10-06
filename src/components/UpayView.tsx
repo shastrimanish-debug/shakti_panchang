@@ -27,6 +27,9 @@ import {
 } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
+import { SaralUpayPanel } from './SaralUpayPanel';
+import { UI } from '../data/saral/ui';
+import { isLang } from '../data/saral/languages';
 
 interface UpayViewProps {
   activeKundali: KundaliData | null;
@@ -40,7 +43,9 @@ export const UpayView: React.FC<UpayViewProps> = ({
   onOpenUmaWithQuery
 }) => {
   const { language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'kundali_based' | 'all_planets' | 'doshas' | 'miracle'>('kundali_based');
+  const langBase = (language || 'hi').split('-')[0];
+  const saralTitle = isLang(langBase) ? UI[langBase].appTitle : UI.hi.appTitle;
+  const [activeTab, setActiveTab] = useState<'kundali_based' | 'all_planets' | 'doshas' | 'miracle' | 'saral'>('saral');
   const [selectedPlanetName, setSelectedPlanetName] = useState<string>('सूर्य');
   const [selectedDoshaId, setSelectedDoshaId] = useState<string>('manglik');
   const [copiedText, setCopiedText] = useState<string | null>(null);
@@ -145,6 +150,19 @@ export const UpayView: React.FC<UpayViewProps> = ({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-[#8C6239]/20 scrollbar-none">
         <button
           type="button"
+          onClick={() => setActiveTab('saral')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'saral'
+              ? 'bg-[#B56A00] text-white shadow-xs'
+              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EADBCC]'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>{saralTitle}</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('kundali_based')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'kundali_based'
@@ -195,6 +213,8 @@ export const UpayView: React.FC<UpayViewProps> = ({
           <span>{language === 'en' ? 'Miraculous Totkas' : language === 'gu' ? 'ચમત્કારી ટોટકા' : 'चमत्कारी टोटके'}</span>
         </button>
       </div>
+
+      {activeTab === 'saral' && <SaralUpayPanel />}
 
       {/* 1. KUNDALI-BASED TAILORED REMEDIES */}
       {activeTab === 'kundali_based' && (
