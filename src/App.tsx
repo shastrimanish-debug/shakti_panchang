@@ -334,12 +334,6 @@ export function App() {
     <div key={`app-root-${currentLang}`} className="min-h-screen w-full max-w-full overflow-x-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
-      {licenseStatus.kind === "trial" && (
-        <div className="bg-[#B56A00] text-white text-center text-xs font-bold py-1.5">
-          {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष।` })}
-        </div>
-      )}
-
       {/* Heritage Top Navigation Bar with Page Flip Controls */}
       <Navbar
         key={`navbar-${currentLang}`}
@@ -364,6 +358,12 @@ export function App() {
         onToggleTheme={handleToggleTheme}
       />
 
+      {licenseStatus.kind === "trial" && (
+        <div className="bg-[#B56A00] text-white text-center text-xs font-bold py-1.5 px-3 shadow-xs select-none">
+          {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष।` })}
+        </div>
+      )}
+
       {/* Floating Page Turn Toast Notice */}
       {pageTurnNotice && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
@@ -376,7 +376,7 @@ export function App() {
       )}
 
       {/* Main Vedic Content Presentation Area (Mobile Fit & Responsive) */}
-      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-2 sm:px-4 py-2 pb-36 sm:pb-32 min-w-0 overflow-x-hidden">
+      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-2 sm:px-4 py-2 pb-40 sm:pb-36 min-w-0 overflow-x-hidden">
         {!isBookOpen ? (
           <BookCover
             onOpenIndex={() => {

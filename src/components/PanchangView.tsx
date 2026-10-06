@@ -8,6 +8,7 @@ import {
 import {
   Sparkles,
   Check,
+  CheckCircle2,
   Copy,
   Share2,
   Download,
@@ -57,6 +58,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 }) => {
   const { t, language } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<PanchangSubPage>('main');
+  const [showVerificationProof, setShowVerificationProof] = useState<boolean>(false);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<{
@@ -105,7 +107,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 🕉️ ${t('panchang.shareHeader', 'सनातन शक्ति पंचांग')}${loc}
 📅 ${t('panchang.shareDate', 'दिनांक')}: ${dateStr}, ${trWeekday(panchang.weekday)}
 🚩 ${t('panchang.shareSamvat', 'संवत्')}: ${trVedic(panchang.samvat)}
-🌕 ${t('panchang.shareMasaPaksha', 'मास/पक्ष')}: ${trVedic(panchang.masa)} ${t('panchang.masa', 'मास')}, ${trVedic(panchang.paksha)} ${t('panchang.paksha', 'पक्ष')}
+🌕 ${t('panchang.shareMasaPaksha', 'मास/पक्ष')}: ${trVedic(panchang.paksha)} • ${trVedic(panchang.masa)}
 
 १. ${t('panchang.shareTithi', 'तिथि')}: ${trVedic(panchang.tithi)} (${panchang.tithiSpan ? fmt(panchang.tithiSpan.end) + ' ' + t('panchang.endsAt', 'तक') : ''})
 २. ${t('panchang.shareNakshatra', 'नक्षत्र')}: ${trVedic(panchang.nakshatra)} (${t('panchang.pada', 'चरण')} ${panchang.pada})
@@ -217,18 +219,34 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       {/* ========================================================================= */}
       {activeSubTab === 'main' && (
         <div className="space-y-3 animate-in fade-in duration-150">
-          <div className="rounded-2xl border border-[#8C6239]/30 bg-white/80 p-3 text-xs text-[#3E2714] space-y-1">
-            <div className="font-bold text-[#5C3A21]">{t('panchang.verificationProof', 'गणना प्रमाण — पंडित इसी से मिलाएँ')}</div>
-            <p>{t('panchang.ayanamsha', 'अयनांश')}: {panchang.ayanamshaName} • {panchang.ayanamsha.toFixed(4)}°</p>
-            <p>{t('panchang.location', 'स्थान')}: {locationName} • {t('panchang.latitude', 'अक्षांश')} {latitude.toFixed(4)} • {t('panchang.longitude', 'देशांतर')} {longitude.toFixed(4)}</p>
-            <p>{t('panchang.sunrise', 'सूर्योदय')} {fmt(panchang.solar.sunrise)} • {t('panchang.sunset', 'सूर्यास्त')} {fmt(panchang.solar.sunset)}</p>
-            {panchang.tithiSpan && (
-              <p>{t('panchang.tithiEndsAt', 'तिथि समाप्ति')}: {trVedic(panchang.tithiSpan.nextName)} {fmt(panchang.tithiSpan.end)}</p>
+          <div className="rounded-2xl border border-[#8C6239]/30 bg-white/80 p-2.5 text-xs text-[#3E2714] shadow-xs">
+            <button
+              type="button"
+              onClick={() => setShowVerificationProof(!showVerificationProof)}
+              className="w-full flex items-center justify-between text-left font-bold text-[#5C3A21] cursor-pointer select-none"
+            >
+              <span className="flex items-center gap-1.5 min-w-0">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="truncate">{t('panchang.verificationProof', 'गणना प्रमाण — पंडित इसी से मिलाएँ')}</span>
+              </span>
+              <span className="text-[10px] text-[#8C4A00] font-semibold shrink-0 ml-2">
+                {showVerificationProof ? t('common.collapse', 'कम देखें ▲') : t('common.expand', 'विवरण ▼')}
+              </span>
+            </button>
+            {showVerificationProof && (
+              <div className="mt-2 pt-2 border-t border-[#8C6239]/20 space-y-1 animate-in fade-in duration-150 text-[11px] leading-relaxed">
+                <p>{t('panchang.ayanamsha', 'अयनांश')}: {panchang.ayanamshaName} • {panchang.ayanamsha.toFixed(4)}°</p>
+                <p>{t('panchang.location', 'स्थान')}: {locationName} • {t('panchang.latitude', 'अक्षांश')} {latitude.toFixed(4)} • {t('panchang.longitude', 'देशांतर')} {longitude.toFixed(4)}</p>
+                <p>{t('panchang.sunrise', 'सूर्योदय')} {fmt(panchang.solar.sunrise)} • {t('panchang.sunset', 'सूर्यास्त')} {fmt(panchang.solar.sunset)}</p>
+                {panchang.tithiSpan && (
+                  <p>{t('panchang.tithiEndsAt', 'तिथि समाप्ति')}: {trVedic(panchang.tithiSpan.nextName)} {fmt(panchang.tithiSpan.end)}</p>
+                )}
+                {panchang.nakshatraSpan && (
+                  <p>{t('panchang.nakshatraEndsAt', 'नक्षत्र समाप्ति')}: {trVedic(panchang.nakshatraSpan.nextName)} {fmt(panchang.nakshatraSpan.end)}</p>
+                )}
+                <p className="text-[#735133]">{t('panchang.drikVerificationNote')}</p>
+              </div>
             )}
-            {panchang.nakshatraSpan && (
-              <p>{t('panchang.nakshatraEndsAt', 'नक्षत्र समाप्ति')}: {trVedic(panchang.nakshatraSpan.nextName)} {fmt(panchang.nakshatraSpan.end)}</p>
-            )}
-            <p className="text-[#735133]">{t('panchang.drikVerificationNote')}</p>
           </div>
           {/* Flutter Hero Tithi Card (Luminous Vedic Gold & Parchment) */}
           <div className="flutter-hero-gradient rounded-3xl p-4 sm:p-5 text-[#2C180C] shadow-sm relative overflow-hidden">
@@ -237,7 +255,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
             <div className="relative z-10">
               <div className="flex items-center justify-between text-xs font-bold text-[#7A4518]">
-                <span className="tracking-wide">{trVedic(panchang.paksha)} {t('panchang.paksha', 'पक्ष')} • {trVedic(panchang.masa)} {t('panchang.masa', 'मास')}</span>
+                <span className="tracking-wide">{trVedic(panchang.paksha)} • {trVedic(panchang.masa)}</span>
                 <span className="font-mono text-[11px] bg-[#F5DEBE] text-[#6E3C12] px-2.5 py-0.5 rounded-full border border-[#E8C59D] font-bold shadow-2xs">
                   {trVedic(panchang.samvat)}
                 </span>
