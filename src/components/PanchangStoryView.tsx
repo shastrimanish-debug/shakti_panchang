@@ -376,10 +376,10 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
     <div
       className="instagram-story-wrapper select-none bg-gradient-to-b from-[#1C0F08] via-[#2D160C] to-[#140804] text-[#FAF2E4] font-sans flex flex-col justify-between"
       style={{
-        height: '100dvh',
-        width: '100vw',
-        maxHeight: '100dvh',
-        maxWidth: '100vw',
+        height: '100%',
+        width: '100%',
+        maxHeight: '100%',
+        maxWidth: '100%',
         overflow: 'hidden',
         overflowY: 'hidden',
         overflowX: 'hidden',
