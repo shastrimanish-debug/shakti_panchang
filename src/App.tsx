@@ -331,38 +331,40 @@ export function App() {
   }
 
   return (
-    <div key={`app-root-${currentLang}`} className="min-h-screen w-full max-w-full overflow-x-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
+    <div key={`app-root-${currentLang}`} className="min-h-[100dvh] w-full max-w-full overflow-x-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
-      {/* Heritage Top Navigation Bar with Page Flip Controls */}
-      <Navbar
-        key={`navbar-${currentLang}`}
-        currentLocation={currentLocation}
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-        onOpenLocationModal={() => setIsLocationModalOpen(true)}
-        onOpenUmaModal={() => setIsUmaModalOpen(true)}
-        onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
-        activeTab={activeTab}
-        setActiveTab={handleSelectTab}
-        isAudioEnabled={isAudioEnabled}
-        setIsAudioEnabled={setIsAudioEnabled}
-        onPrevPage={handlePrevPage}
-        onNextPage={handleNextPage}
-        isBookOpen={isBookOpen}
-        onToggleBookOpen={() => {
-          setIsBookOpen(!isBookOpen);
-          if (isAudioEnabled) playTactilePageTurnSound();
-        }}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
-      />
+      {/* Unified Sticky Header Group: Navbar + Trial Banner */}
+      <div className="sticky top-0 z-40 w-full max-w-full bg-[#FFFDF9]/98 shadow-xs">
+        <Navbar
+          key={`navbar-${currentLang}`}
+          currentLocation={currentLocation}
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          onOpenLocationModal={() => setIsLocationModalOpen(true)}
+          onOpenUmaModal={() => setIsUmaModalOpen(true)}
+          onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
+          activeTab={activeTab}
+          setActiveTab={handleSelectTab}
+          isAudioEnabled={isAudioEnabled}
+          setIsAudioEnabled={setIsAudioEnabled}
+          onPrevPage={handlePrevPage}
+          onNextPage={handleNextPage}
+          isBookOpen={isBookOpen}
+          onToggleBookOpen={() => {
+            setIsBookOpen(!isBookOpen);
+            if (isAudioEnabled) playTactilePageTurnSound();
+          }}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+        />
 
-      {licenseStatus.kind === "trial" && (
-        <div className="bg-[#B56A00] text-white text-center text-xs font-bold py-1.5 px-3 shadow-xs select-none">
-          {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष।` })}
-        </div>
-      )}
+        {licenseStatus.kind === "trial" && (
+          <div className="bg-[#B56A00] text-white text-center text-xs font-bold py-1 px-3 shadow-xs select-none">
+            {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष।` })}
+          </div>
+        )}
+      </div>
 
       {/* Floating Page Turn Toast Notice */}
       {pageTurnNotice && (

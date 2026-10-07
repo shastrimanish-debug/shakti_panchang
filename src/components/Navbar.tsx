@@ -75,7 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-2xl text-[#2C180C] border-b border-[#E8DCCB] shadow-xs transition-all w-full max-w-full overflow-hidden"
+      className="bg-[#FFFDF9]/98 backdrop-blur-2xl text-[#2C180C] border-b border-[#E8DCCB] shadow-xs w-full max-w-full overflow-hidden"
       style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)' }}
     >
       <div className="w-full max-w-4xl mx-auto px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2">

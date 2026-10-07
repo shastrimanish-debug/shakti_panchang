@@ -27,6 +27,7 @@ import { downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { PdfSuccessModal } from './PdfSuccessModal';
 import { useLanguage } from '../i18n';
 import { trVedic, trRashi, trPlanet, trWeekday } from '../i18n/vedicTranslate';
+import { PanchangStoryView } from './PanchangStoryView';
 
 // Sub-pages inside Panchang tab
 export type PanchangSubPage = 'main' | 'gochar' | 'hora' | 'muhurat_quick' | 'khagol';
@@ -53,10 +54,13 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   onOpenWhatsAppPanchang,
   locationName = 'उज्जैन',
   currentDate,
+  onDateChange,
+  onOpenLocationModal,
   latitude = 23.1765,
   longitude = 75.7885,
 }) => {
   const { t, language } = useLanguage();
+  const [displayMode, setDisplayMode] = useState<'story' | 'classic'>('story');
   const [activeSubTab, setActiveSubTab] = useState<PanchangSubPage>('main');
   const [showVerificationProof, setShowVerificationProof] = useState<boolean>(false);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
@@ -176,12 +180,41 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
     }
   };
 
+  if (displayMode === 'story') {
+    return (
+      <PanchangStoryView
+        panchang={panchang}
+        locationName={locationName}
+        currentDate={currentDate}
+        onDateChange={onDateChange}
+        onOpenLocationModal={onOpenLocationModal}
+        onOpenUmaModal={onOpenUmaModal}
+        onOpenWhatsAppPanchang={onOpenWhatsAppPanchang}
+        onSwitchToClassicView={() => setDisplayMode('classic')}
+        latitude={latitude}
+        longitude={longitude}
+      />
+    );
+  }
+
   return (
     <div className="space-y-3 animate-in fade-in duration-200">
       <PdfSuccessModal
         info={pdfSuccessInfo}
         onClose={() => setPdfSuccessInfo(null)}
       />
+
+      {/* Switch to Modern Story Mode Banner */}
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setDisplayMode('story')}
+          className="w-full py-2 px-3 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-600 hover:to-yellow-600 text-stone-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition cursor-pointer border border-amber-300"
+        >
+          <Sparkles className="w-4 h-4 fill-stone-950" />
+          <span>{t('panchang.switchToStoryMode', '📱 इंस्टाग्राम स्टोरी व्यू में देखें')}</span>
+        </button>
+      </div>
 
       {/* 1. Flutter App Style Segmented Sub-Page Switcher */}
       <div className="flex items-center gap-1.5 p-1 bg-[#F5ECE0] border border-[#DFCBB5] rounded-2xl shadow-xs">
