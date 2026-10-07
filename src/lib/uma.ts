@@ -97,6 +97,7 @@ function chartAnswer(kundali: KundaliData, query: string, panchang?: VedicPancha
   const jupiter = kundali.planets?.find((p) => p.planet === "गुरु");
   const venus = kundali.planets?.find((p) => p.planet === "शुक्र");
   const saturn = kundali.planets?.find((p) => p.planet === "शनि");
+  const rahu = kundali.planets?.find((p) => p.planet === "राहु");
   let sadeLine = "";
   try {
     const sade = calculateSadeSati(kundali);
@@ -112,16 +113,17 @@ function chartAnswer(kundali: KundaliData, query: string, panchang?: VedicPancha
   const head = `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${kundali.name} जी।\n\nआपकी पत्रिका (लग्न: ${kundali.lagnaRashi}, चंद्र राशि: ${kundali.moonRashi}, नक्षत्र: ${kundali.nakshatra}, वर्तमान महादशा: ${kundali.mahadasha}, अंतर्दशा: ${kundali.antardasha}) का सूक्ष्म अध्ययन करने पर:`;
   const today = panchang ? `\nआज ${panchang.weekday}, ${panchang.tithi}, नक्षत्र ${panchang.nakshatra} का गोचर प्रभाव भी सक्रिय है।` : "";
 
-  if (/नौकरी|करियर|व्यापार|काम|धंधा|job|career|business/.test(q)) {
-    return `${head}${today}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nकर्म भाव (दशम) में ${occupants(kundali, 10)} की स्थिति और वर्तमान ${kundali.mahadasha} महादशा के कारण पिछले कुछ समय से कार्यक्षेत्र में परिश्रम की तुलना में फल मिलने में विलंब या अनिश्चितता का अनुभव हुआ है। मानसिक रूप से जिम्मेदारियों का भारी दबाव रहा है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी ६ से १२ महीनों में गोचर ग्रह आपके दशम और एकादश भाव पर अनुकूल दृष्टि डालेंगे। विशेषकर अंतर्दशा के परिवर्तन के साथ नए अवसर, पदोन्नति या व्यवसाय में नए संपर्क स्थापित होंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nआपके दशमेश व कर्म कारक ग्रह के बलवर्धन हेतु: बुधवार की सांध्यवेला में किसी जरूरतमंद विद्यार्थी या कन्या को हरी मूंग की दाल अथवा हरे फल का दान करें, तथा नित्य प्रातः ॐ नमो भगवते वासुदेवाय का २१ बार जप करें।`;
+  // 1. Career / Business / Work / Job / Dhandha
+  if (/नौकरी|करियर|व्यापार|काम|धंधा|रोजगार|दुकान|घाटा|हानि|नुकसान|बिजनेस|कारोबार|job|career|business|work|dhandha|loss|growth|chal/.test(q)) {
+    return `${head}${today}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nआपकी पत्रिका में कर्म भाव (दशम भाव) में ${occupants(kundali, 10)} की स्थिति तथा वर्तमान ${kundali.mahadasha} की महादशा प्रभावी है। विशेषकर पिछले ६-८ महीनों से कार्यक्षेत्र और व्यापार में मानसिक तनाव, ग्राहकों या सौदों में अप्रत्याशित विलंब, और परिश्रम के अनुरूप प्रतिफल न मिलने की स्थिति बनी हुई है। निर्णय लेते समय असमंजस व अस्थिरता का अनुभव हुआ है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी ६ से १२ महीनों में गोचर ग्रह आपके एकादश (लाभ) और दशम (कर्म) भाव को संबल देंगे। अंतर्दशा के शुभ परिवर्तन के साथ व्यापार में नई गति, रुका हुआ धन वापस आना, तथा नए विश्वसनीय व्यावसायिक साझेदार/अवसर प्राप्त होंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedies):**\n- **व्यापार वृद्धि हेतु:** बुधवार की संध्या को किसी जरूरतमंद कन्या या विद्यार्थी को हरी मूंग की दाल अथवा हरे फल का दान दें।\n- **प्रतिदिन प्रातः:** सूर्य देव को तांबे के पात्र में रोली व अक्षत मिलाकर 'ॐ घृणिः सूर्याय नमः' बोलते हुए अर्घ्य दें और अपने कार्यस्थल के मुख्य द्वार पर नित्य प्रातः गंगाजल छिड़कें।`;
   }
-  if (/शादी|विवाह|दांपत्य|पति|पत्नी|प्रेम|मिलान|marriage|love/.test(q)) {
+  if (/शादी|विवाह|दांपत्य|पति|पत्नी|प्रेम|मिलान|रिश्ता|marriage|love|relationship|husband|wife|divorce|shadi/.test(q)) {
     return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nसप्तम भाव में ${occupants(kundali, 7)} की स्थिति और शुक्र/गुरु के प्रभाव से रिश्तों में संवाद की कमी या अपेक्षाओं का असंतुलन बना रहा है। ${kundali.isManglik ? "मंगल की विशेष स्थिति के कारण स्वभाव में उग्रता या वैचारिक मतभेद उभरे हैं।" : "दशा के प्रभाव से संबंध में मानसिक खिंचाव रहा है।"}\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी महीनों में गुरु का शुभ गोचर सप्तम भाव को संबल देगा। विवाह योग्य जातकों के लिए शीघ्र ही योग्य प्रस्ताव व दांपत्य में सामंजस्य की स्थिति बनेगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nसप्तम भाव की शांति हेतु: शुक्रवार के दिन सायंकाल घी का दीपक जलाकर माँ लक्ष्मी के समक्ष श्वेत पुष्प अर्पित करें और किसी सुहागिन महिला को मिश्री व सफेद वस्त्र/खीर का दान दें।`;
   }
-  if (/पैसा|धन|ऋण|लोन|money|finance|wealth/.test(q)) {
+  if (/पैसा|धन|ऋण|लोन|कर्ज|बचत|आर्थिक|money|finance|wealth|loan|debt|earning|income/.test(q)) {
     return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nद्वितीय (धन) भाव में ${occupants(kundali, 2)} एवं एकादश (लाभ) भाव में ${occupants(kundali, 11)} की स्थिति दर्शाती है कि आय के साधन बने रहने के बावजूद अप्रत्याशित पारिवारिक या आकस्मिक खर्चों के कारण बचत में रुकावट आई है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी ६ माह में धन के नए स्रोत खुलेंगे। रुका हुआ धन धीरे-धीरे प्राप्त होने लगेगा और ऋण के दबाव में कमी आएगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nधन संचय हेतु: गुरुवार के दिन प्रातः स्नान के जल में एक चुटकी हल्दी डालकर स्नान करें, और बेसन के २ लड्डू किसी वृद्ध ब्राह्मण या गौमाता को अर्पित करें।`;
   }
-  if (/सेहत|स्वास्थ्य|बीमार|रोग|health/.test(q)) {
+  if (/सेहत|स्वास्थ्य|बीमार|रोग|दवा|तनाव|health|disease|sick|tension|stress|pain/.test(q)) {
     return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nषष्ठ भाव में ${occupants(kundali, 6)} एवं अष्टम में ${occupants(kundali, 8)} की स्थिति तथा ${sadeLine} के कारण मानसिक तनाव, अनिद्रा अथवा पाचन/वात जनित शिथिलता का अनुभव रहा है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nदशा में शुभ ग्रह के प्रत्यंतर प्रवेश से स्वास्थ्य में सुधार होगा। ऊर्जा और स्फूर्ति में वृद्धि होगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nआरोग्य रक्षा हेतु: सोमवार के दिन तांबे के लोटे में जल व दुर्वा डालकर भगवान शिव को 'ॐ जूं सः' मंत्र का ११ बार जप करते हुए अर्पित करें।`;
   }
   if (/शनि|साढ़े|ढैया|shani|sade|dhaiya/.test(q)) {
@@ -149,17 +151,33 @@ export async function generateUma({
   try {
     const q = (query || "").toLowerCase().trim();
 
-    // 0. Greeting & Introduction
-    if (q.includes("नमस्ते") || q.includes("हेलो") || q.includes("hello") || q.includes("hi") || q.includes("परिचय") || q.includes("तुम कौन हो") || q.includes("प्रणाम")) {
+    // 1. Chart / Kundali questions (HIGHEST PRIORITY) - covers Hindi, Hinglish, English queries
+    if (kundali) {
+      const isKundaliIntent = /नौकरी|करियर|व्यापार|काम|धंधा|दुकान|बिजनेस|शादी|विवाह|दांपत्य|प्रेम|धन|पैसा|रुपया|ऋण|कर्ज|स्वास्थ्य|सेहत|बीमार|शनि|साढ़े|मंगल|मांगलिक|राहु|केतु|गुरु|शुक्र|दशा|कुंडली|लग्न|ग्रह|उपाय|भविष्य|क्यों|kyo|kyon|chal|raha|job|career|business|work|money|finance|wealth|marriage|love|health|shani|rahu|kundali|astro|horoscope|future|remedy/.test(q);
+      if (isKundaliIntent) {
+        return {
+          ok: true,
+          source: "local_vedic",
+          text: chartAnswer(kundali, query, panchang),
+          actionPayload: { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" },
+        };
+      }
+    }
+
+    // 2. Pure Greeting & Introduction (MUST be strict word boundary, NOT substring like "nahi")
+    const isPureGreeting = /^(नमस्ते|प्रणाम|हेलो|hello|hi|hey|hii|radhe radhe|jai shri krishna|om|hari om|jai jinendra|sat sri akaal|जय श्री राम|जय श्री कृष्ण|हर हर महादेव|तुम कौन हो|परिचय|who are you)[\s!.,?]*$/i.test(q) ||
+      (q === "hi" || q === "hello" || q === "hey" || q === "नमस्ते" || q === "प्रणाम");
+
+    if (isPureGreeting) {
       return {
         ok: true,
         source: "local_vedic",
-        text: `॥ ॐ श्री गणेशाय नमः ॥\nप्रणाम यजमान! मैं **उमा** हूँ — आपकी वैदिक ज्योतिष आचार्य और कर्मकाण्ड पुरोहित। आज (${panchang?.weekday || 'सोमवार'}, ${panchang?.paksha || 'कृष्ण'} पक्ष) मैं एक वैदिक ब्राह्मण की तरह आपको गणेश स्थापना, गणेश पूजन, करवा चौथ या किसी भी अनुष्ठान का संकल्प, मंत्रोच्चार और विधि-विधान पूरे सस्वर और श्रद्धा के साथ करवा सकती हूँ। आप मुझसे पूछिए — आज कौन सा पूजन करवाना है?`,
+        text: `॥ ॐ श्री गणेशाय नमः ॥\nप्रणाम यजमान! मैं **उमा** हूँ — आपकी वैदिक ज्योतिष आचार्य। ४० वर्षों के अनुभव व वैदिक साधना से मैं आपकी जन्मपत्रिका का सूक्ष्म विश्लेषण और सटीक मार्गदर्शन करने के लिए उपस्थित हूँ।\n\nआप अपनी आजीविका, व्यापार, नौकरी, विवाह, धन या ग्रह-दशा से संबंधित कोई भी प्रश्न पूछें, मैं प्रामाणिक फलादेश और अचूक शास्त्रोक्त सूक्ष्म उपाय प्रस्तुत करूँगी।`,
         actionPayload: kundali ? { type: "open_kundali", label: "कुंडली विश्लेषण देखें" } : { type: "open_panchang", label: "आज का पंचांग देखें" }
       };
     }
 
-    // 1. GANPATI STHAPANA / PUJAN GUIDANCE BY UMA
+    // 3. GANPATI STHAPANA / PUJAN GUIDANCE BY UMA
     if (q.includes("गणेश स्थापना") || q.includes("गणपति स्थापना") || q.includes("गणेश पूजा") || q.includes("गणेश पूजन") || q.includes("sthapana") || q.includes("पूजन करवाओ") || q.includes("पूजा करवाओ")) {
       return {
         ok: true,
