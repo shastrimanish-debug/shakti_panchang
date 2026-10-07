@@ -59,8 +59,8 @@ function mapNative(raw: NativeLicense): LicenseStatus {
     daysRemaining: Number(raw.daysRemaining) || 0,
     expiresAt: new Date(Number(raw.expiresAt) || Date.now()).toISOString(),
     issuedAt: new Date(Number(raw.issuedAt) || Date.now()).toISOString(),
-    token: raw.playOwned ? "play-annual" : "trial-device",
-    planName: raw.playOwned ? "श्री शक्ति पंचांग वार्षिक सदस्यता" : "श्री शक्ति पंचांग ७-दिवसीय निःशुल्क परीक्षण",
+    token: raw.playOwned ? "play-lifetime" : "trial-device",
+    planName: raw.playOwned ? "श्री शक्ति पंचांग आजीवन VIP सदस्यता" : "श्री शक्ति पंचांग ७-दिवसीय निःशुल्क परीक्षण",
     amount: 99,
     reason: raw.reason || undefined,
     isTampered: !!raw.tampered,
@@ -249,13 +249,13 @@ export function getLicenseStatus(): LicenseStatus {
     amount: 99,
     reason: entitled
       ? undefined
-      : "७ दिन का परीक्षण समाप्त। ₹99 की सदस्यता Google Play से लें।",
+      : "७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता Google Play से प्राप्त करें।",
     isTampered: false,
   };
 }
 
 /**
- * Trial is the whole app for 7 days. After that nothing opens until ₹99 is paid.
+ * Trial is the whole app for 7 days. After that nothing opens until ₹99 / $1 lifetime is paid.
  */
 export function isFeaturePermitted(status: LicenseStatus, _tabId?: string, _panchangSubPage?: string): boolean {
   return status.entitled;
@@ -311,7 +311,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
   const activateAnnual = useCallback(
     async (_codeOrRef?: string) => {
       if (!Capacitor.isNativePlatform()) {
-        throw new Error("₹99 की सदस्यता Google Play से ली जाती है। Play Store वाला ऐप खोलें।");
+        throw new Error("₹99 / $1 की आजीवन सदस्यता Google Play से ली जाती है। Play Store वाला ऐप खोलें।");
       }
       nativeStatus = mapNative(await PlayLicense.purchase());
       const next = getLicenseStatus();

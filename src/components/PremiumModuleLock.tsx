@@ -125,7 +125,7 @@ export const PremiumModuleLock: React.FC<PremiumModuleLockProps> = ({
               className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-[0_6px_22px_rgba(245,158,11,0.5)] border border-amber-200 transition-all cursor-pointer active:scale-95 uma-glow-badge"
             >
               <Unlock className="w-4 h-4 text-stone-950" />
-              <span>{t('spiritual.unlockCTA', 'Unlock with ₹99 annual membership')}</span>
+              <span>{t('spiritual.unlockCTA', 'Unlock with ₹99 / $1 lifetime membership')}</span>
             </button>
 
             <div className="flex items-center justify-center gap-3 text-[11px] text-[#FAF2E4]/70 pt-1">

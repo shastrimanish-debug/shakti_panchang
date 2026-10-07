@@ -292,7 +292,7 @@ export function App() {
         };
         const name = featureNames[tabId] || 'यह अध्याय';
         triggerSubscriptionModal(
-          `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग मुख्य पृष्ठ फ्री है। ${name} देखने के लिए वार्षिक सदस्यता (₹99/वर्ष) सक्रिय करें।`
+          `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग मुख्य पृष्ठ फ्री है। ${name} देखने के लिए आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।`
         );
         return;
       }
@@ -340,7 +340,7 @@ export function App() {
         isOpen
         locked
         onClose={() => {}}
-        reason="७ दिन का परीक्षण समाप्त। ₹99 की सदस्यता के बिना यह ऐप बंद है।"
+        reason="७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता के बिना यह ऐप बंद है।"
       />
     );
   }
@@ -698,7 +698,7 @@ export function App() {
         onToggleBookCover={() => setIsBookOpen(false)}
         onOpenWhatsAppPanchang={() => {
           if (!isEntitled) {
-            triggerSubscriptionModal("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु वार्षिक सदस्यता सक्रिय करें।");
+            triggerSubscriptionModal("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।");
             return;
           }
           setIsWhatsAppPanchangOpen(true);

@@ -647,13 +647,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    setSubscriptionReason('वार्षिक सदस्यता (₹99/वर्ष) सक्रिय करने पर आप असीमित 59-पृष्ठीय महापत्रिका व कुण्डली PDF डाउनलोड कर सकते हैं।');
+                    setSubscriptionReason('आजीवन सदस्यता (₹99 / $1) सक्रिय करने पर आप असीमित 59-पृष्ठीय महापत्रिका व कुण्डली PDF डाउनलोड कर सकते हैं।');
                     setIsSubscriptionModalOpen(true);
                   }}
                   className="px-2.5 py-1.5 bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition cursor-pointer animate-pulse"
                 >
                   <Lock className="w-3 h-3" />
-                  <span>₹99/वर्ष</span>
+                  <span>₹99 / $1 आजीवन</span>
                 </button>
               )}
             </div>
@@ -744,13 +744,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    setSubscriptionReason('वार्षिक सदस्यता (₹99/वर्ष) सक्रिय करने पर आप असीमित 59-पृष्ठीय महापत्रिका व कुण्डली PDF डाउनलोड कर सकते हैं।');
+                    setSubscriptionReason('आजीवन सदस्यता (₹99 / $1) सक्रिय करने पर आप असीमित 59-पृष्ठीय महापत्रिका व कुण्डली PDF डाउनलोड कर सकते हैं।');
                     setIsSubscriptionModalOpen(true);
                   }}
                   className="px-3 py-2 bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer animate-pulse"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span>{t('kundali.annualVipPrice', 'वार्षिक सदस्यता: ₹99/वर्ष')}</span>
+                  <span>{t('kundali.annualVipPrice', 'आजीवन सदस्यता: ₹99 / $1')}</span>
                 </button>
               )}
             </div>
@@ -837,23 +837,23 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             </div>
             <div>
               <div className="font-black text-sm sm:text-base text-amber-200">
-                {t('common.appName', 'शक्ति पंचांग')} • {t('kundali.annualVipPrice', 'वार्षिक सदस्यता (केवल ₹99 / वर्ष)')}
+                {t('common.appName', 'शक्ति पंचांग')} • {t('kundali.annualVipPrice', 'आजीवन VIP सदस्यता (केवल ₹99 / $1)')}
               </div>
               <div className="text-xs text-amber-100/90 mt-0.5">
-                {t('kundali.vipRequiredDesc', 'सम्पूर्ण 59-पृष्ठीय महापत्रिका सचित्र PDF, अष्टकूट विवाह मिलान, एवं सूक्ष्म दशा सेवा हेतु वार्षिक सदस्यता आवश्यक है।')}
+                {t('kundali.vipRequiredDesc', 'सम्पूर्ण 59-पृष्ठीय महापत्रिका सचित्र PDF, अष्टकूट विवाह मिलान, एवं सूक्ष्म दशा सेवा हेतु आजीवन सदस्यता प्राप्त करें।')}
               </div>
             </div>
           </div>
           <button
             type="button"
             onClick={() => {
-              setSubscriptionReason('सम्पूर्ण कुण्डली सेवा एवं 59-पृष्ठीय महापत्रिका सचित्र PDF डाउनलोड करने के लिए केवल ₹99/वर्ष की सदस्यता प्राप्त करें।');
+              setSubscriptionReason('सम्पूर्ण कुण्डली सेवा एवं 59-पृष्ठीय महापत्रिका सचित्र PDF डाउनलोड करने के लिए केवल ₹99 / $1 की आजीवन सदस्यता प्राप्त करें।');
               setIsSubscriptionModalOpen(true);
             }}
             className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black text-xs sm:text-sm rounded-lg shadow-md transition cursor-pointer shrink-0 active:scale-95 flex items-center gap-1.5"
           >
             <Lock className="w-4 h-4" />
-            <span>{t('kundali.unlockWithVip', '₹99/वर्ष में अनलॉक करें')}</span>
+            <span>{t('kundali.unlockWithVip', '₹99 / $1 में आजीवन अनलॉक करें')}</span>
           </button>
         </div>
       )}

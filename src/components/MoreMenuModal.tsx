@@ -145,10 +145,10 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div>
                 <div className="text-xs sm:text-sm font-bold flex items-center gap-1.5 text-[#FFD88A]">
-                  <span>{t('more.vipCardTitle', 'सदस्यता स्थिति: VIP वार्षिक सक्रिय (1 वर्ष)')}</span>
+                  <span>{t('more.vipCardTitle', 'सदस्यता: VIP आजीवन (Lifetime) • ७ दिन फ्री ट्रायल')}</span>
                 </div>
                 <div className="text-[10px] text-[#D9C4A9]">
-                  {t('more.vipCardDesc', 'वार्षिक योजना सक्रिय — समस्त कुण्डली, विवाह मिलान व पंचांग PDF अनलॉक')}
+                  {t('more.vipCardDesc', '₹99 (भारत) / $1 (Global) — समस्त कुण्डली, विवाह मिलान व पंचांग PDF आजीवन अनलॉक')}
                 </div>
               </div>
             </div>

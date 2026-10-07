@@ -65,10 +65,10 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
             </div>
             <div>
               <h3 className="font-bold font-granth text-base text-[#FFD88A] leading-tight">
-                शक्ति पंचांग वार्षिक सदस्यता
+                शक्ति पंचांग आजीवन VIP सदस्यता
               </h3>
               <p className="text-[11px] text-[#D9C4A9]">
-                ७ दिन पूरी ऐप • फिर बंद, जब तक ₹99 न हो
+                ७ दिन निःशुल्क ट्रायल • ₹99 (भारत) / $1 (Global) आजीवन
               </p>
             </div>
           </div>
@@ -138,22 +138,22 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
                   {status.entitled ? "७ दिन फ्री ट्रायल" : "ट्रायल समाप्त"}
                 </div>
                 <div className="text-[11px] text-[#8C6239] font-bold uppercase tracking-wider">
-                  एक साल का एक ही वादा
+                  एक बार का भुगतान — आजीवन असीमित उपयोग
                 </div>
-                <div className="flex items-baseline justify-center gap-1 mt-0.5">
-                  <span className="text-3xl sm:text-4xl font-black font-granth text-[#5C3A21]">₹99</span>
-                  <span className="text-xs font-bold text-[#8C6239]">/ वर्ष</span>
+                <div className="flex items-baseline justify-center gap-1.5 mt-0.5">
+                  <span className="text-3xl sm:text-4xl font-black font-granth text-[#5C3A21]">₹99 / $1</span>
+                  <span className="text-xs font-bold text-[#8C6239] bg-[#EBD8BD] px-2 py-0.5 rounded-md">आजीवन (Lifetime)</span>
                 </div>
                 <p className="text-[12px] text-[#3E2714] mt-2 font-medium leading-relaxed">
-                  ७ दिन पूरी ऐप खुली है। उसके बाद बंद। ₹99 में कुंडली PDF, मिलान पत्रिका, और सुबह का उपाय — एक साल।
+                  ७ दिन पूरी ऐप निःशुल्क उपलब्ध है। उसके बाद केवल ₹99 (भारत) या $1 (विश्व भर में) के एकमुश्त शुल्क में आजीवन समस्त कुण्डली PDF, मिलान पत्रिका, चौघड़िया व दैनिक उपाय अनलॉक रहेंगे।
                 </p>
                 {status.entitled && status.kind === "trial" ? (
-                  <p className="text-[11px] text-[#735133] mt-1 font-medium">
-                    आपकी निःशुल्क अवधि सक्रिय है — <span className="font-bold text-[#B56A00]">{status.daysRemaining} दिन शेष</span>।
+                  <p className="text-[11px] text-[#735133] mt-1.5 font-medium">
+                    आपकी ७-दिवसीय निःशुल्क ट्रायल अवधि सक्रिय है — <span className="font-bold text-[#B56A00]">{status.daysRemaining} दिन शेष</span>।
                   </p>
                 ) : (
-                  <p className="text-[11px] text-[#8C3A00] mt-1 font-bold">
-                    ७ दिन का परीक्षण समाप्त। जब तक ₹99 की वार्षिक सदस्यता सक्रिय नहीं होती, यह ऐप बंद रहेगी।
+                  <p className="text-[11px] text-[#8C3A00] mt-1.5 font-bold">
+                    ७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता प्राप्त करके ऐप को स्थायी रूप से अनलॉक करें।
                   </p>
                 )}
               </div>
@@ -162,13 +162,14 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
               <div className="border border-[#8C6239]/30 rounded-xl p-3 bg-white/70">
                 <div className="text-[11px] font-bold text-[#5C3A21] mb-1.5 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-                  <span>₹99 में ये तीन काम पूरे होते हैं:</span>
+                  <span>₹99 / $1 में आजीवन उपलब्ध विशेष सेवाएँ:</span>
                 </div>
                 <ul className="grid grid-cols-1 gap-1.5 text-[11px] text-[#5C3A21]">
                   {[
-                    "📜 कुंडली PDF और भोजपत्र",
-                    "💖 अष्टकूट मिलान पत्रिका",
-                    "🔔 सुबह तिथि, राहुकाल और एक उपाय",
+                    "📜 59-पृष्ठीय कुण्डली व महापत्रिका PDF (आजीवन)",
+                    "💖 अष्टकूट 36-गुण मिलान पत्रिका व मंगलीक विचार",
+                    "🔔 दैनिक पंचांग, राहुकाल, शुभ चौघड़िया व सुबह का उपाय",
+                    "✨ हस्तरेखा, टैरो कार्ड, रत्न विचार व उमा दैवज्ञ परामर्श",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-[#B56A00] shrink-0" />
@@ -181,18 +182,18 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
               {/* Payment & Activation Card */}
               <div className="border border-[#8C6239]/30 rounded-xl p-3.5 space-y-3 bg-white/80">
                 <p className="text-xs font-bold text-[#5C3A21]">
-                  भुगतान सिर्फ Google Play से। UPI नंबर या कोड से ऐप नहीं खुलती।
+                  भुगतान Google Play बिलिंग से सुरक्षित। भारत: ₹99 • Rest of World: $1 (आजीवन)
                 </p>
                 <button
                   type="button"
                   onClick={handleActivate}
                   disabled={isProcessing || loading}
-                  className="w-full min-h-11 py-2.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-sm font-bold disabled:opacity-50 cursor-pointer"
+                  className="w-full min-h-11 py-2.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-sm font-bold disabled:opacity-50 cursor-pointer shadow-xs active:scale-98 transition"
                 >
-                  {isProcessing ? "Play खुल रहा है..." : "Google Play पर ₹99 / वर्ष लें"}
+                  {isProcessing ? "Play खुल रहा है..." : "Google Play पर ₹99 / $1 आजीवन लें"}
                 </button>
                 <p className="text-[11px] text-[#735133] leading-relaxed">
-                  सात दिन पूरे ऐप में। उसके बाद सदस्यता Google Play से। डेटा मिटाने से परीक्षण दोबारा शुरू नहीं होता।
+                  ७ दिन पूरे ऐप का निःशुल्क आनंद लें। उसके बाद एकमुश्त ₹99 / $1 आजीवन सदस्यता Google Play से प्राप्त करें।
                 </p>
                 {error && (
                   <p className="text-[11px] text-red-700 font-bold bg-red-50 p-2 rounded-lg border border-red-200">
