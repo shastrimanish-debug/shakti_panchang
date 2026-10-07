@@ -1,6 +1,7 @@
 import { KundaliData, PlanetPosition, VedicPanchangData } from "../types";
 import { getLicenseStatus } from "./license-client";
 import { calculateSadeSati } from "../services/sadesati";
+import { synthesizeDynamicMicroVerdict } from "../services/umaMicroAstrology";
 
 export interface UmaResponse {
   ok: boolean;
@@ -90,90 +91,14 @@ function occupants(kundali: KundaliData, house: number): string {
 
 function chartAnswer(kundali: KundaliData, query: string, panchang?: VedicPanchangData | null): string {
   const q = query.toLowerCase();
-  const sun = kundali.planets?.find((p) => p.planet === "सूर्य");
-  const moon = kundali.planets?.find((p) => p.planet === "चंद्र");
-  const mars = kundali.planets?.find((p) => p.planet === "मंगल");
-  const mercury = kundali.planets?.find((p) => p.planet === "बुध");
-  const jupiter = kundali.planets?.find((p) => p.planet === "गुरु");
-  const venus = kundali.planets?.find((p) => p.planet === "शुक्र");
-  const saturn = kundali.planets?.find((p) => p.planet === "शनि");
-  const rahu = kundali.planets?.find((p) => p.planet === "राहु");
-  const ketu = kundali.planets?.find((p) => p.planet === "केतु");
-
-  let sadeLine = "";
-  try {
-    const sade = calculateSadeSati(kundali);
-    sadeLine = sade.isUnderSadeSati
-      ? `साढ़ेसाती चल रही है। ${sade.summary}`
-      : sade.isDhaiya
-        ? `ढैया है: ${sade.dhaiyaType || "शनि का विशेष गोचर"}। ${sade.summary}`
-        : `साढ़ेसाती नहीं है। शनि अभी ${sade.shaniCurrentRashi} में, चंद्र राशि से ${sade.shaniTransitHouse}वें भाव में।`;
-  } catch {
-    sadeLine = planetLine(saturn);
-  }
-
-  const head = `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${kundali.name} जी।\n\nआपकी पत्रिका (लग्न: ${kundali.lagnaRashi}, चंद्र राशि: ${kundali.moonRashi}, नक्षत्र: ${kundali.nakshatra}, वर्तमान महादशा: ${kundali.mahadasha}, अंतर्दशा: ${kundali.antardasha}) का सूक्ष्म अध्ययन करने पर:`;
-  const today = panchang ? `\nआज ${panchang.weekday}, ${panchang.tithi}, नक्षत्र ${panchang.nakshatra} का गोचर प्रभाव भी सक्रिय है।` : "";
 
   // 0. Conversational / Meta Feedback ("Sabhi prashno ka ek hi uttar", "ek jaisa kyo", "same answer")
   if (/ek hi|ek jaisa|same|kuch aur|wahi|bar bar|sab me|repeat|dobara|fir se/.test(q)) {
     return `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${kundali.name} जी। मैं समझ रही हूँ आपकी शंका।\n\nयजमान, ऐसा इसलिए अनुभव हुआ क्योंकि आपकी कुंडली में वर्तमान में **${kundali.mahadasha} की महादशा** प्रभावी है, जो एक मुख्य 'केंद्र-बिंदु' बनकर आपके करियर, वित्त, और मानसिक स्थिति पर एक साथ अपना असर डाल रही है।\n\nपरन्तु आपकी पत्रिका के हर भाव का गणित अलग है। आप मुझसे कोई भी विशिष्ट प्रश्न पूछें, जैसे:\n- 💼 **व्यापार/नौकरी:** *"मेरा बिजनेस कब गति पकड़ेगा या नौकरी में प्रमोशन कब होगा?"*\n- 💰 **धन व कर्ज:** *"रुका हुआ धन कब प्राप्त होगा और आर्थिक तंगी कैसे दूर करें?"*\n- 💍 **विवाह व संबंध:** *"दांपत्य में प्रेम व शांति के लिए क्या उपाय करें?"*\n- 🩺 **स्वास्थ्य व मानसिक शांति:** *"तनाव और अनिद्रा दूर करने का अचूक उपाय"*\n- 🪐 **ग्रह शांति:** *"${kundali.mahadasha} महादशा की शांति हेतु विशेष जप व दान"*\n\nआप जिस भी विषय पर पूछेंगे, मैं उसी भाव के स्वामी ग्रह और गोचर के आधार पर अलग व सटीक फलादेश दूँगी।`;
   }
 
-  // 1. Career / Business / Work / Job / Dhandha / Karobar / Loss
-  if (/नौकरी|करियर|व्यापार|काम|धंधा|रोजगार|दुकान|घाटा|हानि|नुकसान|बिजनेस|कारोबार|job|career|business|work|dhandha|loss|growth|chal|sales|customer/.test(q)) {
-    return `${head}${today}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nआपकी पत्रिका में कर्म भाव (दशम भाव) में ${occupants(kundali, 10)} की स्थिति तथा वर्तमान ${kundali.mahadasha} की महादशा प्रभावी है। विशेषकर पिछले ६-८ महीनों से कार्यक्षेत्र और व्यापार में मानसिक तनाव, ग्राहकों या सौदों में अप्रत्याशित विलंब, और परिश्रम के अनुरूप प्रतिफल न मिलने की स्थिति बनी हुई है। निर्णय लेते समय असमंजस व अस्थिरता का अनुभव हुआ है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी ६ से १२ महीनों में गोचर ग्रह आपके एकादश (लाभ) और दशम (कर्म) भाव को संबल देंगे। अंतर्दशा के शुभ परिवर्तन के साथ व्यापार में नई गति, रुका हुआ धन वापस आना, तथा नए विश्वसनीय व्यावसायिक साझेदार/अवसर प्राप्त होंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedies):**\n- **व्यापार वृद्धि हेतु:** बुधवार की संध्या को किसी जरूरतमंद कन्या या विद्यार्थी को हरी मूंग की दाल अथवा हरे फल का दान दें।\n- **प्रतिदिन प्रातः:** सूर्य देव को तांबे के पात्र में रोली व अक्षत मिलाकर 'ॐ घृणिः सूर्याय नमः' बोलते हुए अर्घ्य दें और अपने कार्यस्थल के मुख्य द्वार पर नित्य प्रातः गंगाजल छिड़कें।`;
-  }
-
-  // 2. Marriage / Relationship / Husband / Wife / Love / Vivah
-  if (/शादी|विवाह|दांपत्य|पति|पत्नी|प्रेम|मिलान|रिश्ता|लड़की|लड़का|तलाक|marriage|love|relationship|husband|wife|divorce|shadi|rishta/.test(q)) {
-    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nसप्तम भाव में ${occupants(kundali, 7)} की स्थिति और शुक्र/गुरु के प्रभाव से रिश्तों में संवाद की कमी या अपेक्षाओं का असंतुलन बना रहा है। ${kundali.isManglik ? "मंगल की विशेष स्थिति के कारण स्वभाव में उग्रता या वैचारिक मतभेद उभरे हैं।" : "दशा के प्रभाव से संबंध में मानसिक खिंचाव रहा है।"}\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी महीनों में गुरु का शुभ गोचर सप्तम भाव को संबल देगा। विवाह योग्य जातकों के लिए शीघ्र ही योग्य प्रस्ताव व दांपत्य में सामंजस्य की स्थिति बनेगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nसप्तम भाव की शांति हेतु: शुक्रवार के दिन सायंकाल घी का दीपक जलाकर माँ लक्ष्मी के समक्ष श्वेत पुष्प अर्पित करें और किसी सुहागिन महिला को मिश्री व सफेद वस्त्र/खीर का दान दें।`;
-  }
-
-  // 3. Money / Wealth / Loan / Debt / Savings / Karz
-  if (/पैसा|धन|ऋण|लोन|कर्ज|बचत|आर्थिक|तंगी|रुपया|कमाई|money|finance|wealth|loan|debt|earning|income|saving/.test(q)) {
-    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nद्वितीय (धन) भाव में ${occupants(kundali, 2)} एवं एकादश (लाभ) भाव में ${occupants(kundali, 11)} की स्थिति दर्शाती है कि आय के साधन बने रहने के बावजूद अप्रत्याशित पारिवारिक या आकस्मिक खर्चों के कारण बचत में रुकावट आई है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी ६ माह में धन के नए स्रोत खुलेंगे। रुका हुआ धन धीरे-धीरे प्राप्त होने लगेगा और ऋण के दबाव में कमी आएगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nधन संचय हेतु: गुरुवार के दिन प्रातः स्नान के जल में एक चुटकी हल्दी डालकर स्नान करें, और बेसन के २ लड्डू किसी वृद्ध ब्राह्मण या गौमाता को अर्पित करें।`;
-  }
-
-  // 4. Health / Stress / Depression / Illness / Rog
-  if (/सेहत|स्वास्थ्य|बीमार|रोग|दवा|तनाव|अनिद्रा|दर्द|बीमारी|health|disease|sick|tension|stress|pain|sleep/.test(q)) {
-    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nषष्ठ भाव में ${occupants(kundali, 6)} एवं अष्टम में ${occupants(kundali, 8)} की स्थिति तथा ${sadeLine} के कारण मानसिक तनाव, अनिद्रा अथवा पाचन/वात जनित शिथिलता का अनुभव रहा है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nदशा में शुभ ग्रह के प्रत्यंतर प्रवेश से स्वास्थ्य में सुधार होगा। ऊर्जा और स्फूर्ति में वृद्धि होगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nआरोग्य रक्षा हेतु: सोमवार के दिन तांबे के लोटे में जल व दुर्वा डालकर भगवान शिव को 'ॐ जूं सः' मंत्र का ११ बार जप करते हुए अर्पित करें।`;
-  }
-
-  // 5. Children / Education / Studies / Exam / Putra / Putri
-  if (/संतान|बच्चा|बेटा|बेटी|पुत्र|पुत्री|पढ़ाई|परीक्षा|शिक्षा|विद्या|child|children|education|study|exam|son|daughter/.test(q)) {
-    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nपंचम (विद्या व संतान) भाव में ${occupants(kundali, 5)} की स्थिति और गुरु के प्रभाव से एकाग्रता में कभी-कभी भटकाव या परिश्रम के अनुपात में परिणाम को लेकर चिंता रही है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी गोचर पंचमेश को बल देगा। अध्ययन, प्रतियोगिता परीक्षा व संतान सुख में सकारात्मक प्रगति होगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nविद्या व बुद्धि विकास हेतु: बुधवार को भगवान गणेश को दुर्वा के २१ अंकुर अर्पित करें और 'ॐ गं गणपतये नमः' का १०८ बार जप करें।`;
-  }
-
-  // 6. Property / Land / House / Vehicle / Makan / Vahan
-  if (/मकान|घर|भूमि|जमीन|वाहन|गाड़ी|प्रॉपर्टी|फ्लैट|house|home|land|property|car|vehicle|flat/.test(q)) {
-    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nचतुर्थ (भूमि, भवन, वाहन) भाव में ${occupants(kundali, 4)} की स्थिति और मंगल/शुक्र के गोचर के कारण संपत्ति संबंधी निर्णयों में विलंब या कागजी अड़चनों का सामना करना पड़ा है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी महीनों में चतुर्थ भाव पर शुभ ग्रहों की दृष्टि बनेगी। नवीन वाहन क्रय अथवा गृह निर्माण/सजावट के प्रबल योग बनेंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nभूमि-भवन सुख हेतु: मंगलवार को लाल मसूर की दाल का दान करें और शुक्रवार को घर के मुख्य द्वार पर सिंदूर का स्वास्तिक बनाएं।`;
-  }
-
-  // 7. Shani / Sade Sati / Dhaiya
-  if (/शनि|साढ़े|ढैया|shani|sade|dhaiya/.test(q)) {
-    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\n${sadeLine}\n${planetLine(saturn)}। पिछले समय में कार्यों में विलंब, मानसिक बेचैनी व अत्यधिक श्रम की अनुभूति रही है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nशनि देव न्यायप्रिय हैं; आगामी महीनों में आपके धैर्य का फल मिलना प्रारंभ होगा। रुका हुआ कार्य धीरे-धीरे गति पकड़ेगा।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nशनिवार की संध्या को काले तिल व सरसों के तेल का दीपक पीपल वृक्ष के नीचे प्रज्वलित करें, एवं किसी दिव्यांग या असहाय व्यक्ति को तिल-गुड़ या भोजन अर्पित करें।`;
-  }
-
-  // 8. Mangal / Manglik
-  if (/मंगल|मांगलिक|manglik|mars/.test(q)) {
-    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\n${planetLine(mars)}। ${kundali.isManglik ? `आपकी पत्रिका में मांगलिक योग सक्रिय है (${kundali.manglikDescription || "प्रथम/चतुर्थ/सप्तम/अष्टम/द्वादश भाव में मंगल"})। इसके प्रभाव से स्वभाव में शीघ्र उत्तेजना, अधीरता या संबंधों में तीक्ष्णता का अनुभव रहा है।` : "जन्म पत्रिका में अमंगल दोष नहीं है, परंतु मंगल के तेज से कार्यों में उतावलापन रहा है।"}\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी गोचर में मंगल का बल आपको साहस व निर्णय शक्ति देगा। भूमि, भवन व तकनीकी कार्यों में सफलता के मार्ग प्रशस्त होंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nमंगल शांति व सामंजस्य हेतु: मंगलवार के दिन तंदूर की मीठी रोटी या गुड़-चना बंदरों/लाल गाय को खिलाएं और मस्तक पर नित्य लाल चंदन या केसर का तिलक लगाएं।`;
-  }
-
-  // 9. Rahu / Ketu / Specific Dasha analysis
-  if (/राहु|केतु|महादशा|अंतर्दशा|दशा|rahu|ketu|dasha|mahadasha/.test(q)) {
-    return `${head}\n\n**१. वर्तमान दशा प्रभाव (Current Dasha Analysis):**\nआपकी पत्रिका में वर्तमान में **${kundali.mahadasha} की महादशा** एवं **${kundali.antardasha} की अंतर्दशा** गतिशील है। ${kundali.mahadasha === 'राहु' ? 'राहु की महादशा में मन में अत्यधिक विचार, महत्वाकांक्षाएं और अचानक जीवन में अप्रत्याशित उतार-चढ़ाव आते हैं।' : `${kundali.mahadasha} का प्रभाव आपके जीवन में अनुशासन और नए अनुभव लेकर आ रहा है।`}\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nजैसे-जैसे अंतर्दशा का गोचर परिवर्तन होगा, मानसिक भ्रम समाप्त होगा और एक स्थिर व सुनियोजित दिशा प्राप्त होगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\n${kundali.mahadasha} शांति हेतु: पक्षियों को नित्य प्रातः सात प्रकार का अनाज (सप्तधान्य) डालें और सायंकाल 'ॐ रां राहवे नमः' या अपने इष्टदेव का स्मरण करें।`;
-  }
-
-  // 10. Timing / Shubh Samay / Kab Theek Hoga
-  if (/कब|समय|शुरू|सुधार|कब तक|good time|when|timing|future|bhavishya|aage/.test(q)) {
-    return `${head}\n\n**१. वर्तमान चक्र (Current Planetary Cycle):**\nवर्तमान ${kundali.mahadasha} महादशा अपने अंतिम/संक्रमण चरण में प्रवेश कर रही है, जिसके कारण पुरानी चुनौतियों का समापन और नए अवसरों की शुरुआत का समय बन रहा है।\n\n**२. आगामी शुभ समय (Upcoming Timeline):**\nआगामी ३ से ६ महीनों के भीतर बृहस्पति और सूर्य का गोचर आपके लिए अत्यंत अनुकूल मोड़ लाएगा। विशेष रूप से रुके हुए कार्यों में अचानक गति आएगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nसमय की अनुकूलता शीघ्र प्राप्त करने हेतु: प्रतिदिन प्रातः सूर्योदय के समय गायत्री मंत्र का ११ बार जप करें और मस्तक पर केसर-चंदन का तिलक लगाएं।`;
-  }
-
-  const graha = (kundali.planets || [])
-    .map((p) => `${p.planet}: ${p.rashi}, भाव ${p.house}${p.isRetrograde ? ", वक्री" : ""}`)
-    .join("\n");
-  return `${head}${today}\n\n**१. पत्रिका का सूक्ष्म अवलोकन (Kundali Overview):**\nआपकी पत्रिका का लग्न **${kundali.lagnaRashi}** और चंद्र राशि **${kundali.moonRashi}** है। वर्तमान में **${kundali.mahadasha}** की महादशा चल रही है।\n\n**२. आगामी मार्ग (Next 6–12 Months Guidance):**\nग्रह गोचर के अनुसार आगामी ६ से १२ महीने आपके आत्मबल और कर्मक्षेत्र में नई दिशा निर्धारित करेंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nअपने लग्न के अधिपति ग्रह के बलवर्धन हेतु: नित्य प्रातः सूर्य देव को तांबे के पात्र से कुमकुम व अक्षत मिश्रित जल अर्पित करें और 'ॐ नमो भगवते वासुदेवाय' का २१ बार जप करें।\n\n(पूछें: व्यापार, नौकरी, विवाह, धन, स्वास्थ्य, संतान या दशा विश्लेषण)`;
+  // Dynamic Micro-Astrological Math Synthesis
+  return synthesizeDynamicMicroVerdict(kundali, query, panchang);
 }
 
 export async function generateUma({

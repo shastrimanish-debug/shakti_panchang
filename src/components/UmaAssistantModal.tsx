@@ -6,6 +6,7 @@ import { askUma, AskUmaResponse } from '@/lib/uma';
 import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech } from '@/lib/umaSpeech';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { analyzeKundali } from '../services/predictions';
+import { buildMicroAstrologyContextPrompt } from '../services/umaMicroAstrology';
 import { getAstrologerBranding } from '../services/storage';
 import {
   downloadUmaConsultationPdf,
@@ -468,39 +469,16 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     }
   };
 
-  // Build complete astrological context for Gemini AI
+  // Build complete astrological context for Gemini AI with Micro Astrology calculations
   const buildKundaliContext = (k: KundaliData): string => {
     try {
+      const microPrompt = buildMicroAstrologyContextPrompt(k);
       const analysis = analyzeKundali(k);
-      const planetList = k.planets
-        .map(
-          (p) =>
-            `${p.planet}: भाव ${p.house}, ${p.rashi} राशि (${p.degree.toFixed(1)}°), ${
-              p.isRetrograde ? 'वक्री' : 'मार्गी'
-            }, नक्षत्र: ${p.nakshatra} (चरण ${p.pada})`
-        )
-        .join('; ');
-
       const yogasStr = analysis.yogas.join('; ') || 'सामान्य शुभ योग';
-      const areasStr = analysis.areas
-        .map((a) => `${a.title}: ${a.finding} [उपाय: ${a.remedy}]`)
-        .join('\n');
 
-      return `जातक: ${k.name}, जन्म: ${new Date(k.birthDate).toLocaleDateString('hi-IN')}, समय: ${
-        k.birthTime
-      }, स्थान: ${k.birthPlace} (अक्षांश ${k.latitude.toFixed(2)}, रेखांश ${k.longitude.toFixed(2)})
-लग्न: ${k.lagnaRashi} (डिग्री: ${k.lagnaDegree.toFixed(1)}°), लग्नेश: भाव ${k.lagnaRashiNumber}
-चंद्र राशि: ${k.moonRashi}, नक्षत्र: ${k.nakshatra} (चरण ${k.charan}), नाड़ी: ${k.nadi}, गण: ${
-        k.gana
-      }
-सूर्य राशि: ${k.sunRashi}, मांगलिक: ${k.isManglik ? `हाँ (${k.manglikDescription || 'मांगलिक'})` : 'नहीं (अमंगल)'}
-विंशोत्तरी दशा: महादशा ${k.mahadasha}, अंतर्दशा ${k.antardasha}, प्रत्यंतर्दशा ${k.pratyantardasha}
-ग्रह स्थितियां: ${planetList}
-प्रमुख योग: ${yogasStr}
-जीवन क्षेत्र विश्लेषण:
-${areasStr}`;
+      return `${microPrompt}\n\n[अतिरिक्त योग व क्षेत्र विश्लेषण]:\nप्रमुख योग: ${yogasStr}`;
     } catch {
-      return `जातक: ${k.name}, लग्न: ${k.lagnaRashi}, चंद्र राशि: ${k.moonRashi}, नक्षत्र: ${k.nakshatra}, महादशा: ${k.mahadasha}`;
+      return buildMicroAstrologyContextPrompt(k);
     }
   };
 
