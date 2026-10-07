@@ -51,11 +51,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
       title: fest.name,
       category: fest.type === 'major' ? 'vrat' : 'festival',
       date: fest.date.toISOString().split('T')[0],
-      time: '06:00',
-      description: `${fest.name} - ${fest.tithi || ''} ${fest.description || ''}`,
-      notifyBefore: 15,
-      soundEnabled: true,
-      isActive: true,
+      notes: `${fest.name} - ${fest.tithi || ''} ${fest.description || ''}`,
     });
     setAddedReminderId(fest.name);
     setTimeout(() => setAddedReminderId(null), 2000);
@@ -88,7 +84,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                 >
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-base">{fest.icon || '🪔'}</span>
+                      <span className="text-base">🪔</span>
                       <h4 className="font-black font-granth text-xs sm:text-sm text-[#462B17] truncate">
                         {fest.name}
                       </h4>
@@ -143,7 +139,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                 >
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-base">{fest.icon || '🌺'}</span>
+                      <span className="text-base">🌺</span>
                       <h4 className="font-black font-granth text-xs sm:text-sm text-[#462B17] truncate">
                         {fest.name}
                       </h4>
@@ -194,7 +190,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
                 className="p-2.5 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/60 border border-amber-300 flex flex-col justify-between"
               >
                 <div className="flex items-center gap-1">
-                  <span className="text-base">{fest.icon || '🪔'}</span>
+                  <span className="text-base">🪔</span>
                   <span className="font-black font-granth text-xs text-[#462B17] truncate">{fest.name}</span>
                 </div>
                 <div className="text-[10px] font-bold text-amber-800 mt-1">

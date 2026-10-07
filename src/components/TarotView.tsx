@@ -36,21 +36,21 @@ export const TarotView: React.FC<TarotViewProps> = ({
     {
       id: 'daily-card',
       title: 'दैनिक टैरो अंतर्ज्ञान (Daily Card)',
-      subtitle: `${t(dailyCard.card.nameKey, dailyCard.card.id)} (${dailyCard.isReversed ? 'Reversed' : 'Upright'})`,
+      subtitle: `${t(dailyCard.card.nameKey, { defaultValue: `Card ${dailyCard.card.id}` })} (${dailyCard.isReversed ? 'Reversed' : 'Upright'})`,
       badge: dailyCard.isReversed ? 'पुनरावलोकन' : 'सकारात्मक ऊर्जा',
       icon: '🔮',
-      voiceText: `आज का टैरो कार्ड: ${dailyCard.card.id}। संदेश: ${t(dailyCard.isReversed ? dailyCard.card.reversedMeaningKey : dailyCard.card.uprightMeaningKey, 'सकारात्मक ऊर्जा')}।`,
+      voiceText: `आज का टैरो कार्ड: ${dailyCard.card.id}। संदेश: ${t(dailyCard.isReversed ? dailyCard.card.reversedMeaningKey : dailyCard.card.uprightMeaningKey, { defaultValue: 'सकारात्मक ऊर्जा' })}।`,
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-2">
           <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[#FFF8EE] to-[#FFEEC9] border-2 border-amber-400 text-center shadow-sm my-auto space-y-2">
             <div className="w-12 h-16 mx-auto rounded-xl bg-gradient-to-tr from-purple-900 via-indigo-950 to-stone-900 border-2 border-amber-400 flex flex-col items-center justify-center text-amber-300 shadow-md">
               <span className="text-xl">🎴</span>
-              <span className="text-[8px] font-mono mt-0.5">{dailyCard.card.number}</span>
+              <span className="text-[8px] font-mono mt-0.5">{dailyCard.card.id}</span>
             </div>
 
             <div>
               <h4 className="font-black font-granth text-base text-[#462B17]">
-                {t(dailyCard.card.nameKey, dailyCard.card.id)}
+                {t(dailyCard.card.nameKey, { defaultValue: `Card ${dailyCard.card.id}` })}
               </h4>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 font-bold">
                 {dailyCard.isReversed ? 'उल्टा (Reversed)' : 'सीधा (Upright)'}
@@ -60,7 +60,7 @@ export const TarotView: React.FC<TarotViewProps> = ({
             <div className="p-2.5 rounded-xl bg-white/90 border border-amber-200 text-left text-xs">
               <div className="text-[10px] font-bold text-[#8C6239] uppercase">दिव्य संदेश</div>
               <p className="text-[#3E2714] text-[11px] mt-0.5 leading-snug">
-                {t(dailyCard.isReversed ? dailyCard.card.reversedMeaningKey : dailyCard.card.uprightMeaningKey, 'सकारात्मक ऊर्जा')}
+                {t(dailyCard.isReversed ? dailyCard.card.reversedMeaningKey : dailyCard.card.uprightMeaningKey, { defaultValue: 'सकारात्मक ऊर्जा' })}
               </p>
             </div>
 
@@ -104,10 +104,10 @@ export const TarotView: React.FC<TarotViewProps> = ({
                     {i === 0 ? '१. भूतकाल (Past)' : i === 1 ? '२. वर्तमान (Present)' : '३. भविष्य (Future)'}
                   </div>
                   <div className="font-black font-granth text-xs text-[#462B17] truncate">
-                    {t(dc.card.nameKey, dc.card.id)}
+                    {t(dc.card.nameKey, { defaultValue: `Card ${dc.card.id}` })}
                   </div>
                   <p className="text-[10px] text-[#735133] truncate mt-0.5">
-                    {t(dc.isReversed ? dc.card.reversedMeaningKey : dc.card.uprightMeaningKey, '')}
+                    {t(dc.isReversed ? dc.card.reversedMeaningKey : dc.card.uprightMeaningKey, { defaultValue: '' })}
                   </p>
                 </div>
                 <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 font-bold shrink-0">
@@ -129,7 +129,7 @@ export const TarotView: React.FC<TarotViewProps> = ({
             </button>
           </div>
           <div className="text-[10px] text-center text-[#8C6239]">
-            विस्तृत प्रश्न व उपाय हेतु 'उमा परामर्श' प्राप्त करें।
+            तीन कार्ड भूत, वर्तमान और भविष्य की सूक्ष्म ऊर्जा दर्शाते हैं।
           </div>
         </div>
       ),
@@ -141,14 +141,12 @@ export const TarotView: React.FC<TarotViewProps> = ({
       slides={slides}
       currentSlideIndex={activeSlideIndex}
       onSlideIndexChange={setActiveSlideIndex}
-      headerTitle="टैरो कार्ड (Tarot)"
-      headerIcon="🔮"
-      chapterNumber={16}
-      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('टैरो कार्ड रीडिंग व भविष्य संकेत') : undefined}
+      headerTitle="टैरो मार्गदर्शन (Tarot Intuition)"
+      headerIcon="🎴"
+      chapterNumber={12}
       onPrevChapter={onPrevChapter}
       onNextChapter={onNextChapter}
-      prevChapterLabel="हस्तरेखा"
-      nextChapterLabel="रत्न विज्ञान"
+      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('टैरो कार्ड परामर्श व भविष्य दर्शन') : undefined}
     />
   );
 };

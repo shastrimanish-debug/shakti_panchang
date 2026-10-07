@@ -33,20 +33,20 @@ export const IChingView: React.FC<IChingViewProps> = ({
     // Slide 1: Hexagram & Coin Oracle
     {
       id: 'hexagram-overview',
-      title: `${hex.chineseChar} ${t(hex.nameKey, hex.englishName)}`,
-      subtitle: `Hexagram #${hex.number} • ${t(hex.elementKey, hex.trigrams.join('/'))}`,
+      title: `${hex.chineseName} ${t(hex.nameKey, hex.pinyin)}`,
+      subtitle: `Hexagram #${hex.number} • ${hex.pinyin}`,
       badge: 'आई-चिंग दैवज्ञ',
-      icon: '☯️',
-      voiceText: `आई चिंग हेक्साग्राम संख्या ${hex.number}। ${t(hex.nameKey, hex.englishName)}। निर्णय: ${t(hex.judgmentKey, '')}।`,
+      icon: hex.symbolEmoji || '☯️',
+      voiceText: `आई चिंग हेक्साग्राम संख्या ${hex.number}। ${hex.pinyin}।`,
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-2">
           <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[#FFF8EE] to-[#FFEEC9] border-2 border-amber-400 text-center shadow-sm my-auto space-y-2">
             <div className="flex items-center justify-center gap-3">
-              <span className="text-3xl">{hex.chineseChar}</span>
+              <span className="text-3xl">{hex.symbolEmoji || hex.chineseName}</span>
               <div className="text-left">
-                <div className="text-xs font-black text-[#B56A00]">हेक्साग्राम #{hex.number}</div>
+                <div className="text-xs font-black text-[#B56A00]">हेक्साग्राम #{hex.number} ({hex.chineseName})</div>
                 <div className="font-black font-granth text-base text-[#462B17]">
-                  {t(hex.nameKey, hex.englishName)}
+                  {t(hex.nameKey, hex.pinyin)}
                 </div>
               </div>
             </div>
@@ -70,7 +70,7 @@ export const IChingView: React.FC<IChingViewProps> = ({
             <div className="p-2.5 rounded-xl bg-white/90 border border-amber-200 text-left text-xs">
               <div className="text-[10px] font-bold text-[#8C6239] uppercase">दैवज्ञ निर्णय (Judgment)</div>
               <p className="text-[#3E2714] text-[11px] mt-0.5 leading-snug">
-                {t(hex.judgmentKey, '')}
+                {t(hex.judgmentKey, 'धैर्य, संतुलन और सात्विक कर्म से कार्य सिद्धि प्राप्त होगी।')}
               </p>
             </div>
 
@@ -100,21 +100,21 @@ export const IChingView: React.FC<IChingViewProps> = ({
       subtitle: 'The Image & Spiritual Advice',
       badge: 'कर्म सूत्र',
       icon: '✨',
-      voiceText: `मार्गदर्शन: ${t(hex.imageKey, '')}। सलाह: ${t(hex.adviceKey, '')}।`,
+      voiceText: `मार्गदर्शन एवं सलाह।`,
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-1.5">
           <div className="space-y-2 my-auto text-xs">
             <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-300">
               <div className="font-bold text-[#5C3A21] text-xs">🌊 प्रतीक एवं प्रकृति (The Image)</div>
               <p className="text-[11px] text-[#6E472A] mt-1 leading-relaxed">
-                {t(hex.imageKey, '')}
+                {t(hex.imageKey, 'प्रकृति के शाश्वत नियमों का पालन करते हुए आत्मसंयम बनाए रखें।')}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-300">
               <div className="font-bold text-emerald-950 text-xs">💡 व्यावहारिक सलाह (Practical Action)</div>
               <p className="text-[11px] text-emerald-900 mt-1 leading-relaxed">
-                {t(hex.adviceKey, '')}
+                {t(hex.practicalAdviceKey, 'जल्दबाजी से बचें और सही समय की प्रतीक्षा करते हुए निरंतर पुरुषार्थ करें।')}
               </p>
             </div>
           </div>
@@ -131,14 +131,12 @@ export const IChingView: React.FC<IChingViewProps> = ({
       slides={slides}
       currentSlideIndex={activeSlideIndex}
       onSlideIndexChange={setActiveSlideIndex}
-      headerTitle="आई-चिंग (I-Ching Oracle)"
+      headerTitle="आई-चिंग दैवज्ञ (I-Ching Oracle)"
       headerIcon="☯️"
       chapterNumber={19}
-      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('आई चिंग हेक्साग्राम का गहरा अर्थ') : undefined}
+      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('आई-चिंग दैवज्ञ परामर्श') : undefined}
       onPrevChapter={onPrevChapter}
       onNextChapter={onNextChapter}
-      prevChapterLabel="सामुद्रिक मुखाकृति"
-      nextChapterLabel="पंचांग"
     />
   );
 };

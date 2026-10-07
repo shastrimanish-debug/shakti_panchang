@@ -68,7 +68,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
             <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs">
               <div className="text-[10px] font-bold text-[#8C6239] uppercase">व्रत माहात्म्य व फल</div>
               <p className="text-[#3E2714] text-[11px] mt-0.5 leading-relaxed">
-                {katha.story ? (katha.story.length > 220 ? `${katha.story.slice(0, 220)}...` : katha.story) : katha.subtitle}
+                {katha.description ? (katha.description.length > 220 ? `${katha.description.slice(0, 220)}...` : katha.description) : katha.subtitle}
               </p>
             </div>
           </div>

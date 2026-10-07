@@ -5,53 +5,61 @@ import { getStoredLocation } from '../services/storage';
 import { buildDailyRashifal, RASHI_META } from '../services/dailyRashifal';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
 
-export const DailyRashifalView: React.FC<{
+interface DailyRashifalViewProps {
   personName?: string;
   lagnaRashi?: string;
   onOpenUmaModal?: (query?: string) => void;
   onPrevChapter?: () => void;
   onNextChapter?: () => void;
-}> = ({ personName, lagnaRashi, onOpenUmaModal, onPrevChapter, onNextChapter }) => {
-  const matched = RASHI_META.find((r) => lagnaRashi?.startsWith(r.name));
-  const initialIndex = matched ? RASHI_META.findIndex((r) => r.id === matched.id) : 0;
-  const [activeSlideIndex, setActiveSlideIndex] = useState<number>(initialIndex >= 0 ? initialIndex : 0);
+}
 
-  const place = useMemo(() => getStoredLocation(), []);
-  const today = useMemo(() => new Date(), []);
+export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
+  personName,
+  lagnaRashi,
+  onOpenUmaModal,
+  onPrevChapter,
+  onNextChapter,
+}) => {
+  const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
+  const location = getStoredLocation();
 
-  const slides: StorySlideItem[] = RASHI_META.map((rashi) => {
+  const slides: StorySlideItem[] = RASHI_META.map((meta) => {
     const live = buildDailyRashifal(
-      rashi.id,
-      today,
-      place.latitude,
-      place.longitude,
-      place.timezoneHours,
+      meta.name,
+      new Date(),
+      location.latitude,
+      location.longitude
     );
 
     const handleShare = () => {
-      const text = `🌟 *${live.dateLabel} का दैनिक राशिफल — ${rashi.name}* 🌟\nचंद्र गोचर: ${live.moonTransit}\n\nसामान्य: ${live.general}\nकरियर: ${live.career}\nधन: ${live.wealth}\nउपाय: ${live.remedy}\n\nग्रह स्थिति आज की गणना से। शक्ति पंचांग।`;
+      const text = `🌸 *दैनिक राशिफल - ${meta.name} राशि (${meta.symbol})* 🌸\n` +
+        `📅 ${live.dateLabel}\n\n` +
+        `✨ *सामान्य फल:* ${live.general}\n` +
+        `💼 *करियर:* ${live.career}\n` +
+        `💰 *धन:* ${live.wealth}\n` +
+        `🪔 *उपाय:* ${live.remedy}\n\n` +
+        `📖 *शक्ति पंचांग - वैदिक मार्गदर्शन*`;
       openWhatsAppShare(text);
     };
 
     return {
-      id: rashi.id,
-      title: `${rashi.name} (${rashi.symbol})`,
-      subtitle: `स्वामी: ${rashi.lord} • चंद्र गोचर: ${live.moonTransit}`,
-      badge: `शुभ अंक: ${live.luckyNumber} • रंग: ${live.luckyColor}`,
-      icon: rashi.symbol,
-      voiceText: `${rashi.name} का आज का राशिफल। सामान्य फल: ${live.general}। करियर: ${live.career}। उपाय: ${live.remedy}।`,
+      id: meta.id,
+      title: `${meta.name} राशि (${meta.symbol}) दैनिक राशिफल`,
+      subtitle: `स्वामी: ${meta.lord} • गोचर: ${live.moonTransit}`,
+      badge: `${meta.symbol} ${meta.name}`,
+      icon: meta.symbol,
+      voiceText: `${meta.name} राशि का आज का राशिफल। ${live.general}`,
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-2">
-          {/* Main Rashifal Card */}
-          <div className="p-3.5 rounded-2xl bg-white/90 border border-amber-300 shadow-sm space-y-2 my-auto">
-            {/* General */}
-            <div className="p-2 rounded-xl bg-amber-50/80 border border-amber-200">
-              <div className="text-[10px] font-bold text-[#8C6239] uppercase">सामान्य प्रभाव</div>
-              <p className="text-xs text-[#462B17] font-medium mt-0.5 leading-snug">{live.general}</p>
+          {/* General Forecast */}
+          <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-200/90 shadow-xs space-y-2 text-xs">
+            <div className="flex items-center gap-1.5 font-bold text-[#5C3A21]">
+              <Sun className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>ग्रह गोचर फलादेश</span>
             </div>
+            <p className="text-[11px] text-[#462B17] leading-snug">{live.general}</p>
 
-            {/* Career & Wealth */}
-            <div className="grid grid-cols-2 gap-1.5 text-xs">
+            <div className="grid grid-cols-2 gap-1.5 pt-1">
               <div className="p-2 rounded-xl bg-emerald-50/80 border border-emerald-200">
                 <div className="text-[10px] font-bold text-emerald-800">💼 कार्यक्षेत्र (Career)</div>
                 <p className="text-[11px] text-emerald-950 font-medium mt-0.5 leading-tight">{live.career}</p>
@@ -70,7 +78,7 @@ export const DailyRashifalView: React.FC<{
           </div>
 
           <div className="flex items-center justify-between text-[10px] text-[#8C6239]">
-            <span>शुभ अंक: <strong className="text-[#5C3A21]">{live.luckyNumber}</strong> • रंग: <strong className="text-[#5C3A21]">{live.luckyColor}</strong></span>
+            <span>गोचर: <strong className="text-[#5C3A21]">{live.moonTransit}</strong></span>
             <button
               type="button"
               onClick={(e) => {
@@ -93,16 +101,12 @@ export const DailyRashifalView: React.FC<{
       slides={slides}
       currentSlideIndex={activeSlideIndex}
       onSlideIndexChange={setActiveSlideIndex}
-      headerTitle="दैनिक राशिफल"
+      headerTitle="दैनिक राशिफल (१२ राशियाँ)"
       headerIcon="♈"
-      chapterNumber={9}
-      currentDate={today}
-      onOpenUma={onOpenUmaModal ? () => onOpenUmaModal('आज का विस्तृत राशिफल व गोचर') : undefined}
+      chapterNumber="६"
       onPrevChapter={onPrevChapter}
       onNextChapter={onNextChapter}
-      prevChapterLabel="व्रत कथा"
-      nextChapterLabel="गीता श्लोक"
+      onOpenUma={onOpenUmaModal}
     />
   );
 };
-export default DailyRashifalView;

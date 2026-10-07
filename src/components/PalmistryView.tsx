@@ -3,12 +3,10 @@ import {
   captureSpiritualScanPhoto,
   generatePalmAnalysis,
   PalmScanAnalysisResult,
-  CapturedImageResult,
 } from '../services/spiritualModules';
 import { useTranslation } from '../i18n';
 import {
   Camera,
-  Sparkles,
   Hand,
   Activity,
   Heart,
@@ -34,9 +32,14 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
 
   const handleStartScan = async () => {
-    const captured = await captureSpiritualScanPhoto('palm');
+    await captureSpiritualScanPhoto('palm');
     setAnalysisResult(generatePalmAnalysis(selectedHand));
   };
+
+  const lifeLine = analysisResult.lines.find((l) => l.nameKey.includes('life')) || analysisResult.lines[0];
+  const heartLine = analysisResult.lines.find((l) => l.nameKey.includes('heart')) || analysisResult.lines[1];
+  const headLine = analysisResult.lines.find((l) => l.nameKey.includes('head')) || analysisResult.lines[2];
+  const fateLine = analysisResult.lines.find((l) => l.nameKey.includes('fate')) || analysisResult.lines[3];
 
   const slides: StorySlideItem[] = [
     // Slide 1: Scanner / Hand Overview
@@ -124,25 +127,25 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
             <div className="p-2 rounded-xl bg-rose-50 border border-rose-200">
               <div className="font-bold text-rose-950 flex items-center gap-1">
                 <Heart className="w-3.5 h-3.5 text-rose-600" />
-                <span>हृदय रेखा (Heart Line): {analysisResult.heartLine.strength}</span>
+                <span>{heartLine?.sanskritName || 'हृदय रेखा'}: {t(heartLine?.qualityKey, 'स्पष्ट व सबल')}</span>
               </div>
-              <p className="text-[10px] text-rose-900 mt-0.5">{analysisResult.heartLine.prediction}</p>
+              <p className="text-[10px] text-rose-900 mt-0.5">{t(heartLine?.interpretationKey, 'सहानुभूति व भावनात्मक स्थिरता का सूचक।')}</p>
             </div>
 
             <div className="p-2 rounded-xl bg-sky-50 border border-sky-200">
               <div className="font-bold text-sky-950 flex items-center gap-1">
                 <Brain className="w-3.5 h-3.5 text-sky-600" />
-                <span>मस्तिष्क रेखा (Head Line): {analysisResult.headLine.strength}</span>
+                <span>{headLine?.sanskritName || 'मस्तिष्क रेखा'}: {t(headLine?.qualityKey, 'दीर्घ व स्पष्ट')}</span>
               </div>
-              <p className="text-[10px] text-sky-900 mt-0.5">{analysisResult.headLine.prediction}</p>
+              <p className="text-[10px] text-sky-900 mt-0.5">{t(headLine?.interpretationKey, 'तीक्ष्ण बुद्धि, निर्णय क्षमता व दूरदर्शिता।')}</p>
             </div>
 
             <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200">
               <div className="font-bold text-emerald-950 flex items-center gap-1">
                 <Activity className="w-3.5 h-3.5 text-emerald-600" />
-                <span>जीवन रेखा (Life Line): {analysisResult.lifeLine.strength}</span>
+                <span>{lifeLine?.sanskritName || 'जीवन रेखा'}: {t(lifeLine?.qualityKey, 'सुदृढ़ एवं अक्षुण्ण')}</span>
               </div>
-              <p className="text-[10px] text-emerald-900 mt-0.5">{analysisResult.lifeLine.prediction}</p>
+              <p className="text-[10px] text-emerald-900 mt-0.5">{t(lifeLine?.interpretationKey, 'उत्तम आरोग्य, प्राणशक्ति एवं दीर्घायु का वरदान।')}</p>
             </div>
           </div>
           <div className="text-[10px] text-center text-[#8C6239]">
@@ -152,39 +155,43 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
       ),
     },
 
-    // Slide 3: Fate Line & Sun Line
+    // Slide 3: Fate Line & Mounts
     {
       id: 'fate-sun-line',
-      title: 'भाग्य रेखा एवं सूर्य रेखा (यश-कीर्ति)',
+      title: 'भाग्य रेखा एवं प्रमुख पर्वत',
       subtitle: 'आजीविका, पदोन्नति एवं मान-सम्मान',
       badge: 'राजयोग रेखा',
       icon: '👑',
-      voiceText: 'भाग्य रेखा और सूर्य रेखा का विश्लेषण।',
+      voiceText: 'भाग्य रेखा और पर्वतों का विश्लेषण।',
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-1.5">
           <div className="space-y-2 my-auto text-xs">
             <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-300">
               <div className="font-bold text-[#5C3A21] flex items-center gap-1 text-xs">
                 <Zap className="w-3.5 h-3.5 text-amber-600" />
-                <span>भाग्य रेखा (Fate Line): {analysisResult.fateLine.strength}</span>
+                <span>{fateLine?.sanskritName || 'भाग्य रेखा'}: {t(fateLine?.qualityKey, 'सक्रिय')}</span>
               </div>
               <p className="text-[11px] text-[#6E472A] mt-1 leading-snug">
-                {analysisResult.fateLine.prediction}
+                {t(fateLine?.interpretationKey, 'स्वावलम्बन से भाग्य निर्माण एवं निरंतर कार्य सिद्धि।')}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-100/70 to-yellow-50 border border-amber-300">
               <div className="font-bold text-amber-950 flex items-center gap-1 text-xs">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span>सूर्य रेखा एवं विशिष्ट योग</span>
+                <span>हथेली के प्रमुख पर्वत</span>
               </div>
-              <p className="text-[11px] text-[#462B17] mt-1 leading-snug">
-                हथेली में मत्स्य, त्रिशूल या पद्म चिह्न की उपस्थिति जातक को उच्च सामाजिक प्रतिष्ठा व आकस्मिक धन लाभ दिलाती है।
-              </p>
+              <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+                {analysisResult.mounts.slice(0, 4).map((m, idx) => (
+                  <div key={idx} className="p-1.5 rounded-lg bg-white/80 border border-amber-200">
+                    <div className="font-bold text-[10px] text-[#5C3A21]">{m.planet}</div>
+                    <div className="text-[9px] text-[#735133]">बल: {m.strength}%</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div className="text-[10px] text-center text-[#8C6239]">
-            हस्तरेखा की विस्तृत सूक्ष्म रीडिंग हेतु 'उमा परामर्श' लें।
+            शनि व सूर्य पर्वत की शुभता से समाज में प्रतिष्ठा प्राप्त होती है।
           </div>
         </div>
       ),
@@ -196,14 +203,12 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
       slides={slides}
       currentSlideIndex={activeSlideIndex}
       onSlideIndexChange={setActiveSlideIndex}
-      headerTitle="हस्तरेखा शास्त्र (Palmistry)"
+      headerTitle="सामुद्रिक हस्तरेखा शास्त्र"
       headerIcon="✋"
-      chapterNumber={15}
-      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('मेरी हस्तरेखा का सम्पूर्ण फलित') : undefined}
+      chapterNumber={11}
       onPrevChapter={onPrevChapter}
       onNextChapter={onNextChapter}
-      prevChapterLabel="अंकशास्त्र"
-      nextChapterLabel="टैरो कार्ड"
+      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('हस्तरेखा फलित एवं सामुद्रिक परामर्श') : undefined}
     />
   );
 };

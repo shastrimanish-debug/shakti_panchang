@@ -6,6 +6,7 @@ import {
   calculateNamank,
   calculatePersonalYear,
   calculateLoshuGrid,
+  NUMBER_DATA,
 } from '../services/numerology';
 import { Sparkles, Hash } from 'lucide-react';
 import { useLanguage } from '../i18n';

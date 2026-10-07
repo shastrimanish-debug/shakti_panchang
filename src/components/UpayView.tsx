@@ -35,7 +35,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
     {
       id: 'personal-upay',
       title: activeKundali ? `${activeKundali.name} की कुण्डली उपाय` : 'व्यक्तिगत कुण्डली ग्रह शांति',
-      subtitle: activeKundali ? `लग्न: ${activeKundali.lagnaRashi} • राशि: ${activeKundali.chandraRashi}` : 'ग्रह शांति विश्लेषण',
+      subtitle: activeKundali ? `लग्न: ${activeKundali.lagnaRashi} • राशि: ${activeKundali.moonRashi}` : 'ग्रह शांति विश्लेषण',
       badge: 'कुण्डली अनुकूल',
       icon: '🪔',
       voiceText: 'आपकी कुण्डली के अनुसार ग्रह शांति व अचूक उपाय।',
