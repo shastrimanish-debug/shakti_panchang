@@ -43,7 +43,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         paddingBottom: 'max(0.4rem, env(safe-area-inset-bottom, 0px))',
       }}
     >
-      <div className="max-w-md mx-auto flex items-center justify-between px-2 pt-1 h-12">
+      <div className="max-w-md mx-auto flex items-center justify-between px-2 pt-0.5 pb-1 h-14">
         {/* Tab 1: पंचांग */}
         <button
           type="button"
