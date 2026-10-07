@@ -558,6 +558,7 @@ export function App() {
 
             {activeTab === 'gita' && (
               <DailyGitaShlokaView
+                onBackToPanchang={() => handleSelectTab('panchang')}
                 onOpenUmaModal={(query?: string) => {
                   if (query) setUmaInitialPrompt(query);
                   setIsUmaModalOpen(true);
@@ -580,6 +581,7 @@ export function App() {
 
             {activeTab === 'durga' && (
               <DurgaSaptashatiView
+                onBackToPanchang={() => handleSelectTab('panchang')}
                 onOpenUmaModal={(query?: string) => {
                   if (query) setUmaInitialPrompt(query);
                   setIsUmaModalOpen(true);

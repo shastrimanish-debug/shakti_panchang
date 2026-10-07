@@ -1,16 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { GITA_SHLOKAS, getLocalizedGitaShloka } from '../data/gitaShlokas';
 import { shlokaChrome } from '../constants/shlokas';
-import { Sparkles, Share2, Volume2, VolumeX, BookOpen, ChevronLeft, ChevronRight, Copy, Check, Bookmark, Menu, X, Search } from 'lucide-react';
+import { Sparkles, Share2, Volume2, VolumeX, BookOpen, ChevronLeft, ChevronRight, Copy, Check, Bookmark, Menu, X, Search, ArrowLeft } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 
-export const DailyGitaShlokaView: React.FC<{
+interface DailyGitaShlokaViewProps {
+  onBackToPanchang?: () => void;
   onOpenUmaModal?: (query?: string) => void;
   onPrevChapter?: () => void;
   onNextChapter?: () => void;
-}> = ({ onOpenUmaModal, onPrevChapter, onNextChapter }) => {
+}
+
+export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
+  onBackToPanchang,
+  onOpenUmaModal,
+  onPrevChapter,
+  onNextChapter,
+}) => {
   const { language, t } = useLanguage();
   const chrome = shlokaChrome(language);
 
@@ -95,6 +103,19 @@ export const DailyGitaShlokaView: React.FC<{
       {/* Header Bar */}
       <header className="shrink-0 bg-gradient-to-r from-[#462B17] via-[#5C3A21] to-[#3E2714] text-[#FAF2E4] px-3 py-2.5 shadow-md flex items-center justify-between border-b border-[#B56A00]/40 z-20">
         <div className="flex items-center gap-2">
+          {/* Back to Panchang Button */}
+          {onBackToPanchang && (
+            <button
+              type="button"
+              onClick={onBackToPanchang}
+              className="px-2 py-1 rounded-xl bg-[#2C180C] border border-amber-500/40 text-amber-300 hover:bg-amber-900/40 transition cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0"
+              title="पंचांग पर वापस जाएं"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">पंचांग</span>
+            </button>
+          )}
+
           {/* TOC Index Button */}
           <button
             type="button"
