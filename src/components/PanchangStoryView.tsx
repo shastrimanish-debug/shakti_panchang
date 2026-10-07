@@ -17,7 +17,7 @@ import { downloadBhojpatraPdf } from '../services/bhojpatraPdf';
 import { PdfSuccessModal } from './PdfSuccessModal';
 import { useLanguage } from '../i18n';
 import { trVedic, trRashi, trWeekday } from '../i18n/vedicTranslate';
-import { speakUma, stopUmaSpeech, isUmaSpeaking } from '../lib/umaSpeech';
+import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import {
   ChevronLeft,
   ChevronRight,
@@ -28,19 +28,15 @@ import {
   Share2,
   Sparkles,
   Sun,
-  Moon,
   Compass,
   Clock,
-  Shield,
   ShieldCheck,
-  AlertTriangle,
-  Flame,
   Star,
   Check,
   Download,
-  Calendar,
   Layers,
   Zap,
+  BookOpen,
 } from 'lucide-react';
 
 export interface PanchangStoryViewProps {
@@ -56,8 +52,8 @@ export interface PanchangStoryViewProps {
   longitude?: number;
 }
 
-const TOTAL_SLIDES = 6;
-const SLIDE_DURATION_MS = 6500; // 6.5s per slide
+const TOTAL_SLIDES = 8;
+const SLIDE_DURATION_MS = 6500; // 6.5s per chunk
 
 export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
   panchang,
@@ -68,8 +64,6 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
   onOpenUmaModal,
   onOpenWhatsAppPanchang,
   onSwitchToClassicView,
-  latitude = 23.1765,
-  longitude = 75.7885,
 }) => {
   const { t, language } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState<number>(0);
@@ -103,11 +97,9 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
   const specialYogas = calculateSpecialYogas(panchang);
   const { panchak, bhadra } = calculatePanchakAndBhadra(panchang);
 
-  // Day & Night duration
+  // Day duration
   const dayMinutes = Math.round((solar.sunset.getTime() - solar.sunrise.getTime()) / 60000);
-  const nightMinutes = Math.round((solar.nextSunrise.getTime() - solar.sunset.getTime()) / 60000);
   const dayHoursStr = `${Math.floor(dayMinutes / 60)}h ${dayMinutes % 60}m`;
-  const nightHoursStr = `${Math.floor(nightMinutes / 60)}h ${nightMinutes % 60}m`;
 
   // Disha Shool based on weekday
   const DISHA_SHOOL_MAP: Record<number, { dirHindi: string; dirEnglish: string; remedyHindi: string; remedyEnglish: string }> = {
@@ -121,14 +113,16 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
   };
   const dishaInfo = DISHA_SHOOL_MAP[weekdayNum] || DISHA_SHOOL_MAP[1];
 
-  // Story Titles & Icons for tabs
-  const SLIDE_META = [
-    { id: 0, titleKey: 'panchang.storyTithi', label: t('panchang.tithi', 'तिथि'), icon: '🪔' },
-    { id: 1, titleKey: 'panchang.storyNakshatra', label: t('panchang.nakshatra', 'नक्षत्र'), icon: '🌟' },
-    { id: 2, titleKey: 'panchang.storyYoga', label: t('panchang.yoga', 'योग व करण'), icon: '☯️' },
-    { id: 3, titleKey: 'panchang.storyMuhurat', label: t('panchang.muhurat', 'मुहूर्त'), icon: '✨' },
-    { id: 4, titleKey: 'panchang.storyKhagol', label: t('panchang.khagol', 'खगोल'), icon: '🌅' },
-    { id: 5, titleKey: 'panchang.storyPanchak', label: t('panchang.panchak', 'पञ्चक व भद्रा'), icon: '🛡️' },
+  // 8 Chunked Slides Metadata
+  const SLIDES_META = [
+    { id: 0, title: `${t('panchang.tithi', 'तिथि')} (1/2)`, subtitle: t('panchang.shareTithi', 'मुख्य तिथि'), icon: '🪔' },
+    { id: 1, title: `${t('panchang.tithi', 'तिथि')} (2/2)`, subtitle: t('panchang.storyBlessingShort', 'संकल्प व मंत्र'), icon: '🕉️' },
+    { id: 2, title: `${t('panchang.nakshatra', 'नक्षत्र')} (1/2)`, subtitle: t('panchang.pada', 'सक्रिय नक्षत्र'), icon: '🌟' },
+    { id: 3, title: `${t('panchang.nakshatra', 'नक्षत्र')} (2/2)`, subtitle: t('panchang.moonSign', 'स्वामी व राशि'), icon: '♈' },
+    { id: 4, title: t('panchang.yoga', 'योग व करण'), subtitle: t('panchang.dailyYoga', 'दैनिक प्रभाव'), icon: '☯️' },
+    { id: 5, title: t('panchang.muhurat', 'शुभ मुहूर्त'), subtitle: t('panchang.abhijit', 'अभिजित काल'), icon: '✨' },
+    { id: 6, title: t('panchang.rahuKaal', 'अशुभ व दिशाशूल'), subtitle: t('panchang.dishaShool', 'सावधानी'), icon: '⚠️' },
+    { id: 7, title: t('panchang.panchakBhadra', 'पञ्चक व भद्रा'), subtitle: t('panchang.activeYoga', 'विशेष योग'), icon: '🛡️' },
   ];
 
   // Navigation handlers
@@ -163,7 +157,7 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
   useEffect(() => {
     if (isPaused) return;
 
-    const interval = 50; // update every 50ms
+    const interval = 50;
     const step = (interval / SLIDE_DURATION_MS) * 100;
 
     const timer = setInterval(() => {
@@ -255,7 +249,7 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
     setProgress(0);
   };
 
-  // Voice narration for current slide
+  // Voice narration for current chunk
   const handleToggleVoice = async () => {
     if (isSpeaking) {
       stopUmaSpeech();
@@ -270,13 +264,17 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
     if (currentSlide === 0) {
       speechText = `आज का पंचांग। ${trWeekday(panchang.weekday)}, ${dateStr}। संवत् ${panchang.samvat}। ${panchang.paksha}, ${panchang.tithi}। ${loc}`;
     } else if (currentSlide === 1) {
-      speechText = `आज का नक्षत्र ${panchang.nakshatra}, चरण ${panchang.pada}। नक्षत्र समाप्ति ${panchang.nakshatraSpan ? fmt(panchang.nakshatraSpan.end) : ''}।`;
+      speechText = `आज की तिथि ${panchang.tithi}। श्री गणेशाय नमः। शुभं करोति कल्याणम्।`;
     } else if (currentSlide === 2) {
-      speechText = `आज का योग ${panchang.yoga}, और करण ${panchang.karana} है।`;
+      speechText = `आज का नक्षत्र ${panchang.nakshatra}, चरण ${panchang.pada}। नक्षत्र समाप्ति ${panchang.nakshatraSpan ? fmt(panchang.nakshatraSpan.end) : ''}।`;
     } else if (currentSlide === 3) {
-      speechText = `आज का शुभ अभिजित मुहूर्त ${abhijitWindow ? `${fmt(abhijitWindow.start)} से ${fmt(abhijitWindow.end)} तक` : 'आज नहीं है'}। राहुकाल ${rahuWindow ? `${fmt(rahuWindow.start)} से ${fmt(rahuWindow.end)} तक` : 'नहीं है'}।`;
+      speechText = `चन्द्र राशि ${panchang.lunarRashi}, सूर्य राशि ${panchang.solarRashi}।`;
     } else if (currentSlide === 4) {
-      speechText = `सूर्योदय ${fmt(solar.sunrise)}, सूर्यास्त ${fmt(solar.sunset)}। चन्द्र राशि ${panchang.lunarRashi}, सूर्य राशि ${panchang.solarRashi}। आज का दिशाशूल ${dishaInfo.dirHindi} दिशा में है।`;
+      speechText = `आज का योग ${panchang.yoga}, और करण ${panchang.karana} है।`;
+    } else if (currentSlide === 5) {
+      speechText = `आज का शुभ अभिजित मुहूर्त ${abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} से ${fmt(abhijitWindow.end)} तक` : 'आज नहीं है'}। ब्रह्म मुहूर्त ${brahmaWindow ? fmt(brahmaWindow.start) : 'प्रातःकाल'}।`;
+    } else if (currentSlide === 6) {
+      speechText = `राहुकाल ${rahuWindow ? `${fmt(rahuWindow.start)} से ${fmt(rahuWindow.end)} तक` : 'नहीं है'}। आज का दिशाशूल ${dishaInfo.dirHindi} दिशा में है।`;
     } else {
       speechText = `पञ्चक स्थिति: ${panchak.isActive ? panchak.typeNameHindi : 'पञ्चक मुक्त'}। भद्रा: ${bhadra.isActive ? bhadra.vas : 'भद्रा मुक्त'}।`;
     }
@@ -367,10 +365,18 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
 
   return (
     <div
-      className="relative w-full h-[100dvh] max-h-[100dvh] flex flex-col justify-between overflow-hidden select-none bg-gradient-to-b from-[#1C0F08] via-[#2D160C] to-[#140804] text-[#FAF2E4] font-sans touch-manipulation"
+      className="instagram-story-wrapper select-none bg-gradient-to-b from-[#1C0F08] via-[#2D160C] to-[#140804] text-[#FAF2E4] font-sans flex flex-col justify-between"
       style={{
-        paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))',
-        paddingBottom: 'max(4.5rem, calc(env(safe-area-inset-bottom, 0px) + 3.8rem))',
+        height: '100dvh',
+        width: '100vw',
+        maxHeight: '100dvh',
+        maxWidth: '100vw',
+        overflow: 'hidden',
+        overflowY: 'hidden',
+        overflowX: 'hidden',
+        touchAction: 'pan-x',
+        paddingTop: 'max(0.4rem, env(safe-area-inset-top, 0px))',
+        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))',
       }}
     >
       <PdfSuccessModal info={pdfSuccessInfo} onClose={() => setPdfSuccessInfo(null)} />
@@ -378,13 +384,13 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
       {/* Ambient background divine glow rings */}
       <div className="absolute top-1/4 -left-20 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/3 -right-20 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* ========================================================================= */}
-      {/* 1. TOP STATUS / INSTAGRAM STORY PROGRESS BARS */}
+      {/* 1. TOP SEGMENTED PROGRESS BARS & CONTROLS */}
       {/* ========================================================================= */}
-      <div className="relative z-30 px-3 pt-1 pb-1.5 shrink-0">
-        <div className="flex items-center gap-1.5 w-full max-w-lg mx-auto">
+      <header className="relative z-30 px-3 pt-1 pb-1 shrink-0 w-full max-w-lg mx-auto">
+        {/* 8 Segmented Progress Bars */}
+        <div className="flex items-center gap-1 w-full">
           {Array.from({ length: TOTAL_SLIDES }).map((_, idx) => {
             let widthPct = 0;
             if (idx < currentSlide) widthPct = 100;
@@ -408,17 +414,17 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
           })}
         </div>
 
-        {/* Top Floating Control Bar */}
-        <div className="flex items-center justify-between gap-1.5 mt-2 max-w-lg mx-auto">
-          {/* Left: Day & Location Badge */}
+        {/* Top Control Bar with Slide Title Counter */}
+        <div className="flex items-center justify-between gap-1.5 mt-2">
+          {/* Left: Day, Date & Slide Label */}
           <div className="flex items-center gap-1.5 min-w-0">
-            <div className="flex items-center bg-white/10 backdrop-blur-md rounded-full px-2.5 py-1 border border-white/15 text-xs font-bold shadow-xs">
-              <span className="text-amber-400 mr-1">✦</span>
+            <div className="flex items-center bg-white/10 backdrop-blur-md rounded-full px-2.5 py-0.5 border border-white/15 text-xs font-bold shadow-xs">
+              <span className="text-amber-400 mr-1">{SLIDES_META[currentSlide]?.icon}</span>
               <span className="font-extrabold text-[#FFF6E5] truncate">
-                {trWeekday(panchang.weekday)}
+                {SLIDES_META[currentSlide]?.title}
               </span>
               <span className="text-stone-400 mx-1">•</span>
-              <span className="text-amber-300 font-mono text-[11px] font-black">{formattedDate}</span>
+              <span className="text-amber-300 font-mono text-[11px] font-black">{currentSlide + 1}/{TOTAL_SLIDES}</span>
             </div>
 
             {onOpenLocationModal && (
@@ -428,7 +434,7 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
                   e.stopPropagation();
                   onOpenLocationModal();
                 }}
-                className="px-2 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/15 text-[11px] font-bold text-amber-200 hover:bg-white/20 transition truncate max-w-[100px] cursor-pointer"
+                className="px-2 py-0.5 bg-white/10 backdrop-blur-md rounded-full border border-white/15 text-[11px] font-bold text-amber-200 hover:bg-white/20 transition truncate max-w-[90px] cursor-pointer"
                 title={`Location: ${locationName}`}
               >
                 📍 {locationName}
@@ -436,9 +442,8 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
             )}
           </div>
 
-          {/* Right Action Icons (Voice, Pause/Play, Share, Classic Mode Switch) */}
+          {/* Right Action Icons */}
           <div className="flex items-center gap-1 shrink-0">
-            {/* Audio Voice Narration */}
             <button
               type="button"
               onClick={(e) => {
@@ -455,7 +460,6 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
               {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
             </button>
 
-            {/* Pause / Play Toggle */}
             <button
               type="button"
               onClick={(e) => {
@@ -468,7 +472,6 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
               {isPaused ? <Play className="w-3.5 h-3.5 fill-current" /> : <Pause className="w-3.5 h-3.5" />}
             </button>
 
-            {/* 1-Click WhatsApp Story Share */}
             <button
               type="button"
               onClick={(e) => {
@@ -481,7 +484,6 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
               <Share2 className="w-3.5 h-3.5" />
             </button>
 
-            {/* Switch to Detailed Classic View */}
             {onSwitchToClassicView && (
               <button
                 type="button"
@@ -489,16 +491,16 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
                   e.stopPropagation();
                   onSwitchToClassicView();
                 }}
-                className="px-2 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-[#FFD88A] hover:bg-amber-500/30 text-[10px] font-black tracking-wide transition cursor-pointer flex items-center gap-1"
+                className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-[#FFD88A] hover:bg-amber-500/30 text-[10px] font-black tracking-wide transition cursor-pointer flex items-center gap-1"
                 title="विस्तृत ग्रन्थ व्यू देखें"
               >
                 <Layers className="w-3 h-3 text-amber-300" />
-                <span>ग्रन्थ व्यू</span>
+                <span>ग्रन्थ</span>
               </button>
             )}
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Share Toast Banner */}
       {shareNotice && (
@@ -511,33 +513,38 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 2. MAIN STORY SLIDE CANVAS (Interactive Tap Navigation & Zero-Scroll Fit) */}
+      {/* 2. CHUNKED STORY SLIDE CANVAS (Zero Scroll, 100% Guaranteed Fit) */}
       {/* ========================================================================= */}
-      <div
+      <main
         className="relative z-20 flex-1 w-full max-w-lg mx-auto px-3 py-1 flex flex-col justify-center overflow-hidden"
+        style={{
+          overflow: 'hidden',
+          overflowY: 'hidden',
+          overflowX: 'hidden',
+          touchAction: 'pan-x',
+        }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleTouchStart}
         onMouseUp={handleTouchEnd}
       >
-        {/* Visual Tap Indicator Pill Guides */}
-        <div className="absolute inset-y-0 left-0 w-1/4 pointer-events-none z-10 flex items-center justify-start pl-2 opacity-0 hover:opacity-40 transition">
+        {/* Visual Tap Indicators */}
+        <div className="absolute inset-y-0 left-0 w-1/4 pointer-events-none z-10 flex items-center justify-start pl-2 opacity-0 hover:opacity-30 transition">
           <div className="p-2 rounded-full bg-black/40 text-white/70">
             <ChevronLeft className="w-5 h-5" />
           </div>
         </div>
-        <div className="absolute inset-y-0 right-0 w-1/4 pointer-events-none z-10 flex items-center justify-end pr-2 opacity-0 hover:opacity-40 transition">
+        <div className="absolute inset-y-0 right-0 w-1/4 pointer-events-none z-10 flex items-center justify-end pr-2 opacity-0 hover:opacity-30 transition">
           <div className="p-2 rounded-full bg-black/40 text-white/70">
             <ChevronRight className="w-5 h-5" />
           </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* SLIDE 0: 🪔 TITHI & VEDIC ESSENCE */}
-        {/* ========================================================================= */}
+        {/* ===================================================================== */}
+        {/* SLIDE 0: 🪔 TITHI (Part 1/2) — MAIN TITHI & SAMVAT */}
+        {/* ===================================================================== */}
         {currentSlide === 0 && (
-          <div className="h-full flex flex-col justify-between py-1 animate-in fade-in zoom-in-95 duration-200">
-            {/* Top Badge: Samvat & Paksha */}
+          <div className="h-full flex flex-col justify-between py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             <div className="flex items-center justify-between gap-2">
               <span className="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase tracking-widest inline-flex items-center gap-1.5 shadow-xs">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -548,190 +555,222 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
               </span>
             </div>
 
-            {/* Centerpiece Tithi Master Glass Card */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-center relative overflow-hidden backdrop-blur-xl my-auto">
-              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-orange-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-2xl text-center relative overflow-hidden backdrop-blur-xl my-auto">
+              <div className="text-xs font-black uppercase tracking-widest text-amber-300/80 font-sans mb-2">
+                ॥ {t('panchang.tithi', 'तिथि')} ॥
+              </div>
 
-              <div className="relative z-10 space-y-3">
-                <div className="text-xs font-black uppercase tracking-widest text-amber-300/80 font-sans">
-                  ॥ {t('panchang.tithi', 'तिथि')} ॥
+              <h2 className="text-3xl sm:text-4xl font-black font-granth text-[#FFE6B3] tracking-wide drop-shadow-md">
+                {trVedic(panchang.tithi)}
+              </h2>
+
+              {panchang.tithiSpan && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-3 rounded-full bg-white/10 text-amber-200 text-xs font-bold border border-white/10">
+                  <Clock className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{t('panchang.endsAt', 'समाप्ति')}: {fmt(panchang.tithiSpan.end)}</span>
                 </div>
+              )}
 
-                <h2 className="text-3xl sm:text-4xl font-black font-granth text-[#FFE6B3] tracking-wide drop-shadow-md">
-                  {trVedic(panchang.tithi)}
-                </h2>
-
-                {panchang.tithiSpan && (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 text-xs font-bold border border-white/10">
-                    <Clock className="w-3.5 h-3.5 text-amber-300" />
-                    <span>{t('panchang.endsAt', 'समाप्ति')}: {fmt(panchang.tithiSpan.end)}</span>
-                  </div>
-                )}
-
-                {/* Progress bar gauge */}
-                <div className="space-y-1 pt-1">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-amber-200/80">
-                    <span>{t('panchang.elapsed', 'व्यतीत मान')}</span>
-                    <span className="font-mono text-amber-300 font-extrabold">
-                      {(panchang.tithiProgress * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-black/40 h-2 rounded-full overflow-hidden p-0.5 border border-amber-500/30">
-                    <div
-                      className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 h-full rounded-full transition-all duration-500 shadow-xs"
-                      style={{ width: `${Math.min(100, Math.max(5, panchang.tithiProgress * 100))}%` }}
-                    />
-                  </div>
+              <div className="space-y-1 pt-3">
+                <div className="flex items-center justify-between text-[11px] font-bold text-amber-200/80">
+                  <span>{t('panchang.elapsed', 'व्यतीत मान')}</span>
+                  <span className="font-mono text-amber-300 font-extrabold">
+                    {(panchang.tithiProgress * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <div className="w-full bg-black/40 h-2 rounded-full overflow-hidden p-0.5 border border-amber-500/30">
+                  <div
+                    className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 h-full rounded-full transition-all duration-500 shadow-xs"
+                    style={{ width: `${Math.min(100, Math.max(5, panchang.tithiProgress * 100))}%` }}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Bottom Shloka / Blessing Strip */}
-            <div className="p-3 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center space-y-1">
-              <div className="text-amber-300 font-black text-xs font-granth tracking-wide">
-                ॥ ॐ श्री गणेशाय नमः • शुभं करोति कल्याणम् ॥
-              </div>
-              <p className="text-[11px] text-[#FAF2E4]/80 leading-snug">
-                {t('panchang.storyBlessing', 'आज का दिन आपके जीवन में धर्म, अर्थ, काम और मोक्ष के संतुलन को प्रदीप्त करे।')}
-              </p>
+            <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center text-xs text-amber-200 font-bold">
+              <span>📅 {trWeekday(panchang.weekday)}, {formattedDate}</span>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* SLIDE 1: 🌟 NAKSHATRA & PADA */}
-        {/* ========================================================================= */}
+        {/* ===================================================================== */}
+        {/* SLIDE 1: 🕉️ TITHI (Part 2/2) — BLESSINGS & MANTRA */}
+        {/* ===================================================================== */}
         {currentSlide === 1 && (
-          <div className="h-full flex flex-col justify-between py-1 animate-in fade-in zoom-in-95 duration-200">
+          <div className="h-full flex flex-col justify-between py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>{t('panchang.tithi', 'तिथि संकल्प')}</span>
+              </span>
+              <span className="text-xs font-mono text-amber-200 font-bold">
+                भाग २ / २
+              </span>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-2xl text-center relative overflow-hidden backdrop-blur-xl my-auto space-y-4">
+              <div className="text-amber-300 font-black text-sm font-granth tracking-wide border-b border-amber-500/30 pb-2">
+                ॥ ॐ श्री गणेशाय नमः ॥
+              </div>
+
+              <p className="text-sm font-serif text-[#FFE6B3] italic leading-relaxed">
+                "शुभं करोति कल्याणमारोग्यं धनसंपदा।<br />शत्रुबुद्धिविनाशाय दीपज्योतिर्नमोऽस्तुते॥"
+              </p>
+
+              <div className="p-3 rounded-2xl bg-black/40 border border-amber-500/30 text-left space-y-1 text-xs">
+                <div className="font-bold text-amber-300">🌸 दैनिक साधना मार्गदर्शन:</div>
+                <div className="text-[#FAF2E4]/85 leading-snug">
+                  {t('panchang.storyBlessing', 'आज का दिन आपके जीवन में धर्म, अर्थ, काम और मोक्ष के संतुलन को प्रदीप्त करे।')}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center text-xs text-amber-300 font-bold">
+              <span>सर्व मंगल मांगल्ये शिवे सर्वार्थ साधिके</span>
+            </div>
+          </div>
+        )}
+
+        {/* ===================================================================== */}
+        {/* SLIDE 2: 🌟 NAKSHATRA (Part 1/2) — NAKSHATRA & PADA */}
+        {/* ===================================================================== */}
+        {currentSlide === 2 && (
+          <div className="h-full flex flex-col justify-between py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
                 <Star className="w-3.5 h-3.5 text-amber-400" />
-                <span>{t('panchang.nakshatra', 'नक्षत्र विज्ञान')}</span>
+                <span>{t('panchang.nakshatra', 'नक्षत्र')} (1/2)</span>
               </span>
               <span className="text-xs font-black text-amber-200/90 font-mono">
                 {t('panchang.pada', 'चरण')} {panchang.pada} / 4
               </span>
             </div>
 
-            {/* Master Nakshatra Card */}
-            <div className="p-5 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-center relative overflow-hidden backdrop-blur-xl my-auto">
-              <div className="relative z-10 space-y-3">
-                <div className="text-xs font-black uppercase tracking-widest text-amber-300/80 font-sans">
-                  ॥ {t('panchang.nakshatra', 'नक्षत्र')} ॥
+            <div className="p-5 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-2xl text-center relative overflow-hidden backdrop-blur-xl my-auto space-y-3">
+              <div className="text-xs font-black uppercase tracking-widest text-amber-300/80 font-sans">
+                ॥ {t('panchang.nakshatra', 'नक्षत्र')} ॥
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-black font-granth text-[#FFE6B3] tracking-wide">
+                {trVedic(panchang.nakshatra)}
+              </h2>
+
+              {panchang.nakshatraSpan && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 text-xs font-bold border border-white/10">
+                  <Clock className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{t('panchang.endsAt', 'समाप्ति')}: {fmt(panchang.nakshatraSpan.end)}</span>
                 </div>
+              )}
 
-                <h2 className="text-3xl sm:text-4xl font-black font-granth text-[#FFE6B3] tracking-wide">
-                  {trVedic(panchang.nakshatra)}
-                </h2>
-
-                {panchang.nakshatraSpan && (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 text-xs font-bold border border-white/10">
-                    <Clock className="w-3.5 h-3.5 text-amber-300" />
-                    <span>{t('panchang.endsAt', 'समाप्ति')}: {fmt(panchang.nakshatraSpan.end)}</span>
-                  </div>
-                )}
-
-                {/* 4 Padas Indicator Ribbon */}
-                <div className="pt-2">
-                  <div className="text-[11px] font-bold text-amber-300/80 mb-1.5 text-left">
-                    {t('panchang.activePada', 'सक्रिय चरण')}:
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[1, 2, 3, 4].map((p) => (
-                      <div
-                        key={p}
-                        className={`py-2 rounded-xl text-xs font-black text-center transition-all ${
-                          panchang.pada === p
-                            ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 text-stone-950 shadow-md scale-105 border-2 border-white'
-                            : 'bg-black/30 text-stone-400 border border-white/10'
-                        }`}
-                      >
-                        चरण {p}
-                      </div>
-                    ))}
-                  </div>
+              <div className="pt-2">
+                <div className="grid grid-cols-4 gap-2">
+                  {[1, 2, 3, 4].map((p) => (
+                    <div
+                      key={p}
+                      className={`py-2 rounded-xl text-xs font-black text-center transition-all ${
+                        panchang.pada === p
+                          ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 text-stone-950 shadow-md scale-105 border-2 border-white'
+                          : 'bg-black/30 text-stone-400 border border-white/10'
+                      }`}
+                    >
+                      चरण {p}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Quick Astrological Nakshatra Attributes */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-3 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md">
-                <div className="text-amber-300/80 font-bold text-[10px] uppercase">{t('panchang.moonSign', 'चन्द्र राशि')}</div>
-                <div className="text-sm font-black text-white mt-0.5">{trRashi(panchang.lunarRashi)}</div>
-              </div>
-              <div className="p-3 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md">
-                <div className="text-amber-300/80 font-bold text-[10px] uppercase">{t('panchang.sunSign', 'सूर्य राशि')}</div>
-                <div className="text-sm font-black text-white mt-0.5">{trRashi(panchang.solarRashi)}</div>
-              </div>
+            <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center text-xs text-amber-200/90">
+              <span>{panchang.nakshatraNumber}/27 वैदिक नक्षत्र मंडल</span>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* SLIDE 2: ☯️ YOGA & KARANA */}
-        {/* ========================================================================= */}
-        {currentSlide === 2 && (
-          <div className="h-full flex flex-col justify-between py-1 animate-in fade-in zoom-in-95 duration-200">
+        {/* ===================================================================== */}
+        {/* SLIDE 3: ♈ NAKSHATRA (Part 2/2) — RASHI & LORDS */}
+        {/* ===================================================================== */}
+        {currentSlide === 3 && (
+          <div className="h-full flex flex-col justify-between py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+                <span>{t('panchang.moonAndSunSign', 'राशि व खगोल')} (2/2)</span>
+              </span>
+              <span className="text-xs font-mono text-amber-200 font-bold">
+                भाग २ / २
+              </span>
+            </div>
+
+            <div className="space-y-3 my-auto">
+              <div className="p-4 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-xl backdrop-blur-xl">
+                <div className="text-[11px] font-bold text-amber-300 uppercase">🌙 {t('panchang.moonSign', 'चन्द्र राशि (जन्म राशि आधार)')}</div>
+                <div className="text-2xl font-black font-granth text-white mt-1">{trRashi(panchang.lunarRashi)}</div>
+                <div className="text-xs text-amber-200/70 mt-1">मन, भावना एवं मानसिक तरंगों का नियामक</div>
+              </div>
+
+              <div className="p-4 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-xl backdrop-blur-xl">
+                <div className="text-[11px] font-bold text-amber-300 uppercase">☀️ {t('panchang.sunSign', 'सूर्य राशि (सौर संक्रान्ति)')}</div>
+                <div className="text-2xl font-black font-granth text-white mt-1">{trRashi(panchang.solarRashi)}</div>
+                <div className="text-xs text-amber-200/70 mt-1">आत्मा, ऊर्जा, स्वास्थ्य व यश का कारक</div>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center text-xs text-amber-200 font-bold">
+              <span>🌅 सूर्योदय {fmt(solar.sunrise)} • 🌇 सूर्यास्त {fmt(solar.sunset)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* ===================================================================== */}
+        {/* SLIDE 4: ☯️ YOGA & KARANA */}
+        {/* ===================================================================== */}
+        {currentSlide === 4 && (
+          <div className="h-full flex flex-col justify-between py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>{t('panchang.yoga', 'योग व करण')}</span>
+                <span>{t('panchang.yoga', 'योग एवं करण')}</span>
               </span>
               <span className="text-xs font-bold text-amber-200 font-mono">
                 27 योग • 11 करण
               </span>
             </div>
 
-            {/* Dual Cards: Yoga & Karana */}
             <div className="space-y-3 my-auto">
-              {/* Yoga Card */}
-              <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-xl backdrop-blur-xl">
+              <div className="p-4 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-xl backdrop-blur-xl">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">☯️</span>
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300/80">
-                        {t('panchang.yoga', 'दैनिक योग')}
-                      </div>
-                      <h3 className="text-2xl font-black font-granth text-[#FFE6B3]">
-                        {trVedic(panchang.yoga)}
-                      </h3>
-                    </div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300/80">
+                    ☯️ {t('panchang.yoga', 'दैनिक योग')}
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-mono font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-mono font-bold">
                     {panchang.yogaNumber}/27
                   </span>
                 </div>
+                <h3 className="text-2xl font-black font-granth text-[#FFE6B3] mt-1">
+                  {trVedic(panchang.yoga)}
+                </h3>
                 {panchang.yogaSpan && (
-                  <div className="mt-2 text-xs text-amber-200/80 flex items-center gap-1">
+                  <div className="mt-1.5 text-xs text-amber-200/80 flex items-center gap-1">
                     <Clock className="w-3 h-3 text-amber-400" />
                     <span>{t('panchang.endsAt', 'समाप्ति')}: {fmt(panchang.yogaSpan.end)}</span>
                   </div>
                 )}
               </div>
 
-              {/* Karana Card */}
-              <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-xl backdrop-blur-xl">
+              <div className="p-4 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 shadow-xl backdrop-blur-xl">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">⚡</span>
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300/80">
-                        {t('panchang.karana', 'सक्रिय करण (आधा तिथि मान)')}
-                      </div>
-                      <h3 className="text-2xl font-black font-granth text-[#FFE6B3]">
-                        {trVedic(panchang.karana)}
-                      </h3>
-                    </div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300/80">
+                    ⚡ {t('panchang.karana', 'सक्रिय करण (आधा तिथि मान)')}
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-mono font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-mono font-bold">
                     करण {panchang.karanaNumber}
                   </span>
                 </div>
+                <h3 className="text-2xl font-black font-granth text-[#FFE6B3] mt-1">
+                  {trVedic(panchang.karana)}
+                </h3>
                 {panchang.karanaSpan && (
-                  <div className="mt-2 text-xs text-amber-200/80 flex items-center gap-1">
+                  <div className="mt-1.5 text-xs text-amber-200/80 flex items-center gap-1">
                     <Clock className="w-3 h-3 text-amber-400" />
                     <span>{t('panchang.endsAt', 'समाप्ति')}: {fmt(panchang.karanaSpan.end)}</span>
                   </div>
@@ -739,272 +778,164 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
               </div>
             </div>
 
-            {/* Bottom Significance Pill */}
-            <div className="p-3 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center text-xs text-amber-200/90">
-              <span className="font-bold text-amber-300">💡 वैदिक रहस्य: </span>
-              <span>योग सूर्य-चन्द्र के परस्पर सामंजस्य को और करण संकल्प सिद्धि के वेग को दर्शाता है।</span>
+            <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center text-xs text-amber-200">
+              <span>योग और करण दैनिक कार्यों में सिद्धि का निर्धारण करते हैं</span>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* SLIDE 3: ✨ SHUBH MUHURAT & RAHU KAAL */}
-        {/* ========================================================================= */}
-        {currentSlide === 3 && (
-          <div className="h-full flex flex-col justify-between py-1 animate-in fade-in zoom-in-95 duration-200">
+        {/* ===================================================================== */}
+        {/* SLIDE 5: ✨ SHUBH MUHURAT (ABHIJIT & BRAHMA) */}
+        {/* ===================================================================== */}
+        {currentSlide === 5 && (
+          <div className="h-full flex flex-col justify-between py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>{t('panchang.muhurat', 'काल निर्णय व मुहूर्त')}</span>
+              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{t('panchang.muhurat', 'शुभ मुहूर्त काल')}</span>
               </span>
-              <span className="text-xs font-bold text-amber-200 font-mono">
-                {trWeekday(panchang.weekday)}
+              <span className="text-xs font-bold text-emerald-200">
+                मांगलिक वेला
               </span>
             </div>
 
-            {/* Dual Master Cards: Abhijit vs Rahu Kaal */}
-            <div className="space-y-3 my-auto">
-              {/* Abhijit Muhurat (Auspicious) */}
-              <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-emerald-950/90 via-emerald-900/80 to-[#1A3320]/90 border-2 border-emerald-400/50 shadow-xl backdrop-blur-xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🌟</span>
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-                        {t('panchang.abhijit', 'सर्वश्रेष्ठ अभिजित मुहूर्त')}
-                      </div>
-                      <div className="text-xl sm:text-2xl font-black font-mono text-emerald-100 mt-0.5">
-                        {abhijitWindow && weekdayNum !== 3 ? (
-                          `${fmt(abhijitWindow.start)} - ${fmt(abhijitWindow.end)}`
-                        ) : (
-                          t('panchang.notToday', 'बुधवार होने से आज वर्जित')
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/40 text-[11px] font-black">
-                    अति शुभ
-                  </span>
+            <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-950/90 via-emerald-900/80 to-[#1A3320]/90 border-2 border-emerald-400/50 shadow-2xl backdrop-blur-xl my-auto space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+                  🌟 {t('panchang.abhijit', 'सर्वश्रेष्ठ अभिजित मुहूर्त')}
                 </div>
-                <div className="mt-2 text-[11px] text-emerald-200/80">
-                  समस्त नवीन कार्य, यात्रा, क्रय-विक्रय व मांगलिक कार्यों के लिए सिद्धिप्रद काल।
-                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/40 text-[11px] font-black">
+                  अति शुभ
+                </span>
               </div>
 
-              {/* Rahu Kaal (Caution) */}
-              <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-rose-950/90 via-rose-900/80 to-[#331515]/90 border-2 border-rose-400/50 shadow-xl backdrop-blur-xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">⚠️</span>
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-300">
-                        {t('panchang.rahuKaal', 'अशुभ राहुकाल (सावधानी)')}
-                      </div>
-                      <div className="text-xl sm:text-2xl font-black font-mono text-rose-100 mt-0.5">
-                        {rahuWindow ? `${fmt(rahuWindow.start)} - ${fmt(rahuWindow.end)}` : '—'}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full bg-rose-400/20 text-rose-200 border border-rose-400/40 text-[11px] font-black">
-                    वर्जित काल
-                  </span>
-                </div>
-                <div className="mt-2 text-[11px] text-rose-200/80">
-                  इस समय नए कार्य का आरंभ, धन निवेश व यात्रा प्रारंभ करने से बचें।
-                </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-100">
+                {abhijitWindow && weekdayNum !== 3 ? (
+                  `${fmt(abhijitWindow.start)} - ${fmt(abhijitWindow.end)}`
+                ) : (
+                  t('panchang.notToday', 'बुधवार होने से आज वर्जित')
+                )}
               </div>
-            </div>
 
-            {/* Secondary Timings Pill Grid */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md flex items-center justify-between">
-                <span className="text-amber-200 font-bold">🌅 {t('panchang.brahmaMuhurat', 'ब्रह्म मुहूर्त')}:</span>
+              <p className="text-xs text-emerald-200/85 leading-snug">
+                समस्त नवीन कार्य, व्यापार, यात्रा व अनुबंध हेतु सर्वोत्तम मुहूर्त काल।
+              </p>
+
+              <div className="pt-2 border-t border-emerald-500/30 flex items-center justify-between text-xs text-emerald-200">
+                <span className="font-bold">🌅 {t('panchang.brahmaMuhurat', 'ब्रह्म मुहूर्त')}:</span>
                 <span className="font-mono font-black text-white">
                   {brahmaWindow ? `${fmt(brahmaWindow.start)} - ${fmt(brahmaWindow.end)}` : '04:45 - 05:35'}
                 </span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md flex items-center justify-between">
-                <span className="text-amber-200 font-bold">🏺 {t('panchang.amritKaal', 'अमृत काल')}:</span>
-                <span className="font-mono font-black text-white">
-                  {amritWindow ? `${fmt(amritWindow.start)} - ${fmt(amritWindow.end)}` : 'शुभ योग'}
-                </span>
-              </div>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center text-xs text-emerald-300 font-bold">
+              <span>शुभ कार्य सदैव अभिजित व शुभ चौघड़िया में प्रारंभ करें</span>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* SLIDE 4: 🌅 SUN, MOON & COSMIC DISHA SHOOL */}
-        {/* ========================================================================= */}
-        {currentSlide === 4 && (
-          <div className="h-full flex flex-col justify-between py-1 animate-in fade-in zoom-in-95 duration-200">
+        {/* ===================================================================== */}
+        {/* SLIDE 6: ⚠️ ASHUBH KAAL & DISHA SHOOL */}
+        {/* ===================================================================== */}
+        {currentSlide === 6 && (
+          <div className="h-full flex flex-col justify-between py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
-                <span>{t('panchang.solarLunar', 'सूर्य-चन्द्र व दिशाशूल')}</span>
+              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-rose-500/20 text-rose-300 border border-rose-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
+                <Compass className="w-3.5 h-3.5 text-rose-400" />
+                <span>{t('panchang.rahuKaal', 'राहुकाल व दिशाशूल')}</span>
               </span>
-              <span className="text-xs font-bold text-amber-200 font-mono">
-                {dayHoursStr} दिनमान
+              <span className="text-xs font-bold text-rose-200">
+                सावधानी वेला
               </span>
             </div>
 
-            {/* 4-Box Astronomical Timings */}
             <div className="space-y-3 my-auto">
-              <div className="grid grid-cols-2 gap-2">
-                {/* Sunrise */}
-                <div className="p-4 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 text-center backdrop-blur-xl">
-                  <div className="text-xs font-bold text-amber-300">🌅 {t('panchang.sunrise', 'सूर्योदय')}</div>
-                  <div className="text-2xl font-black font-mono text-white mt-1">{fmt(solar.sunrise)}</div>
-                  <div className="text-[10px] text-amber-200/70 mt-1">उदित लग्न समय</div>
+              <div className="p-4 rounded-3xl bg-gradient-to-br from-rose-950/90 via-rose-900/80 to-[#331515]/90 border-2 border-rose-400/50 shadow-xl backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-rose-300">
+                    ⚠️ {t('panchang.rahuKaal', 'अशुभ राहुकाल')}
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-400/20 text-rose-200 border border-rose-400/40 text-[10px] font-black">
+                    वर्जित काल
+                  </span>
                 </div>
-
-                {/* Sunset */}
-                <div className="p-4 rounded-3xl bg-gradient-to-br from-[#2D1609]/95 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-500/40 text-center backdrop-blur-xl">
-                  <div className="text-xs font-bold text-amber-300">🌇 {t('panchang.sunset', 'सूर्यास्त')}</div>
-                  <div className="text-2xl font-black font-mono text-white mt-1">{fmt(solar.sunset)}</div>
-                  <div className="text-[10px] text-amber-200/70 mt-1">संध्या पूजन वेला</div>
+                <div className="text-xl sm:text-2xl font-black font-mono text-rose-100 mt-1">
+                  {rahuWindow ? `${fmt(rahuWindow.start)} - ${fmt(rahuWindow.end)}` : '—'}
+                </div>
+                <div className="text-[11px] text-rose-200/80 mt-1">
+                  इस समय नया निवेश, अनुबंध व यात्रा प्रारंभ करने से बचें।
                 </div>
               </div>
 
-              {/* Disha Shool Alert Card */}
               <div className="p-4 rounded-3xl bg-gradient-to-br from-amber-950/90 via-[#44220E]/90 to-[#2A1407]/95 border-2 border-amber-400/50 backdrop-blur-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Compass className="w-5 h-5 text-amber-400" />
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                        {t('panchang.dishaShool', 'आज का दिशाशूल')}
-                      </span>
-                      <h4 className="text-lg font-black text-[#FFE6B3]">
-                        {dishaInfo.dirHindi} दिशा ({dishaInfo.dirEnglish})
-                      </h4>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-bold text-amber-300">
+                    🧭 {t('panchang.dishaShool', 'आज का दिशाशूल')}: <span className="text-white font-black">{dishaInfo.dirHindi} ({dishaInfo.dirEnglish})</span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/40 text-[10px] font-black">
-                    यात्रा में सावधानी
-                  </span>
                 </div>
-                <div className="p-2.5 rounded-2xl bg-black/40 text-[11px] text-amber-200/90 border border-amber-500/20">
-                  <span className="font-bold text-amber-300">🛡️ दोष परिहार: </span>
+                <div className="mt-2 p-2 rounded-xl bg-black/40 text-[11px] text-amber-200/90 border border-amber-500/20">
+                  <span className="font-bold text-amber-300">🛡️ परिहार: </span>
                   <span>{dishaInfo.remedyHindi}।</span>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Solar / Lunar Signs */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center">
-                <span className="text-amber-200 text-[10px] uppercase font-bold">🌙 {t('panchang.moonSign', 'चन्द्र राशि')}: </span>
-                <span className="font-black text-white ml-1">{trRashi(panchang.lunarRashi)}</span>
-              </div>
-              <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center">
-                <span className="text-amber-200 text-[10px] uppercase font-bold">☀️ {t('panchang.sunSign', 'सूर्य राशि')}: </span>
-                <span className="font-black text-white ml-1">{trRashi(panchang.solarRashi)}</span>
-              </div>
+            <div className="p-2.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-center text-xs text-rose-300 font-bold">
+              <span>राहुकाल में केवल नित्य कर्म व मंत्र जप हितकारी होते हैं</span>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* SLIDE 5: 🛡️ PANCHAK, BHADRA & SPECIAL YOGAS */}
-        {/* ========================================================================= */}
-        {currentSlide === 5 && (
-          <div className="h-full flex flex-col justify-between py-1 animate-in fade-in zoom-in-95 duration-200">
+        {/* ===================================================================== */}
+        {/* SLIDE 7: 🛡️ PANCHAK, BHADRA & SPECIAL YOGAS */}
+        {/* ===================================================================== */}
+        {currentSlide === 7 && (
+          <div className="h-full flex flex-col justify-between py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase tracking-widest inline-flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>{t('panchang.panchakBhadra', 'पञ्चक, भद्रा व शुभ योग')}</span>
+                <span>{t('panchang.panchakBhadra', 'पञ्चक, भद्रा व विशेष योग')}</span>
               </span>
               <span className="text-xs font-bold text-amber-200">
-                विशेष योग
+                ८ / ८
               </span>
             </div>
 
-            {/* Panchak & Bhadra Display */}
-            <div className="space-y-3 my-auto">
-              {/* Panchak Card */}
-              <div className={`p-4 rounded-3xl border-2 backdrop-blur-xl ${
+            <div className="space-y-2.5 my-auto">
+              <div className={`p-3.5 rounded-2xl border-2 backdrop-blur-xl ${
                 panchak.isActive
-                  ? 'bg-gradient-to-br from-amber-950/95 via-amber-900/80 to-[#2A1407]/95 border-amber-400/60 shadow-xl'
-                  : 'bg-gradient-to-br from-emerald-950/90 via-emerald-900/80 to-[#142B1A]/90 border-emerald-400/50 shadow-xl'
+                  ? 'bg-amber-950/90 border-amber-400/60'
+                  : 'bg-emerald-950/90 border-emerald-400/50'
               }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">⚡</span>
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                        {t('panchang.panchak', 'पञ्चक निर्णय')}
-                      </div>
-                      <h4 className="text-xl font-black font-granth text-white">
-                        {panchak.isActive ? trVedic(panchak.typeNameHindi) : t('panchang.noPanchak', 'पञ्चक मुक्त')}
-                      </h4>
-                    </div>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-black border ${
-                    panchak.isActive
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-400/40'
-                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
-                  }`}>
-                    {panchak.isActive ? 'पञ्चक प्रभावी' : 'सर्वकार्य सिद्धि'}
-                  </span>
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-amber-300">⚡ {t('panchang.panchak', 'पञ्चक')}: {panchak.isActive ? trVedic(panchak.typeNameHindi) : t('panchang.noPanchak', 'पञ्चक मुक्त')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white">{panchak.isActive ? 'सक्रिय' : 'शुभ'}</span>
                 </div>
-                <p className="text-[11px] text-[#FAF2E4]/80 mt-2 leading-relaxed">
-                  {panchak.isActive
-                    ? 'छत ढालना, चारपाई बुनना, दक्षिण दिशा यात्रा व तृण काष्ठ संग्रह में सावधानी बरतें।'
-                    : 'आज कोई पञ्चक दोष नहीं है। सभी गृह निर्माण व मांगलिक कार्य निर्बाध संपन्न किए जा सकते हैं।'}
+                <p className="text-[11px] text-[#FAF2E4]/80 mt-1 leading-tight">
+                  {panchak.isActive ? 'काष्ठ संग्रह, दक्षिण यात्रा व छत ढालने में सावधानी।' : 'आज कोई पञ्चक दोष नहीं है।'}
                 </p>
               </div>
 
-              {/* Bhadra Card */}
-              <div className={`p-4 rounded-3xl border-2 backdrop-blur-xl ${
+              <div className={`p-3.5 rounded-2xl border-2 backdrop-blur-xl ${
                 bhadra.isActive && bhadra.nature === 'varjya'
-                  ? 'bg-gradient-to-br from-rose-950/95 via-rose-900/80 to-[#2A0C0C]/95 border-rose-400/60 shadow-xl'
-                  : 'bg-gradient-to-br from-emerald-950/90 via-emerald-900/80 to-[#142B1A]/90 border-emerald-400/50 shadow-xl'
+                  ? 'bg-rose-950/90 border-rose-400/60'
+                  : 'bg-emerald-950/90 border-emerald-400/50'
               }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🛡️</span>
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                        {t('panchang.bhadra', 'भद्रा वास निर्णय')}
-                      </div>
-                      <h4 className="text-xl font-black font-granth text-white">
-                        {bhadra.isActive ? `${trVedic(bhadra.vas)}` : t('panchang.noBhadra', 'भद्रा मुक्त')}
-                      </h4>
-                    </div>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-black border ${
-                    bhadra.isActive && bhadra.nature === 'varjya'
-                      ? 'bg-rose-500/20 text-rose-300 border-rose-400/40'
-                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
-                  }`}>
-                    {bhadra.isActive ? (bhadra.nature === 'varjya' ? 'पृथ्वी वास (वर्जित)' : 'पाताल/स्वर्ग (शुभ)') : 'भद्रा रहित'}
-                  </span>
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-amber-300">🛡️ {t('panchang.bhadra', 'भद्रा')}: {bhadra.isActive ? trVedic(bhadra.vas) : t('panchang.noBhadra', 'भद्रा मुक्त')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white">{bhadra.isActive ? (bhadra.nature === 'varjya' ? 'वर्जित' : 'कल्याणकारी') : 'रहित'}</span>
                 </div>
-                <p className="text-[11px] text-[#FAF2E4]/80 mt-2 leading-relaxed">
-                  {bhadra.isActive
-                    ? bhadra.nature === 'varjya'
-                      ? 'पृथ्वी लोक में भद्रा होने से विवाह, मुंडन व गृहप्रवेश जैसे मंगल कार्य वर्जित हैं।'
-                      : 'स्वर्ग या पाताल में भद्रा वास होने से धन धान्य और कल्याण की वृद्धि होती है।'
-                    : 'आज भद्रा का कोई प्रभाव नहीं है। शुभ व मांगलिक कार्य संपन्न करें।'}
-                </p>
               </div>
 
-              {/* Special Yogas Ribbon */}
               {specialYogas.length > 0 && (
-                <div className="p-3 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs flex items-center justify-between shadow-xs">
-                  <div className="flex items-center gap-1.5 font-black text-[#FFE6B3]">
-                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>{specialYogas.map((y) => trVedic(y.name)).join(' • ')}</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-400 text-stone-950 font-black text-[10px]">
-                    अति दुर्लभ
-                  </span>
+                <div className="p-2.5 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs flex items-center justify-between">
+                  <span className="font-bold">✨ {specialYogas.map((y) => trVedic(y.name)).join(' • ')}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-400 text-stone-950 font-black text-[10px]">शुभ योग</span>
                 </div>
               )}
             </div>
 
-            {/* Bottom Bhojpatra PDF Action Button */}
             <div className="pt-1">
               <button
                 type="button"
@@ -1013,52 +944,52 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
                   handleDownloadTodayBhojpatra();
                 }}
                 disabled={isDownloadingPdf}
-                className="w-full py-2.5 px-4 bg-gradient-to-r from-[#8f2121] via-[#A82828] to-[#8f2121] hover:from-[#7a1b1b] hover:to-[#7a1b1b] text-[#fdf8eb] font-black text-xs rounded-2xl transition flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-97 border border-amber-500/40"
+                className="w-full py-2.5 px-4 bg-gradient-to-r from-[#8f2121] via-[#A82828] to-[#8f2121] text-[#fdf8eb] font-black text-xs rounded-2xl transition flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-97 border border-amber-500/40"
               >
                 <Download className="w-4 h-4 text-amber-300" />
-                <span>{isDownloadingPdf ? t('common.loading', 'भोजपत्र तैयार हो रहा है…') : t('panchang.bhojpatraPdfBtn', '📥 संपूर्ण पंचांग भोजपत्र PDF डाउनलोड करें')}</span>
+                <span>{isDownloadingPdf ? t('common.loading', 'तैयार…') : t('panchang.bhojpatraPdfBtn', '📥 भोजपत्र PDF डाउनलोड')}</span>
               </button>
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       {/* ========================================================================= */}
-      {/* 3. BOTTOM INSTAGRAM STORY QUICK-SWITCH STRIP */}
+      {/* 3. BOTTOM STORY SELECTOR STRIP & CONTROLS */}
       {/* ========================================================================= */}
-      <div className="relative z-30 px-3 pb-2 shrink-0 max-w-lg mx-auto w-full">
+      <footer className="relative z-30 px-3 pb-1 shrink-0 max-w-lg mx-auto w-full">
         {/* Quick Icon Selector Pills */}
-        <div className="flex items-center justify-between gap-1 p-1 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg">
-          {SLIDE_META.map((s) => (
+        <div className="flex items-center justify-between gap-1 p-1 bg-black/50 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg">
+          {SLIDES_META.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => handleSelectSlide(s.id)}
-              className={`flex-1 py-1.5 px-1 rounded-xl text-[10px] font-black transition-all flex flex-col items-center justify-center cursor-pointer active:scale-95 ${
+              className={`flex-1 py-1 px-0.5 rounded-xl text-[10px] font-black transition-all flex flex-col items-center justify-center cursor-pointer active:scale-95 ${
                 currentSlide === s.id
                   ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 text-stone-950 font-extrabold shadow-md scale-105'
                   : 'text-stone-300 hover:text-white hover:bg-white/10'
               }`}
             >
-              <span className="text-sm leading-none">{s.icon}</span>
-              <span className="mt-0.5 truncate tracking-tighter text-[9px]">{s.label}</span>
+              <span className="text-xs leading-none">{s.icon}</span>
+              <span className="mt-0.5 truncate tracking-tighter text-[8px] font-sans">{s.id + 1}</span>
             </button>
           ))}
         </div>
 
-        {/* Story Navigation Hint Bar */}
-        <div className="flex items-center justify-between text-[10px] font-semibold text-amber-200/60 mt-1.5 px-1">
+        {/* Date Stepper Hint */}
+        <div className="flex items-center justify-between text-[10px] font-semibold text-amber-200/70 mt-1 px-1">
           <div className="flex items-center gap-1 cursor-pointer hover:text-amber-200" onClick={handlePrevDay}>
             <span>◀ {t('common.prev', 'पिछला दिन')}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span>👈 पिछला • {currentSlide + 1}/{TOTAL_SLIDES} • अगला 👉</span>
+          <div className="flex items-center gap-1">
+            <span>👈 टैप या स्वाइप करें 👉</span>
           </div>
           <div className="flex items-center gap-1 cursor-pointer hover:text-amber-200" onClick={handleNextDay}>
             <span>{t('common.next', 'अगला दिन')} ▶</span>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };
