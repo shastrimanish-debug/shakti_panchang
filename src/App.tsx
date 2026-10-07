@@ -393,8 +393,8 @@ export function App() {
         </div>
       )}
 
-      {/* Main Full-Screen Story Presentation Area: Zero Vertical Scrolling (100dvh Fit) */}
-      <main className="flex-1 w-full min-h-0 overflow-hidden relative flex flex-col">
+      {/* Main Responsive View Container with Smooth Vertical Scrolling */}
+      <main className="flex-1 w-full min-h-0 overflow-y-auto relative flex flex-col pb-20">
         {!isBookOpen ? (
           <BookCover
             onOpenIndex={() => {
@@ -421,7 +421,7 @@ export function App() {
         ) : (
           <div
             key={`${activeTab}-${currentLang}`}
-            className="w-full h-full min-h-0 overflow-hidden flex flex-col"
+            className="w-full min-h-full flex flex-col overflow-y-auto pb-20"
           >
             {activeTab === 'index' && (
               <GranthIndexView

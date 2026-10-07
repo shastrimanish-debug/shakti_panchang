@@ -117,7 +117,7 @@ HOW TO START THE CONVERSATION & RESPOND:
       const fullPrompt = promptParts.join("\n\n");
 
       let responseText = "";
-      const modelsToTry = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
+      const modelsToTry = ["gemini-3.8-flash", "gemini-flash-latest"];
       let lastError: any = null;
 
       for (const model of modelsToTry) {

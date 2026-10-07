@@ -90,13 +90,6 @@ function occupants(kundali: KundaliData, house: number): string {
 }
 
 function chartAnswer(kundali: KundaliData, query: string, panchang?: VedicPanchangData | null): string {
-  const q = query.toLowerCase();
-
-  // 0. Conversational / Meta Feedback ("Sabhi prashno ka ek hi uttar", "ek jaisa kyo", "same answer")
-  if (/ek hi|ek jaisa|same|kuch aur|wahi|bar bar|sab me|repeat|dobara|fir se/.test(q)) {
-    return `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${kundali.name} जी। मैं समझ रही हूँ आपकी शंका।\n\nयजमान, ऐसा इसलिए अनुभव हुआ क्योंकि आपकी कुंडली में वर्तमान में **${kundali.mahadasha} की महादशा** प्रभावी है, जो एक मुख्य 'केंद्र-बिंदु' बनकर आपके करियर, वित्त, और मानसिक स्थिति पर एक साथ अपना असर डाल रही है।\n\nपरन्तु आपकी पत्रिका के हर भाव का गणित अलग है। आप मुझसे कोई भी विशिष्ट प्रश्न पूछें, जैसे:\n- 💼 **व्यापार/नौकरी:** *"मेरा बिजनेस कब गति पकड़ेगा या नौकरी में प्रमोशन कब होगा?"*\n- 💰 **धन व कर्ज:** *"रुका हुआ धन कब प्राप्त होगा और आर्थिक तंगी कैसे दूर करें?"*\n- 💍 **विवाह व संबंध:** *"दांपत्य में प्रेम व शांति के लिए क्या उपाय करें?"*\n- 🩺 **स्वास्थ्य व मानसिक शांति:** *"तनाव और अनिद्रा दूर करने का अचूक उपाय"*\n- 🪐 **ग्रह शांति:** *"${kundali.mahadasha} महादशा की शांति हेतु विशेष जप व दान"*\n\nआप जिस भी विषय पर पूछेंगे, मैं उसी भाव के स्वामी ग्रह और गोचर के आधार पर अलग व सटीक फलादेश दूँगी।`;
-  }
-
   // Dynamic Micro-Astrological Math Synthesis
   return synthesizeDynamicMicroVerdict(kundali, query, panchang);
 }

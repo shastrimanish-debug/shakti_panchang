@@ -502,7 +502,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     ALL_D1_TO_D60_VARGAS.find((v) => v.division === selectedVarga) || ALL_D1_TO_D60_VARGAS[0];
 
   return (
-    <div className="space-y-3 sm:space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-3 sm:space-y-6 animate-in fade-in duration-300 pb-28">
       {/* 59-Page PDF Generating Progress Overlay Modal */}
       {isGeneratingPdf && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
