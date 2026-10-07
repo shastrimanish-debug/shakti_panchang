@@ -358,7 +358,14 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
     }
   };
 
-  const formattedDate = panchang.date.toLocaleDateString(
+  // Dynamic user date using TypeScript new Date() formatted per active language (Hindi, Gujarati, English)
+  const activeStoryDate = currentDate instanceof Date && !isNaN(currentDate.getTime())
+    ? currentDate
+    : panchang?.date instanceof Date && !isNaN(panchang.date.getTime())
+      ? panchang.date
+      : new Date();
+
+  const formattedDate = activeStoryDate.toLocaleDateString(
     language === 'en' ? 'en-US' : language === 'gu' ? 'gu-IN' : 'hi-IN',
     { day: 'numeric', month: 'short' }
   );

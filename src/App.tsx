@@ -683,6 +683,7 @@ export function App() {
         onSelectTab={handleSelectTab}
         onOpenMore={() => setIsMoreModalOpen(true)}
         onOpenUma={() => setIsUmaModalOpen(true)}
+        currentDate={currentDate}
       />
 
       {/* More Options Sheet / Modal */}

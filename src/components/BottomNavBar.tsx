@@ -6,13 +6,14 @@ import {
   MoreHorizontal,
   Sparkles,
 } from 'lucide-react';
-import { useTranslation } from '../i18n';
+import { useTranslation, useLanguage } from '../i18n';
 
 interface BottomNavBarProps {
   activeTab: string;
   onSelectTab: (tabId: string) => void;
   onOpenMore: () => void;
   onOpenUma?: () => void;
+  currentDate?: Date;
 }
 
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({
@@ -20,8 +21,19 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onSelectTab,
   onOpenMore,
   onOpenUma,
+  currentDate,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+
+  // Dynamic user date using TypeScript new Date() formatted according to the active language
+  const dynamicDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) ? currentDate : new Date();
+  const dateLocale = language === 'en' ? 'en-US' : language === 'gu' ? 'gu-IN' : 'hi-IN';
+  const dynamicDateLabel = dynamicDate.toLocaleDateString(dateLocale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+  });
 
   return (
     <nav
@@ -36,6 +48,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         <button
           type="button"
           onClick={() => onSelectTab('panchang')}
+          title={`${t('nav.panchang', 'पंचांग')} (${dynamicDateLabel})`}
           className={`flex-1 flex flex-col items-center justify-center py-1 transition cursor-pointer select-none m3-touch ${
             activeTab === 'panchang'
               ? 'text-[#8C4A00] font-black'

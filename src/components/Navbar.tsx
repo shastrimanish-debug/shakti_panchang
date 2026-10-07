@@ -69,8 +69,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     onDateChange(new Date());
   };
 
+  // Dynamic user date using TypeScript new Date() formatted per active language (Hindi, Gujarati, English)
+  const activeDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) ? currentDate : new Date();
   const dateLocale = language === 'en' ? 'en-US' : language === 'gu' ? 'gu-IN' : 'hi-IN';
-  const formattedDate = currentDate.toLocaleDateString(dateLocale, {
+  const formattedDate = activeDate.toLocaleDateString(dateLocale, {
     day: 'numeric',
     month: 'short',
   });
