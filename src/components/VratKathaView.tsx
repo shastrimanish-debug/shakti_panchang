@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Sparkles, Share2, Volume2, VolumeX, BookOpen, Scroll, ChevronLeft, ChevronRight, Search, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Share2, Volume2, VolumeX, BookOpen, ChevronLeft, ChevronRight, Search, CheckCircle2, Menu, X, Copy, Check } from 'lucide-react';
 import { VRAT_KATHA_DATA, VRAT_KATHA_CATEGORIES, VratKathaItem } from '../data/vratKathaData';
 import { getLocalizedVratKathaItem } from '../services/vratKathaMultilingual';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
@@ -26,6 +26,8 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
+  const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const localizedKathas = useMemo(() => {
     return VRAT_KATHA_DATA.map((item) => getLocalizedVratKathaItem(item, language));
@@ -66,12 +68,28 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
     openWhatsAppShare(text);
   };
 
+  const handleCopyText = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   return (
-    <div className="w-full h-full min-h-0 flex flex-col bg-[#FAF2E4] text-[#2C180C] overflow-hidden select-none">
+    <div className="w-full h-full min-h-0 flex flex-col bg-[#FCF8EC] text-[#2C180C] overflow-hidden select-none relative">
       {/* Header Bar */}
-      <header className="shrink-0 bg-gradient-to-r from-[#462B17] via-[#5C3A21] to-[#3E2714] text-[#FAF2E4] px-3 py-2.5 shadow-md flex items-center justify-between border-b border-[#B56A00]/40">
+      <header className="shrink-0 bg-gradient-to-r from-[#462B17] via-[#5C3A21] to-[#3E2714] text-[#FAF2E4] px-3 py-2.5 shadow-md flex items-center justify-between border-b border-[#B56A00]/40 z-20">
         <div className="flex items-center gap-2">
-          <span className="text-xl">📜</span>
+          {/* TOC Index Button */}
+          <button
+            type="button"
+            onClick={() => setIsTocOpen(!isTocOpen)}
+            className="p-1.5 rounded-xl bg-[#2C180C] border border-amber-500/40 text-amber-300 hover:bg-amber-900/40 transition cursor-pointer flex items-center gap-1"
+            title="अनुक्रमणिका (TOC)"
+          >
+            <Menu className="w-4 h-4" />
+            <span className="text-[10px] font-bold hidden sm:inline">कथा सूचकांक</span>
+          </button>
+
           <div>
             <h2 className="text-xs sm:text-sm font-black font-granth tracking-wide text-[#FFD88A] flex items-center gap-1.5">
               <span>पावन व्रत कथा एवं आरती संग्रह</span>
@@ -79,8 +97,8 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                 शास्त्रोक्त प्रामाणिक
               </span>
             </h2>
-            <p className="text-[10px] text-[#E5D2B8] truncate">
-              स्कन्दपुराण, पद्मपुराण व वेद सम्मत सम्पूर्ण व्रत-विधान व कथा
+            <p className="text-[10px] text-[#E5D2B8] truncate max-w-[200px] sm:max-w-md">
+              {currentKatha ? currentKatha.title : 'स्कन्दपुराण व वेद सम्मत व्रत-विधान'}
             </p>
           </div>
         </div>
@@ -98,7 +116,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
             <button
               type="button"
               onClick={() => onOpenUmaModal(`${currentKatha.title} की कथा का पाठ विधान और विशेष फल बताइए।`)}
-              className="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 text-stone-950 text-xs font-black flex items-center gap-1 shadow-sm hover:scale-105 active:scale-95 transition"
+              className="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 text-stone-950 text-xs font-black flex items-center gap-1 shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer"
             >
               <Sparkles className="w-3 h-3 fill-stone-950" />
               <span>उमा</span>
@@ -106,6 +124,54 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
           )}
         </div>
       </header>
+
+      {/* Slide-out Interactive TOC / Index Drawer Overlay */}
+      {isTocOpen && (
+        <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-200">
+          <div className="w-4/5 max-w-xs h-full bg-[#FAF2E4] border-r-2 border-amber-600 shadow-2xl flex flex-col p-3 space-y-3 overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E2D2BE]">
+              <div className="flex items-center gap-1.5">
+                <BookOpen className="w-4 h-4 text-[#8C4A00]" />
+                <h3 className="font-granth font-black text-sm text-[#462B17]">
+                  व्रत कथा अनुक्रमणिका
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTocOpen(false)}
+                className="p-1 rounded-lg bg-[#E2D2BE] text-[#462B17]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* TOC Katha Items */}
+            <div className="space-y-1">
+              {filteredKathas.map((katha, idx) => (
+                <button
+                  key={katha.id || idx}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIndex(idx);
+                    setActiveChapterIndex(0);
+                    setIsTocOpen(false);
+                  }}
+                  className={`w-full text-left px-2.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
+                    selectedIndex === idx
+                      ? 'bg-[#5C3A21] text-[#FFF6E5]'
+                      : 'bg-white/80 text-[#3E2714] hover:bg-[#FFEEC9]'
+                  }`}
+                >
+                  <div className="truncate pr-1">
+                    <span className="text-xs font-black truncate">{katha.title}</span>
+                  </div>
+                  <span className="text-[9px] opacity-75 shrink-0 uppercase">{katha.category}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filter Categories Bar */}
       <div className="shrink-0 bg-[#FFFDF9] border-b border-[#E8DCCB] px-2 py-2 space-y-1.5 shadow-2xs">
@@ -168,7 +234,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
               }}
               className={`shrink-0 px-3 py-2 rounded-xl border text-left transition flex flex-col justify-between max-w-[180px] cursor-pointer ${
                 selectedIndex === idx
-                  ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white border-amber-800 shadow-sm'
+                  ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white border-amber-800 shadow-sm font-black'
                   : 'bg-[#FFFDF9] text-[#5C3A21] border-[#E2D2BE] hover:bg-[#FFEEC9]'
               }`}
             >
@@ -195,7 +261,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                   <button
                     type="button"
                     onClick={handleSpeakKatha}
-                    className="p-1.5 rounded-lg bg-amber-100 text-[#5C3A21] hover:bg-amber-200 transition"
+                    className="p-1.5 rounded-lg bg-amber-100 text-[#5C3A21] hover:bg-amber-200 transition cursor-pointer"
                     title="ध्वनि वाचन"
                   >
                     {isSpeaking ? <VolumeX className="w-4 h-4 text-rose-600" /> : <Volume2 className="w-4 h-4" />}
@@ -203,8 +269,17 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
 
                   <button
                     type="button"
+                    onClick={() => handleCopyText(`katha_${currentKatha.id}`, `${currentKatha.title}\n\n${currentKatha.shlok}\n\n${currentKatha.shlokMeaning}`)}
+                    className="p-1.5 rounded-lg bg-amber-50 text-[#8C6239] hover:bg-amber-100 transition cursor-pointer"
+                    title="प्रतिलिपि"
+                  >
+                    {copiedId === `katha_${currentKatha.id}` ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={handleShareKatha}
-                    className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition"
+                    className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition cursor-pointer"
                     title="व्हाट्सएप साझा करें"
                   >
                     <Share2 className="w-4 h-4" />
@@ -308,7 +383,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
             )}
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between pt-2 pb-6">
+            <div className="flex items-center justify-between pt-2 pb-8 border-t border-amber-200/60">
               <button
                 type="button"
                 onClick={() => {
@@ -321,15 +396,19 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                     onPrevChapter();
                   }
                 }}
-                className="px-3 py-1.5 rounded-xl bg-[#FFFDF9] border border-[#E2D2BE] text-xs font-bold text-[#5C3A21] flex items-center gap-1 hover:bg-[#FFEEC9]"
+                className="px-3 py-1.5 rounded-xl bg-[#FFFDF9] border border-[#E2D2BE] text-xs font-bold text-[#5C3A21] flex items-center gap-1 hover:bg-[#FFEEC9] cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>पिछली कथा/अध्याय</span>
               </button>
 
-              <span className="text-xs font-bold text-[#8C6239]">
-                {selectedIndex + 1} / {filteredKathas.length}
-              </span>
+              <button
+                type="button"
+                onClick={() => setIsTocOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-amber-100 text-[#8C4A00] text-xs font-black border border-amber-300 hover:bg-amber-200 cursor-pointer"
+              >
+                अनुक्रम सूचकांक
+              </button>
 
               <button
                 type="button"
@@ -343,7 +422,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                     onNextChapter();
                   }
                 }}
-                className="px-3 py-1.5 rounded-xl bg-[#5C3A21] text-[#FFF6E5] text-xs font-bold flex items-center gap-1 hover:bg-[#462B17]"
+                className="px-3 py-1.5 rounded-xl bg-[#5C3A21] text-[#FFF6E5] text-xs font-bold flex items-center gap-1 hover:bg-[#462B17] cursor-pointer"
               >
                 <span>अगली कथा/अध्याय</span>
                 <ChevronRight className="w-4 h-4" />
