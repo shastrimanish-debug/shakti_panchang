@@ -13,26 +13,28 @@ import {
   Sun,
   Moon,
   Sparkles,
+  ShieldAlert,
   CheckCircle2,
   AlertTriangle,
-  ShieldAlert,
-  ChevronLeft,
-  ChevronRight,
-  Award,
 } from 'lucide-react';
 import { useLanguage } from '../i18n';
 import { trVedic, trPlanet, trWeekday, trChoghadiyaMeaning } from '../i18n/vedicTranslate';
+import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
 
 interface ChoghadiyaViewProps {
   panchang: VedicPanchangData;
+  onOpenUmaModal?: (query?: string) => void;
+  onPrevChapter?: () => void;
+  onNextChapter?: () => void;
 }
 
-type ChoghadiyaSubPage = 'table' | 'windows';
-
-export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
+export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({
+  panchang,
+  onOpenUmaModal,
+  onPrevChapter,
+  onNextChapter,
+}) => {
   const { t, language } = useLanguage();
-  const [subPage, setSubPage] = useState<ChoghadiyaSubPage>('table');
-  const [period, setPeriod] = useState<'day' | 'night'>('day');
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -43,278 +45,253 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({ panchang }) => {
   const weekday = panchang.date.getDay();
   const dayChoghadiyas = getDayChoghadiya(panchang.solar, weekday);
   const nightChoghadiyas = getNightChoghadiya(panchang.solar, weekday);
-  const activeList = period === 'day' ? dayChoghadiyas : nightChoghadiyas;
+  const activeDayNight = currentTime >= panchang.solar.sunrise && currentTime < panchang.solar.sunset ? dayChoghadiyas : nightChoghadiyas;
 
-  const { current, remainingMinutes } = getCurrentChoghadiya(activeList, currentTime);
+  const { current, remainingMinutes } = getCurrentChoghadiya(activeDayNight, currentTime);
   const inauspiciousWindows = getInauspiciousWindows(panchang.solar, weekday);
   const auspiciousWindows = getAuspiciousWindows(panchang.solar);
 
   const formatTime = (d: Date) => formatPlaceTime(d);
 
-  const getBadgeStyle = (nature: ChoghadiyaItem['nature']) => {
+  const getBadgeClass = (nature: ChoghadiyaItem['nature']) => {
     switch (nature) {
       case 'auspicious':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        return 'bg-emerald-500/20 text-emerald-800 border-emerald-400 font-black';
       case 'neutral':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
+        return 'bg-amber-500/20 text-amber-800 border-amber-400 font-bold';
       default:
-        return 'bg-rose-100 text-rose-800 border-rose-300';
+        return 'bg-rose-500/20 text-rose-800 border-rose-400 font-bold';
     }
   };
 
-  const getNatureText = (nature: ChoghadiyaItem['nature']) => {
+  const getNatureLabel = (nature: ChoghadiyaItem['nature']) => {
     switch (nature) {
       case 'auspicious':
-        return t('choghadiya.auspicious', 'शुभ');
+        return t('choghadiya.auspicious', 'शुभ (अमृत/लाभ/शुभ)');
       case 'neutral':
         return t('choghadiya.neutral', 'मध्यम (चल)');
       default:
-        return t('choghadiya.inauspicious', 'अशुभ (त्याज्य)');
+        return t('choghadiya.inauspicious', 'त्याज्य (रोग/उद्वेग/काल)');
     }
   };
 
-  return (
-    <div className="space-y-3 sm:space-y-4 animate-in fade-in duration-200">
-      {/* Flutter-style Segmented Chips */}
-      <div className="flex items-center gap-1.5 p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs">
-        <button
-          type="button"
-          onClick={() => setSubPage('table')}
-          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
-            subPage === 'table'
-              ? 'bg-[#5C3A21] text-white shadow-xs'
-              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
-          }`}
-        >
-          <Clock className={`w-3.5 h-3.5 ${subPage === 'table' ? 'text-[#FFD88A]' : 'text-[#8C6239]'}`} />
-          <span>{t('choghadiya.tableTab', 'चौघड़िया तालिका')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setSubPage('windows')}
-          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
-            subPage === 'windows'
-              ? 'bg-[#5C3A21] text-white shadow-xs'
-              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
-          }`}
-        >
-          <Sparkles className={`w-3.5 h-3.5 ${subPage === 'windows' ? 'text-[#FFD88A]' : 'text-[#8C6239]'}`} />
-          <span>{t('choghadiya.windowsTab', 'विशिष्ट शुभाशुभ काल')}</span>
-        </button>
-      </div>
-
-      {/* SUB-PAGE 1: ACTIVE CHOGHADIYA & 8 CHOGHADIYAS TABLE */}
-      {subPage === 'table' && (
-        <div className="space-y-3 animate-in fade-in duration-150">
-          {/* Current Active Choghadiya Banner */}
-          {current && (
-            <div className="bg-gradient-to-r from-[#FAF2E4] to-[#F4E8D1] border-2 border-[#B56A00] rounded-xl p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-[#B56A00] text-white shadow-xs shrink-0">
-                  <Clock className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
-                  </span>
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold text-[#8C6239] uppercase tracking-wider">
-                    {t('choghadiya.currentChoghadiya', 'वर्तमान चालू चौघड़िया')}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-lg sm:text-xl font-black font-granth text-[#5C3A21]">
-                      {trVedic(current.hindiName)}
-                    </span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold border ${getBadgeStyle(current.nature)}`}>
-                      {getNatureText(current.nature)}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#735133] mt-0.2">{trChoghadiyaMeaning(current.meaning, current.hindiName)}</p>
-                </div>
+  const slides: StorySlideItem[] = [
+    // Slide 1: Current Active Choghadiya
+    {
+      id: 'current',
+      title: t('choghadiya.currentChoghadiya', 'वर्तमान चालू चौघड़िया'),
+      subtitle: `${trWeekday(panchang.weekday)} • ${formatPlaceTime(currentTime)}`,
+      badge: current ? getNatureLabel(current.nature) : 'सक्रिय',
+      icon: '⏳',
+      voiceText: current
+        ? `वर्तमान चौघड़िया ${current.hindiName} है। यह ${getNatureLabel(current.nature)} है। लगभग ${remainingMinutes} मिनट शेष हैं।`
+        : 'वर्तमान चौघड़िया',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1">
+          {current ? (
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FFF8EE] via-[#FFF3DD] to-[#FBE8C8] border-2 border-amber-400 shadow-md flex flex-col justify-between my-auto">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#8C6239] uppercase tracking-wider flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <span>सक्रिय वेला</span>
+                </span>
+                <span className={`text-[11px] px-2.5 py-0.5 rounded-full border ${getBadgeClass(current.nature)}`}>
+                  {getNatureLabel(current.nature)}
+                </span>
               </div>
 
-              <div className="bg-[#FAF2E4] px-3 py-1.5 rounded-lg border border-[#8C6239]/30 text-right">
-                <div className="text-[10px] font-semibold text-[#8C6239]">{t('choghadiya.timeRange', 'समय सीमा')}</div>
-                <div className="text-xs sm:text-sm font-black text-[#5C3A21]">
-                  {formatTime(current.start)} - {formatTime(current.end)}
+              <div className="text-center my-3">
+                <div className="text-3xl sm:text-4xl font-black font-granth text-[#462B17] tracking-tight">
+                  {trVedic(current.hindiName)}
                 </div>
-                <div className="text-[11px] font-bold text-[#B56A00]">
-                  {language === 'en'
-                    ? `Approx. ${remainingMinutes} mins remaining`
-                    : language === 'gu'
-                    ? `આશરે ${remainingMinutes} મિનિટ બાકી`
-                    : `लगभग ${remainingMinutes} मिनट शेष`}
+                <p className="text-xs text-[#735133] mt-1 font-medium max-w-xs mx-auto">
+                  {trChoghadiyaMeaning(current.meaning, current.hindiName)}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-300/60 text-xs">
+                <div className="p-2 rounded-xl bg-white/80 border border-amber-200">
+                  <div className="text-[10px] text-[#8C6239] font-bold">समय सीमा</div>
+                  <div className="font-black text-[#5C3A21]">
+                    {formatTime(current.start)} - {formatTime(current.end)}
+                  </div>
+                </div>
+                <div className="p-2 rounded-xl bg-white/80 border border-amber-200">
+                  <div className="text-[10px] text-[#8C6239] font-bold">शेष अवधि</div>
+                  <div className="font-black text-amber-800">
+                    ~{remainingMinutes} {t('common.mins', 'मिनट')}
+                  </div>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center">
+              चौघड़िया गणना चालू है...
             </div>
           )}
 
-          {/* Day / Night Toggle */}
-          <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-2">
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setPeriod('day')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  period === 'day'
-                    ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-                    : 'bg-[#FAF2E4] text-[#5C3A21] hover:bg-[#F4E8D1] border border-[#8C6239]/30'
-                }`}
-              >
-                <Sun className="w-3.5 h-3.5 text-amber-500" />
-                <span>{t('choghadiya.day', 'दिन')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPeriod('night')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  period === 'night'
-                    ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-                    : 'bg-[#FAF2E4] text-[#5C3A21] hover:bg-[#F4E8D1] border border-[#8C6239]/30'
-                }`}
-              >
-                <Moon className="w-3.5 h-3.5 text-indigo-400" />
-                <span>{t('choghadiya.night', 'रात')}</span>
-              </button>
-            </div>
-            <span className="text-[11px] text-[#735133]">
-              {trWeekday(panchang.weekday)} • {period === 'day' ? t('choghadiya.daySpan', 'सूर्योदय से सूर्यास्त') : t('choghadiya.nightSpan', 'सूर्यास्त से सूर्योदय')}
-            </span>
-          </div>
-
-          {/* Choghadiya Table */}
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#5C3A21] text-[#FAF2E4] text-[11px] uppercase tracking-wider">
-                  <tr>
-                    <th className="py-2.5 px-3">{t('choghadiya.colChoghadiya', 'चौघड़िया')}</th>
-                    <th className="py-2.5 px-3">{t('choghadiya.colNature', 'प्रकृति')}</th>
-                    <th className="py-2.5 px-3">{t('choghadiya.colTime', 'समय अवधि')}</th>
-                    <th className="py-2.5 px-3">{t('choghadiya.colRuler', 'स्वामी')}</th>
-                    <th className="py-2.5 px-3">{t('choghadiya.colEffect', 'फल व प्रभाव')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#8C6239]/20">
-                  {activeList.map((item, idx) => {
-                    const isActive = currentTime >= item.start && currentTime < item.end;
-                    return (
-                      <tr
-                        key={idx}
-                        className={`transition-colors ${
-                          isActive
-                            ? 'bg-amber-100/80 font-semibold'
-                            : idx % 2 === 0
-                            ? 'bg-[#FAF2E4]'
-                            : 'bg-[#F4E8D1]/50'
-                        }`}
-                      >
-                        <td className="py-2 px-3 font-bold text-[#5C3A21]">
-                          <div className="flex items-center gap-1.5">
-                            {isActive && (
-                              <span className="w-2 h-2 rounded-full bg-[#B56A00] animate-ping" />
-                            )}
-                            <span>{trVedic(item.hindiName)}</span>
-                          </div>
-                        </td>
-                        <td className="py-2 px-3">
-                          <span
-                            className={`inline-block px-1.5 py-0.2 rounded text-[10px] font-bold border ${getBadgeStyle(
-                              item.nature
-                            )}`}
-                          >
-                            {getNatureText(item.nature)}
-                          </span>
-                        </td>
-                        <td className="py-2 px-3 whitespace-nowrap text-[#5C3A21] font-medium text-[11px]">
-                          {formatTime(item.start)} - {formatTime(item.end)}
-                        </td>
-                        <td className="py-2 px-3 text-[#735133]">{trPlanet(item.ruler)}</td>
-                        <td className="py-2 px-3 text-[#5C3A21]">{trChoghadiyaMeaning(item.meaning, item.hindiName)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+          <div className="p-2 rounded-xl bg-amber-50/90 border border-amber-200/80 text-[11px] text-center text-[#6E472A] font-medium">
+            💡 यात्रा, व्यापार व शुभ कार्य प्रारम्भ करने से पूर्व चौघड़िया देखें।
           </div>
         </div>
-      )}
+      ),
+    },
 
-      {/* SUB-PAGE 2: AUSPICIOUS & INAUSPICIOUS WINDOWS */}
-      {subPage === 'windows' && (
-        <div className="space-y-3.5 animate-in fade-in duration-150">
-          {/* Auspicious Windows */}
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3.5 shadow-xs">
-            <h3 className="text-sm font-bold font-granth text-[#5C3A21] mb-2.5 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-[#B56A00]" />
-              <span>{t('choghadiya.auspiciousWindows', 'दैनिक शुभ मुहूर्त (Auspicious Windows)')}</span>
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {auspiciousWindows.map((item, idx) => (
-                <div key={idx} className="bg-[#F4E8D1] p-2.5 rounded-lg border border-[#8C6239]/20">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-bold text-xs text-[#5C3A21]">{trVedic(item.title)}</span>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+    // Slide 2: Day Choghadiya Slots
+    {
+      id: 'day-choghadiya',
+      title: `${t('choghadiya.day', 'दिन का चौघड़िया')} (८ मुहूर्त)`,
+      subtitle: `${t('choghadiya.daySpan', 'सूर्योदय से सूर्यास्त')}`,
+      badge: 'दिन काल',
+      icon: '☀️',
+      voiceText: 'दिन के आठ चौघड़िया मुहूर्त। शुभ, लाभ, अमृत, चल, काल, शुभ, रोग और उद्वेग।',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1">
+          <div className="grid grid-cols-2 gap-1.5 my-auto">
+            {dayChoghadiyas.map((item, idx) => {
+              const isActive = currentTime >= item.start && currentTime < item.end;
+              return (
+                <div
+                  key={idx}
+                  className={`p-2 rounded-xl border transition-all ${
+                    isActive
+                      ? 'bg-amber-100/90 border-amber-500 shadow-xs ring-2 ring-amber-400'
+                      : 'bg-white/80 border-[#E8DCCB]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-black font-granth text-xs text-[#462B17]">
+                      {trVedic(item.hindiName)}
+                    </span>
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded border ${getBadgeClass(item.nature)}`}>
+                      {item.nature === 'auspicious' ? 'शुभ' : item.nature === 'neutral' ? 'मध्यम' : 'त्याज्य'}
+                    </span>
                   </div>
-                  <div className="text-xs font-black text-[#B56A00]">
+                  <div className="text-[10px] font-mono font-bold text-[#735133] mt-0.5">
                     {formatTime(item.start)} - {formatTime(item.end)}
                   </div>
-                  <p className="text-[10px] text-[#735133] mt-0.5">{trVedic(item.description)}</p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="text-[10px] text-center text-[#8C6239] font-medium">
+            दिन में शुभ, अमृत व लाभ चौघड़िया सर्वश्रेष्ठ माने गए हैं।
+          </div>
+        </div>
+      ),
+    },
+
+    // Slide 3: Night Choghadiya Slots
+    {
+      id: 'night-choghadiya',
+      title: `${t('choghadiya.night', 'रात का चौघड़िया')} (८ मुहूर्त)`,
+      subtitle: `${t('choghadiya.nightSpan', 'सूर्यास्त से सूर्योदय')}`,
+      badge: 'रात्रि काल',
+      icon: '🌙',
+      voiceText: 'रात्रि के आठ चौघड़िया मुहूर्त।',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1">
+          <div className="grid grid-cols-2 gap-1.5 my-auto">
+            {nightChoghadiyas.map((item, idx) => {
+              const isActive = currentTime >= item.start && currentTime < item.end;
+              return (
+                <div
+                  key={idx}
+                  className={`p-2 rounded-xl border transition-all ${
+                    isActive
+                      ? 'bg-indigo-100/90 border-indigo-500 shadow-xs ring-2 ring-indigo-400'
+                      : 'bg-white/80 border-[#E8DCCB]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-black font-granth text-xs text-[#2A1D36]">
+                      {trVedic(item.hindiName)}
+                    </span>
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded border ${getBadgeClass(item.nature)}`}>
+                      {item.nature === 'auspicious' ? 'शुभ' : item.nature === 'neutral' ? 'मध्यम' : 'त्याज्य'}
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono font-bold text-[#564268] mt-0.5">
+                    {formatTime(item.start)} - {formatTime(item.end)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="text-[10px] text-center text-[#8C6239] font-medium">
+            रात्रि में शुभ, अमृत व लाभ चौघड़िया साधना व यात्रा हेतु उपयुक्त हैं।
+          </div>
+        </div>
+      ),
+    },
+
+    // Slide 4: Auspicious & Inauspicious Windows
+    {
+      id: 'windows',
+      title: 'दैनिक शुभाशुभ वेला (मुहूर्त)',
+      subtitle: 'अभिजित, अमृत, ब्रह्म व राहुकाल',
+      badge: 'वेला चक्र',
+      icon: '✨',
+      voiceText: 'दैनिक शुभ मुहूर्त और अशुभ वेला।',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2">
+          {/* Auspicious */}
+          <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200">
+            <div className="text-xs font-bold text-emerald-900 mb-1 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>शुभ मुहूर्त (Auspicious)</span>
+            </div>
+            <div className="space-y-1">
+              {auspiciousWindows.slice(0, 3).map((w, i) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-emerald-950">{trVedic(w.title)}</span>
+                  <span className="font-mono font-bold text-emerald-800">
+                    {formatTime(w.start)} - {formatTime(w.end)}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Inauspicious Windows */}
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3.5 shadow-xs">
-            <h3 className="text-sm font-bold font-granth text-[#5C3A21] mb-2.5 flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-rose-700" />
-              <span>{t('choghadiya.inauspiciousWindows', 'दैनिक त्याज्य काल (Inauspicious Windows)')}</span>
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {inauspiciousWindows.map((item, idx) => (
-                <div key={idx} className="bg-rose-50/70 p-2.5 rounded-lg border border-rose-200">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-bold text-xs text-rose-900">{trVedic(item.title)}</span>
-                    <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-                  </div>
-                  <div className="text-xs font-black text-rose-800">
-                    {formatTime(item.start)} - {formatTime(item.end)}
-                  </div>
-                  <p className="text-[10px] text-rose-700 mt-0.5">{trVedic(item.description)}</p>
+          {/* Inauspicious */}
+          <div className="p-2.5 rounded-xl bg-rose-50/80 border border-rose-200">
+            <div className="text-xs font-bold text-rose-900 mb-1 flex items-center gap-1">
+              <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+              <span>अशुभ काल (Inauspicious)</span>
+            </div>
+            <div className="space-y-1">
+              {inauspiciousWindows.slice(0, 3).map((w, i) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-rose-950">{trVedic(w.title)}</span>
+                  <span className="font-mono font-bold text-rose-800">
+                    {formatTime(w.start)} - {formatTime(w.end)}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
+
+          <div className="text-[10px] text-center text-[#8C6239]">
+            राहुकाल में शुभ कार्य वर्जित रहते हैं। अभिजित मुहूर्त सर्वकार्य सिद्धिकारक है।
+          </div>
         </div>
-      )}
+      ),
+    },
+  ];
 
-      {/* Screen-Fit Sub-Page Bottom Navigation Footer */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#8C6239]/25 text-xs">
-        <button
-          type="button"
-          onClick={() => setSubPage(subPage === 'table' ? 'windows' : 'table')}
-          className="flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF2E4] hover:bg-[#F4E8D1] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg font-bold transition cursor-pointer active:scale-95 shadow-xs"
-        >
-          <ChevronLeft className="w-3.5 h-3.5 text-[#B56A00]" />
-          <span>{subPage === 'table' ? t('choghadiya.windowsTab', 'शुभ मुहूर्त') : t('choghadiya.tableTab', 'चौघड़िया तालिका')}</span>
-        </button>
-
-        <span className="font-granth text-xs font-bold text-[#8C6239]">
-          {subPage === 'table' ? t('choghadiya.page1of2', 'पृष्ठ १ / २') : t('choghadiya.page2of2', 'पृष्ठ २ / २')}
-        </span>
-
-        <button
-          type="button"
-          onClick={() => setSubPage(subPage === 'table' ? 'windows' : 'table')}
-          className="flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF2E4] hover:bg-[#F4E8D1] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg font-bold transition cursor-pointer active:scale-95 shadow-xs"
-        >
-          <span>{subPage === 'table' ? t('choghadiya.windowsTab', 'शुभ मुहूर्त') : t('choghadiya.tableTab', 'चौघड़िया तालिका')}</span>
-          <ChevronRight className="w-3.5 h-3.5 text-[#B56A00]" />
-        </button>
-      </div>
-    </div>
+  return (
+    <UniversalStoryDeck
+      slides={slides}
+      headerTitle={t('nav.choghadiya', 'चौघड़िया चक्र')}
+      headerIcon="⏳"
+      chapterNumber={2}
+      currentDate={panchang.date}
+      onOpenUma={onOpenUmaModal ? () => onOpenUmaModal('आज का चौघड़िया फल') : undefined}
+      onPrevChapter={onPrevChapter}
+      onNextChapter={onNextChapter}
+      prevChapterLabel="पंचांग"
+      nextChapterLabel="शुभ मुहूर्त"
+    />
   );
 };
-
+export default ChoghadiyaView;

@@ -2,293 +2,222 @@ import React, { useState } from 'react';
 import { VedicPanchangData } from '../types';
 import { MUHURAT_ACTIVITIES, getMuhuratGuidance, getDailyMuhuratDetails } from '../services/muhurat';
 import { DISHASHOOL_MAP } from '../services/disha';
-import { AnnualMuhuratTableView } from './AnnualMuhuratTableView';
 import { useTranslation } from '../i18n';
-import { trVedic, trWeekday } from '../i18n/vedicTranslate';
+import { trVedic } from '../i18n/vedicTranslate';
 import {
   Sparkles,
   CheckCircle2,
-  AlertTriangle,
-  ShieldCheck,
-  ChevronRight,
-  ChevronLeft,
-  Clock,
-  BookOpen,
   Calendar,
+  Clock,
+  ShieldCheck,
 } from 'lucide-react';
+import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
 
 interface MuhuratViewProps {
   panchang: VedicPanchangData;
+  onOpenUmaModal?: (query?: string) => void;
+  onPrevChapter?: () => void;
+  onNextChapter?: () => void;
 }
 
-export const MuhuratView: React.FC<MuhuratViewProps> = ({ panchang }) => {
+export const MuhuratView: React.FC<MuhuratViewProps> = ({
+  panchang,
+  onOpenUmaModal,
+  onPrevChapter,
+  onNextChapter,
+}) => {
   const { t } = useTranslation();
   const [selectedActivity, setSelectedActivity] = useState(MUHURAT_ACTIVITIES[0]);
-  const [subPage, setSubPage] = useState<'annual_table' | 'today' | 'windows' | 'guidance'>('annual_table');
   const weekday = panchang.date.getDay();
   const shoolDirection = DISHASHOOL_MAP[weekday];
   const guidance = getMuhuratGuidance(selectedActivity, panchang, shoolDirection);
   const dailyRows = getDailyMuhuratDetails(panchang);
 
+  const slides: StorySlideItem[] = [
+    // Slide 1: Daily Muhurats
+    {
+      id: 'daily',
+      title: t('muhurat.todayTab', 'आज के प्रमुख शुभ मुहूर्त'),
+      subtitle: 'अभिजित, अमृत व ब्रह्म मुहूर्त',
+      badge: 'दैनिक काल',
+      icon: '✨',
+      voiceText: 'आज के मुख्य शुभ मुहूर्त। अभिजित काल और अमृत काल।',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2">
+          <div className="space-y-1.5 my-auto">
+            {dailyRows.slice(0, 5).map((row, idx) => (
+              <div
+                key={idx}
+                className="p-2.5 rounded-xl bg-white/80 border border-[#E8DCCB] flex items-center justify-between"
+              >
+                <div>
+                  <div className="text-xs font-black font-granth text-[#462B17]">{trVedic(row.title)}</div>
+                  <div className="text-[10px] text-[#8C6239]">{row.note}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono font-black text-[#B56A00]">{row.start} - {row.end}</div>
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                    row.kind === 'shubh' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                  }`}>
+                    {row.kind === 'shubh' ? 'शुभ' : 'त्याज्य'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-[10px] text-center text-[#8C6239]">
+            अभिजित मुहूर्त में किए गए सभी कार्य निर्विघ्न सम्पन्न होते हैं।
+          </div>
+        </div>
+      ),
+    },
+
+    // Slide 2: Vivah & Griha Pravesh Dates
+    {
+      id: 'vivah-griha',
+      title: 'वार्षिक विवाह व गृहप्रवेश मुहूर्त',
+      subtitle: 'शास्त्रसम्मत पावन तिथियां',
+      badge: 'मांगलिक काल',
+      icon: '💒',
+      voiceText: 'आगामी शुभ विवाह और गृहप्रवेश के पावन मुहूर्त।',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2">
+          <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-300 space-y-2 my-auto">
+            <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1.5 border-b border-amber-200 pb-1">
+              <Calendar className="w-3.5 h-3.5 text-amber-600" />
+              <span>शुभ विवाह मुहूर्त चक्र</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 text-xs">
+              <div className="p-2 rounded-xl bg-white border border-amber-200">
+                <div className="font-bold text-[#462B17]">शुक्ल पक्ष त्रयोदशी</div>
+                <div className="text-[10px] text-[#8C6239]">रोहिणी / मृगशिरा नक्षत्र</div>
+              </div>
+              <div className="p-2 rounded-xl bg-white border border-amber-200">
+                <div className="font-bold text-[#462B17]">शुक्ल पक्ष द्वितीया</div>
+                <div className="text-[10px] text-[#8C6239]">उत्तराफाल्गुनी नक्षत्र</div>
+              </div>
+              <div className="p-2 rounded-xl bg-white border border-amber-200">
+                <div className="font-bold text-[#462B17]">कृष्ण पक्ष पंचमी</div>
+                <div className="text-[10px] text-[#8C6239]">हस्त / चित्रा नक्षत्र</div>
+              </div>
+              <div className="p-2 rounded-xl bg-white border border-amber-200">
+                <div className="font-bold text-[#462B17]">शुक्ल पक्ष एकादशी</div>
+                <div className="text-[10px] text-[#8C6239]">अनुराधा / रेवती नक्षत्र</div>
+              </div>
+            </div>
+          </div>
+          <div className="text-[10px] text-center text-[#8C6239]">
+            विस्तृत कुण्डली मिलान व लग्न शुद्धि हेतु 'उमा परामर्श' लें।
+          </div>
+        </div>
+      ),
+    },
+
+    // Slide 3: Activity Specific Guidance
+    {
+      id: 'activity',
+      title: 'कार्य अनुसार मुहूर्त परामर्श',
+      subtitle: trVedic(selectedActivity),
+      badge: guidance.grade === 'excellent' || guidance.grade === 'good' ? 'शुभ समय' : 'सावधानी',
+      icon: '🎯',
+      voiceText: `${selectedActivity} के लिए मुहूर्त परामर्श।`,
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2">
+          {/* Activity picker */}
+          <div className="flex flex-wrap gap-1 justify-center shrink-0">
+            {MUHURAT_ACTIVITIES.slice(0, 5).map((act) => (
+              <button
+                key={act}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedActivity(act);
+                }}
+                className={`px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                  selectedActivity === act
+                    ? 'bg-[#5C3A21] text-white shadow-xs'
+                    : 'bg-white/80 text-[#5C3A21] border border-[#E8DCCB]'
+                }`}
+              >
+                {trVedic(act)}
+              </button>
+            ))}
+          </div>
+
+          <div className={`p-3.5 rounded-2xl border-2 my-auto ${
+            guidance.grade === 'excellent' || guidance.grade === 'good'
+              ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
+              : 'bg-amber-50/90 border-amber-300 text-[#5C3A21]'
+          }`}>
+            <div className="flex items-center gap-1.5 font-black text-xs mb-1">
+              {guidance.grade === 'excellent' || guidance.grade === 'good' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+              )}
+              <span>{guidance.gradeText}</span>
+            </div>
+            <p className="text-xs font-medium leading-relaxed">
+              {guidance.recommendations.join(' ')}
+            </p>
+          </div>
+
+          <div className="text-[10px] text-center text-[#8C6239]">
+            शुभ होरा व शुभ चौघड़िया में कार्य प्रारम्भ करना लाभप्रद रहता है।
+          </div>
+        </div>
+      ),
+    },
+
+    // Slide 4: Vedic Muhurat Principles
+    {
+      id: 'rules',
+      title: 'वैदिक मुहूर्त शास्त्र नियम',
+      subtitle: 'शास्त्र सम्मत शुद्धि',
+      badge: 'सिद्धांत',
+      icon: '📜',
+      voiceText: 'वैदिक मुहूर्त शास्त्र के नियम।',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2">
+          <div className="p-3 rounded-2xl bg-white/90 border border-[#E8DCCB] space-y-2 my-auto text-xs">
+            <div className="flex items-start gap-2">
+              <span className="text-[#B56A00] font-black">१.</span>
+              <span><strong>तिथि शुद्धि:</strong> रिक्ता तिथियां (४, ९, १४) शुभ कार्यों में त्याज्य हैं।</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-[#B56A00] font-black">२.</span>
+              <span><strong>वार शुद्धि:</strong> गुरुवार व शुक्रवार सर्वकार्य सिद्धिकारक माने गए हैं।</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-[#B56A00] font-black">३.</span>
+              <span><strong>नक्षत्र शुद्धि:</strong> स्थिर नक्षत्र (रोहिणी, उत्तरा) निर्माण व गृहप्रवेश हेतु उत्तम हैं।</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-[#B56A00] font-black">४.</span>
+              <span><strong>राहुकाल व भद्रा:</strong> इस काल में कोई भी शुभ शुभारम्भ न करें।</span>
+            </div>
+          </div>
+          <div className="text-[10px] text-center text-[#8C6239]">
+            ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः।
+          </div>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-2 sm:space-y-3 animate-in fade-in duration-200">
-      {/* Flutter-style Segmented Chips */}
-      <div className="flex items-center gap-1 p-0.5 sm:p-1 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl shadow-xs overflow-x-auto no-scrollbar">
-        <button
-          type="button"
-          onClick={() => setSubPage('annual_table')}
-          className={`flex-1 py-1 px-1.5 text-center text-[11px] sm:text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
-            subPage === 'annual_table'
-              ? 'bg-[#5C3A21] text-white shadow-xs'
-              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
-          }`}
-        >
-          <Calendar className="w-3.5 h-3.5 text-amber-300" />
-          <span>{t('muhurat.annualTableTab', 'विवाह/गृहप्रवेश सारणी')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setSubPage('today')}
-          className={`flex-1 py-1 px-1.5 text-center text-[11px] sm:text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
-            subPage === 'today'
-              ? 'bg-[#5C3A21] text-white shadow-xs'
-              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          <span>{t('muhurat.todayTab', 'आज के मुहूर्त')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setSubPage('windows')}
-          className={`flex-1 py-1 px-1.5 text-center text-[11px] sm:text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
-            subPage === 'windows'
-              ? 'bg-[#5C3A21] text-white shadow-xs'
-              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
-          }`}
-        >
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          <span>{t('muhurat.byActivityTab', 'कार्य अनुसार')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setSubPage('guidance')}
-          className={`flex-1 py-1 px-1.5 text-center text-[11px] sm:text-xs font-black rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
-            subPage === 'guidance'
-              ? 'bg-[#5C3A21] text-white shadow-xs'
-              : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDDC1]'
-          }`}
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>{t('muhurat.vedicRulesTab', 'वैदिक नियम')}</span>
-        </button>
-      </div>
-
-      {/* When Annual Table is selected */}
-      {subPage === 'annual_table' && <AnnualMuhuratTableView />}
-
-      {/* When other sub-pages are selected */}
-      {subPage !== 'annual_table' && (
-        <div className="space-y-4">
-          {/* Activity Selector */}
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3 sm:p-4 shadow-xs">
-            <label className="block text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2">
-              {t('muhurat.selectActivity', 'कार्य का चयन करें')}
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {MUHURAT_ACTIVITIES.map((act) => {
-                const isSelected = selectedActivity === act;
-                return (
-                  <button
-                    key={act}
-                    onClick={() => setSelectedActivity(act)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-                        : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#FAF2E4] border border-[#8C6239]/30'
-                    }`}
-                  >
-                    {trVedic(act)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Main Guidance Card */}
-          <div className="bg-[#FAF2E4] border-2 border-[#8C6239]/40 rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
-            {/* Header Status */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-3">
-              <div>
-                <div className="text-xs font-bold text-[#8C6239]">{t('muhurat.selectedActivity', 'चयनित कार्य')}</div>
-                <h2 className="text-xl sm:text-2xl font-black font-granth text-[#5C3A21]">
-                  {trVedic(guidance.activity)} {t('muhurat.title', 'मुहूर्त')}
-                </h2>
-              </div>
-              <div className={`px-3 py-1 rounded-lg border font-black text-xs sm:text-sm ${guidance.statusColor}`}>
-                {guidance.gradeText}
-              </div>
-            </div>
-
-        {subPage === 'today' && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              {[
-                [t('panchang.weekday', 'वार'), trWeekday(panchang.weekday)],
-                [t('panchang.tithi', 'तिथि'), `${trVedic(panchang.paksha)} ${trVedic(panchang.tithi)}`],
-                [t('panchang.nakshatra', 'नक्षत्र'), trVedic(panchang.nakshatra)],
-                [t('panchang.yoga', 'योग') + ' / ' + t('panchang.karana', 'करण'), `${trVedic(panchang.yoga)} · ${trVedic(panchang.karana)}`],
-              ].map(([k, v]) => (
-                <div key={k} className="bg-[#F4E8D1] border border-[#8C6239]/25 rounded-lg p-2">
-                  <div className="text-[10px] font-bold text-[#8C6239] uppercase">{k}</div>
-                  <div className="font-black text-[#5C3A21] leading-tight">{v}</div>
-                </div>
-              ))}
-            </div>
-            <div className="text-[11px] font-bold text-[#8C6239]">
-              {t('yatra.shoolDirection', 'दिशाशूल')}: {trVedic(shoolDirection)}
-            </div>
-            <div className="divide-y divide-[#8C6239]/15 border border-[#8C6239]/25 rounded-xl overflow-hidden">
-              {dailyRows.map((row) => (
-                <div
-                  key={row.title + row.start}
-                  className={`flex items-start justify-between gap-2 px-3 py-2 text-xs ${
-                    row.kind === 'shubh' ? 'bg-emerald-50/80' : 'bg-rose-50/70'
-                  }`}
-                >
-                  <div>
-                    <div className="font-black text-[#3E2714]">{trVedic(row.title)}</div>
-                    <div className="text-[11px] text-[#735133]">{row.note}</div>
-                  </div>
-                  <div
-                    className={`shrink-0 font-black px-2 py-0.5 rounded ${
-                      row.kind === 'shubh' ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-900'
-                    }`}
-                  >
-                    {row.start === row.end ? row.start : `${row.start}–${row.end}`}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Sub-Page 1: Suitable & Avoid Windows */}
-        {subPage === 'windows' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4">
-                <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wider mb-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                  {t('muhurat.suitableWindowsTitle', 'ઉપલબ્ધ શુભ સમય વિન્ડો (Suitable Windows)')}
-                </div>
-                {guidance.suitableWindows.length > 0 ? (
-                  <div className="space-y-2">
-                    {guidance.suitableWindows.map((w, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-white/80 p-2.5 rounded-lg border border-emerald-200 flex justify-between items-center text-xs"
-                      >
-                        <span className="font-semibold text-emerald-950">{trVedic(w.title)}</span>
-                        <span className="font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                          {w.start} - {w.end}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-emerald-800 italic">{t('muhurat.limitedSuitableWindows', 'આજે વિશેષ શુભ વિન્ડો મર્યાદિત છે.')}</p>
-                )}
-              </div>
-
-              <div className="bg-rose-50/70 border border-rose-200 rounded-xl p-4">
-                <div className="flex items-center gap-2 text-rose-900 font-bold text-xs uppercase tracking-wider mb-2.5">
-                  <AlertTriangle className="w-4 h-4 text-rose-700" />
-                  {t('muhurat.avoidWindowsTitle', 'ત્યાજ્ય સમય (Avoid Windows)')}
-                </div>
-                <div className="space-y-2">
-                  {guidance.avoidWindows.map((w, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white/80 p-2.5 rounded-lg border border-rose-200 flex justify-between items-center text-xs"
-                    >
-                      <span className="font-semibold text-rose-950">{trVedic(w.title)}</span>
-                      <span className="font-black text-rose-800 bg-rose-100 px-2 py-0.5 rounded">
-                        {w.start} - {w.end}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Pagination */}
-            <div className="flex items-center justify-between p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-lg">
-              <span className="text-xs font-bold text-[#8C6239]">{t('muhurat.page1of2', 'પૃષ્ઠ ૧ / ૨ (શુભ-અશુભ સમય)')}</span>
-              <button
-                type="button"
-                onClick={() => setSubPage('guidance')}
-                className="px-3 py-1 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
-              >
-                <span>{t('muhurat.nextVedicRules', 'આગળ: ૨. વૈદિક નિયમો અને વિચાર')}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Sub-Page 2: Astrological Analysis & Recommendations */}
-        {subPage === 'guidance' && (
-          <div className="space-y-4">
-            {/* Astrological Analysis */}
-            <div className="bg-[#F4E8D1] p-4 rounded-lg border border-[#8C6239]/20">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#5C3A21] mb-2 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-                {t('muhurat.astrologyFactorsTitle', 'પંચાંગ અને જ્યોતિષીય વિચાર (Panchang Astrological Factors)')}
-              </h4>
-              <ul className="space-y-1.5 text-xs sm:text-sm text-[#5C3A21]">
-                {guidance.reasons.map((r, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-[#B56A00] font-bold">•</span>
-                    <span>{trVedic(r)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Guidelines */}
-            <div className="bg-[#F4E8D1]/70 border border-[#8C6239]/30 rounded-xl p-4">
-              <h4 className="text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                {t('muhurat.guidelinesTitle', 'શુભ ફળ હેતુ આવશ્યક વૈદિક સૂચનો (Guidelines)')}
-              </h4>
-              <ul className="space-y-1.5 text-xs sm:text-sm text-[#5C3A21]">
-                {guidance.recommendations.map((rec, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-[#8C6239] font-bold">✓</span>
-                    <span>{trVedic(rec)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Bottom Pagination */}
-            <div className="flex items-center justify-between p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setSubPage('windows')}
-                className="px-3 py-1 bg-[#FAF2E4] border border-[#8C6239]/40 hover:bg-white text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span>{t('muhurat.prevSuitableWindows', 'પાછળ: ૧. શુભ અને ત્યાજ્ય સમય')}</span>
-              </button>
-              <span className="text-xs font-bold text-[#8C6239]">{t('muhurat.page2of2', 'પૃષ્ઠ ૨ / ૨')}</span>
-            </div>
-          </div>
-        )}
-      </div>
-      </div>
-      )}
-    </div>
+    <UniversalStoryDeck
+      slides={slides}
+      headerTitle={t('nav.muhurat', 'शुभ मुहूर्त')}
+      headerIcon="✨"
+      chapterNumber={3}
+      currentDate={panchang.date}
+      onOpenUma={onOpenUmaModal ? () => onOpenUmaModal('शुभ मुहूर्त परामर्श') : undefined}
+      onPrevChapter={onPrevChapter}
+      onNextChapter={onNextChapter}
+      prevChapterLabel="चौघड़िया"
+      nextChapterLabel="यात्रा दिशाशूल"
+    />
   );
 };
+export default MuhuratView;

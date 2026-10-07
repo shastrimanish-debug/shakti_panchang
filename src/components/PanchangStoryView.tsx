@@ -50,6 +50,8 @@ export interface PanchangStoryViewProps {
   onSwitchToClassicView?: () => void;
   latitude?: number;
   longitude?: number;
+  onPrevChapter?: () => void;
+  onNextChapter?: () => void;
 }
 
 const TOTAL_SLIDES = 8;
@@ -490,21 +492,6 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
             >
               <Share2 className="w-3.5 h-3.5" />
             </button>
-
-            {onSwitchToClassicView && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSwitchToClassicView();
-                }}
-                className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-[#FFD88A] hover:bg-amber-500/30 text-[10px] font-black tracking-wide transition cursor-pointer flex items-center gap-1"
-                title="विस्तृत ग्रन्थ व्यू देखें"
-              >
-                <Layers className="w-3 h-3 text-amber-300" />
-                <span>ग्रन्थ</span>
-              </button>
-            )}
           </div>
         </div>
       </header>

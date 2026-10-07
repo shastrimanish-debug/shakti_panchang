@@ -346,11 +346,11 @@ export function App() {
   }
 
   return (
-    <div key={`app-root-${currentLang}`} className="min-h-[100dvh] w-full max-w-full overflow-x-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
+    <div key={`app-root-${currentLang}`} className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
-      {/* Unified Sticky Header Group: Navbar + Trial Banner */}
-      <div className="sticky top-0 z-40 w-full max-w-full bg-[#FFFDF9]/98 shadow-xs">
+      {/* Compact Header Group: Navbar + Trial Banner */}
+      <div className="shrink-0 z-40 w-full bg-[#FFFDF9]/98 shadow-2xs">
         <Navbar
           key={`navbar-${currentLang}`}
           currentLocation={currentLocation}
@@ -376,7 +376,7 @@ export function App() {
         />
 
         {licenseStatus.kind === "trial" && (
-          <div className="bg-[#B56A00] text-white text-center text-xs font-bold py-1 px-3 shadow-xs select-none">
+          <div className="bg-[#B56A00] text-white text-center text-[10px] font-bold py-0.5 px-2 shadow-2xs select-none">
             {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष।` })}
           </div>
         )}
@@ -384,8 +384,8 @@ export function App() {
 
       {/* Floating Page Turn Toast Notice */}
       {pageTurnNotice && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
-          <div className="px-4 py-2 bg-[#2C180C]/95 text-[#FAF2E4] border border-amber-500/50 rounded-full shadow-2xl text-xs sm:text-sm font-bold font-granth flex items-center gap-2 backdrop-blur-md">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+          <div className="px-3 py-1 bg-[#2C180C]/95 text-[#FAF2E4] border border-amber-500/50 rounded-full shadow-2xl text-xs font-bold font-granth flex items-center gap-1.5 backdrop-blur-md">
             <span className="text-amber-300">✦</span>
             <span>{pageTurnNotice}</span>
             <span className="text-amber-300">✦</span>
@@ -393,8 +393,8 @@ export function App() {
         </div>
       )}
 
-      {/* Main Vedic Content Presentation Area (Mobile Fit & Responsive) */}
-      <main className="flex-1 w-full max-w-md sm:max-w-xl md:max-w-4xl mx-auto px-2 sm:px-4 py-2 pb-40 sm:pb-36 min-w-0 overflow-x-hidden">
+      {/* Main Full-Screen Story Presentation Area: Zero Vertical Scrolling (100dvh Fit) */}
+      <main className="flex-1 w-full min-h-0 overflow-hidden relative flex flex-col">
         {!isBookOpen ? (
           <BookCover
             onOpenIndex={() => {
@@ -419,272 +419,287 @@ export function App() {
             }}
           />
         ) : (
-          /* Modern Material 3 Glassmorphic Card Container */
-          <div className="w-full min-w-0 overflow-x-hidden flutter-card p-3 sm:p-5 relative shadow-xs border border-[#EADBCC]">
-            {/* Desktop Chapter Title Ribbon (Hidden on mobile to maximize screen fit) */}
-            <div className="hidden sm:flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[#8C6239]/20 text-[#5C3A21] text-xs">
-              <div className="flex items-center gap-1.5 font-bold">
-                <span className="text-sm text-[#B56A00] font-black">ॐ</span>
-                <span className="font-granth">{currentTabMeta.chapter}: {currentTabMeta.title}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-[#8C6239]">
-                  📖 {t('book.page', 'पृष्ठ')} {currentTabMeta.pageNumber} / {BOOK_PAGES.length}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsBookOpen(false);
-                    if (isAudioEnabled) playTactilePageTurnSound();
-                  }}
-                  className="px-2 py-0.5 bg-[#8C6239] hover:bg-[#5C3A21] text-[#FAF2E4] rounded text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
-                  title={t('book.openCoverTitle', 'ग्रन्थ मुखपृष्ठ खोलें')}
-                >
-                  <span>📕 {t('book.coverBtn', 'मुखपृष्ठ')}</span>
-                </button>
-              </div>
-            </div>
+          <div
+            key={`${activeTab}-${currentLang}`}
+            className="w-full h-full min-h-0 overflow-hidden flex flex-col"
+          >
+            {activeTab === 'index' && (
+              <GranthIndexView
+                onSelectTab={handleSelectTab}
+                onReturnToCover={() => setIsBookOpen(false)}
+              />
+            )}
 
-            {/* Main Active Page View */}
-            <div
-              key={`${activeTab}-${currentLang}`}
-              className={`w-full min-w-0 overflow-x-hidden ${
-                turnDirection === 'forward'
-                  ? 'book-page-turn-forward'
-                  : 'book-page-turn-backward'
-              }`}
-            >
-              {activeTab === 'index' && (
-                <GranthIndexView
-                  onSelectTab={handleSelectTab}
-                  onReturnToCover={() => setIsBookOpen(false)}
-                />
-              )}
+            {activeTab === 'panchang' && (
+              <PanchangView
+                panchang={panchang}
+                onNavigateTab={handleSelectTab}
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onOpenWhatsAppPanchang={() => {
+                  setIsWhatsAppPanchangOpen(true);
+                }}
+                onOpenSubscriptionModal={triggerSubscriptionModal}
+                locationName={currentLocation.name}
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                onOpenLocationModal={() => setIsLocationModalOpen(true)}
+                latitude={currentLocation.latitude}
+                longitude={currentLocation.longitude}
+                timezoneHours={currentLocation.timezoneHours}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'panchang' && (
-                <PanchangView
-                  panchang={panchang}
-                  onNavigateTab={handleSelectTab}
-                  onOpenUmaModal={(query?: string) => {
-                    if (query) setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                  onOpenWhatsAppPanchang={() => {
-                    setIsWhatsAppPanchangOpen(true);
-                  }}
-                  onOpenSubscriptionModal={triggerSubscriptionModal}
-                  locationName={currentLocation.name}
-                  currentDate={currentDate}
-                  onDateChange={setCurrentDate}
-                  onOpenLocationModal={() => setIsLocationModalOpen(true)}
-                  latitude={currentLocation.latitude}
-                  longitude={currentLocation.longitude}
-                  timezoneHours={currentLocation.timezoneHours}
-                />
-              )}
+            {activeTab === 'choghadiya' && (
+              <ChoghadiyaView
+                panchang={panchang}
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'choghadiya' && (
-                <ChoghadiyaView panchang={panchang} />
-              )}
+            {activeTab === 'muhurat' && (
+              <MuhuratView
+                panchang={panchang}
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'muhurat' && (
-                <MuhuratView panchang={panchang} />
-              )}
+            {activeTab === 'yatra' && (
+              <YatraView
+                panchang={panchang}
+                currentLocation={currentLocation}
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'yatra' && (
-                <YatraView panchang={panchang} currentLocation={currentLocation} />
-              )}
+            {(activeTab === 'kundali' || activeTab === 'milan') && (
+              <KundaliView
+                activeKundali={activeKundali}
+                setActiveKundali={setActiveKundali}
+                currentLocation={currentLocation}
+                initialSubTab={activeTab === 'milan' ? 'milan' : undefined}
+                onOpenSavedModal={() => setIsSavedProfilesModalOpen(true)}
+                onOpenUmaModal={() => setIsUmaModalOpen(true)}
+                onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
+              />
+            )}
 
-              {(activeTab === 'kundali' || activeTab === 'milan') && (
-                <KundaliView
-                  activeKundali={activeKundali}
-                  setActiveKundali={setActiveKundali}
-                  currentLocation={currentLocation}
-                  initialSubTab={activeTab === 'milan' ? 'milan' : undefined}
-                  onOpenSavedModal={() => setIsSavedProfilesModalOpen(true)}
-                  onOpenUmaModal={() => setIsUmaModalOpen(true)}
-                  onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
-                />
-              )}
+            {activeTab === 'festivals' && (
+              <FestivalsView
+                currentDate={currentDate}
+                onNavigateToReminders={() => handleSelectTab('reminders')}
+                onDateSelect={(d) => {
+                  setCurrentDate(d);
+                  handleSelectTab('panchang');
+                }}
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'festivals' && (
-                <FestivalsView
-                  currentDate={currentDate}
-                  onNavigateToReminders={() => handleSelectTab('reminders')}
-                  onDateSelect={(d) => {
-                    setCurrentDate(d);
-                    handleSelectTab('panchang');
-                  }}
-                />
-              )}
+            {activeTab === 'reminders' && (
+              <RemindersView
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'reminders' && (
-                <RemindersView />
-              )}
+            {activeTab === 'vratkatha' && (
+              <VratKathaView
+                onBackToPanchang={() => handleSelectTab('panchang')}
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'vratkatha' && (
-                <VratKathaView onBackToPanchang={() => handleSelectTab('panchang')} />
-              )}
+            {activeTab === 'rashifal' && (
+              <DailyRashifalView
+                personName={activeKundali?.name}
+                lagnaRashi={activeKundali?.lagnaRashi}
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'rashifal' && (
-                <DailyRashifalView
-                  personName={activeKundali?.name}
-                  lagnaRashi={activeKundali?.lagnaRashi}
-                />
-              )}
+            {activeTab === 'gita' && (
+              <DailyGitaShlokaView
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'gita' && (
-                <DailyGitaShlokaView />
-              )}
+            {activeTab === 'vastu' && (
+              <VastuView
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'vastu' && (
-                <VastuView />
-              )}
+            {activeTab === 'durga' && (
+              <DurgaSaptashatiView
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'durga' && (
-                <DurgaSaptashatiView />
-              )}
+            {activeTab === 'upay' && (
+              <UpayView
+                activeKundali={activeKundali}
+                onOpenKundaliTab={() => handleSelectTab('kundali')}
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'upay' && (
-                <UpayView
-                  activeKundali={activeKundali}
-                  onOpenKundaliTab={() => handleSelectTab('kundali')}
-                  onOpenUmaWithQuery={(query) => {
-                    setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                />
-              )}
+            {activeTab === 'numerology' && (
+              <NumerologyView
+                activeKundali={activeKundali}
+                onOpenKundaliTab={() => handleSelectTab('kundali')}
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'numerology' && (
-                <NumerologyView
-                  activeKundali={activeKundali}
-                  onOpenKundaliTab={() => handleSelectTab('kundali')}
-                  onOpenUmaWithQuery={(query) => {
-                    setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                />
-              )}
+            {activeTab === 'palmistry' && (
+              <PalmistryView
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'palmistry' && (
-                <PalmistryView
-                  onOpenUmaWithQuery={(query) => {
-                    setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                />
-              )}
+            {activeTab === 'tarot' && (
+              <TarotView
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'tarot' && (
-                <TarotView
-                  onOpenUmaWithQuery={(query) => {
-                    setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                />
-              )}
+            {activeTab === 'gemology' && (
+              <GemologyView
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'gemology' && (
-                <GemologyView
-                  onOpenUmaWithQuery={(query) => {
-                    setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                />
-              )}
+            {activeTab === 'face_reading' && (
+              <FaceReadingView
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
 
-              {activeTab === 'face_reading' && (
-                <FaceReadingView
-                  onOpenUmaWithQuery={(query) => {
-                    setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                />
-              )}
-
-              {activeTab === 'iching' && (
-                <IChingView
-                  onOpenUmaWithQuery={(query) => {
-                    setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Sacred Granth Page Navigation Footer (Visible on both Mobile and Desktop) */}
-            <div className="flex mt-5 pt-3 border-t border-[#8C6239]/30 items-center justify-between text-xs select-none">
-              <button
-                type="button"
-                onClick={handlePrevPage}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#FAF2E4] hover:bg-[#EBD8BD] text-[#2C1810] border border-[#8C6239]/40 rounded-xl font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs m3-touch"
-                title={`${t('common.prev', 'पिछला')}: ${prevTabMeta.label}`}
-              >
-                <ChevronLeft className="w-4 h-4 text-[#B56A00]" />
-                <span>‹ {t('common.prev', 'पिछला')} ({prevTabMeta.label})</span>
-              </button>
-
-              <div className="font-granth text-xs font-bold text-[#8C6239] text-center px-1">
-                <span>{t('book.page', 'पृष्ठ')} {currentTabMeta.pageNumber} / {BOOK_PAGES.length}</span>
-                <span className="text-[#B56A00] font-normal block sm:inline sm:ml-1.5">• {currentTabMeta.label}</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleNextPage}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] border border-[#B56A00] rounded-xl font-bold transition cursor-pointer text-xs active:scale-95 shadow-xs m3-touch"
-                title={`${t('common.next', 'अगला')}: ${nextTabMeta.label}`}
-              >
-                <span>{t('common.next', 'अगला')} ({nextTabMeta.label}) ›</span>
-                <ChevronRight className="w-4 h-4 text-[#FFD88A]" />
-              </button>
-            </div>
+            {activeTab === 'iching' && (
+              <IChingView
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
           </div>
         )}
       </main>
 
       {/* Floating UMA Assistant FAB */}
-      <aside aria-label="Floating Vedic Assistant" className="hidden sm:block fixed bottom-8 right-8 z-30">
+      <aside aria-label="Floating Vedic Assistant" className="hidden sm:block fixed bottom-14 right-6 z-30">
         <button
           onClick={() => {
             setIsUmaModalOpen(true);
           }}
-          className="flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black rounded-full shadow-[0_6px_25px_rgba(245,158,11,0.5)] transition transform hover:scale-105 active:scale-95 group cursor-pointer uma-glow-badge m3-touch border-2 border-white/60"
+          className="flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black rounded-full shadow-[0_4px_20px_rgba(245,158,11,0.5)] transition transform hover:scale-105 active:scale-95 group cursor-pointer uma-glow-badge m3-touch border-2 border-white/60"
         >
-          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-stone-950 text-amber-400">
-            <Sparkles className="w-3.5 h-3.5 fill-amber-400 group-hover:rotate-12 transition-transform" />
+          <div className="relative flex items-center justify-center w-5 h-5 rounded-full bg-stone-950 text-amber-400">
+            <Sparkles className="w-3 h-3 fill-amber-400 group-hover:rotate-12 transition-transform" />
           </div>
           <span className="text-xs font-black tracking-wide pr-1">
-            {t('uma.title', 'उमा परामर्श')} ✨
+            {t('uma.title', 'उमा')} ✨
           </span>
         </button>
       </aside>
 
-      {/* Traditional Bhojpatra Footer (Compact with bottom padding for mobile navigation bar) */}
-      <footer className="bg-[#F5ECE0] text-[#5C3A21] border-t border-[#DFCBB5] py-4 px-3 mb-24 sm:mb-8 text-center text-xs space-y-1 select-none">
-        <div className="font-granth text-xs sm:text-sm text-[#2C180C] font-black tracking-wide">
-          {t('footer.shloka', '॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥')}
-        </div>
-        <p className="text-[11px] text-[#6E472A] font-medium max-w-xl mx-auto">
-          {getLocalizedDailyShloka(SHLOKAS.find((item) => item.id === 6) ?? SHLOKAS[0], currentLang).meaning}
-        </p>
-        <p className="text-[11px] text-[#6E472A] font-medium">
-          {t('footer.tagline', 'शक्ति पंचांग • प्रामाणिक वैदिक खगोलशास्त्र एवं ज्योतिषीय पंचांग ग्रन्थ')}
-        </p>
-        <p className="text-[10px] text-[#8C4A00] font-semibold">
-          {t('footer.calcMethod', 'गणना: सूर्य सिद्धान्त एवं लाहिरी अयनांश')} • {t('panchang.location', 'स्थान')}: {currentLocation.name}
-        </p>
-      </footer>
-
-      {/* Flutter-style Mobile Bottom Navigation Bar */}
-      <BottomNavBar
-        activeTab={activeTab}
-        onSelectTab={handleSelectTab}
-        onOpenMore={() => setIsMoreModalOpen(true)}
-        onOpenUma={() => setIsUmaModalOpen(true)}
-        currentDate={currentDate}
-      />
+      {/* Flutter-style Mobile Bottom Navigation Bar (Docked at Bottom) */}
+      <div className="shrink-0 z-40 w-full">
+        <BottomNavBar
+          activeTab={activeTab}
+          onSelectTab={handleSelectTab}
+          onOpenMore={() => setIsMoreModalOpen(true)}
+          onOpenUma={() => setIsUmaModalOpen(true)}
+          currentDate={currentDate}
+        />
+      </div>
 
       {/* More Options Sheet / Modal */}
       <MoreMenuModal

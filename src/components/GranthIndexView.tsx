@@ -1,111 +1,86 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BOOK_PAGES, getLocalizedBookPages } from '../constants/bookPages';
-import { BookOpen, Sparkles, ChevronRight, ArrowLeft, Calendar, Flame, Home, Clock, Compass, Heart, Gift, Bell } from 'lucide-react';
-import { ShaktiLogo } from './ShaktiLogo';
+import { BookOpen, ChevronRight, Sparkles } from 'lucide-react';
 import { useTranslation } from '../i18n';
+import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
 
 interface GranthIndexViewProps {
   onSelectTab: (tabId: string) => void;
-  onReturnToCover: () => void;
+  onReturnToCover?: () => void;
 }
 
 export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
   onSelectTab,
-  onReturnToCover,
 }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language || 'hi';
   const localizedPages = getLocalizedBookPages(BOOK_PAGES, currentLang);
+  const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
+
+  // Group pages into chunks of 6 per slide
+  const CHUNK_SIZE = 6;
+  const chunkCount = Math.ceil(localizedPages.length / CHUNK_SIZE);
+  const slides: StorySlideItem[] = [];
+
+  for (let i = 0; i < chunkCount; i++) {
+    const chunk = localizedPages.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+    slides.push({
+      id: `index-chunk-${i}`,
+      title: `सनातन शक्ति पंचांग अनुक्रमणिका (${i + 1}/${chunkCount})`,
+      subtitle: `अध्याय ${i * CHUNK_SIZE + 1} से ${Math.min((i + 1) * CHUNK_SIZE, localizedPages.length)}`,
+      badge: 'ग्रन्थ सूची',
+      icon: '📖',
+      voiceText: `ग्रन्थ अनुक्रमणिका भाग ${i + 1}। अपने इच्छित अध्याय पर टैप करें।`,
+      content: (
+        <div className="h-full flex flex-col justify-between py-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 my-auto">
+            {chunk.map((page) => {
+              const Icon = page.icon || BookOpen;
+              return (
+                <button
+                  key={page.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectTab(page.id);
+                  }}
+                  className="p-2 rounded-xl bg-white/95 border border-amber-300 hover:border-amber-500 shadow-xs flex items-center justify-between group cursor-pointer transition text-left active:scale-95"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-900 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 text-[#8C4A00]" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[9px] font-bold text-[#B56A00] uppercase">
+                        {page.chapter}
+                      </div>
+                      <div className="font-black font-granth text-xs text-[#462B17] truncate">
+                        {page.title}
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-[#8C6239] group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-[10px] text-center text-[#8C6239]">
+            किसी भी अध्याय पर टैप करके सीधे उस पृष्ठ पर जाएं।
+          </div>
+        </div>
+      ),
+    });
+  }
 
   return (
-    <div className="w-full space-y-5 animate-in fade-in zoom-in-95 duration-200">
-      {/* Top Grand Granth Header */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#5C3A21] via-[#8C6239] to-[#5C3A21] text-[#FAF2E4] shadow-lg border border-[#FFD88A]/40 text-center relative overflow-hidden">
-        <div className="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
-          <ShaktiLogo size={180} />
-        </div>
-
-        <p className="text-xs sm:text-sm font-black tracking-widest text-[#FFD88A] uppercase">
-          {t('book.heading', '॥ श्री गणेशाय नमः ॥ • काशी-उज्जैन परंपरा')}
-        </p>
-        <h2 className="text-2xl sm:text-3xl font-bold font-granth text-[#FFD88A] mt-1">
-          {t('granth.title', 'सनातन शक्ति पंचांग – ग्रंथ अनुक्रमणिका')}
-        </h2>
-        <p className="text-xs sm:text-sm text-[#FAF2E4]/90 mt-1 max-w-lg mx-auto">
-          {t('granth.subtitle', 'वैदिक पंचांग, जन्म कुण्डली, दुर्गा सप्तशती, वास्तु शास्त्र, ग्रह शांति व समस्त अध्यायों की सूची। अपनी रुचि का अध्याय चुनें:')}
-        </p>
-
-        <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={onReturnToCover}
-            className="px-4 py-2 bg-[#FAF2E4]/15 hover:bg-[#FAF2E4]/25 text-[#FAF2E4] border border-[#FFD88A]/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4 text-[#FFD88A]" />
-            <span>{t('granth.returnToCover', '📕 ग्रंथ मुखपृष्ठ पर लौटें')}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Chapters Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {localizedPages.map((page) => {
-          const Icon = page.icon || BookOpen;
-          const isNew = ['durga', 'upay', 'vastu'].includes(page.id);
-
-          return (
-            <button
-              key={page.id}
-              type="button"
-              onClick={() => onSelectTab(page.id)}
-              className="p-4 rounded-2xl bg-white/90 dark:bg-[#2A1508]/90 hover:bg-white dark:hover:bg-[#351D0C] border border-[#8C6239]/25 hover:border-[#B56A00] transition-all text-left flex items-center justify-between group cursor-pointer shadow-xs active:scale-97 m3-touch"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#B56A00] to-[#8C6239] text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
-                  <Icon className="w-5 h-5 text-amber-200" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-[#B56A00] uppercase tracking-wider">
-                      {page.chapter} • {t('book.page', 'पृष्ठ')} {page.pageNumber}
-                    </span>
-                    {isNew && (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-600 text-white font-black">
-                        {t('granth.specialNew', 'विशेष नया')}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-sm sm:text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A] truncate mt-0.5">
-                    {page.title}
-                  </h3>
-                  <p className="text-[11px] text-[#735133] dark:text-stone-300 truncate">
-                    {page.desc}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-2 rounded-xl bg-[#FAF2E4] dark:bg-stone-800 text-[#5C3A21] dark:text-amber-200 group-hover:translate-x-1 transition-transform shrink-0 ml-2">
-                <ChevronRight className="w-4 h-4" />
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Return footer */}
-      <div className="p-4 rounded-2xl bg-[#FAF2E4] border border-[#8C6239]/20 text-center flex items-center justify-between">
-        <span className="text-xs text-[#735133] font-bold">
-          {t('granth.allRights', '✦ सनातन शक्ति पंचांग ग्रंथ • सर्वाधिकार सुरक्षित ✦')}
-        </span>
-        <button
-          type="button"
-          onClick={onReturnToCover}
-          className="px-3.5 py-1.5 bg-[#5C3A21] text-[#FAF2E4] rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>{t('granth.coverBtn', 'मुखपृष्ठ')}</span>
-        </button>
-      </div>
-    </div>
+    <UniversalStoryDeck
+      slides={slides}
+      currentSlideIndex={activeSlideIndex}
+      onSlideIndexChange={setActiveSlideIndex}
+      headerTitle="ग्रन्थ अनुक्रमणिका"
+      headerIcon="📖"
+      chapterNumber="विषय-सूची"
+    />
   );
 };
+export default GranthIndexView;

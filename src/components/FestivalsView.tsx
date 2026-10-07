@@ -1,961 +1,230 @@
 import React, { useState, useMemo } from 'react';
 import { FestivalItem } from '../types';
-import {
-  getFestivalsForYear,
-  searchFestivalsAcrossCenturies,
-  CenturySearchResult,
-} from '../services/festivals';
-import { KalnirnayMonthView } from './KalnirnayMonthView';
-import {
-  Calendar,
-  Search,
-  Bell,
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Compass,
-  History,
-  Clock,
-  ArrowUpDown,
-  Filter,
-  CalendarPlus,
-  Download,
-} from 'lucide-react';
+import { getFestivalsForYear } from '../services/festivals';
 import { saveAppReminder } from '../services/storage';
 import {
-  generateSingleEventICS,
-  generateYearFestivalsICS,
-  downloadICSBlob,
-  getGoogleCalendarUrl,
-} from '../services/calendarExport';
+  Sparkles,
+  Calendar,
+  Bell,
+  Check,
+  Download,
+} from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { trVedic } from '../i18n/vedicTranslate';
+import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
 
 interface FestivalsViewProps {
   currentDate: Date;
-  onNavigateToReminders: () => void;
+  onNavigateToReminders?: () => void;
   onDateSelect?: (date: Date) => void;
+  onOpenUmaModal?: (query?: string) => void;
+  onPrevChapter?: () => void;
+  onNextChapter?: () => void;
 }
 
 export const FestivalsView: React.FC<FestivalsViewProps> = ({
   currentDate,
   onNavigateToReminders,
   onDateSelect,
+  onOpenUmaModal,
+  onPrevChapter,
+  onNextChapter,
 }) => {
   const { t, i18n } = useTranslation();
-  // Selected Year for single-year view (default to currentDate's year or 2026)
-  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear() || 2026);
-
-  // Active Mode: 'kalnirnay' (मासिक पंचांग) vs 'year' (वार्षिक सूची) vs 'century' (200 वर्षों में महा-खोज)
-  const [viewMode, setViewMode] = useState<'kalnirnay' | 'year' | 'century'>('kalnirnay');
-
-  // Single year filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
-
-  // Century Search state
-  const [centuryQuery, setCenturyQuery] = useState('दीपावली');
-  const [centuryRange, setCenturyRange] = useState<'all' | 'past100' | 'next100'>('all');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'closest'>('asc');
-
-  // Feedback state for reminders
   const [addedReminderId, setAddedReminderId] = useState<string | null>(null);
-  const [calendarSyncNotice, setCalendarSyncNotice] = useState<string | null>(null);
 
-  // Pagination states for mobile screen friendliness
-  const [centuryPage, setCenturyPage] = useState<number>(1);
-  const [yearPage, setYearPage] = useState<number>(1);
-  const CENTURY_PAGE_SIZE = 9;
-  const YEAR_PAGE_SIZE = 8;
+  const selectedYear = currentDate.getFullYear() || 2026;
+  const festivals = useMemo(() => getFestivalsForYear(selectedYear), [selectedYear]);
 
-  // 1925 to 2125 year options (200 years)
-  const availableYears = useMemo(() => {
-    const list: number[] = [];
-    for (let y = 1925; y <= 2125; y++) {
-      list.push(y);
-    }
-    return list;
-  }, []);
+  const upcomingList = useMemo(() => {
+    const today = new Date(currentDate);
+    today.setHours(0, 0, 0, 0);
+    return festivals
+      .filter((f) => f.date >= today)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [festivals, currentDate]);
 
-  // Festivals for the selected single year
-  const yearFestivals = useMemo(() => {
-    return getFestivalsForYear(selectedYear);
-  }, [selectedYear]);
-
-  const upcomingHindi = useMemo(() => {
-    const start = new Date(currentDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 50);
-    const y = currentDate.getFullYear();
-    return [...getFestivalsForYear(y), ...getFestivalsForYear(y + 1)]
-      .filter((f) => f.date >= start && f.date <= end)
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 10);
-  }, [currentDate]);
-
-  // Filtered list for the single year view
-  const filteredYearList = useMemo(() => {
-    const cleanQ = searchQuery.toLowerCase().trim();
-    return yearFestivals.filter((f) => {
-      const matchesQ =
-        !cleanQ ||
-        f.name.toLowerCase().includes(cleanQ) ||
-        f.hindiName.toLowerCase().includes(cleanQ) ||
-        f.description.toLowerCase().includes(cleanQ);
-      const matchesT = selectedType === 'all' || f.type === selectedType;
-      return matchesQ && matchesT;
-    });
-  }, [yearFestivals, searchQuery, selectedType]);
-
-  // Search results for 200 years search
-  const centuryResults = useMemo(() => {
-    if (!centuryQuery.trim()) return [];
-    let start = 1925;
-    let end = 2125;
-    if (centuryRange === 'past100') {
-      start = 1925;
-      end = 2025;
-    } else if (centuryRange === 'next100') {
-      start = 2026;
-      end = 2125;
-    }
-    const raw = searchFestivalsAcrossCenturies(centuryQuery, start, end);
-
-    const currYear = currentDate.getFullYear() || 2026;
-
-    if (sortOrder === 'desc') {
-      return [...raw].sort((a, b) => b.year - a.year);
-    } else if (sortOrder === 'closest') {
-      return [...raw].sort(
-        (a, b) => Math.abs(a.year - currYear) - Math.abs(b.year - currYear)
-      );
-    }
-    return raw; // default asc
-  }, [centuryQuery, centuryRange, sortOrder, currentDate]);
-
-  // Paginated items
-  const totalCenturyPages = Math.max(1, Math.ceil(centuryResults.length / CENTURY_PAGE_SIZE));
-  const currentCenturyPage = Math.min(centuryPage, totalCenturyPages);
-  const paginatedCenturyResults = useMemo(() => {
-    const start = (currentCenturyPage - 1) * CENTURY_PAGE_SIZE;
-    return centuryResults.slice(start, start + CENTURY_PAGE_SIZE);
-  }, [centuryResults, currentCenturyPage]);
-
-  const totalYearPages = Math.max(1, Math.ceil(filteredYearList.length / YEAR_PAGE_SIZE));
-  const currentYearPage = Math.min(yearPage, totalYearPages);
-  const paginatedYearList = useMemo(() => {
-    const start = (currentYearPage - 1) * YEAR_PAGE_SIZE;
-    return filteredYearList.slice(start, start + YEAR_PAGE_SIZE);
-  }, [filteredYearList, currentYearPage]);
-
-  const categories = [
-    { id: 'all', label: t('festivals.catAll', 'सभी पर्व व व्रत') },
-    { id: 'पर्व', label: t('festivals.catMajor', 'प्रमुख पर्व') },
-    { id: 'व्रत', label: t('festivals.catVrat', 'व्रत') },
-    { id: 'एकादशी', label: t('festivals.catEkadashi', 'एकादशी') },
-    { id: 'पूर्णिमा', label: t('festivals.catPurnima', 'पूर्णिमा') },
-    { id: 'अमावस्या', label: t('festivals.catAmavasya', 'अमावस्या') },
-  ];
-
-  const quickCenturyPills = [
-    'दीपावली',
-    'होली',
-    'महाशिवरात्रि',
-    'करवा चौथ',
-    'श्री कृष्ण जन्माष्टमी',
-    'रक्षाबंधन',
-    'गणेश चतुर्थी',
-    'दशहरा',
-    'छठ पूजा',
-    'मकर संक्रांति',
-    'श्री राम नवमी',
-    'अक्षय तृतीया',
-    'निर्जला एकादशी',
-    'देवउठनी एकादशी',
-    'शरद पूर्णिमा',
-  ];
-
-  const handleSetReminder = (f: FestivalItem) => {
+  const handleAddReminder = (fest: FestivalItem, e: React.MouseEvent) => {
+    e.stopPropagation();
     saveAppReminder({
-      id: `fest_${f.id}_${Date.now()}`,
-      title: `${f.hindiName} (${f.type})`,
-      body: f.description,
-      timestamp: f.date.getTime(),
-      type: 'vrat',
-      createdAt: Date.now(),
+      id: `fest_${fest.name}_${fest.date.toISOString()}`,
+      title: fest.name,
+      category: fest.type === 'major' ? 'vrat' : 'festival',
+      date: fest.date.toISOString().split('T')[0],
+      time: '06:00',
+      description: `${fest.name} - ${fest.tithi || ''} ${fest.description || ''}`,
+      notifyBefore: 15,
+      soundEnabled: true,
+      isActive: true,
     });
-    setAddedReminderId(f.id);
-    setTimeout(() => setAddedReminderId(null), 2500);
+    setAddedReminderId(fest.name);
+    setTimeout(() => setAddedReminderId(null), 2000);
   };
 
-  const handleExportSingleToICS = (f: FestivalItem) => {
-    const ics = generateSingleEventICS({
-      id: f.id,
-      name: f.hindiName,
-      date: f.date.toISOString(),
-      category: f.type,
-      description: f.description,
-    });
-    downloadICSBlob(ics, `${f.hindiName}-${f.date.getFullYear()}`);
-    setCalendarSyncNotice(`${f.hindiName} कैलेंडर फाइल (.ics) डाउनलोड हुई!`);
-    setTimeout(() => setCalendarSyncNotice(null), 3000);
-  };
+  // Chunk upcoming into slides of 3 items each
+  const upcomingChunk1 = upcomingList.slice(0, 3);
+  const upcomingChunk2 = upcomingList.slice(3, 6);
+  const majorFestivals = festivals.filter((f) => f.type === 'major').slice(0, 4);
 
-  const handleExportFullYearToICS = () => {
-    const items = yearFestivals.map((f) => ({
-      id: f.id,
-      name: f.hindiName,
-      date: f.date.toISOString(),
-      category: f.type,
-      description: f.description,
-    }));
-    const ics = generateYearFestivalsICS(items, selectedYear);
-    downloadICSBlob(ics, `Shakti-Panchang-Vrat-Parv-${selectedYear}`);
-    setCalendarSyncNotice(`वर्ष ${selectedYear} के सभी ${items.length} पर्व कैलेंडर में डाउनलोड हुए!`);
-    setTimeout(() => setCalendarSyncNotice(null), 3500);
-  };
+  const slides: StorySlideItem[] = [
+    // Slide 1: Next 3 Upcoming Festivals
+    {
+      id: 'upcoming-1',
+      title: 'आगामी प्रमुख व्रत व महापर्व',
+      subtitle: `${selectedYear} • आगामी तिथियां (भाग १)`,
+      badge: 'निकटतम पर्व',
+      icon: '🪔',
+      voiceText: `आगामी पर्व: ${upcomingChunk1.map((f) => f.name).join(', ')}।`,
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2">
+          <div className="space-y-1.5 my-auto">
+            {upcomingChunk1.map((fest, idx) => {
+              const daysDiff = Math.ceil((fest.date.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+              const isAdded = addedReminderId === fest.name;
+              return (
+                <div
+                  key={idx}
+                  className="p-3 rounded-2xl bg-white/90 border border-amber-300 shadow-xs flex items-center justify-between"
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{fest.icon || '🪔'}</span>
+                      <h4 className="font-black font-granth text-xs sm:text-sm text-[#462B17] truncate">
+                        {fest.name}
+                      </h4>
+                    </div>
+                    <div className="text-[10px] text-[#8C6239] mt-0.5 font-medium">
+                      {fest.date.toLocaleDateString('hi-IN', { weekday: 'short', day: 'numeric', month: 'short' })} • {fest.tithi || ''}
+                    </div>
+                  </div>
 
-  const handleOpenGoogleCalendar = (f: FestivalItem) => {
-    const url = getGoogleCalendarUrl({
-      id: f.id,
-      name: f.hindiName,
-      date: f.date.toISOString(),
-      category: f.type,
-      description: f.description,
-    });
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
+                      {daysDiff === 0 ? 'आज' : `${daysDiff} दिन`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleAddReminder(fest, e)}
+                      className="p-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-stone-900 transition cursor-pointer"
+                      title="स्मृति जोड़ें"
+                    >
+                      {isAdded ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Bell className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="text-[10px] text-center text-[#8C6239]">
+            घंटी आइकन दबाकर त्योहार की स्मृति (Reminder) सेट करें।
+          </div>
+        </div>
+      ),
+    },
 
-  const currentLang = i18n.language || 'hi';
-  const localeCode = currentLang === 'gu' ? 'gu-IN' : currentLang === 'en' ? 'en-US' : 'hi-IN';
+    // Slide 2: Next 3 Upcoming (Part 2)
+    {
+      id: 'upcoming-2',
+      title: 'आगामी व्रत व पर्व (भाग २)',
+      subtitle: `${selectedYear} • अग्रिम सूची`,
+      badge: 'मासिक पर्व',
+      icon: '🕉️',
+      voiceText: `अग्रिम पर्व: ${upcomingChunk2.map((f) => f.name).join(', ')}।`,
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2">
+          <div className="space-y-1.5 my-auto">
+            {upcomingChunk2.map((fest, idx) => {
+              const daysDiff = Math.ceil((fest.date.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+              const isAdded = addedReminderId === fest.name;
+              return (
+                <div
+                  key={idx}
+                  className="p-3 rounded-2xl bg-white/90 border border-amber-300 shadow-xs flex items-center justify-between"
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{fest.icon || '🌺'}</span>
+                      <h4 className="font-black font-granth text-xs sm:text-sm text-[#462B17] truncate">
+                        {fest.name}
+                      </h4>
+                    </div>
+                    <div className="text-[10px] text-[#8C6239] mt-0.5 font-medium">
+                      {fest.date.toLocaleDateString('hi-IN', { weekday: 'short', day: 'numeric', month: 'short' })} • {fest.tithi || ''}
+                    </div>
+                  </div>
 
-  const fmtDate = (d: Date) =>
-    d.toLocaleDateString(localeCode, {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
+                      {daysDiff} दिन
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleAddReminder(fest, e)}
+                      className="p-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-stone-900 transition cursor-pointer"
+                      title="स्मृति जोड़ें"
+                    >
+                      {isAdded ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Bell className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="text-[10px] text-center text-[#8C6239]">
+            सभी पर्व शास्त्रसम्मत सूर्य-सिद्धान्त गणना पर आधारित हैं।
+          </div>
+        </div>
+      ),
+    },
 
-  return (
-    <div className="space-y-4 animate-in fade-in duration-300">
-      {upcomingHindi.length > 0 && (
-        <div className="bg-[#FAF2E4] border-2 border-[#B56A00]/50 rounded-xl p-3 shadow-xs">
-          <h3 className="text-sm font-black font-granth text-[#5C3A21] mb-2">{t('festivals.upcomingFestivals', 'Upcoming Hindu Festivals')}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {upcomingHindi.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => onDateSelect?.(f.date)}
-                className="flex items-center justify-between gap-2 text-left px-2.5 py-1.5 rounded-lg bg-[#F4E8D1] border border-[#8C6239]/25 hover:bg-white cursor-pointer"
+    // Slide 3: Major Sanatan Festivals of the Year
+    {
+      id: 'major-sanatan',
+      title: `सनातन महापर्व (${selectedYear})`,
+      subtitle: 'दीपावली, महाशिवरात्रि, नवरात्रि, जन्माष्टमी',
+      badge: 'महापर्व',
+      icon: '✨',
+      voiceText: 'सनातन धर्म के प्रमुख वार्षिक महापर्व।',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2">
+          <div className="grid grid-cols-2 gap-2 my-auto">
+            {majorFestivals.map((fest, idx) => (
+              <div
+                key={idx}
+                className="p-2.5 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/60 border border-amber-300 flex flex-col justify-between"
               >
-                <span className="font-black text-[#5C3A21] text-sm">{trVedic(f.hindiName)}</span>
-                <span className="text-[11px] font-bold text-[#8C6239] shrink-0">
-                  {f.date.toLocaleDateString(localeCode, { day: 'numeric', month: 'long', weekday: 'short' })}
-                </span>
-              </button>
+                <div className="flex items-center gap-1">
+                  <span className="text-base">{fest.icon || '🪔'}</span>
+                  <span className="font-black font-granth text-xs text-[#462B17] truncate">{fest.name}</span>
+                </div>
+                <div className="text-[10px] font-bold text-amber-800 mt-1">
+                  {fest.date.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short' })}
+                </div>
+                <div className="text-[9px] text-[#735133] truncate">{fest.tithi || 'शुक्ल पक्ष'}</div>
+              </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Top Header Card with Mode Switcher */}
-      <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-base sm:text-lg text-[#B56A00] font-bold">ॐ</span>
-              <h2 className="text-base sm:text-xl font-black font-granth text-[#5C3A21]">
-                {t('festivals.centuryArchiveTitle', 'સનાતન પર્વ, વ્રત અને ઉત્સવ સંગ્રહ (૧૯૨૫ થી ૨૧૨૫)')}
-              </h2>
-            </div>
-            <p className="text-[11px] sm:text-xs text-[#735133] mt-0.5">
-              {t('festivals.centuryArchiveDesc', 'ખગોળીય ગણતરી આધારિત પાછલા ૧૦૦ વર્ષ અને આગામી ૧૦૦ વર્ષનો પ્રામાણિક ૨૦૦-વાર્ષિક પંચાંગ સંગ્રહ')}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onNavigateToReminders}
-              className="px-2.5 py-1 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 rounded-lg text-xs font-bold text-[#5C3A21] flex items-center gap-1.5 transition cursor-pointer"
-            >
-              <Bell className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span>{t('festivals.remindersBtn', 'રિમાઇન્ડર')}</span>
-            </button>
+          <div className="text-[10px] text-center text-[#8C6239]">
+            धर्मो रक्षति रक्षितः • सनातन संस्कृति के पावन उत्सव
           </div>
         </div>
+      ),
+    },
+  ];
 
-        {/* Calendar Sync Notice Banner */}
-        {calendarSyncNotice && (
-          <div className="bg-emerald-800 text-[#FAF2E4] px-3.5 py-2 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 shadow-xs animate-in fade-in duration-150">
-            <Check className="w-4 h-4 text-emerald-300 shrink-0" />
-            <span>{calendarSyncNotice}</span>
-          </div>
-        )}
-
-        {/* Primary View Mode Tabs (Clear, high-contrast toggle) */}
-        <div className="flex flex-wrap items-center p-1 bg-[#462B17] rounded-xl text-xs font-bold border border-[#8C6239]/60 gap-1">
-          <button
-            type="button"
-            onClick={() => setViewMode('kalnirnay')}
-            className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[150px] ${
-              viewMode === 'kalnirnay'
-                ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
-                : 'text-[#E5D2B8] hover:text-white'
-            }`}
-          >
-            <Calendar className="w-4 h-4 text-[#B56A00]" />
-            <span>🗓️ {t('festivals.calendarView', 'માસિક પંચાંગ')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode('year')}
-            className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[150px] ${
-              viewMode === 'year'
-                ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
-                : 'text-[#E5D2B8] hover:text-white'
-            }`}
-          >
-            <Sparkles className="w-4 h-4 text-[#B56A00]" />
-            <span>📅 {t('festivals.yearList', 'વાર્ષિક પર્વ યાદી')} ({selectedYear})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode('century')}
-            className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[150px] ${
-              viewMode === 'century'
-                ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
-                : 'text-[#E5D2B8] hover:text-white'
-            }`}
-          >
-            <History className="w-4 h-4 text-[#B56A00]" />
-            <span>🔍 {t('festivals.centurySearch', '૨૦૦ વર્ષોમાં મહા-શોધ')}</span>
-          </button>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* MODE 1: 200 YEARS CENTURY SEARCH CONTROLS                     */}
-        {/* ------------------------------------------------------------- */}
-        {viewMode === 'century' && (
-          <div className="pt-1 space-y-3">
-            <div className="bg-[#5C3A21] text-[#FAF2E4] p-3 sm:p-4 rounded-xl border border-[#8C6239] space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
-                <div className="flex items-center gap-1.5 font-bold text-[#FFD88A]">
-                  <Sparkles className="w-4 h-4" />
-                  <span>पिछले 100 वर्ष एवं अगले 100 वर्ष में किसी भी पर्व की तिथि खोजें:</span>
-                </div>
-                <span className="text-[11px] text-[#E5D2B8]">1925 से 2125 तक पूर्ण समर्थित</span>
-              </div>
-
-              {/* Main Century Search Bar */}
-              <div className="relative">
-                <Search className="w-4 h-4 text-[#8C6239] absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={centuryQuery}
-                  onChange={(e) => setCenturyQuery(e.target.value)}
-                  placeholder="त्योहार का नाम लिखें (उदा. दीपावली, होली, महाशिवरात्रि, करवा चौथ, जन्माष्टमी, छठ, रामनवमी, एकादशी)..."
-                  className="w-full bg-[#FAF2E4] text-[#3E2714] border-2 border-[#B56A00] rounded-xl pl-9 pr-3 py-2 text-xs sm:text-sm font-bold placeholder:text-[#8C6239] outline-none shadow-inner"
-                />
-              </div>
-
-              {/* Time Range Filter Buttons & Sort Orders */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[#E5D2B8] text-[11px] font-bold">कालखंड:</span>
-                  <button
-                    onClick={() => setCenturyRange('all')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      centuryRange === 'all'
-                        ? 'bg-[#B56A00] text-white shadow-xs'
-                        : 'bg-[#462B17] text-[#D9C4A9] hover:text-white'
-                    }`}
-                  >
-                    समस्त 200 वर्ष (1925-2125)
-                  </button>
-                  <button
-                    onClick={() => setCenturyRange('past100')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      centuryRange === 'past100'
-                        ? 'bg-[#B56A00] text-white shadow-xs'
-                        : 'bg-[#462B17] text-[#D9C4A9] hover:text-white'
-                    }`}
-                  >
-                    पिछले 100 वर्ष (1925-2025)
-                  </button>
-                  <button
-                    onClick={() => setCenturyRange('next100')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      centuryRange === 'next100'
-                        ? 'bg-[#B56A00] text-white shadow-xs'
-                        : 'bg-[#462B17] text-[#D9C4A9] hover:text-white'
-                    }`}
-                  >
-                    अगले 100 वर्ष (2026-2125)
-                  </button>
-                </div>
-
-                {/* Sort Order Selector */}
-                <div className="flex items-center gap-1">
-                  <ArrowUpDown className="w-3.5 h-3.5 text-[#FFD88A]" />
-                  <select
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value as any)}
-                    className="bg-[#462B17] text-[#FAF2E4] border border-[#8C6239] rounded px-2 py-0.5 text-[11px] font-bold outline-none cursor-pointer"
-                  >
-                    <option value="asc">वर्ष: प्राचीन से नवीन (1925 ➔ 2125)</option>
-                    <option value="desc">वर्ष: नवीन से प्राचीन (2125 ➔ 1925)</option>
-                    <option value="closest">वर्तमान वर्ष (2026) के निकटतम</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick 1-Click Search Chips */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#735133]">
-                <Filter className="w-3 h-3 text-[#B56A00]" />
-                <span>लोकप्रिय त्योहारों पर एक क्लिक से 200 वर्षों का इतिहास व भविष्य खोजें:</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {quickCenturyPills.map((pill) => (
-                  <button
-                    key={pill}
-                    onClick={() => setCenturyQuery(pill)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
-                      centuryQuery === pill
-                        ? 'bg-[#5C3A21] text-[#FAF2E4] border-2 border-[#B56A00] shadow-xs'
-                        : 'bg-[#F4E8D1] hover:bg-[#E5D2B8] text-[#5C3A21] border border-[#8C6239]/30'
-                    }`}
-                  >
-                    {pill}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ------------------------------------------------------------- */}
-        {/* MODE 2: ANNUAL FESTIVALS LIST CONTROLS                        */}
-        {/* ------------------------------------------------------------- */}
-        {viewMode === 'year' && (
-          <div className="pt-1 space-y-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              {/* Year Stepper & 200-Year Dropdown */}
-              <div className="flex items-center gap-1.5 bg-[#F4E8D1] p-1 rounded-xl border border-[#8C6239]/40">
-                <button
-                  onClick={() => setSelectedYear((prev) => Math.max(1925, prev - 1))}
-                  className="px-2.5 py-1 bg-[#FAF2E4] hover:bg-white border border-[#8C6239]/30 rounded-lg text-xs font-bold text-[#5C3A21] transition cursor-pointer flex items-center gap-0.5"
-                  title="पिछला वर्ष"
-                >
-                  <ChevronLeft className="w-4 h-4 text-[#B56A00]" />
-                  <span className="hidden sm:inline">पिछला वर्ष</span>
-                </button>
-
-                {/* Dropdown for 200 years (1925 to 2125) */}
-                <div className="relative">
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number(e.target.value))}
-                    aria-label="वर्ष चुनें (Select Year)"
-                    className="bg-white border-2 border-[#B56A00] rounded-lg px-3 py-1 text-xs sm:text-sm font-black text-[#5C3A21] outline-none cursor-pointer shadow-xs"
-                  >
-                    {availableYears.map((yr) => (
-                      <option key={yr} value={yr}>
-                        वर्ष {yr} {yr === 1974 ? '(जातक जन्म)' : yr === 2026 ? '(वर्तमान)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <button
-                  onClick={() => setSelectedYear((prev) => Math.min(2125, prev + 1))}
-                  className="px-2.5 py-1 bg-[#FAF2E4] hover:bg-white border border-[#8C6239]/30 rounded-lg text-xs font-bold text-[#5C3A21] transition cursor-pointer flex items-center gap-0.5"
-                  title="अगला वर्ष"
-                >
-                  <span className="hidden sm:inline">अगला वर्ष</span>
-                  <ChevronRight className="w-4 h-4 text-[#B56A00]" />
-                </button>
-              </div>
-
-              {/* Quick Jump Milestones */}
-              <div className="flex flex-wrap items-center gap-1 text-[11px] font-bold">
-                <span className="text-[#8C6239] mr-1 hidden sm:inline">त्वरित वर्ष:</span>
-                <button
-                  onClick={() => setSelectedYear(1925)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 1925
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                  title="100 वर्ष पूर्व (1925)"
-                >
-                  1925
-                </button>
-                <button
-                  onClick={() => setSelectedYear(1974)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 1974
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                  title="जातक जन्म 1974"
-                >
-                  1974 (जन्म)
-                </button>
-                <button
-                  onClick={() => setSelectedYear(2000)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 2000
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                >
-                  2000
-                </button>
-                <button
-                  onClick={() => setSelectedYear(2025)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 2025
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                >
-                  2025
-                </button>
-                <button
-                  onClick={() => setSelectedYear(2026)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 2026
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                >
-                  2026 (आज)
-                </button>
-                <button
-                  onClick={() => setSelectedYear(2030)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 2030
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                >
-                  2030
-                </button>
-                <button
-                  onClick={() => setSelectedYear(2050)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 2050
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                >
-                  2050
-                </button>
-                <button
-                  onClick={() => setSelectedYear(2100)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 2100
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                >
-                  2100
-                </button>
-                <button
-                  onClick={() => setSelectedYear(2125)}
-                  className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                    selectedYear === 2125
-                      ? 'bg-[#B56A00] text-white'
-                      : 'bg-[#F4E8D1] hover:bg-[#E8D4B4] text-[#5C3A21] border border-[#8C6239]/30'
-                  }`}
-                  title="100 वर्ष बाद (2125)"
-                >
-                  2125
-                </button>
-              </div>
-            </div>
-
-            {/* Single Year In-Page Search */}
-            <div className="relative">
-              <Search className="w-4 h-4 text-[#8C6239] absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`वर्ष ${selectedYear} के पर्वों में खोजें (उदा. दीपावली, होली, शिवरात्रि, एकादशी)...`}
-                className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-xl pl-9 pr-3 py-2 text-xs sm:text-sm font-semibold text-[#5C3A21] placeholder:text-[#A89279] outline-none shadow-inner"
-              />
-            </div>
-
-            {/* Category Filter Chips */}
-            <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {categories.map((cat) => {
-                const isSel = selectedType === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedType(cat.id)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
-                      isSel
-                        ? 'bg-[#5C3A21] text-[#FAF2E4] shadow-xs'
-                        : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#E5D2B8] border border-[#8C6239]/30'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* 1-Click All Events Calendar Sync (.ICS) */}
-            <div className="pt-1.5">
-              <button
-                type="button"
-                onClick={handleExportFullYearToICS}
-                className="w-full py-2 px-3 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
-                title="वर्ष के सभी पर्व व व्रत अपने मोबाइल/कंप्यूटर कैलेंडर में जोड़ें"
-              >
-                <CalendarPlus className="w-4 h-4 text-[#FFD88A]" />
-                <span>वर्ष {selectedYear} के सभी {yearFestivals.length} व्रत-पर्व कैलेंडर में जोड़ें (.ics)</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ------------------------------------------------------------- */}
-      {/* MODE 0: KALNIRNAY MONTHLY WALL CALENDAR VIEW                  */}
-      {/* ------------------------------------------------------------- */}
-      {viewMode === 'kalnirnay' && (
-        <KalnirnayMonthView
-          currentDate={currentDate}
-          onDateSelect={onDateSelect}
-          onNavigateToReminders={onNavigateToReminders}
-        />
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* MODE 1 RESULTS: 200 YEARS CENTURY SEARCH RESULTS              */}
-      {/* ------------------------------------------------------------- */}
-      {viewMode === 'century' && (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-[#5C3A21] px-1 bg-[#FAF2E4] p-2 rounded-lg border border-[#8C6239]/30">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[#B56A00] font-black">✦</span>
-              <span>
-                &ldquo;{centuryQuery}&rdquo; के लिए कुल {centuryResults.length} परिणाम मिले
-              </span>
-            </div>
-            <span className="text-[#8C6239] text-[11px]">
-              {centuryRange === 'all'
-                ? 'समस्त 200 वर्ष (1925 से 2125)'
-                : centuryRange === 'past100'
-                ? 'पिछले 100 वर्ष (1925 से 2025)'
-                : 'आगामी 100 वर्ष (2026 से 2125)'}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {paginatedCenturyResults.map((res: CenturySearchResult, idx: number) => {
-              const isCurrent = res.year === 2026;
-              const isReminded = addedReminderId === res.festival.id;
-
-              return (
-                <div
-                  key={`${res.year}_${res.festival.id}_${idx}`}
-                  className={`bg-[#FAF2E4] border-2 rounded-xl p-3.5 shadow-xs transition flex flex-col justify-between ${
-                    isCurrent
-                      ? 'border-[#B56A00] bg-[#FFFBF0] ring-2 ring-[#B56A00]/40'
-                      : 'border-[#8C6239]/40 hover:border-[#8C6239]'
-                  }`}
-                >
-                  <div>
-                    {/* Header with Year badge & Type */}
-                    <div className="flex items-center justify-between gap-1.5 mb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-black bg-[#5C3A21] text-[#FAF2E4] shadow-xs">
-                          वर्ष {res.year}
-                        </span>
-                        {isCurrent && (
-                          <span className="text-[10px] font-black bg-[#B56A00] text-white px-1.5 py-0.2 rounded">
-                            वर्तमान
-                          </span>
-                        )}
-                      </div>
-
-                      <span className="text-[11px] px-2 py-0.5 rounded-md font-bold bg-[#B56A00]/15 text-[#B56A00] border border-[#B56A00]/30">
-                        {res.festival.type}
-                      </span>
-                    </div>
-
-                    {/* Festival Name */}
-                    <h3 className="font-bold font-granth text-base sm:text-lg text-[#5C3A21] leading-snug">
-                      {res.festival.hindiName}
-                    </h3>
-
-                    {/* Exact Date & Day */}
-                    <div className="text-xs font-black text-[#8B1E1E] mt-1 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-[#B56A00] shrink-0" />
-                      <span>{fmtDate(res.festival.date)}</span>
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-xs text-[#735133] mt-1.5 line-clamp-3 leading-relaxed">
-                      {res.festival.description}
-                    </p>
-                  </div>
-
-                  {/* Actions: View Panchang & Set Reminder */}
-                  <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedYear(res.year);
-                        setViewMode('year');
-                      }}
-                      className="text-[11px] font-bold text-[#B56A00] hover:underline cursor-pointer"
-                    >
-                      वर्ष {res.year} की सूची →
-                    </button>
-
-                    <div className="flex items-center gap-1">
-                      {onDateSelect && (
-                        <button
-                          onClick={() => onDateSelect(res.festival.date)}
-                          className="px-2.5 py-1 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
-                          title="इस ऐतिहासिक / भविष्य के दिन का पंचांग देखें"
-                        >
-                          <Compass className="w-3.5 h-3.5 text-[#FFD88A]" />
-                          <span>पंचांग देखें</span>
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => handleSetReminder(res.festival)}
-                        className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
-                          isReminded
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-[#F4E8D1] hover:bg-[#E5D2B8] text-[#5C3A21]'
-                        }`}
-                        title="रिमाइंडर लगाएँ"
-                      >
-                        {isReminded ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-700" />
-                        ) : (
-                          <Bell className="w-3.5 h-3.5 text-[#8C6239]" />
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => handleExportSingleToICS(res.festival)}
-                        className="p-1.5 rounded-lg text-xs bg-[#F4E8D1] hover:bg-[#E5D2B8] text-[#5C3A21] transition cursor-pointer"
-                        title="मोबाइल/गूगल कैलेंडर में जोड़ें (.ics)"
-                      >
-                        <CalendarPlus className="w-3.5 h-3.5 text-[#B56A00]" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Century Pagination Bar */}
-          {totalCenturyPages > 1 && (
-            <div className="flex items-center justify-between p-2.5 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl mt-3 shadow-xs">
-              <button
-                disabled={currentCenturyPage <= 1}
-                onClick={() => setCenturyPage((p) => Math.max(1, p - 1))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                  currentCenturyPage <= 1
-                    ? 'opacity-40 cursor-not-allowed text-[#8C6239]'
-                    : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] cursor-pointer'
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>पिछला</span>
-              </button>
-
-              <span className="text-xs font-bold text-[#5C3A21]">
-                पृष्ठ {currentCenturyPage} / {totalCenturyPages} (कुल {centuryResults.length})
-              </span>
-
-              <button
-                disabled={currentCenturyPage >= totalCenturyPages}
-                onClick={() => setCenturyPage((p) => Math.min(totalCenturyPages, p + 1))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                  currentCenturyPage >= totalCenturyPages
-                    ? 'opacity-40 cursor-not-allowed text-[#8C6239]'
-                    : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] cursor-pointer'
-                }`}
-              >
-                <span>अगला</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {centuryResults.length === 0 && (
-            <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-8 text-center text-[#735133] space-y-2">
-              <History className="w-8 h-8 text-[#B56A00] mx-auto opacity-60" />
-              <p className="text-sm font-bold text-[#5C3A21]">
-                &ldquo;{centuryQuery}&rdquo; के लिए 200 वर्षों में कोई त्योहार नहीं मिला।
-              </p>
-              <p className="text-xs text-[#735133]">
-                कृपया ऊपर दिए गए लोकप्रिय बटनों (जैसे दीपावली, होली, महाशिवरात्रि, करवा चौथ) में से किसी एक पर क्लिक करें।
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* MODE 2 RESULTS: SINGLE YEAR FESTIVALS LIST                     */}
-      {/* ------------------------------------------------------------- */}
-      {viewMode === 'year' && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold text-[#735133] px-1 bg-[#FAF2E4] p-2 rounded-lg border border-[#8C6239]/30">
-            <span>
-              वर्ष {selectedYear} के कुल {filteredYearList.length} पर्व एवं व्रत उपलब्ध हैं
-            </span>
-            <span className="text-[#B56A00]">
-              विक्रम संवत् {selectedYear + 57}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {paginatedYearList.map((item: FestivalItem) => {
-              const isReminded = addedReminderId === item.id;
-              return (
-                <div
-                  key={item.id}
-                  className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-3.5 sm:p-4 shadow-xs hover:border-[#B56A00] transition flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[11px] px-2 py-0.5 rounded-md font-bold bg-[#B56A00]/15 text-[#B56A00] border border-[#B56A00]/30">
-                          {item.type}
-                        </span>
-                        <span className="text-xs font-bold text-[#8B1E1E]">
-                          {fmtDate(item.date)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        {onDateSelect && (
-                          <button
-                            onClick={() => onDateSelect(item.date)}
-                            className="p-1.5 rounded-lg text-xs bg-[#F4E8D1] hover:bg-[#E5D2B8] text-[#5C3A21] transition cursor-pointer"
-                            title="इस दिन का पंचांग देखें"
-                          >
-                            <Compass className="w-3.5 h-3.5 text-[#B56A00]" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleSetReminder(item)}
-                          className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
-                            isReminded
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-[#F4E8D1] hover:bg-[#E5D2B8] text-[#5C3A21]'
-                          }`}
-                          title="इस पर्व के लिए रिमाइंडर लगाएँ"
-                        >
-                          {isReminded ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-700" />
-                          ) : (
-                            <Bell className="w-3.5 h-3.5 text-[#8C6239]" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleExportSingleToICS(item)}
-                          className="p-1.5 rounded-lg text-xs bg-[#F4E8D1] hover:bg-[#E5D2B8] text-[#5C3A21] transition cursor-pointer"
-                          title="मोबाइल/गूगल कैलेंडर में जोड़ें (.ics)"
-                        >
-                          <CalendarPlus className="w-3.5 h-3.5 text-[#B56A00]" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <h3 className="text-base sm:text-lg font-black font-granth text-[#5C3A21] mt-1.5">
-                      {item.hindiName}
-                    </h3>
-                    <p className="text-xs text-[#735133] mt-1 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  {isReminded && (
-                    <div className="mt-2 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded">
-                      ✓ रिमाइंडर सफलतापूर्वक सहेजा गया!
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Year Pagination Bar */}
-          {totalYearPages > 1 && (
-            <div className="flex items-center justify-between p-2.5 bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl mt-3 shadow-xs">
-              <button
-                disabled={currentYearPage <= 1}
-                onClick={() => setYearPage((p) => Math.max(1, p - 1))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                  currentYearPage <= 1
-                    ? 'opacity-40 cursor-not-allowed text-[#8C6239]'
-                    : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] cursor-pointer'
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>पिछला</span>
-              </button>
-
-              <span className="text-xs font-bold text-[#5C3A21]">
-                पृष्ठ {currentYearPage} / {totalYearPages} (कुल {filteredYearList.length})
-              </span>
-
-              <button
-                disabled={currentYearPage >= totalYearPages}
-                onClick={() => setYearPage((p) => Math.min(totalYearPages, p + 1))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                  currentYearPage >= totalYearPages
-                    ? 'opacity-40 cursor-not-allowed text-[#8C6239]'
-                    : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] cursor-pointer'
-                }`}
-              >
-                <span>अगला</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {filteredYearList.length === 0 && (
-            <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-8 text-center text-[#735133] space-y-2">
-              <Calendar className="w-8 h-8 text-[#B56A00] mx-auto opacity-60" />
-              <p className="text-sm font-bold text-[#5C3A21]">
-                वर्ष {selectedYear} में आपके खोजे गए शब्द से कोई पर्व या व्रत नहीं मिला।
-              </p>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedType('all');
-                }}
-                className="px-3 py-1.5 bg-[#5C3A21] text-[#FAF2E4] rounded-lg text-xs font-bold cursor-pointer"
-              >
-                सभी पर्व दिखाएं
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+  return (
+    <UniversalStoryDeck
+      slides={slides}
+      headerTitle={t('nav.festivals', 'पर्व व त्योहार')}
+      headerIcon="🪔"
+      chapterNumber={6}
+      currentDate={currentDate}
+      onOpenUma={onOpenUmaModal ? () => onOpenUmaModal('आगामी त्योहार व व्रत पूजन विधि') : undefined}
+      onPrevChapter={onPrevChapter}
+      onNextChapter={onNextChapter}
+      prevChapterLabel="कुण्डली"
+      nextChapterLabel="स्मृति व संकल्प"
+    />
   );
 };
+export default FestivalsView;

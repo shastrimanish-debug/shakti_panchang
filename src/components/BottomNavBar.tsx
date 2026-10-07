@@ -38,12 +38,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   return (
     <nav
       aria-label="Mobile Navigation Bar"
-      className="fixed bottom-0 left-0 right-0 w-full z-40 bg-[#FFFDF9]/98 backdrop-blur-xl border-t border-[#E8DCCB] shadow-[0_-4px_25px_rgba(92,58,33,0.08)] select-none"
+      className="relative w-full z-40 bg-[#FFFDF9]/98 backdrop-blur-xl border-t border-[#E8DCCB] shadow-[0_-2px_15px_rgba(92,58,33,0.06)] select-none shrink-0"
       style={{
-        paddingBottom: 'max(1.125rem, calc(env(safe-area-inset-bottom, 0px) + 0.65rem))',
+        paddingBottom: 'max(0.4rem, env(safe-area-inset-bottom, 0px))',
       }}
     >
-      <div className="max-w-md mx-auto flex items-center justify-between px-2 pt-1.5 h-14">
+      <div className="max-w-md mx-auto flex items-center justify-between px-2 pt-1 h-12">
         {/* Tab 1: पंचांग */}
         <button
           type="button"
