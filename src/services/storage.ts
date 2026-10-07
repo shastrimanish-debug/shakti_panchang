@@ -209,14 +209,172 @@ export function cancelSubscription(): void {
 }
 
 const STORAGE_KEY_THEME = 'shakti_app_theme_mode';
-export type AppTheme = 'bhojpatra' | 'tamra' | 'shvet';
+
+export type AppTheme =
+  | 'kesariya'
+  | 'chandan'
+  | 'peetambari'
+  | 'gangajal'
+  | 'tulsi'
+  | 'sindoor'
+  | 'swarna'
+  | 'shvet'
+  | 'bhojpatra'
+  | 'tamra';
+
+export interface DevotionalThemeInfo {
+  id: AppTheme;
+  name: string;
+  nameEn: string;
+  deity: string;
+  icon: string;
+  bgHex: string;
+  cardBgHex: string;
+  accentHex: string;
+  borderHex: string;
+  desc: string;
+  isLight: boolean;
+}
+
+export const DEVOTIONAL_THEMES: DevotionalThemeInfo[] = [
+  {
+    id: 'kesariya',
+    name: 'केसरी भगवा',
+    nameEn: 'Kesariya Bhagwa',
+    deity: 'श्री राम व हनुमान जी',
+    icon: '🚩',
+    bgHex: '#FFF8F0',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#C2410C',
+    borderHex: '#FDBA74',
+    desc: 'अयोध्या राम मंदिर व सूर्य-हनुमान दिव्य तेज',
+    isLight: true,
+  },
+  {
+    id: 'chandan',
+    name: 'श्री चन्दन',
+    nameEn: 'Shree Chandan',
+    deity: 'श्री बद्रीनाथ व जगन्नाथ',
+    icon: '🪵',
+    bgHex: '#FAF5EC',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#8C4A00',
+    borderHex: '#DFCBB5',
+    desc: 'पवित्र चन्दन तिलक व वैदिक भोजपत्र आभा',
+    isLight: true,
+  },
+  {
+    id: 'peetambari',
+    name: 'पीताम्बरी',
+    nameEn: 'Peetambari Gold',
+    deity: 'श्री हरि विष्णु व माँ बगलामुखी',
+    icon: '💛',
+    bgHex: '#FEFCE8',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#A16207',
+    borderHex: '#FDE047',
+    desc: 'पावन हरि पीताम्बर व स्वर्ण प्रभा',
+    isLight: true,
+  },
+  {
+    id: 'gangajal',
+    name: 'गंगाजल शिव',
+    nameEn: 'Gangajal Shiva',
+    deity: 'माँ गंगा व भगवान शिव',
+    icon: '🌊',
+    bgHex: '#F0FDFA',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#0F766E',
+    borderHex: '#99F6E4',
+    desc: 'हरिद्वार-ऋषिकेश पावन अमृत धारा',
+    isLight: true,
+  },
+  {
+    id: 'tulsi',
+    name: 'पावन तुलसी',
+    nameEn: 'Pawan Tulsi',
+    deity: 'श्री राधा-कृष्ण व वृन्दावन',
+    icon: '🌿',
+    bgHex: '#F4FBF4',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#15803D',
+    borderHex: '#BBF7D0',
+    desc: 'वृन्दावन कुंज व पावन तुलसीदल आभा',
+    isLight: true,
+  },
+  {
+    id: 'sindoor',
+    name: 'सिन्दूरी शक्ति',
+    nameEn: 'Sindoor Shakti',
+    deity: 'माँ दुर्गा व कामाख्या',
+    icon: '🌺',
+    bgHex: '#FFF5F5',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#BE123C',
+    borderHex: '#FECDD3',
+    desc: 'माँ जगदम्बा कुमकुम व शक्ति कृपा',
+    isLight: true,
+  },
+  {
+    id: 'swarna',
+    name: 'स्वर्ण महालक्ष्मी',
+    nameEn: 'Swarna Lakshmi',
+    deity: 'माँ महालक्ष्मी व काशी विश्वनाथ',
+    icon: '✨',
+    bgHex: '#FFFBEB',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#B45309',
+    borderHex: '#FDE68A',
+    desc: 'महालक्ष्मी समृद्धि व काशी स्वर्ण आभा',
+    isLight: true,
+  },
+  {
+    id: 'shvet',
+    name: 'श्वेत प्रकाश',
+    nameEn: 'Shvet Kailash',
+    deity: 'माँ सरस्वती व कैलास शांति',
+    icon: '🕊️',
+    bgHex: '#F8FAFC',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#334155',
+    borderHex: '#CBD5E1',
+    desc: 'धवल कैलास शांति व उच्च पठनीयता',
+    isLight: true,
+  },
+  {
+    id: 'bhojpatra',
+    name: 'भोजपत्र पाण्डुलिपि',
+    nameEn: 'Bhojpatra Parchment',
+    deity: 'महर्षि वेदव्यास व वैदिक संहिता',
+    icon: '📜',
+    bgHex: '#FAF2DE',
+    cardBgHex: '#FFFDF9',
+    accentHex: '#78350F',
+    borderHex: '#DFCBB5',
+    desc: 'प्राचीन भोजपत्र स्वर्ण पाण्डुलिपि परम्परा',
+    isLight: true,
+  },
+  {
+    id: 'tamra',
+    name: 'ताम्र-डार्क',
+    nameEn: 'Tamra Night',
+    deity: 'निशाकाल व रात्रि उपासना',
+    icon: '🌙',
+    bgHex: '#17110E',
+    cardBgHex: '#231710',
+    accentHex: '#D97706',
+    borderHex: '#78350F',
+    desc: 'पारंपरिक ताम्र कांस्य डार्क मोड',
+    isLight: false,
+  },
+];
 
 export function getStoredTheme(): AppTheme {
   try {
     const val = localStorage.getItem(STORAGE_KEY_THEME);
-    if (val === 'tamra' || val === 'bhojpatra' || val === 'shvet') return val;
+    if (val && DEVOTIONAL_THEMES.some((t) => t.id === val)) return val as AppTheme;
   } catch {}
-  return 'shvet';
+  return 'kesariya';
 }
 
 export function setStoredTheme(theme: AppTheme): void {

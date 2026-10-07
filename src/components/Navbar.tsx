@@ -32,6 +32,7 @@ interface NavbarProps {
   onToggleBookOpen?: () => void;
   theme: AppTheme;
   onToggleTheme: () => void;
+  onOpenThemeModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -47,6 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setIsAudioEnabled,
   theme,
   onToggleTheme,
+  onOpenThemeModal,
 }) => {
   const { t } = useTranslation();
   const { language, currentOption } = useLanguage();
@@ -156,17 +158,31 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* Theme Toggle Icon (Mobile & Desktop) */}
+          {/* Theme Toggle & Palette Selector Icon (Mobile & Desktop) */}
           <button
             type="button"
-            onClick={onToggleTheme}
-            className="p-1.5 rounded-xl bg-[#F5ECE0] hover:bg-[#EADBCE] border border-[#DFCBB5] text-[#5C3A21] transition cursor-pointer active:scale-90 flex items-center justify-center"
-            title="Theme Toggle"
+            onClick={onOpenThemeModal || onToggleTheme}
+            className="p-1.5 rounded-xl bg-[#F5ECE0] hover:bg-[#EADBCE] border border-[#DFCBB5] text-[#5C3A21] transition cursor-pointer active:scale-90 flex items-center justify-center shadow-xs"
+            title="पावन भक्तिमय थीम चयन (Devotional Themes)"
           >
             {theme === 'tamra' ? (
               <Moon className="w-3.5 h-3.5 text-amber-500" />
+            ) : theme === 'kesariya' ? (
+              <span className="text-xs leading-none">🚩</span>
+            ) : theme === 'chandan' ? (
+              <span className="text-xs leading-none">🪵</span>
+            ) : theme === 'peetambari' ? (
+              <span className="text-xs leading-none">💛</span>
+            ) : theme === 'gangajal' ? (
+              <span className="text-xs leading-none">🌊</span>
+            ) : theme === 'tulsi' ? (
+              <span className="text-xs leading-none">🌿</span>
+            ) : theme === 'sindoor' ? (
+              <span className="text-xs leading-none">🌺</span>
+            ) : theme === 'swarna' ? (
+              <span className="text-xs leading-none">✨</span>
             ) : theme === 'shvet' ? (
-              <Sun className="w-3.5 h-3.5 text-orange-600" />
+              <span className="text-xs leading-none">🕊️</span>
             ) : (
               <Sun className="w-3.5 h-3.5 text-[#8C4A00]" />
             )}

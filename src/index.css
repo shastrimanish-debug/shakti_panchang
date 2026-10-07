@@ -135,23 +135,244 @@
   }
 }
 
-/* Clean High-Contrast Daylight Light Theme (श्वेत प्रकाश) */
+/* ========================================================================= */
+/* 🌟 8 DEVOTIONAL LIGHT THEMES (८ पावन भक्तिमय प्रकाश थीम) */
+/* ========================================================================= */
+
+/* 1. 🚩 केसरी भगवा (Kesariya Bhagwa - Ram & Hanuman Saffron Glow) */
+.kesariya-theme {
+  background-color: #fff8f0 !important;
+  color: #2a1205 !important;
+}
+.kesariya-theme .flutter-scaffold-bg {
+  background: #fff8f0 !important;
+}
+.kesariya-theme .flutter-card,
+.kesariya-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #fed7aa !important;
+  box-shadow: 0 4px 16px -2px rgba(194, 65, 12, 0.08) !important;
+}
+.kesariya-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fed7aa 100%) !important;
+  border-color: #fb923c !important;
+}
+.kesariya-theme .bg-\[\#FAF2E4\],
+.kesariya-theme .bg-\[\#faf2de\],
+.kesariya-theme .bg-\[\#FFFBF0\],
+.kesariya-theme .bg-\[\#F4E8D1\],
+.kesariya-theme .bg-\[\#F6EBD4\] {
+  background-color: #ffedd5 !important;
+  color: #431407 !important;
+}
+.kesariya-theme .text-\[\#5C3A21\],
+.kesariya-theme .text-\[\#2C1810\],
+.kesariya-theme .text-\[\#2c1810\],
+.kesariya-theme .text-\[\#3E2714\],
+.kesariya-theme .text-\[\#462B17\] {
+  color: #7c2d12 !important;
+}
+.kesariya-theme .text-\[\#8C4A00\],
+.kesariya-theme .text-\[\#B56A00\] {
+  color: #ea580c !important;
+}
+.kesariya-theme .border-\[\#8C6239\]\/30,
+.kesariya-theme .border-\[\#8C6239\]\/40,
+.kesariya-theme .border-\[\#DFCBB5\],
+.kesariya-theme .border-\[\#EADBCC\] {
+  border-color: #fed7aa !important;
+}
+
+/* 2. 🪵 श्री चन्दन (Shree Chandan - Sandalwood Sacred Bark) */
+.chandan-theme {
+  background-color: #faf5ec !important;
+  color: #2c180c !important;
+}
+.chandan-theme .flutter-scaffold-bg {
+  background: #faf5ec !important;
+}
+.chandan-theme .flutter-card,
+.chandan-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #dfcbb5 !important;
+  box-shadow: 0 4px 16px -2px rgba(92, 58, 33, 0.08) !important;
+}
+.chandan-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fff9ee 0%, #fff2db 50%, #ffe9bf 100%) !important;
+  border-color: #f0cfa7 !important;
+}
+
+/* 3. 💛 पीताम्बरी (Peetambari - Vishnu Gold & Turmeric Light) */
+.peetambari-theme {
+  background-color: #fefce8 !important;
+  color: #3b2005 !important;
+}
+.peetambari-theme .flutter-scaffold-bg {
+  background: #fefce8 !important;
+}
+.peetambari-theme .flutter-card,
+.peetambari-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #fde047 !important;
+  box-shadow: 0 4px 16px -2px rgba(161, 98, 7, 0.08) !important;
+}
+.peetambari-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fefce8 0%, #fef08a 50%, #fde047 100%) !important;
+  border-color: #eab308 !important;
+}
+.peetambari-theme .bg-\[\#FAF2E4\],
+.peetambari-theme .bg-\[\#faf2de\],
+.peetambari-theme .bg-\[\#FFFBF0\] {
+  background-color: #fef9c3 !important;
+  color: #422006 !important;
+}
+.peetambari-theme .text-\[\#8C4A00\],
+.peetambari-theme .text-\[\#B56A00\] {
+  color: #ca8a04 !important;
+}
+
+/* 4. 🌊 गंगाजल शिव (Gangajal Shiva - Celestial Aqua Light) */
+.gangajal-theme {
+  background-color: #f0fdfa !important;
+  color: #042f2c !important;
+}
+.gangajal-theme .flutter-scaffold-bg {
+  background: #f0fdfa !important;
+}
+.gangajal-theme .flutter-card,
+.gangajal-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #99f6e4 !important;
+  box-shadow: 0 4px 16px -2px rgba(15, 118, 110, 0.08) !important;
+}
+.gangajal-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%) !important;
+  border-color: #2dd4bf !important;
+}
+.gangajal-theme .bg-\[\#FAF2E4\],
+.gangajal-theme .bg-\[\#faf2de\],
+.gangajal-theme .bg-\[\#FFFBF0\] {
+  background-color: #ccfbf1 !important;
+  color: #115e59 !important;
+}
+.gangajal-theme .text-\[\#5C3A21\],
+.gangajal-theme .text-\[\#2C1810\] {
+  color: #134e4a !important;
+}
+.gangajal-theme .text-\[\#8C4A00\],
+.gangajal-theme .text-\[\#B56A00\] {
+  color: #0f766e !important;
+}
+
+/* 5. 🌿 पावन तुलसी (Pawan Tulsi - Vrindavan Herbal Green Light) */
+.tulsi-theme {
+  background-color: #f4fbf4 !important;
+  color: #052e16 !important;
+}
+.tulsi-theme .flutter-scaffold-bg {
+  background: #f4fbf4 !important;
+}
+.tulsi-theme .flutter-card,
+.tulsi-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #bbf7d0 !important;
+  box-shadow: 0 4px 16px -2px rgba(21, 128, 61, 0.08) !important;
+}
+.tulsi-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%) !important;
+  border-color: #4ade80 !important;
+}
+.tulsi-theme .bg-\[\#FAF2E4\],
+.tulsi-theme .bg-\[\#faf2de\],
+.tulsi-theme .bg-\[\#FFFBF0\] {
+  background-color: #dcfce7 !important;
+  color: #14532d !important;
+}
+.tulsi-theme .text-\[\#5C3A21\],
+.tulsi-theme .text-\[\#2C1810\] {
+  color: #166534 !important;
+}
+.tulsi-theme .text-\[\#8C4A00\],
+.tulsi-theme .text-\[\#B56A00\] {
+  color: #15803d !important;
+}
+
+/* 6. 🌺 सिन्दूरी शक्ति (Sindoor Shakti - Divine Devi Rose Blush Light) */
+.sindoor-theme {
+  background-color: #fff5f5 !important;
+  color: #4c0519 !important;
+}
+.sindoor-theme .flutter-scaffold-bg {
+  background: #fff5f5 !important;
+}
+.sindoor-theme .flutter-card,
+.sindoor-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #fecdd3 !important;
+  box-shadow: 0 4px 16px -2px rgba(190, 18, 60, 0.08) !important;
+}
+.sindoor-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 50%, #fecdd3 100%) !important;
+  border-color: #fb7185 !important;
+}
+.sindoor-theme .bg-\[\#FAF2E4\],
+.sindoor-theme .bg-\[\#faf2de\],
+.sindoor-theme .bg-\[\#FFFBF0\] {
+  background-color: #ffe4e6 !important;
+  color: #881337 !important;
+}
+.sindoor-theme .text-\[\#5C3A21\],
+.sindoor-theme .text-\[\#2C1810\] {
+  color: #9f1239 !important;
+}
+.sindoor-theme .text-\[\#8C4A00\],
+.sindoor-theme .text-\[\#B56A00\] {
+  color: #e11d48 !important;
+}
+
+/* 7. ✨ स्वर्ण महालक्ष्मी (Swarna Lakshmi - Rich Honey Gold Light) */
+.swarna-theme {
+  background-color: #fffbeb !important;
+  color: #451a03 !important;
+}
+.swarna-theme .flutter-scaffold-bg {
+  background: #fffbeb !important;
+}
+.swarna-theme .flutter-card,
+.swarna-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #fde68a !important;
+  box-shadow: 0 4px 16px -2px rgba(180, 83, 9, 0.08) !important;
+}
+.swarna-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%) !important;
+  border-color: #f59e0b !important;
+}
+.swarna-theme .bg-\[\#FAF2E4\],
+.swarna-theme .bg-\[\#faf2de\],
+.swarna-theme .bg-\[\#FFFBF0\] {
+  background-color: #fef3c7 !important;
+  color: #78350f !important;
+}
+.swarna-theme .text-\[\#8C4A00\],
+.swarna-theme .text-\[\#B56A00\] {
+  color: #d97706 !important;
+}
+
+/* 8. 🕊️ श्वेत प्रकाश (Shvet Kailash - Pure Pearl White) */
 .shvet-theme {
   background-color: #f8fafc !important;
   color: #0f172a !important;
 }
-
 .shvet-theme .flutter-scaffold-bg {
   background: #f8fafc !important;
 }
-
 .shvet-theme .flutter-card,
 .shvet-theme .flutter-card-elevated {
   background: #ffffff !important;
   border-color: #cbd5e1 !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
 }
-
 .shvet-theme .bg-\[\#FAF2E4\],
 .shvet-theme .bg-\[\#faf2de\],
 .shvet-theme .bg-\[\#FFFBF0\],
@@ -160,7 +381,6 @@
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
 }
-
 .shvet-theme .text-\[\#5C3A21\],
 .shvet-theme .text-\[\#2C1810\],
 .shvet-theme .text-\[\#2c1810\],
@@ -168,12 +388,10 @@
 .shvet-theme .text-\[\#462B17\] {
   color: #0f172a !important;
 }
-
 .shvet-theme .text-\[\#735133\],
 .shvet-theme .text-\[\#8C6239\] {
   color: #334155 !important;
 }
-
 .shvet-theme .border-\[\#8C6239\]\/30,
 .shvet-theme .border-\[\#8C6239\]\/40,
 .shvet-theme .border-\[\#8C6239\]\/20,
@@ -181,66 +399,99 @@
 .shvet-theme .border-\[\#EADBCC\] {
   border-color: #cbd5e1 !important;
 }
-
 .shvet-theme .text-\[\#8C4A00\],
 .shvet-theme .text-\[\#B56A00\] {
   color: #c2410c !important;
 }
-
 .shvet-theme .bg-\[\#FBF0DD\] {
   background-color: #ffedd5 !important;
 }
-
 .shvet-theme nav {
   background-color: rgba(255, 255, 255, 0.98) !important;
   border-color: #cbd5e1 !important;
 }
 
-/* Night / Bronze Theme */
+/* 9. 📜 भोजपत्र पार्चमेंट (Bhojpatra Ancient Manuscript Light) */
+.bhojpatra-theme {
+  background-color: #faf2de !important;
+  color: #2c1810 !important;
+}
+.bhojpatra-theme .flutter-scaffold-bg {
+  background: #faf2de !important;
+}
+.bhojpatra-theme .flutter-card,
+.bhojpatra-theme .flutter-card-elevated {
+  background: #fffdf9 !important;
+  border-color: #dfcbb5 !important;
+  box-shadow: 0 4px 16px -2px rgba(92, 58, 33, 0.08) !important;
+}
+.bhojpatra-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fffdf9 0%, #fbf0dc 50%, #f5e4c6 100%) !important;
+  border-color: #d8b688 !important;
+}
+.bhojpatra-theme .bg-\[\#FAF2E4\],
+.bhojpatra-theme .bg-\[\#faf2de\],
+.bhojpatra-theme .bg-\[\#FFFBF0\],
+.bhojpatra-theme .bg-\[\#F4E8D1\],
+.bhojpatra-theme .bg-\[\#F6EBD4\] {
+  background-color: #f4e8d1 !important;
+  color: #462b17 !important;
+}
+.bhojpatra-theme .text-\[\#5C3A21\],
+.bhojpatra-theme .text-\[\#2C1810\],
+.bhojpatra-theme .text-\[\#2c1810\],
+.bhojpatra-theme .text-\[\#3E2714\],
+.bhojpatra-theme .text-\[\#462B17\] {
+  color: #5c3a21 !important;
+}
+.bhojpatra-theme .text-\[\#8C4A00\],
+.bhojpatra-theme .text-\[\#B56A00\] {
+  color: #8c4a00 !important;
+}
+.bhojpatra-theme .border-\[\#8C6239\]\/30,
+.bhojpatra-theme .border-\[\#8C6239\]\/40,
+.bhojpatra-theme .border-\[\#DFCBB5\],
+.bhojpatra-theme .border-\[\#EADBCC\] {
+  border-color: #dfcbb5 !important;
+}
+
+/* 10. 🌙 ताम्र-डार्क (Night / Bronze Dark Theme) */
 .tamra-theme {
   background-color: #17110e !important;
   color: #f7ebd0 !important;
 }
-
 .tamra-theme .flutter-scaffold-bg {
   background: radial-gradient(circle at 50% 0%, #2A1A12 0%, #1D120B 50%, #120A06 100%) !important;
 }
-
 .tamra-theme .flutter-card {
   background: rgba(36, 25, 19, 0.92) !important;
   border-color: rgba(184, 122, 60, 0.25) !important;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
 }
-
 .tamra-theme .flutter-card-elevated {
   background: #231710 !important;
   border-color: rgba(184, 122, 60, 0.3) !important;
 }
-
 .tamra-theme .bg-\[\#FAF2E4\],
 .tamra-theme .bg-\[\#faf2de\],
 .tamra-theme .bg-\[\#FFFBF0\] {
   background-color: #241913 !important;
   color: #f5e8d0 !important;
 }
-
 .tamra-theme .bg-\[\#F4E8D1\],
 .tamra-theme .bg-\[\#F6EBD4\] {
   background-color: #2e2018 !important;
   color: #faeedb !important;
 }
-
 .tamra-theme .text-\[\#5C3A21\],
 .tamra-theme .text-\[\#2C1810\],
 .tamra-theme .text-\[\#2c1810\] {
   color: #faeedb !important;
 }
-
 .tamra-theme .text-\[\#735133\],
 .tamra-theme .text-\[\#8C6239\] {
   color: #d8b688 !important;
 }
-
 .tamra-theme .border-\[\#8C6239\]\/30,
 .tamra-theme .border-\[\#8C6239\]\/40,
 .tamra-theme .border-\[\#8C6239\]\/20 {

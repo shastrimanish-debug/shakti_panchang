@@ -105,7 +105,7 @@ define(['./workbox-afac4cd2'], (function (workbox) { 'use strict';
     "revision": "da1ef67b5e4c6149fbf5eb01c0643209"
   }, {
     "url": "index.html",
-    "revision": "687a4f51d3732f1baedce8faa0a939bf"
+    "revision": "a11c11f3413fdb609bc59e836d47cabc"
   }, {
     "url": "icon-512.png",
     "revision": "05a9b6942636510d060420468cd18b1a"
@@ -125,31 +125,31 @@ define(['./workbox-afac4cd2'], (function (workbox) { 'use strict';
     "url": "assets/vendor-DK8IkU_w.js",
     "revision": null
   }, {
-    "url": "assets/pwa-toast.entry-CS0bmsps.js",
+    "url": "assets/pwa-toast.entry-DuO3pLSi.js",
     "revision": null
   }, {
-    "url": "assets/pwa-camera.entry-BPDseimW.js",
+    "url": "assets/pwa-camera.entry-DGLbqWp8.js",
     "revision": null
   }, {
-    "url": "assets/pwa-camera-modal.entry-DtsLhFtm.js",
+    "url": "assets/pwa-camera-modal.entry-DrHLk7iD.js",
     "revision": null
   }, {
-    "url": "assets/pwa-camera-modal-instance.entry-DF-GvBYR.js",
+    "url": "assets/pwa-camera-modal-instance.entry-9a89L7d3.js",
     "revision": null
   }, {
-    "url": "assets/pwa-action-sheet.entry-Ca_JHQet.js",
+    "url": "assets/pwa-action-sheet.entry-BARaC0NV.js",
     "revision": null
   }, {
     "url": "assets/purify.es-CYR4BTuT.js",
     "revision": null
   }, {
-    "url": "assets/index.es-xF9mNl--.js",
+    "url": "assets/index.es-BlW59frf.js",
     "revision": null
   }, {
-    "url": "assets/index-xcZh58BA.js",
+    "url": "assets/index-tZsd5Tg6.css",
     "revision": null
   }, {
-    "url": "assets/index-WABexvbE.css",
+    "url": "assets/index-DY-HZOyi.js",
     "revision": null
   }, {
     "url": "assets/html2canvas.esm-QH1iLAAe.js",

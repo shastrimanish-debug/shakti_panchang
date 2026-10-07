@@ -24,7 +24,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { SavedLocation } from '../types';
-import { AppTheme, getAstrologerBranding } from '../services/storage';
+import { AppTheme, DEVOTIONAL_THEMES, getAstrologerBranding } from '../services/storage';
 import { useLicense } from '../lib/license-client';
 import { useLanguage } from '../i18n';
 
@@ -43,6 +43,7 @@ interface MoreMenuModalProps {
   theme: AppTheme;
   onToggleTheme: () => void;
   onSetTheme?: (theme: AppTheme) => void;
+  onOpenThemeModal?: () => void;
   isAudioEnabled: boolean;
   onToggleAudio: () => void;
 }
@@ -62,6 +63,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   theme,
   onToggleTheme,
   onSetTheme,
+  onOpenThemeModal,
   isAudioEnabled,
   onToggleAudio,
 }) => {
@@ -532,50 +534,83 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </button>
           </div>
 
-          <div className="py-2 border-t border-[#8C6239]/20">
+          <div className="py-2.5 border-t border-[#8C6239]/20">
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="flex items-center gap-1.5 font-bold text-[#5C3A21] dark:text-[#FAF2E4]">
-                {theme === 'tamra' ? (
-                  <Moon className="w-3.5 h-3.5 text-amber-500" />
-                ) : (
-                  <Sun className="w-3.5 h-3.5 text-amber-600" />
-                )}
-                {t('more.themeSection', 'थीम चयन (स्पष्ट पठन):')}
+                <Sun className="w-3.5 h-3.5 text-amber-600" />
+                <span>{t('more.themeSection', 'पावन भक्तिमय प्रकाश थीम (8+ Themes)')}:</span>
               </span>
+              {onOpenThemeModal && (
+                <button
+                  type="button"
+                  onClick={() => handleAction(onOpenThemeModal)}
+                  className="text-[11px] font-black text-[#B56A00] dark:text-amber-400 hover:underline cursor-pointer flex items-center gap-0.5"
+                >
+                  <span>{t('themes.allThemesBtn', 'सभी थीम देखें')} →</span>
+                </button>
+              )}
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
+
+            {/* Quick 8 Devotional Light Themes Horizontal / Grid Swatches */}
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              {DEVOTIONAL_THEMES.filter((t) => t.isLight).slice(0, 8).map((thm) => {
+                const isSelected = theme === thm.id;
+                return (
+                  <button
+                    key={thm.id}
+                    type="button"
+                    onClick={() => onSetTheme?.(thm.id)}
+                    className={`p-1.5 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-0.5 relative active:scale-95 ${
+                      isSelected
+                        ? 'ring-2 ring-amber-500 shadow-xs font-black'
+                        : 'border-[#8C6239]/30 hover:border-amber-400 opacity-90'
+                    }`}
+                    style={{
+                      backgroundColor: thm.bgHex,
+                      borderColor: isSelected ? thm.accentHex : thm.borderHex,
+                    }}
+                    title={`${thm.name} (${thm.deity})`}
+                  >
+                    <span className="text-sm leading-none">{thm.icon}</span>
+                    <span
+                      className="text-[9px] font-bold truncate max-w-full leading-tight"
+                      style={{ color: thm.accentHex }}
+                    >
+                      {thm.name.split(' ')[0]}
+                    </span>
+                    {isSelected && (
+                      <span
+                        className="w-1.5 h-1.5 rounded-full absolute top-1 right-1"
+                        style={{ backgroundColor: thm.accentHex }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick 2-button row: Full Theme Palette + Night Mode */}
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 type="button"
-                onClick={() => onSetTheme ? onSetTheme('shvet') : onToggleTheme()}
-                className={`py-1.5 px-2 rounded-xl text-center text-xs font-bold transition border cursor-pointer ${
-                  theme === 'shvet'
-                    ? 'bg-[#EA580C] text-white border-[#C2410C] shadow-xs'
-                    : 'bg-[#FAF2E4] dark:bg-stone-800 text-[#5C3A21] dark:text-[#FAF2E4] border-[#8C6239]/30 hover:border-amber-500'
-                }`}
+                onClick={() => handleAction(onOpenThemeModal)}
+                className="py-1.5 px-2.5 rounded-xl text-center text-[11px] font-black transition border cursor-pointer bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-[#8C4A00] dark:text-amber-300 border-amber-400/50 hover:bg-amber-500/30 flex items-center justify-center gap-1.5"
               >
-                ☀️ {t('more.themeShvet', 'स्वच्छ प्रकाश')}
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>{t('themes.customizeThemes', '८ पावन रंग चयन')}</span>
               </button>
+
               <button
                 type="button"
-                onClick={() => onSetTheme ? onSetTheme('bhojpatra') : onToggleTheme()}
-                className={`py-1.5 px-2 rounded-xl text-center text-xs font-bold transition border cursor-pointer ${
-                  theme === 'bhojpatra'
-                    ? 'bg-[#8C6239] text-white border-[#5C3A21] shadow-xs'
-                    : 'bg-[#FAF2E4] dark:bg-stone-800 text-[#5C3A21] dark:text-[#FAF2E4] border-[#8C6239]/30 hover:border-amber-500'
-                }`}
-              >
-                📜 {t('more.themeBhojpatra', 'भोजपत्र')}
-              </button>
-              <button
-                type="button"
-                onClick={() => onSetTheme ? onSetTheme('tamra') : onToggleTheme()}
-                className={`py-1.5 px-2 rounded-xl text-center text-xs font-bold transition border cursor-pointer ${
+                onClick={() => (onSetTheme ? onSetTheme(theme === 'tamra' ? 'kesariya' : 'tamra') : onToggleTheme())}
+                className={`py-1.5 px-2.5 rounded-xl text-center text-[11px] font-bold transition border cursor-pointer flex items-center justify-center gap-1.5 ${
                   theme === 'tamra'
                     ? 'bg-[#B45309] text-white border-[#78350F] shadow-xs'
                     : 'bg-[#FAF2E4] dark:bg-stone-800 text-[#5C3A21] dark:text-[#FAF2E4] border-[#8C6239]/30 hover:border-amber-500'
                 }`}
               >
-                🌙 {t('more.themeTamra', 'ताम्र-डार्क')}
+                <Moon className="w-3.5 h-3.5 text-amber-500" />
+                <span>{theme === 'tamra' ? t('more.themeTamraActive', 'ताम्र-डार्क सक्रिय') : t('more.themeTamra', 'ताम्र-डार्क')}</span>
               </button>
             </div>
           </div>

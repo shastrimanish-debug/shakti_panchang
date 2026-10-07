@@ -35,6 +35,7 @@ import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
 import { BottomNavBar } from './components/BottomNavBar';
 import { MoreMenuModal } from './components/MoreMenuModal';
+import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { useLicense } from './lib/license-client';
@@ -98,26 +99,40 @@ export function App() {
   // Book open/closed state (true: showing Panchang content directly on startup)
   const [isBookOpen, setIsBookOpen] = useState<boolean>(true);
   const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
 
-  // Apply Theme (Shvet-Clean Light, Tamra-Ratri Dark, or Bhojpatra Parchment)
+  // Apply Devotional Light Theme or Ratri Dark Theme across document
   useEffect(() => {
     setStoredTheme(theme);
     if (typeof document !== 'undefined') {
-      document.body.classList.remove('tamra-theme', 'shvet-theme');
+      const allThemeClasses = [
+        'kesariya-theme',
+        'chandan-theme',
+        'peetambari-theme',
+        'gangajal-theme',
+        'tulsi-theme',
+        'sindoor-theme',
+        'swarna-theme',
+        'shvet-theme',
+        'bhojpatra-theme',
+        'tamra-theme',
+        'dark',
+      ];
+      document.body.classList.remove(...allThemeClasses);
+      document.documentElement.classList.remove('dark');
+
+      const themeClass = `${theme}-theme`;
+      document.body.classList.add(themeClass);
+
       if (theme === 'tamra') {
-        document.body.classList.add('tamra-theme');
-      } else if (theme === 'shvet') {
-        document.body.classList.add('shvet-theme');
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
       }
     }
   }, [theme]);
 
   const handleToggleTheme = () => {
-    setTheme((prev) => {
-      if (prev === 'shvet') return 'tamra';
-      if (prev === 'tamra') return 'bhojpatra';
-      return 'shvet';
-    });
+    setIsThemeModalOpen(true);
   };
 
   // Modals state
@@ -357,6 +372,7 @@ export function App() {
           }}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+          onOpenThemeModal={() => setIsThemeModalOpen(true)}
         />
 
         {licenseStatus.kind === "trial" && (
@@ -693,8 +709,20 @@ export function App() {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         onSetTheme={setTheme}
+        onOpenThemeModal={() => setIsThemeModalOpen(true)}
         isAudioEnabled={isAudioEnabled}
         onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
+      />
+
+      {/* Devotional Light & Ratri Theme Selector Modal (8+ Themes) */}
+      <ThemeSelectorModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+        activeTheme={theme}
+        onSelectTheme={(newTheme) => {
+          setTheme(newTheme);
+          setIsThemeModalOpen(false);
+        }}
       />
 
       {/* Language Selector Modal (10+ Languages) */}
