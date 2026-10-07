@@ -33,7 +33,42 @@ export interface AskUmaResponse {
 }
 
 export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
-  const { query, panchang, activeKundali } = params;
+  const { query, panchang, activeKundali, panchangContext, kundaliContext, chatHistory, systemPrompt } = params;
+
+  // Try Gemini AI consultation proxy first
+  try {
+    const lic = getLicenseStatus();
+    const resp = await fetch("/api/uma/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-license-token": lic.token,
+      },
+      body: JSON.stringify({
+        query,
+        panchangContext,
+        kundaliContext,
+        chatHistory,
+        systemPrompt,
+        licenseToken: lic.token,
+      }),
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.ok && data.text) {
+        return {
+          ok: true,
+          text: data.text,
+          source: "gemini",
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Backend /api/uma/chat call failed, switching to local Vedic engine:", err);
+  }
+
+  // Fallback to local offline Vedic astrology engine
   const localRes = await generateUma({ query, kundali: activeKundali, panchang });
   return {
     ok: localRes.ok,
@@ -74,32 +109,32 @@ function chartAnswer(kundali: KundaliData, query: string, panchang?: VedicPancha
     sadeLine = planetLine(saturn);
   }
 
-  const head = `॥ ॐ श्री गणेशाय नमः ॥\n${kundali.name} जी, लग्न ${kundali.lagnaRashi}, चंद्र ${kundali.moonRashi} (${kundali.nakshatra}), महादशा ${kundali.mahadasha}, अंतरदशा ${kundali.antardasha}।`;
-  const today = panchang ? `\nआज ${panchang.weekday}, ${panchang.tithi}, नक्षत्र ${panchang.nakshatra}।` : "";
+  const head = `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${kundali.name} जी।\n\nआपकी पत्रिका (लग्न: ${kundali.lagnaRashi}, चंद्र राशि: ${kundali.moonRashi}, नक्षत्र: ${kundali.nakshatra}, वर्तमान महादशा: ${kundali.mahadasha}, अंतर्दशा: ${kundali.antardasha}) का सूक्ष्म अध्ययन करने पर:`;
+  const today = panchang ? `\nआज ${panchang.weekday}, ${panchang.tithi}, नक्षत्र ${panchang.nakshatra} का गोचर प्रभाव भी सक्रिय है।` : "";
 
-  if (/नौकरी|करियर|व्यापार|काम|धंधा|job|career/.test(q)) {
-    return `${head}${today}\n\nकर्म भाव (दसवाँ) में: ${occupants(kundali, 10)}।\n${planetLine(sun)}\n${planetLine(saturn)}\n${planetLine(mercury)}\n${planetLine(jupiter)}\n\nदशा ${kundali.mahadasha}/${kundali.antardasha} इसी कर्मफल को अभी खोल रही है।`;
+  if (/नौकरी|करियर|व्यापार|काम|धंधा|job|career|business/.test(q)) {
+    return `${head}${today}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nकर्म भाव (दशम) में ${occupants(kundali, 10)} की स्थिति और वर्तमान ${kundali.mahadasha} महादशा के कारण पिछले कुछ समय से कार्यक्षेत्र में परिश्रम की तुलना में फल मिलने में विलंब या अनिश्चितता का अनुभव हुआ है। मानसिक रूप से जिम्मेदारियों का भारी दबाव रहा है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी ६ से १२ महीनों में गोचर ग्रह आपके दशम और एकादश भाव पर अनुकूल दृष्टि डालेंगे। विशेषकर अंतर्दशा के परिवर्तन के साथ नए अवसर, पदोन्नति या व्यवसाय में नए संपर्क स्थापित होंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nआपके दशमेश व कर्म कारक ग्रह के बलवर्धन हेतु: बुधवार की सांध्यवेला में किसी जरूरतमंद विद्यार्थी या कन्या को हरी मूंग की दाल अथवा हरे फल का दान करें, तथा नित्य प्रातः ॐ नमो भगवते वासुदेवाय का २१ बार जप करें।`;
   }
-  if (/शादी|विवाह|दांपत्य|पति|पत्नी|प्रेम|मिलान/.test(q)) {
-    return `${head}\n\nसप्तम भाव में: ${occupants(kundali, 7)}।\n${planetLine(venus)}\n${planetLine(jupiter)}\nमांगलिक: ${kundali.isManglik ? `हाँ। ${kundali.manglikDescription || "मंगल दोष की शांति करें।"}` : "स्पष्ट मांगलिक दोष नहीं दिखता।"}`;
+  if (/शादी|विवाह|दांपत्य|पति|पत्नी|प्रेम|मिलान|marriage|love/.test(q)) {
+    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nसप्तम भाव में ${occupants(kundali, 7)} की स्थिति और शुक्र/गुरु के प्रभाव से रिश्तों में संवाद की कमी या अपेक्षाओं का असंतुलन बना रहा है। ${kundali.isManglik ? "मंगल की विशेष स्थिति के कारण स्वभाव में उग्रता या वैचारिक मतभेद उभरे हैं।" : "दशा के प्रभाव से संबंध में मानसिक खिंचाव रहा है।"}\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी महीनों में गुरु का शुभ गोचर सप्तम भाव को संबल देगा। विवाह योग्य जातकों के लिए शीघ्र ही योग्य प्रस्ताव व दांपत्य में सामंजस्य की स्थिति बनेगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nसप्तम भाव की शांति हेतु: शुक्रवार के दिन सायंकाल घी का दीपक जलाकर माँ लक्ष्मी के समक्ष श्वेत पुष्प अर्पित करें और किसी सुहागिन महिला को मिश्री व सफेद वस्त्र/खीर का दान दें।`;
   }
-  if (/पैसा|धन|ऋण|लोन/.test(q)) {
-    return `${head}\n\nद्वितीय भाव में: ${occupants(kundali, 2)}। एकादश भाव में: ${occupants(kundali, 11)}।\n${planetLine(jupiter)}\n${planetLine(venus)}`;
+  if (/पैसा|धन|ऋण|लोन|money|finance|wealth/.test(q)) {
+    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nद्वितीय (धन) भाव में ${occupants(kundali, 2)} एवं एकादश (लाभ) भाव में ${occupants(kundali, 11)} की स्थिति दर्शाती है कि आय के साधन बने रहने के बावजूद अप्रत्याशित पारिवारिक या आकस्मिक खर्चों के कारण बचत में रुकावट आई है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी ६ माह में धन के नए स्रोत खुलेंगे। रुका हुआ धन धीरे-धीरे प्राप्त होने लगेगा और ऋण के दबाव में कमी आएगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nधन संचय हेतु: गुरुवार के दिन प्रातः स्नान के जल में एक चुटकी हल्दी डालकर स्नान करें, और बेसन के २ लड्डू किसी वृद्ध ब्राह्मण या गौमाता को अर्पित करें।`;
   }
-  if (/सेहत|स्वास्थ्य|बीमार|रोग/.test(q)) {
-    return `${head}\n\nषष्ठ भाव में: ${occupants(kundali, 6)}। अष्टम में: ${occupants(kundali, 8)}।\n${planetLine(moon)}\n${planetLine(sun)}\n${sadeLine}\n\nयह चिकित्सा नहीं है। दशा में शरीर वाला भाव कमजोर हो तो जाँच कराएँ।`;
+  if (/सेहत|स्वास्थ्य|बीमार|रोग|health/.test(q)) {
+    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\nषष्ठ भाव में ${occupants(kundali, 6)} एवं अष्टम में ${occupants(kundali, 8)} की स्थिति तथा ${sadeLine} के कारण मानसिक तनाव, अनिद्रा अथवा पाचन/वात जनित शिथिलता का अनुभव रहा है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nदशा में शुभ ग्रह के प्रत्यंतर प्रवेश से स्वास्थ्य में सुधार होगा। ऊर्जा और स्फूर्ति में वृद्धि होगी।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nआरोग्य रक्षा हेतु: सोमवार के दिन तांबे के लोटे में जल व दुर्वा डालकर भगवान शिव को 'ॐ जूं सः' मंत्र का ११ बार जप करते हुए अर्पित करें।`;
   }
-  if (/शनि|साढ़े|ढैया/.test(q)) {
-    return `${head}\n${sadeLine}\n${planetLine(saturn)}\nउपाय: शनिवार को तिल का दीप और हनुमान चालीसा।`;
+  if (/शनि|साढ़े|ढैया|shani|sade|dhaiya/.test(q)) {
+    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\n${sadeLine}\n${planetLine(saturn)}। पिछले समय में कार्यों में विलंब, मानसिक बेचैनी व अत्यधिक श्रम की अनुभूति रही है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nशनि देव न्यायप्रिय हैं; आगामी महीनों में आपके धैर्य का फल मिलना प्रारंभ होगा। रुका हुआ कार्य धीरे-धीरे गति पकड़ेगा।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nशनिवार की संध्या को काले तिल व सरसों के तेल का दीपक पीपल वृक्ष के नीचे प्रज्वलित करें, एवं किसी दिव्यांग या असहाय व्यक्ति को तिल-गुड़ या भोजन अर्पित करें।`;
   }
-  if (/मंगल|मांगलिक/.test(q)) {
-    return `${head}\n${planetLine(mars)}\n${kundali.isManglik ? `मांगलिक स्थिति है। ${kundali.manglikDescription || ""}` : "जन्म पत्रिका में मांगलिक दोष अंकित नहीं है।"}\nहनुमान उपासना इस ग्रह का सीधा उपाय है।`;
+  if (/मंगल|मांगलिक|manglik|mars/.test(q)) {
+    return `${head}\n\n**१. वर्तमान व हालिया स्थिति (Past & Present Insights):**\n${planetLine(mars)}। ${kundali.isManglik ? `आपकी पत्रिका में मांगलिक योग सक्रिय है (${kundali.manglikDescription || "प्रथम/चतुर्थ/सप्तम/अष्टम/द्वादश भाव में मंगल"})। इसके प्रभाव से स्वभाव में शीघ्र उत्तेजना, अधीरता या संबंधों में तीक्ष्णता का अनुभव रहा है।` : "जन्म पत्रिका में अमंगल दोष नहीं है, परंतु मंगल के तेज से कार्यों में उतावलापन रहा है।"}\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nआगामी गोचर में मंगल का बल आपको साहस व निर्णय शक्ति देगा। भूमि, भवन व तकनीकी कार्यों में सफलता के मार्ग प्रशस्त होंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nमंगल शांति व सामंजस्य हेतु: मंगलवार के दिन तंदूर की मीठी रोटी या गुड़-चना बंदरों/लाल गाय को खिलाएं और मस्तक पर नित्य लाल चंदन या केसर का तिलक लगाएं।`;
   }
 
   const graha = (kundali.planets || [])
     .map((p) => `${p.planet}: ${p.rashi}, भाव ${p.house}${p.isRetrograde ? ", वक्री" : ""}`)
     .join("\n");
-  return `${head}${today}\n\n${sadeLine}\n\nग्रह स्थिति:\n${graha}\n\nपूछें: नौकरी, विवाह, धन, स्वास्थ्य, शनि या मंगल। उत्तर इसी पत्रिका से होगा।`;
+  return `${head}${today}\n\n**१. वर्तमान दशा व हालिया स्थिति (Past & Present Insights):**\nआपकी पत्रिका में ${kundali.mahadasha} महादशा एवं ${kundali.antardasha} अंतर्दशा प्रभावी है। हाल के समय में जीवन में बड़े परिवर्तनों और वैचारिक मंथन का दौर रहा है।\n\n**२. आगामी मार्ग (Next 6–12 Months Path):**\nग्रह गोचर के अनुसार आगामी ६ से १२ महीने आपके आत्मबल और कर्मक्षेत्र में नई दिशा निर्धारित करेंगे।\n\n**३. सूक्ष्म शास्त्रोक्त उपाय (Micro-Remedy):**\nअपने लग्न के अधिपति ग्रह के बलवर्धन हेतु: नित्य प्रातः सूर्य देव को तांबे के पात्र से कुमकुम व अक्षत मिश्रित जल अर्पित करें और 'ॐ नमो भगवते वासुदेवाय' का २१ बार जप करें।\n\n(ग्रह स्थिति संक्षेप: ${sadeLine})`;
 }
 
 export async function generateUma({
