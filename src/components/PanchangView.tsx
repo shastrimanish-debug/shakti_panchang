@@ -46,30 +46,32 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
 
   if (viewMode === 'story') {
     return (
-      <div className="relative w-full">
-        <div className="bg-[#FFFDF9] dark:bg-[#1E110A] border-b border-[#E8DCCB] dark:border-amber-900/30 px-4 py-2 flex justify-between items-center text-xs shadow-xs">
+      <div className="relative w-full h-full min-h-0 flex flex-col overflow-hidden">
+        <div className="bg-[#FFFDF9] dark:bg-[#1E110A] border-b border-[#E8DCCB] dark:border-amber-900/30 px-4 py-2 flex justify-between items-center text-xs shadow-xs shrink-0 z-30">
           <span className="font-bold text-[#8C4A00] dark:text-amber-300">📖 ग्रन्थ स्टोरी व्यू (Story Book)</span>
           <button
             type="button"
             onClick={() => setViewMode('bento')}
-            className="px-3 py-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white font-black rounded-xl shadow-xs hover:from-amber-700 hover:to-amber-800 transition"
+            className="px-3 py-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white font-black rounded-xl shadow-xs hover:from-amber-700 hover:to-amber-800 transition cursor-pointer"
           >
             📱 iOS Bento Mode
           </button>
         </div>
-        <PanchangStoryView
-          panchang={panchang}
-          locationName={locationName}
-          currentDate={currentDate}
-          onDateChange={onDateChange}
-          onOpenLocationModal={onOpenLocationModal}
-          onOpenUmaModal={onOpenUmaModal}
-          onOpenWhatsAppPanchang={onOpenWhatsAppPanchang}
-          latitude={latitude}
-          longitude={longitude}
-          onPrevChapter={onPrevChapter}
-          onNextChapter={onNextChapter}
-        />
+        <div className="flex-1 min-h-0 w-full overflow-hidden">
+          <PanchangStoryView
+            panchang={panchang}
+            locationName={locationName}
+            currentDate={currentDate}
+            onDateChange={onDateChange}
+            onOpenLocationModal={onOpenLocationModal}
+            onOpenUmaModal={onOpenUmaModal}
+            onOpenWhatsAppPanchang={onOpenWhatsAppPanchang}
+            latitude={latitude}
+            longitude={longitude}
+            onPrevChapter={onPrevChapter}
+            onNextChapter={onNextChapter}
+          />
+        </div>
       </div>
     );
   }

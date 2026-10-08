@@ -230,7 +230,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
       </div>
 
       {/* Main Content Scroll Body */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 sm:p-4 pb-28 space-y-3">
         {/* Horizontal Selectable Story Carousel */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar select-none">
           {filteredKathas.map((katha, idx) => (

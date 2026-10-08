@@ -180,12 +180,15 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
 
   // Touch & Mouse tap navigation
   const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
   const touchStartTimeRef = useRef<number>(0);
 
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     setIsPaused(true);
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     touchStartXRef.current = clientX;
+    touchStartYRef.current = clientY;
     touchStartTimeRef.current = Date.now();
   };
 
@@ -194,30 +197,28 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
     if (touchStartXRef.current === null) return;
 
     const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY;
     const diffX = clientX - touchStartXRef.current;
+    const diffY = touchStartYRef.current !== null ? clientY - touchStartYRef.current : 0;
     const elapsed = Date.now() - touchStartTimeRef.current;
 
-    // Swipe detection
-    if (Math.abs(diffX) > 40 && elapsed < 400) {
+    // If user scrolled vertically, allow smooth scrolling without flipping slides
+    if (Math.abs(diffY) > 25) {
+      touchStartXRef.current = null;
+      touchStartYRef.current = null;
+      return;
+    }
+
+    // Swipe horizontal detection
+    if (Math.abs(diffX) > 48 && Math.abs(diffX) > Math.abs(diffY) * 1.5 && elapsed < 450) {
       if (diffX < 0) {
         handleNextSlide();
       } else {
         handlePrevSlide();
       }
-      touchStartXRef.current = null;
-      return;
-    }
-
-    // Tap detection (left 35% -> prev, right 65% -> next)
-    if (elapsed < 300) {
-      const screenWidth = window.innerWidth || 360;
-      if (clientX < screenWidth * 0.35) {
-        handlePrevSlide();
-      } else {
-        handleNextSlide();
-      }
     }
     touchStartXRef.current = null;
+    touchStartYRef.current = null;
   };
 
   // Keyboard navigation
@@ -510,12 +511,9 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
       {/* 2. CHUNKED STORY SLIDE CANVAS (Zero Scroll, 100% Guaranteed Fit) */}
       {/* ========================================================================= */}
       <main
-        className="relative z-20 flex-1 w-full max-w-lg mx-auto px-3 py-1 flex flex-col justify-center overflow-hidden"
+        className="relative z-20 flex-1 w-full max-w-lg mx-auto px-2 sm:px-3 py-1 flex flex-col min-h-0 overflow-y-auto overscroll-contain"
         style={{
-          overflow: 'hidden',
-          overflowY: 'hidden',
-          overflowX: 'hidden',
-          touchAction: 'pan-x',
+          touchAction: 'pan-y pinch-zoom',
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}

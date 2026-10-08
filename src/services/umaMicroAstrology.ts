@@ -281,7 +281,7 @@ ${profile.keyStrengths.length ? profile.keyStrengths.join('; ') : 'सामा�
 /**
  * Dynamic Local Micro Verdict Synthesizer:
  * Calculates exact house lords, retrogrades, and Dasha interactions mathematically
- * so that local responses are 100% dynamic and personalized, never static template boilerplate!
+ * so that local responses are 100% dynamic, personalized, conversational and never static boilerplate!
  */
 export function synthesizeDynamicMicroVerdict(
   k: KundaliData,
@@ -291,88 +291,163 @@ export function synthesizeDynamicMicroVerdict(
   const profile = buildMicroAstrologyProfile(k);
   const q = userQuery.toLowerCase();
 
-  // Determine query domain
+  // Determine query domain & house
   let targetHouse = 10;
-  let targetAreaName = 'कार्यक्षेत्र व आजीविका (Career/Business)';
-  let primaryKarak = 'सूर्य व शनि';
+  let targetAreaName = 'आजीविका व कार्यक्षेत्र';
+  let karakInfo = 'सूर्य व शनि देव';
 
-  if (/नौकरी|करियर|व्यापार|काम|धंधा|दुकान|बिजनेस|कारोबार|job|career|business|work|dhandha|loss|growth|sales|customer/.test(q)) {
+  if (/नौकरी|करियर|व्यापार|काम|धंधा|दुकान|बिजनेस|कारोबार|job|career|business|work|dhandha|promotion|office|salary/.test(q)) {
     targetHouse = 10;
-    targetAreaName = 'कर्म व आजीविका (Career)';
-    primaryKarak = 'सूर्य, बुध व शनि';
+    targetAreaName = 'आजीविका, पदोन्नति व कार्यक्षेत्र';
+    karakInfo = 'कर्मेश सूर्य, बुध व शनि';
   } else if (/शादी|विवाह|दांपत्य|पति|पत्नी|प्रेम|मिलान|रिश्ता|लड़की|लड़का|तलाक|marriage|love|relationship|husband|wife|divorce|shadi|rishta/.test(q)) {
     targetHouse = 7;
-    targetAreaName = 'दांपत्य व संबंध (Marriage & Relationship)';
-    primaryKarak = 'शुक्र, गुरु व मंगल';
+    targetAreaName = 'विवाह, दांपत्य व संबंध';
+    karakInfo = 'सप्तमेश शुक्र व देवगुरु बृहस्पति';
   } else if (/पैसा|धन|ऋण|लोन|कर्ज|बचत|आर्थिक|तंगी|रुपया|कमाई|money|finance|wealth|loan|debt|earning|income|saving/.test(q)) {
     targetHouse = 2;
-    targetAreaName = 'धन संचय व लाभ (Wealth & Finance)';
-    primaryKarak = 'गुरु, शुक्र व बुध';
+    targetAreaName = 'धन संचय, कोष व आर्थिक उन्नति';
+    karakInfo = 'धनेश व लाभेश गुरु-शुक्र';
   } else if (/सेहत|स्वास्थ्य|बीमार|रोग|दवा|तनाव|अनिद्रा|दर्द|बीमारी|health|disease|sick|tension|stress|pain|sleep/.test(q)) {
     targetHouse = 6;
-    targetAreaName = 'आरोग्य व स्वास्थ्य (Health & Well-being)';
-    primaryKarak = 'सूर्य, चंद्र व लग्नेश';
+    targetAreaName = 'आरोग्य, स्वास्थ्य व रोग निवारण';
+    karakInfo = 'षष्ठेश व लग्नेश';
   } else if (/संतान|बच्चा|बेटा|बेटी|पुत्र|पुत्री|पढ़ाई|परीक्षा|शिक्षा|विद्या|child|children|education|study|exam|son|daughter/.test(q)) {
     targetHouse = 5;
-    targetAreaName = 'पंचम भाव (शिक्षा व संतान)';
-    primaryKarak = 'गुरु व बुध';
+    targetAreaName = 'विद्या, बुद्धि व संतान सुख';
+    karakInfo = 'पंचमेश देवगुरु व बुध';
   } else if (/मकान|घर|भूमि|जमीन|वाहन|गाड़ी|प्रॉपर्टी|फ्लैट|house|home|land|property|car|vehicle|flat/.test(q)) {
     targetHouse = 4;
-    targetAreaName = 'भूमि-भवन व सुख (Property & Home)';
-    primaryKarak = 'मंगल व शुक्र';
+    targetAreaName = 'भूमि, भवन, वाहन व गृह-सुख';
+    karakInfo = 'चतुर्थेश मंगल व शुक्र';
   } else if (/शनि|साढ़े|ढैया|shani|sade|dhaiya/.test(q)) {
     targetHouse = 8;
-    targetAreaName = 'शनि गोचर व साढ़ेसाती (Saturn Transit)';
-    primaryKarak = 'शनि देव';
-  } else if (/राहु|केतु|महादशा|अंतर्दशा|दशा|rahu|ketu|dasha|mahadasha/.test(q)) {
+    targetAreaName = 'शनि प्रभाव, साढ़ेसाती व ढैया';
+    karakInfo = 'कर्मफलदाता शनि देव';
+  } else if (/राहु|केतु|कालसर्प|ग्रहण|rahu|ketu|kaal|sarp/.test(q)) {
+    targetHouse = 8;
+    targetAreaName = 'छाया ग्रह राहु-केतु प्रभाव';
+    karakInfo = 'राहु व केतु';
+  } else if (/दशा|महादशा|अंतर्दशा|dasha|mahadasha/.test(q)) {
     targetHouse = 1;
-    targetAreaName = 'दशा प्रभाव (Dasha Analysis)';
-    primaryKarak = profile.mahadasha;
+    targetAreaName = 'विंशोत्तरी महादशा व अंतर्दशा';
+    karakInfo = `${profile.mahadasha} महादशा`;
   }
 
-  const hInfo = profile.houseLords.find((h) => h.house === targetHouse) || profile.houseLords[9];
+  const hInfo = profile.houseLords.find((h) => h.house === targetHouse) || profile.houseLords[0];
   const lordDetail = profile.planets[hInfo.lord];
   const dashaLordDetail = profile.planets[profile.mahadasha];
 
-  // Micro observation based on actual math
-  let pastPresentMicro = `आपकी पत्रिका के ${hInfo.houseName} का स्वामी **${hInfo.lord}** है, जो वर्तमान में ${lordDetail ? `${lordDetail.house}वें भाव में ${lordDetail.rashi} राशि में` : 'विशेष स्थिति में'} स्थित है। `;
+  // Past & Present observation based on actual mathematical configuration
+  let pastPresentText = '';
   if (lordDetail && lordDetail.isRetrograde) {
-    pastPresentMicro += `चूँकि ${hInfo.lord} वक्री अवस्था में है और वर्तमान में ${profile.mahadasha} की महादशा प्रभावी है, इसलिए हाल के ६-८ महीनों में ${targetAreaName} में मानसिक ऊहापोह, विलंब तथा प्रयासों के अनुरूप फल प्राप्त न होने की स्थिति का सामना करना पड़ा है।`;
+    pastPresentText = `आपकी पत्रिका में ${hInfo.houseName} के स्वामी **${hInfo.lord}** वक्री स्थिति में हैं। वर्तमान में **${profile.mahadasha}** की महादशा और **${profile.antardasha}** की अंतर्दशा चल रही है। इसी कारण ${targetAreaName} को लेकर हाल के समय में मन में द्वंद्व, निर्णय लेने में संकोच और प्रयासों के अनुपात में परिणाम मिलने में थोड़ा विलंब देखने को मिला है।`;
   } else if (lordDetail && [6, 8, 12].includes(lordDetail.house)) {
-    pastPresentMicro += `चूँकि ${targetHouse}वें भाव का स्वामी ${hInfo.lord} ${lordDetail.house}वें दुस्थान भाव में स्थित है, इसलिए पिछले समय में अप्रत्याशित अड़चनें, कागजी रुकावटें तथा ऊर्जा का अत्यधिक व्यय हुआ है।`;
+    pastPresentText = `आपकी जन्मपत्रिका में ${targetHouse}वें भाव के स्वामी **${hInfo.lord}** ${lordDetail.house}वें भाव में स्थित हैं। इसके प्रभाव से पिछले दिनों में कागजी अड़चनें, अचानक व्यय अथवा कार्यों में अनपेक्षित मोड़ आए हैं।`;
   } else {
-    pastPresentMicro += `वर्तमान में ${profile.mahadasha} महादशा में ${profile.antardasha} की अंतर्दशा के प्रभाव से इस क्षेत्र में निर्णय लेने में द्वंद्व और अतिरिक्त प्रयास की आवश्यकता बनी हुई है।`;
+    pastPresentText = `आपकी जन्मपत्रिका के ${hInfo.houseName} का स्वामी **${hInfo.lord}** लग्न से ${lordDetail ? lordDetail.house : 1}वें भाव में ${lordDetail ? lordDetail.rashi : ''} राशि में स्थित है। वर्तमान ${profile.mahadasha} महादशा में ऊर्जा और कर्मठता में वृद्धि हुई है, यद्यपि परिस्थिति में पूर्ण स्थिरता लाने के लिए सूक्ष्म संतुलन की आवश्यकता है।`;
   }
 
-  // Micro path forward based on Navamsha & Dasha
-  let futureMicro = `आगामी ६ से १२ महीनों में जब ${profile.antardasha} अंतर्दशा का गोचर परिवर्तन होगा, तो D9 नवमांश में ${lordDetail ? lordDetail.navamshaRashi : 'शुभ'} स्थिति के कारण ${targetAreaName} में सकारात्मक मोड़ आएगा। `;
-  if (dashaLordDetail && dashaLordDetail.dignity === 'उच्च') {
-    futureMicro += `आपकी महादशा स्वामी ${profile.mahadasha} उच्च अवस्था में बली है, अतः रुका हुआ कार्य शीघ्र गति पकड़ेगा और नवीन विश्वसनीय अवसर प्राप्त होंगे।`;
+  // Future trajectory
+  let futureText = '';
+  if (dashaLordDetail && (dashaLordDetail.dignity === 'उच्च' || dashaLordDetail.dignity === 'स्वक्षेत्र')) {
+    futureText = `अच्छी बात यह है कि आपकी महादशा स्वामी **${profile.mahadasha}** पत्रिका में बली अवस्था में हैं। नवमांश (D9) में भी इनकी स्थिति शुभ संबल दे रही है। आगामी ६ से १२ महीनों में जब गोचर में बृहस्पति और सूर्य का अनुकूल कोण बनेगा, तो ${targetAreaName} में अवरोध दूर होंगे और नवीन शुभ अवसर प्राप्त होंगे।`;
   } else {
-    futureMicro += `गोचर में बृहस्पति और सूर्य का अनुकूल प्रभाव आपके ${targetHouse}वें भाव को संबल देगा, जिससे परिस्थिति में स्पष्ट सुधार और नवीन मार्ग प्रशस्त होंगे।`;
+    futureText = `आगामी समय में गोचरीय ग्रहों के अनुकूल संचार और **${profile.antardasha}** अंतर्दशा की परिपक्वता से स्थिति संभलेगी। विशेषकर आने वाले समय में पुराने संपर्कों से लाभ और रुके हुए संकल्पों को पूर्ण करने की दिशा में प्रगति होगी।`;
   }
 
-  // Micro hyper-specific remedy targeted at the afflicted planet
+  // Tailored Micro Remedy
   let remedyPlanet = hInfo.lord;
   let remedyText = '';
 
   if (remedyPlanet === 'बुध') {
-    remedyText = `चूँकि आपके ${targetHouse}वें भाव के स्वामी बुध ${lordDetail ? lordDetail.house : 8}वें भाव में हैं, बुधवार की संध्या को किसी जरूरतमंद कन्या को हरे मूंग या हरी सब्जियाँ दान करें और 'ॐ बुं बुधाय नमः' का जप करें।`;
+    remedyText = `• बुधवार को किसी कन्या को हरे फल अथवा हरी मूंग का दान करें।\n• नित्य प्रातः 'ॐ बुं बुधाय नमः' का २१ बार जप करें और तुलसी पत्र को जल अर्पित करें।`;
   } else if (remedyPlanet === 'सूर्य') {
-    remedyText = `चूँकि आपके भावेश सूर्य देव हैं, नित्य प्रातः तांबे के पात्र में रोली व अक्षत मिलाकर सूर्य नारायण को अर्घ्य दें और आदित्य हृदय स्तोत्र का पाठ करें।`;
+    remedyText = `• नित्य प्रातः तांबे के लोटे में रोली, अक्षत व थोड़ा गुड़ मिलाकर उगते सूर्य को अर्घ्य दें।\n• 'आदित्य हृदय स्तोत्र' का पाठ करें अथवा 'ॐ सूर्याय नमः' का ११ बार जप करें।`;
   } else if (remedyPlanet === 'मंगल') {
-    remedyText = `चूँकि आपके ${targetHouse}वें भावेश मंगल हैं, मंगलवार के दिन तांबे का सिक्का या लाल मसूर दान करें और हनुमान जी को गुड़-चना अर्पित करें।`;
+    remedyText = `• मंगलवार को हनुमान जी को सिंदूर व चमेली का तेल या लाल पुष्प अर्पित करें।\n• 'हनुमान चालीसा' का नित्य पाठ करें और लाल मसूर की दाल का दान करें।`;
   } else if (remedyPlanet === 'शुक्र') {
-    remedyText = `चूँकि आपके भावेश शुक्र देव हैं, शुक्रवार को माँ लक्ष्मी के सम्मुख खीर या सफेद मिष्ठान का भोग लगाएं और किसी सुहागिन महिला को वस्त्र दान दें।`;
+    remedyText = `• शुक्रवार को माँ भगवती लक्ष्मी के सम्मुख घी का दीपक जलाकर खीर या बताशे का भोग लगाएं।\n• 'ॐ शुं शुक्राय नमः' का जप करें और इत्र का प्रयोग सात्विक रूप से करें।`;
   } else if (remedyPlanet === 'गुरु') {
-    remedyText = `चूँकि आपके भावेश देवगुरु बृहस्पति हैं, गुरुवार को स्नान के जल में चुटकी भर हल्दी डालें और किसी वृद्ध ब्राह्मण/पीपल वृक्ष की सेवा करें।`;
+    remedyText = `• गुरुवार को स्नान के जल में चुटकी भर हल्दी डालें और केले के वृक्ष या गुरुजनों का वंदन करें।\n• 'ॐ बृं बृहस्पतये नमः' का जप करें और पीले अन्न का दान करें।`;
   } else if (remedyPlanet === 'शनि') {
-    remedyText = `चूँकि आपके भावेश शनि देव हैं, शनिवार की संध्या को पीपल के नीचे सरसों के तेल का दीपक जलाएं और असहाय व्यक्ति की सहायता करें।`;
+    remedyText = `• शनिवार की संध्या को पीपल के वृक्ष के नीचे सरसों के तेल का दीपक प्रज्वलित करें।\n• 'ॐ शं शनैश्चराय नमः' का जप करें और किसी जरूरतमंद को काले तिल या जूते-वस्त्र का दान करें।`;
   } else {
-    remedyText = `नित्य प्रातः अपने इष्टदेव का स्मरण करें और 'ॐ नमो भगवते वासुदेवाय' का २१ बार जप करें।`;
+    remedyText = `• नित्य प्रातः 'ॐ नमो भगवते वासुदेवाय' का २१ बार स्मरण करें।\n• अपने कुलदेवता व माता-पिता के चरण स्पर्श कर दिन का आरंभ करें।`;
   }
 
-  const todayStr = panchang ? `\nआज ${panchang.weekday}, ${panchang.tithi} तिथि का पंचांग गोचर भी सक्रिय है।` : '';
+  const panchangStr = panchang ? `\n(आज ${panchang.weekday}, ${panchang.paksha} ${panchang.tithi} तिथि का गोचर भी अनुकूल प्रभाव दे रहा है।)` : '';
 
-  return `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${profile.name} जी। मैं उमा हूँ।\n\nआपकी जन्मपत्रिका (लग्न: **${profile.lagnaRashi}**, चंद्र: **${profile.moonRashi}**, नक्षत्र: **${profile.moonNakshatra}**, महादशा: **${profile.mahadasha}**, अंतर्दशा: **${profile.antardasha}**) की सूक्ष्म ग्रह-गणित का विश्लेषण करने पर:${todayStr}\n\n**१. हालिया स्थिति का सूक्ष्म विश्लेषण (Past & Present Insights):**\n${pastPresentMicro}\n\n**२. आगामी ६–१२ महीनों का मार्ग (The Path Forward):**\n${futureMicro}\n\n**३. अचूक शास्त्रोक्त सूक्ष्म उपाय (Micro-Remedy):**\n${remedyText}`;
+  return `॥ ॐ श्री गणेशाय नमः ॥
+
+सदा कल्याण हो, **${profile.name}** जी! मैं उमा हूँ।
+
+आपकी पत्रिका (**लग्न: ${profile.lagnaRashi}**, **चंद्र राशि: ${profile.moonRashi}**, **नक्षत्र: ${profile.moonNakshatra}**, **महादशा: ${profile.mahadasha}** / **अंतर्दशा: ${profile.antardasha}**) के सूक्ष्म गणित के अनुसार:
+
+🌿 **ग्रह स्थिति व वर्तमान परिस्थिति:**
+${pastPresentText}
+
+🔮 **आगामी ६–१२ महीनों का ज्योतिषीय मार्गदर्शन:**
+${futureText}
+
+🕉️ **शास्त्रोक्त सात्विक सूक्ष्म उपाय:**
+${remedyText}${panchangStr}`;
+}
+
+/**
+ * Universal Vedic Guidance Synthesizer when no birth chart is loaded yet:
+ * Uses deep Parashari rules, Nakshatra energetics, Panchang data and scriptural wisdom.
+ */
+export function synthesizePanchangAstrologyVerdict(
+  userQuery: string,
+  panchang?: VedicPanchangData | null
+): string {
+  const q = userQuery.toLowerCase();
+
+  let domainTitle = 'शुभ वैदिक मार्गदर्शन';
+  let principleText = '';
+  let remedyText = '';
+
+  if (/नौकरी|करियर|व्यापार|काम|धंधा|दुकान|बिजनेस|job|career|business|work/.test(q)) {
+    domainTitle = 'कर्म व आजीविका विचार (Career & Business)';
+    principleText = 'वैदिक ज्योतिष में दशम भाव कर्म और प्रतिष्ठा का प्रतीक है। सूर्य देव यश-सम्मान और अधिकारी पद के कारक हैं, बुध व्यापार और निर्णय के कारक हैं, तथा शनि देव कर्मठता और न्याय के कारक हैं। जब भी कर्मक्षेत्र में बाधा आए, सूर्य और शनि के समन्वय से भाग्य का द्वार खुलता है।';
+    remedyText = '• नित्य प्रातः तांबे के पात्र से सूर्य नारायण को अर्घ्य दें और आदित्य हृदय स्तोत्र का पाठ करें।\n• शनिवार को किसी श्रमिक या जरूरतमंद व्यक्ति को भोजन कराएं।\n• कार्यस्थल पर ईशान कोण (उत्तर-पूर्व) को सदा स्वच्छ व प्रकाशवान रखें।';
+  } else if (/शादी|विवाह|दांपत्य|पति|पत्नी|प्रेम|रिश्ता|marriage|love|relationship|shadi/.test(q)) {
+    domainTitle = 'विवाह व दांपत्य विचार (Marriage & Harmony)';
+    principleText = 'सप्तम भाव दांपत्य सुख का केन्द्र है। पुरुषों की पत्रिका में शुक्र और स्त्रियों की पत्रिका में देवगुरु बृहस्पति विवाह के प्रमुख कारक होते हैं। यदि विवाह में विलंब या दांपत्य में तनाव हो, तो गौरी-शंकर उपासना और गुरु-शुक्र की अनुकूलता सर्वोपरि मानी गई है।';
+    remedyText = '• गुरुवार को भगवान विष्णु और माँ लक्ष्मी का एक साथ पूजन करें।\n• शिव-पार्वती के सम्मुख घी का दीपक जलाकर "ॐ नमः शिवाय" का जप करें।\n• कन्याएं माँ कात्यायनी मंत्र अथवा गौरी पूजन करें।';
+  } else if (/पैसा|धन|ऋण|लोन|कर्ज|आर्थिक|money|wealth|finance|debt|loan/.test(q)) {
+    domainTitle = 'धन-समृद्धि व ऋणमुक्ति विचार (Wealth & Debt Relief)';
+    principleText = 'वैदिक सिद्धांत में द्वितीय भाव धन संचय और एकादश भाव आय व लाभ का है। देवगुरु बृहस्पति समृद्धि के दाता हैं और माँ महालक्ष्मी की कृपा से अष्ट-लक्ष्मी योग जागृत होता है। ऋण मुक्ति के लिए मंगलवार को भौम प्रदोष व मंगल ऋण मोचक स्तोत्र अचूक है।';
+    remedyText = '• नित्य कनकधारा स्तोत्र अथवा श्रीसूक्त का पाठ करें।\n• मंगलवार को ऋण मोचक मंगल स्तोत्र का पाठ करें और हनुमान जी को गुड़ अर्पित करें।\n• शुक्रवार को संध्या समय घर के मुख्य द्वार पर दीपक अवश्य प्रज्वलित करें।';
+  } else if (/सेहत|स्वास्थ्य|रोग|दवा|बीमार|health|disease|sick/.test(q)) {
+    domainTitle = 'आरोग्य व स्वास्थ्य रक्षा (Health & Vitality)';
+    principleText = 'लग्न और सूर्य आत्मा तथा देह के बल हैं, जबकि चंद्रमा मन के कारक हैं। किसी भी अरिष्ट या रोग की शांति हेतु महामृत्युंजय जप और सूर्य उपासना से श्रेष्ठ कोई औषधि नहीं है।';
+    remedyText = '• नित्य १०८ बार महामृत्युंजय मंत्र: "ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्यsourceर्मुक्षीय मामृतात्॥" का जप करें।\n• तांबे के पात्र में रखा जल प्रातः ग्रहण करें।\n• सोमवार को भगवान शिव का दुग्ध अथवा गंगाजल से अभिषेक करें।';
+  } else if (/शनि|साढ़े|ढैया|shani|sade|dhaiya/.test(q)) {
+    domainTitle = 'शनि कृपा व साढ़ेसाती विधान (Saturn Transit)';
+    principleText = 'शनि देव दण्डनायक हैं, वे केवल व्यक्ति के कर्मों की परीक्षा लेते हैं। जो व्यक्ति सत्यवादी, विनम्र और कर्मनिष्ठ रहता है, शनि देव उसे रंक से राजा बना देते हैं। साढ़ेसाती में पीपल सेवा और दशरथ कृत शनि स्तोत्र परम कल्याणकारी हैं।';
+    remedyText = '• शनिवार की संध्या पीपल के वृक्ष की जड़ में सरसों के तेल का चौमुखा दीपक लगाएं।\n• दशरथ कृत शनि स्तोत्र का पाठ करें।\n• असहाय, वृद्ध अथवा दिव्यांग व्यक्तियों का सम्मान व सेवा करें।';
+  } else {
+    domainTitle = 'वैदिक जीवन सूत्र व ग्रह शांति';
+    principleText = 'सनातन वैदिक ज्योतिष का मूल ध्येय व्यक्ति को कर्म के प्रति जागरूक करना और परमात्मा के नियमों के साथ जीवन को संतुलित बनाना है। जब भाव शुद्ध हो और नित्य ईश-स्मरण हो, तो समस्त प्रतिकूल ग्रह भी अनुकूल फल देने लगते हैं।';
+    remedyText = '• नित्य प्रातः गायत्री मंत्र अथवा "ॐ नमो भगवते वासुदेवाय" का २१ बार जप करें।\n• अपने इष्टदेव का स्मरण कर दिन का संकल्प लें।\n• पक्षियों को दाना और गाय को नित्य पहली रोटी दें।';
+  }
+
+  const todayStr = panchang
+    ? `\n📅 **आज का पंचांग गोचर:** ${panchang.weekday}, ${panchang.paksha} पक्ष की **${panchang.tithi}** तिथि, **${panchang.nakshatra}** नक्षत्र।`
+    : '';
+
+  return `॥ ॐ श्री गणेशाय नमः ॥
+
+प्रणाम यजमान! मैं **उमा** हूँ। आपके प्रश्न पर वैदिक ज्योतिष व शास्त्रों के अनुसार मेरा मार्गदर्शन:
+
+📜 **${domainTitle}:**
+${principleText}
+${todayStr}
+
+🕉️ **सात्विक एवं अचूक शास्त्रोक्त उपाय:**
+${remedyText}
+
+💡 *सुझाव: अपनी सटीक जन्म कुंडली, विंशोत्तरी महादशा और लग्न भाव के अनुसार सूक्ष्म व्यक्तिगत फलादेश देखने हेतु आप ऐप के 'कुंडली' टैब में अपना जन्म विवरण भी दर्ज कर सकते हैं। सनातन शक्ति पंचांग आपके साथ है!*`;
 }

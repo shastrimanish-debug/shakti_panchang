@@ -487,7 +487,7 @@ export const DurgaSaptashatiView: React.FC<{
       </div>
 
       {/* Main Reader Scroll Body */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 sm:p-4 pb-28 space-y-3">
         {/* Active Header Banner Card */}
         <div className="bg-[#FFFDF9] border-2 border-amber-300 rounded-2xl p-3.5 shadow-sm space-y-2">
           <div className="flex items-center justify-between">

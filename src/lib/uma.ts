@@ -1,7 +1,7 @@
 import { KundaliData, PlanetPosition, VedicPanchangData } from "../types";
 import { getLicenseStatus } from "./license-client";
 import { calculateSadeSati } from "../services/sadesati";
-import { synthesizeDynamicMicroVerdict } from "../services/umaMicroAstrology";
+import { synthesizeDynamicMicroVerdict, synthesizePanchangAstrologyVerdict } from "../services/umaMicroAstrology";
 
 export interface UmaResponse {
   ok: boolean;
@@ -219,37 +219,22 @@ export async function generateUma({
       };
     }
 
-    // 3. PANCHANG / TITHI / SOMWAR
-    if (q.includes("आज") || q.includes("सोमवार") || q.includes("कृष्ण") || q.includes("शुक्ल") || q.includes("पक्ष") || q.includes("तिथि") || q.includes("पंचांग")) {
+    // 3. PANCHANG / TITHI / MUHURAT / TODAY INQUIRIES
+    if (q.includes("आज") || q.includes("तिथि") || q.includes("पंचांग") || q.includes("मुहूर्त") || q.includes("चौघड़िया") || q.includes("राहुकाल") || q.includes("दिशाशूल")) {
       const wDay = panchang?.weekday || "सोमवार";
-      const pKash = panchang?.paksha || "कृष्ण";
-      const tth = panchang?.tithi || "द्वितीया";
+      const pKash = panchang?.paksha || "शुक्ल";
+      const tth = panchang?.tithi || "एकादशी";
+      const nksh = panchang?.nakshatra || "पुष्य";
+      const samv = panchang?.samvat || "२०८३";
       return {
         ok: true,
         source: "local_vedic",
-        text: `॥ ॐ नमः शिवाय ॥\nयजमान, आज ${wDay} को ${pKash} पक्ष की **${tth}** तिथि है। आज के दिन भगवान शिव का जलाभिषेक और महामृत्युंजय मंत्र का जप करने से सभी कष्ट दूर होते हैं। आप मुझसे कोई भी अनुष्ठान या पूजा विधि पूछ सकती हैं!`,
+        text: `॥ ॐ नमः शिवाय ॥\n\nप्रणाम यजमान! आज का वैदिक पंचांग विवरण:\n\n• **वार:** ${wDay} • **संवत्:** ${samv}\n• **पक्ष व तिथि:** ${pKash} पक्ष, **${tth}** तिथि\n• **नक्षत्र:** **${nksh}**\n• **दैनिक फल:** आज के दिन शुभ संकल्प, देव-आराधन और सात्विक कर्म करने से अभीष्ट सिद्धि प्राप्त होती है।\n\nआप मुझसे आज के चौघड़िया, अभिजित मुहूर्त, अथवा किसी विशिष्ट कार्य के समय के विषय में पूछ सकते हैं।`,
         actionPayload: { type: "open_panchang", label: "सम्पूर्ण पंचांग देखें" }
       };
     }
 
-    // 4. KUNDALI / PATRIKA
-    if (q.includes("कुंडली") || q.includes("पत्री") || q.includes("पत्रिका") || q.includes("लग्न") || q.includes("दशा")) {
-      if (kundali) {
-        return {
-          ok: true,
-          source: "local_vedic",
-          text: chartAnswer(kundali, query, panchang),
-          actionPayload: { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" },
-        };
-      }
-      return {
-        ok: true,
-        source: "local_vedic",
-        text: `॥ ॐ श्री गणेशाय नमः ॥\nयजमान, बिना जन्म तिथि, समय और स्थान के दशा नहीं खुलती। पहले कुंडली बनाएँ, फिर नौकरी, विवाह, धन या शनि पूछें।`,
-        actionPayload: { type: "open_kundali", label: "जन्मकुंडली बनाएँ" },
-      };
-    }
-
+    // 4. KUNDALI / PATRIKA / ASTROLOGY INQUIRIES (WITHOUT KUNDALI LOADED)
     if (kundali) {
       return {
         ok: true,
@@ -259,12 +244,12 @@ export async function generateUma({
       };
     }
 
-    // DEFAULT / GENERAL ASTROLOGICAL & PUJAN GUIDANCE
+    // Dynamic Vedic Guidance without Kundali (Never a canned rejection!)
     return {
       ok: true,
       source: "local_vedic",
-      text: `॥ ॐ श्री गणेशाय नमः ॥\nप्रणाम यजमान! आपके प्रश्न पर मैंने वैदिक ज्योतिष और कर्मकाण्ड के नियमों के अनुसार विचार किया है। \n\n**उमा का पुरोहितीय मार्गदर्शन:**\nकिसी भी धार्मिक अनुष्ठान, गणेश स्थापना, सत्यनारायण कथा या व्रत पूजन को विधि-विधान से करने पर उसका शत-प्रतिशत फल प्राप्त होता है। \n\nआप मुझसे पूछिए — **"उमा जी, गणेश स्थापना कैसे करें?"**, **"करवा चौथ की पूजा विधि बताओ"**, या **"सत्यनारायण व्रत कथा सुनाओ"**, और मैं एक वैदिक ब्राह्मण की तरह आपको पूरी विधि और मंत्र करवाऊंगी!`,
-      actionPayload: { type: "open_panchang", label: "व्रत कथा व विधि देखें" }
+      text: synthesizePanchangAstrologyVerdict(query, panchang),
+      actionPayload: { type: "open_kundali", label: "जन्मकुंडली बनाएं व फलादेश देखें" }
     };
 
   } catch (err) {
@@ -272,7 +257,7 @@ export async function generateUma({
     return {
       ok: true,
       source: "local_vedic",
-      text: `॥ ॐ नमः शिवाय ॥\nप्रणाम यजमान! भगवान शिव और गणेश जी की कृपा से आपका हर कार्य मंगलमय हो। कृपया अपना प्रश्न दोहराएं, मैं पूरी विधि के साथ पूजन संपन्न करवाऊँगी।`,
+      text: `॥ ॐ नमः शिवाय ॥\nप्रणाम यजमान! भगवान शिव और श्रीगणेश जी की कृपा से आपका हर कार्य मंगलमय हो। कृपया अपना प्रश्न साझा करें, मैं प्रामाणिक वैदिक मार्गदर्शन प्रस्तुत करूँगी।`,
       actionPayload: { type: "open_panchang", label: "पंचांग देखें" }
     };
   }

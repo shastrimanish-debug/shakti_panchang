@@ -129,14 +129,17 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
     return () => clearInterval(timer);
   }, [currentSlideSafe, isPaused, durationMs, handleNextSlide]);
 
-  // Touch & Swipe handlers (tap left 35% for prev, right 65% for next, press and hold to pause)
+  // Touch & Swipe handlers (horizontal swipe flips, vertical scroll allowed)
   const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
   const touchStartTimeRef = useRef<number>(0);
 
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     setIsPaused(true);
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     touchStartXRef.current = clientX;
+    touchStartYRef.current = clientY;
     touchStartTimeRef.current = Date.now();
   };
 
@@ -145,30 +148,28 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
     if (touchStartXRef.current === null) return;
 
     const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY;
     const diffX = clientX - touchStartXRef.current;
+    const diffY = touchStartYRef.current !== null ? clientY - touchStartYRef.current : 0;
     const elapsed = Date.now() - touchStartTimeRef.current;
 
-    // Swipe horizontal detection
-    if (Math.abs(diffX) > 45 && elapsed < 400) {
+    // If user scrolled vertically, strictly do NOT change slides
+    if (Math.abs(diffY) > 25) {
+      touchStartXRef.current = null;
+      touchStartYRef.current = null;
+      return;
+    }
+
+    // Swipe horizontal detection - must be dominant horizontal motion
+    if (Math.abs(diffX) > 48 && Math.abs(diffX) > Math.abs(diffY) * 1.5 && elapsed < 450) {
       if (diffX < 0) {
         handleNextSlide();
       } else {
         handlePrevSlide();
       }
-      touchStartXRef.current = null;
-      return;
-    }
-
-    // Tap detection (left 35% / right 65%)
-    if (elapsed < 300) {
-      const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
-      if (clientX < screenWidth * 0.35) {
-        handlePrevSlide();
-      } else {
-        handleNextSlide();
-      }
     }
     touchStartXRef.current = null;
+    touchStartYRef.current = null;
   };
 
   // Keyboard navigation
@@ -368,33 +369,33 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
         </div>
       </div>
 
-      {/* Main Slide Body: Exactly 100% Height, No Overflow, Beautiful Centered Fit */}
-      <div className="flex-1 w-full max-w-2xl mx-auto px-3 py-2.5 flex flex-col justify-center min-h-0 overflow-hidden relative z-20">
+      {/* Main Slide Body: Responsive, Smooth Scrolling without clipping */}
+      <div className="flex-1 w-full max-w-2xl mx-auto px-2.5 sm:px-4 py-2 flex flex-col min-h-0 overflow-hidden relative z-20">
         <div
           key={`slide-${currentSlideSafe}`}
-          className="w-full h-full max-h-full flex flex-col justify-between animate-in fade-in zoom-in-95 duration-200"
+          className="w-full h-full min-h-0 flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
         >
           {/* Slide Title & Subtitle Badge */}
           {currentSlideData?.title && (
             <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
                 {currentSlideData.icon && (
-                  <span className="text-base">{currentSlideData.icon}</span>
+                  <span className="text-base shrink-0">{currentSlideData.icon}</span>
                 )}
-                <h3 className="text-sm sm:text-base font-black font-granth text-[#2C180C]">
+                <h3 className="text-xs sm:text-sm font-black font-granth text-[#2C180C] truncate">
                   {currentSlideData.title}
                 </h3>
               </div>
               {currentSlideData.badge && (
-                <span className="px-2 py-0.5 rounded-full bg-[#FAF0DD] border border-[#DFCBB5] text-[10px] font-bold text-[#8C4A00]">
+                <span className="px-2 py-0.5 rounded-full bg-[#FAF0DD] border border-[#DFCBB5] text-[10px] font-bold text-[#8C4A00] shrink-0">
                   {currentSlideData.badge}
                 </span>
               )}
             </div>
           )}
 
-          {/* Slide Content Slot (Rendered without vertical scroll) */}
-          <div className="flex-1 w-full min-h-0 flex flex-col justify-center overflow-hidden">
+          {/* Slide Content Slot: Scrollable to read 100% of the content without truncation */}
+          <div className="flex-1 w-full min-h-0 overflow-y-auto overscroll-contain pr-0.5 space-y-2 select-text">
             {currentSlideData?.content}
           </div>
         </div>

@@ -28,9 +28,8 @@
     height: 100dvh;
     margin: 0;
     padding: 0;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: auto;
+    overflow: hidden;
+    overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
     -webkit-tap-highlight-color: transparent;
   }
@@ -43,8 +42,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow: hidden;
   }
 
   h1, h2, h3, h4, .font-granth {
@@ -62,10 +60,8 @@
   flex: 1 1 0% !important;
   min-height: 0 !important;
   overflow: hidden !important;
-  overflow-y: hidden !important;
-  overflow-x: hidden !important;
-  touch-action: pan-x !important;
-  overscroll-behavior: none !important;
+  touch-action: pan-y pinch-zoom !important;
+  overscroll-behavior: contain !important;
   position: relative !important;
 }
 

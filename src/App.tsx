@@ -395,7 +395,7 @@ export function App() {
       )}
 
       {/* Main Responsive View Container with Smooth Vertical Scrolling */}
-      <main className="flex-1 w-full min-h-0 overflow-y-auto relative flex flex-col pb-20">
+      <main className="flex-1 w-full min-h-0 relative flex flex-col overflow-hidden">
         {!isBookOpen ? (
           <BookCover
             onOpenIndex={() => {
@@ -422,54 +422,60 @@ export function App() {
         ) : (
           <div
             key={`${activeTab}-${currentLang}`}
-            className="w-full min-h-full flex flex-col overflow-y-auto pb-20"
+            className="w-full h-full min-h-0 flex-1 flex flex-col overflow-hidden"
           >
             {activeTab === 'index' && (
-              <GranthIndexView
-                onSelectTab={handleSelectTab}
-                onReturnToCover={() => setIsBookOpen(false)}
-              />
+              <div className="w-full h-full min-h-0 overflow-y-auto overscroll-contain flex-1">
+                <GranthIndexView
+                  onSelectTab={handleSelectTab}
+                  onReturnToCover={() => setIsBookOpen(false)}
+                />
+              </div>
             )}
 
             {activeTab === 'dashboard' && (
-              <DashboardView
-                panchang={panchang}
-                currentLocation={currentLocation}
-                currentDate={currentDate}
-                onDateChange={setCurrentDate}
-                onNavigateTab={handleSelectTab}
-                onOpenUma={(query?: string) => {
-                  if (query) setUmaInitialPrompt(query);
-                  setIsUmaModalOpen(true);
-                }}
-                onOpenConnect={() => setIsBrandingModalOpen(true)}
-                onOpenLocationModal={() => setIsLocationModalOpen(true)}
-                onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
-              />
+              <div className="w-full h-full min-h-0 overflow-y-auto overscroll-contain flex-1">
+                <DashboardView
+                  panchang={panchang}
+                  currentLocation={currentLocation}
+                  currentDate={currentDate}
+                  onDateChange={setCurrentDate}
+                  onNavigateTab={handleSelectTab}
+                  onOpenUma={(query?: string) => {
+                    if (query) setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                  onOpenConnect={() => setIsBrandingModalOpen(true)}
+                  onOpenLocationModal={() => setIsLocationModalOpen(true)}
+                  onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
+                />
+              </div>
             )}
 
             {activeTab === 'panchang' && (
-              <PanchangView
-                panchang={panchang}
-                onNavigateTab={handleSelectTab}
-                onOpenUmaModal={(query?: string) => {
-                  if (query) setUmaInitialPrompt(query);
-                  setIsUmaModalOpen(true);
-                }}
-                onOpenWhatsAppPanchang={() => {
-                  setIsWhatsAppPanchangOpen(true);
-                }}
-                onOpenSubscriptionModal={triggerSubscriptionModal}
-                locationName={currentLocation.name}
-                currentDate={currentDate}
-                onDateChange={setCurrentDate}
-                onOpenLocationModal={() => setIsLocationModalOpen(true)}
-                latitude={currentLocation.latitude}
-                longitude={currentLocation.longitude}
-                timezoneHours={currentLocation.timezoneHours}
-                onPrevChapter={handlePrevPage}
-                onNextChapter={handleNextPage}
-              />
+              <div className="w-full h-full min-h-0 overflow-y-auto overscroll-contain flex-1">
+                <PanchangView
+                  panchang={panchang}
+                  onNavigateTab={handleSelectTab}
+                  onOpenUmaModal={(query?: string) => {
+                    if (query) setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                  onOpenWhatsAppPanchang={() => {
+                    setIsWhatsAppPanchangOpen(true);
+                  }}
+                  onOpenSubscriptionModal={triggerSubscriptionModal}
+                  locationName={currentLocation.name}
+                  currentDate={currentDate}
+                  onDateChange={setCurrentDate}
+                  onOpenLocationModal={() => setIsLocationModalOpen(true)}
+                  latitude={currentLocation.latitude}
+                  longitude={currentLocation.longitude}
+                  timezoneHours={currentLocation.timezoneHours}
+                  onPrevChapter={handlePrevPage}
+                  onNextChapter={handleNextPage}
+                />
+              </div>
             )}
 
             {activeTab === 'choghadiya' && (
@@ -510,15 +516,17 @@ export function App() {
             )}
 
             {(activeTab === 'kundali' || activeTab === 'milan') && (
-              <KundaliView
-                activeKundali={activeKundali}
-                setActiveKundali={setActiveKundali}
-                currentLocation={currentLocation}
-                initialSubTab={activeTab === 'milan' ? 'milan' : undefined}
-                onOpenSavedModal={() => setIsSavedProfilesModalOpen(true)}
-                onOpenUmaModal={() => setIsUmaModalOpen(true)}
-                onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
-              />
+              <div className="w-full h-full min-h-0 overflow-y-auto overscroll-contain flex-1 px-1 sm:px-2">
+                <KundaliView
+                  activeKundali={activeKundali}
+                  setActiveKundali={setActiveKundali}
+                  currentLocation={currentLocation}
+                  initialSubTab={activeTab === 'milan' ? 'milan' : undefined}
+                  onOpenSavedModal={() => setIsSavedProfilesModalOpen(true)}
+                  onOpenUmaModal={() => setIsUmaModalOpen(true)}
+                  onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
+                />
+              </div>
             )}
 
             {activeTab === 'festivals' && (
