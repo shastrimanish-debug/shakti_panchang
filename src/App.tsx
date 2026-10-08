@@ -92,7 +92,7 @@ function playTactilePageTurnSound() {
 export function App() {
   const [currentLocation, setCurrentLocation] = useState<SavedLocation>(() => getStoredLocation());
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
-  const [activeTab, setActiveTab] = useState<string>('panchang');
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [turnDirection, setTurnDirection] = useState<'forward' | 'backward'>('forward');
   const [pageTurnNotice, setPageTurnNotice] = useState<string | null>(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(true);

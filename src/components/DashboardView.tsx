@@ -41,6 +41,7 @@ export interface DashboardViewProps {
   onOpenConnect: () => void;
   onOpenLocationModal?: () => void;
   onOpenWhatsAppPanchang?: () => void;
+  onToggleStoryMode?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -53,6 +54,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenConnect,
   onOpenLocationModal,
   onOpenWhatsAppPanchang,
+  onToggleStoryMode,
 }) => {
   const { language } = useLanguage();
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -210,6 +212,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Right: Quick Action Pill */}
         <div className="flex items-center gap-2">
+          {onToggleStoryMode && (
+            <button
+              onClick={onToggleStoryMode}
+              className="px-3 py-1.5 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-amber-200 text-xs font-black flex items-center gap-1.5 shadow-xs transition border border-amber-500/30"
+              title="ग्रन्थ स्टोरी रूप देखें"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span className="hidden sm:inline">स्टोरी ग्रन्थ</span>
+            </button>
+          )}
+
           {onOpenWhatsAppPanchang && (
             <button
               onClick={onOpenWhatsAppPanchang}
