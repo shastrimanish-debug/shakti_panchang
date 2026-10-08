@@ -44,26 +44,26 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       }}
     >
       <div className="max-w-md mx-auto flex items-center justify-between px-2 pt-0.5 pb-1 h-14">
-        {/* Tab 1: पंचांग */}
+        {/* Tab 1: पंचांग / बेन्टो */}
         <button
           type="button"
-          onClick={() => onSelectTab('panchang')}
-          title={`${t('nav.panchang', 'पंचांग')} (${dynamicDateLabel})`}
+          onClick={() => onSelectTab(activeTab === 'panchang' ? 'dashboard' : 'panchang')}
+          title={`${t('nav.panchang', 'पंचांग')} / बेन्टो विजेट्स (${dynamicDateLabel})`}
           className={`flex-1 flex flex-col items-center justify-center py-1 transition cursor-pointer select-none m3-touch ${
-            activeTab === 'panchang'
+            ['panchang', 'dashboard'].includes(activeTab)
               ? 'text-[#8C4A00] font-black'
               : 'text-[#6B4E36] hover:text-[#2C180C]'
           }`}
         >
           <div
             className={`p-1.5 rounded-xl transition-all ${
-              activeTab === 'panchang' ? 'bg-[#FBF0DD] scale-110 shadow-xs' : ''
+              ['panchang', 'dashboard'].includes(activeTab) ? 'bg-[#FBF0DD] scale-110 shadow-xs' : ''
             }`}
           >
-            <Sun className={`w-4 h-4 ${activeTab === 'panchang' ? 'text-[#8C4A00]' : 'text-[#735133]'}`} />
+            <Sun className={`w-4 h-4 ${['panchang', 'dashboard'].includes(activeTab) ? 'text-[#8C4A00]' : 'text-[#735133]'}`} />
           </div>
           <span className="text-[10px] leading-tight mt-0.5 tracking-wide">
-            {t('nav.panchang', 'पंचांग')}
+            {activeTab === 'dashboard' ? 'बेन्टो' : t('nav.panchang', 'पंचांग')}
           </span>
         </button>
 

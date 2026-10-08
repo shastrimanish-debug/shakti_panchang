@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
+import { DashboardView } from './components/DashboardView';
 import { PanchangView } from './components/PanchangView';
 import { ChoghadiyaView } from './components/ChoghadiyaView';
 import { MuhuratView } from './components/MuhuratView';
@@ -427,6 +428,23 @@ export function App() {
               <GranthIndexView
                 onSelectTab={handleSelectTab}
                 onReturnToCover={() => setIsBookOpen(false)}
+              />
+            )}
+
+            {activeTab === 'dashboard' && (
+              <DashboardView
+                panchang={panchang}
+                currentLocation={currentLocation}
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                onNavigateTab={handleSelectTab}
+                onOpenUma={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onOpenConnect={() => setIsBrandingModalOpen(true)}
+                onOpenLocationModal={() => setIsLocationModalOpen(true)}
+                onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
               />
             )}
 

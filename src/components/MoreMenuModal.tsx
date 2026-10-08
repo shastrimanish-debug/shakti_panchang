@@ -252,6 +252,25 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
 
         {/* Grid Options */}
         <div className="grid grid-cols-2 gap-2 my-3">
+          {/* iOS Bento Box Dashboard */}
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('dashboard'))}
+            className="flex items-center gap-2.5 p-2.5 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-stone-950 rounded-2xl text-left transition cursor-pointer active:scale-95 col-span-2 relative m3-touch shadow-md border border-amber-300"
+          >
+            <div className="p-2 bg-stone-950 text-amber-300 rounded-xl shadow-xs">
+              <Home className="w-5 h-5 text-amber-300" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-black text-stone-950 flex items-center justify-between">
+                <span>📱 iOS Bento Box डैशबोर्ड (Widget Hub)</span>
+                <span className="text-[10px] bg-stone-950 text-amber-300 px-2 py-0.5 rounded-full font-bold">नया</span>
+              </div>
+              <div className="text-[10px] text-stone-900 font-bold">
+                आधुनिक विजेट लेआउट में पंचांग, मुहूर्त, चौघड़िया, गीता सीख व ज्योतिष सेवाएँ
+              </div>
+            </div>
+          </button>
           {/* श्री दुर्गा सप्तशती सम्पूर्ण */}
           <button
             type="button"
