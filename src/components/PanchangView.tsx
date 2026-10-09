@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { VedicPanchangData, SavedLocation } from '../types';
 import { PanchangStoryView } from './PanchangStoryView';
 import { DashboardView } from './DashboardView';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface PanchangViewProps {
   panchang: VedicPanchangData;
@@ -77,6 +78,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   }
 
   return (
+    <ZeroScrollPager className="flex-1 min-h-0 w-full h-full" resetKey={currentDate.toDateString()}>
     <DashboardView
       panchang={panchang}
       currentLocation={locationObj}
@@ -89,6 +91,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
       onOpenWhatsAppPanchang={onOpenWhatsAppPanchang}
       onToggleStoryMode={() => setViewMode('story')}
     />
+    </ZeroScrollPager>
   );
 };
 

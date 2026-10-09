@@ -24,6 +24,7 @@ import {
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface RawChapterShloka {
   n: number;
@@ -288,7 +289,7 @@ export const DurgaSaptashatiView: React.FC<{
       {/* Slide-out Interactive TOC / Index Drawer Overlay */}
       {isTocOpen && (
         <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-200">
-          <div className="w-4/5 max-w-xs h-full bg-[#FAF2E4] border-r-2 border-amber-600 shadow-2xl flex flex-col p-3 space-y-3 overflow-y-auto">
+          <ZeroScrollPager className="w-4/5 max-w-xs h-full bg-[#FAF2E4] border-r-2 border-amber-600 shadow-2xl flex flex-col overflow-hidden min-h-0" contentClassName="p-3 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-[#E2D2BE]">
               <div className="flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-[#8C4A00]" />
@@ -365,7 +366,7 @@ export const DurgaSaptashatiView: React.FC<{
                 ))}
               </div>
             </div>
-          </div>
+          </ZeroScrollPager>
         </div>
       )}
 
@@ -487,7 +488,7 @@ export const DurgaSaptashatiView: React.FC<{
       </div>
 
       {/* Main Reader Scroll Body */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 sm:p-4 pb-28 space-y-3">
+      <ZeroScrollPager className="flex-1 min-h-0 sm:p-4 overflow-hidden" contentClassName="p-2 pb-28 space-y-3">
         {/* Active Header Banner Card */}
         <div className="bg-[#FFFDF9] border-2 border-amber-300 rounded-2xl p-3.5 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
@@ -722,7 +723,7 @@ export const DurgaSaptashatiView: React.FC<{
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      </ZeroScrollPager>
     </div>
   );
 };

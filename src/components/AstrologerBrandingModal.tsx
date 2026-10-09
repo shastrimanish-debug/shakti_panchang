@@ -17,6 +17,7 @@ import {
   saveAstrologerBranding,
 } from '../services/storage';
 import { ShaktiLogo } from './ShaktiLogo';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface AstrologerBrandingModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export const AstrologerBrandingModal: React.FC<AstrologerBrandingModalProps> = (
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-lg bg-[#FAF2E4] text-[#3E2714] rounded-2xl border-2 border-[#8C6239] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="w-full max-w-lg bg-[#FAF2E4] text-[#3E2714] rounded-2xl border-2 border-[#8C6239] shadow-2xl overflow-hidden h-[90dvh] max-h-[100dvh] flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#5C3A21] to-[#735133] text-[#FAF2E4] border-b border-[#8C6239]">
           <div className="flex items-center gap-2.5">
@@ -78,7 +79,7 @@ export const AstrologerBrandingModal: React.FC<AstrologerBrandingModalProps> = (
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="p-4 overflow-y-auto space-y-4 flex-1">
+        <ZeroScrollPager className="flex-1 overflow-hidden min-h-0" contentClassName="p-4 space-y-4">
           {/* Feature Toggle */}
           <div className="flex items-center justify-between p-3.5 bg-[#F4E8D1] border-2 border-[#8C6239]/40 rounded-xl shadow-xs">
             <div className="space-y-0.5">
@@ -242,7 +243,7 @@ export const AstrologerBrandingModal: React.FC<AstrologerBrandingModalProps> = (
               </div>
             </div>
           </div>
-        </div>
+        </ZeroScrollPager>
 
         {/* Footer */}
         <div className="p-3 bg-[#F4E8D1] border-t border-[#8C6239]/30 flex items-center justify-between gap-2">

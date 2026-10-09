@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 export interface StorySlideItem {
   id: string | number;
@@ -129,7 +130,7 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
     return () => clearInterval(timer);
   }, [currentSlideSafe, isPaused, durationMs, handleNextSlide]);
 
-  // Touch & Swipe handlers (horizontal swipe flips, vertical scroll allowed)
+  // Touch & swipe: horizontal flips the story. Vertical movement never scrolls.
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const touchStartTimeRef = useRef<number>(0);
@@ -153,8 +154,8 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
     const diffY = touchStartYRef.current !== null ? clientY - touchStartYRef.current : 0;
     const elapsed = Date.now() - touchStartTimeRef.current;
 
-    // If user scrolled vertically, strictly do NOT change slides
-    if (Math.abs(diffY) > 25) {
+    // Vertical drags do not scroll and do not change the slide.
+    if (Math.abs(diffY) > 25 && Math.abs(diffY) > Math.abs(diffX)) {
       touchStartXRef.current = null;
       touchStartYRef.current = null;
       return;
@@ -369,13 +370,12 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
         </div>
       </div>
 
-      {/* Main Slide Body: Responsive, Smooth Scrolling without clipping */}
+      {/* Main slide body — locked page, no vertical scroll */}
       <div className="flex-1 w-full max-w-2xl mx-auto px-2.5 sm:px-4 py-2 flex flex-col min-h-0 overflow-hidden relative z-20">
         <div
           key={`slide-${currentSlideSafe}`}
-          className="w-full h-full min-h-0 flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+          className="w-full h-full min-h-0 flex flex-col overflow-hidden"
         >
-          {/* Slide Title & Subtitle Badge */}
           {currentSlideData?.title && (
             <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
               <div className="flex items-center gap-1.5 min-w-0">
@@ -394,10 +394,9 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
             </div>
           )}
 
-          {/* Slide Content Slot: Scrollable to read 100% of the content without truncation */}
-          <div className="flex-1 w-full min-h-0 overflow-y-auto overscroll-contain pr-0.5 space-y-2 select-text">
+          <ZeroScrollPager className="flex-1 w-full min-h-0" resetKey={currentSlideSafe}>
             {currentSlideData?.content}
-          </div>
+          </ZeroScrollPager>
         </div>
       </div>
 

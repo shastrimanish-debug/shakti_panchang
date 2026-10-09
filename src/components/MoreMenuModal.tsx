@@ -27,6 +27,7 @@ import { SavedLocation } from '../types';
 import { AppTheme, DEVOTIONAL_THEMES, getAstrologerBranding } from '../services/storage';
 import { useLicense } from '../lib/license-client';
 import { useLanguage } from '../i18n';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface MoreMenuModalProps {
   isOpen: boolean;
@@ -83,12 +84,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-      <div
-        className="w-full max-w-md bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 backdrop-blur-2xl text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] p-4 sm:p-6 max-h-[88vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
-        style={{
-          paddingBottom: 'max(1.75rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))',
-        }}
-      >
+      <ZeroScrollPager className="w-full max-w-md h-[100dvh] sm:h-[86dvh] max-h-[100dvh] bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 backdrop-blur-2xl text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom duration-200 overflow-hidden min-h-0" contentClassName="p-4 sm:p-6">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#8C6239]/30">
           <div className="flex items-center gap-2">
@@ -664,7 +660,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
         >
           {t('more.privacyPolicy', 'गोपनीयता नीति')}
         </a>
-      </div>
+      </ZeroScrollPager>
     </div>
   );
 };

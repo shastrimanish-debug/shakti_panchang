@@ -35,6 +35,7 @@ import { calculateKundali } from './services/kundali';
 import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
 import { BottomNavBar } from './components/BottomNavBar';
+import { ZeroScrollPager } from './components/ZeroScrollPager';
 import { MoreMenuModal } from './components/MoreMenuModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
@@ -347,7 +348,7 @@ export function App() {
   }
 
   return (
-    <div key={`app-root-${currentLang}`} className="h-full min-h-full w-full overflow-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
+    <div key={`app-root-${currentLang}`} className="h-dvh w-screen overflow-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       {/* Compact Header Group: Navbar + Trial Banner */}
@@ -425,7 +426,7 @@ export function App() {
             className="flex-1 min-h-0 w-full flex flex-col overflow-hidden bg-[#FCF8EC]"
           >
             {activeTab === 'index' && (
-              <div className="flex-1 min-h-0 w-full flex flex-col overflow-y-auto overscroll-contain bg-[#FCF8EC]">
+              <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden bg-[#FCF8EC]">
                 <GranthIndexView
                   onSelectTab={handleSelectTab}
                   onReturnToCover={() => setIsBookOpen(false)}
@@ -434,7 +435,7 @@ export function App() {
             )}
 
             {activeTab === 'dashboard' && (
-              <div className="flex-1 min-h-0 w-full flex flex-col overflow-y-auto overscroll-contain bg-[#FCF8EC]">
+              <ZeroScrollPager className="flex-1 min-h-0 w-full bg-[#FCF8EC]" resetKey={`dashboard-${currentLang}`}>
                 <DashboardView
                   panchang={panchang}
                   currentLocation={currentLocation}
@@ -449,11 +450,11 @@ export function App() {
                   onOpenLocationModal={() => setIsLocationModalOpen(true)}
                   onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
                 />
-              </div>
+              </ZeroScrollPager>
             )}
 
             {activeTab === 'panchang' && (
-              <div className="flex-1 min-h-0 w-full flex flex-col overflow-y-auto overscroll-contain bg-[#FCF8EC]">
+              <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden bg-[#FCF8EC]">
                 <PanchangView
                   panchang={panchang}
                   onNavigateTab={handleSelectTab}
@@ -516,7 +517,8 @@ export function App() {
             )}
 
             {(activeTab === 'kundali' || activeTab === 'milan') && (
-              <div className="flex-1 min-h-0 w-full flex flex-col overflow-y-auto overscroll-contain bg-[#FCF8EC] px-1 sm:px-2">
+              <ZeroScrollPager className="flex-1 min-h-0 w-full bg-[#FCF8EC]" resetKey={`${activeTab}-${currentLang}`}>
+                <div className="w-full px-1 sm:px-2">
                 <KundaliView
                   activeKundali={activeKundali}
                   setActiveKundali={setActiveKundali}
@@ -526,7 +528,8 @@ export function App() {
                   onOpenUmaModal={() => setIsUmaModalOpen(true)}
                   onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
                 />
-              </div>
+                </div>
+              </ZeroScrollPager>
             )}
 
             {activeTab === 'festivals' && (

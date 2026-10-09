@@ -9,6 +9,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useLicense } from "@/lib/license-client";
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface SubscriptionModalProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150"
       data-swipe-ignore="true"
     >
-      <div className="bg-[#FAF2E4] border-2 border-[#B56A00] rounded-2xl shadow-2xl overflow-hidden max-w-lg w-full text-[#3E2714] flex flex-col max-h-[90vh]">
+      <div className="bg-[#FAF2E4] border-2 border-[#B56A00] rounded-2xl shadow-2xl overflow-hidden max-w-lg w-full text-[#3E2714] flex flex-col h-[90dvh] max-h-[100dvh]">
         {/* Header */}
         <div className="bg-[#5C3A21] text-[#FAF2E4] p-3.5 sm:p-4 flex items-center justify-between border-b border-[#B56A00] shrink-0">
           <div className="flex items-center gap-2.5">
@@ -85,7 +86,7 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 bg-[#FAF2E4]">
+        <ZeroScrollPager className="flex-1 min-h-0 bg-[#FAF2E4] overflow-hidden" contentClassName="p-4 sm:p-5 space-y-3.5">
           {/* Reason Notification Banner */}
           {reason && (
             <div className="p-2.5 bg-amber-100 border border-[#B56A00]/50 rounded-xl text-xs text-[#3E2714] flex items-center gap-2 font-bold shadow-2xs">
@@ -220,7 +221,7 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
               </div>
             </>
           )}
-        </div>
+        </ZeroScrollPager>
       </div>
     </div>
   );

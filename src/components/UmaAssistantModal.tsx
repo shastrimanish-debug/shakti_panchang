@@ -43,6 +43,7 @@ import {
   Clock,
   Sparkle,
 } from 'lucide-react';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface UmaVoicePlugin {
   listen: () => Promise<{ text: string }>;
@@ -810,7 +811,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         </div>
 
         {/* Messages List Container */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 bg-[#FAF2E4]">
+        <ZeroScrollPager className="flex-1 sm:p-5 bg-[#FAF2E4] overflow-hidden min-h-0" contentClassName="p-3 space-y-4">
           {messages.map((msg) => {
             const isUma = msg.sender === 'uma';
             return (
@@ -982,7 +983,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             </div>
           )}
           <div ref={messagesEndRef} />
-        </div>
+        </ZeroScrollPager>
 
         {/* Input Bar - Alexa Voice & Text input */}
         <div className="bg-[#F4E8D1] p-2.5 sm:p-3 border-t-2 border-[#8C6239]/30">
@@ -1038,7 +1039,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         {/* WhatsApp Client Bot Modal Overlay */}
         {isWhatsAppBotOpen && (
           <div className="absolute inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
-            <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-2xl h-[92dvh] max-h-[100dvh] flex flex-col shadow-2xl overflow-hidden">
               {/* Bot Header */}
               <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-3 sm:p-4 flex items-center justify-between border-b border-emerald-600">
                 <div className="flex items-center gap-2.5">
@@ -1066,7 +1067,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               </div>
 
               {/* Bot Body */}
-              <div className="p-4 overflow-y-auto space-y-4 text-sm font-serif">
+              <ZeroScrollPager className="flex-1 min-h-0 text-sm font-serif overflow-hidden" contentClassName="p-4 space-y-4">
                 {/* Client Details Form */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#FFFDF8] p-3 rounded-xl border border-[#8C6239]/30 shadow-xs">
                   <div>
@@ -1148,7 +1149,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     />
                   </div>
                 )}
-              </div>
+              </ZeroScrollPager>
 
               {/* Bot Footer Actions */}
               <div className="bg-[#F4E8D1] p-3 border-t border-[#8C6239]/30 flex items-center justify-between flex-wrap gap-2">

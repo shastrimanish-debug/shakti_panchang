@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { VedicPanchangData, SavedLocation } from '../types';
 import { getAstrologerBranding, AstrologerBranding } from '../services/storage';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface WhatsAppPanchangModalProps {
   isOpen: boolean;
@@ -532,7 +533,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       {/* Hidden offscreen canvas for crisp 1080x1350 rendering */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-      <div className="w-full max-w-md bg-[#FAF2E4] text-[#3E2714] rounded-2xl border-2 border-[#8C6239] shadow-2xl overflow-hidden max-h-[95vh] flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="w-full max-w-md bg-[#FAF2E4] text-[#3E2714] rounded-2xl border-2 border-[#8C6239] shadow-2xl overflow-hidden h-[92dvh] max-h-[100dvh] flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-[#5C3A21] to-[#735133] text-[#FAF2E4] border-b border-[#8C6239]">
           <div className="flex items-center gap-2">
@@ -558,7 +559,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
         </div>
 
         {/* Scrollable Content */}
-        <div className="p-3 sm:p-4 overflow-y-auto space-y-3 flex-1 flex flex-col items-center">
+        <ZeroScrollPager className="sm:p-4 flex-1 flex flex-col items-center overflow-hidden min-h-0" contentClassName="p-3 space-y-3">
           {/* Card Preview */}
           <div className="w-full max-w-[340px] rounded-xl overflow-hidden border-2 border-[#8C6239] shadow-md bg-stone-100 relative group aspect-[4/5] flex items-center justify-center">
             {isGenerating || !imageUri ? (
@@ -646,7 +647,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </ZeroScrollPager>
 
         {/* Footer */}
         <div className="p-2.5 bg-[#F4E8D1] border-t border-[#8C6239]/20 text-center">

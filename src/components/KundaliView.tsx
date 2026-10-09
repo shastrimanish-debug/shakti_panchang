@@ -1244,7 +1244,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 </div>
 
                 {/* Varga Pills Grid */}
-                <div className="max-h-48 overflow-y-auto pr-1">
+                <div className="pr-1">
                   <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
                     {(vargaListFilter === 'shodash'
                       ? ALL_D1_TO_D60_VARGAS.filter((v) => v.isShodash)
@@ -1338,7 +1338,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       <span>{vargaListFilter === 'shodash' ? 'षोडशवर्ग (16 वर्गीय चक्रों) की सूची' : 'सम्पूर्ण D1 से D60 वर्गीय चक्रों की सूची'}</span>
                       <span className="text-[10px] text-[#FFD88A]">क्लिक कर चार्ट देखें</span>
                     </div>
-                    <div className="max-h-[260px] overflow-y-auto no-scrollbar">
+                    <div className="">
                       <table className="w-full text-left text-xs">
                         <tbody className="divide-y divide-[#8C6239]/20">
                           {(vargaListFilter === 'shodash'

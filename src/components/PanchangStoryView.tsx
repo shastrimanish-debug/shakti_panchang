@@ -511,9 +511,9 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
       {/* 2. CHUNKED STORY SLIDE CANVAS (Zero Scroll, 100% Guaranteed Fit) */}
       {/* ========================================================================= */}
       <main
-        className="relative z-20 flex-1 w-full max-w-lg mx-auto px-2 sm:px-3 py-1 flex flex-col min-h-0 overflow-y-auto overscroll-contain"
+        className="relative z-20 flex-1 w-full max-w-lg mx-auto px-2 sm:px-3 py-1 flex flex-col min-h-0 overflow-hidden"
         style={{
-          touchAction: 'pan-y pinch-zoom',
+          touchAction: 'pan-x',
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}

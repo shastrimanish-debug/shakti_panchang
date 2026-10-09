@@ -88,10 +88,8 @@
   border-bottom: 1px solid var(--color-gold-dark);
 }
 
-::-webkit-scrollbar { width: 7px; height: 7px; }
-::-webkit-scrollbar-track { background: #f1e0be; }
-::-webkit-scrollbar-thumb { background: var(--color-gold-dark); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-vermilion); }
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

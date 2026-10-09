@@ -5,6 +5,7 @@ import { Sparkles, Share2, Volume2, VolumeX, BookOpen, ChevronLeft, ChevronRight
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface DailyGitaShlokaViewProps {
   onBackToPanchang?: () => void;
@@ -165,7 +166,7 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
       {/* TOC Drawer Overlay */}
       {isTocOpen && (
         <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-200">
-          <div className="w-4/5 max-w-xs h-full bg-[#FAF2E4] border-r-2 border-amber-600 shadow-2xl flex flex-col p-3 space-y-3 overflow-y-auto">
+          <ZeroScrollPager className="w-4/5 max-w-xs h-full bg-[#FAF2E4] border-r-2 border-amber-600 shadow-2xl flex flex-col overflow-hidden min-h-0" contentClassName="p-3 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-[#E2D2BE]">
               <div className="flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-[#8C4A00]" />
@@ -204,7 +205,7 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
                 </button>
               ))}
             </div>
-          </div>
+          </ZeroScrollPager>
         </div>
       )}
 
@@ -228,7 +229,7 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
       </div>
 
       {/* Main Content Body */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 space-y-3">
+      <ZeroScrollPager className="flex-1 min-h-0 sm:p-4 overflow-hidden" contentClassName="p-2 space-y-3">
         {/* Horizontal Selectable Carousel */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar select-none">
           {filteredShlokas.map((s, idx) => (
@@ -402,7 +403,7 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
             कोई श्लोक प्राप्त नहीं हुआ। कृपया खोज शब्द बदलें।
           </div>
         )}
-      </div>
+      </ZeroScrollPager>
     </div>
   );
 };

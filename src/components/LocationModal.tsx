@@ -29,6 +29,7 @@ import {
   GlobalCity,
 } from "../services/globalCities";
 import { timezoneHoursFor } from "../services/engine/time";
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -261,7 +262,7 @@ export function LocationModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] text-[#3E2714]"
+        className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col h-[92dvh] max-h-[100dvh] text-[#3E2714]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -360,7 +361,7 @@ export function LocationModal({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 bg-[#FAF2E4] space-y-1.5">
+            <ZeroScrollPager className="flex-1 bg-[#FAF2E4] overflow-hidden min-h-0" contentClassName="p-2 space-y-1.5">
               {results.length === 0 ? (
                 <div className="text-center py-10 px-4 text-[#8C6239] space-y-2">
                   <p className="text-sm font-medium">कोई नगर नहीं मिला।</p>
@@ -414,7 +415,7 @@ export function LocationModal({
                   );
                 })
               )}
-            </div>
+            </ZeroScrollPager>
           </div>
         )}
 
@@ -485,7 +486,7 @@ export function LocationModal({
             </div>
 
             {/* City List for Chosen Country / Region */}
-            <div className="flex-1 overflow-y-auto p-2 bg-[#FAF2E4] space-y-1.5">
+            <ZeroScrollPager className="flex-1 bg-[#FAF2E4] overflow-hidden min-h-0" contentClassName="p-2 space-y-1.5">
               <div className="px-1 py-0.5 text-[11px] font-semibold text-[#735133] flex justify-between">
                 <span>{selectedCountryInfo.flag} {selectedCountryInfo.nameHi} • {filteredDirectoryCities.length} नगर</span>
                 <span>सटीक पंचांग व सूर्योदय गणना</span>
@@ -539,13 +540,13 @@ export function LocationModal({
                   </button>
                 );
               })}
-            </div>
+            </ZeroScrollPager>
           </div>
         )}
 
         {/* TAB 3: SACRED PILGRIMAGE CENTRES */}
         {activeTab === "pilgrimage" && (
-          <div className="flex-1 overflow-y-auto p-2.5 space-y-2 bg-[#FAF2E4]">
+          <ZeroScrollPager className="flex-1 bg-[#FAF2E4] overflow-hidden min-h-0" contentClassName="p-2.5 space-y-2">
             <div className="p-2 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl text-xs text-[#5C3A21] font-medium">
               चार धाम, द्वादश ज्योतिर्लिंग, सप्त पुरी एवं सिद्ध तीर्थ — इन पावन स्थलों के अक्षांश-देशांतर से पंचांग की गणना पूर्णतः प्रमाणिक होती है।
             </div>
@@ -580,12 +581,13 @@ export function LocationModal({
                 );
               })}
             </div>
-          </div>
+          </ZeroScrollPager>
         )}
 
         {/* TAB 4: CUSTOM COORDINATES & TIMEZONE */}
         {activeTab === "custom" && (
-          <form onSubmit={handleCustomSubmit} className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-[#FAF2E4]">
+          <form onSubmit={handleCustomSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden bg-[#FAF2E4]">
+            <ZeroScrollPager className="flex-1 min-h-0" contentClassName="p-3.5 space-y-3">
             <p className="text-xs text-[#735133] font-medium">
               यदि आपका गाँव, कस्बा या विदेश का कोई स्थान सूची में नहीं है, तो उसके सटीक निर्देशांक (GPS) व समय-क्षेत्र यहाँ भरें:
             </p>
@@ -716,6 +718,7 @@ export function LocationModal({
               <MapPin className="w-4 h-4" />
               स्थान सुरक्षित करें और पंचांग देखें
             </button>
+            </ZeroScrollPager>
           </form>
         )}
       </div>

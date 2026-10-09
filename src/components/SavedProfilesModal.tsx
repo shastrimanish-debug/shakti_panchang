@@ -4,6 +4,7 @@ import { getSavedKundaliProfiles, deleteSavedKundaliProfile } from '../services/
 import { BookMarked, X, Trash2 } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { trRashi, trVedic } from '../i18n/vedicTranslate';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface SavedProfilesModalProps {
   isOpen: boolean;
@@ -46,7 +47,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col h-[85dvh] max-h-[100dvh]">
         {/* Header */}
         <div className="bg-[#5C3A21] text-[#FAF2E4] p-3.5 flex items-center justify-between border-b-2 border-[#8C6239]">
           <div className="flex items-center gap-2">
@@ -62,7 +63,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <ZeroScrollPager className="flex-1 overflow-hidden min-h-0" contentClassName="p-3 space-y-2">
           {profiles.length > 0 ? (
             profiles.map((p, idx) => (
               <div
@@ -96,7 +97,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
               {t('savedProfiles.empty', 'કોઈ સાચવેલી કુંડળી મળી નથી. કુંડળી બનાવીને તેને અહીં સાચવી શકાય છે.')}
             </div>
           )}
-        </div>
+        </ZeroScrollPager>
       </div>
     </div>
   );

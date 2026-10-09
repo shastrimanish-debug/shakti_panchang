@@ -13,6 +13,7 @@ import {
   BookOpen,
   Send,
 } from 'lucide-react';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 export interface PdfSuccessInfo {
   isOpen: boolean;
@@ -202,7 +203,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
           </div>
         ) : (
           /* Download & Location Guide Mode */
-          <div className="p-4 sm:p-5 space-y-4 overflow-y-auto max-h-[80vh]">
+          <ZeroScrollPager className="flex-1 min-h-0 overflow-hidden" contentClassName="p-4 sm:p-5 space-y-4">
             {downloadSuccessMsg && (
               <div className="p-3 bg-emerald-100 border border-emerald-400 text-emerald-950 rounded-xl text-xs font-bold animate-in fade-in flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
@@ -312,7 +313,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                 सम्पन्न (बंद करें)
               </button>
             </div>
-          </div>
+          </ZeroScrollPager>
         )}
       </div>
     </div>

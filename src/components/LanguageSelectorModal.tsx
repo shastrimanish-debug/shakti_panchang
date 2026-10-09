@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage, SUPPORTED_LANGUAGES, LanguageOption } from '../i18n';
 import { Globe, Check, Search, X, Sparkles } from 'lucide-react';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface LanguageSelectorModalProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-lg bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 backdrop-blur-2xl text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] p-4 sm:p-6 max-h-[88vh] flex flex-col animate-in slide-in-from-bottom duration-200"
+        className="w-full max-w-lg h-[100dvh] sm:h-[86dvh] max-h-[100dvh] bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 backdrop-blur-2xl text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] p-4 sm:p-6 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200"
         style={{
           paddingBottom: 'max(1.75rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))',
         }}
@@ -76,7 +77,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
         </div>
 
         {/* Language Grid / List */}
-        <div className="mt-3.5 space-y-2 overflow-y-auto max-h-[55vh] pr-1 scrollbar-thin">
+        <ZeroScrollPager className="mt-3.5 flex-1 min-h-0 overflow-hidden" contentClassName="space-y-2 pr-1">
           {filteredLanguages.map((lang) => {
             const isSelected = currentLangCode === lang.code;
             return (
@@ -125,7 +126,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
               </button>
             );
           })}
-        </div>
+        </ZeroScrollPager>
 
         {/* Footer info */}
         <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
