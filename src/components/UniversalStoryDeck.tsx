@@ -220,7 +220,7 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
 
   return (
     <div
-      className="w-full h-full max-h-full flex flex-col justify-between overflow-hidden select-none bg-gradient-to-b from-[#FFFDF9] to-[#FBF3E6] text-[#2C180C] relative"
+      className="flex-1 min-h-0 w-full h-full max-h-full flex flex-col justify-between overflow-hidden select-none bg-gradient-to-b from-[#FFFDF9] to-[#FBF3E6] text-[#2C180C] relative"
       onMouseDown={handleTouchStart}
       onMouseUp={handleTouchEnd}
       onTouchStart={handleTouchStart}

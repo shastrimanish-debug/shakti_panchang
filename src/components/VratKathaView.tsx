@@ -75,7 +75,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
   };
 
   return (
-    <div className="w-full h-full min-h-0 flex flex-col bg-[#FCF8EC] text-[#2C180C] overflow-hidden select-none relative">
+    <div className="flex-1 min-h-0 w-full flex flex-col bg-[#FCF8EC] text-[#2C180C] overflow-hidden select-none relative">
       {/* Header Bar */}
       <header className="shrink-0 bg-gradient-to-r from-[#462B17] via-[#5C3A21] to-[#3E2714] text-[#FAF2E4] px-3 py-2.5 shadow-md flex items-center justify-between border-b border-[#B56A00]/40 z-20">
         <div className="flex items-center gap-2">
