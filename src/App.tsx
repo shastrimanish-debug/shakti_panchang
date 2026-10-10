@@ -15,6 +15,7 @@ import { HANUMAN_CHALISA } from './data/hanumanChalisa';
 import sundarkandRaw from './data/sundarkand.json';
 import { VastuView } from './components/VastuView';
 import { UpayView } from './components/UpayView';
+import { SaralUpayPanel } from './components/SaralUpayPanel';
 import { NumerologyView } from './components/NumerologyView';
 import { PalmistryView } from './components/PalmistryView';
 import { TarotView } from './components/TarotView';
@@ -591,6 +592,15 @@ export function App() {
                 title="श्री रामचरितमानस · संपूर्ण सुंदरकांड"
                 verses={sundarkandRaw as { n: number; kind?: string; text: string }[]}
               />
+            )}
+
+            {activeTab === 'saral' && (
+              <div className="flex-1 min-h-0 flex flex-col">
+                <div className="shrink-0 px-3 pt-1 text-[13px] font-semibold">सरल उपाय · 200 पाठ</div>
+                <ZeroScrollPager className="flex-1 min-h-0" contentClassName="p-2" resetKey="saral">
+                  <SaralUpayPanel />
+                </ZeroScrollPager>
+              </div>
             )}
 
             {activeTab === 'upay' && (

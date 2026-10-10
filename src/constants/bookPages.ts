@@ -337,6 +337,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     screenTitle: '🔮 ग्रह शांति व चमत्कारी उपाय',
   },
   {
+    id: 'saral',
+    title: 'सरल उपाय और मंत्र पाठ',
+    label: 'सरल उपाय',
+    pageNumber: 23,
+    chapter: '',
+    desc: '200 सरल जप, विधि और सावधानी। धन, रक्षा, नींद, व्यापार',
+    icon: Sparkles,
+    screenTitle: '🪔 सरल उपाय',
+  },
+  {
     id: 'vastu',
     title: 'वैदिक वास्तु शास्त्र व चमत्कारी टिप्स',
     label: 'वास्तु शास्त्र',

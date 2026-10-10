@@ -181,7 +181,7 @@ function fitAtom(el: HTMLElement, atoms: HTMLElement[], root: HTMLElement, pageH
 }
 
 function packMeasured(root: HTMLElement, atoms: HTMLElement[], pageH: number): Page[] {
-  const pages: NodePage[] = [];
+  const pages: Page[] = [];
   let cur: NodeSlice[] = [];
   const fullHeight = new Map<HTMLElement, number>();
   atoms.forEach((el) => fullHeight.set(el, Math.max(el.scrollHeight, el.offsetHeight)));
@@ -207,44 +207,23 @@ function packMeasured(root: HTMLElement, atoms: HTMLElement[], pageH: number): P
       continue;
     }
 
-    if (!canSlice(el)) {
+    const textOnly = !el.querySelector("button, a, input, textarea, select, canvas, video, svg");
+    if (textOnly && (el.innerText || "").trim().length > 40) {
       if (cur.length) commit();
-      paint(atoms, [{ id, top: 0, height: full, clip: false }]);
-      if (root.scrollHeight > pageH + 2) {
-        fitAtom(el, atoms, root, pageH);
-        const scale = Number(el.dataset.zspScale || "1");
-        cur = [{ id, top: 0, height: full, clip: false, scale: scale < 0.995 ? scale : undefined }];
-        commit();
-      } else {
-        cur = [{ id, top: 0, height: full, clip: false }];
-      }
+      chunkText(el, pageH).forEach((text) => pages.push({ type: "text", text }));
       continue;
     }
 
-    let top = 0;
-    let guard = 0;
-    while (top < full - 2 && guard++ < 60) {
-      paint(atoms, cur);
-      let room = (cur.length ? pageH - root.scrollHeight : pageH) - 2;
-      if (room < 48) {
-        commit();
-        room = pageH - 2;
-      }
-      let height = Math.min(Math.max(room, 48), full - top);
-      const slice: NodeSlice = { id, top, height, clip: true };
-      paint(atoms, [...cur, slice]);
-      if (tooTall()) {
-        height = Math.max(48, height - (root.scrollHeight - pageH) - 4);
-        slice.height = height;
-        paint(atoms, [...cur, slice]);
-      }
-      if (height < 36) height = Math.min(pageH - 4, full - top);
-      slice.height = height;
-      slice.clip = top > 0 || height < full - 4;
-      cur.push(slice);
-      top += height;
-      if (top < full - 2) commit();
+    if (cur.length) commit();
+    paint(atoms, [{ id, top: 0, height: full, clip: false }]);
+    if (root.scrollHeight > pageH + 2) {
+      fitAtom(el, atoms, root, pageH);
+      const scale = Number(el.dataset.zspScale || "1");
+      cur = [{ id, top: 0, height: full, clip: false, scale: scale < 0.995 ? scale : undefined }];
+    } else {
+      cur = [{ id, top: 0, height: full, clip: false }];
     }
+    commit();
   }
   commit();
   paint(atoms, null);
