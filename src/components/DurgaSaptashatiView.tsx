@@ -287,7 +287,9 @@ export const DurgaSaptashatiView: React.FC<{
   return (
     <div className="w-full h-full min-h-0 flex flex-col overflow-hidden relative">
       <div className="shrink-0 px-3 pt-1 text-[13px] font-semibold truncate">
-        {activeTab === "angas" ? localizedAnga.name : `${ui.chapter(activeChapter.id)} · ${localizedChapter.heading}`}
+        {activeTab === "angas"
+          ? `${ui.shareTitle} · ${localizedAnga.name}`
+          : `${ui.shareTitle} · ${ui.chapterOf(activeChapter.id, DURGA_CHAPTERS.length)}`}
       </div>
       {host ? createPortal(toolbars, host) : null}
 
