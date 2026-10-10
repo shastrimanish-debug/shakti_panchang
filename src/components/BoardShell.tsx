@@ -40,35 +40,34 @@ export function BoardHeader({
   const { t, language } = useLanguage();
   const brand = language === "en" ? "Shakti" : language === "gu" ? "શક્તિ" : "शक्ति";
   return (
-    <header className="bx-head shrink-0 z-40 flex items-center gap-2 px-3 h-14 border-b">
+    <header className="bx-head shrink-0 z-40 flex items-center gap-1.5 px-2.5">
       {showBack ? (
         <button
           type="button"
           onClick={onBack}
-          className="h-10 px-2 inline-flex items-center gap-1 rounded-lg text-sm font-medium"
+          className="bx-head-btn shrink-0"
           aria-label={t("nav.allServices", "सभी सेवाएँ")}
         >
           <ChevronLeft className="w-4 h-4" />
-          {t("nav.services", "सेवाएँ")}
         </button>
       ) : (
-        <div className="min-w-0">
+        <div className="min-w-0 shrink-0 max-w-[34%]">
           <div className="text-[15px] font-semibold leading-none">{brand}</div>
           <div className="bx-kicker mt-1 truncate">{dateLabel}</div>
         </div>
       )}
-      <div className="flex-1 min-w-0 text-center">
-        <div className="text-sm font-semibold truncate">{showBack ? title : t("nav.allServices", "सभी सेवाएँ")}</div>
+      <div className="flex-1 min-w-0 text-center px-1">
+        <div className="text-[15px] font-semibold truncate">{showBack ? title : t("nav.allServices", "सभी सेवाएँ")}</div>
       </div>
       <button
         type="button"
         onClick={onPlace}
-        className="h-10 max-w-[38%] px-2 inline-flex items-center gap-1 rounded-lg text-xs font-medium"
+        className="bx-head-btn max-w-[32%] min-w-0 shrink"
       >
         <MapPin className="w-3.5 h-3.5 shrink-0" />
         <span className="truncate">{place}</span>
       </button>
-      <button type="button" onClick={onLanguage} className="h-10 w-10 grid place-items-center rounded-lg" aria-label={t("common.language", "भाषा")}>
+      <button type="button" onClick={onLanguage} className="bx-head-btn shrink-0" aria-label={t("common.language", "भाषा")}>
         <Languages className="w-4 h-4" />
       </button>
     </header>
@@ -96,7 +95,7 @@ export function BoardDock({
     { id: "uma", label: t("nav.uma", "उमा"), icon: Sparkles, onClick: onUma },
   ];
   return (
-    <nav className="bx-dock shrink-0 z-40 grid grid-cols-4 border-t h-14" aria-label={t("nav.services", "मुख्य")}>
+    <nav className="bx-dock shrink-0 z-40 grid grid-cols-4" aria-label={t("nav.services", "मुख्य")}>
       {items.map((item) => {
         const on = item.id === "uma" ? false : active === item.id || (item.id === "kundali" && active === "milan");
         const Icon = item.icon;
