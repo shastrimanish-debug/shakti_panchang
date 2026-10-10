@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   Calendar,
   LayoutGrid,
@@ -28,6 +28,21 @@ export const DrawerHostContext = React.createContext<{
   host: HTMLElement | null;
   close: () => void;
 }>({ host: null, close: () => {} });
+
+export const TabMenuContext = React.createContext<{
+  register: (fn: () => boolean) => () => void;
+  go: () => void;
+}>({
+  register: () => () => {},
+  go: () => {},
+});
+
+export function useTabMenu(handler: () => boolean) {
+  const { register } = useContext(TabMenuContext);
+  const latest = useRef(handler);
+  latest.current = handler;
+  useEffect(() => register(() => latest.current()), [register]);
+}
 
 export function BoardMenuButton({
   open,

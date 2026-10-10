@@ -20,7 +20,7 @@ import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { ZeroScrollPager } from './ZeroScrollPager';
-import { DrawerHostContext } from './BoardShell';
+import { DrawerHostContext, useTabMenu } from './BoardShell';
 
 interface RawChapterShloka {
   n: number;
@@ -55,6 +55,11 @@ export const DurgaSaptashatiView: React.FC<{
   const [bookmarks, setBookmarks] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
+  useTabMenu(() => {
+    if (isTocOpen) return false;
+    setIsTocOpen(true);
+    return true;
+  });
 
   // Audio Speech States
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);

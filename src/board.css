@@ -87,9 +87,21 @@
 .bx-rail {
   display: flex;
   align-items: center;
+  gap: 8px;
   height: auto;
   padding: 6px 10px 2px;
   background: transparent;
+}
+
+.bx-tabmenu {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bx-line);
+  background: var(--bx-panel);
+  color: var(--bx-ink);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .zsp-flow button,

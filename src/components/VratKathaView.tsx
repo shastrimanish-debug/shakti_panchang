@@ -7,7 +7,7 @@ import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { ZeroScrollPager } from './ZeroScrollPager';
-import { DrawerHostContext } from './BoardShell';
+import { DrawerHostContext, useTabMenu } from './BoardShell';
 
 interface VratKathaViewProps {
   onBackToPanchang?: () => void;
@@ -30,6 +30,12 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [atMenu, setAtMenu] = useState(false);
+  useTabMenu(() => {
+    if (atMenu) return false;
+    setAtMenu(true);
+    return true;
+  });
 
   const localizedKathas = useMemo(() => {
     return VRAT_KATHA_DATA.map((item) => getLocalizedVratKathaItem(item, language));
@@ -104,7 +110,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
       </div>
       <div className="max-h-40 overflow-y-auto flex flex-col gap-1">
         {filteredKathas.map((katha, idx) => (
-          <button key={katha.id || idx} type="button" className="text-left text-xs px-2 py-1 rounded-lg" style={{ background: idx === selectedIndex ? "var(--bx-mark)" : "transparent", color: idx === selectedIndex ? "var(--bx-cream)" : "inherit" }} onClick={() => { setSelectedIndex(idx); setActiveChapterIndex(0); }}>
+          <button key={katha.id || idx} type="button" className="text-left text-xs px-2 py-1 rounded-lg" style={{ background: idx === selectedIndex ? "var(--bx-mark)" : "transparent", color: idx === selectedIndex ? "var(--bx-cream)" : "inherit" }} onClick={() => { setSelectedIndex(idx); setActiveChapterIndex(0); setAtMenu(false); drawer.close(); }}>
             {katha.title}
           </button>
         ))}
@@ -121,20 +127,34 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
 
   return (
     <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
-      <div className="shrink-0 px-3 pt-1 text-[13px] font-semibold truncate">{currentKatha.title}</div>
+      <div className="shrink-0 px-3 pt-1 flex items-center gap-2">
+        {atMenu ? (
+          <button type="button" className="text-[13px] font-semibold shrink-0" onClick={() => setAtMenu(false)}>पाठ</button>
+        ) : null}
+        <div className="text-[13px] font-semibold truncate">{atMenu ? "व्रत कथा सूची" : currentKatha.title}</div>
+      </div>
       {host ? createPortal(tools, host) : null}
-      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-0.5 flex flex-col gap-1.5" resetKey={`${currentKatha.id}-${activeChapterIndex}-${fontSize}`}>
-        {currentKatha.shlok ? <article className="bx-verse"><div className="bx-kicker">श्लोक</div><p className={`font-granth whitespace-pre-wrap ${size}`}>{currentKatha.shlok}</p></article> : null}
-        {currentKatha.shlokMeaning ? <article className="bx-verse"><div className="bx-kicker">भावार्थ</div><p className={size}>{currentKatha.shlokMeaning}</p></article> : null}
-        {blocks.map((line, idx) => (
-          <article key={idx} className="bx-verse">
-            <div className="bx-kicker">अध्याय {activeChapterIndex + 1} · {idx + 1}/{blocks.length}</div>
-            <p className={`whitespace-pre-wrap ${size}`}>{line}</p>
-          </article>
-        ))}
-        {(currentKatha.rules || []).map((rule, idx) => (
-          <article key={`r${idx}`} className="bx-verse"><div className="bx-kicker">विधि</div><p className={size}>{rule}</p></article>
-        ))}
+      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-0.5 flex flex-col gap-1.5" resetKey={atMenu ? `menu-${selectedCategory}-${searchQuery}` : `${currentKatha.id}-${activeChapterIndex}-${fontSize}`}>
+        {atMenu ? filteredKathas.map((katha, idx) => (
+          <button key={katha.id || idx} type="button" className="bx-verse text-left" onClick={() => { setSelectedIndex(idx); setActiveChapterIndex(0); setAtMenu(false); }}>
+            <div className="bx-kicker">{katha.category}</div>
+            <strong className="text-sm">{katha.title}</strong>
+          </button>
+        )) : (
+          <>
+            {currentKatha.shlok ? <article className="bx-verse"><div className="bx-kicker">श्लोक</div><p className={`font-granth whitespace-pre-wrap ${size}`}>{currentKatha.shlok}</p></article> : null}
+            {currentKatha.shlokMeaning ? <article className="bx-verse"><div className="bx-kicker">भावार्थ</div><p className={size}>{currentKatha.shlokMeaning}</p></article> : null}
+            {blocks.map((line, idx) => (
+              <article key={idx} className="bx-verse">
+                <div className="bx-kicker">अध्याय {activeChapterIndex + 1} · {idx + 1}/{blocks.length}</div>
+                <p className={`whitespace-pre-wrap ${size}`}>{line}</p>
+              </article>
+            ))}
+            {(currentKatha.rules || []).map((rule, idx) => (
+              <article key={`r${idx}`} className="bx-verse"><div className="bx-kicker">विधि</div><p className={size}>{rule}</p></article>
+            ))}
+          </>
+        )}
       </ZeroScrollPager>
     </div>
   );

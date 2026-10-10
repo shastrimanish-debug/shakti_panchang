@@ -6,6 +6,7 @@ import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { useTabMenu } from './BoardShell';
 
 interface DailyGitaShlokaViewProps {
   onBackToPanchang?: () => void;
@@ -30,6 +31,11 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [bookmarks, setBookmarks] = useState<Record<string, boolean>>({});
   const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
+  useTabMenu(() => {
+    if (isTocOpen) return false;
+    setIsTocOpen(true);
+    return true;
+  });
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const localizedShlokas = useMemo(() => {

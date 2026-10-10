@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { SABAR_CATEGORIES, SABAR_MANTRAS, type SabarMantra } from "../data/saral/sabar";
 import { ZeroScrollPager } from "./ZeroScrollPager";
+import { useTabMenu } from "./BoardShell";
 
 export function SabarMantraView() {
   const [query, setQuery] = useState("");
@@ -17,6 +18,11 @@ export function SabarMantraView() {
     [category, needle],
   );
   const selected = SABAR_MANTRAS.find((item) => item.id === selectedId) ?? null;
+  useTabMenu(() => {
+    if (selectedId == null) return false;
+    setSelectedId(null);
+    return true;
+  });
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">

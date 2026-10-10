@@ -7,6 +7,7 @@ import { UI, type UiKey } from '../data/saral/ui';
 import { gloss } from '../data/saral/glossary';
 import { viewOf } from '../data/saral/view';
 import { loadSadhana, saveSadhana, todayISO, weekdayName, type SadhanaMap } from '../data/saral/sadhana';
+import { useTabMenu } from '../components/BoardShell';
 
 function useSaralLang(): LangCode {
   const { language } = useLanguage();
@@ -25,6 +26,11 @@ export function SaralUpayPanel() {
   const [todayName, setTodayName] = useState<string | null>(null);
   const [sadhana, setSadhana] = useState<SadhanaMap>({});
   const [copied, setCopied] = useState<string | null>(null);
+  useTabMenu(() => {
+    if (selectedId == null) return false;
+    setSelectedId(null);
+    return true;
+  });
 
   useEffect(() => {
     setToday(todayISO());

@@ -41,7 +41,7 @@ import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
 import { BottomNavBar } from './components/BottomNavBar';
 import { ZeroScrollPager } from './components/ZeroScrollPager';
-import { BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TodayBoard } from './components/BoardShell';
+import { BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TabMenuContext, TodayBoard } from './components/BoardShell';
 import { MoreMenuModal } from './components/MoreMenuModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
@@ -379,14 +379,35 @@ export function App() {
     setDrawerOpen(false);
     fn();
   };
+  const tabMenu = useMemo(() => {
+    let current: (() => boolean) | null = null;
+    return {
+      register(fn: () => boolean) {
+        current = fn;
+        return () => {
+          if (current === fn) current = null;
+        };
+      },
+      go() {
+        if (current?.()) return;
+        handleSelectTab("services");
+      },
+    };
+  }, [handleSelectTab]);
 
   return (
     <DrawerHostContext.Provider value={drawerApi}>
+    <TabMenuContext.Provider value={tabMenu}>
     <div key={`app-root-${currentLang}`} className="board h-dvh w-screen overflow-hidden relative flex flex-col font-sans">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       <div className="bx-rail shrink-0">
         <BoardMenuButton open={drawerOpen} onClick={() => setDrawerOpen((open) => !open)} />
+        {activeTab !== "services" && activeTab !== "index" && (
+          <button type="button" className="bx-tabmenu" onClick={() => tabMenu.go()}>
+            मुख्य मेनू
+          </button>
+        )}
       </div>
 
       {/* Floating Page Turn Toast Notice */}
@@ -819,6 +840,7 @@ export function App() {
         onSelectProfile={setActiveKundali}
       />
     </div>
+    </TabMenuContext.Provider>
     </DrawerHostContext.Provider>
   );
 }
