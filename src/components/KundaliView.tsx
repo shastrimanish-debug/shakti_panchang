@@ -870,7 +870,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
       {/* Sub-Navigation Tabs */}
       <CalcSettingsPanel compact />
-      <div className="flex border-b border-[#8C6239]/30 overflow-x-auto no-scrollbar gap-1">
+      <div className="flex flex-wrap border-b gap-1">
         {[
           { id: 'phalit', label: t('kundali.tabPrediction', 'फलादेश (Prediction)'), icon: Sparkles },
           { id: 'chart', label: t('kundali.tabLagnaVargas', 'लग्न व सम्पूर्ण वर्ग चक्र (D1 से D60)'), icon: Layers },

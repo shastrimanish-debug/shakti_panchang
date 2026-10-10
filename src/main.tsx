@@ -5,6 +5,7 @@ import './i18n';
 import { LanguageProvider } from './i18n';
 import { App } from './App';
 import './index.css';
+import './board.css';
 import { registerSW } from 'virtual:pwa-register';
 import { LicenseProvider } from './lib/license-client';
 import { initializeSecurityGuard } from './utils/securityGuard';

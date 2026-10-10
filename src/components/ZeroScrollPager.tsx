@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "../i18n";
 
 /**
  * Locks a region to the viewport and flips content page-by-page.
@@ -207,6 +208,7 @@ export interface ZeroScrollPagerProps {
 }
 
 export function ZeroScrollPager({ children, className = "", contentClassName = "", resetKey, label }: ZeroScrollPagerProps) {
+  const { t } = useLanguage();
   const stageRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<Page[]>([{ type: "nodes", ids: [] }]);
@@ -361,7 +363,7 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
         </div>
         {textOverlay && (
           <div className="absolute inset-0 overflow-hidden p-3 sm:p-4" data-zsp-chrome="1">
-            <p className="font-serif text-[15px] sm:text-base leading-relaxed text-[#3E2714] whitespace-pre-wrap">
+            <p className="text-[15px] sm:text-base leading-relaxed whitespace-pre-wrap" style={{ color: "var(--bx-ink, #1c1916)" }}>
               {textOverlay}
             </p>
           </div>
@@ -370,7 +372,7 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
           <>
             <button
               type="button"
-              aria-label="पिछला पृष्ठ"
+              aria-label={t("common.prev", "पिछला पृष्ठ")}
               onClick={(event) => {
                 event.stopPropagation();
                 go(-1);
@@ -380,7 +382,7 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
             />
             <button
               type="button"
-              aria-label="अगला पृष्ठ"
+              aria-label={t("common.next", "अगला पृष्ठ")}
               onClick={(event) => {
                 event.stopPropagation();
                 go(1);
@@ -393,30 +395,17 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
       </div>
 
       {pageCount > 1 && (
-        <div
-          className="shrink-0 z-[45] flex items-center justify-between gap-2 px-2 py-1 border-t border-[#E8DCCB] bg-[#FFFDF9]/95"
-          data-zsp-chrome="1"
-        >
-          <button
-            type="button"
-            onClick={() => go(-1)}
-            disabled={atStart}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#FAF0DD] text-[#5C3A21] border border-[#DFCBB5] text-xs font-bold disabled:opacity-35"
-          >
-            <ChevronLeft className="w-3.5 h-3.5 text-[#B56A00]" />
-            <span>पिछला</span>
+        <div className="bx-pagebar shrink-0 z-[45] flex items-center justify-between gap-2 px-2 py-1 border-t" data-zsp-chrome="1">
+          <button type="button" onClick={() => go(-1)} disabled={atStart} className="bx-navbtn">
+            <ChevronLeft className="w-4 h-4" />
+            <span>{t("common.prev", "पिछला")}</span>
           </button>
-          <div className="text-[10px] sm:text-xs font-bold text-[#6E472A] tracking-wide truncate">
-            {label ? `${label} · ` : ""}पृष्ठ {page + 1} / {pageCount}
+          <div className="bx-kicker tabular-nums truncate">
+            {label ? `${label} · ` : ""}{t("common.page", "पृष्ठ")} {page + 1} / {pageCount}
           </div>
-          <button
-            type="button"
-            onClick={() => go(1)}
-            disabled={atEnd}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#5C3A21] text-[#FAF2E4] border border-[#B56A00] text-xs font-bold disabled:opacity-35"
-          >
-            <span>अगला</span>
-            <ChevronRight className="w-3.5 h-3.5 text-[#FFD88A]" />
+          <button type="button" onClick={() => go(1)} disabled={atEnd} className="bx-navbtn bx-navbtn-solid">
+            <span>{t("common.next", "अगला")}</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}

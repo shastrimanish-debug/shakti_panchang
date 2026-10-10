@@ -36,6 +36,7 @@ import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
 import { BottomNavBar } from './components/BottomNavBar';
 import { ZeroScrollPager } from './components/ZeroScrollPager';
+import { BoardDock, BoardHeader, ModuleBoard, TodayBoard } from './components/BoardShell';
 import { MoreMenuModal } from './components/MoreMenuModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
@@ -93,7 +94,7 @@ function playTactilePageTurnSound() {
 export function App() {
   const [currentLocation, setCurrentLocation] = useState<SavedLocation>(() => getStoredLocation());
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>('services');
   const [turnDirection, setTurnDirection] = useState<'forward' | 'backward'>('forward');
   const [pageTurnNotice, setPageTurnNotice] = useState<string | null>(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(true);
@@ -348,44 +349,27 @@ export function App() {
   }
 
   return (
-    <div key={`app-root-${currentLang}`} className="h-dvh w-screen overflow-hidden relative flutter-scaffold-bg text-[#3E2714] flex flex-col font-sans selection:bg-[#B56A00] selection:text-white">
+    <div key={`app-root-${currentLang}`} className="board h-dvh w-screen overflow-hidden relative flex flex-col font-sans">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       {/* Compact Header Group: Navbar + Trial Banner */}
-      <div className="shrink-0 z-40 w-full bg-[#FFFDF9]/98 shadow-2xs">
-        <Navbar
-          key={`navbar-${currentLang}`}
-          currentLocation={currentLocation}
-          currentDate={currentDate}
-          onDateChange={setCurrentDate}
-          onOpenLocationModal={() => setIsLocationModalOpen(true)}
-          onOpenUmaModal={() => setIsUmaModalOpen(true)}
-          onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
-          activeTab={activeTab}
-          setActiveTab={handleSelectTab}
-          isAudioEnabled={isAudioEnabled}
-          setIsAudioEnabled={setIsAudioEnabled}
-          onPrevPage={handlePrevPage}
-          onNextPage={handleNextPage}
-          isBookOpen={isBookOpen}
-          onToggleBookOpen={() => {
-            setIsBookOpen(!isBookOpen);
-            if (isAudioEnabled) playTactilePageTurnSound();
-          }}
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
-          onOpenThemeModal={() => setIsThemeModalOpen(true)}
-        />
-
-        {licenseStatus.kind === "trial" && (
-          <div className="bg-[#B56A00] text-white text-center text-[10px] font-bold py-0.5 px-2 shadow-2xs select-none">
-            {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष।` })}
-          </div>
-        )}
-      </div>
+      <BoardHeader
+        title={(getLocalizedBookPage(BOOK_PAGES.find((p) => p.id === activeTab) || BOOK_PAGES[0], currentLang)).label}
+        place={currentLocation.name}
+        dateLabel={currentDate.toLocaleDateString(currentLang === 'en' ? 'en-IN' : 'hi-IN', { day: 'numeric', month: 'short', weekday: 'short' })}
+        showBack={activeTab !== 'services'}
+        onBack={() => setActiveTab('services')}
+        onPlace={() => setIsLocationModalOpen(true)}
+        onLanguage={() => setIsLanguageModalOpen(true)}
+      />
+      {licenseStatus.kind === "trial" && (
+        <div className="shrink-0 text-center text-[11px] font-medium py-1 px-2" style={{ background: "var(--bx-mark-soft)", color: "var(--bx-mark)" }}>
+          {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष` })}
+        </div>
+      )}
 
       {/* Floating Page Turn Toast Notice */}
-      {pageTurnNotice && (
+      {false && pageTurnNotice && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
           <div className="px-3 py-1 bg-[#2C180C]/95 text-[#FAF2E4] border border-amber-500/50 rounded-full shadow-2xl text-xs font-bold font-granth flex items-center gap-1.5 backdrop-blur-md">
             <span className="text-amber-300">✦</span>
@@ -396,8 +380,8 @@ export function App() {
       )}
 
       {/* Main Responsive View Container with Smooth Vertical Scrolling */}
-      <main className="flex-1 min-h-0 w-full relative flex flex-col overflow-hidden bg-[#FCF8EC]">
-        {!isBookOpen ? (
+      <main className="flex-1 min-h-0 w-full relative flex flex-col overflow-hidden">
+        {false ? (
           <BookCover
             onOpenIndex={() => {
               setIsBookOpen(true);
@@ -423,60 +407,19 @@ export function App() {
         ) : (
           <div
             key={`${activeTab}-${currentLang}`}
-            className="flex-1 min-h-0 w-full flex flex-col overflow-hidden bg-[#FCF8EC]"
+            className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
           >
-            {activeTab === 'index' && (
-              <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden bg-[#FCF8EC]">
-                <GranthIndexView
-                  onSelectTab={handleSelectTab}
-                  onReturnToCover={() => setIsBookOpen(false)}
-                />
-              </div>
+            {(activeTab === 'services' || activeTab === 'index') && (
+              <ModuleBoard language={currentLang} onOpen={handleSelectTab} />
             )}
 
-            {activeTab === 'dashboard' && (
-              <ZeroScrollPager className="flex-1 min-h-0 w-full bg-[#FCF8EC]" resetKey={`dashboard-${currentLang}`}>
-                <DashboardView
-                  panchang={panchang}
-                  currentLocation={currentLocation}
-                  currentDate={currentDate}
-                  onDateChange={setCurrentDate}
-                  onNavigateTab={handleSelectTab}
-                  onOpenUma={(query?: string) => {
-                    if (query) setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                  onOpenConnect={() => setIsBrandingModalOpen(true)}
-                  onOpenLocationModal={() => setIsLocationModalOpen(true)}
-                  onOpenWhatsAppPanchang={() => setIsWhatsAppPanchangOpen(true)}
-                />
-              </ZeroScrollPager>
-            )}
-
-            {activeTab === 'panchang' && (
-              <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden bg-[#FCF8EC]">
-                <PanchangView
-                  panchang={panchang}
-                  onNavigateTab={handleSelectTab}
-                  onOpenUmaModal={(query?: string) => {
-                    if (query) setUmaInitialPrompt(query);
-                    setIsUmaModalOpen(true);
-                  }}
-                  onOpenWhatsAppPanchang={() => {
-                    setIsWhatsAppPanchangOpen(true);
-                  }}
-                  onOpenSubscriptionModal={triggerSubscriptionModal}
-                  locationName={currentLocation.name}
-                  currentDate={currentDate}
-                  onDateChange={setCurrentDate}
-                  onOpenLocationModal={() => setIsLocationModalOpen(true)}
-                  latitude={currentLocation.latitude}
-                  longitude={currentLocation.longitude}
-                  timezoneHours={currentLocation.timezoneHours}
-                  onPrevChapter={handlePrevPage}
-                  onNextChapter={handleNextPage}
-                />
-              </div>
+            {(activeTab === 'dashboard' || activeTab === 'panchang') && (
+              <TodayBoard
+                panchang={panchang}
+                place={currentLocation}
+                onWhatsApp={() => setIsWhatsAppPanchangOpen(true)}
+                onOpen={handleSelectTab}
+              />
             )}
 
             {activeTab === 'choghadiya' && (
@@ -517,7 +460,7 @@ export function App() {
             )}
 
             {(activeTab === 'kundali' || activeTab === 'milan') && (
-              <ZeroScrollPager className="flex-1 min-h-0 w-full bg-[#FCF8EC]" resetKey={`${activeTab}-${currentLang}`}>
+              <ZeroScrollPager className="flex-1 min-h-0 w-full" resetKey={`${activeTab}-${currentLang}`}>
                 <div className="w-full px-1 sm:px-2">
                 <KundaliView
                   activeKundali={activeKundali}
@@ -704,33 +647,13 @@ export function App() {
         )}
       </main>
 
-      {/* Floating UMA Assistant FAB */}
-      <aside aria-label="Floating Vedic Assistant" className="hidden sm:block fixed bottom-14 right-6 z-30">
-        <button
-          onClick={() => {
-            setIsUmaModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black rounded-full shadow-[0_4px_20px_rgba(245,158,11,0.5)] transition transform hover:scale-105 active:scale-95 group cursor-pointer uma-glow-badge m3-touch border-2 border-white/60"
-        >
-          <div className="relative flex items-center justify-center w-5 h-5 rounded-full bg-stone-950 text-amber-400">
-            <Sparkles className="w-3 h-3 fill-amber-400 group-hover:rotate-12 transition-transform" />
-          </div>
-          <span className="text-xs font-black tracking-wide pr-1">
-            {t('uma.title', 'उमा')} ✨
-          </span>
-        </button>
-      </aside>
-
-      {/* Flutter-style Mobile Bottom Navigation Bar (Docked at Bottom) */}
-      <div className="shrink-0 z-40 w-full">
-        <BottomNavBar
-          activeTab={activeTab}
-          onSelectTab={handleSelectTab}
-          onOpenMore={() => setIsMoreModalOpen(true)}
-          onOpenUma={() => setIsUmaModalOpen(true)}
-          currentDate={currentDate}
-        />
-      </div>
+      <BoardDock
+        active={activeTab}
+        onServices={() => setActiveTab('services')}
+        onPanchang={() => handleSelectTab('panchang')}
+        onKundali={() => handleSelectTab('kundali')}
+        onUma={() => setIsUmaModalOpen(true)}
+      />
 
       {/* More Options Sheet / Modal */}
       <MoreMenuModal
