@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   Languages,
   Palette,
+  MoreHorizontal,
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
@@ -86,12 +87,14 @@ export function BoardDock({
   onPanchang,
   onKundali,
   onUma,
+  onMore,
 }: {
   active: string;
   onServices: () => void;
   onPanchang: () => void;
   onKundali: () => void;
   onUma: () => void;
+  onMore: () => void;
 }) {
   const { t } = useLanguage();
   const items = [
@@ -99,9 +102,10 @@ export function BoardDock({
     { id: "panchang", label: t("nav.panchang", "पंचांग"), icon: Sun, onClick: onPanchang },
     { id: "kundali", label: t("nav.kundali", "कुण्डली"), icon: UserRound, onClick: onKundali },
     { id: "uma", label: t("nav.uma", "उमा"), icon: Sparkles, onClick: onUma },
+    { id: "more", label: t("nav.more", "अधिक"), icon: MoreHorizontal, onClick: onMore },
   ];
   return (
-    <nav className="bx-dock shrink-0 z-40 grid grid-cols-4" aria-label={t("nav.services", "मुख्य")}>
+    <nav className="bx-dock shrink-0 z-40 grid grid-cols-5" aria-label={t("nav.services", "मुख्य")}>
       {items.map((item) => {
         const on = item.id === "uma" ? false : active === item.id || (item.id === "kundali" && active === "milan");
         const Icon = item.icon;
@@ -111,7 +115,7 @@ export function BoardDock({
             type="button"
             data-on={on ? "true" : "false"}
             onClick={item.onClick}
-            className="flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium"
+            className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium min-w-0 px-0.5"
           >
             <span className="bx-tile-icon w-7 h-7">
               <Icon className="w-3.5 h-3.5" />

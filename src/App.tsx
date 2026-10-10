@@ -657,6 +657,7 @@ export function App() {
         onPanchang={() => handleSelectTab('panchang')}
         onKundali={() => handleSelectTab('kundali')}
         onUma={() => setIsUmaModalOpen(true)}
+        onMore={() => setIsMoreModalOpen(true)}
       />
 
       {/* More Options Sheet / Modal */}

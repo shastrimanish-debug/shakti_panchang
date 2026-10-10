@@ -52,7 +52,16 @@ function collectAtoms(root: HTMLElement, pageH: number): HTMLElement[] {
     const kids = elementChildren(el).filter((kid) => !isSkipped(kid));
     const h = el.offsetHeight;
     if (h <= 1) return;
-    if (h <= pageH - 4 || kids.length === 0 || isAtomic(el)) {
+    const cards = kids.filter((kid) => kid.tagName === "BUTTON" || kid.classList.contains("bx-tile") || kid.classList.contains("bx-verse") || kid.classList.contains("bx-fact"));
+    const cardRow = !isAtomic(el) && kids.length > 0 && (
+      cards.length >= 2 ||
+      !!el.querySelector(":scope > .grid, :scope > .bx-verse, :scope > article, :scope > section")
+    );
+    if (!cardRow && (h <= pageH - 4 || kids.length === 0 || isAtomic(el))) {
+      atoms.push(el);
+      return;
+    }
+    if (kids.length === 0 || isAtomic(el)) {
       atoms.push(el);
       return;
     }
@@ -122,12 +131,10 @@ function showOnly(atoms: HTMLElement[], ids: Set<string> | null) {
 }
 
 function canSlice(el: HTMLElement) {
-  if (["BUTTON", "INPUT", "TEXTAREA", "SELECT", "IMG"].includes(el.tagName)) return false;
-  if (el.querySelector("canvas, video")) return false;
-  const svg = el.querySelector("svg");
-  const textLen = (el.innerText || "").trim().length;
-  if (svg && svg.getBoundingClientRect().height > 90 && textLen < 80) return false;
-  return textLen > 24 || el.scrollHeight > 180;
+  if (["BUTTON", "INPUT", "TEXTAREA", "SELECT", "IMG", "A"].includes(el.tagName)) return false;
+  if (el.classList.contains("bx-tile") || el.classList.contains("bx-verse") || el.classList.contains("bx-fact")) return false;
+  if (el.querySelector("button, a, input, textarea, select, canvas, video, svg, .bx-tile, .bx-verse")) return false;
+  return (el.innerText || "").trim().length > 180;
 }
 
 function paint(atoms: HTMLElement[], slices: NodeSlice[] | null) {
@@ -202,10 +209,15 @@ function packMeasured(root: HTMLElement, atoms: HTMLElement[], pageH: number): P
 
     if (!canSlice(el)) {
       if (cur.length) commit();
-      fitAtom(el, atoms, root, pageH);
-      const scale = Number(el.dataset.zspScale || "1");
-      cur = [{ id, top: 0, height: full, clip: false, scale: scale < 0.995 ? scale : undefined }];
-      commit();
+      paint(atoms, [{ id, top: 0, height: full, clip: false }]);
+      if (root.scrollHeight > pageH + 2) {
+        fitAtom(el, atoms, root, pageH);
+        const scale = Number(el.dataset.zspScale || "1");
+        cur = [{ id, top: 0, height: full, clip: false, scale: scale < 0.995 ? scale : undefined }];
+        commit();
+      } else {
+        cur = [{ id, top: 0, height: full, clip: false }];
+      }
       continue;
     }
 
