@@ -720,9 +720,56 @@
   color: inherit;
 }
 
-.bx-pagebar {
-  background: var(--bx-panel);
-  border-top: 1px solid var(--bx-line);
+.board .bx-more .zsp-flow button,
+.board .bx-more .zsp-flow a {
+  background-color: #fffaf3 !important;
+  background-image: none !important;
+  color: #2c180c !important;
+  border: 1px solid #c9b296 !important;
+  box-shadow: none !important;
+}
+
+.board .bx-more .zsp-flow button div,
+.board .bx-more .zsp-flow button span,
+.board .bx-more .zsp-flow a span {
+  color: #2c180c !important;
+}
+
+.board .bx-more .zsp-flow button svg {
+  color: #5c3a21 !important;
+}
+
+.board .bx-more .zsp-flow button [class*="text-[9px]"],
+.board .bx-more .zsp-flow button [class*="text-[10px]"],
+.board .bx-more .zsp-flow button [class*="text-[11px]"] {
+  color: #4a3424 !important;
+  font-size: 12.5px !important;
+  line-height: 1.45 !important;
+  font-weight: 600 !important;
+}
+
+.board .bx-more .zsp-flow button [class*="text-xs"],
+.board .bx-more .zsp-flow button [class*="text-sm"] {
+  color: #2c180c !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+}
+
+.board .bx-more .zsp-flow button span[class*="rounded-full"],
+.board .bx-more .zsp-flow button span[class*="rounded-lg"] {
+  background-color: #5c3a21 !important;
+  color: #fffaf3 !important;
+}
+
+.board .bx-more .zsp-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.board .bx-more .zsp-flow > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 .bx-read,

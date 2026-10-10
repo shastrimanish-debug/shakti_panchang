@@ -84,7 +84,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md" onClick={onClose}>
-      <div className="w-full max-w-md h-[100dvh] sm:h-[86dvh] max-h-[100dvh] bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden min-h-0 flex flex-col" onClick={(event) => event.stopPropagation()}>
+      <div className="bx-more w-full max-w-md h-[100dvh] sm:h-[86dvh] max-h-[100dvh] bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden min-h-0 flex flex-col" onClick={(event) => event.stopPropagation()}>
         <div className="shrink-0 flex items-center justify-between gap-2 px-4 pt-4 pb-3 border-b border-[#8C6239]/30">
           <div className="flex items-center gap-2 min-w-0">
             <ShaktiLogo size={24} className="shrink-0" />
@@ -101,7 +101,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
-      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-4 sm:p-6">
+      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="bx-more-flow px-3 pt-2 pb-1">
 
         {/* Big Prominent UMA AI Hero Card */}
         <div className="mt-3.5">

@@ -32,7 +32,7 @@ export function scheduleMorningBriefs(
   if (typeof window === "undefined") return;
   const stamp = `${placeName}|${personName || ""}|${lagnaRashi || ""}|${new Date().toDateString()}`;
   try {
-    if (localStorage.getItem("sp_morning_brief_v2") === stamp) return;
+    if (localStorage.getItem("sp_morning_brief_v3") === stamp) return;
   } catch {
     /* still schedule */
   }
@@ -58,7 +58,7 @@ export function scheduleMorningBriefs(
   }
 
   try {
-    localStorage.setItem("sp_morning_brief_v2", stamp);
+    localStorage.setItem("sp_morning_brief_v3", stamp);
   } catch {
     /* ignore */
   }

@@ -90,10 +90,17 @@ public class UmaDevicePlugin extends Plugin {
         }
     }
 
+    private boolean askingNotification;
+    private final java.util.ArrayList<PluginCall> notificationQueue = new java.util.ArrayList<>();
+
     @PluginMethod
     public void scheduleReminder(PluginCall call) {
         if (Build.VERSION.SDK_INT >= 33 && getPermissionState("notifications") != PermissionState.GRANTED) {
-            requestPermissionForAlias("notifications", call, "reminderPerms");
+            notificationQueue.add(call);
+            if (!askingNotification) {
+                askingNotification = true;
+                requestPermissionForAlias("notifications", call, "reminderPerms");
+            }
             return;
         }
         armReminder(call);
@@ -101,7 +108,23 @@ public class UmaDevicePlugin extends Plugin {
 
     @PermissionCallback
     private void reminderPerms(PluginCall call) {
-        armReminder(call);
+        askingNotification = false;
+        java.util.ArrayList<PluginCall> pending = new java.util.ArrayList<>(notificationQueue);
+        notificationQueue.clear();
+        if (getPermissionState("notifications") != PermissionState.GRANTED) {
+            for (PluginCall waiting : pending) {
+                if (waiting != null && !waiting.equals(call)) waiting.reject("Notification permission denied");
+            }
+            if (call != null) call.reject("Notification permission denied");
+            return;
+        }
+        boolean armedCall = false;
+        for (PluginCall waiting : pending) {
+            if (waiting == null) continue;
+            if (waiting.equals(call)) armedCall = true;
+            armReminder(waiting);
+        }
+        if (!armedCall && call != null) armReminder(call);
     }
 
     @PluginMethod
