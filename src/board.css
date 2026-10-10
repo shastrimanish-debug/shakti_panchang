@@ -79,6 +79,193 @@
   .bx-dock {
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 48px);
   }
+  .board {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 36px);
+  }
+}
+
+.bx-rail {
+  display: flex;
+  align-items: center;
+  height: auto;
+  padding: 6px 10px 2px;
+  background: transparent;
+}
+
+.bx-menu-btn {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--bx-cream);
+  background: linear-gradient(180deg, var(--bx-header) 0%, var(--bx-header-2) 100%);
+  border: 1.5px solid var(--bx-gold);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--bx-header) 35%, transparent);
+}
+
+.bx-menu-btn::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 18px;
+  border: 2px solid var(--bx-gold);
+  animation: bx-pulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+.bx-menu-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(110deg, transparent 28%, rgba(255, 236, 190, 0.7) 48%, transparent 68%);
+  background-size: 220% 100%;
+  animation: bx-shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.bx-menu-bars {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 16px;
+  height: 14px;
+}
+
+.bx-menu-bars span {
+  display: block;
+  height: 2px;
+  width: 16px;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: center;
+  animation: bx-bar 1.5s ease-in-out infinite;
+}
+
+.bx-menu-bars span:nth-child(2) {
+  width: 11px;
+  animation-delay: 0.12s;
+}
+
+.bx-menu-bars span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.bx-menu-btn[data-open="true"]::before,
+.bx-menu-btn[data-open="true"]::after {
+  animation: none;
+  opacity: 0;
+}
+
+.bx-menu-btn[data-open="true"] .bx-menu-bars span {
+  animation: none;
+  width: 16px;
+  transition: transform 0.22s ease, opacity 0.18s ease;
+}
+
+.bx-menu-btn[data-open="true"] .bx-menu-bars span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.bx-menu-btn[data-open="true"] .bx-menu-bars span:nth-child(2) {
+  opacity: 0;
+}
+
+.bx-menu-btn[data-open="true"] .bx-menu-bars span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+@keyframes bx-pulse {
+  0% { transform: scale(0.9); opacity: 0.75; }
+  70% { transform: scale(1.28); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes bx-shimmer {
+  0% { background-position: 140% 0; }
+  100% { background-position: -140% 0; }
+}
+
+@keyframes bx-bar {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.5); }
+}
+
+.bx-drawer-back {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(28, 14, 6, 0.46);
+  animation: bx-fade 0.2s ease;
+}
+
+.bx-drawer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(86vw, 340px);
+  overflow: auto;
+  background: var(--bx-panel);
+  color: var(--bx-ink);
+  border-right: 3px solid var(--bx-gold);
+  box-shadow: 12px 0 40px rgba(40, 16, 4, 0.28);
+  padding: 16px 14px 20px;
+  padding-top: max(env(safe-area-inset-top, 0px), 28px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 24px);
+  animation: bx-slide 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bx-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px 2px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--bx-ink);
+}
+
+.bx-drawer-nav[data-on="true"] {
+  color: var(--bx-mark);
+  background: var(--bx-mark-soft);
+}
+
+@keyframes bx-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bx-slide {
+  from { transform: translateX(-105%); }
+  to { transform: translateX(0); }
+}
+
+@media (max-width: 900px) {
+  .bx-drawer {
+    padding-top: max(env(safe-area-inset-top, 0px), 32px);
+  }
+  .bx-rail {
+    padding-top: max(env(safe-area-inset-top, 0px), 28px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bx-menu-btn::before,
+  .bx-menu-btn::after,
+  .bx-menu-bars span,
+  .bx-drawer,
+  .bx-drawer-back {
+    animation: none;
+  }
 }
 
 .bx-kicker {
@@ -484,10 +671,10 @@
   border: 1px solid var(--bx-line);
   border-radius: 14px;
   background: var(--bx-panel);
-  padding: 10px 12px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .bx-verse .bx-sans,

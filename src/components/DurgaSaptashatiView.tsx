@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import { DURGA_CHAPTERS, DURGA_ANGAS } from '../data/durgaSaptashatiData';
 import { localizeAnga, localizeChapter, saptUi } from '../data/saptashatiLocale';
 import durgaPathRaw from '../data/durgaPath.json';
@@ -25,6 +26,7 @@ import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { DrawerHostContext } from './BoardShell';
 
 interface RawChapterShloka {
   n: number;
@@ -43,6 +45,7 @@ export const DurgaSaptashatiView: React.FC<{
 }> = ({ onBackToPanchang, onOpenUmaModal, onPrevChapter, onNextChapter }) => {
   const { language } = useLanguage();
   const ui = saptUi(language);
+  const { host, close } = useContext(DrawerHostContext);
 
   // Section & Selector States
   const [activeTab, setActiveTab] = useState<'angas' | 'chapters'>('chapters');
@@ -219,10 +222,10 @@ export const DurgaSaptashatiView: React.FC<{
     }
   };
 
-  return (
-    <div className="w-full h-full min-h-0 flex flex-col overflow-hidden relative">
-      <div className="bx-sheetbar shrink-0 flex items-center gap-1.5 px-2 py-1.5 border-b">
-        <button type="button" className="bx-iconbtn" onClick={() => setIsTocOpen(true)} aria-label={ui.summaryHead}>
+  const toolbars = (
+    <div className="bx-drawer-tools">
+      <div className="flex items-center gap-1.5">
+        <button type="button" className="bx-iconbtn" onClick={() => { setIsTocOpen(true); close(); }} aria-label={ui.summaryHead}>
           <Menu className="w-4 h-4" />
         </button>
         <div className="min-w-0 flex-1">
@@ -251,34 +254,42 @@ export const DurgaSaptashatiView: React.FC<{
           {fontSize === "sm" ? "A−" : fontSize === "lg" ? "A+" : "A"}
         </button>
       </div>
-
-      <div className="shrink-0 flex items-center gap-1.5 px-2 py-1.5 border-b" style={{ background: "var(--bx-panel)" }}>
+      <div className="flex items-center gap-1.5 mt-2">
         <button
           type="button"
           onClick={() => { setActiveTab("chapters"); setCurrentPage(1); }}
-          className={`${activeTab === "chapters" ? "bx-navbtn bx-navbtn-solid" : "bx-navbtn"} min-w-0 max-w-[34%]`}
+          className={`${activeTab === "chapters" ? "bx-navbtn bx-navbtn-solid" : "bx-navbtn"} min-w-0`}
         >
           <span className="truncate">{ui.tabChapters}</span>
         </button>
         <button
           type="button"
           onClick={() => { setActiveTab("angas"); setCurrentPage(1); }}
-          className={`${activeTab === "angas" ? "bx-navbtn bx-navbtn-solid" : "bx-navbtn"} min-w-0 max-w-[34%]`}
+          className={`${activeTab === "angas" ? "bx-navbtn bx-navbtn-solid" : "bx-navbtn"} min-w-0`}
         >
           <span className="truncate">{ui.tabAngas}</span>
         </button>
-        <div className="relative flex-1 min-w-0">
-          <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2" style={{ color: "var(--bx-mute)" }} />
-          <input
-            type="text"
-            placeholder={language === "en" ? "Search a verse" : language === "gu" ? "શ્લોક શોધો" : "श्लोक खोजें"}
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-            className="w-full pl-7 pr-2"
-            style={{ height: 34, borderRadius: 10, border: "1px solid var(--bx-line)", background: "var(--bx-bg)", color: "var(--bx-ink)", fontSize: 12 }}
-          />
-        </div>
       </div>
+      <div className="relative mt-2">
+        <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2" style={{ color: "var(--bx-mute)" }} />
+        <input
+          type="text"
+          placeholder={language === "en" ? "Search a verse" : language === "gu" ? "શ્લોક શોધો" : "श्लोक खोजें"}
+          value={searchQuery}
+          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          className="w-full pl-7 pr-2"
+          style={{ height: 34, borderRadius: 10, border: "1px solid var(--bx-line)", background: "var(--bx-bg)", color: "var(--bx-ink)", fontSize: 12 }}
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="w-full h-full min-h-0 flex flex-col overflow-hidden relative">
+      <div className="shrink-0 px-3 pt-1 text-[13px] font-semibold truncate">
+        {activeTab === "angas" ? localizedAnga.name : `${ui.chapter(activeChapter.id)} · ${localizedChapter.heading}`}
+      </div>
+      {host ? createPortal(toolbars, host) : null}
 
       {/* Slide-out Interactive TOC / Index Drawer Overlay */}
       {isTocOpen && (
@@ -364,7 +375,7 @@ export const DurgaSaptashatiView: React.FC<{
         </div>
       )}
 
-      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="p-2 flex flex-col gap-2" resetKey={`${activeTab}-${selectedChapterIndex}-${selectedAngaIndex}-${searchQuery}-${fontSize}`}>
+      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-0.5 flex flex-col gap-1.5" resetKey={`${activeTab}-${selectedChapterIndex}-${selectedAngaIndex}-${searchQuery}-${fontSize}`}>
         {paginatedVerses.length > 0 ? (
           paginatedVerses.map((verse) => (
             <article key={verse.id} className="bx-verse">

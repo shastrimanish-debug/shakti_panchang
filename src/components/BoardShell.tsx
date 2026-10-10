@@ -10,6 +10,7 @@ import {
   Languages,
   Palette,
   MoreHorizontal,
+  X,
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
@@ -20,6 +21,146 @@ import { useLanguage } from "../i18n";
 function clock(d?: Date) {
   if (!d) return "—";
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+export const DrawerHostContext = React.createContext<{
+  host: HTMLElement | null;
+  close: () => void;
+}>({ host: null, close: () => {} });
+
+export function BoardMenuButton({
+  open,
+  onClick,
+}: {
+  open: boolean;
+  onClick: () => void;
+}) {
+  const { t } = useLanguage();
+  return (
+    <button
+      type="button"
+      className="bx-menu-btn"
+      data-open={open ? "true" : "false"}
+      onClick={onClick}
+      aria-expanded={open}
+      aria-label={open ? t("common.close", "बंद करें") : t("nav.more", "मेनू")}
+    >
+      <span className="bx-menu-bars" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </span>
+    </button>
+  );
+}
+
+export function BoardDrawer({
+  title,
+  place,
+  showBack,
+  trialText,
+  active,
+  onClose,
+  onBack,
+  onPlace,
+  onLanguage,
+  onTheme,
+  onServices,
+  onPanchang,
+  onKundali,
+  onUma,
+  onMore,
+  onHost,
+}: {
+  title: string;
+  place: string;
+  showBack: boolean;
+  trialText: string | null;
+  active: string;
+  onClose: () => void;
+  onBack: () => void;
+  onPlace: () => void;
+  onLanguage: () => void;
+  onTheme: () => void;
+  onServices: () => void;
+  onPanchang: () => void;
+  onKundali: () => void;
+  onUma: () => void;
+  onMore: () => void;
+  onHost: (el: HTMLDivElement | null) => void;
+}) {
+  const { t, language } = useLanguage();
+  const brand = language === "en" ? "Shakti" : language === "gu" ? "શક્તિ" : "शक्ति";
+  const items = [
+    { id: "services", label: t("nav.services", "सेवाएँ"), icon: LayoutGrid, onClick: onServices },
+    { id: "panchang", label: t("nav.panchang", "पंचांग"), icon: Sun, onClick: onPanchang },
+    { id: "kundali", label: t("nav.kundali", "कुण्डली"), icon: UserRound, onClick: onKundali },
+    { id: "uma", label: t("nav.uma", "उमा"), icon: Sparkles, onClick: onUma },
+    { id: "more", label: t("nav.more", "अधिक"), icon: MoreHorizontal, onClick: onMore },
+  ];
+  return (
+    <div className="bx-drawer-back" onClick={onClose}>
+      <aside
+        className="bx-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label={brand}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-[15px] font-semibold leading-none">{brand}</div>
+            <div className="bx-kicker mt-1 truncate">{title}</div>
+          </div>
+          <button type="button" className="bx-iconbtn" onClick={onClose} aria-label={t("common.close", "बंद करें")}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {showBack && (
+          <button type="button" className="bx-navbtn w-full mt-3" onClick={onBack}>
+            <ChevronLeft className="w-4 h-4" />
+            {t("nav.allServices", "सभी सेवाएँ")}
+          </button>
+        )}
+        <button type="button" className="bx-navbtn w-full mt-2" onClick={onPlace}>
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">{place}</span>
+        </button>
+        {trialText && <div className="bx-kicker mt-2 px-1">{trialText}</div>}
+        <nav className="grid grid-cols-5 gap-1 mt-3" aria-label={t("nav.services", "मुख्य")}>
+          {items.map((item) => {
+            const on = item.id === "uma" ? false : active === item.id || (item.id === "kundali" && active === "milan");
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                data-on={on ? "true" : "false"}
+                onClick={item.onClick}
+                className="bx-drawer-nav"
+              >
+                <span className="bx-tile-icon w-7 h-7">
+                  <Icon className="w-3.5 h-3.5" />
+                </span>
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <button type="button" className="bx-navbtn" onClick={onTheme}>
+            <Palette className="w-4 h-4" />
+            {t("common.theme", "थीम")}
+          </button>
+          <button type="button" className="bx-navbtn" onClick={onLanguage}>
+            <Languages className="w-4 h-4" />
+            {t("common.language", "भाषा")}
+          </button>
+        </div>
+        <div ref={onHost} className="mt-3 empty:hidden" />
+      </aside>
+    </div>
+  );
 }
 
 export function BoardHeader({

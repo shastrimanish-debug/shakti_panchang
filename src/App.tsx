@@ -36,7 +36,7 @@ import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
 import { BottomNavBar } from './components/BottomNavBar';
 import { ZeroScrollPager } from './components/ZeroScrollPager';
-import { BoardDock, BoardHeader, ModuleBoard, TodayBoard } from './components/BoardShell';
+import { BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TodayBoard } from './components/BoardShell';
 import { MoreMenuModal } from './components/MoreMenuModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
@@ -103,6 +103,11 @@ export function App() {
   const [isBookOpen, setIsBookOpen] = useState<boolean>(true);
   const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerHost, setDrawerHost] = useState<HTMLElement | null>(null);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+  const bindDrawerHost = useCallback((el: HTMLDivElement | null) => setDrawerHost(el), []);
+  const drawerApi = useMemo(() => ({ host: drawerHost, close: closeDrawer }), [drawerHost, closeDrawer]);
 
   // Apply Devotional Light Theme or Ratri Dark Theme across document
   useEffect(() => {
@@ -340,6 +345,15 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePrevPage, handleNextPage]);
 
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDrawerOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [drawerOpen]);
+
   if (!isEntitled) {
     return (
       <SubscriptionModal
@@ -351,26 +365,24 @@ export function App() {
     );
   }
 
+  const pageMeta = BOOK_PAGES.find((p) => p.id === activeTab);
+  const pageTitle =
+    activeTab === "services" || activeTab === "index" || !pageMeta
+      ? t("nav.allServices", "सभी सेवाएँ")
+      : getLocalizedBookPage(pageMeta, currentLang).label;
+  const openFromDrawer = (fn: () => void) => {
+    setDrawerOpen(false);
+    fn();
+  };
+
   return (
+    <DrawerHostContext.Provider value={drawerApi}>
     <div key={`app-root-${currentLang}`} className="board h-dvh w-screen overflow-hidden relative flex flex-col font-sans">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
-      {/* Compact Header Group: Navbar + Trial Banner */}
-      <BoardHeader
-        title={(getLocalizedBookPage(BOOK_PAGES.find((p) => p.id === activeTab) || BOOK_PAGES[0], currentLang)).label}
-        place={currentLocation.name}
-        dateLabel={currentDate.toLocaleDateString(currentLang === 'en' ? 'en-IN' : 'hi-IN', { day: 'numeric', month: 'short', weekday: 'short' })}
-        showBack={activeTab !== 'services'}
-        onBack={() => setActiveTab('services')}
-        onPlace={() => setIsLocationModalOpen(true)}
-        onLanguage={() => setIsLanguageModalOpen(true)}
-        onTheme={() => setIsThemeModalOpen(true)}
-      />
-      {licenseStatus.kind === "trial" && (
-        <div className="shrink-0 text-center text-[11px] font-medium py-1 px-2" style={{ background: "var(--bx-mark-soft)", color: "var(--bx-mark)" }}>
-          {t('trial.banner', { days: licenseStatus.daysRemaining, defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष` })}
-        </div>
-      )}
+      <div className="bx-rail shrink-0">
+        <BoardMenuButton open={drawerOpen} onClick={() => setDrawerOpen((open) => !open)} />
+      </div>
 
       {/* Floating Page Turn Toast Notice */}
       {false && pageTurnNotice && (
@@ -651,14 +663,33 @@ export function App() {
         )}
       </main>
 
-      <BoardDock
-        active={activeTab}
-        onServices={() => setActiveTab('services')}
-        onPanchang={() => handleSelectTab('panchang')}
-        onKundali={() => handleSelectTab('kundali')}
-        onUma={() => setIsUmaModalOpen(true)}
-        onMore={() => setIsMoreModalOpen(true)}
-      />
+      {drawerOpen && (
+        <BoardDrawer
+          title={pageTitle}
+          place={currentLocation.name}
+          showBack={activeTab !== "services"}
+          trialText={
+            licenseStatus.kind === "trial"
+              ? t("trial.banner", {
+                  days: licenseStatus.daysRemaining,
+                  defaultValue: `परीक्षण: ${licenseStatus.daysRemaining} दिन शेष`,
+                })
+              : null
+          }
+          active={activeTab}
+          onClose={() => setDrawerOpen(false)}
+          onBack={() => openFromDrawer(() => setActiveTab("services"))}
+          onPlace={() => openFromDrawer(() => setIsLocationModalOpen(true))}
+          onLanguage={() => openFromDrawer(() => setIsLanguageModalOpen(true))}
+          onTheme={() => openFromDrawer(() => setIsThemeModalOpen(true))}
+          onServices={() => openFromDrawer(() => setActiveTab("services"))}
+          onPanchang={() => openFromDrawer(() => handleSelectTab("panchang"))}
+          onKundali={() => openFromDrawer(() => handleSelectTab("kundali"))}
+          onUma={() => openFromDrawer(() => setIsUmaModalOpen(true))}
+          onMore={() => openFromDrawer(() => setIsMoreModalOpen(true))}
+          onHost={bindDrawerHost}
+        />
+      )}
 
       {/* More Options Sheet / Modal */}
       <MoreMenuModal
@@ -761,6 +792,7 @@ export function App() {
         onSelectProfile={setActiveKundali}
       />
     </div>
+    </DrawerHostContext.Provider>
   );
 }
 export default App;
