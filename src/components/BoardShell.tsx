@@ -15,6 +15,7 @@ import {
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
 import { ZeroScrollPager } from "./ZeroScrollPager";
+import { MoonPhaseChart } from "./MoonPhaseChart";
 import { trVedic } from "../i18n/vedicTranslate";
 import { useLanguage } from "../i18n";
 
@@ -413,6 +414,7 @@ export function TodayBoard({
   return (
     <ZeroScrollPager className="flex-1 min-h-0" resetKey={panchang.date.toDateString()} label={t("nav.panchang", "पंचांग")}>
       <div className="p-3 space-y-2">
+        <MoonPhaseChart panchang={panchang} />
         <div className="bx-fact">
           <div className="bx-kicker inline-flex items-center gap-1">
             <Calendar className="w-3 h-3" /> {t("common.today", "आज")}
