@@ -83,24 +83,25 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-      <ZeroScrollPager className="w-full max-w-md h-[100dvh] sm:h-[86dvh] max-h-[100dvh] bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 backdrop-blur-2xl text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom duration-200 overflow-hidden min-h-0" contentClassName="p-4 sm:p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#8C6239]/30">
-          <div className="flex items-center gap-2">
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md" onClick={onClose}>
+      <div className="w-full max-w-md h-[100dvh] sm:h-[86dvh] max-h-[100dvh] bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden min-h-0 flex flex-col" onClick={(event) => event.stopPropagation()}>
+        <div className="shrink-0 flex items-center justify-between gap-2 px-4 pt-4 pb-3 border-b border-[#8C6239]/30">
+          <div className="flex items-center gap-2 min-w-0">
             <ShaktiLogo size={24} className="shrink-0" />
-            <h3 className="font-granth font-black text-base text-[#5C3A21] dark:text-[#FFD88A]">
+            <h3 className="font-granth font-black text-base text-[#5C3A21] dark:text-[#FFD88A] truncate">
               {t('more.title', 'अतिरिक्त सेवाएँ व विकल्प')}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 hover:bg-[#F4E8D1] dark:hover:bg-stone-800 rounded-full text-[#8C6239] transition cursor-pointer m3-touch"
+            className="bx-iconbtn shrink-0"
+            aria-label={t('common.close', 'बंद करें')}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-4 sm:p-6">
 
         {/* Big Prominent UMA AI Hero Card */}
         <div className="mt-3.5">
@@ -251,7 +252,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           {/* iOS Bento Box Dashboard */}
           <button
             type="button"
-            onClick={() => handleAction(() => onSelectTab('dashboard'))}
+            onClick={() => handleAction(() => onSelectTab('panchang'))}
             className="flex items-center gap-2.5 p-2.5 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-stone-950 rounded-2xl text-left transition cursor-pointer active:scale-95 col-span-2 relative m3-touch shadow-md border border-amber-300"
           >
             <div className="p-2 bg-stone-950 text-amber-300 rounded-xl shadow-xs">
@@ -282,6 +283,32 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                 <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">{t('common.newBadge', 'नया')}</span>
               </div>
               <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.durgaDesc', 'कवच, अर्गला, कीलक, सिद्ध कुंजिका स्तोत्र व आरती सहित')}</div>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('hanuman'))}
+            className="flex items-center gap-2.5 p-2.5 bg-gradient-to-r from-[#FFFDF9] to-[#FBF0DD] dark:bg-[#341F14] border border-[#B56A00]/40 rounded-2xl text-left col-span-2"
+          >
+            <div className="p-2 bg-gradient-to-br from-orange-700 to-amber-600 text-white rounded-xl">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A]">🙏 श्री हनुमान चालीसा</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">दोहा और चालीस चौपाई, संपूर्ण पाठ</div>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('sundarkand'))}
+            className="flex items-center gap-2.5 p-2.5 bg-gradient-to-r from-[#FFFDF9] to-[#FBF0DD] dark:bg-[#341F14] border border-[#B56A00]/40 rounded-2xl text-left col-span-2"
+          >
+            <div className="p-2 bg-gradient-to-br from-amber-800 to-orange-700 text-white rounded-xl">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A]">📖 संपूर्ण सुंदरकांड</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">रामचरितमानस, चौपाई और दोहा</div>
             </div>
           </button>
 
@@ -661,6 +688,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           {t('more.privacyPolicy', 'गोपनीयता नीति')}
         </a>
       </ZeroScrollPager>
+      </div>
     </div>
   );
 };

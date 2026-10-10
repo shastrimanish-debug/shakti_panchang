@@ -420,7 +420,7 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
                 go(-1);
               }}
               disabled={atStart}
-              className="absolute left-0 top-0 bottom-0 w-[14%] z-20 bg-transparent disabled:opacity-0"
+              className="absolute left-0 top-14 bottom-0 w-[14%] z-10 bg-transparent disabled:opacity-0"
             />
             <button
               type="button"
@@ -430,7 +430,7 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
                 go(1);
               }}
               disabled={atEnd}
-              className="absolute right-0 top-0 bottom-0 w-[14%] z-20 bg-transparent disabled:opacity-0"
+              className="absolute right-0 top-14 bottom-0 w-[14%] z-10 bg-transparent disabled:opacity-0"
             />
           </>
         )}

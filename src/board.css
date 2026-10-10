@@ -92,6 +92,16 @@
   background: transparent;
 }
 
+.zsp-flow button,
+.zsp-flow a,
+.zsp-flow input,
+.zsp-flow textarea,
+.zsp-flow select,
+.zsp-flow label {
+  position: relative;
+  z-index: 30;
+}
+
 .bx-menu-btn {
   position: relative;
   width: 42px;

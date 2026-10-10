@@ -10,6 +10,9 @@ import { FestivalsView } from './components/FestivalsView';
 import { RemindersView } from './components/RemindersView';
 import { VratKathaView } from './components/VratKathaView';
 import { DurgaSaptashatiView } from './components/DurgaSaptashatiView';
+import { ScripturePathView } from './components/ScripturePathView';
+import { HANUMAN_CHALISA } from './data/hanumanChalisa';
+import sundarkandRaw from './data/sundarkand.json';
 import { VastuView } from './components/VastuView';
 import { UpayView } from './components/UpayView';
 import { NumerologyView } from './components/NumerologyView';
@@ -576,6 +579,17 @@ export function App() {
                 }}
                 onPrevChapter={handlePrevPage}
                 onNextChapter={handleNextPage}
+              />
+            )}
+
+            {activeTab === 'hanuman' && (
+              <ScripturePathView title="श्री हनुमान चालीसा" verses={HANUMAN_CHALISA} />
+            )}
+
+            {activeTab === 'sundarkand' && (
+              <ScripturePathView
+                title="श्री रामचरितमानस · संपूर्ण सुंदरकांड"
+                verses={sundarkandRaw as { n: number; kind?: string; text: string }[]}
               />
             )}
 

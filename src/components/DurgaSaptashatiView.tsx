@@ -4,23 +4,17 @@ import { DURGA_CHAPTERS, DURGA_ANGAS } from '../data/durgaSaptashatiData';
 import { localizeAnga, localizeChapter, saptUi } from '../data/saptashatiLocale';
 import durgaPathRaw from '../data/durgaPath.json';
 import {
-  Sparkles,
   Share2,
   Volume2,
   VolumeX,
-  BookOpen,
-  Scroll,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
   Search,
   Copy,
   Check,
   Bookmark,
-  Layers,
   Menu,
   X,
-  ArrowLeft,
 } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
@@ -295,85 +289,60 @@ export const DurgaSaptashatiView: React.FC<{
 
       {/* Slide-out Interactive TOC / Index Drawer Overlay */}
       {isTocOpen && (
-        <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-200">
-          <ZeroScrollPager className="w-4/5 max-w-xs h-full bg-[#FAF2E4] border-r-2 border-amber-600 shadow-2xl flex flex-col overflow-hidden min-h-0" contentClassName="p-3 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E2D2BE]">
-              <div className="flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4 text-[#8C4A00]" />
-                <h3 className="font-granth font-black text-sm text-[#462B17]">
-                  {ui.summaryHead}
-                </h3>
+        <div className="absolute inset-0 z-50 bg-black/50 flex justify-start" onClick={() => setIsTocOpen(false)}>
+          <div
+            className="w-[88%] max-w-sm h-full flex flex-col border-r-2 shadow-2xl"
+            style={{ background: "var(--bx-panel)", borderColor: "var(--bx-gold)", color: "var(--bx-ink)" }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-b" style={{ borderColor: "var(--bx-line)" }}>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold truncate">{ui.shareTitle}</div>
+                <div className="bx-kicker truncate">{ui.tabChapters}</div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsTocOpen(false)}
-                className="p-1 rounded-lg bg-[#E2D2BE] text-[#462B17] cursor-pointer"
-              >
+              <button type="button" className="bx-iconbtn" onClick={() => setIsTocOpen(false)} aria-label={ui.stop}>
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            {/* TOC Category 1: Angas */}
-            <div className="space-y-1">
-              <div className="text-[10px] font-black text-[#8C6239] uppercase tracking-wider">
-                {ui.tabAngas}
-              </div>
-              <div className="space-y-1">
-                {DURGA_ANGAS.map((anga, idx) => (
-                  <button
-                    key={anga.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveTab('angas');
-                      setSelectedAngaIndex(idx);
-                      setIsTocOpen(false);
-                      setCurrentPage(1);
-                    }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
-                      activeTab === 'angas' && selectedAngaIndex === idx
-                        ? 'bg-[#5C3A21] text-[#FFF6E5]'
-                        : 'bg-white/80 text-[#3E2714] hover:bg-[#FFEEC9]'
-                    }`}
-                  >
-                    <span>{anga.name}</span>
-                    <span className="text-[9px] opacity-75">{anga.verses.length} {verseWord}</span>
-                  </button>
-                ))}
-              </div>
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2">
+              <div className="bx-kicker px-1">{ui.tabAngas}</div>
+              {DURGA_ANGAS.map((anga, idx) => (
+                <button
+                  key={anga.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("angas");
+                    setSelectedAngaIndex(idx);
+                    setIsTocOpen(false);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between"
+                  style={{ background: activeTab === "angas" && selectedAngaIndex === idx ? "var(--bx-mark)" : "var(--bx-bg)", color: activeTab === "angas" && selectedAngaIndex === idx ? "var(--bx-cream)" : "var(--bx-ink)" }}
+                >
+                  <span className="truncate">{anga.name}</span>
+                  <span className="text-[10px] opacity-75 shrink-0">{anga.verses.length}</span>
+                </button>
+              ))}
+              <div className="bx-kicker px-1 pt-1">{ui.tabChapters}</div>
+              {DURGA_CHAPTERS.map((ch, idx) => (
+                <button
+                  key={ch.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("chapters");
+                    setSelectedChapterIndex(idx);
+                    setIsTocOpen(false);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between gap-2"
+                  style={{ background: activeTab === "chapters" && selectedChapterIndex === idx ? "var(--bx-mark)" : "var(--bx-bg)", color: activeTab === "chapters" && selectedChapterIndex === idx ? "var(--bx-cream)" : "var(--bx-ink)" }}
+                >
+                  <span className="truncate">{ui.chapter(ch.id)} · {ch.title}</span>
+                  <span className="text-[10px] opacity-75 shrink-0">{ch.shlokaCount}</span>
+                </button>
+              ))}
             </div>
-
-            {/* TOC Category 2: 13 Chapters */}
-            <div className="space-y-1 pt-2 border-t border-[#E2D2BE]">
-              <div className="text-[10px] font-black text-[#8C6239] uppercase tracking-wider">
-                {ui.tabChapters}
-              </div>
-              <div className="space-y-1">
-                {DURGA_CHAPTERS.map((ch, idx) => (
-                  <button
-                    key={ch.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveTab('chapters');
-                      setSelectedChapterIndex(idx);
-                      setIsTocOpen(false);
-                      setCurrentPage(1);
-                    }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
-                      activeTab === 'chapters' && selectedChapterIndex === idx
-                        ? 'bg-[#5C3A21] text-[#FFF6E5]'
-                        : 'bg-white/80 text-[#3E2714] hover:bg-[#FFEEC9]'
-                    }`}
-                  >
-                    <div className="truncate pr-1">
-                      <span className="text-[#B56A00] font-black mr-1">{ui.chapter(ch.id)}</span>
-                      <span>{ch.title}</span>
-                    </div>
-                    <span className="text-[9px] opacity-75 shrink-0">{ch.shlokaCount} {verseWord}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </ZeroScrollPager>
+          </div>
         </div>
       )}
 
