@@ -201,20 +201,28 @@ function packMeasured(root: HTMLElement, atoms: HTMLElement[], pageH: number): P
     if (full <= 1) continue;
 
     paint(atoms, [...cur, { id, top: 0, height: full, clip: false }]);
-    const fitsWhole = !tooTall() && full <= pageH - 4;
+    const fitsWhole = !tooTall() && full <= pageH - 12;
     if (fitsWhole) {
       cur.push({ id, top: 0, height: full, clip: false });
       continue;
     }
 
+    if (cur.length) {
+      commit();
+      paint(atoms, [{ id, top: 0, height: full, clip: false }]);
+      if (!tooTall() && full <= pageH - 12) {
+        cur = [{ id, top: 0, height: full, clip: false }];
+        continue;
+      }
+    }
+
     const textOnly = !el.querySelector("button, a, input, textarea, select, canvas, video, svg");
     if (textOnly && (el.innerText || "").trim().length > 40) {
-      if (cur.length) commit();
       chunkText(el, pageH).forEach((text) => pages.push({ type: "text", text }));
+      cur = [];
       continue;
     }
 
-    if (cur.length) commit();
     paint(atoms, [{ id, top: 0, height: full, clip: false }]);
     if (root.scrollHeight > pageH + 2) {
       fitAtom(el, atoms, root, pageH);
@@ -262,7 +270,15 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
     if (!stage || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => setMeasureTick((n) => n + 1));
     observer.observe(stage);
-    return () => observer.disconnect();
+    const content = contentRef.current;
+    const mutations = content
+      ? new MutationObserver(() => setMeasureTick((n) => n + 1))
+      : null;
+    mutations?.observe(content!, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      mutations?.disconnect();
+    };
   }, []);
 
   useLayoutEffect(() => {
