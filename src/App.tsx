@@ -16,6 +16,7 @@ import sundarkandRaw from './data/sundarkand.json';
 import { VastuView } from './components/VastuView';
 import { UpayView } from './components/UpayView';
 import { SaralUpayPanel } from './components/SaralUpayPanel';
+import { SabarMantraView } from './components/SabarMantraView';
 import { NumerologyView } from './components/NumerologyView';
 import { PalmistryView } from './components/PalmistryView';
 import { TarotView } from './components/TarotView';
@@ -593,6 +594,8 @@ export function App() {
                 verses={sundarkandRaw as { n: number; kind?: string; text: string }[]}
               />
             )}
+
+            {activeTab === 'sabar' && <SabarMantraView />}
 
             {activeTab === 'saral' && (
               <div className="flex-1 min-h-0 flex flex-col">

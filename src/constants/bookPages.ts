@@ -347,6 +347,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     screenTitle: '🪔 सरल उपाय',
   },
   {
+    id: 'sabar',
+    title: 'साबर मंत्र और विस्तृत विधि',
+    label: 'साबर मंत्र',
+    pageNumber: 24,
+    chapter: '',
+    desc: '100 पूरे साबर मंत्र, चरणबद्ध विधि और सावधानी',
+    icon: Flame,
+    screenTitle: '🔱 साबर मंत्र',
+  },
+  {
     id: 'vastu',
     title: 'वैदिक वास्तु शास्त्र व चमत्कारी टिप्स',
     label: 'वास्तु शास्त्र',

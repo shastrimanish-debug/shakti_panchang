@@ -277,7 +277,7 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   },
   {
     title: { hi: "जन्म पत्रिका", en: "Birth chart", gu: "જન્મ પત્રિકા" },
-    ids: ["kundali", "milan", "upay", "saral", "numerology", "gemology"],
+    ids: ["kundali", "milan", "upay", "saral", "sabar", "numerology", "gemology"],
   },
   {
     title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },
