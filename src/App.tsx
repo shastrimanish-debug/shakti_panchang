@@ -28,7 +28,7 @@ import { LocationModal } from './components/LocationModal';
 import { SavedProfilesModal } from './components/SavedProfilesModal';
 import { BookCover } from './components/BookCover';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme } from './services/storage';
+import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
 import { scheduleMorningBriefs } from './services/morningBrief';
 import { calculateKundali } from './services/kundali';
@@ -131,6 +131,9 @@ export function App() {
         document.documentElement.classList.add('dark');
         document.body.classList.add('dark');
       }
+      const swatch = DEVOTIONAL_THEMES.find((item) => item.id === theme);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (swatch && meta) meta.setAttribute('content', swatch.accentHex);
     }
   }, [theme]);
 
@@ -361,6 +364,7 @@ export function App() {
         onBack={() => setActiveTab('services')}
         onPlace={() => setIsLocationModalOpen(true)}
         onLanguage={() => setIsLanguageModalOpen(true)}
+        onTheme={() => setIsThemeModalOpen(true)}
       />
       {licenseStatus.kind === "trial" && (
         <div className="shrink-0 text-center text-[11px] font-medium py-1 px-2" style={{ background: "var(--bx-mark-soft)", color: "var(--bx-mark)" }}>

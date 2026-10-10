@@ -358,7 +358,7 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
             </div>
 
             {/* Bottom Section Controls */}
-            <div className="flex items-center justify-between pt-2 pb-8 border-t border-amber-200/60">
+            <div className="flex items-center justify-between pt-2 pb-1 border-t border-amber-200/60">
               <button
                 type="button"
                 onClick={() => {

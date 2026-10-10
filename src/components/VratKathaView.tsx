@@ -190,7 +190,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
       {/* Filter Categories Bar */}
       <div className="shrink-0 bg-[#FFFDF9] border-b border-[#E8DCCB] px-2 py-2 space-y-1.5 shadow-2xs">
         {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex flex-wrap items-center gap-1.5">
           {VRAT_KATHA_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -397,7 +397,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
             )}
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between pt-2 pb-8 border-t border-amber-200/60">
+            <div className="flex items-center justify-between pt-2 pb-1 border-t border-amber-200/60">
               <button
                 type="button"
                 onClick={() => {

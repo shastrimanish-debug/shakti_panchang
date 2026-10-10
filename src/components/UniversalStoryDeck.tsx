@@ -213,106 +213,49 @@ export const UniversalStoryDeck: React.FC<UniversalStoryDeckProps> = ({
     : '';
 
   return (
-    <div
-      className="bx-sheet flex-1 min-h-0 w-full h-full max-h-full flex flex-col overflow-hidden relative"
-      onMouseDown={handleTouchStart}
-      onMouseUp={handleTouchEnd}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div className="bx-sheetbar shrink-0 flex items-center gap-2 px-3 py-2 border-b">
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold truncate">
-            {stripMark(currentSlideData?.title) || stripMark(headerTitle)}
-          </div>
-          {currentSlideData?.subtitle && (
-            <div className="bx-kicker truncate">{stripMark(currentSlideData.subtitle)}</div>
-          )}
-        </div>
-        {currentSlideData?.badge && (
-          <span className="bx-count shrink-0">{stripMark(currentSlideData.badge)}</span>
-        )}
-        <span className="bx-count shrink-0 tabular-nums">
-          {currentSlideSafe + 1}/{totalSlides}
-        </span>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleVoice();
-          }}
-          className="bx-iconbtn"
-          aria-pressed={isSpeaking}
-          title={isSpeaking ? "उमा वाणी रोकें" : "उमा वाणी सुनें"}
-        >
-          {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
+    <div className="bx-sheet flex-1 min-h-0 w-full h-full max-h-full flex flex-col overflow-hidden relative">
+      <div className="bx-sheetbar shrink-0 flex items-center gap-2 px-3 py-1.5 border-b">
+        <div className="min-w-0 flex-1 text-sm font-semibold truncate">{stripMark(headerTitle)}</div>
+        <span className="bx-count shrink-0 tabular-nums">{totalSlides}</span>
         {onShare && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onShare();
-            }}
-            className="bx-iconbtn"
-            title="साझा करें"
-          >
+          <button type="button" onClick={onShare} className="bx-iconbtn" title="साझा करें">
             <Share2 className="w-4 h-4" />
           </button>
         )}
         {onOpenUma && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenUma();
-            }}
-            className="bx-iconbtn"
-            title="उमा परामर्श"
-          >
+          <button type="button" onClick={() => onOpenUma()} className="bx-iconbtn" title="उमा परामर्श">
             <Sparkles className="w-4 h-4" />
           </button>
         )}
         {extraHeaderActions}
       </div>
 
-      <div className="flex-1 w-full max-w-3xl mx-auto px-3 py-2 flex flex-col min-h-0 overflow-hidden">
-        <ZeroScrollPager className="flex-1 w-full min-h-0" resetKey={`${headerTitle}-${currentSlideSafe}`} label={stripMark(currentSlideData?.title) || stripMark(headerTitle)}>
-          {currentSlideData?.content}
-        </ZeroScrollPager>
-      </div>
-
-      {totalSlides > 1 && (
-        <div className="bx-sheetfoot shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 border-t">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePrevSlide();
-            }}
-            disabled={currentSlideSafe === 0}
-            className="bx-navbtn disabled:opacity-35"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>{t("common.prev", "पिछला")}</span>
-          </button>
-          <div className="bx-kicker tabular-nums">
-            {currentSlideSafe + 1} / {totalSlides}
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleNextSlide();
-            }}
-            disabled={currentSlideSafe >= totalSlides - 1}
-            className="bx-navbtn bx-navbtn-solid disabled:opacity-35"
-          >
-            <span>{t("common.next", "अगला")}</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      <ZeroScrollPager className="flex-1 w-full min-h-0" contentClassName="p-2 flex flex-col gap-2" resetKey={`${headerTitle}-${totalSlides}`} label={stripMark(headerTitle)}>
+        {slides.map((slide) => (
+          <section key={slide.id} className="bx-verse">
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold leading-snug">{stripMark(slide.title)}</div>
+                {slide.subtitle && <div className="bx-kicker truncate">{stripMark(slide.subtitle)}</div>}
+              </div>
+              {slide.badge && <span className="bx-count shrink-0">{stripMark(slide.badge)}</span>}
+              <button
+                type="button"
+                className="bx-iconbtn shrink-0"
+                title="सुनें"
+                onClick={() => {
+                  const text = slide.voiceText || `${slide.title}। ${slide.subtitle || ""}`;
+                  setIsSpeaking(true);
+                  void speakUma(text).finally(() => setIsSpeaking(false));
+                }}
+              >
+                {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="bx-read">{slide.content}</div>
+          </section>
+        ))}
+      </ZeroScrollPager>
     </div>
   );
 };

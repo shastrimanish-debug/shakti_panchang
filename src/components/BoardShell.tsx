@@ -8,6 +8,7 @@ import {
   UserRound,
   ChevronLeft,
   Languages,
+  Palette,
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
@@ -28,6 +29,7 @@ export function BoardHeader({
   onBack,
   onPlace,
   onLanguage,
+  onTheme,
 }: {
   title: string;
   place: string;
@@ -36,6 +38,7 @@ export function BoardHeader({
   onBack: () => void;
   onPlace: () => void;
   onLanguage: () => void;
+  onTheme: () => void;
 }) {
   const { t, language } = useLanguage();
   const brand = language === "en" ? "Shakti" : language === "gu" ? "શક્તિ" : "शक्ति";
@@ -66,6 +69,9 @@ export function BoardHeader({
       >
         <MapPin className="w-3.5 h-3.5 shrink-0" />
         <span className="truncate">{place}</span>
+      </button>
+      <button type="button" onClick={onTheme} className="bx-head-btn shrink-0" aria-label="थीम">
+        <Palette className="w-4 h-4" />
       </button>
       <button type="button" onClick={onLanguage} className="bx-head-btn shrink-0" aria-label={t("common.language", "भाषा")}>
         <Languages className="w-4 h-4" />

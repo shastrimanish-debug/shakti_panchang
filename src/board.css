@@ -9,11 +9,12 @@
   --bx-mark: #9a3412;
   --bx-mark-soft: #fde7c7;
   --bx-gold: #c8892d;
-  --bx-header: #5c2612;
+  --bx-header: #9a3412;
+  --bx-header-2: #c2410c;
   --bx-cream: #fff6e8;
   background:
-    radial-gradient(900px 420px at 50% -8%, rgba(200, 137, 45, 0.22), transparent 58%),
-    linear-gradient(180deg, #f8f1e4 0%, #f3e6d0 100%) !important;
+    radial-gradient(900px 420px at 50% -8%, color-mix(in srgb, var(--bx-gold) 28%, transparent), transparent 58%),
+    linear-gradient(180deg, var(--bx-bg) 0%, color-mix(in srgb, var(--bx-line) 45%, var(--bx-bg)) 100%) !important;
   color: var(--bx-ink) !important;
   font-family: "Yantramanav", "Noto Sans Devanagari", system-ui, sans-serif;
 }
@@ -36,7 +37,7 @@
 }
 
 .bx-head {
-  background: linear-gradient(180deg, #4a1a0e 0%, #6e2c16 100%) !important;
+  background: linear-gradient(180deg, var(--bx-header) 0%, var(--bx-header-2) 100%) !important;
   color: var(--bx-cream) !important;
   border-bottom: 3px solid var(--bx-gold) !important;
   padding-top: env(safe-area-inset-top, 0px);
@@ -64,8 +65,8 @@
 }
 
 .bx-dock {
-  background: #fff8ee !important;
-  color: #5c3318 !important;
+  background: var(--bx-panel) !important;
+  color: var(--bx-ink) !important;
   border-top: 2px solid var(--bx-gold) !important;
   padding-top: 6px;
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -375,6 +376,7 @@
   color: var(--bx-ink) !important;
   box-shadow: none !important;
   border-color: var(--bx-line) !important;
+  padding: 4px 8px !important;
 }
 
 .board header[class*="bg-gradient"] h2,
@@ -510,8 +512,152 @@
 }
 
 .bx-pagebar {
-  background: #fff8ee;
+  background: var(--bx-panel);
   border-top: 1px solid var(--bx-line);
+}
+
+.bx-read,
+.bx-read .h-full {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+.bx-read .justify-between {
+  justify-content: flex-start !important;
+  gap: 8px;
+}
+
+.bx-read .my-auto {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.board main header[class*="bg-gradient"] h2,
+.board main header[class*="from-[#"] h2 {
+  display: none !important;
+}
+
+.kesariya-theme .board {
+  --bx-bg: #fff8f0;
+  --bx-panel: #fffdfb;
+  --bx-ink: #2a1205;
+  --bx-mute: #9a3412;
+  --bx-line: #fdba74;
+  --bx-mark: #c2410c;
+  --bx-mark-soft: #ffedd5;
+  --bx-gold: #ea580c;
+  --bx-header: #7c2d12;
+  --bx-header-2: #c2410c;
+}
+.chandan-theme .board {
+  --bx-bg: #faf5ec;
+  --bx-panel: #fffdf8;
+  --bx-ink: #2c180c;
+  --bx-mute: #8a5a32;
+  --bx-line: #dfcbb5;
+  --bx-mark: #8c4a00;
+  --bx-mark-soft: #f3e6d4;
+  --bx-gold: #b7791f;
+  --bx-header: #5c3a21;
+  --bx-header-2: #8c4a00;
+}
+.peetambari-theme .board {
+  --bx-bg: #fefce8;
+  --bx-panel: #fffef5;
+  --bx-ink: #3b2005;
+  --bx-mute: #854d0e;
+  --bx-line: #fde047;
+  --bx-mark: #a16207;
+  --bx-mark-soft: #fef9c3;
+  --bx-gold: #ca8a04;
+  --bx-header: #713f12;
+  --bx-header-2: #a16207;
+}
+.gangajal-theme .board {
+  --bx-bg: #f0fdfa;
+  --bx-panel: #f7fffd;
+  --bx-ink: #042f2e;
+  --bx-mute: #0f766e;
+  --bx-line: #99f6e4;
+  --bx-mark: #0f766e;
+  --bx-mark-soft: #ccfbf1;
+  --bx-gold: #0d9488;
+  --bx-header: #134e4a;
+  --bx-header-2: #0f766e;
+}
+.tulsi-theme .board {
+  --bx-bg: #f4fbf4;
+  --bx-panel: #f8fff8;
+  --bx-ink: #052e16;
+  --bx-mute: #166534;
+  --bx-line: #bbf7d0;
+  --bx-mark: #15803d;
+  --bx-mark-soft: #dcfce7;
+  --bx-gold: #16a34a;
+  --bx-header: #14532d;
+  --bx-header-2: #15803d;
+}
+.sindoor-theme .board {
+  --bx-bg: #fff5f5;
+  --bx-panel: #fffafa;
+  --bx-ink: #4c0519;
+  --bx-mute: #9f1239;
+  --bx-line: #fecdd3;
+  --bx-mark: #be123c;
+  --bx-mark-soft: #ffe4e6;
+  --bx-gold: #e11d48;
+  --bx-header: #881337;
+  --bx-header-2: #be123c;
+}
+.swarna-theme .board {
+  --bx-bg: #fffbeb;
+  --bx-panel: #fffdf6;
+  --bx-ink: #451a03;
+  --bx-mute: #92400e;
+  --bx-line: #fde68a;
+  --bx-mark: #b45309;
+  --bx-mark-soft: #fef3c7;
+  --bx-gold: #d97706;
+  --bx-header: #78350f;
+  --bx-header-2: #b45309;
+}
+.shvet-theme .board {
+  --bx-bg: #f8fafc;
+  --bx-panel: #ffffff;
+  --bx-ink: #0f172a;
+  --bx-mute: #475569;
+  --bx-line: #cbd5e1;
+  --bx-mark: #334155;
+  --bx-mark-soft: #e2e8f0;
+  --bx-gold: #64748b;
+  --bx-header: #1e293b;
+  --bx-header-2: #334155;
+}
+.bhojpatra-theme .board {
+  --bx-bg: #faf2de;
+  --bx-panel: #fffdf9;
+  --bx-ink: #3f2a14;
+  --bx-mute: #78542a;
+  --bx-line: #dfcbb5;
+  --bx-mark: #78350f;
+  --bx-mark-soft: #f3e6d0;
+  --bx-gold: #a16207;
+  --bx-header: #5c3a21;
+  --bx-header-2: #78350f;
+}
+.tamra-theme .board {
+  --bx-bg: #17110e;
+  --bx-panel: #2a1c14;
+  --bx-ink: #f6efe2;
+  --bx-mute: #d6b48a;
+  --bx-line: #6b4a2a;
+  --bx-mark: #e08a2a;
+  --bx-mark-soft: #3a2618;
+  --bx-gold: #e0a04a;
+  --bx-header: #100c0a;
+  --bx-header-2: #3a2416;
+  --bx-cream: #fff6e8;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -9,7 +9,8 @@ import { useLanguage } from "../i18n";
  * No overflow-y scrolling — only explicit next / previous.
  */
 
-type NodePage = { type: "nodes"; ids: string[] };
+type NodeSlice = { id: string; top: number; height: number; clip: boolean; scale?: number };
+type NodePage = { type: "nodes"; slices: NodeSlice[] };
 type TextPage = { type: "text"; text: string };
 type Page = NodePage | TextPage;
 
@@ -120,20 +121,50 @@ function showOnly(atoms: HTMLElement[], ids: Set<string> | null) {
   });
 }
 
-function overflows(root: HTMLElement, pageH: number) {
-  return root.scrollHeight > pageH + 2;
+function canSlice(el: HTMLElement) {
+  if (["BUTTON", "INPUT", "TEXTAREA", "SELECT", "IMG"].includes(el.tagName)) return false;
+  if (el.querySelector("canvas, video")) return false;
+  const svg = el.querySelector("svg");
+  const textLen = (el.innerText || "").trim().length;
+  if (svg && svg.getBoundingClientRect().height > 90 && textLen < 80) return false;
+  return textLen > 24 || el.scrollHeight > 180;
+}
+
+function paint(atoms: HTMLElement[], slices: NodeSlice[] | null) {
+  const map = new Map((slices || []).map((slice) => [slice.id, slice]));
+  atoms.forEach((el) => {
+    const slice = map.get(el.dataset.zspId || "");
+    el.style.transform = "";
+    el.style.transformOrigin = "";
+    el.style.height = "";
+    el.style.overflow = "";
+    el.style.marginBottom = "";
+    if (!slice) {
+      el.classList.add("zsp-off");
+      el.scrollTop = 0;
+      return;
+    }
+    el.classList.remove("zsp-off");
+    if (slice.scale && slice.scale < 0.995) {
+      const h = el.offsetHeight || slice.height;
+      el.style.transformOrigin = "top center";
+      el.style.transform = `scale(${slice.scale})`;
+      el.style.marginBottom = `${-(h - h * slice.scale)}px`;
+      return;
+    }
+    if (slice.clip) {
+      el.style.overflow = "hidden";
+      el.style.height = `${Math.max(36, slice.height)}px`;
+      el.scrollTop = slice.top;
+    } else {
+      el.scrollTop = 0;
+    }
+  });
 }
 
 function fitAtom(el: HTMLElement, atoms: HTMLElement[], root: HTMLElement, pageH: number) {
-  const interactive = el.querySelector("button, input, textarea, select, a");
-  const textLen = (el.innerText || "").trim().length;
   showOnly(atoms, new Set([el.dataset.zspId || ""]));
-  if (!overflows(root, pageH)) return;
-  if (textLen > 70 && !interactive) {
-    el.dataset.zspSynthetic = "1";
-    el.classList.add("zsp-off");
-    return;
-  }
+  if (root.scrollHeight <= pageH + 2) return;
   const natural = el.offsetHeight || root.scrollHeight;
   const scale = Math.max(0.42, Math.min(0.98, (pageH - 6) / Math.max(root.scrollHeight, natural, 1)));
   el.dataset.zspScale = String(scale);
@@ -143,58 +174,71 @@ function fitAtom(el: HTMLElement, atoms: HTMLElement[], root: HTMLElement, pageH
 }
 
 function packMeasured(root: HTMLElement, atoms: HTMLElement[], pageH: number): Page[] {
-  const pages: Page[] = [];
-  let cur: HTMLElement[] = [];
-  const naturalHeight = new Map<HTMLElement, number>();
-  atoms.forEach((el) => naturalHeight.set(el, el.offsetHeight));
+  const pages: NodePage[] = [];
+  let cur: NodeSlice[] = [];
+  const fullHeight = new Map<HTMLElement, number>();
+  atoms.forEach((el) => fullHeight.set(el, Math.max(el.scrollHeight, el.offsetHeight)));
 
   const commit = () => {
     if (!cur.length) return;
-    pages.push({ type: "nodes", ids: cur.map((el) => el.dataset.zspId!).filter(Boolean) });
+    pages.push({ type: "nodes", slices: cur });
     cur = [];
   };
+
+  const tooTall = () => root.scrollHeight > pageH + 2;
 
   for (const el of atoms) {
     const id = el.dataset.zspId;
     if (!id) continue;
-    const natural = naturalHeight.get(el) || 0;
-    if (natural <= 1) continue;
+    const full = fullHeight.get(el) || 0;
+    if (full <= 1) continue;
 
-    if (natural > pageH - 4) {
-      commit();
-      const interactive = el.querySelector("button, input, textarea, select, a");
-      const textLen = (el.innerText || "").trim().length;
-      if (textLen > 70 && !interactive) {
-        el.dataset.zspSynthetic = "1";
-        chunkText(el, pageH).forEach((text) => pages.push({ type: "text", text }));
-      } else {
-        fitAtom(el, atoms, root, pageH);
-        if (el.dataset.zspSynthetic === "1") {
-          chunkText(el, pageH).forEach((text) => pages.push({ type: "text", text }));
-        } else {
-          pages.push({ type: "nodes", ids: [id] });
-        }
-      }
-      showOnly(atoms, null);
+    paint(atoms, [...cur, { id, top: 0, height: full, clip: false }]);
+    const fitsWhole = !tooTall() && full <= pageH - 4;
+    if (fitsWhole) {
+      cur.push({ id, top: 0, height: full, clip: false });
       continue;
     }
 
-    const trial = [...cur, el];
-    showOnly(atoms, new Set(trial.map((node) => node.dataset.zspId!)));
-    if (cur.length && overflows(root, pageH)) {
+    if (!canSlice(el)) {
+      if (cur.length) commit();
+      fitAtom(el, atoms, root, pageH);
+      const scale = Number(el.dataset.zspScale || "1");
+      cur = [{ id, top: 0, height: full, clip: false, scale: scale < 0.995 ? scale : undefined }];
       commit();
-      cur = [el];
-      showOnly(atoms, new Set([id]));
-      if (overflows(root, pageH)) fitAtom(el, atoms, root, pageH);
-    } else {
-      cur = trial;
+      continue;
+    }
+
+    let top = 0;
+    let guard = 0;
+    while (top < full - 2 && guard++ < 60) {
+      paint(atoms, cur);
+      let room = (cur.length ? pageH - root.scrollHeight : pageH) - 2;
+      if (room < 48) {
+        commit();
+        room = pageH - 2;
+      }
+      let height = Math.min(Math.max(room, 48), full - top);
+      const slice: NodeSlice = { id, top, height, clip: true };
+      paint(atoms, [...cur, slice]);
+      if (tooTall()) {
+        height = Math.max(48, height - (root.scrollHeight - pageH) - 4);
+        slice.height = height;
+        paint(atoms, [...cur, slice]);
+      }
+      if (height < 36) height = Math.min(pageH - 4, full - top);
+      slice.height = height;
+      slice.clip = top > 0 || height < full - 4;
+      cur.push(slice);
+      top += height;
+      if (top < full - 2) commit();
     }
   }
   commit();
-  showOnly(atoms, null);
+  paint(atoms, null);
 
   if (!pages.length) {
-    return [{ type: "nodes", ids: atoms.map((atom) => atom.dataset.zspId!).filter(Boolean) }];
+    return [{ type: "nodes", slices: atoms.map((atom) => ({ id: atom.dataset.zspId || "", top: 0, height: fullHeight.get(atom) || 0, clip: false })).filter((slice) => slice.id) }];
   }
   return pages;
 }
@@ -211,7 +255,7 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
   const { t } = useLanguage();
   const stageRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const pagesRef = useRef<Page[]>([{ type: "nodes", ids: [] }]);
+  const pagesRef = useRef<Page[]>([{ type: "nodes", slices: [] }]);
   const [page, setPage] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const [textOverlay, setTextOverlay] = useState<string | null>(null);
@@ -245,6 +289,9 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
       el.style.transform = "";
       el.style.transformOrigin = "";
       el.style.marginBottom = "";
+      el.style.height = "";
+      el.style.overflow = "";
+      el.scrollTop = 0;
     });
 
     relaxTall(root, pageH);
@@ -263,25 +310,8 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
     }
 
     const current = built[safe];
-    const visible = new Set(current?.type === "nodes" ? current.ids : []);
-
-    atoms.forEach((el) => {
-      const id = el.dataset.zspId || "";
-      const show = current?.type === "nodes" && visible.has(id);
-      const synthetic = el.dataset.zspSynthetic === "1";
-      if (show && !synthetic) {
-        el.classList.remove("zsp-off");
-        const scale = Number(el.dataset.zspScale || "1");
-        if (scale > 0 && scale < 0.995) {
-          const h = el.offsetHeight;
-          el.style.transformOrigin = "top center";
-          el.style.transform = `scale(${scale})`;
-          el.style.marginBottom = `${-(h - h * scale)}px`;
-        }
-      } else {
-        el.classList.add("zsp-off");
-      }
-    });
+    if (current?.type === "nodes") paint(atoms, current.slices);
+    else paint(atoms, null);
 
     const overlay = current?.type === "text" ? current.text : null;
     setTextOverlay((prev) => (prev === overlay ? prev : overlay));
