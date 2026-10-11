@@ -427,8 +427,8 @@ export function TodayBoard({
     [t("kundali.place", "स्थान"), place.name],
   ];
   return (
-    <ZeroScrollPager className="flex-1 min-h-0" resetKey={panchang.date.toDateString()} label={t("nav.panchang", "पंचांग")}>
-      <div className="p-3 space-y-2">
+    <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
+      <div className="p-3 space-y-3 pb-16">
         <MoonPhaseChart panchang={panchang} />
         <div className="bx-fact">
           <div className="bx-kicker inline-flex items-center gap-1">
@@ -466,6 +466,6 @@ export function TodayBoard({
           </button>
         </div>
       </div>
-    </ZeroScrollPager>
+    </div>
   );
 }

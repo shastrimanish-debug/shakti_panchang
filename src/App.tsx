@@ -593,11 +593,9 @@ export function App() {
             {activeTab === 'jain_mantras' && <JainMantraView />}
 
             {activeTab === 'saral' && (
-              <div className="flex-1 min-h-0 flex flex-col">
-                <div className="shrink-0 px-3 pt-1 text-[13px] font-semibold">सरल उपाय · 200 पाठ</div>
-                <ZeroScrollPager className="flex-1 min-h-0" contentClassName="p-2" resetKey="saral">
-                  <SaralUpayPanel />
-                </ZeroScrollPager>
+              <div className="flex-1 min-h-0 flex flex-col w-full overflow-y-auto overscroll-contain p-2 pb-16">
+                <div className="shrink-0 px-1 pb-2 text-[13px] font-semibold text-[#5C3A21]">सरल उपाय · 200 पाठ</div>
+                <SaralUpayPanel />
               </div>
             )}
 

@@ -78,20 +78,20 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   }
 
   return (
-    <ZeroScrollPager className="flex-1 min-h-0 w-full h-full" resetKey={currentDate.toDateString()}>
-    <DashboardView
-      panchang={panchang}
-      currentLocation={locationObj}
-      currentDate={currentDate}
-      onDateChange={onDateChange}
-      onNavigateTab={onNavigateTab || (() => {})}
-      onOpenUma={(q) => onOpenUmaModal?.(q)}
-      onOpenConnect={() => {}}
-      onOpenLocationModal={onOpenLocationModal}
-      onOpenWhatsAppPanchang={onOpenWhatsAppPanchang}
-      onToggleStoryMode={() => setViewMode('story')}
-    />
-    </ZeroScrollPager>
+    <div className="flex-1 min-h-0 w-full h-full overflow-y-auto overscroll-contain">
+      <DashboardView
+        panchang={panchang}
+        currentLocation={locationObj}
+        currentDate={currentDate}
+        onDateChange={onDateChange}
+        onNavigateTab={onNavigateTab || (() => {})}
+        onOpenUma={(q) => onOpenUmaModal?.(q)}
+        onOpenConnect={() => {}}
+        onOpenLocationModal={onOpenLocationModal}
+        onOpenWhatsAppPanchang={onOpenWhatsAppPanchang}
+        onToggleStoryMode={() => setViewMode('story')}
+      />
+    </div>
   );
 };
 

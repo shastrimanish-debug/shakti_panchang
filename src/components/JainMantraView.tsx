@@ -160,15 +160,17 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-[#FFD88A] bg-[#2C180C]/80 px-3 py-1 rounded-lg border border-[#B56A00]/50">
-              कुल उपलब्ध: {filteredMantras.length} मंत्र
+              {selectedCategory === 'सभी 100 मंत्र'
+                ? 'कुल 100 मंत्र उपलब्ध'
+                : `श्रेणी परिणाम: ${filteredMantras.length} / 100 मंत्र`}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Zero Scroll Container for smooth layout */}
-      <ZeroScrollPager className="flex-1 min-h-0 overflow-hidden sm:p-4" contentClassName="p-2 sm:p-3 space-y-3">
-        <div className="max-w-5xl mx-auto space-y-3">
+      {/* Main Container - Full Native Scroll Container for smooth Mobile/Desktop viewing */}
+      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2 sm:p-4">
+        <div className="max-w-5xl mx-auto space-y-3.5 pb-16">
           {/* Search Bar & Category Selector */}
           <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 shadow-xs space-y-2.5">
             <div className="relative">
@@ -547,7 +549,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
             </div>
           )}
         </div>
-      </ZeroScrollPager>
+      </div>
     </div>
   );
 };
