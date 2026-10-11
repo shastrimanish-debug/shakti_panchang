@@ -312,6 +312,25 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
           </button>
 
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('jain_mantras'))}
+            className="flex items-center gap-2.5 p-2.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-stone-950 font-black rounded-2xl text-left col-span-2 shadow-md border border-amber-300 transition cursor-pointer active:scale-95 m3-touch"
+          >
+            <div className="p-2 bg-stone-950 text-amber-300 rounded-xl shadow-xs">
+              <Sparkles className="w-5 h-5 fill-amber-300 text-amber-300" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-black text-stone-950 flex items-center justify-between">
+                <span>☸ 100 चमत्कारिक जैन मंत्र व विधि</span>
+                <span className="text-[10px] bg-stone-950 text-amber-300 px-2 py-0.5 rounded-full font-bold">100/100</span>
+              </div>
+              <div className="text-[10px] text-stone-900 font-bold">
+                नवकार महामंत्र, 48 ऋद्धि-सिद्धि, पार्श्वनाथ, पद्मावती व 100 चमत्कारिक जैन मंत्र विधि सहित
+              </div>
+            </div>
+          </button>
+
           {/* वैदिक अंक ज्योतिष व लो शू चक्र */}
           <button
             type="button"

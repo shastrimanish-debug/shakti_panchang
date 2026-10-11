@@ -511,14 +511,52 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
   };
 
-  const handleDownloadImage = () => {
+  const handleDownloadImage = async () => {
     if (!imageUri) return;
-    const a = document.createElement('a');
-    a.href = imageUri;
-    a.download = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const fileName = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
+    try {
+      const res = await fetch(imageUri);
+      const blob = await res.blob();
+
+      // If Web Share API supports file sharing, trigger native share dialog
+      if (typeof navigator !== 'undefined' && navigator.canShare) {
+        const file = new File([blob], fileName, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: `दैनिक वैशाली/वैदिक पंचांग कार्ड`,
+              files: [file],
+            });
+            return;
+          } catch (e) {
+            if ((e as { name?: string })?.name === 'AbortError') return;
+          }
+        }
+      }
+
+      // Convert to Blob URL for clean browser / webview download
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 1200);
+    } catch {
+      // Fallback
+      const a = document.createElement('a');
+      a.href = imageUri;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+      }, 1000);
+    }
   };
 
   const handleCopyText = () => {

@@ -357,6 +357,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     screenTitle: '🔱 साबर मंत्र',
   },
   {
+    id: 'jain_mantras',
+    title: '100 चमत्कारिक जैन मंत्र व संपूर्ण साधना विधि',
+    label: 'जैन मंत्र',
+    pageNumber: 25,
+    chapter: '',
+    desc: 'नवकार महामंत्र, 48 ऋद्धि-सिद्धि मंत्र, पार्श्वनाथ, पद्मावती व 100 चमत्कारी जैन मंत्र विधि सहित',
+    icon: Sparkles,
+    screenTitle: '☸ 100 चमत्कारिक जैन मंत्र व विधि',
+  },
+  {
     id: 'vastu',
     title: 'वैदिक वास्तु शास्त्र व चमत्कारी टिप्स',
     label: 'वास्तु शास्त्र',

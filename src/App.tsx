@@ -17,6 +17,7 @@ import { VastuView } from './components/VastuView';
 import { UpayView } from './components/UpayView';
 import { SaralUpayPanel } from './components/SaralUpayPanel';
 import { SabarMantraView } from './components/SabarMantraView';
+import { JainMantraView } from './components/JainMantraView';
 import { NumerologyView } from './components/NumerologyView';
 import { PalmistryView } from './components/PalmistryView';
 import { TarotView } from './components/TarotView';
@@ -588,6 +589,8 @@ export function App() {
             )}
 
             {activeTab === 'sabar' && <SabarMantraView />}
+
+            {activeTab === 'jain_mantras' && <JainMantraView />}
 
             {activeTab === 'saral' && (
               <div className="flex-1 min-h-0 flex flex-col">
