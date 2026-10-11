@@ -79,7 +79,9 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
     const vargaSign = calculateVargaSign(p.degree, vargaDivision);
     const house = ((vargaSign - ascSignIdx + 12) % 12) + 1;
     const isBenefic = ['गुरु', 'शुक्र', 'बुध', 'चंद्र'].includes(p.planet);
-    const degStr = `${Math.floor(p.degreeInRashi)}°`;
+    const slice = 30 / Math.max(1, vargaDivision);
+    const degInVarga = vargaDivision === 1 ? p.degreeInRashi : (p.degreeInRashi % slice) * vargaDivision;
+    const degStr = `${Math.floor(degInVarga)}°`;
 
     const item: FormattedPlanet = {
       name: p.planet,

@@ -445,36 +445,41 @@ export function calculateVedicPanchang(
  */
 export function calculateVargaSign(degree: number, vargaDiv: number): number {
   const deg = normalize360(degree);
-  const rashi = Math.floor(deg / 30);
+  const rashi = Math.floor(deg / 30) % 12;
   const rem = deg - rashi * 30;
-  const part = Math.min(vargaDiv - 1, Math.max(0, Math.floor(rem / (30 / vargaDiv))));
+  const div = Math.max(1, vargaDiv);
+  const part = Math.min(div - 1, Math.max(0, Math.floor(rem / (30 / div))));
   const mod12 = (val: number) => ((val % 12) + 12) % 12;
 
-  switch (vargaDiv) {
+  switch (div) {
     case 1:
       return rashi;
     case 2: // Hora
       return rashi % 2 === 0 ? (part === 0 ? 4 : 3) : (part === 0 ? 3 : 4);
     case 3: // Drekkana
-      return mod12(rashi + [0, 4, 8][part]);
+      return mod12(rashi + [0, 4, 8][part % 3]);
     case 4: // Chaturthamsha
-      return mod12(rashi + [0, 3, 6, 9][part]);
+      return mod12(rashi + [0, 3, 6, 9][part % 4]);
+    case 5: // Panchamsha
+      return mod12((rashi % 2 === 0 ? [0, 10, 8, 2, 6] : [1, 5, 11, 9, 7])[part % 5]);
+    case 6: // Shashtamsha
+      return mod12((rashi % 2 === 0 ? 0 : 6) + part);
     case 7: // Saptamsha
       return mod12((rashi % 2 === 0 ? rashi : rashi + 6) + part);
-    case 9: { // Navamsha
-      const start = rashi % 3 === 0 ? rashi : rashi % 3 === 1 ? rashi + 8 : rashi + 4;
-      return mod12(start + part);
-    }
+    case 8: // Ashtamsha
+      return mod12([0, 8, 4][rashi % 3] + part);
+    case 9: // Navamsha
+      return mod12([0, 9, 6, 3][rashi % 4] + part);
     case 10: // Dashamsha
       return mod12((rashi % 2 === 0 ? rashi : rashi + 8) + part);
+    case 11: // Ekadashamsha / Rudramsha
+      return mod12(0 - part);
     case 12: // Dwadashamsha
       return mod12(rashi + part);
-    case 16: { // Shodashamsha
-      const start = rashi % 3 === 0 ? 0 : rashi % 3 === 1 ? 4 : 8;
-      return mod12(start + part);
-    }
+    case 16: // Shodashamsha
+      return mod12([0, 4, 8][rashi % 3] + part);
     case 20: // Vimshamsha
-      return mod12([0, 8, 4, 3][rashi % 4] + part);
+      return mod12([0, 8, 4][rashi % 3] + part);
     case 24: // Chaturvimshamsha
       return mod12((rashi % 2 === 0 ? 4 : 3) + part);
     case 27: // Saptavimshamsha
@@ -483,17 +488,19 @@ export function calculateVargaSign(degree: number, vargaDiv: number): number {
       if (rashi % 2 === 0) {
         return rem < 5 ? 0 : rem < 10 ? 10 : rem < 18 ? 8 : rem < 25 ? 2 : 6;
       } else {
-        return rem < 5 ? 1 : rem < 10 ? 5 : rem < 18 ? 11 : rem < 25 ? 9 : 7;
+        return rem < 5 ? 1 : rem < 12 ? 5 : rem < 20 ? 11 : rem < 25 ? 9 : 7;
       }
     case 40: // Khavedamsha
       return mod12((rashi % 2 === 0 ? 0 : 6) + part);
-    case 45: { // Akshavedamsha
-      const start = rashi % 3 === 0 ? 0 : rashi % 3 === 1 ? 4 : 8;
-      return mod12(start + part);
-    }
+    case 45: // Akshavedamsha
+      return mod12([0, 4, 8][rashi % 3] + part);
     case 60: // Shashtiamsha
       return mod12(rashi + part);
     default:
-      return mod12(rashi + part);
+      if (div % 2 === 0) {
+        return mod12((rashi % 2 === 0 ? rashi : rashi + 6) + part);
+      } else {
+        return mod12(rashi + part);
+      }
   }
 }

@@ -250,10 +250,12 @@ export async function generateExhaustive59PageKundaliPdf(
       const house = opts?.useNatalHouses
         ? p.house
         : houseFromAsc(calculateVargaSign(p.degree, vargaDivision), lagnaSign);
+      const slice = 30 / Math.max(1, vargaDivision);
+      const vdeg = vargaDivision === 1 ? p.degreeInRashi : (p.degreeInRashi % slice) * vargaDivision;
       hPlanets[house]?.push({
         name: planetAbbr(p.planet),
         retro: p.isRetrograde,
-        deg: `${Math.floor(p.degreeInRashi)}°`,
+        deg: `${Math.floor(vdeg)}°`,
       });
     });
 
