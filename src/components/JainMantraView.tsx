@@ -21,6 +21,13 @@ import {
   RotateCcw,
   Flame,
   X,
+  Compass,
+  Clock,
+  Shirt,
+  ShieldCheck,
+  Zap,
+  CircleDot,
+  Gift,
 } from 'lucide-react';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { ZeroScrollPager } from './ZeroScrollPager';
@@ -98,7 +105,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
     }
     stopUmaSpeech();
     setSpeakingId(mantra.id);
-    const speechText = `${mantra.title}। मंत्र: ${mantra.mantra}। साधना विधि: ${mantra.vidhi}। लाभ: ${mantra.phala}`;
+    const speechText = `${mantra.title}। मंत्र: ${mantra.mantra}। आवश्यक जाप संख्या: ${mantra.japSankhya}। माला: ${mantra.mala}। साधना विधि: ${mantra.vidhi}। फल: ${mantra.phala}`;
     speakUma(speechText, {
       onEnd: () => setSpeakingId(null),
       onError: () => setSpeakingId(null),
@@ -106,14 +113,14 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
   };
 
   const handleCopy = (mantra: JainMantra) => {
-    const txt = `॥ ${mantra.title} ॥\n\nमंत्र:\n${mantra.mantra}\n\nसम्पूर्ण साधना विधि:\n${mantra.vidhi}\n\nचमत्कारिक फल:\n${mantra.phala}\n\n— सनातन शक्ति पंचांग (100 जैन मंत्र संग्रह)`;
+    const txt = `॥ ${mantra.title} ॥\n\nमंत्र:\n${mantra.mantra}\n\nजाप संख्या: ${mantra.japSankhya}\nमाला: ${mantra.mala}\nदिशा व समय: ${mantra.disha}, ${mantra.samay}\nवस्त्र: ${mantra.vastra}\n\nसम्पूर्ण साधना विधि:\n${mantra.vidhi}\n\nचमत्कारिक फल:\n${mantra.phala}\n\n— सनातन शक्ति पंचांग (100 जैन मंत्र संग्रह)`;
     navigator.clipboard.writeText(txt);
     setCopiedId(mantra.id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleShare = (mantra: JainMantra) => {
-    const txt = `*॥ ${mantra.title} ॥*\n\n*मंत्र:*\n${mantra.mantra}\n\n*सम्पूर्ण साधना विधि:*\n${mantra.vidhi}\n\n*चमत्कारिक फल:*\n${mantra.phala}\n\n_सनातन शक्ति पंचांग_`;
+    const txt = `*॥ ${mantra.title} ॥*\n\n*मंत्र:*\n${mantra.mantra}\n\n*जाप संख्या:* ${mantra.japSankhya}\n*माला:* ${mantra.mala}\n*दिशा:* ${mantra.disha} | *समय:* ${mantra.samay}\n*वस्त्र:* ${mantra.vastra}\n\n*सम्पूर्ण साधना विधि:*\n${mantra.vidhi}\n\n*चमत्कारिक फल:*\n${mantra.phala}\n\n_सनातन शक्ति पंचांग_`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`;
     window.open(url, '_blank');
   };
@@ -342,17 +349,25 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                       </div>
                     </div>
 
-                    {/* Title & Beej */}
+                    {/* Title & Beej / Riddhi */}
                     <div className="space-y-1">
                       <h3 className="font-bold font-granth text-lg sm:text-xl text-[#5C3A21] flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-[#B56A00] shrink-0" />
                         <span>{currentMantra.title}</span>
                       </h3>
-                      {currentMantra.riddhi && (
-                        <div className="text-xs font-bold text-[#8B1E1E]">
-                          ऋद्धि: {currentMantra.riddhi}
-                        </div>
-                      )}
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        {currentMantra.beej && (
+                          <span className="px-2.5 py-0.5 bg-[#5C3A21] text-[#FFD88A] rounded-full text-[11px] font-bold border border-[#B56A00]/50 flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-amber-300" />
+                            बीज मंत्र: {currentMantra.beej}
+                          </span>
+                        )}
+                        {currentMantra.riddhi && (
+                          <span className="px-2.5 py-0.5 bg-[#8B1E1E]/10 text-[#8B1E1E] rounded-full text-[11px] font-bold border border-[#8B1E1E]/30">
+                            ऋद्धि: {currentMantra.riddhi}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Mantra Main Box */}
@@ -365,13 +380,79 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                       </div>
                     </div>
 
+                    {/* Structured Mantra Details Grid (जाप संख्या, माला, दिशा, समय, वस्त्र, नैवेद्य, नियम) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* Jap Count */}
+                      <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
+                        <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
+                          <Flame className="w-3.5 h-3.5 text-[#B56A00]" />
+                          <span>आवश्यक जाप संख्या:</span>
+                        </div>
+                        <div className="text-xs font-black text-[#5C3A21]">{currentMantra.japSankhya}</div>
+                      </div>
+
+                      {/* Mala */}
+                      <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
+                        <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
+                          <CircleDot className="w-3.5 h-3.5 text-[#B56A00]" />
+                          <span>उपयुक्त जप माला:</span>
+                        </div>
+                        <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.mala}</div>
+                      </div>
+
+                      {/* Disha */}
+                      <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
+                        <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
+                          <Compass className="w-3.5 h-3.5 text-[#B56A00]" />
+                          <span>साधना दिशा:</span>
+                        </div>
+                        <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.disha}</div>
+                      </div>
+
+                      {/* Samay */}
+                      <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
+                        <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-[#B56A00]" />
+                          <span>शुभ समय:</span>
+                        </div>
+                        <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.samay}</div>
+                      </div>
+
+                      {/* Vastra */}
+                      <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
+                        <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
+                          <Shirt className="w-3.5 h-3.5 text-[#B56A00]" />
+                          <span>वस्त्र व आसन:</span>
+                        </div>
+                        <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.vastra}</div>
+                      </div>
+
+                      {/* Naivedya */}
+                      <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
+                        <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
+                          <Gift className="w-3.5 h-3.5 text-[#B56A00]" />
+                          <span>भोग व नैवेद्य:</span>
+                        </div>
+                        <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.naivedya}</div>
+                      </div>
+                    </div>
+
+                    {/* Niyam */}
+                    <div className="p-3 bg-[#FAF2E4] border border-[#B56A00]/40 rounded-xl space-y-1">
+                      <div className="text-xs font-bold text-[#8B1E1E] flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-[#8B1E1E]" />
+                        <span>साधना नियम व परहेज:</span>
+                      </div>
+                      <p className="text-xs text-[#5C3A21] font-semibold">{currentMantra.niyam}</p>
+                    </div>
+
                     {/* Step-by-Step Vidhi (सम्पूर्ण साधना विधि) */}
-                    <div className="p-3.5 bg-[#F4E8D1]/70 border border-[#8C6239]/30 rounded-xl space-y-1.5 text-xs">
+                    <div className="p-3.5 bg-[#F4E8D1]/80 border border-[#8C6239]/40 rounded-xl space-y-1.5 text-xs">
                       <div className="font-bold text-[#5C3A21] flex items-center gap-1.5 border-b border-[#8C6239]/20 pb-1">
                         <BookOpen className="w-4 h-4 text-[#B56A00]" />
-                        <span>सम्पूर्ण साधना विधि (Step-by-Step Vidhi):</span>
+                        <span>सम्पूर्ण चरणबद्ध साधना विधि:</span>
                       </div>
-                      <p className="text-[#3E2714] leading-relaxed font-medium">
+                      <p className="text-[#3E2714] leading-relaxed font-medium whitespace-pre-line">
                         {currentMantra.vidhi}
                       </p>
                     </div>
