@@ -291,8 +291,8 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
           ))
         ) : (
           <>
-            {/* Introductory Shlok & Meaning */}
-            {currentKatha.shlok && (
+            {/* Introductory Shlok & Meaning (Only if present and not empty) */}
+            {currentKatha.shlok && currentKatha.shlok.trim().length > 0 && (
               <article className="p-3.5 rounded-xl bg-[#F4E8D1]/90 border-2 border-[#B56A00]/40 shadow-xs space-y-1.5">
                 <div className="text-[11px] font-black text-[#B56A00] flex items-center gap-1 uppercase tracking-wider">
                   <Sparkles className="w-3.5 h-3.5" /> मंगलाचरण श्लोक
@@ -300,7 +300,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                 <p className={`font-granth font-bold text-[#5C3A21] whitespace-pre-wrap leading-relaxed ${size}`}>
                   {currentKatha.shlok}
                 </p>
-                {currentKatha.shlokMeaning && (
+                {currentKatha.shlokMeaning && currentKatha.shlokMeaning.trim().length > 0 && (
                   <div className="pt-2 border-t border-[#8C6239]/20 text-[#3E2714]">
                     <span className="text-[11px] font-bold text-[#8C6239] block">हिंदी भावार्थ:</span>
                     <p className={`font-medium ${size}`}>{currentKatha.shlokMeaning}</p>
@@ -316,7 +316,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                   <button
                     key={idx}
                     type="button"
-                    className={`px-3 py-1 rounded-lg text-xs font-extrabold shrink-0 border transition ${
+                    className={`px-3 py-1 rounded-lg text-xs font-extrabold shrink-0 border transition cursor-pointer ${
                       activeChapterIndex === idx
                         ? 'bg-[#5C3A21] text-[#FFD88A] border-[#B56A00] shadow-sm'
                         : 'bg-[#F4E8D1] text-[#5C3A21] border-[#8C6239]/30 hover:bg-[#EBD8BD]'
@@ -333,50 +333,73 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
             {blocks.map((block, idx) => {
               const lines = block.split(/\n/);
               const isShlokaBlock = block.includes('श्लोक') || block.includes('संस्कृत:') || block.includes('॥');
-              const isTranslationBlock = block.includes('हिंदी अनुवाद:') || block.includes('भावार्थ:') || block.includes('अर्थ:');
 
               return (
                 <article
                   key={idx}
-                  className={`p-3.5 rounded-xl border transition shadow-2xs ${
+                  className={`p-3.5 rounded-xl border transition shadow-2xs space-y-2 ${
                     isShlokaBlock
                       ? 'bg-[#F4E8D1] border-[#B56A00]/40'
-                      : isTranslationBlock
-                      ? 'bg-[#FAF2E4] border-l-4 border-l-[#B56A00] border-[#8C6239]/20'
-                      : 'bg-[#F4E8D1]/60 border-[#8C6239]/20'
+                      : 'bg-[#F4E8D1]/70 border-[#8C6239]/20'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] font-bold text-[#B56A00] uppercase tracking-wider">
                       {currentKatha.katha && currentKatha.katha.length > 1
-                        ? `अध्याय ${activeChapterIndex + 1} · खण्ड ${idx + 1}`
+                        ? `अध्याय ${activeChapterIndex + 1} · मन्त्र ${idx + 1}`
                         : `भाग ${idx + 1}`}
                     </span>
                   </div>
 
                   <div className="space-y-2">
                     {lines.map((line, lIdx) => {
-                      const isShlokaLine = line.startsWith('श्लोक') || line.startsWith('संस्कृत:');
-                      const isTransLine = line.startsWith('हिंदी अनुवाद:') || line.startsWith('भावार्थ:') || line.startsWith('अर्थ:');
+                      const trimmed = line.trim();
+                      if (!trimmed) return null;
 
-                      if (isShlokaLine) {
+                      // Chapter Header Line (e.g. ॥ अध्याय १ ॥ or 🌅 १. प्रातः उठते ही)
+                      if (trimmed.startsWith('॥') || trimmed.match(/^[🌅🌍🍲🪔🌙\d]\s*[.।]/)) {
                         return (
-                          <div key={lIdx} className="font-granth font-bold text-[#5C3A21] text-lg sm:text-xl leading-relaxed">
-                            {line}
+                          <div key={lIdx} className="font-extrabold text-[#5C3A21] text-sm sm:text-base border-b border-[#8C6239]/20 pb-1 font-granth">
+                            {trimmed}
                           </div>
                         );
                       }
-                      if (isTransLine) {
+
+                      // Label line 'श्लोक:'
+                      if (trimmed === 'श्लोक:' || trimmed === 'संस्कृत प्रमाण:') {
                         return (
-                          <div key={lIdx} className="font-medium text-[#3E2714] text-base sm:text-lg bg-[#FAF2E4] p-2.5 rounded-lg border border-[#8C6239]/20 leading-relaxed">
-                            <span className="font-bold text-[#B56A00] block text-xs mb-0.5">हिंदी अनुवाद:</span>
-                            {line.replace(/^हिंदी अनुवाद:\s*/, '')}
+                          <div key={lIdx} className="text-[11px] font-bold text-[#B56A00] uppercase tracking-wider">
+                            श्लोक:
                           </div>
                         );
                       }
+
+                      // Hindi Translation Line or Block
+                      if (trimmed.startsWith('हिंदी अनुवाद:') || trimmed.startsWith('हिंदी भावार्थ:') || trimmed.startsWith('भावार्थ:')) {
+                        const contentText = trimmed.replace(/^(हिंदी अनुवाद:|हिंदी भावार्थ:|भावार्थ:)\s*/, '');
+                        return (
+                          <div key={lIdx} className="bg-[#FAF2E4] p-3 rounded-xl border-l-4 border-l-[#B56A00] border-[#8C6239]/20 space-y-0.5">
+                            <span className="font-bold text-[#B56A00] block text-xs">हिंदी अर्थ:</span>
+                            <p className="font-medium text-[#3E2714] text-xs sm:text-sm leading-relaxed">
+                              {contentText}
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      // Shloka Sanskrit Verse Text
+                      if (isShlokaBlock && !trimmed.startsWith('हिंदी')) {
+                        return (
+                          <p key={lIdx} className="font-granth font-bold text-[#5C3A21] text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                            {trimmed}
+                          </p>
+                        );
+                      }
+
+                      // Standard Descriptive Text
                       return (
-                        <p key={lIdx} className={`whitespace-pre-wrap ${size} text-[#3E2714] leading-relaxed`}>
-                          {line}
+                        <p key={lIdx} className={`whitespace-pre-wrap ${size} text-[#3E2714] leading-relaxed font-medium`}>
+                          {trimmed}
                         </p>
                       );
                     })}
