@@ -179,12 +179,12 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   // Varga selector state
   const [selectedVarga, setSelectedVarga] = useState<number>(10);
   const [chartViewMode, setChartViewMode] = useState<'twin' | 'shodashvarga'>('twin');
-  const [chartSubPage, setChartSubPage] = useState<'twin' | 'planets' | 'vargas'>('twin');
-  const [vargaViewType, setVargaViewType] = useState<'priority_analysis' | 'explorer'>('priority_analysis');
+  const [chartSubPage, setChartSubPage] = useState<'twin' | 'planets' | 'vargas'>('vargas');
+  const [vargaViewType, setVargaViewType] = useState<'priority_analysis' | 'explorer'>('explorer');
   const [milanSubPage, setMilanSubPage] = useState<'score' | 'ashtakoot' | 'manglik'>('score');
   const [isFormExpanded, setIsFormExpanded] = useState<boolean>(true);
   const [formError, setFormError] = useState<string | null>(null);
-  const [vargaListFilter, setVargaListFilter] = useState<'shodash' | 'all60'>('shodash');
+  const [vargaListFilter, setVargaListFilter] = useState<'shodash' | 'all60'>('all60');
 
   // Kundali Input Form State — empty until the user enters a real native
   const [name, setName] = useState('');
@@ -1254,7 +1254,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       return (
                         <button
                           key={v.division}
-                          onClick={() => setSelectedVarga(v.division)}
+                          onClick={() => {
+                            setSelectedVarga(v.division);
+                            document.getElementById(`varga-chart-${v.division}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
                           className={`p-2 rounded-lg border text-left transition flex flex-col justify-between ${
                             isSel
                               ? 'bg-[#5C3A21] text-[#FAF2E4] border-[#5C3A21] shadow-xs ring-2 ring-[#B56A00]'
@@ -1347,7 +1350,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                           ).map((v) => (
                             <tr
                               key={v.division}
-                              onClick={() => setSelectedVarga(v.division)}
+                              onClick={() => {
+                                setSelectedVarga(v.division);
+                                document.getElementById(`varga-chart-${v.division}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }}
                               className={`cursor-pointer transition ${
                                 selectedVarga === v.division
                                   ? 'bg-[#F4E8D1] font-bold'
@@ -1367,6 +1373,23 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </div>
             </div>
           )}
+
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold font-granth text-[#5C3A21]">D1 से D60 तक सभी वर्ग चक्र</h4>
+                {ALL_D1_TO_D60_VARGAS.map((varga) => (
+                  <div key={varga.division} id={`varga-chart-${varga.division}`} className="space-y-1">
+                    <div className="text-xs font-bold text-[#5C3A21]">{varga.code}: {varga.name}</div>
+                    <p className="text-[11px] text-[#735133] leading-relaxed">{varga.desc}</p>
+                    <KundaliChart
+                      lagnaDegree={k.lagnaDegree}
+                      planets={k.planets}
+                      vargaDivision={varga.division}
+                      chartTitle={`${k.name} — ${varga.code}`}
+                      allowToggleStyle={false}
+                    />
+                  </div>
+                ))}
+              </div>
 
               {/* Bottom Pagination */}
               <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
