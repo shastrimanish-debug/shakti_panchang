@@ -160,6 +160,108 @@ HOW TO START THE CONVERSATION & RESPOND:
     }
   });
 
+  // AI Samudrik Shastra Face Analysis Endpoint
+  app.post("/api/face-reading/analyze", async (req: Request, res: Response) => {
+    try {
+      const { imageBase64, imageMimeType } = req.body;
+      const ai = getGeminiClient();
+
+      if (!ai || !imageBase64) {
+        return res.status(200).json({
+          ok: false,
+          error: "NO_AI_OR_IMAGE",
+          message: "Gemini API key or face photo is missing; using offline Samudrik engine.",
+        });
+      }
+
+      const prompt = `Analyze this face photo according to authentic Vedic Samudrik Shastra (महर्षि गर्ग व वराहमिहिर कृत सामुद्रिक लक्षण शास्त्र).
+Return ONLY a valid JSON object with the following structure:
+{
+  "faceShape": "Oval / Round / Square / Heart / Diamond (in Hindi)",
+  "faceShapeDesc": "3-4 sentence detailed Hindi personality and destiny prediction based on face shape",
+  "vitalityScore": 92,
+  "temperament": "सात्त्विक / राजसिक / तामसिक",
+  "features": [
+    {
+      "part": "ललाट (Forehead)",
+      "type": "उन्नत व चौड़ा",
+      "traits": "तीक्ष्ण बुद्धिमत्ता, नेतृत्व क्षमता व भाग्योदय के लक्षण",
+      "wisdom": "उन्नत ललाट सौम्यता व प्रशासनिक सफलता का सूचक है।"
+    },
+    {
+      "part": "नेत्र (Eyes)",
+      "type": "तेजस्वी व सौम्य",
+      "traits": "गहरी अंतर्दृष्टि, सत्यनिष्ठा व एकाग्रता",
+      "wisdom": "विशाल व स्निग्ध नेत्र ऐश्वर्य तथा आत्मीयता का संकेत देते हैं।"
+    },
+    {
+      "part": "नासिका (Nose)",
+      "type": "सरल व उन्नत",
+      "traits": "स्वाभिमान, आर्थिक समृद्धि व दृढ संकल्प",
+      "wisdom": "सीधी नासिका धन-धान्य तथा सुदृढ़ चरित्र का प्रतीक है।"
+    },
+    {
+      "part": "ओष्ठ व दंत (Lips & Teeth)",
+      "type": "सुगठित व सम्मोहक",
+      "traits": "मधुर वाणी, सम्मोहन क्षमता व कलाप्रियता",
+      "wisdom": "रक्तवर्ण ओष्ठ सम्भाषण कला व सौभाग्यशाली जीवन के लक्षण हैं।"
+    },
+    {
+      "part": "चिबुक (Chin)",
+      "type": "दृढ़ व सुडौल",
+      "traits": "दृढ़ इच्छाशक्ति, अनुशासन व दीर्घायु",
+      "wisdom": "सुडौल चिबुक निर्णय क्षमता व स्थायित्व दर्शाती है।"
+    }
+  ],
+  "careerGuidance": "Detailed career and wealth prediction in Hindi based on face traits",
+  "remedy": "Vedic remedy and lucky gemstone based on facial traits"
+}`;
+
+      const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+      let resultText = "";
+
+      for (const model of modelsToTry) {
+        try {
+          const response = await ai.models.generateContent({
+            model,
+            contents: [
+              {
+                inlineData: {
+                  mimeType: imageMimeType || "image/jpeg",
+                  data: imageBase64.replace(/^data:image\/\w+;base64,/, ""),
+                },
+              },
+              prompt,
+            ],
+            config: {
+              responseMimeType: "application/json",
+            },
+          });
+          if (response.text?.trim()) {
+            resultText = response.text.trim();
+            break;
+          }
+        } catch (mErr) {
+          console.warn(`Face analysis model ${model} failed, trying next...`);
+        }
+      }
+
+      if (resultText) {
+        try {
+          const parsed = JSON.parse(resultText);
+          return res.status(200).json({ ok: true, data: parsed });
+        } catch {
+          // If JSON parse fails, return raw
+        }
+      }
+
+      return res.status(200).json({ ok: false, error: "ANALYSIS_FAILED" });
+    } catch (err: any) {
+      console.error("Face Analysis API error:", err);
+      return res.status(200).json({ ok: false, error: err?.message || "SERVER_ERROR" });
+    }
+  });
+
   // Vite middleware setup
   if (process.env.NODE_ENV !== "production") {
     const isHmrDisabled = process.env.DISABLE_HMR === "true";
