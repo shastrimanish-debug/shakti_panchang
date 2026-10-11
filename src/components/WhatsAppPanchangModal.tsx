@@ -16,6 +16,7 @@ import {
 import { VedicPanchangData, SavedLocation } from '../types';
 import { getAstrologerBranding, AstrologerBranding } from '../services/storage';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { shareImageFile, shareTextContent } from '../lib/shareHelper';
 
 interface WhatsAppPanchangModalProps {
   isOpen: boolean;
@@ -483,80 +484,33 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
   const handleShareWhatsApp = async () => {
     const text = getShareText();
+    const fileName = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
 
-    // Try Web Share API with File
-    if (imageUri && navigator.share && navigator.canShare) {
-      try {
-        const res = await fetch(imageUri);
-        const blob = await res.blob();
-        const file = new File([blob], `Panchang-${currentDate.toISOString().slice(0, 10)}.png`, {
-          type: 'image/png',
-        });
-
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `दैनिक पंचांग - ${dateFormatted}`,
-            text: text,
-            files: [file],
-          });
-          return;
-        }
-      } catch {
-        // Fallback below
-      }
+    if (imageUri) {
+      await shareImageFile({
+        imageUri,
+        fileName,
+        title: `दैनिक वैदिक पञ्चाङ्गम् - ${dateFormatted}`,
+        text,
+      });
+    } else {
+      await shareTextContent({
+        title: `दैनिक वैदिक पञ्चाङ्गम् - ${dateFormatted}`,
+        text,
+      });
     }
-
-    // Direct WhatsApp Web / Mobile intent
-    const encodedText = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
   };
 
   const handleDownloadImage = async () => {
     if (!imageUri) return;
     const fileName = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
-    try {
-      const res = await fetch(imageUri);
-      const blob = await res.blob();
 
-      // If Web Share API supports file sharing, trigger native share dialog
-      if (typeof navigator !== 'undefined' && navigator.canShare) {
-        const file = new File([blob], fileName, { type: 'image/png' });
-        if (navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: `दैनिक वैशाली/वैदिक पंचांग कार्ड`,
-              files: [file],
-            });
-            return;
-          } catch (e) {
-            if ((e as { name?: string })?.name === 'AbortError') return;
-          }
-        }
-      }
-
-      // Convert to Blob URL for clean browser / webview download
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileName;
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        if (document.body.contains(a)) document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      }, 1200);
-    } catch {
-      // Fallback
-      const a = document.createElement('a');
-      a.href = imageUri;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        if (document.body.contains(a)) document.body.removeChild(a);
-      }, 1000);
-    }
+    await shareImageFile({
+      imageUri,
+      fileName,
+      title: `दैनिक वैशाली/वैदिक पंचांग कार्ड`,
+      text: getShareText(),
+    });
   };
 
   const handleCopyText = () => {

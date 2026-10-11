@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { SABAR_CATEGORIES, SABAR_MANTRAS, type SabarMantra } from "../data/saral/sabar";
+import { shareTextContent } from "../lib/shareHelper";
+import { Share2 } from "lucide-react";
 import { ZeroScrollPager } from "./ZeroScrollPager";
 import { useTabMenu } from "./BoardShell";
 
@@ -64,8 +66,24 @@ export function SabarMantraView() {
 }
 
 function Detail({ item }: { item: SabarMantra }) {
+  const handleShare = () => {
+    const text = `॥ ${item.title} ॥\n(साबर मंत्र · ${item.category})\n\nमंत्र:\n${item.mantra}\n\nजाप व समय: ${item.japa} (${item.day})\nउपयोग: ${item.use}\n\nविधि:\n${item.vidhi.join('\n')}\n\nसावधानी: ${item.caution}\n\n_सनातन शक्ति पंचांग_`;
+    shareTextContent({ title: item.title, text });
+  };
+
   return (
     <>
+      <div className="flex justify-end px-1 pt-1">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-[#25D366] text-white rounded-lg shadow-xs"
+        >
+          <Share2 className="w-3.5 h-3.5" />
+          <span>व्हाट्सएप शेयर</span>
+        </button>
+      </div>
+
       <article className="bx-verse">
         <div className="bx-kicker">{item.category} · पूरा मंत्र</div>
         <p className="font-granth whitespace-pre-wrap text-[16px] leading-relaxed">{item.mantra}</p>

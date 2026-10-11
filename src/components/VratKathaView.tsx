@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Share2, Volume2, VolumeX, Search, Copy, Check } from 'lucide-react';
+import { Share2, Volume2, VolumeX, Search, Copy, Check, Sparkles, BookOpen } from 'lucide-react';
 import { VRAT_KATHA_DATA, VRAT_KATHA_CATEGORIES, VratKathaItem } from '../data/vratKathaData';
 import { getLocalizedVratKathaItem } from '../services/vratKathaMultilingual';
-import { openWhatsAppShare } from '../services/umaConsultationPdf';
+import { shareTextContent } from '../lib/shareHelper';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { ZeroScrollPager } from './ZeroScrollPager';
@@ -30,7 +30,9 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [shareToast, setShareToast] = useState<string | null>(null);
   const [atMenu, setAtMenu] = useState(false);
+
   useTabMenu(() => {
     if (atMenu) return false;
     setAtMenu(true);
@@ -60,8 +62,8 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
       setIsSpeaking(false);
       return;
     }
-    const currentChapterText = currentKatha.katha[activeChapterIndex] || currentKatha.description;
-    const speechContent = `${currentKatha.title}। ${currentKatha.subtitle}। श्लोक: ${currentKatha.shlok}। भावार्थ: ${currentKatha.shlokMeaning}। ${currentChapterText}`;
+    const currentChapterText = (currentKatha.katha && currentKatha.katha[activeChapterIndex]) || currentKatha.description;
+    const speechContent = `${currentKatha.title}। ${currentKatha.subtitle}। ${currentChapterText}`;
     setIsSpeaking(true);
     void speakUma(speechContent, {
       rate: 0.88,
@@ -71,9 +73,22 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
     });
   };
 
-  const handleShareKatha = () => {
-    const text = `॥ ${currentKatha.title} ॥\n\n${currentKatha.subtitle}\n\nश्लोक:\n${currentKatha.shlok}\n\nभावार्थ: ${currentKatha.shlokMeaning}\n\n(शक्ति पंचांग - व्रत कथा संग्रह)`;
-    openWhatsAppShare(text);
+  const handleShareKatha = async () => {
+    const chapterText = (currentKatha.katha && currentKatha.katha[activeChapterIndex]) || currentKatha.description;
+    const shareText = `॥ ${currentKatha.title} ॥\n(अध्याय ${activeChapterIndex + 1})\n\n${currentKatha.subtitle}\n\n${chapterText.slice(0, 800)}...\n\n(श्री शक्ति सनातन वैदिक पंचांग • व्रत कथा संग्रह)`;
+    
+    const res = await shareTextContent({
+      title: currentKatha.title,
+      text: shareText,
+    });
+
+    if (res === 'copied') {
+      setShareToast('कथा का अंश कॉपी हो गया!');
+      setTimeout(() => setShareToast(null), 2500);
+    } else if (res === 'shared' || res === 'whatsapp') {
+      setShareToast('शेयरिंग विंडो खोली गई!');
+      setTimeout(() => setShareToast(null), 2000);
+    }
   };
 
   const handleCopyText = (id: string, text: string) => {
@@ -85,40 +100,138 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
   const drawer = React.useContext(DrawerHostContext);
   const host = drawer.host;
   const body = (currentKatha.katha && currentKatha.katha[activeChapterIndex]) || currentKatha.description || "";
-  const blocks = body.split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  const size = fontSize === "sm" ? "text-[15px]" : fontSize === "lg" ? "text-[20px]" : "text-[17px]";
+  const blocks = body.split(/\n\n+/).map((line) => line.trim()).filter(Boolean);
+  const size = fontSize === "sm" ? "text-[15px]" : fontSize === "lg" ? "text-[19px]" : "text-[17px]";
 
   const tools = (
-    <div className="flex flex-col gap-2 text-sm">
+    <div className="flex flex-col gap-2 text-sm p-1">
       <div className="flex flex-wrap gap-1.5">
         {VRAT_KATHA_CATEGORIES.map((cat) => (
-          <button key={cat.id} type="button" className="bx-iconbtn h-auto px-2 text-xs" onClick={() => { setSelectedCategory(cat.id); setSelectedIndex(0); setActiveChapterIndex(0); }}>
+          <button
+            key={cat.id}
+            type="button"
+            className="bx-iconbtn h-auto px-2 py-1 text-xs font-semibold"
+            style={{
+              background: selectedCategory === cat.id ? 'var(--bx-mark)' : 'transparent',
+              color: selectedCategory === cat.id ? 'var(--bx-cream)' : 'inherit',
+            }}
+            onClick={() => {
+              setSelectedCategory(cat.id);
+              setSelectedIndex(0);
+              setActiveChapterIndex(0);
+            }}
+          >
             {cat.label}
           </button>
         ))}
       </div>
-      <label className="flex items-center gap-2">
-        <Search className="w-4 h-4 shrink-0" />
-        <input value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setSelectedIndex(0); setActiveChapterIndex(0); }} placeholder="कथा खोजें" className="w-full bg-transparent outline-none" />
+
+      <label className="flex items-center gap-2 bg-stone-100/80 px-2.5 py-1.5 rounded-lg border border-amber-900/20">
+        <Search className="w-4 h-4 shrink-0 text-[#B56A00]" />
+        <input
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setSelectedIndex(0);
+            setActiveChapterIndex(0);
+          }}
+          placeholder="कथा या श्लोक खोजें..."
+          className="w-full bg-transparent outline-none text-xs"
+        />
       </label>
-      <div className="flex flex-wrap gap-1.5">
-        <button type="button" className="bx-iconbtn" onClick={() => setFontSize(fontSize === "sm" ? "base" : fontSize === "base" ? "lg" : "sm")}>अ</button>
-        <button type="button" className="bx-iconbtn" onClick={handleSpeakKatha}>{isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}</button>
-        <button type="button" className="bx-iconbtn" onClick={() => handleCopyText(currentKatha.id, `${currentKatha.title}\n${currentKatha.shlok}`)}>{copiedId ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}</button>
-        <button type="button" className="bx-iconbtn" onClick={handleShareKatha}><Share2 className="w-4 h-4" /></button>
-        {onOpenUmaModal && <button type="button" className="bx-iconbtn" onClick={() => onOpenUmaModal(currentKatha.title)}>उमा</button>}
+
+      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+        <button
+          type="button"
+          className="bx-iconbtn flex items-center gap-1 text-xs px-2 py-1"
+          onClick={() => setFontSize(fontSize === "sm" ? "base" : fontSize === "base" ? "lg" : "sm")}
+        >
+          <span>अ</span>
+          <span className="text-[10px] opacity-70">({fontSize})</span>
+        </button>
+
+        <button
+          type="button"
+          className="bx-iconbtn flex items-center gap-1 text-xs px-2 py-1"
+          onClick={handleSpeakKatha}
+        >
+          {isSpeaking ? <VolumeX className="w-4 h-4 text-red-600" /> : <Volume2 className="w-4 h-4 text-[#B56A00]" />}
+          <span>{isSpeaking ? 'रुकें' : 'वाचन'}</span>
+        </button>
+
+        <button
+          type="button"
+          className="bx-iconbtn flex items-center gap-1 text-xs px-2 py-1"
+          onClick={() => handleCopyText(currentKatha.id, `${currentKatha.title}\n${body}`)}
+        >
+          {copiedId ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-[#B56A00]" />}
+          <span>{copiedId ? 'कॉपी हुआ' : 'कॉपी'}</span>
+        </button>
+
+        <button
+          type="button"
+          className="bx-iconbtn flex items-center gap-1 text-xs px-2 py-1 bg-[#25D366] text-white font-bold"
+          onClick={handleShareKatha}
+        >
+          <Share2 className="w-4 h-4" />
+          <span>शेयर करें</span>
+        </button>
+
+        {onOpenUmaModal && (
+          <button
+            type="button"
+            className="bx-iconbtn flex items-center gap-1 text-xs px-2 py-1 bg-[#B56A00] text-white font-bold"
+            onClick={() => onOpenUmaModal(currentKatha.title)}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>उमा AI</span>
+          </button>
+        )}
       </div>
-      <div className="max-h-40 overflow-y-auto flex flex-col gap-1">
+
+      <div className="max-h-36 overflow-y-auto flex flex-col gap-1 border-t border-amber-900/15 pt-1.5">
         {filteredKathas.map((katha, idx) => (
-          <button key={katha.id || idx} type="button" className="text-left text-xs px-2 py-1 rounded-lg" style={{ background: idx === selectedIndex ? "var(--bx-mark)" : "transparent", color: idx === selectedIndex ? "var(--bx-cream)" : "inherit" }} onClick={() => { setSelectedIndex(idx); setActiveChapterIndex(0); setAtMenu(false); drawer.close(); }}>
-            {katha.title}
+          <button
+            key={katha.id || idx}
+            type="button"
+            className="text-left text-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between"
+            style={{
+              background: idx === selectedIndex ? "var(--bx-mark)" : "transparent",
+              color: idx === selectedIndex ? "var(--bx-cream)" : "inherit",
+            }}
+            onClick={() => {
+              setSelectedIndex(idx);
+              setActiveChapterIndex(0);
+              setAtMenu(false);
+              drawer.close();
+            }}
+          >
+            <span className="font-bold truncate">{katha.title}</span>
+            {katha.katha && (
+              <span className="text-[10px] opacity-80 shrink-0 ml-2">
+                {katha.katha.length} अध्याय
+              </span>
+            )}
           </button>
         ))}
       </div>
+
       {currentKatha.katha && currentKatha.katha.length > 1 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1 border-t border-amber-900/15 pt-1.5">
+          <span className="text-xs font-bold text-[#5C3A21] w-full mb-0.5">अध्याय चुनें:</span>
           {currentKatha.katha.map((_, idx) => (
-            <button key={idx} type="button" className="bx-iconbtn h-auto px-2 text-xs" onClick={() => setActiveChapterIndex(idx)}>अध्याय {idx + 1}</button>
+            <button
+              key={idx}
+              type="button"
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                activeChapterIndex === idx
+                  ? 'bg-[#B56A00] text-white shadow-xs'
+                  : 'bg-stone-200/80 text-[#5C3A21] hover:bg-stone-300'
+              }`}
+              onClick={() => setActiveChapterIndex(idx)}
+            >
+              अध्याय {idx + 1}
+            </button>
           ))}
         </div>
       )}
@@ -126,38 +239,171 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
   );
 
   return (
-    <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
-      <div className="shrink-0 px-3 pt-1 flex items-center gap-2">
-        {atMenu ? (
-          <button type="button" className="text-[13px] font-semibold shrink-0" onClick={() => setAtMenu(false)}>पाठ</button>
-        ) : null}
-        <div className="text-[13px] font-semibold truncate">{atMenu ? "व्रत कथा सूची" : currentKatha.title}</div>
+    <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden relative bg-[#FAF2E4]">
+      {shareToast && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-[#5C3A21] text-[#FFD88A] text-xs font-bold px-3.5 py-1.5 rounded-full border border-[#B56A00] shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+          {shareToast}
+        </div>
+      )}
+
+      {/* Title Bar */}
+      <div className="shrink-0 px-3 py-1.5 bg-[#F4E8D1] border-b border-[#8C6239]/20 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <BookOpen className="w-4 h-4 text-[#B56A00] shrink-0" />
+          <h2 className="text-[13px] font-bold text-[#5C3A21] truncate">
+            {atMenu ? "व्रत कथा सूची" : currentKatha.title}
+          </h2>
+        </div>
+
+        {currentKatha.katha && currentKatha.katha.length > 1 && !atMenu && (
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-[11px] font-bold text-[#B56A00] bg-[#FAF2E4] px-2 py-0.5 rounded-md border border-[#B56A00]/30">
+              अध्याय {activeChapterIndex + 1}/{currentKatha.katha.length}
+            </span>
+          </div>
+        )}
       </div>
+
       {host ? createPortal(tools, host) : null}
-      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-0.5 flex flex-col gap-1.5" resetKey={atMenu ? `menu-${selectedCategory}-${searchQuery}` : `${currentKatha.id}-${activeChapterIndex}-${fontSize}`}>
-        {atMenu ? filteredKathas.map((katha, idx) => (
-          <button key={katha.id || idx} type="button" className="bx-verse text-left" onClick={() => { setSelectedIndex(idx); setActiveChapterIndex(0); setAtMenu(false); }}>
-            <div className="bx-kicker">{katha.category}</div>
-            <strong className="text-sm">{katha.title}</strong>
-          </button>
-        )) : (
+
+      {/* Content View */}
+      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain px-2.5 py-2 space-y-2.5">
+        {atMenu ? (
+          filteredKathas.map((katha, idx) => (
+            <button
+              key={katha.id || idx}
+              type="button"
+              className="w-full text-left p-3 rounded-xl bg-[#F4E8D1] border border-[#8C6239]/30 hover:border-[#B56A00] transition space-y-1"
+              onClick={() => {
+                setSelectedIndex(idx);
+                setActiveChapterIndex(0);
+                setAtMenu(false);
+              }}
+            >
+              <div className="text-[10px] font-bold text-[#B56A00] uppercase tracking-wider">
+                {katha.category}
+              </div>
+              <strong className="text-sm font-extrabold text-[#5C3A21] block">
+                {katha.title}
+              </strong>
+              <p className="text-xs text-[#735133] line-clamp-2">{katha.subtitle}</p>
+            </button>
+          ))
+        ) : (
           <>
-            {currentKatha.shlok ? <article className="bx-verse"><div className="bx-kicker">श्लोक</div><p className={`font-granth whitespace-pre-wrap ${size}`}>{currentKatha.shlok}</p></article> : null}
-            {currentKatha.shlokMeaning ? <article className="bx-verse"><div className="bx-kicker">भावार्थ</div><p className={size}>{currentKatha.shlokMeaning}</p></article> : null}
-            {blocks.map((line, idx) => (
-              <article key={idx} className="bx-verse">
-                <div className="bx-kicker">अध्याय {activeChapterIndex + 1} · {idx + 1}/{blocks.length}</div>
-                <p className={`whitespace-pre-wrap ${size}`}>{line}</p>
+            {/* Introductory Shlok & Meaning */}
+            {currentKatha.shlok && (
+              <article className="p-3.5 rounded-xl bg-[#F4E8D1]/90 border-2 border-[#B56A00]/40 shadow-xs space-y-1.5">
+                <div className="text-[11px] font-black text-[#B56A00] flex items-center gap-1 uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" /> मंगलाचरण श्लोक
+                </div>
+                <p className={`font-granth font-bold text-[#5C3A21] whitespace-pre-wrap leading-relaxed ${size}`}>
+                  {currentKatha.shlok}
+                </p>
+                {currentKatha.shlokMeaning && (
+                  <div className="pt-2 border-t border-[#8C6239]/20 text-[#3E2714]">
+                    <span className="text-[11px] font-bold text-[#8C6239] block">हिंदी भावार्थ:</span>
+                    <p className={`font-medium ${size}`}>{currentKatha.shlokMeaning}</p>
+                  </div>
+                )}
               </article>
-            ))}
-            {(currentKatha.rules || []).map((rule, idx) => (
-              <article key={`r${idx}`} className="bx-verse"><div className="bx-kicker">विधि</div><p className={size}>{rule}</p></article>
-            ))}
+            )}
+
+            {/* Chapter Tabs inside content for quick switching */}
+            {currentKatha.katha && currentKatha.katha.length > 1 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto py-1 px-0.5 no-scrollbar">
+                {currentKatha.katha.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`px-3 py-1 rounded-lg text-xs font-extrabold shrink-0 border transition ${
+                      activeChapterIndex === idx
+                        ? 'bg-[#5C3A21] text-[#FFD88A] border-[#B56A00] shadow-sm'
+                        : 'bg-[#F4E8D1] text-[#5C3A21] border-[#8C6239]/30 hover:bg-[#EBD8BD]'
+                    }`}
+                    onClick={() => setActiveChapterIndex(idx)}
+                  >
+                    अध्याय {idx + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Main Chapter Content Blocks */}
+            {blocks.map((block, idx) => {
+              const lines = block.split(/\n/);
+              const isShlokaBlock = block.includes('श्लोक') || block.includes('संस्कृत:') || block.includes('॥');
+              const isTranslationBlock = block.includes('हिंदी अनुवाद:') || block.includes('भावार्थ:') || block.includes('अर्थ:');
+
+              return (
+                <article
+                  key={idx}
+                  className={`p-3.5 rounded-xl border transition shadow-2xs ${
+                    isShlokaBlock
+                      ? 'bg-[#F4E8D1] border-[#B56A00]/40'
+                      : isTranslationBlock
+                      ? 'bg-[#FAF2E4] border-l-4 border-l-[#B56A00] border-[#8C6239]/20'
+                      : 'bg-[#F4E8D1]/60 border-[#8C6239]/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-[#B56A00] uppercase tracking-wider">
+                      {currentKatha.katha && currentKatha.katha.length > 1
+                        ? `अध्याय ${activeChapterIndex + 1} · खण्ड ${idx + 1}`
+                        : `भाग ${idx + 1}`}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {lines.map((line, lIdx) => {
+                      const isShlokaLine = line.startsWith('श्लोक') || line.startsWith('संस्कृत:');
+                      const isTransLine = line.startsWith('हिंदी अनुवाद:') || line.startsWith('भावार्थ:') || line.startsWith('अर्थ:');
+
+                      if (isShlokaLine) {
+                        return (
+                          <div key={lIdx} className="font-granth font-bold text-[#5C3A21] text-lg sm:text-xl leading-relaxed">
+                            {line}
+                          </div>
+                        );
+                      }
+                      if (isTransLine) {
+                        return (
+                          <div key={lIdx} className="font-medium text-[#3E2714] text-base sm:text-lg bg-[#FAF2E4] p-2.5 rounded-lg border border-[#8C6239]/20 leading-relaxed">
+                            <span className="font-bold text-[#B56A00] block text-xs mb-0.5">हिंदी अनुवाद:</span>
+                            {line.replace(/^हिंदी अनुवाद:\s*/, '')}
+                          </div>
+                        );
+                      }
+                      return (
+                        <p key={lIdx} className={`whitespace-pre-wrap ${size} text-[#3E2714] leading-relaxed`}>
+                          {line}
+                        </p>
+                      );
+                    })}
+                  </div>
+                </article>
+              );
+            })}
+
+            {/* Puja Rules & Vidhi */}
+            {(currentKatha.rules || []).length > 0 && (
+              <div className="p-3.5 bg-[#F4E8D1] border-2 border-[#8C6239]/30 rounded-xl space-y-2 mt-3">
+                <h3 className="font-bold text-xs text-[#B56A00] uppercase tracking-wider flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5" /> व्रत व पूजन नियम (सम्पूर्ण विधि)
+                </h3>
+                <ul className="space-y-1.5 list-disc list-inside text-xs sm:text-sm font-medium text-[#3E2714]">
+                  {currentKatha.rules.map((rule, idx) => (
+                    <li key={idx} className="leading-relaxed">{rule}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </>
         )}
-      </ZeroScrollPager>
+      </div>
     </div>
   );
 };
 
 export default VratKathaView;
+

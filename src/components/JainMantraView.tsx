@@ -4,6 +4,7 @@ import {
   JAIN_MANTRA_CATEGORIES,
   JainMantra,
 } from '../data/jainMantras';
+import { shareTextContent } from '../lib/shareHelper';
 import {
   Search,
   Sparkles,
@@ -119,10 +120,13 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleShare = (mantra: JainMantra) => {
-    const txt = `*॥ ${mantra.title} ॥*\n\n*मंत्र:*\n${mantra.mantra}\n\n*जाप संख्या:* ${mantra.japSankhya}\n*माला:* ${mantra.mala}\n*दिशा:* ${mantra.disha} | *समय:* ${mantra.samay}\n*वस्त्र:* ${mantra.vastra}\n\n*सम्पूर्ण साधना विधि:*\n${mantra.vidhi}\n\n*चमत्कारिक फल:*\n${mantra.phala}\n\n_सनातन शक्ति पंचांग_`;
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`;
-    window.open(url, '_blank');
+  const handleShare = async (mantra: JainMantra) => {
+    const txt = `*॥ ${mantra.title} ॥*\n\n*मंत्र:*\n${mantra.mantra}\n\n*जाप संख्या:* ${mantra.japSankhya}\n*माला:* ${mantra.mala}\n*दिशा:* ${mantra.disha} | *समय:* ${mantra.samay}\n*वस्त्र:* ${mantra.vastra}\n\n*सम्पूर्ण साधना विधि:*\n${mantra.vidhi}\n\n*चमत्कारिक फल:*\n${mantra.phala}\n\n_सनातन शक्ति पंचांग • 100 जैन मंत्र_`;
+    
+    await shareTextContent({
+      title: mantra.title,
+      text: txt,
+    });
   };
 
   const incrementJapa = () => {
