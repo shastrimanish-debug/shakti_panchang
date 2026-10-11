@@ -31,19 +31,7 @@ export function getSavedKundaliProfiles(): KundaliData[] {
     const raw = localStorage.getItem(STORAGE_KEY_PROFILES);
     if (raw) {
       const arr = JSON.parse(raw);
-      // Filter out any demo/default profiles like Manish, Akshita, etc.
-      const cleanArr = arr.filter(
-        (p: any) => 
-          !p.name?.includes('मनीष') && 
-          !p.name?.includes('Manish') && 
-          !p.name?.includes('अक्षिता') && 
-          !p.name?.includes('Akshita') && 
-          !p.birthPlace?.includes('बुरहानपुर')
-      );
-      if (cleanArr.length !== arr.length) {
-        localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(cleanArr));
-      }
-      return cleanArr.map((p: any) => ({
+      return arr.map((p: any) => ({
         ...p,
         birthDate: new Date(p.birthDate),
         calculatedAt: new Date(p.calculatedAt || Date.now()),

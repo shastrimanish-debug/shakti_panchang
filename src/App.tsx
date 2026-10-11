@@ -168,27 +168,6 @@ export function App() {
   const { status: licenseStatus } = useLicense();
   const isEntitled = licenseStatus.entitled;
 
-  // Purge any demo or default profiles (Akshita, Manish, etc.) on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('shakti_saved_kundali_profiles_v1');
-      if (raw) {
-        const arr = JSON.parse(raw);
-        const clean = arr.filter(
-          (p: any) => 
-            !p.name?.includes('मनीष') && 
-            !p.name?.includes('Manish') && 
-            !p.name?.includes('अक्षिता') && 
-            !p.name?.includes('Akshita') && 
-            !p.birthPlace?.includes('बुरहानपुर')
-        );
-        if (clean.length !== arr.length) {
-          localStorage.setItem('shakti_saved_kundali_profiles_v1', JSON.stringify(clean));
-        }
-      }
-    } catch {}
-  }, []);
-
   const triggerSubscriptionModal = useCallback((reason?: string) => {
     setSubscriptionReason(
       reason ||
@@ -213,15 +192,7 @@ export function App() {
   // Active Kundali Profile - clean profile state without hardcoded defaults
   const [activeKundali, setActiveKundali] = useState<KundaliData | null>(() => {
     const saved = getSavedKundaliProfiles();
-    const cleanSaved = saved.filter(
-      (p) => 
-        !p.name.includes('मनीष') && 
-        !p.name.includes('Manish') && 
-        !p.name.includes('अक्षिता') && 
-        !p.name.includes('Akshita') && 
-        !p.birthPlace.includes('बुरहानपुर')
-    );
-    return cleanSaved.length > 0 ? cleanSaved[0] : null;
+    return saved.length > 0 ? saved[0] : null;
   });
 
   // Calculate high-precision Vedic Panchang based on current Date and Geo-coordinates
@@ -502,8 +473,8 @@ export function App() {
             )}
 
             {(activeTab === 'kundali' || activeTab === 'milan') && (
-              <ZeroScrollPager className="flex-1 min-h-0 w-full" resetKey={`${activeTab}-${currentLang}`}>
-                <div className="w-full px-1 sm:px-2">
+              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
+                <div className="w-full px-2 pb-8">
                 <KundaliView
                   activeKundali={activeKundali}
                   setActiveKundali={setActiveKundali}
@@ -514,7 +485,7 @@ export function App() {
                   onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
                 />
                 </div>
-              </ZeroScrollPager>
+              </div>
             )}
 
             {activeTab === 'festivals' && (

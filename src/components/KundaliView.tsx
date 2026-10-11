@@ -326,7 +326,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     setActiveKundali(k);
     saveKundaliProfile(k);
     setIsFormExpanded(false);
-    setKundaliTab('phalit');
+    setKundaliTab('chart');
   };
 
   const k = activeKundali;
