@@ -20,18 +20,18 @@ interface HouseCoord {
 }
 
 const NORTH_HOUSE_COORDS: HouseCoord[] = [
-  { house: 1, cx: 180, cy: 95, numX: 180, numY: 155, shapeType: 'center-diamond' },
-  { house: 2, cx: 90, cy: 45, numX: 120, numY: 75, shapeType: 'top-triangle' },
-  { house: 3, cx: 45, cy: 90, numX: 75, numY: 120, shapeType: 'corner-triangle' },
-  { house: 4, cx: 95, cy: 180, numX: 155, numY: 180, shapeType: 'side-triangle' },
-  { house: 5, cx: 45, cy: 270, numX: 75, numY: 240, shapeType: 'corner-triangle' },
-  { house: 6, cx: 90, cy: 315, numX: 120, numY: 285, shapeType: 'bottom-triangle' },
-  { house: 7, cx: 180, cy: 265, numX: 180, numY: 205, shapeType: 'center-diamond' },
-  { house: 8, cx: 270, cy: 315, numX: 240, numY: 285, shapeType: 'bottom-triangle' },
-  { house: 9, cx: 315, cy: 270, numX: 285, numY: 240, shapeType: 'corner-triangle' },
-  { house: 10, cx: 265, cy: 180, numX: 205, numY: 180, shapeType: 'side-triangle' },
-  { house: 11, cx: 315, cy: 90, numX: 285, numY: 120, shapeType: 'corner-triangle' },
-  { house: 12, cx: 270, cy: 45, numX: 240, numY: 75, shapeType: 'top-triangle' },
+  { house: 1, cx: 180, cy: 62, numX: 180, numY: 24, shapeType: 'center-diamond' },
+  { house: 2, cx: 96, cy: 46, numX: 34, numY: 22, shapeType: 'top-triangle' },
+  { house: 3, cx: 46, cy: 96, numX: 22, numY: 78, shapeType: 'corner-triangle' },
+  { house: 4, cx: 70, cy: 180, numX: 24, numY: 180, shapeType: 'side-triangle' },
+  { house: 5, cx: 46, cy: 264, numX: 22, numY: 282, shapeType: 'corner-triangle' },
+  { house: 6, cx: 96, cy: 314, numX: 34, numY: 338, shapeType: 'bottom-triangle' },
+  { house: 7, cx: 180, cy: 298, numX: 180, numY: 336, shapeType: 'center-diamond' },
+  { house: 8, cx: 264, cy: 314, numX: 326, numY: 338, shapeType: 'bottom-triangle' },
+  { house: 9, cx: 314, cy: 264, numX: 338, numY: 282, shapeType: 'corner-triangle' },
+  { house: 10, cx: 290, cy: 180, numX: 336, numY: 180, shapeType: 'side-triangle' },
+  { house: 11, cx: 314, cy: 96, numX: 338, numY: 78, shapeType: 'corner-triangle' },
+  { house: 12, cx: 264, cy: 46, numX: 326, numY: 22, shapeType: 'top-triangle' },
 ];
 
 const SOUTH_SIGNS = [
@@ -170,102 +170,75 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
 
               return (
                 <g key={house}>
-                  {/* Rashi number badge */}
-                  <circle
-                    cx={numX}
-                    cy={numY}
-                    r="9"
-                    fill="#F4E8D1"
-                    stroke="#8C6239"
-                    strokeWidth="0.8"
-                    opacity="0.9"
-                  />
+                  {isLagna && (
+                    <text
+                      x={cx}
+                      y={40}
+                      textAnchor="middle"
+                      fill="#B56A00"
+                      fontSize="8"
+                      fontWeight="800"
+                      fontFamily="system-ui, sans-serif"
+                    >
+                      लग्न
+                    </text>
+                  )}
+
+                  {pList.length > 0 && (
+                    <g transform={`translate(${cx}, ${cy})`}>
+                      {pList.map((p, idx) => {
+                        const n = pList.length;
+                        const cols = n > 3 ? 2 : 1;
+                        const rows = Math.ceil(n / cols);
+                        const col = idx % cols;
+                        const row = Math.floor(idx / cols);
+                        const rowH = n > 4 ? 11 : 13;
+                        const colW = 34;
+                        const offsetX = (col - (cols - 1) / 2) * colW;
+                        const offsetY = (row - (rows - 1) / 2) * rowH;
+                        const color = p.isRetro ? '#B91C1C' : p.isBenefic ? '#166534' : '#3E2714';
+                        const size = n > 4 ? 8.5 : n > 2 ? 9.5 : 11;
+
+                        return (
+                          <text
+                            key={idx}
+                            x={offsetX}
+                            y={offsetY}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill={color}
+                            fontSize={size}
+                            fontWeight="700"
+                            fontFamily="'Tiro Devanagari Hindi', 'Rozha One', serif"
+                          >
+                            {p.name}
+                            {p.isRetro && (
+                              <tspan fill="#DC2626" fontWeight="900">(व)</tspan>
+                            )}
+                            {showDegrees && (
+                              <tspan fill="#78350F" fontSize={n > 3 ? 7 : 8} fontWeight="500">
+                                {' '}{p.degreeStr}
+                              </tspan>
+                            )}
+                          </text>
+                        );
+                      })}
+                    </g>
+                  )}
+
+                  <circle cx={numX} cy={numY} r="8" fill="#F4E8D1" stroke="#8C6239" strokeWidth="0.8" />
                   <text
                     x={numX}
                     y={numY + 0.5}
                     textAnchor="middle"
                     dominantBaseline="central"
                     fill="#5C3A21"
-                    fontSize="10"
+                    fontSize="9"
                     fontWeight="800"
                     fontFamily="serif"
                   >
                     {signNum}
                   </text>
-
-                  {isLagna && (
-                    <text
-                      x={cx}
-                      y={cy - 26}
-                      textAnchor="middle"
-                      fill="#B56A00"
-                      fontSize="9.5"
-                      fontWeight="800"
-                      fontFamily="system-ui, sans-serif"
-                    >
-                      [ लग्न ]
-                    </text>
-                  )}
-
-                  {/* Planets inside house */}
-                  {pList.length > 0 && (
-                    <g transform={`translate(${cx}, ${cy})`}>
-                      {pList.map((p, idx) => {
-                        let offsetX = 0;
-                        let offsetY = 0;
-                        if (pList.length === 1) {
-                          offsetY = 0;
-                        } else if (pList.length === 2) {
-                          offsetY = (idx - 0.5) * 16;
-                        } else if (pList.length === 3) {
-                          offsetY = (idx - 1) * 15;
-                        } else {
-                          const col = idx % 2 === 0 ? -28 : 28;
-                          const row = Math.floor(idx / 2) * 15 - (pList.length > 4 ? 12 : 7);
-                          offsetX = col;
-                          offsetY = row;
-                        }
-
-                        const color = p.isRetro
-                          ? '#B91C1C'
-                          : p.isBenefic
-                          ? '#166534'
-                          : '#3E2714';
-
-                        return (
-                          <g key={idx} transform={`translate(${offsetX}, ${offsetY})`}>
-                            <text
-                              x="0"
-                              y="0"
-                              textAnchor="middle"
-                              dominantBaseline="central"
-                              fill={color}
-                              fontSize={pList.length > 3 ? '10' : '11.5'}
-                              fontWeight="700"
-                              fontFamily="'Tiro Devanagari Hindi', 'Rozha One', serif"
-                            >
-                              {p.name}
-                              {p.isRetro && (
-                                <tspan fill="#DC2626" fontWeight="900">
-                                  (व)
-                                </tspan>
-                              )}
-                              {showDegrees && (
-                                <tspan
-                                  fill="#78350F"
-                                  fontSize={pList.length > 3 ? '8.5' : '9.5'}
-                                  fontWeight="500"
-                                >
-                                  {' '}
-                                  {p.degreeStr}
-                                </tspan>
-                              )}
-                            </text>
-                          </g>
-                        );
-                      })}
-                    </g>
-                  )}
                 </g>
               );
             })}
