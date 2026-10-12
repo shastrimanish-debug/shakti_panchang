@@ -66,10 +66,16 @@ type UmaPart = { text: string; rate: number; pitch: number };
 
 function stripMarkup(text: string): string {
   return text
+    // Replace English section headings with pure Hindi for clean TTS voice
+    .replace(/Grah Dasha Analysis/gi, "ग्रह दशा विश्लेषण")
+    .replace(/Past Insights/gi, "अतीत का विश्लेषण")
+    .replace(/Future Trajectory/gi, "भविष्य कालखंड")
+    .replace(/Vedic Upay/gi, "वैदिक सात्विक उपाय")
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/\*(.*?)\*/g, "$1")
     .replace(/#{1,6}\s?/g, "")
     .replace(/[•▪●]/g, ", ")
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "") // strip emojis
     .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "।")
     .replace(/॥\s*॥/g, "।")
     .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, "")
@@ -90,13 +96,13 @@ function isSanskritPath(chunk: string): boolean {
   return letters > 10 && !hindi.test(chunk);
 }
 
-/** Dakshin pathashala: clean Sanskrit phonetics, continuous flowing rhythm, breathing pause at danda. */
+/** Pure, melodious Sanskrit phonetics and continuous flowing rhythm */
 function dakshinPath(text: string): string {
   return text
     .replace(/ॐ/g, "ओम् ")
     .replace(/ः/g, "ह ")
-    .replace(/॥+/g, " ... ")
-    .replace(/।/g, " .. ")
+    .replace(/॥+/g, "। ")
+    .replace(/।/g, ", ")
     .replace(/ऽ/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -123,40 +129,29 @@ export function buildUmaParts(text: string): UmaPart[] {
   for (const line of lines) {
     const isSanskrit = isSanskritPath(line);
     if (isSanskrit) {
-      // Split by danda (।) and double danda (॥) or commas to isolate quarters/padas
       const padas = line
         .split(/(?<=[।॥,])\s+/)
         .map((s) => s.trim())
         .filter(Boolean);
 
-      let quarterIdx = 0;
       for (const pada of padas) {
         const spoken = dakshinPath(pada).slice(0, 500);
         if (!spoken) continue;
 
-        // Rhythmic Chanting Pitch & Rate Cadence (सस्वर गान लय)
-        // 0: Udatt (High pitch 1.10, rate 0.68)
-        // 1: Anudatt (Low pitch 0.88, rate 0.64)
-        // 2: Swarit (High melodious pitch 1.16, rate 0.70)
-        // 3: Nyasa (Deep concluding pause pitch 0.82, rate 0.60)
-        const pitchSequence = [1.10, 0.88, 1.16, 0.82];
-        const rateSequence = [0.68, 0.64, 0.70, 0.60];
-        const pIdx = quarterIdx % 4;
-
+        // Steady, divine, smooth chanting tone (0.86 rate, 1.02 pitch)
         parts.push({
           text: spoken,
-          rate: rateSequence[pIdx],
-          pitch: pitchSequence[pIdx],
+          rate: 0.86,
+          pitch: 1.02,
         });
-        quarterIdx++;
       }
     } else {
       const spoken = naturalHindi(line).slice(0, 700);
       if (spoken) {
         parts.push({
           text: spoken,
-          rate: 0.96,
-          pitch: 1.05,
+          rate: 0.92,
+          pitch: 1.04,
         });
       }
     }
