@@ -274,6 +274,15 @@ export const DurgaSaptashatiView: React.FC<{
         <button
           type="button"
           className="bx-navbtn"
+          onClick={() => setViewMode(viewMode === "list" ? "paged" : "list")}
+          title={viewMode === "list" ? "पृष्ठ मोड में बदलें" : "निरंतर प्रवाह में बदलें"}
+          aria-label="View Mode"
+        >
+          {viewMode === "list" ? "📖 पृष्ठ" : "📜 निरंतर"}
+        </button>
+        <button
+          type="button"
+          className="bx-navbtn"
           onClick={() => setFontSize(fontSize === "sm" ? "base" : fontSize === "base" ? "lg" : "sm")}
           aria-label={fontSize === "lg" ? ui.zoomOut : ui.zoomIn}
         >
@@ -415,84 +424,165 @@ export const DurgaSaptashatiView: React.FC<{
         </div>
       )}
 
-      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-16 flex flex-col gap-1.5" resetKey={`${seqIndex}-${searchQuery}-${fontSize}`}>
-        {paginatedVerses.length > 0 ? (
-          paginatedVerses.map((verse, vIdx) => {
-            const isCurrentSpeaking = isSpeaking && speakingIndex === vIdx;
-            return (
-              <article
-                key={verse.id}
-                className={`bx-verse transition-all duration-200 ${
-                  isCurrentSpeaking ? 'ring-2 ring-amber-500 bg-amber-50/90 shadow-md' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="bx-kicker flex items-center gap-1">
-                    <Music2 className={`w-3 h-3 inline ${isCurrentSpeaking ? 'text-amber-600 animate-bounce' : 'text-amber-600'}`} />
-                    {verseWord} {verse.number} / {currentVerses.length}
-                    {isCurrentSpeaking && (
-                      <span className="ml-1 px-1.5 py-0.2 rounded bg-amber-600 text-white text-[9px] font-bold">
-                        🔊 पाठ जारी
-                      </span>
-                    )}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
-                      {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                    <button type="button" className="bx-iconbtn" aria-label={ui.shareTitle} onClick={() => handleShareVerse(verse.number, verse.sanskrit, verse.hindi)}>
-                      <Share2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button type="button" className="bx-iconbtn" aria-pressed={!!bookmarks[verse.id]} aria-label="Bookmark" onClick={() => toggleBookmark(verse.id)}>
-                      <Bookmark className="w-3.5 h-3.5" />
-                    </button>
+      {viewMode === "list" ? (
+        <div className="flex-1 min-h-0 overflow-y-auto px-2 pt-1 pb-20 flex flex-col gap-2">
+          {paginatedVerses.length > 0 ? (
+            paginatedVerses.map((verse, vIdx) => {
+              const isCurrentSpeaking = isSpeaking && speakingIndex === vIdx;
+              return (
+                <article
+                  key={verse.id}
+                  className={`bx-verse transition-all duration-200 ${
+                    isCurrentSpeaking ? 'ring-2 ring-amber-500 bg-amber-50/90 shadow-md' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="bx-kicker flex items-center gap-1">
+                      <Music2 className={`w-3 h-3 inline ${isCurrentSpeaking ? 'text-amber-600 animate-bounce' : 'text-amber-600'}`} />
+                      {verseWord} {verse.number} / {currentVerses.length}
+                      {isCurrentSpeaking && (
+                        <span className="ml-1 px-1.5 py-0.2 rounded bg-amber-600 text-white text-[9px] font-bold">
+                          🔊 पाठ जारी
+                        </span>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
+                        {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                      <button type="button" className="bx-iconbtn" aria-label={ui.shareTitle} onClick={() => handleShareVerse(verse.number, verse.sanskrit, verse.hindi)}>
+                        <Share2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" className="bx-iconbtn" aria-pressed={!!bookmarks[verse.id]} aria-label="Bookmark" onClick={() => toggleBookmark(verse.id)}>
+                        <Bookmark className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <p className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
-                <p className="bx-mean"><b style={{ color: "var(--bx-ink)" }}>{ui.meaning}</b> {verse.hindi}</p>
-              </article>
-            );
-          })
-        ) : (
-          <div className="bx-fact text-sm">{language === "en" ? "No verse matches that search." : "कोई श्लोक नहीं मिला।"}</div>
-        )}
+                  <p className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
+                  <p className="bx-mean"><b style={{ color: "var(--bx-ink)" }}>{ui.meaning}</b> {verse.hindi}</p>
+                </article>
+              );
+            })
+          ) : (
+            <div className="bx-fact text-sm">{language === "en" ? "No verse matches that search." : "कोई श्लोक नहीं मिला।"}</div>
+          )}
 
-        {/* Bottom Navigation for Continuous Sequential Reading */}
-        <div className="flex items-center justify-between gap-2 my-2 p-2 rounded-xl bg-amber-50/90 border border-amber-200">
-          <button
-            type="button"
-            onClick={() => goSequenceStep(-1)}
-            disabled={seqIndex === 0}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-amber-300 text-amber-900 disabled:opacity-40 flex items-center gap-1 shadow-xs"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            पिछला पाठ
-          </button>
+          {/* Bottom Navigation for Continuous Sequential Reading */}
+          <div className="flex items-center justify-between gap-2 my-2 p-2 rounded-xl bg-amber-50/90 border border-amber-200">
+            <button
+              type="button"
+              onClick={() => goSequenceStep(-1)}
+              disabled={seqIndex === 0}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-amber-300 text-amber-900 disabled:opacity-40 flex items-center gap-1 shadow-xs"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              पिछला पाठ
+            </button>
 
-          <span className="text-[11px] font-medium text-amber-800">
-            {seqIndex + 1} / {FULL_SAPTASHATI_SEQUENCE.length}
-          </span>
+            <span className="text-[11px] font-medium text-amber-800">
+              {seqIndex + 1} / {FULL_SAPTASHATI_SEQUENCE.length}
+            </span>
 
-          <button
-            type="button"
-            onClick={() => goSequenceStep(1)}
-            disabled={seqIndex === FULL_SAPTASHATI_SEQUENCE.length - 1}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white disabled:opacity-40 flex items-center gap-1 shadow-xs"
-          >
-            अगला पाठ
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        {activeTab === "chapters" && localizedChapter.details && localizedChapter.details.length > 0 && (
-          <div className="bx-verse">
-            <div className="bx-kicker">{ui.points}</div>
-            {localizedChapter.details.map((desc, dIdx) => (
-              <p key={dIdx} className="bx-mean" style={{ color: "var(--bx-ink)" }}>{desc}</p>
-            ))}
+            <button
+              type="button"
+              onClick={() => goSequenceStep(1)}
+              disabled={seqIndex === FULL_SAPTASHATI_SEQUENCE.length - 1}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white disabled:opacity-40 flex items-center gap-1 shadow-xs"
+            >
+              अगला पाठ
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-        )}
-      </ZeroScrollPager>
+
+          {activeTab === "chapters" && localizedChapter.details && localizedChapter.details.length > 0 && (
+            <div className="bx-verse">
+              <div className="bx-kicker">{ui.points}</div>
+              {localizedChapter.details.map((desc, dIdx) => (
+                <p key={dIdx} className="bx-mean" style={{ color: "var(--bx-ink)" }}>{desc}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-16 flex flex-col gap-1.5" resetKey={`${seqIndex}-${searchQuery}-${fontSize}`}>
+          {paginatedVerses.length > 0 ? (
+            paginatedVerses.map((verse, vIdx) => {
+              const isCurrentSpeaking = isSpeaking && speakingIndex === vIdx;
+              return (
+                <article
+                  key={verse.id}
+                  className={`bx-verse transition-all duration-200 ${
+                    isCurrentSpeaking ? 'ring-2 ring-amber-500 bg-amber-50/90 shadow-md' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="bx-kicker flex items-center gap-1">
+                      <Music2 className={`w-3 h-3 inline ${isCurrentSpeaking ? 'text-amber-600 animate-bounce' : 'text-amber-600'}`} />
+                      {verseWord} {verse.number} / {currentVerses.length}
+                      {isCurrentSpeaking && (
+                        <span className="ml-1 px-1.5 py-0.2 rounded bg-amber-600 text-white text-[9px] font-bold">
+                          🔊 पाठ जारी
+                        </span>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
+                        {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                      <button type="button" className="bx-iconbtn" aria-label={ui.shareTitle} onClick={() => handleShareVerse(verse.number, verse.sanskrit, verse.hindi)}>
+                        <Share2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" className="bx-iconbtn" aria-pressed={!!bookmarks[verse.id]} aria-label="Bookmark" onClick={() => toggleBookmark(verse.id)}>
+                        <Bookmark className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
+                  <p className="bx-mean"><b style={{ color: "var(--bx-ink)" }}>{ui.meaning}</b> {verse.hindi}</p>
+                </article>
+              );
+            })
+          ) : (
+            <div className="bx-fact text-sm">{language === "en" ? "No verse matches that search." : "कोई श्लोक नहीं मिला।"}</div>
+          )}
+
+          {/* Bottom Navigation for Continuous Sequential Reading */}
+          <div data-zsp-chrome="1" className="flex items-center justify-between gap-2 my-2 p-2 rounded-xl bg-amber-50/90 border border-amber-200">
+            <button
+              type="button"
+              onClick={() => goSequenceStep(-1)}
+              disabled={seqIndex === 0}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-amber-300 text-amber-900 disabled:opacity-40 flex items-center gap-1 shadow-xs"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              पिछला पाठ
+            </button>
+
+            <span className="text-[11px] font-medium text-amber-800">
+              {seqIndex + 1} / {FULL_SAPTASHATI_SEQUENCE.length}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => goSequenceStep(1)}
+              disabled={seqIndex === FULL_SAPTASHATI_SEQUENCE.length - 1}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white disabled:opacity-40 flex items-center gap-1 shadow-xs"
+            >
+              अगला पाठ
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {activeTab === "chapters" && localizedChapter.details && localizedChapter.details.length > 0 && (
+            <div className="bx-verse">
+              <div className="bx-kicker">{ui.points}</div>
+              {localizedChapter.details.map((desc, dIdx) => (
+                <p key={dIdx} className="bx-mean" style={{ color: "var(--bx-ink)" }}>{desc}</p>
+              ))}
+            </div>
+          )}
+        </ZeroScrollPager>
+      )}
 
       {/* Floating Sticky Audio Player Bar when speaking */}
       {isSpeaking && (
