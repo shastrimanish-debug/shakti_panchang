@@ -62,31 +62,51 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
 
   const currentShloka = filteredShlokas[selectedShlokaIndex] || filteredShlokas[0] || localizedShlokas[0];
 
-  const handleSpeakVerse = (id: string, text: string) => {
-    if (isSpeaking && currentSpeakingId === id) {
-      stopUmaSpeech();
-      setIsSpeaking(false);
-      setCurrentSpeakingId(null);
+  const stopAllSpeech = () => {
+    stopUmaSpeech();
+    setIsSpeaking(false);
+    setCurrentSpeakingId(null);
+  };
+
+  const speakShlokaFromIndex = (index: number) => {
+    stopUmaSpeech();
+    if (index < 0 || index >= filteredShlokas.length) {
+      stopAllSpeech();
       return;
     }
-    stopUmaSpeech();
+
+    const s = filteredShlokas[index];
+    setSelectedShlokaIndex(index);
     setIsSpeaking(true);
-    setCurrentSpeakingId(id);
-    void speakUma(text, {
+    setCurrentSpeakingId(`gita_${s.id}`);
+
+    const textToSpeak = `अध्याय ${s.chapter} श्लोक ${s.verse}। ${s.sanskrit}। भावार्थ: ${s.localizedMeaning}`;
+
+    void speakUma(textToSpeak, {
       rate: 0.88,
       onStart: () => {
         setIsSpeaking(true);
-        setCurrentSpeakingId(id);
+        setCurrentSpeakingId(`gita_${s.id}`);
       },
       onEnd: () => {
-        setIsSpeaking(false);
-        setCurrentSpeakingId(null);
+        if (index + 1 < filteredShlokas.length) {
+          speakShlokaFromIndex(index + 1);
+        } else {
+          stopAllSpeech();
+        }
       },
       onError: () => {
-        setIsSpeaking(false);
-        setCurrentSpeakingId(null);
+        stopAllSpeech();
       },
     });
+  };
+
+  const handleToggleSpeak = () => {
+    if (isSpeaking) {
+      stopAllSpeech();
+    } else {
+      speakShlokaFromIndex(selectedShlokaIndex);
+    }
   };
 
   const handleCopy = (id: string, sanskrit: string, meaning: string) => {
@@ -148,6 +168,20 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleToggleSpeak}
+            className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer transition ${
+              isSpeaking
+                ? 'bg-rose-600 text-white border-rose-700 animate-pulse'
+                : 'bg-[#3E2714] text-amber-200 border-amber-500/30 hover:bg-amber-900/40'
+            }`}
+            title="सस्वर पाठ सुनें / बंद करें"
+          >
+            {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
+            <span>{isSpeaking ? 'रुकें' : 'पाठ सुनें'}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setFontSize(fontSize === 'sm' ? 'base' : fontSize === 'base' ? 'lg' : 'sm')}
@@ -277,19 +311,6 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleSpeakVerse(`gita_${currentShloka.id}`, `${currentShloka.sanskrit}। भावार्थ: ${currentShloka.localizedMeaning}`)}
-                    className="p-1.5 rounded-lg bg-amber-100 text-[#5C3A21] hover:bg-amber-200 transition cursor-pointer"
-                    title="ध्वनि वाचन"
-                  >
-                    {isSpeaking && currentSpeakingId === `gita_${currentShloka.id}` ? (
-                      <VolumeX className="w-4 h-4 text-rose-600" />
-                    ) : (
-                      <Volume2 className="w-4 h-4" />
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => handleCopy(`gita_${currentShloka.id}`, currentShloka.sanskrit, currentShloka.localizedMeaning)}
                     className="p-1.5 rounded-lg bg-amber-50 text-[#8C6239] hover:bg-amber-100 transition cursor-pointer"
                     title="प्रतिलिपि"
@@ -410,6 +431,65 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
           </div>
         )}
       </ZeroScrollPager>
+
+      {/* Floating Sticky Audio Player Bar when speaking */}
+      {isSpeaking && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-md bg-stone-900/95 backdrop-blur-md text-amber-100 p-2.5 rounded-2xl border-2 border-amber-500 shadow-2xl flex items-center justify-between gap-2 animate-in slide-in-from-bottom-3 duration-200">
+          <div className="min-w-0 flex-1 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center shrink-0">
+              <Volume2 className="w-4 h-4 text-amber-400 animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-amber-300 truncate">
+                गीतोपदेश वाचन चालू
+              </div>
+              <div className="text-[10px] text-amber-200/80 truncate">
+                अध्याय {currentShloka?.chapter} • श्लोक {currentShloka?.verse} ({selectedShlokaIndex + 1}/{filteredShlokas.length})
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedShlokaIndex > 0) {
+                  speakShlokaFromIndex(selectedShlokaIndex - 1);
+                }
+              }}
+              disabled={selectedShlokaIndex === 0}
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 text-amber-200 cursor-pointer"
+              title="पिछला श्लोक"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={stopAllSpeech}
+              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 shadow-md cursor-pointer"
+              title="पाठ बंद करें"
+            >
+              <VolumeX className="w-4 h-4" />
+              <span>रुकें</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedShlokaIndex < filteredShlokas.length - 1) {
+                  speakShlokaFromIndex(selectedShlokaIndex + 1);
+                }
+              }}
+              disabled={selectedShlokaIndex === filteredShlokas.length - 1}
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 text-amber-200 cursor-pointer"
+              title="अगला श्लोक"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

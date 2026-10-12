@@ -90,7 +90,7 @@ export const DurgaSaptashatiView: React.FC<{
 
   // Audio Speech States
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
-  const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
 
   // Current active data resolution
   const activeAnga = DURGA_ANGAS[selectedAngaIndex] || DURGA_ANGAS[0];
@@ -169,40 +169,52 @@ export const DurgaSaptashatiView: React.FC<{
     return filteredVerses.slice(start, start + pageSize);
   }, [filteredVerses, viewMode, safePage, pageSize]);
 
-  // Audio Speech Handler
-  const handleSpeakVerse = (id: string, text: string) => {
-    if (isSpeaking && currentSpeakingId === id) {
-      stopUmaSpeech();
-      setIsSpeaking(false);
-      setCurrentSpeakingId(null);
+  // Stop all speech
+  const stopAllSpeech = () => {
+    stopUmaSpeech();
+    setIsSpeaking(false);
+    setSpeakingIndex(null);
+  };
+
+  // Continuous Verse-by-Verse Speech Handler
+  const speakFromIndex = (idx: number) => {
+    stopUmaSpeech();
+    if (idx < 0 || idx >= currentVerses.length) {
+      stopAllSpeech();
       return;
     }
 
-    stopUmaSpeech();
     setIsSpeaking(true);
-    setCurrentSpeakingId(id);
+    setSpeakingIndex(idx);
 
-    void speakUma(text, {
+    const verse = currentVerses[idx];
+    const verseText = `${verseWord} ${verse.number}। ${verse.sanskrit}`;
+
+    void speakUma(verseText, {
       rate: 0.88,
       onStart: () => {
         setIsSpeaking(true);
-        setCurrentSpeakingId(id);
+        setSpeakingIndex(idx);
       },
       onEnd: () => {
-        setIsSpeaking(false);
-        setCurrentSpeakingId(null);
+        if (idx + 1 < currentVerses.length) {
+          speakFromIndex(idx + 1);
+        } else {
+          stopAllSpeech();
+        }
       },
       onError: () => {
-        setIsSpeaking(false);
-        setCurrentSpeakingId(null);
+        stopAllSpeech();
       },
     });
   };
 
   const handleSpeakAllSection = () => {
-    const title = activeTab === 'angas' ? localizedAnga.name : localizedChapter.heading;
-    const fullText = `${title}। ${currentVerses.slice(0, 10).map((v) => `श्लोक ${v.number}: ${v.sanskrit}`).join('। ')}`;
-    handleSpeakVerse(`section_full`, fullText);
+    if (isSpeaking) {
+      stopAllSpeech();
+    } else {
+      speakFromIndex(0);
+    }
   };
 
   // Copy Handler
@@ -256,8 +268,8 @@ export const DurgaSaptashatiView: React.FC<{
         <button type="button" className="bx-iconbtn" onClick={() => goSequenceStep(1)} disabled={seqIndex === FULL_SAPTASHATI_SEQUENCE.length - 1} aria-label={ui.nextChapter}>
           <ChevronRight className="w-4 h-4" />
         </button>
-        <button type="button" className="bx-iconbtn" onClick={handleSpeakAllSection} aria-pressed={isSpeaking && currentSpeakingId === "section_full"} aria-label={ui.listen} title="सस्वर गान (Chant Melody)">
-          {isSpeaking && currentSpeakingId === "section_full" ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-amber-600" />}
+        <button type="button" className="bx-iconbtn" onClick={handleSpeakAllSection} aria-pressed={isSpeaking} aria-label={ui.listen} title="सस्वर पाठ सुनें (Play/Stop)">
+          {isSpeaking ? <VolumeX className="w-4 h-4 text-rose-600 animate-pulse" /> : <Volume2 className="w-4 h-4 text-amber-600" />}
         </button>
         <button
           type="button"
@@ -403,34 +415,44 @@ export const DurgaSaptashatiView: React.FC<{
         </div>
       )}
 
-      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-0.5 flex flex-col gap-1.5" resetKey={`${seqIndex}-${searchQuery}-${fontSize}`}>
+      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-16 flex flex-col gap-1.5" resetKey={`${seqIndex}-${searchQuery}-${fontSize}`}>
         {paginatedVerses.length > 0 ? (
-          paginatedVerses.map((verse) => (
-            <article key={verse.id} className="bx-verse">
-              <div className="flex items-center justify-between gap-2">
-                <span className="bx-kicker flex items-center gap-1">
-                  <Music2 className="w-3 h-3 text-amber-600 inline" />
-                  {verseWord} {verse.number} / {currentVerses.length}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button type="button" className="bx-iconbtn" aria-pressed={isSpeaking && currentSpeakingId === verse.id} aria-label={ui.listen} title="सस्वर गान सुनें" onClick={() => handleSpeakVerse(verse.id, `${verse.sanskrit}। ${ui.meaning} ${verse.hindi}`)}>
-                    {isSpeaking && currentSpeakingId === verse.id ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-amber-700" />}
-                  </button>
-                  <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
-                    {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                  <button type="button" className="bx-iconbtn" aria-label={ui.shareTitle} onClick={() => handleShareVerse(verse.number, verse.sanskrit, verse.hindi)}>
-                    <Share2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button type="button" className="bx-iconbtn" aria-pressed={!!bookmarks[verse.id]} aria-label="Bookmark" onClick={() => toggleBookmark(verse.id)}>
-                    <Bookmark className="w-3.5 h-3.5" />
-                  </button>
+          paginatedVerses.map((verse, vIdx) => {
+            const isCurrentSpeaking = isSpeaking && speakingIndex === vIdx;
+            return (
+              <article
+                key={verse.id}
+                className={`bx-verse transition-all duration-200 ${
+                  isCurrentSpeaking ? 'ring-2 ring-amber-500 bg-amber-50/90 shadow-md' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="bx-kicker flex items-center gap-1">
+                    <Music2 className={`w-3 h-3 inline ${isCurrentSpeaking ? 'text-amber-600 animate-bounce' : 'text-amber-600'}`} />
+                    {verseWord} {verse.number} / {currentVerses.length}
+                    {isCurrentSpeaking && (
+                      <span className="ml-1 px-1.5 py-0.2 rounded bg-amber-600 text-white text-[9px] font-bold">
+                        🔊 पाठ जारी
+                      </span>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
+                      {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                    <button type="button" className="bx-iconbtn" aria-label={ui.shareTitle} onClick={() => handleShareVerse(verse.number, verse.sanskrit, verse.hindi)}>
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button type="button" className="bx-iconbtn" aria-pressed={!!bookmarks[verse.id]} aria-label="Bookmark" onClick={() => toggleBookmark(verse.id)}>
+                      <Bookmark className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <p className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
-              <p className="bx-mean"><b style={{ color: "var(--bx-ink)" }}>{ui.meaning}</b> {verse.hindi}</p>
-            </article>
-          ))
+                <p className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
+                <p className="bx-mean"><b style={{ color: "var(--bx-ink)" }}>{ui.meaning}</b> {verse.hindi}</p>
+              </article>
+            );
+          })
         ) : (
           <div className="bx-fact text-sm">{language === "en" ? "No verse matches that search." : "कोई श्लोक नहीं मिला।"}</div>
         )}
@@ -471,6 +493,65 @@ export const DurgaSaptashatiView: React.FC<{
           </div>
         )}
       </ZeroScrollPager>
+
+      {/* Floating Sticky Audio Player Bar when speaking */}
+      {isSpeaking && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-md bg-stone-900/95 backdrop-blur-md text-amber-100 p-2.5 rounded-2xl border-2 border-amber-500 shadow-2xl flex items-center justify-between gap-2 animate-in slide-in-from-bottom-3 duration-200">
+          <div className="min-w-0 flex-1 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center shrink-0">
+              <Volume2 className="w-4 h-4 text-amber-400 animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-amber-300 truncate">
+                सस्वर पाठ चालू: {currentSeqItem.name}
+              </div>
+              <div className="text-[10px] text-amber-200/80 truncate">
+                श्लोक {speakingIndex !== null ? speakingIndex + 1 : 1} / {currentVerses.length}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (speakingIndex !== null && speakingIndex > 0) {
+                  speakFromIndex(speakingIndex - 1);
+                }
+              }}
+              disabled={speakingIndex === 0}
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 text-amber-200 cursor-pointer"
+              title="पिछला श्लोक"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={stopAllSpeech}
+              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 shadow-md cursor-pointer"
+              title="पाठ बंद करें"
+            >
+              <VolumeX className="w-4 h-4" />
+              <span>रुकें</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (speakingIndex !== null && speakingIndex < currentVerses.length - 1) {
+                  speakFromIndex(speakingIndex + 1);
+                }
+              }}
+              disabled={speakingIndex === currentVerses.length - 1}
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 text-amber-200 cursor-pointer"
+              title="अगला श्लोक"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

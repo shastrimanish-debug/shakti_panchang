@@ -424,6 +424,42 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
           </>
         )}
       </div>
+
+      {/* Floating Sticky Audio Player Bar when speaking */}
+      {isSpeaking && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-md bg-stone-900/95 backdrop-blur-md text-amber-100 p-2.5 rounded-2xl border-2 border-amber-500 shadow-2xl flex items-center justify-between gap-2 animate-in slide-in-from-bottom-3 duration-200">
+          <div className="min-w-0 flex-1 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center shrink-0">
+              <Volume2 className="w-4 h-4 text-amber-400 animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-amber-300 truncate">
+                कथा वाचन चालू: {currentKatha.title}
+              </div>
+              <div className="text-[10px] text-amber-200/80 truncate">
+                {currentKatha.katha && currentKatha.katha.length > 1
+                  ? `अध्याय ${activeChapterIndex + 1} / ${currentKatha.katha.length}`
+                  : 'संपूर्ण वाचन'}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                stopUmaSpeech();
+                setIsSpeaking(false);
+              }}
+              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 shadow-md cursor-pointer"
+              title="कथा वाचन बंद करें"
+            >
+              <VolumeX className="w-4 h-4" />
+              <span>रुकें</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
