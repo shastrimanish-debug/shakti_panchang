@@ -103,22 +103,55 @@ function naturalHindi(text: string): string {
 export function buildUmaParts(text: string): UmaPart[] {
   const clean = stripMarkup(text);
   if (!clean) return [];
-  const chunks = clean
-    .split(/\n+|(?<=[।॥])\s+/)
+  const lines = clean
+    .split(/\n+/)
     .map((s) => s.trim())
     .filter(Boolean);
   const parts: UmaPart[] = [];
-  for (const chunk of chunks) {
-    const path = isSanskritPath(chunk);
-    const spoken = (path ? dakshinPath(chunk) : naturalHindi(chunk)).slice(0, 700);
-    if (!spoken) continue;
-    parts.push({
-      text: spoken,
-      rate: path ? 0.62 : 0.96,
-      pitch: path ? 0.88 : 1.05,
-    });
+
+  for (const line of lines) {
+    const isSanskrit = isSanskritPath(line);
+    if (isSanskrit) {
+      // Split by danda (।) and double danda (॥) or commas to isolate quarters/padas
+      const padas = line
+        .split(/(?<=[।॥,])\s+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      let quarterIdx = 0;
+      for (const pada of padas) {
+        const spoken = dakshinPath(pada).slice(0, 500);
+        if (!spoken) continue;
+
+        // Rhythmic Chanting Pitch & Rate Cadence (सस्वर गान लय)
+        // 0: Udatt (High pitch 1.10, rate 0.68)
+        // 1: Anudatt (Low pitch 0.88, rate 0.64)
+        // 2: Swarit (High melodious pitch 1.16, rate 0.70)
+        // 3: Nyasa (Deep concluding pause pitch 0.82, rate 0.60)
+        const pitchSequence = [1.10, 0.88, 1.16, 0.82];
+        const rateSequence = [0.68, 0.64, 0.70, 0.60];
+        const pIdx = quarterIdx % 4;
+
+        parts.push({
+          text: spoken,
+          rate: rateSequence[pIdx],
+          pitch: pitchSequence[pIdx],
+        });
+        quarterIdx++;
+      }
+    } else {
+      const spoken = naturalHindi(line).slice(0, 700);
+      if (spoken) {
+        parts.push({
+          text: spoken,
+          rate: 0.96,
+          pitch: 1.05,
+        });
+      }
+    }
   }
-  return parts.slice(0, 35);
+
+  return parts.slice(0, 50);
 }
 
 export function prepareUmaUtterance(text: string): string {
