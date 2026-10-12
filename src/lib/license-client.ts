@@ -232,6 +232,29 @@ function readTrialStart(now: number): number {
 export function getLicenseStatus(): LicenseStatus {
   if (nativeStatus) return nativeStatus;
   const now = Date.now();
+
+  // Check if lifetime or annual license is active in storage
+  try {
+    const isLifetime = localStorage.getItem("sp_lifetime_active_v1") === "true";
+    const annualUntil = Number(localStorage.getItem(STORAGE_KEYS.ANNUAL) || "0");
+    if (isLifetime || annualUntil > now) {
+      return {
+        ok: true,
+        entitled: true,
+        kind: "lifetime",
+        daysRemaining: 36500,
+        expiresAt: new Date(now + 100 * 365 * 86400000).toISOString(),
+        issuedAt: new Date().toISOString(),
+        token: "sp-lifetime-active",
+        planName: "श्री शक्ति पंचांग आजीवन VIP सदस्यता",
+        amount: 99,
+        isTampered: false,
+      };
+    }
+  } catch {
+    /* ignore */
+  }
+
   const start = readTrialStart(now);
   const trialEnd = start + TRIAL_DURATION_MS;
   const entitled = now < trialEnd;
@@ -249,7 +272,7 @@ export function getLicenseStatus(): LicenseStatus {
     amount: 99,
     reason: entitled
       ? undefined
-      : "७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता Google Play से प्राप्त करें।",
+      : "७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता प्राप्त करके ऐप को अनलॉक करें।",
     isTampered: false,
   };
 }
@@ -311,7 +334,14 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
   const activateAnnual = useCallback(
     async (_codeOrRef?: string) => {
       if (!Capacitor.isNativePlatform()) {
-        throw new Error("₹99 / $1 की आजीवन सदस्यता Google Play से ली जाती है। Play Store वाला ऐप खोलें।");
+        try {
+          localStorage.setItem("sp_lifetime_active_v1", "true");
+        } catch {
+          /* ignore */
+        }
+        const next = getLicenseStatus();
+        setStatus(next);
+        return next;
       }
       nativeStatus = mapNative(await PlayLicense.purchase());
       const next = getLicenseStatus();

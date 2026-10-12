@@ -502,7 +502,7 @@ export const hi = {
     includedInModule: "इस मॉड्यूल में क्या शामिल है:",
     oneTimeOrVip: "तुरंत १-क्लिक एक्सेस • १००% प्रामाणिक शास्त्रीय फलादेश",
     vipSectionTitle: "प्रीमियम दिव्य विधाएं (Spiritual Modules)",
-    vipBadge: "VIP ₹80 / $1",
+    vipBadge: "VIP ₹99 / $1",
   },
   palmistry: {
     subtitleShort: "कैमरा स्कैन व रेखा विचार",

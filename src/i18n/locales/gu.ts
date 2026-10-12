@@ -502,7 +502,7 @@ export const gu = {
     includedInModule: "આ મોડ્યુલમાં શું મળશે:",
     oneTimeOrVip: "ત્વરિત ૧-ક્લિક એક્સેસ • ૧૦૦% શાસ્ત્રોક્ત માર્ગદર્શન",
     vipSectionTitle: "પ્રીમિયમ દિવ્ય વિદ્યાઓ (Spiritual Modules)",
-    vipBadge: "VIP ₹80 / $1",
+    vipBadge: "VIP ₹99 / $1",
   },
   palmistry: {
     subtitleShort: "કેમેરા સ્કેન અને રેખા વિચાર",
