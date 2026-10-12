@@ -109,25 +109,58 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
     openWhatsAppShare(shareText);
   };
 
-  const handleSpeakVerse = async (verse: PathVerse) => {
-    if (isSpeaking && activeSpeakingIndex === verse.n) {
-      stopUmaSpeech();
-      setIsSpeaking(false);
-      setActiveSpeakingIndex(null);
+  const stopAllSpeech = () => {
+    stopUmaSpeech();
+    setIsSpeaking(false);
+    setActiveSpeakingIndex(null);
+  };
+
+  const speakVerseFromIndex = (vIndex: number) => {
+    if (vIndex < 0 || vIndex >= filteredVerses.length) {
+      stopAllSpeech();
+      return;
+    }
+    const currentVerse = filteredVerses[vIndex];
+    if (!currentVerse) {
+      stopAllSpeech();
       return;
     }
 
     stopUmaSpeech();
     setIsSpeaking(true);
-    setActiveSpeakingIndex(verse.n);
+    setActiveSpeakingIndex(currentVerse.n);
 
-    const speechText = `${verse.kind || "पद"} संख्या ${verse.n}। ${verse.text}`;
-    await speakUma(speechText, {
+    // Scroll active verse into view smoothly
+    const targetEl = verseRefs.current[currentVerse.n];
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    const speechText = `${currentVerse.text}`;
+    void speakUma(speechText, {
       onEnd: () => {
-        setIsSpeaking(false);
-        setActiveSpeakingIndex(null);
+        // Auto-advance to next verse
+        if (vIndex + 1 < filteredVerses.length) {
+          speakVerseFromIndex(vIndex + 1);
+        } else {
+          stopAllSpeech();
+        }
+      },
+      onError: () => {
+        stopAllSpeech();
       },
     });
+  };
+
+  const handleToggleMasterPlay = () => {
+    if (isSpeaking) {
+      stopAllSpeech();
+    } else {
+      const startIdx = activeSpeakingIndex !== null
+        ? Math.max(0, filteredVerses.findIndex((v) => v.n === activeSpeakingIndex))
+        : 0;
+      speakVerseFromIndex(startIdx);
+    }
   };
 
   const handleJumpToVerse = (vIndex: number) => {
@@ -165,6 +198,21 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
+            {/* Master Speech Button */}
+            <button
+              type="button"
+              onClick={handleToggleMasterPlay}
+              className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer transition ${
+                isSpeaking
+                  ? "bg-amber-600 text-amber-50 border-amber-700 shadow-xs animate-pulse"
+                  : "bg-amber-100/80 text-amber-900 border-amber-300 hover:bg-amber-200"
+              }`}
+              title="सस्वर पाठ चालू / बंद करें"
+            >
+              {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              <span>{isSpeaking ? "पाठ रोकें" : "सस्वर गान"}</span>
+            </button>
+
             {/* View Mode Switcher */}
             <button
               type="button"
@@ -298,18 +346,6 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Audio Recite */}
-                    <button
-                      type="button"
-                      onClick={() => handleSpeakVerse(verse)}
-                      className={`p-1 rounded-md transition ${
-                        isAudioActive ? "bg-amber-600 text-white" : "hover:bg-amber-100 text-amber-800"
-                      }`}
-                      title="सस्वर पाठ सुनें"
-                    >
-                      {isAudioActive ? <VolumeX className="w-3.5 h-3.5 animate-pulse" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    </button>
-
                     {/* Bookmark */}
                     <button
                       type="button"
@@ -388,6 +424,61 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
             <span>अगला</span>
             <ChevronRight className="w-4 h-4" />
           </button>
+        </div>
+      )}
+
+      {/* Floating Sticky Audio Player Bar when speaking */}
+      {isSpeaking && activeSpeakingIndex !== null && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-md bg-stone-900/95 backdrop-blur-md text-amber-100 p-2.5 rounded-2xl shadow-2xl border border-amber-500/50 flex items-center justify-between gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="p-2 rounded-xl bg-amber-500 text-stone-950 shrink-0 font-bold animate-pulse">
+              <Volume2 className="w-4 h-4" />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider truncate">
+                सस्वर पाठ चालू है
+              </div>
+              <div className="text-xs font-black text-amber-100 font-granth truncate">
+                {title} — पद #{activeSpeakingIndex}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const curPos = filteredVerses.findIndex((v) => v.n === activeSpeakingIndex);
+                if (curPos > 0) speakVerseFromIndex(curPos - 1);
+              }}
+              className="p-1.5 rounded-lg bg-stone-800 text-amber-200 hover:bg-stone-700 active:scale-95 transition"
+              title="पिछला पद"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={stopAllSpeech}
+              className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white font-black text-xs shadow-md flex items-center gap-1 border border-red-400/50 cursor-pointer"
+              title="पाठ रोकें (Stop Audio)"
+            >
+              <X className="w-4 h-4" />
+              <span>स्टॉप (STOP)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const curPos = filteredVerses.findIndex((v) => v.n === activeSpeakingIndex);
+                if (curPos < filteredVerses.length - 1) speakVerseFromIndex(curPos + 1);
+              }}
+              className="p-1.5 rounded-lg bg-stone-800 text-amber-200 hover:bg-stone-700 active:scale-95 transition"
+              title="अगला पद"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>

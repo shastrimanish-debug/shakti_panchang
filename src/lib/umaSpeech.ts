@@ -70,6 +70,15 @@ function stripMarkup(text: string): string {
     .replace(/\*(.*?)\*/g, "$1")
     .replace(/#{1,6}\s?/g, "")
     .replace(/[•▪●]/g, ", ")
+    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "।")
+    .replace(/॥\s*॥/g, "।")
+    .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, "")
+    .replace(/श्लोक\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
+    .replace(/चौपाई\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
+    .replace(/दोहा\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
+    .replace(/सोराठा\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
+    .replace(/पद\s*#?\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
+    .replace(/संख्या\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
     .replace(/[ \t]+/g, " ")
     .trim();
 }
@@ -81,12 +90,13 @@ function isSanskritPath(chunk: string): boolean {
   return letters > 10 && !hindi.test(chunk);
 }
 
-/** Dakshin pathashala: same Indian words, one flowing line, breath only at the danda. */
+/** Dakshin pathashala: clean Sanskrit phonetics, continuous flowing rhythm, breathing pause at danda. */
 function dakshinPath(text: string): string {
   return text
-    .replace(/ॐ/g, "ओ३म्...")
-    .replace(/॥+/g, "..... ")
-    .replace(/।/g, "... ")
+    .replace(/ॐ/g, "ओम् ")
+    .replace(/ः/g, "ह ")
+    .replace(/॥+/g, " ... ")
+    .replace(/।/g, " .. ")
     .replace(/ऽ/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -94,6 +104,7 @@ function dakshinPath(text: string): string {
 
 function naturalHindi(text: string): string {
   return text
+    .replace(/ॐ/g, "ओम् ")
     .replace(/॥+/g, ". ")
     .replace(/।/g, ", ")
     .replace(/\s+/g, " ")
