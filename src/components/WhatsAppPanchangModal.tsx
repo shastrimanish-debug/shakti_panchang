@@ -51,6 +51,18 @@ const DAILY_SHLOKAS = [
   },
 ];
 
+function dataURItoBlob(dataURI: string): Blob {
+  const parts = dataURI.split(',');
+  const byteString = atob(parts[1] || parts[0]);
+  const mimeString = parts[0].includes(':') ? parts[0].split(':')[1].split(';')[0] : 'image/png';
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
+}
+
 // Safe rounded rectangle for Canvas across all browser/webview versions
 function safeRoundRect(
   ctx: CanvasRenderingContext2D,
@@ -505,27 +517,50 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     if (!imageUri) return;
     const fileName = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
     try {
-      const res = await fetch(imageUri);
-      const blob = await res.blob();
+      const blob = dataURItoBlob(imageUri);
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      // 1. Mobile Web Share API first (Ideal for Android Gallery / WhatsApp / Files)
+      if (
+        typeof navigator !== 'undefined' &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [file] })
+      ) {
+        try {
+          await navigator.share({
+            title: 'दैनिक वैदिक पंचांग कार्ड (HD)',
+            files: [file],
+          });
+          return;
+        } catch (e: any) {
+          if (e?.name === 'AbortError') return;
+        }
+      }
+
+      // 2. Direct Blob Link Download
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = fileName;
+      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
+
       setTimeout(() => {
         if (document.body.contains(a)) document.body.removeChild(a);
         URL.revokeObjectURL(blobUrl);
-      }, 1500);
-    } catch {
-      const a = document.createElement('a');
-      a.href = imageUri;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        if (document.body.contains(a)) document.body.removeChild(a);
-      }, 1500);
+      }, 3000);
+    } catch (err) {
+      console.error('Download error:', err);
+      const win = window.open();
+      if (win) {
+        win.document.write(`<title>${fileName}</title><img src="${imageUri}" style="max-width:100%; height:auto;" alt="Panchang HD Card" />`);
+      } else {
+        const a = document.createElement('a');
+        a.href = imageUri;
+        a.download = fileName;
+        a.click();
+      }
     }
   };
 
@@ -582,6 +617,9 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
                 className="w-full h-full object-contain rounded-lg"
               />
             )}
+          </div>
+          <div className="text-[10px] text-[#8C6239] font-bold text-center">
+            💡 यदि बटन से डाउनलोड न हो तो फ़ोटो पर उंगली दबाकर रखें और 'Download Image' चुनें
           </div>
 
           {/* Pandit Custom Branding Indicator / Shortcut */}

@@ -56,7 +56,7 @@ export const DevotionalAudioPlayerView: React.FC<{
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('stream');
+  const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('speech');
   
   // Stream HTML5 Audio states
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -396,16 +396,39 @@ export const DevotionalAudioPlayerView: React.FC<{
           </div>
 
           {/* Verses Container with Senior Citizen Font Sizing */}
-          <div
-            className={`font-serif leading-loose tracking-wide whitespace-pre-line text-stone-950 font-bold ${
-              seniorFontSize === 'normal'
-                ? 'text-base sm:text-lg'
-                : seniorFontSize === 'xl'
-                ? 'text-xl sm:text-2xl'
-                : 'text-2xl sm:text-3xl'
-            }`}
-          >
-            {currentTrack.lyricsText}
+          <div className="space-y-4">
+            {currentTrack.lyricsText.split(/\n\s*\n/).map((versePara, pIdx) => (
+              <div
+                key={pIdx}
+                className="p-3.5 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl space-y-2 relative group hover:border-[#B56A00] transition"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div
+                    className={`font-serif leading-relaxed tracking-wide text-stone-950 font-bold whitespace-pre-line flex-1 ${
+                      seniorFontSize === 'normal'
+                        ? 'text-base sm:text-lg'
+                        : seniorFontSize === 'xl'
+                        ? 'text-xl sm:text-2xl'
+                        : 'text-2xl sm:text-3xl'
+                    }`}
+                  >
+                    {versePara}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playTempleBellSound();
+                      speakTextWithSpeech(versePara);
+                    }}
+                    className="p-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] rounded-xl text-xs font-bold shrink-0 cursor-pointer shadow-xs flex items-center gap-1 active:scale-95"
+                    title="इस श्लोक को स्पष्ट स्वर में सुनें"
+                  >
+                    <Volume2 className="w-4 h-4 text-amber-300" />
+                    <span className="hidden sm:inline">सुनाएं</span>
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Meaning / Translation */}
