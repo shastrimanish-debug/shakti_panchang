@@ -39,9 +39,17 @@ export type UmaLinkState = "online" | "local" | "nokey";
 
 export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers: string[] }> {
   try {
+    const healthResp = await fetch("/api/health", { signal: AbortSignal.timeout(3000) }).catch(() => null);
+    if (healthResp && healthResp.ok) {
+      const hData = await healthResp.json();
+      if (hData?.hasGeminiKey) {
+        return { state: "online", providers: ["gemini"] };
+      }
+    }
+
     const resp = await fetch(UMA_PHP_URL, {
       method: "GET",
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(5000),
     });
     if (!resp.ok) return { state: "local", providers: [] };
     const data = await resp.json();
@@ -61,9 +69,8 @@ export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers:
 export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
   const { query, panchang, activeKundali, panchangContext, kundaliContext, chatHistory, systemPrompt } = params;
 
-  const endpoints = import.meta.env.DEV
-    ? ["/api/uma/chat", UMA_PHP_URL]
-    : [UMA_PHP_URL];
+  // Always check internal Node/Gemini server /api/uma/chat first (both in dev & prod)
+  const endpoints = ["/api/uma/chat", UMA_PHP_URL];
 
   for (const endpoint of endpoints) {
     try {
@@ -87,11 +94,11 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
 
       if (!resp.ok) continue;
       const data = await resp.json();
-      const provider = data?.provider;
-      const source = provider === "grok" || provider === "openrouter" || provider === "gemini"
-        ? provider
-        : "gemini";
       if (data?.ok && typeof data.text === "string" && data.text.trim()) {
+        const provider = data?.provider;
+        const source = provider === "grok" || provider === "openrouter" || provider === "gemini"
+          ? provider
+          : "gemini";
         return {
           ok: true,
           text: data.text.trim(),
