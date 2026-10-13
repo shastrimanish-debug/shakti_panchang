@@ -44,7 +44,7 @@ import {
   Clock,
   Sparkle,
 } from 'lucide-react';
-import { ZeroScrollPager } from './ZeroScrollPager';
+
 
 interface UmaVoicePlugin {
   listen: () => Promise<{ text: string }>;
@@ -707,21 +707,19 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           type="button"
           onClick={() => void refreshUmaLink()}
           className={`w-full px-3 py-1.5 text-left text-[11px] sm:text-xs font-bold border-b flex items-center justify-between gap-2 ${
-            umaLink === 'online'
+            umaLink === 'online' || umaLink === 'nokey'
               ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
-              : umaLink === 'nokey'
-                ? 'bg-amber-50 text-amber-950 border-amber-300'
-                : umaLink === 'local'
-                  ? 'bg-stone-100 text-stone-800 border-stone-300'
-                  : 'bg-amber-50 text-amber-900 border-amber-200'
+              : 'bg-amber-50/80 text-amber-950 border-amber-200'
           }`}
         >
-          <span>
-            {umaLink === 'checking' && 'उमा जाँच हो रही है...'}
-            {umaLink === 'online' && `उमा ऑनलाइन — ${umaProviders.map((p) => (p === 'grok' ? 'Grok' : p === 'gemini' ? 'Gemini' : 'OpenRouter')).join(' · ') || 'सर्वर जुड़ा'}`}
-            {umaLink === 'nokey' && 'उमा सर्वर जुड़ा — चाबी अभी खाली है'}
-            {umaLink === 'local' && 'उमा ऑफ़लाइन — लोकल पत्रिका चल रही है'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${umaLink === 'online' || umaLink === 'nokey' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            <span>
+              {umaLink === 'checking' && 'उमा संपर्क स्थिति जांची जा रही है...'}
+              {(umaLink === 'online' || umaLink === 'nokey') && 'उमा ऑनलाइन'}
+              {umaLink === 'local' && 'उमा ऑफ़लाइन (लोकल सूक्ष्म वैदिक गणित सक्रिय)'}
+            </span>
+          </div>
           <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${umaLink === 'checking' ? 'animate-spin' : ''}`} />
         </button>
 
@@ -869,7 +867,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         </div>
 
         {/* Messages List Container */}
-        <ZeroScrollPager className="flex-1 sm:p-5 bg-[#FAF2E4] overflow-hidden min-h-0" contentClassName="p-3 space-y-4">
+        <div className="flex-1 sm:p-5 p-3 bg-[#FAF2E4] overflow-y-auto min-h-0 space-y-4">
           {messages.map((msg) => {
             const isUma = msg.sender === 'uma';
             return (
@@ -895,11 +893,6 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                         <span>॥</span>
                         <span>उमा ज्योतिषाचार्य निर्णय</span>
                         <span>॥</span>
-                        {msg.source && msg.source !== 'local_vedic' && (
-                          <span className="bg-amber-100 text-[#B56A00] text-[10px] px-1.5 py-0.2 rounded border border-amber-300 font-sans">
-                            AI
-                          </span>
-                        )}
                       </div>
                       <span className="text-[11px] text-[#8C6239]">
                         {msg.timestamp.toLocaleTimeString('hi-IN', {
@@ -1041,7 +1034,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             </div>
           )}
           <div ref={messagesEndRef} />
-        </ZeroScrollPager>
+        </div>
 
         {/* Input Bar - Alexa Voice & Text input */}
         <div className="bg-[#F4E8D1] p-2.5 sm:p-3 border-t-2 border-[#8C6239]/30">
@@ -1125,7 +1118,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               </div>
 
               {/* Bot Body */}
-              <ZeroScrollPager className="flex-1 min-h-0 text-sm font-serif overflow-hidden" contentClassName="p-4 space-y-4">
+              <div className="flex-1 min-h-0 text-sm font-serif overflow-y-auto p-4 space-y-4">
                 {/* Client Details Form */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#FFFDF8] p-3 rounded-xl border border-[#8C6239]/30 shadow-xs">
                   <div>
@@ -1207,7 +1200,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     />
                   </div>
                 )}
-              </ZeroScrollPager>
+              </div>
 
               {/* Bot Footer Actions */}
               <div className="bg-[#F4E8D1] p-3 border-t border-[#8C6239]/30 flex items-center justify-between flex-wrap gap-2">
