@@ -1,75 +1,44 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   DEVOTIONAL_AUDIO_TRACKS,
   DevotionalTrack,
-  SHIV_MAHIMNA_STOTRAM_TEXT,
 } from '../data/devotionalAudioTracks';
 import {
   Play,
   Pause,
-  RotateCcw,
   Volume2,
-  VolumeX,
   Music,
   Sparkles,
   Sun,
   Bell,
-  Sliders,
-  Type,
-  Maximize2,
-  ChevronLeft,
-  ChevronRight,
   ShieldCheck,
   Disc,
 } from 'lucide-react';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { devotionalAudioEngine } from '../services/devotionalAudioEngine';
 
-// Web Audio API Temple Sound Synthesizer (Temple Bell & Shankh)
-function playTempleBellSound() {
-  try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 Bell
-    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 2.5);
-
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 2.5);
-  } catch {
-    // Ignore audio policies
-  }
-}
-
 export const DevotionalAudioPlayerView: React.FC<{
   onOpenUmaModal?: (query?: string) => void;
   onBackToPanchang?: () => void;
-}> = ({ onOpenUmaModal, onBackToPanchang }) => {
+}> = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('speech');
-  
+
+  // Sequential Verse Queue States (Android / iOS WebView Compliant)
+  const [activeVerseIndex, setActiveVerseIndex] = useState<number>(-1);
+  const isPlayingRef = useRef<boolean>(false);
+  const nextTimerRef = useRef<any>(null);
+
   // Stream HTML5 Audio states
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [duration, setDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [playbackRate, setPlaybackRate] = useState<number>(1.0);
-  const [volume, setVolume] = useState<number>(1.0);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
 
   // Senior Citizens Mode Options (70+ Elderly Friendly)
   const [seniorFontSize, setSeniorFontSize] = useState<'normal' | 'xl' | 'xxl'>('xl');
-  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState<boolean>(true);
 
   // Filtered Tracks
   const filteredTracks = DEVOTIONAL_AUDIO_TRACKS.filter((t) => {
@@ -77,103 +46,183 @@ export const DevotionalAudioPlayerView: React.FC<{
     return t.category === activeCategory;
   });
 
-  const currentTrack: DevotionalTrack = filteredTracks[selectedTrackIndex] || DEVOTIONAL_AUDIO_TRACKS[0];
+  const currentTrack: DevotionalTrack =
+    filteredTracks[selectedTrackIndex] || DEVOTIONAL_AUDIO_TRACKS[0];
 
-  // Speech Synthesis Reciter for Verse Reading
-  const speakTextWithSpeech = useCallback((text: string) => {
-    devotionalAudioEngine.playTempleBell(880);
-    devotionalAudioEngine.startTanpuraDrone();
+  // Split current track into individual short verses/paragraphs (under 150 chars per chunk for Android TTS)
+  const verses = useMemo(() => {
+    return currentTrack.lyricsText
+      .split(/\n\s*\n/)
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0);
+  }, [currentTrack]);
 
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  // Completely Stop Playback
+  const stopAllPlayback = useCallback(() => {
+    isPlayingRef.current = false;
+    setIsPlaying(false);
+    setActiveVerseIndex(-1);
 
-    try {
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.resume();
-
-      const cleanText = text.replace(/[*#॥|_]/g, ' ');
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = 'hi-IN';
-      utterance.rate = playbackRate * 0.85; // Calmer pace for senior citizens
-      utterance.pitch = 0.95; // Warm, resonant voice pitch
-
-      const voices = window.speechSynthesis.getVoices();
-      const hindiVoice = voices.find(
-        (v) => v.lang.includes('hi') || v.name.toLowerCase().includes('hindi')
-      );
-      if (hindiVoice) {
-        utterance.voice = hindiVoice;
-      }
-
-      utterance.onend = () => {
-        setIsPlaying(false);
-        devotionalAudioEngine.stopTanpuraDrone();
-      };
-      utterance.onerror = () => {
-        setIsPlaying(false);
-        devotionalAudioEngine.stopTanpuraDrone();
-      };
-
-      window.speechSynthesis.speak(utterance);
-      setIsPlaying(true);
-    } catch {
-      setIsPlaying(true);
+    if (nextTimerRef.current) {
+      clearTimeout(nextTimerRef.current);
+      nextTimerRef.current = null;
     }
-  }, [playbackRate]);
 
-  const stopSpeech = useCallback(() => {
     devotionalAudioEngine.stopTanpuraDrone();
+
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
     }
   }, []);
 
-  // Handle Play/Pause
+  // Cleanup on unmount or track change
+  useEffect(() => {
+    return () => {
+      stopAllPlayback();
+    };
+  }, [stopAllPlayback]);
+
+  // Sequential Verse-by-Verse Speech Reciter (Android / iOS WebView Compliant)
+  const speakVerseAtIndex = useCallback(
+    (index: number) => {
+      if (!isPlayingRef.current || index >= verses.length) {
+        stopAllPlayback();
+        return;
+      }
+
+      setActiveVerseIndex(index);
+
+      // Scroll active verse into view gently for elderly users
+      setTimeout(() => {
+        const elem = document.getElementById(`verse-card-${index}`);
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        // Fallback timer if SpeechSynthesis is missing
+        nextTimerRef.current = setTimeout(() => {
+          if (isPlayingRef.current) speakVerseAtIndex(index + 1);
+        }, 5000);
+        return;
+      }
+
+      try {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+
+        const rawVerse = verses[index] || '';
+        // Clean text for speech engine (remove symbols that trip Android TTS)
+        const cleanText = rawVerse
+          .replace(/[*#॥|_।]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'hi-IN';
+        utterance.rate = playbackRate * 0.85; // Calmer pace for senior citizens
+        utterance.pitch = 1.0;
+
+        // Fetch voices (handles Android voiceschanged event)
+        const voices = window.speechSynthesis.getVoices();
+        const hindiVoice = voices.find(
+          (v) =>
+            v.lang.startsWith('hi') ||
+            v.lang.includes('IN') ||
+            v.name.toLowerCase().includes('hindi')
+        );
+        if (hindiVoice) {
+          utterance.voice = hindiVoice;
+        }
+
+        const handleAdvance = () => {
+          if (nextTimerRef.current) clearTimeout(nextTimerRef.current);
+          nextTimerRef.current = setTimeout(() => {
+            if (isPlayingRef.current) {
+              speakVerseAtIndex(index + 1);
+            }
+          }, 600);
+        };
+
+        utterance.onend = handleAdvance;
+        utterance.onerror = handleAdvance;
+
+        window.speechSynthesis.speak(utterance);
+      } catch {
+        nextTimerRef.current = setTimeout(() => {
+          if (isPlayingRef.current) speakVerseAtIndex(index + 1);
+        }, 4000);
+      }
+    },
+    [verses, playbackRate, stopAllPlayback]
+  );
+
+  // Play / Pause Toggle
   const handleTogglePlay = () => {
     devotionalAudioEngine.playTempleBell(880);
 
     if (isPlaying) {
-      if (audioRef.current) audioRef.current.pause();
-      stopSpeech();
-      devotionalAudioEngine.stopTanpuraDrone();
-      setIsPlaying(false);
+      stopAllPlayback();
     } else {
+      isPlayingRef.current = true;
+      setIsPlaying(true);
       devotionalAudioEngine.startTanpuraDrone();
 
       if (audioSource === 'stream' && audioRef.current && currentTrack.audioUrl) {
         audioRef.current
           .play()
-          .then(() => setIsPlaying(true))
+          .then(() => {
+            setIsPlaying(true);
+          })
           .catch(() => {
-            // Fallback to speech + Tanpura if stream is blocked by CORS/network
+            // Fallback to Sequential Verse Reciter if audio stream is blocked
             setAudioSource('speech');
-            speakTextWithSpeech(currentTrack.lyricsText);
+            speakVerseAtIndex(0);
           });
       } else {
-        speakTextWithSpeech(currentTrack.lyricsText);
+        speakVerseAtIndex(0);
       }
     }
+  };
+
+  // Play Specific Verse
+  const handlePlaySpecificVerse = (idx: number) => {
+    devotionalAudioEngine.playTempleBell(880);
+    stopAllPlayback();
+
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+    setAudioSource('speech');
+    devotionalAudioEngine.startTanpuraDrone();
+    speakVerseAtIndex(idx);
   };
 
   // Switch Track
   const handleSelectTrack = (idx: number) => {
     devotionalAudioEngine.playTempleBell(880);
-    devotionalAudioEngine.stopTanpuraDrone();
-    stopSpeech();
-    if (audioRef.current) audioRef.current.pause();
+    stopAllPlayback();
 
     setSelectedTrackIndex(idx);
-    setIsPlaying(false);
     setCurrentTime(0);
   };
 
-  // Update Audio Element when source or track changes
+  // Update Audio Element listeners
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     const updateProgress = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration || 0);
-    const handleEnded = () => setIsPlaying(false);
+    const handleEnded = () => stopAllPlayback();
 
     audio.addEventListener('timeupdate', updateProgress);
     audio.addEventListener('loadedmetadata', updateDuration);
@@ -184,7 +233,7 @@ export const DevotionalAudioPlayerView: React.FC<{
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [currentTrack]);
+  }, [currentTrack, stopAllPlayback]);
 
   // Adjust Playback Speed
   const handleRateChange = (newRate: number) => {
@@ -202,12 +251,8 @@ export const DevotionalAudioPlayerView: React.FC<{
 
   return (
     <div className="flex-1 min-h-0 w-full h-full bg-[#3E2714] text-[#FAF2E4] flex flex-col overflow-hidden font-sans">
-      {/* Hidden Audio Element for Streaming Royalty-Free Tracks */}
-      <audio
-        ref={audioRef}
-        src={currentTrack.audioUrl}
-        preload="metadata"
-      />
+      {/* Hidden Audio Element */}
+      <audio ref={audioRef} src={currentTrack.audioUrl} preload="metadata" />
 
       {/* Header Banner for Seniors */}
       <div className="p-3 bg-gradient-to-r from-[#2A1508] via-[#462B17] to-[#2A1508] border-b border-[#B56A00]/50 flex items-center justify-between shrink-0 shadow-md">
@@ -218,7 +263,9 @@ export const DevotionalAudioPlayerView: React.FC<{
           <div>
             <h2 className="font-granth font-black text-sm sm:text-base text-[#FFD88A] flex items-center gap-1.5">
               <span>॥ सुरीला भक्ति संगीत व दिव्य स्वर पाठ ॥</span>
-              <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">70+ सुगम मोड</span>
+              <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">
+                70+ सुगम मोड
+              </span>
             </h2>
             <p className="text-[11px] text-[#D9C4A9]">
               दुर्गा सप्तशती, शिव महिम्न स्तोत्र, हनुमान चालीसा व आरतियाँ • 100% कॉपीराइट मुक्त
@@ -235,25 +282,39 @@ export const DevotionalAudioPlayerView: React.FC<{
 
           {/* Senior Citizen Font Size Selector */}
           <div className="flex items-center gap-1 bg-[#23140C] border border-[#8C6239] rounded-xl p-1 text-xs">
-            <span className="text-[10px] text-[#D9C4A9] px-1 hidden sm:inline">अक्षर आकार:</span>
+            <span className="text-[10px] text-[#D9C4A9] px-1 hidden sm:inline">
+              अक्षर आकार:
+            </span>
             <button
               type="button"
               onClick={() => setSeniorFontSize('normal')}
-              className={`px-2 py-0.5 rounded font-bold transition ${seniorFontSize === 'normal' ? 'bg-[#B56A00] text-white' : 'text-[#D9C4A9]'}`}
+              className={`px-2 py-0.5 rounded font-bold transition ${
+                seniorFontSize === 'normal'
+                  ? 'bg-[#B56A00] text-white'
+                  : 'text-[#D9C4A9]'
+              }`}
             >
               अ
             </button>
             <button
               type="button"
               onClick={() => setSeniorFontSize('xl')}
-              className={`px-2 py-0.5 rounded font-black transition ${seniorFontSize === 'xl' ? 'bg-[#B56A00] text-white' : 'text-[#D9C4A9]'}`}
+              className={`px-2 py-0.5 rounded font-black transition ${
+                seniorFontSize === 'xl'
+                  ? 'bg-[#B56A00] text-white'
+                  : 'text-[#D9C4A9]'
+              }`}
             >
               अ+
             </button>
             <button
               type="button"
               onClick={() => setSeniorFontSize('xxl')}
-              className={`px-2 py-0.5 rounded font-black text-sm transition ${seniorFontSize === 'xxl' ? 'bg-[#B56A00] text-white' : 'text-[#D9C4A9]'}`}
+              className={`px-2 py-0.5 rounded font-black text-sm transition ${
+                seniorFontSize === 'xxl'
+                  ? 'bg-[#B56A00] text-white'
+                  : 'text-[#D9C4A9]'
+              }`}
             >
               अ++
             </button>
@@ -262,7 +323,10 @@ export const DevotionalAudioPlayerView: React.FC<{
       </div>
 
       {/* Main Content Area */}
-      <ZeroScrollPager className="flex-1 min-h-0 w-full overflow-hidden" contentClassName="p-3 space-y-4 max-w-4xl mx-auto">
+      <ZeroScrollPager
+        className="flex-1 min-h-0 w-full overflow-hidden"
+        contentClassName="p-3 space-y-4 max-w-4xl mx-auto"
+      >
         {/* Category Tabs Bar */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {[
@@ -279,6 +343,7 @@ export const DevotionalAudioPlayerView: React.FC<{
               onClick={() => {
                 setActiveCategory(cat.id);
                 setSelectedTrackIndex(0);
+                stopAllPlayback();
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
                 activeCategory === cat.id
@@ -296,7 +361,12 @@ export const DevotionalAudioPlayerView: React.FC<{
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Spinning Disc / Sacred Icon */}
             <div className="flex items-center gap-4 text-center sm:text-left">
-              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-500 text-stone-950 flex items-center justify-center font-black shadow-xl shrink-0 border-2 border-amber-300 relative ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '8s' }}>
+              <div
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-500 text-stone-950 flex items-center justify-center font-black shadow-xl shrink-0 border-2 border-amber-300 relative ${
+                  isPlaying ? 'animate-spin' : ''
+                }`}
+                style={{ animationDuration: '8s' }}
+              >
                 <Disc className="w-10 h-10 text-stone-950" />
                 <div className="w-4 h-4 rounded-full bg-stone-950 absolute inset-0 m-auto" />
               </div>
@@ -304,7 +374,9 @@ export const DevotionalAudioPlayerView: React.FC<{
               <div>
                 <div className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center justify-center sm:justify-start gap-1">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>{currentTrack.deity} • {currentTrack.category.toUpperCase()}</span>
+                  <span>
+                    {currentTrack.deity} • {currentTrack.category.toUpperCase()}
+                  </span>
                 </div>
                 <h3 className="font-granth font-black text-lg sm:text-2xl text-[#FFD88A] mt-0.5">
                   {currentTrack.title}
@@ -315,7 +387,7 @@ export const DevotionalAudioPlayerView: React.FC<{
               </div>
             </div>
 
-            {/* Giant Play/Pause Control Button for Senior Citizens (70+ Elderly) */}
+            {/* Giant Play/Pause Control Button for Senior Citizens */}
             <button
               type="button"
               onClick={handleTogglePlay}
@@ -342,20 +414,28 @@ export const DevotionalAudioPlayerView: React.FC<{
               <button
                 type="button"
                 onClick={() => {
-                  stopSpeech();
+                  stopAllPlayback();
                   setAudioSource('stream');
                 }}
-                className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${audioSource === 'stream' ? 'bg-[#B56A00] text-white' : 'bg-[#23140C] text-[#D9C4A9]'}`}
+                className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                  audioSource === 'stream'
+                    ? 'bg-[#B56A00] text-white'
+                    : 'bg-[#23140C] text-[#D9C4A9]'
+                }`}
               >
                 🎵 सुरीला भक्ति संगीत (Music Stream)
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  if (audioRef.current) audioRef.current.pause();
+                  stopAllPlayback();
                   setAudioSource('speech');
                 }}
-                className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${audioSource === 'speech' ? 'bg-[#B56A00] text-white' : 'bg-[#23140C] text-[#D9C4A9]'}`}
+                className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                  audioSource === 'speech'
+                    ? 'bg-[#B56A00] text-white'
+                    : 'bg-[#23140C] text-[#D9C4A9]'
+                }`}
               >
                 🗣 देववाणी स्पष्ट उच्चारण पाठ (Vedic Speech)
               </button>
@@ -369,7 +449,11 @@ export const DevotionalAudioPlayerView: React.FC<{
                   key={r}
                   type="button"
                   onClick={() => handleRateChange(r)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-bold ${playbackRate === r ? 'bg-amber-500 text-stone-950' : 'bg-[#23140C] text-[#D9C4A9]'}`}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                    playbackRate === r
+                      ? 'bg-amber-500 text-stone-950'
+                      : 'bg-[#23140C] text-[#D9C4A9]'
+                  }`}
                 >
                   {r}x
                 </button>
@@ -377,7 +461,7 @@ export const DevotionalAudioPlayerView: React.FC<{
             </div>
           </div>
 
-          {/* Audio Seek Progress Bar */}
+          {/* Audio Seek Progress Bar for Stream */}
           {audioSource === 'stream' && (
             <div className="space-y-1 pt-1">
               <div className="flex justify-between text-[11px] text-[#FFD88A] font-bold px-1">
@@ -396,6 +480,27 @@ export const DevotionalAudioPlayerView: React.FC<{
                 }}
                 className="w-full accent-amber-400 bg-[#23140C] h-2 rounded-lg cursor-pointer"
               />
+            </div>
+          )}
+
+          {/* Live Playing Status Indicator Banner */}
+          {isPlaying && (
+            <div className="p-2.5 bg-gradient-to-r from-amber-500/20 via-yellow-400/30 to-amber-500/20 border border-amber-400/50 rounded-xl flex items-center justify-between text-xs text-amber-200 font-bold animate-pulse">
+              <div className="flex items-center gap-2">
+                <Volume2 className="w-4 h-4 text-amber-300" />
+                <span>
+                  🔊 तानपुरा संगीत व श्लोक उच्चारण चालू है...
+                  {activeVerseIndex >= 0 &&
+                    ` (श्लोक ${activeVerseIndex + 1} / ${verses.length})`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={stopAllPlayback}
+                className="px-2.5 py-0.5 bg-amber-500 text-stone-950 rounded font-black text-[11px]"
+              >
+                रोकें
+              </button>
             </div>
           )}
         </div>
@@ -417,40 +522,62 @@ export const DevotionalAudioPlayerView: React.FC<{
             </button>
           </div>
 
-          {/* Verses Container with Senior Citizen Font Sizing */}
+          {/* Verses Container with Senior Citizen Font Sizing and Active Verse Highlighting */}
           <div className="space-y-4">
-            {currentTrack.lyricsText.split(/\n\s*\n/).map((versePara, pIdx) => (
-              <div
-                key={pIdx}
-                className="p-3.5 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl space-y-2 relative group hover:border-[#B56A00] transition"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div
-                    className={`font-serif leading-relaxed tracking-wide text-stone-950 font-bold whitespace-pre-line flex-1 ${
-                      seniorFontSize === 'normal'
-                        ? 'text-base sm:text-lg'
-                        : seniorFontSize === 'xl'
-                        ? 'text-xl sm:text-2xl'
-                        : 'text-2xl sm:text-3xl'
-                    }`}
-                  >
-                    {versePara}
+            {verses.map((versePara, pIdx) => {
+              const isActive = activeVerseIndex === pIdx && isPlaying;
+              return (
+                <div
+                  key={pIdx}
+                  id={`verse-card-${pIdx}`}
+                  className={`p-4 rounded-2xl space-y-2 relative transition duration-300 ${
+                    isActive
+                      ? 'bg-amber-100 border-2 border-[#B56A00] shadow-md ring-2 ring-amber-400/60'
+                      : 'bg-[#FAF2E4] border border-[#8C6239]/40 hover:border-[#B56A00]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 flex-1">
+                      {isActive && (
+                        <div className="flex items-center gap-1.5 text-xs font-black text-[#B56A00] uppercase tracking-wider bg-amber-200/90 px-2.5 py-0.5 rounded-full w-fit animate-pulse mb-1">
+                          <Volume2 className="w-3.5 h-3.5 text-[#B56A00]" />
+                          <span>
+                            🔊 पाठ चल रहा है — श्लोक {pIdx + 1} / {verses.length}
+                          </span>
+                        </div>
+                      )}
+                      <div
+                        className={`font-serif leading-relaxed tracking-wide text-stone-950 font-bold whitespace-pre-line ${
+                          seniorFontSize === 'normal'
+                            ? 'text-base sm:text-lg'
+                            : seniorFontSize === 'xl'
+                            ? 'text-xl sm:text-2xl'
+                            : 'text-2xl sm:text-3xl'
+                        }`}
+                      >
+                        {versePara}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePlaySpecificVerse(pIdx)}
+                      className={`p-2.5 rounded-xl text-xs font-bold shrink-0 cursor-pointer shadow-xs flex items-center gap-1.5 transition active:scale-95 ${
+                        isActive
+                          ? 'bg-[#B56A00] text-white font-black'
+                          : 'bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A]'
+                      }`}
+                      title="यहाँ से श्लोक पाठ शुरू करें"
+                    >
+                      <Volume2 className="w-4 h-4 text-amber-300" />
+                      <span className="hidden sm:inline">
+                        {isActive ? 'चल रहा है' : 'यहाँ से सुनें'}
+                      </span>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playTempleBellSound();
-                      speakTextWithSpeech(versePara);
-                    }}
-                    className="p-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] rounded-xl text-xs font-bold shrink-0 cursor-pointer shadow-xs flex items-center gap-1 active:scale-95"
-                    title="इस श्लोक को स्पष्ट स्वर में सुनें"
-                  >
-                    <Volume2 className="w-4 h-4 text-amber-300" />
-                    <span className="hidden sm:inline">सुनाएं</span>
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Meaning / Translation */}
@@ -470,40 +597,35 @@ export const DevotionalAudioPlayerView: React.FC<{
         <div className="space-y-2 pt-2">
           <h4 className="text-xs font-black text-[#FFD88A] uppercase tracking-wider flex items-center gap-1.5">
             <Disc className="w-4 h-4 text-amber-400" />
-            <span>अन्य उपलब्ध भक्ति पाठ सूची (Royalty Free Devotional Tracks)</span>
+            <span>अन्य भक्ति पाठ एवं आरती सूची ({filteredTracks.length}):</span>
           </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {filteredTracks.map((tr, idx) => {
-              const isSel = idx === selectedTrackIndex;
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {filteredTracks.map((track, idx) => {
+              const isSelected = selectedTrackIndex === idx;
               return (
-                <button
-                  key={tr.id}
-                  type="button"
+                <div
+                  key={track.id}
                   onClick={() => handleSelectTrack(idx)}
-                  className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-center justify-between gap-3 ${
-                    isSel
-                      ? 'bg-gradient-to-r from-[#5C3A21] to-[#462B17] border-amber-400 text-white shadow-md'
-                      : 'bg-[#23140C] border-[#8C6239]/40 text-[#D9C4A9] hover:bg-[#341F14]'
+                  className={`p-3 rounded-2xl border transition cursor-pointer flex items-center justify-between ${
+                    isSelected
+                      ? 'bg-gradient-to-r from-[#B56A00] to-[#8C6239] text-white border-amber-300 shadow-md font-bold'
+                      : 'bg-[#23140C] text-[#D9C4A9] hover:bg-[#341F14] border-[#8C6239]/40'
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${isSel ? 'bg-amber-400 text-stone-950' : 'bg-[#3E2714] text-amber-300'}`}>
-                      {isSel && isPlaying ? <Pause className="w-4 h-4 fill-stone-950" /> : <Play className="w-4 h-4 ml-0.5" />}
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold flex items-center gap-1.5">
+                      <span>{track.title}</span>
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-bold truncate text-[#FFD88A]">
-                        {tr.title}
-                      </div>
-                      <div className="text-[10px] text-[#D9C4A9] truncate">
-                        {tr.deity} • {tr.duration}
-                      </div>
+                    <div className="text-[10px] opacity-80">
+                      {track.deity} • {track.duration}
                     </div>
                   </div>
-                  <span className="text-[10px] bg-[#B56A00]/40 text-amber-200 px-2 py-0.5 rounded-full shrink-0 font-bold">
-                    {isSel ? 'चयनित' : 'सुनें →'}
-                  </span>
-                </button>
+
+                  <div className="p-2 rounded-xl bg-white/10 shrink-0">
+                    <Play className="w-4 h-4 text-amber-300 fill-current" />
+                  </div>
+                </div>
               );
             })}
           </div>
