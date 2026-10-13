@@ -157,14 +157,18 @@ public class UmaVoicePlugin extends Plugin {
             return;
         }
         call.setKeepAlive(true);
-        sitarWanted = call.getBoolean("music", false);
-        neuralCancel.set(false);
+        // The sitar file opens with one bright pluck. On a quiet phone that
+        // is the only thing heard when the internet voice never starts.
+        sitarWanted = false;
+        neuralCancel.set(true);
         synchronized (neuralQueue) {
             neuralQueue.clear();
-            neuralFinished = false;
+            neuralFinished = true;
         }
         stopVoicePlayer();
-        new Thread(() -> speakIndian(call, parts)).start();
+        stopSitar();
+        waitingSpeak.add(call);
+        ensureTts(() -> speakNow(call, parts));
     }
 
     private void speakIndian(PluginCall call, List<SpeechPart> parts) {
@@ -404,16 +408,13 @@ public class UmaVoicePlugin extends Plugin {
             call.reject("Voice engine unavailable");
             return;
         }
-        Voice chosen = pickFemaleHindiVoice(tts.getVoices());
-        if (chosen == null) {
-            openHindiVoiceInstall();
-            call.reject("हिंदी आवाज़ इंस्टॉल नहीं है");
-            return;
-        }
         tts.setLanguage(new Locale("hi", "IN"));
-        tts.setVoice(chosen);
-        if (sitarWanted) startSitar();
-        else stopSitar();
+        Voice chosen = pickFemaleHindiVoice(tts.getVoices());
+        if (chosen != null) {
+            tts.setVoice(chosen);
+        }
+        tts.setSpeechRate(0.9f);
+        tts.setPitch(1.0f);
         waitingSpeak.remove(call);
         PluginCall previous = speakCall;
         speakCall = call;

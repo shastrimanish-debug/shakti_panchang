@@ -209,7 +209,7 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     return;
   }
 
-  const withMusic = wantsPathMusic(parts);
+  const withMusic = false;
 
   if (Capacitor.isNativePlatform()) {
     try {
@@ -221,14 +221,12 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
       return;
     } catch (err) {
       isCurrentlySpeaking = false;
-      options?.onError?.(err);
-      return;
+      // Phone voice engine failed. Try the web speech engine before giving up.
     }
   }
 
-  if (withMusic) startPathBed();
-
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    options?.onError?.();
     options?.onEnd?.();
     return;
   }
