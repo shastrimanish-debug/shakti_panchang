@@ -12,6 +12,7 @@ build/
 .env.local
 .env.*.local
 *.zip
+!server/uma/shaktipanchang-uma-server.zip
 *.apk
 *.aab
 *.tar.gz
@@ -22,6 +23,8 @@ android/app/build/
 android/build/
 local.properties
 android/signing.env
+server/uma/v1/config.php
+
 .DS_Store
 .idea/
 *.iml

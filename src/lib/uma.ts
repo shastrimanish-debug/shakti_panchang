@@ -26,47 +26,81 @@ export interface AskUmaParams {
 export interface AskUmaResponse {
   ok: boolean;
   text: string;
-  source: "gemini" | "local_vedic";
+  source: "gemini" | "grok" | "openrouter" | "local_vedic";
   actionPayload?: {
     type: "open_panchang" | "open_choghadiya" | "open_kundali" | "open_yatra" | "open_muhurat";
     label: string;
   };
 }
 
+const UMA_PHP_URL = "https://myshivshakti.in/shaktipanchang/uma/v1/uma.php";
+
+export type UmaLinkState = "online" | "local" | "nokey";
+
+export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers: string[] }> {
+  try {
+    const resp = await fetch(UMA_PHP_URL, {
+      method: "GET",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!resp.ok) return { state: "local", providers: [] };
+    const data = await resp.json();
+    const providers = (["grok", "gemini", "openrouter"] as const).filter((name) => data?.[name] === true);
+    if (data?.ok === true && data?.service === "uma" && providers.length > 0) {
+      return { state: "online", providers: [...providers] };
+    }
+    if (data?.ok === true && data?.service === "uma") {
+      return { state: "nokey", providers: [] };
+    }
+    return { state: "local", providers: [] };
+  } catch {
+    return { state: "local", providers: [] };
+  }
+}
+
 export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
   const { query, panchang, activeKundali, panchangContext, kundaliContext, chatHistory, systemPrompt } = params;
 
-  // Try Gemini AI consultation proxy first
-  try {
-    const lic = getLicenseStatus();
-    const resp = await fetch("/api/uma/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-license-token": lic.token,
-      },
-      body: JSON.stringify({
-        query,
-        panchangContext,
-        kundaliContext,
-        chatHistory,
-        systemPrompt,
-        licenseToken: lic.token,
-      }),
-    });
+  const endpoints = import.meta.env.DEV
+    ? ["/api/uma/chat", UMA_PHP_URL]
+    : [UMA_PHP_URL];
 
-    if (resp.ok) {
+  for (const endpoint of endpoints) {
+    try {
+      const lic = getLicenseStatus();
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-license-token": lic.token,
+        },
+        signal: AbortSignal.timeout(28000),
+        body: JSON.stringify({
+          query,
+          panchangContext,
+          kundaliContext,
+          chatHistory,
+          systemPrompt,
+          licenseToken: lic.token,
+        }),
+      });
+
+      if (!resp.ok) continue;
       const data = await resp.json();
-      if (data.ok && data.text) {
+      const provider = data?.provider;
+      const source = provider === "grok" || provider === "openrouter" || provider === "gemini"
+        ? provider
+        : "gemini";
+      if (data?.ok && typeof data.text === "string" && data.text.trim()) {
         return {
           ok: true,
-          text: data.text,
-          source: "gemini",
+          text: data.text.trim(),
+          source,
         };
       }
+    } catch (err) {
+      console.warn("Uma cloud call failed, trying next:", endpoint, err);
     }
-  } catch (err) {
-    console.warn("Backend /api/uma/chat call failed, switching to local Vedic engine:", err);
   }
 
   // Fallback to local offline Vedic astrology engine

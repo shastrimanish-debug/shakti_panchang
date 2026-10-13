@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
-import { askUma, AskUmaResponse } from '@/lib/uma';
+import { askUma, AskUmaResponse, pingUmaServer } from '@/lib/uma';
 import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech } from '@/lib/umaSpeech';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { analyzeKundali } from '../services/predictions';
@@ -35,6 +35,7 @@ import {
   Phone,
   User,
   Loader2,
+  RefreshCw,
   CheckCircle2,
   Heart,
   Briefcase,
@@ -57,7 +58,7 @@ interface ChatMessage {
   sender: 'user' | 'uma';
   text: string;
   timestamp: Date;
-  source?: 'gemini' | 'local_vedic';
+  source?: 'gemini' | 'grok' | 'openrouter' | 'local_vedic';
   actionPayload?: {
     type: 'open_panchang' | 'open_choghadiya' | 'open_kundali' | 'open_yatra' | 'open_muhurat';
     label: string;
@@ -211,6 +212,20 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [clientBotPhone, setClientBotPhone] = useState('');
   const [clientBotGeneratedMsg, setClientBotGeneratedMsg] = useState('');
   const [isGeneratingBotMsg, setIsGeneratingBotMsg] = useState(false);
+  const [umaLink, setUmaLink] = useState<'checking' | 'online' | 'local' | 'nokey'>('checking');
+  const [umaProviders, setUmaProviders] = useState<string[]>([]);
+
+  const refreshUmaLink = async () => {
+    setUmaLink('checking');
+    const ping = await pingUmaServer();
+    setUmaLink(ping.state);
+    setUmaProviders(ping.providers);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    void refreshUmaLink();
+  }, [isOpen]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -552,6 +567,12 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       };
 
       setMessages((prev) => [...prev, umaMsg]);
+      if (res.source === 'local_vedic') {
+        setUmaLink('local');
+      } else {
+        setUmaLink('online');
+        setUmaProviders((prev) => (prev.includes(res.source) ? prev : [res.source, ...prev]));
+      }
 
       // Alexa-like voice response if audio enabled
       if (autoSpeak) {
@@ -663,6 +684,28 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             </button>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => void refreshUmaLink()}
+          className={`w-full px-3 py-1.5 text-left text-[11px] sm:text-xs font-bold border-b flex items-center justify-between gap-2 ${
+            umaLink === 'online'
+              ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+              : umaLink === 'nokey'
+                ? 'bg-amber-50 text-amber-950 border-amber-300'
+                : umaLink === 'local'
+                  ? 'bg-stone-100 text-stone-800 border-stone-300'
+                  : 'bg-amber-50 text-amber-900 border-amber-200'
+          }`}
+        >
+          <span>
+            {umaLink === 'checking' && 'उमा जाँच हो रही है...'}
+            {umaLink === 'online' && `उमा ऑनलाइन — ${umaProviders.map((p) => (p === 'grok' ? 'Grok' : p === 'gemini' ? 'Gemini' : 'OpenRouter')).join(' · ') || 'सर्वर जुड़ा'}`}
+            {umaLink === 'nokey' && 'उमा सर्वर जुड़ा — चाबी अभी खाली है'}
+            {umaLink === 'local' && 'उमा ऑफ़लाइन — लोकल पत्रिका चल रही है'}
+          </span>
+          <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${umaLink === 'checking' ? 'animate-spin' : ''}`} />
+        </button>
 
         {/* Live Speaking / Listening Waveform Notice */}
         {playingVoiceId && (
@@ -834,7 +877,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                         <span>॥</span>
                         <span>उमा ज्योतिषाचार्य निर्णय</span>
                         <span>॥</span>
-                        {msg.source === 'gemini' && (
+                        {msg.source && msg.source !== 'local_vedic' && (
                           <span className="bg-amber-100 text-[#B56A00] text-[10px] px-1.5 py-0.2 rounded border border-amber-300 font-sans">
                             AI
                           </span>

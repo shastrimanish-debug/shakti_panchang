@@ -105,7 +105,7 @@ STRICT BEHAVIORAL AND COMPUTATIONAL RULES:
         promptParts.push(`\n[पूर्व संवाद (Recent Chat Context)]:\n${historyText}`);
       }
 
-      promptParts.push(`\nकृपया उपरोक्त पंचांग व कुंडली गणनाओं के आधार पर यजमान के प्रश्न का उत्तर 'Grah Dasha Analysis', 'Past Insights', 'Future Trajectory', और 'Vedic Upay' शीर्षकों के साथ प्रदान करें।`);
+      promptParts.push(`\nपहले दो वाक्य सीधे इसी प्रश्न का उत्तर हों। वही चार शीर्षक मत दोहराओ। कुंडली में जो आँकड़ा नहीं है, वह घटना मत गढ़ो।`);
 
       const fullPrompt = promptParts.join("\n\n");
 
