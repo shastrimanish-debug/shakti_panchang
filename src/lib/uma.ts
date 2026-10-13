@@ -106,19 +106,6 @@ export async function generateUma({
   try {
     const q = (query || "").toLowerCase().trim();
 
-    // 1. Chart / Kundali questions (HIGHEST PRIORITY) - covers Hindi, Hinglish, English queries
-    if (kundali) {
-      const isKundaliIntent = /नौकरी|करियर|व्यापार|काम|धंधा|दुकान|बिजनेस|शादी|विवाह|दांपत्य|प्रेम|धन|पैसा|रुपया|ऋण|कर्ज|स्वास्थ्य|सेहत|बीमार|शनि|साढ़े|मंगल|मांगलिक|राहु|केतु|गुरु|शुक्र|दशा|कुंडली|लग्न|ग्रह|उपाय|भविष्य|क्यों|kyo|kyon|chal|raha|job|career|business|work|money|finance|wealth|marriage|love|health|shani|rahu|kundali|astro|horoscope|future|remedy/.test(q);
-      if (isKundaliIntent) {
-        return {
-          ok: true,
-          source: "local_vedic",
-          text: chartAnswer(kundali, query, panchang),
-          actionPayload: { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" },
-        };
-      }
-    }
-
     // 2. Pure Greeting & Introduction (MUST be strict word boundary, NOT substring like "nahi")
     const isPureGreeting = /^(नमस्ते|प्रणाम|हेलो|hello|hi|hey|hii|radhe radhe|jai shri krishna|om|hari om|jai jinendra|sat sri akaal|जय श्री राम|जय श्री कृष्ण|हर हर महादेव|तुम कौन हो|परिचय|who are you)[\s!.,?]*$/i.test(q) ||
       (q === "hi" || q === "hello" || q === "hey" || q === "नमस्ते" || q === "प्रणाम");
@@ -220,7 +207,9 @@ export async function generateUma({
     }
 
     // 3. PANCHANG / TITHI / MUHURAT / TODAY INQUIRIES
-    if (q.includes("आज") || q.includes("तिथि") || q.includes("पंचांग") || q.includes("मुहूर्त") || q.includes("चौघड़िया") || q.includes("राहुकाल") || q.includes("दिशाशूल")) {
+    const asksToday = /आज|तिथि|पंचांग|मुहूर्त|चौघड़िया|राहुकाल|दिशाशूल/.test(q);
+    const asksChart = /नौकरी|शादी|विवाह|दशा|कुंडली|लग्न|ग्रह|सेहत|पैसा|धन|महादशा/.test(q);
+    if (asksToday && !(kundali && asksChart)) {
       const wDay = panchang?.weekday || "सोमवार";
       const pKash = panchang?.paksha || "शुक्ल";
       const tth = panchang?.tithi || "एकादशी";
