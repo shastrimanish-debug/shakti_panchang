@@ -26,6 +26,7 @@ import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import { SubscriptionModal } from './SubscriptionModal';
 import { SadeSatiView } from './SadeSatiView';
 import { VargaAnalysisPanel } from './VargaAnalysisPanel';
+import { KpAshtakvargaPanel } from './KpAshtakvargaPanel';
 import { useTranslation } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
@@ -147,7 +148,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   // Active Sub-Tab
-  const [kundaliTab, setKundaliTab] = useState<'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati'>(
+  const [kundaliTab, setKundaliTab] = useState<'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati' | 'kp_ashtakvarga'>(
     initialSubTab || 'chart'
   );
 
@@ -877,6 +878,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           { id: 'dasha', label: t('kundali.tabDasha', 'विंशोत्तरी महादशा / अंतर्दशा / प्रत्यंतर'), icon: Clock },
           { id: 'milan', label: t('kundali.tabMilan', 'कुंडली मिलान (36 गुण व मांगलिक)'), icon: Heart },
           { id: 'sadesati', label: t('kundali.tabSadeSati', 'साढ़े साती एवं गोचर फल'), icon: Compass },
+          { id: 'kp_ashtakvarga', label: 'केपी पद्धति, अष्टकवर्ग व चर दशा', icon: Zap },
           { id: 'prashna', label: t('kundali.tabPrashna', 'प्रश्न कुंडली'), icon: HelpCircle },
           { id: 'remedies', label: t('kundali.tabRemedies', 'वैदिक उपाय एवं रत्न'), icon: Shield },
         ].map((tab) => {
@@ -2326,6 +2328,21 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           currentLocation={selectedCity}
           onNavigateToKundali={() => setIsFormExpanded(true)}
         />
+      )}
+
+      {/* Tab: KP System, Ashtakvarga & Jaimini Chara Dasha */}
+      {kundaliTab === 'kp_ashtakvarga' && (
+        k ? (
+          <KpAshtakvargaPanel kundali={k} />
+        ) : (
+          <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-6 text-center space-y-2">
+            <User className="w-8 h-8 text-[#B56A00] mx-auto" />
+            <h3 className="font-granth font-bold text-[#5C3A21] text-base">केपी व अष्टकवर्ग हेतु जातक कुण्डली आवश्यक है</h3>
+            <p className="text-xs text-[#735133] max-w-md mx-auto leading-relaxed">
+              कृपया ऊपर जातक का नाम, जन्म तिथि, सही जन्म समय और स्थान भरकर "जन्म पत्रिका बनाएं" दबाएँ।
+            </p>
+          </div>
+        )
       )}
 
       {/* Tab 4: Prashna Kundali */}
