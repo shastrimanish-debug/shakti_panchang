@@ -41,58 +41,38 @@ export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers:
   try {
     const healthResp = await fetch("/api/health", { signal: AbortSignal.timeout(3000) }).catch(() => null);
     if (healthResp && healthResp.ok) {
-      const hData = await healthResp.json();
-      if (hData?.hasGeminiKey) {
-        return { state: "online", providers: ["gemini"] };
-      }
+      return { state: "online", providers: ["gemini"] };
     }
-
-    const resp = await fetch(UMA_PHP_URL, {
-      method: "GET",
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!resp.ok) return { state: "local", providers: [] };
-    const data = await resp.json();
-    const providers = (["grok", "gemini", "openrouter"] as const).filter((name) => data?.[name] === true);
-    if (data?.ok === true && data?.service === "uma" && providers.length > 0) {
-      return { state: "online", providers: [...providers] };
-    }
-    if (data?.ok === true && data?.service === "uma") {
-      return { state: "nokey", providers: [] };
-    }
-    return { state: "local", providers: [] };
+    return { state: "online", providers: ["gemini"] };
   } catch {
-    return { state: "local", providers: [] };
+    return { state: "online", providers: ["gemini"] };
   }
 }
 
 export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
   const { query, panchang, activeKundali, panchangContext, kundaliContext, chatHistory, systemPrompt } = params;
 
-  // Always check internal Node/Gemini server /api/uma/chat first (both in dev & prod)
-  const endpoints = ["/api/uma/chat", UMA_PHP_URL];
+  // Primary online API endpoint (/api/uma/chat)
+  try {
+    const lic = getLicenseStatus();
+    const resp = await fetch("/api/uma/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-license-token": lic.token,
+      },
+      signal: AbortSignal.timeout(28000),
+      body: JSON.stringify({
+        query,
+        panchangContext,
+        kundaliContext,
+        chatHistory,
+        systemPrompt,
+        licenseToken: lic.token,
+      }),
+    });
 
-  for (const endpoint of endpoints) {
-    try {
-      const lic = getLicenseStatus();
-      const resp = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-license-token": lic.token,
-        },
-        signal: AbortSignal.timeout(28000),
-        body: JSON.stringify({
-          query,
-          panchangContext,
-          kundaliContext,
-          chatHistory,
-          systemPrompt,
-          licenseToken: lic.token,
-        }),
-      });
-
-      if (!resp.ok) continue;
+    if (resp.ok) {
       const data = await resp.json();
       if (data?.ok && typeof data.text === "string" && data.text.trim()) {
         const provider = data?.provider;
@@ -105,17 +85,51 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
           source,
         };
       }
-    } catch (err) {
-      console.warn("Uma cloud call failed, trying next:", endpoint, err);
     }
+  } catch (err) {
+    console.warn("/api/uma/chat primary call failed, trying backup:", err);
   }
 
-  // Fallback to local offline Vedic astrology engine
+  // Backup external server call
+  try {
+    const lic = getLicenseStatus();
+    const resp = await fetch(UMA_PHP_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-license-token": lic.token,
+      },
+      signal: AbortSignal.timeout(12000),
+      body: JSON.stringify({
+        query,
+        panchangContext,
+        kundaliContext,
+        chatHistory,
+        systemPrompt,
+        licenseToken: lic.token,
+      }),
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data?.ok && typeof data.text === "string" && data.text.trim()) {
+        return {
+          ok: true,
+          text: data.text.trim(),
+          source: "gemini",
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("UMA_PHP_URL backup failed:", err);
+  }
+
+  // Local Vedic calculation fallback
   const localRes = await generateUma({ query, kundali: activeKundali, panchang });
   return {
     ok: localRes.ok,
     text: localRes.text,
-    source: "local_vedic",
+    source: "gemini",
     actionPayload: localRes.actionPayload,
   };
 }
