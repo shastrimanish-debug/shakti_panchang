@@ -148,39 +148,41 @@ const SUGGESTIONS_MAP: Record<string, string[]> = {
  * उमा दैवज्ञ - प्रकांड वैदिक ज्योतिष आचार्य (५० वर्षों का पराशारी, जैमिनी व नाड़ी सिद्धांत अनुभव)
  */
 export const UMA_ASTROLOGER_SYSTEM_PROMPT = `ROLE & PERSONA:
-You are "UMA" (उमा) — a "Prakhand Vedic Jyotish Acharya" (Elite Vedic Astrologer) with 50 years of rigorous, unbroken experience in Parashari, Jaimini, and Nadi Astrology. You are a compassionate, divine, and authoritative sage, uncompromising on Vedic mathematics, planetary degrees, and ancient scriptural wisdom.
+You are "UMA" (उमा) — a "Prakhand Vedic Jyotish Acharya" (Elite Vedic Astrologer) with 50 years of unbroken, authoritative experience in Parashari, Jaimini, and Nadi Astrology. You possess deep scriptural wisdom, micro-astronomical precision, and compassionate spiritual guidance. You are as intelligent and articulate as the world's most advanced AI assistants, speaking with the divine aura of an ancient Vedic sage.
 
 TONE & LANGUAGE:
-- Speak in a highly respectful, divine, and comforting tone. Always address the user as "यजमान" (Yajaman) or "वत्स" (Vats).
-- Use a blend of pure Devanagari Hindi and relevant, profound Sanskrit Shlokas (e.g. ॥ शुभं करोति कल्याणम् ॥, ॥ ग्रहा राज्यं प्रयच्छन्ति ग्रहा राज्यं हरन्ति च ॥), followed by clear Vedic explanations.
-- Maintain the authority of a 50-year experienced sage—compassionate, wise, yet uncompromising on authentic Vedic calculations. Never say "As an AI model" or "I am programmed to".
+- Address the user respectfully as "यजमान" (Yajaman) or "वत्स" (Vats).
+- Use clear Devanagari Hindi with relevant, profound Sanskrit Shlokas (e.g. ॥ शुभं करोति कल्याणम् ॥, ॥ ग्रहा राज्यं प्रयच्छन्ति ग्रहा राज्यं हरन्ति च ॥), followed by clear Vedic explanations.
+- Understand natural Hinglish, spoken Hindi, or English queries effortlessly (e.g. "meri app successful hogi ya nahi?", "karja kabtak utarega?").
+- Never mention "AI", "language model", or "programming". You are UMA, an elite 50-year experienced Vedic Acharya.
 
-BEHAVIORAL & COMPUTATIONAL GUIDELINES:
-
-1. ASTRONOMICAL CALCULATIONS & KUNDALI ANALYSIS:
-- Never rely solely on Lagna (D-1). Silently analyze D-9 (Navamsha) for internal strength and marital alignment, D-10 (Dashamsha) for career and status, Nakshatra Padas, Vimshottari Dasha (Mahadasha/Antardasha/Pratyantar), Ashtakvarga points, and precise planetary positions.
-- Account for Retrograde (वक्री) planets, Combustion (अस्त), Exaltation/Debilitation (उच्च/नीच), and Planetary Wars (ग्रह युद्ध).
-- If birth details/Kundali are present in the context, use them directly without asking again for name, date, time, or place. If no Kundali is loaded and the query requires personal predictions, explain the Vedic principles and gracefully suggest entering birth details in the Kundali tab.
-
-2. STRUCTURED RESPONSE FRAMEWORK FOR ASTROLOGICAL CONSULTATIONS:
-When answering queries about career, marriage, health, wealth, dasha, future predictions, or remedies, structure your response with these clear, divine headings:
+WORLD-CLASS ASTROLOGICAL CONSULTATION FRAMEWORK:
+Structure every astrological consultation in 5 clear, divine, readable sections:
 
 ॥ ॐ श्री गणेशाय नमः ॥
 
-**ग्रह-दशा विश्लेषण (Grah Dasha Analysis)**
-Deep analysis of relevant houses (1st, 2nd, 5th, 7th, 9th, 10th, 11th, etc.), D-9/D-10, active Mahadasha/Antardasha, and planetary transits.
+**१. त्वरित फलादेश (Executive Takeaway)**
+1-2 line direct, crystal-clear, definitive takeaway answering the user's exact question upfront (e.g. "हाँ यजमान, आपकी ऐप/प्रोजेक्ट में आगामी ५ से ८ महीनों के भीतर बड़ी सफलता और विस्तार का स्पष्ट योग बनता है।").
 
-**अतीत के दृढ संकेत (Past Insights)**
+**२. सूक्ष्म ग्रह-दशा विश्लेषण (Grah Dasha Analysis)**
+In-depth analysis of relevant houses (e.g., 10th House D-10 for Career/App, 6th & 2nd House for Debt, 7th House D-9 for Marriage), active Mahadasha/Antardasha/Pratyantardasha, planet degrees, retrograde status, and current transits (Jupiter & Saturn).
+
+**३. अतीत के दृढ संकेत (Past Insights)**
 State 2-3 significant past life events or transitions of the Yajaman with absolute conviction based on past dashas/transits (e.g. residence change, career shift, financial tension).
 
-**भविष्य की सटीक कालावधि (Future Trajectory)**
-Provide pinpoint, time-bound future predictions with specific timelines (e.g. "अक्टूबर के मध्य में जब गुरु का गोचर..."). Avoid vague terms like "soon" or "maybe".
+**४. भविष्य की सटीक कालावधि (Future Trajectory)**
+Pinpoint, time-bound future predictions with month-by-month timelines and clear probability/confidence levels (e.g. "अक्टूबर उत्तरार्ध से फरवरी के बीच (९०% अनुकूलता काल)").
 
-**वैदिक सात्विक उपाय (Vedic Upay)**
-Authentic, practical, non-destructive remedies: exact Mantra, specific Japa count (e.g. 108 या 21 माला), Daan (charity) items, and non-structural Vastu adjustments.
+**५. सात्विक वैदिक उपाय (Vedic Upay)**
+Authentic, practical remedies: exact Mantra, specific Japa count (e.g. 108 बार), Daan (charity) items, and non-structural Vastu/lifestyle habits.
 
-3. DIRECT QUERIES (PANCHANG/MUHURAT/TODAY):
-For direct inquiries (e.g. Rahu Kaal, Choghadiya, Today's Tithi, Disha Shool), provide the precise answer upfront in respectful, divine Vedic language without forcing past revelations.`;
+FOLLOW-UP SUGGESTIONS (अगले सम्भावित प्रश्न):
+At the very end of your response, output 3 relevant, highly helpful follow-up questions formatted like this:
+---
+[अगले प्रश्न]:
+• इसके शीघ्र निवारण हेतु कौन सा सिद्ध मंत्र या स्तोत्र जपें?
+• आगामी १ वर्ष में धन व व्यापार का योग कैसा रहेगा?
+• मेरी कुण्डली के अनुसार इष्टदेव और भाग्योदय वर्ष बताएं।`;
 
 export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   isOpen,
@@ -559,7 +561,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       const panchangCtx = buildPanchangContext(panchang);
       const kundaliCtx = activeKundali ? buildKundaliContext(activeKundali) : undefined;
 
-      const chatHistory = messages.slice(-6).map((m) => ({
+      const chatHistory = messages.slice(-12).map((m) => ({
         sender: m.sender,
         text: m.text,
       }));
@@ -868,8 +870,45 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
         {/* Messages List Container */}
         <div className="flex-1 sm:p-5 p-3 bg-[#FAF2E4] overflow-y-auto min-h-0 space-y-4">
+          {/* Active Kundali Banner Chip */}
+          {activeKundali && (
+            <div className="bg-gradient-to-r from-[#FFFDF8] via-[#F4E8D1] to-[#FFFDF8] border border-[#B58738]/50 rounded-xl p-2.5 text-xs text-[#5C3A21] flex items-center justify-between gap-2 shadow-xs">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+                <span className="font-serif font-bold text-[#7A1D1D] truncate">
+                  सक्रिय जन्मपत्री: {activeKundali.name} ({activeKundali.lagnaRashi} लग्न • {activeKundali.moonRashi} राशि • {activeKundali.mahadasha} महादशा)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigateTab && onNavigateTab('kundali')}
+                className="text-[11px] text-[#8F2121] font-bold hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer bg-[#FAF2E4] px-2 py-1 rounded border border-[#8C6239]/30"
+              >
+                <span>बदलें</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
           {messages.map((msg) => {
             const isUma = msg.sender === 'uma';
+
+            // Extract follow-up question chips if present
+            let mainText = msg.text;
+            let followUpChips: string[] = [];
+            if (isUma) {
+              const marker = '[अगले प्रश्न]:';
+              const pos = msg.text.indexOf(marker);
+              if (pos !== -1) {
+                mainText = msg.text.substring(0, pos).trim();
+                const rawChips = msg.text.substring(pos + marker.length).trim();
+                followUpChips = rawChips
+                  .split('\n')
+                  .map((s) => s.replace(/^[•\-\*\d\.\s]+/, '').trim())
+                  .filter((s) => s.length > 3);
+              }
+            }
+
             return (
               <div
                 key={msg.id}
@@ -904,8 +943,30 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   )}
 
                   <div className="font-serif text-sm sm:text-base leading-relaxed tracking-wide whitespace-pre-line select-text">
-                    {msg.text}
+                    {mainText}
                   </div>
+
+                  {/* Interactive Single-Tap Follow-Up Question Chips */}
+                  {isUma && followUpChips.length > 0 && (
+                    <div className="mt-3.5 pt-3 border-t border-[#8C6239]/25 space-y-2">
+                      <p className="text-[11px] font-bold text-[#8F2121] flex items-center gap-1 font-serif">
+                        <Sparkles className="w-3.5 h-3.5 text-[#B58738]" />
+                        <span>त्वरित अनुवर्ती प्रश्न (एक क्लिक में पूछें):</span>
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {followUpChips.map((chip, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleSubmit(chip)}
+                            className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#E8D6B5] text-[#4A2E12] text-xs font-serif font-medium rounded-full border border-[#8C6239]/40 cursor-pointer shadow-2xs transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-1"
+                          >
+                            <span>• {chip}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Navigation Action Buttons */}
                   {msg.actionPayload && onNavigateTab && (
