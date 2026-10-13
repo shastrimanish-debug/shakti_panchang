@@ -105,7 +105,31 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
         </div>
       <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="bx-more-flow px-3 pt-2 pb-1">
 
-        {/* Big Prominent UMA AI Hero Card */}
+        {/* Big Prominent Senior Citizen Audio Player Hero Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('audio_player'))}
+            className="w-full p-3 rounded-2xl bg-gradient-to-r from-[#5C3A21] via-[#8C6239] to-[#5C3A21] text-[#FAF2E4] font-bold flex items-center justify-between shadow-md border border-amber-400/60 transition cursor-pointer active:scale-95 m3-touch"
+          >
+            <div className="flex items-center gap-3 text-left">
+              <div className="w-10 h-10 rounded-full bg-amber-400 text-stone-950 flex items-center justify-center shadow-md font-black shrink-0">
+                <Volume2 className="w-5 h-5 fill-current" />
+              </div>
+              <div>
+                <div className="text-xs sm:text-sm font-black text-[#FFD88A] flex items-center gap-1.5">
+                  <span>🎧 सुरीला भक्ति संगीत व स्वर पाठ (70+ सुगम मोड)</span>
+                </div>
+                <div className="text-[10px] text-[#D9C4A9]">
+                  शिव महिम्न, हनुमान चालीसा, दुर्गा सप्तशती, आरतियाँ व जाप — कॉपीराइट मुक्त सुरों में
+                </div>
+              </div>
+            </div>
+            <span className="text-[10px] bg-amber-400 text-stone-950 px-2.5 py-1 rounded-full font-black shrink-0 shadow-2xs">
+              सुनें ▶
+            </span>
+          </button>
+        </div>
         <div className="mt-3.5">
           <button
             type="button"

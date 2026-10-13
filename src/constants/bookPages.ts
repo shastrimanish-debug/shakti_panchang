@@ -18,6 +18,7 @@ import {
   Award,
   Eye,
   HelpCircle,
+  Volume2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -286,6 +287,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     desc: 'संपूर्ण १२ माह का कालनिर्णय कैलेंडर, एकादशी, पूर्णिमा, अमावस्या व मुख्य पर्व सूची',
     icon: Calendar,
     screenTitle: '📅 मासिक सनातन कालनिर्णय पंचांग',
+  },
+  {
+    id: 'audio_player',
+    title: 'सुरीला भक्ति संगीत व स्वर पाठ (70+ सुगम मोड)',
+    label: 'भक्ति संगीत',
+    pageNumber: 28,
+    chapter: 'स्वर मण्डल',
+    desc: 'शिव महिम्न, हनुमान चालीसा, दुर्गा सप्तशती, आरती व जाप — कॉपीराइट मुक्त सुरों में',
+    icon: Volume2,
+    screenTitle: '🎧 सुरीला भक्ति संगीत व स्वर पाठ',
   },
   {
     id: 'rashifal',

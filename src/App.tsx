@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { PanchangView } from './components/PanchangView';
 import { KalnirnayMonthView } from './components/KalnirnayMonthView';
+import { DevotionalAudioPlayerView } from './components/DevotionalAudioPlayerView';
 import { ChoghadiyaView } from './components/ChoghadiyaView';
 import { MuhuratView } from './components/MuhuratView';
 import { YatraView } from './components/YatraView';
@@ -276,6 +277,8 @@ export function App() {
           reminders: 'दैनिक स्मृति व संकल्प',
           vratkatha: 'व्रत कथा व आरती',
           durga: 'श्री दुर्गा सप्तशती',
+          kalnirnay: 'मासिक सनातन पंचांग',
+          audio_player: 'सुरीला भक्ति संगीत व स्वर पाठ',
           upay: 'ग्रह शांति व चमत्कारी उपाय',
           vastu: 'वैदिक वास्तु शास्त्र',
         };
@@ -448,6 +451,16 @@ export function App() {
                   onNavigateToReminders={() => handleSelectTab('reminders')}
                 />
               </div>
+            )}
+
+            {activeTab === 'audio_player' && (
+              <DevotionalAudioPlayerView
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onBackToPanchang={() => handleSelectTab('panchang')}
+              />
             )}
 
             {activeTab === 'choghadiya' && (
