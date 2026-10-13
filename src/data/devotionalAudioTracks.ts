@@ -4,7 +4,7 @@ export interface DevotionalTrack {
   category: 'stotra' | 'aarti' | 'mantra' | 'bhajan' | 'saptashati';
   deity: string;
   duration: string;
-  audioUrl?: string; // Royalty-Free / Public Domain Stream
+  audioUrl?: string; // Direct Public Domain Audio
   lyricsText: string;
   meaningText?: string;
   description: string;
@@ -69,7 +69,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'stotra',
     deity: 'भगवान शिव',
     duration: '08:45',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3', // Royalty Free Sacred Chanting
+    audioUrl: 'https://archive.org/download/ShivaMahimnaStotram/ShivaMahimnaStotram.mp3',
     lyricsText: SHIV_MAHIMNA_STOTRAM_TEXT,
     meaningText: 'गंधर्वराज पुष्पदन्त विरचित श्री शिव महिम्न स्तोत्रम् — भगवान शिव के अतुलनीय प्रभाव, महिमा एवं दिव्य स्वरूप की स्तुति।',
     description: 'गंभीर सुरीली वैदिक ध्वनि में श्री शिव महिम्न स्तोत्र। वृद्धजनों के लिए सुगम पाठ एवं भक्ति संगीत।',
@@ -80,13 +80,16 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'bhajan',
     deity: 'श्री हनुमान जी',
     duration: '09:30',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8230784.mp3', // Royalty Free Indian Classical Chanting
+    audioUrl: 'https://archive.org/download/HanumanChalisa_201804/Hanuman%20Chalisa.mp3',
     lyricsText: `श्रीगुरु चरन सरोज रज निज मनु मुकुरु सुधारि। बरनउँ रघुबर बिमल जसु जो दायकु फल चारि॥
 बुद्धिहीन तनु जानिके सुमिरौ पवन-कुमार। बल बुद्धि बिद्या देहु मोहिं हरहु कलेस बिकार॥
 
 जय हनुमान ज्ञान गुन सागर। जय कपीस तिहुँ लोक उजागर॥
 राम दूत अतुलित बल धामा। अंजनि-पुत्र पवनसुत नामा॥
-महाबीर बिक्रम बजरंगी। कुमति निवार सुमति के संगी॥`,
+महाबीर बिक्रम बजरंगी। कुमति निवार सुमति के संगी॥
+कंचन बरन बिराज सुबेसा। कानन कुंडल कुंचित केसा॥
+हाथ बज्र ओ ध्वजा बिराजै। काँधे मूँज जनेऊ साजै॥
+संकर सुवन केसरीनंदन। तेज प्रताप महा जग बन्दन॥`,
     meaningText: 'गोस्वामी तुलसीदास कृत श्री हनुमान चालीसा — बल, बुद्धि, विद्या एवं आरोग्य प्रदाता संकटमोचन पाठ।',
     description: '100% कॉपीराइट मुक्त सात्विक सुरों में श्री हनुमान चालीसा पाठ।',
   },
@@ -96,14 +99,16 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'saptashati',
     deity: 'भगवती महाकाली / दुर्गा',
     duration: '12:15',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3', // Royalty Free Chanting
+    audioUrl: 'https://archive.org/download/DurgaSaptashatiFullChanting/01_Durga_Saptashati_Adhyay_1.mp3',
     lyricsText: `॥ अथ प्रथमोऽध्यायः ॥
 ॐ नमश्चण्डिकायै॥
 मार्कण्डेय उवाच॥
 सावर्णिः सूर्यतनयो यो मनुः कथ्यतेऽष्टमः।
 निशामय तदुत्पत्तिं विस्तराद् गदतो मम॥
 महामायानुभावेन यथा मन्वन्तराधिपः।
-स बभूव महाभागः सावर्णिस्तनयो रवेः॥`,
+स बभूव महाभागः सावर्णिस्तनयो रवेः॥
+स्वारोचिषेऽन्तरे पूर्वं चैत्रवंशसमुद्भवः।
+सुरथो नाम राजाभूत्समस्ते क्षितिमण्डले॥`,
     meaningText: 'मार्कण्डेय पुराणोक्त श्री दुर्गा सप्तशती — भगवती महामाया चण्डिका की महिमा, मधु-कैटभ वध एवं देवी कवच।',
     description: 'सात्विक चण्डी पाठ एवं सुरीली देवी स्तुति।',
   },
@@ -113,7 +118,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'mantra',
     deity: 'वेदमाता गायत्री',
     duration: '11:20',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_03d97f25cb.mp3', // Public Domain Ambient Meditation
+    audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/23/Gayatri_Mantra.ogg',
     lyricsText: `ॐ भूर्भुवः स्वः। तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि। धियो यो नः प्रचोदयात्॥`,
     meaningText: 'सृष्टि के प्रकाशक परमात्मा हमारे अंतःकरण को सद्बुद्धि व सन्मार्ग से प्रकाशित करें।',
     description: 'बुद्धि, एकाग्रता एवं आध्यात्मिक शांति हेतु २१ बार दिव्य गायत्री जाप।',
@@ -124,7 +129,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'mantra',
     deity: 'भगवान त्र्यम्बक शिव',
     duration: '15:00',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2023/02/28/audio_2265ef2b42.mp3', // Public Domain Chanting
+    audioUrl: 'https://archive.org/download/MahamrityunjayMantra108Times/MahamrityunjayMantra.mp3',
     lyricsText: `ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥`,
     meaningText: 'हम त्रिनेत्रधारी सुगन्धित एवं पुष्टि को बढ़ाने वाले भगवान शिव की उपासना करते हैं। जिस प्रकार पका हुआ खरबूजा बेल से मुक्त होता है, उसी प्रकार हम मृत्यु से मुक्त होकर अमृतत्व प्राप्त करें।',
     description: 'स्वास्थ्य सुरक्षा एवं दीर्घायु हेतु महामृत्युंजय जाप।',
@@ -135,14 +140,16 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'aarti',
     deity: 'भगवान श्री गणेश',
     duration: '04:30',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/01/26/audio_d0c6b12a80.mp3', // Indian Traditional Instrumental
+    audioUrl: 'https://archive.org/download/JaiGaneshDevaAarti/JaiGaneshDevaAarti.mp3',
     lyricsText: `जय गणेश जय गणेश जय गणेश देवा।
 माता जाकी पारवती पिता महादेवा॥
 
 एक दन्त दयावन्त चार भुजाधारी।
 माथे सिन्दूर सोहे मूसे की सवारी॥
 पान चढ़े फूल चढ़े और चढ़े मेवा।
-लड्डुअन का भोग लगे सन्त करें सेवा॥`,
+लड्डुअन का भोग लगे सन्त करें सेवा॥
+अंधन को आँख देत कोढ़िन को काया।
+बांझन को पुत्र देत निर्धन को माया॥`,
     meaningText: 'विघ्नहर्ता श्री गणेश जी की सर्व-मंगलकारिणी नित्य आरती।',
     description: 'सुरीले ढोलक, मंजीरा एवं घंटी की ध्वनि में गणेश आरती।',
   },
@@ -150,26 +157,30 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     id: 'laxmi-aarti',
     title: 'ॐ जय लक्ष्मी माता (श्री महालक्ष्मी आरती)',
     category: 'aarti',
-    deity: 'माँ महालक्ष्मी',
-    duration: '05:15',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/05/16/audio_c0c801d9f1.mp3',
+    deity: 'भगवती महालक्ष्मी',
+    duration: '05:10',
+    audioUrl: 'https://archive.org/download/OmJaiLaxmiMataAarti/OmJaiLaxmiMata.mp3',
     lyricsText: `ॐ जय लक्ष्मी माता, मैया जय लक्ष्मी माता।
 तुमको निसदिन ध्यावत, हर विष्णु विधाता॥
 उमा रमा ब्रह्माणी, तुम ही जग-माता।
-सूर्य चन्द्रमा ध्यावत, नारद ऋषि गाता॥`,
-    meaningText: 'धन, धान्य, समृद्धि एवं आरोग्य प्रदायिनी श्री महालक्ष्मी आरती।',
-    description: 'सायंकालीन दीपदान व महालक्ष्मी आरती।',
+सूर्य चन्द्रमा ध्यावत, नारद ऋषि गाता॥
+दुर्गा रूप निरंजनी, सुख सम्पति दाता।
+जो कोई तुमको ध्यावत, ऋद्धि सिद्धि पाता॥`,
+    meaningText: 'सुख-समृद्धि, वैभव एवं ऐश्वर्य प्रदायिनी श्री महालक्ष्मी आरती।',
+    description: 'संध्याकालीन सात्विक आरती एवं धन-धान्य समृद्धि पाठ।',
   },
   {
-    id: 'om-namah-shivaya-meditation',
-    title: 'ॐ नमः शिवाय (तानपुरा व शंख ध्वनि ध्यान)',
-    category: 'bhajan',
-    deity: 'भगवान शिव',
-    duration: '20:00',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_51a084c8a2.mp3',
-    lyricsText: `ॐ नमः शिवाय। ॐ नमः शिवाय। ॐ नमः शिवाय।
-हर हर भोले नमः शिवाय॥`,
-    meaningText: 'शांत चित्त एवं मानसिक शांति हेतु सात्विक शिव नाम संकीर्तन।',
-    description: 'वृद्धजनों के लिए अत्यंत सुखद, तनावमुक्त शिव ध्यान संगीत।',
+    id: 'ram-stuti',
+    title: 'श्री रामचन्द्र कृपालु भजु मन (श्री राम स्तुति)',
+    category: 'stotra',
+    deity: 'भगवान श्री राम',
+    duration: '06:15',
+    audioUrl: 'https://archive.org/download/ShriRamChandraKripaluBhajman/RamStuti.mp3',
+    lyricsText: `श्रीरामचन्द्र कृपालु भजु मन हरण भवभय दारुणम्।
+नवकंज लोचन, कंज मुख, कर कंज, पद कंजारुणम्॥
+कन्दर्प अगणित अमित छवि, नवनील नीरद सुन्दरम्।
+पट पीत मानहु तड़ित रुचि शुचि नौमि जनक सुतावरम्॥`,
+    meaningText: 'गोस्वामी तुलसीदास कृत भगवान श्री राम की करुणामयी पावन स्तुति।',
+    description: 'भय-शोक नाशक एवं मनःशांति प्रदायक मधुर राम स्तुति।',
   },
 ];

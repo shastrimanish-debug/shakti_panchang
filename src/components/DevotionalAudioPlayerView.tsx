@@ -23,6 +23,7 @@ import {
   Disc,
 } from 'lucide-react';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { devotionalAudioEngine } from '../services/devotionalAudioEngine';
 
 // Web Audio API Temple Sound Synthesizer (Temple Bell & Shankh)
 function playTempleBellSound() {
@@ -80,27 +81,47 @@ export const DevotionalAudioPlayerView: React.FC<{
 
   // Speech Synthesis Reciter for Verse Reading
   const speakTextWithSpeech = useCallback((text: string) => {
+    devotionalAudioEngine.playTempleBell(880);
+    devotionalAudioEngine.startTanpuraDrone();
+
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
 
-    const cleanText = text.replace(/[*#॥|_]/g, ' ');
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'hi-IN';
-    utterance.rate = playbackRate * 0.85; // Calmer pace for senior citizens
-    utterance.pitch = 0.95; // Warm, resonant voice pitch
+    try {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
 
-    utterance.onend = () => {
-      setIsPlaying(false);
-    };
-    utterance.onerror = () => {
-      setIsPlaying(false);
-    };
+      const cleanText = text.replace(/[*#॥|_]/g, ' ');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'hi-IN';
+      utterance.rate = playbackRate * 0.85; // Calmer pace for senior citizens
+      utterance.pitch = 0.95; // Warm, resonant voice pitch
 
-    window.speechSynthesis.speak(utterance);
-    setIsPlaying(true);
+      const voices = window.speechSynthesis.getVoices();
+      const hindiVoice = voices.find(
+        (v) => v.lang.includes('hi') || v.name.toLowerCase().includes('hindi')
+      );
+      if (hindiVoice) {
+        utterance.voice = hindiVoice;
+      }
+
+      utterance.onend = () => {
+        setIsPlaying(false);
+        devotionalAudioEngine.stopTanpuraDrone();
+      };
+      utterance.onerror = () => {
+        setIsPlaying(false);
+        devotionalAudioEngine.stopTanpuraDrone();
+      };
+
+      window.speechSynthesis.speak(utterance);
+      setIsPlaying(true);
+    } catch {
+      setIsPlaying(true);
+    }
   }, [playbackRate]);
 
   const stopSpeech = useCallback(() => {
+    devotionalAudioEngine.stopTanpuraDrone();
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -108,22 +129,22 @@ export const DevotionalAudioPlayerView: React.FC<{
 
   // Handle Play/Pause
   const handleTogglePlay = () => {
-    playTempleBellSound();
+    devotionalAudioEngine.playTempleBell(880);
 
     if (isPlaying) {
-      if (audioSource === 'stream' && audioRef.current) {
-        audioRef.current.pause();
-      } else {
-        stopSpeech();
-      }
+      if (audioRef.current) audioRef.current.pause();
+      stopSpeech();
+      devotionalAudioEngine.stopTanpuraDrone();
       setIsPlaying(false);
     } else {
-      if (audioSource === 'stream' && audioRef.current) {
+      devotionalAudioEngine.startTanpuraDrone();
+
+      if (audioSource === 'stream' && audioRef.current && currentTrack.audioUrl) {
         audioRef.current
           .play()
           .then(() => setIsPlaying(true))
           .catch(() => {
-            // Fallback to speech if stream fails or network is offline
+            // Fallback to speech + Tanpura if stream is blocked by CORS/network
             setAudioSource('speech');
             speakTextWithSpeech(currentTrack.lyricsText);
           });
@@ -135,7 +156,8 @@ export const DevotionalAudioPlayerView: React.FC<{
 
   // Switch Track
   const handleSelectTrack = (idx: number) => {
-    playTempleBellSound();
+    devotionalAudioEngine.playTempleBell(880);
+    devotionalAudioEngine.stopTanpuraDrone();
     stopSpeech();
     if (audioRef.current) audioRef.current.pause();
 
@@ -387,8 +409,8 @@ export const DevotionalAudioPlayerView: React.FC<{
             </h4>
             <button
               type="button"
-              onClick={playTempleBellSound}
-              className="px-3 py-1 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
+              onClick={() => devotionalAudioEngine.playTempleBell(880)}
+              className="px-3 py-1 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
             >
               <Bell className="w-4 h-4 text-amber-300" />
               <span>मन्दिर घण्टी बजाएं</span>
