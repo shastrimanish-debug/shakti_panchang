@@ -27,6 +27,7 @@ import { SubscriptionModal } from './SubscriptionModal';
 import { SadeSatiView } from './SadeSatiView';
 import { VargaAnalysisPanel } from './VargaAnalysisPanel';
 import { KpAshtakvargaPanel } from './KpAshtakvargaPanel';
+import { JaiminiPanel } from './JaiminiPanel';
 import { useTranslation } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
@@ -186,6 +187,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [isFormExpanded, setIsFormExpanded] = useState<boolean>(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [vargaListFilter, setVargaListFilter] = useState<'shodash' | 'all60'>('all60');
+  const [dashaSystemTab, setDashaSystemTab] = useState<'vimshottari' | 'jaimini'>('vimshottari');
 
   // Kundali Input Form State — empty until the user enters a real native
   const [name, setName] = useState('');
@@ -875,7 +877,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         {[
           { id: 'phalit', label: t('kundali.tabPrediction', 'फलादेश (Prediction)'), icon: Sparkles },
           { id: 'chart', label: t('kundali.tabLagnaVargas', 'लग्न व सम्पूर्ण वर्ग चक्र (D1 से D60)'), icon: Layers },
-          { id: 'dasha', label: t('kundali.tabDasha', 'विंशोत्तरी महादशा / अंतर्दशा / प्रत्यंतर'), icon: Clock },
+          { id: 'dasha', label: t('kundali.tabDasha', 'दशा चक्र (विंशोत्तरी व जैमिनी चर दशा)'), icon: Clock },
           { id: 'milan', label: t('kundali.tabMilan', 'कुंडली मिलान (36 गुण व मांगलिक)'), icon: Heart },
           { id: 'sadesati', label: t('kundali.tabSadeSati', 'साढ़े साती एवं गोचर फल'), icon: Compass },
           { id: 'kp_ashtakvarga', label: 'केपी पद्धति, अष्टकवर्ग व चर दशा', icon: Zap },
@@ -1417,8 +1419,41 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           onTouchStart={handleDashaTouchStart}
           onTouchEnd={handleDashaTouchEnd}
         >
-          {/* Active Dasha Hero Card with Pratyantar */}
-          <div className="bg-[#FAF2E4] border-2 border-[#B56A00] rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
+          {/* Dasha System Selector: Vimshottari vs Jaimini Chara Dasha */}
+          <div className="flex flex-wrap items-center justify-center p-1 bg-[#462B17] rounded-xl text-xs font-bold border border-[#8C6239]/60 gap-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setDashaSystemTab('vimshottari')}
+              className={`flex-1 py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer min-w-[200px] ${
+                dashaSystemTab === 'vimshottari'
+                  ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
+                  : 'text-[#E5D2B8] hover:text-white'
+              }`}
+            >
+              <Zap className="w-4 h-4 text-[#B56A00]" />
+              <span>१. विंशोत्तरी दशा (३-स्तरीय ग्रह दशा)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDashaSystemTab('jaimini')}
+              className={`flex-1 py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer min-w-[200px] ${
+                dashaSystemTab === 'jaimini'
+                  ? 'bg-[#FAF2E4] text-[#5C3A21] shadow-md font-black ring-1 ring-[#B56A00]'
+                  : 'text-[#E5D2B8] hover:text-white'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-[#B56A00]" />
+              <span>२. जैमिनी चर दशा व कारकांश (Jaimini Chara Dasha)</span>
+            </button>
+          </div>
+
+          {dashaSystemTab === 'jaimini' ? (
+            <JaiminiPanel kundali={k} />
+          ) : (
+            <>
+              {/* Active Dasha Hero Card with Pratyantar */}
+              <div className="bg-[#FAF2E4] border-2 border-[#B56A00] rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-xs font-bold text-[#8C6239] uppercase tracking-wider flex items-center gap-1.5">
                 <Zap className="w-4 h-4 text-[#B56A00]" />
@@ -1794,8 +1829,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
+    </div>
+  )}
 
       {/* Tab 3: Kundali Milan (36 Gunas, Manglik, Nadi, Bhakoot & Twin Charts) */}
       {kundaliTab === 'milan' && (
