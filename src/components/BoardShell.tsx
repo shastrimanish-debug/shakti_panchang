@@ -288,11 +288,11 @@ export function BoardDock({
 const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   {
     title: { hi: "आज", en: "Today", gu: "આજ" },
-    ids: ["panchang", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
+    ids: ["panchang", "kalnirnay", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
   },
   {
     title: { hi: "जन्म पत्रिका", en: "Birth chart", gu: "જન્મ પત્રિકા" },
-    ids: ["kundali", "milan", "upay", "saral", "sabar", "numerology", "gemology"],
+    ids: ["kundali", "milan", "prashna", "upay", "saral", "sabar", "numerology", "gemology"],
   },
   {
     title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },

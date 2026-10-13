@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Navbar } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { PanchangView } from './components/PanchangView';
+import { KalnirnayMonthView } from './components/KalnirnayMonthView';
 import { ChoghadiyaView } from './components/ChoghadiyaView';
 import { MuhuratView } from './components/MuhuratView';
 import { YatraView } from './components/YatraView';
@@ -436,6 +437,19 @@ export function App() {
               />
             )}
 
+            {activeTab === 'kalnirnay' && (
+              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
+                <KalnirnayMonthView
+                  currentDate={currentDate}
+                  onDateSelect={(d) => {
+                    setCurrentDate(d);
+                    handleSelectTab('panchang');
+                  }}
+                  onNavigateToReminders={() => handleSelectTab('reminders')}
+                />
+              </div>
+            )}
+
             {activeTab === 'choghadiya' && (
               <ChoghadiyaView
                 panchang={panchang}
@@ -473,14 +487,14 @@ export function App() {
               />
             )}
 
-            {(activeTab === 'kundali' || activeTab === 'milan') && (
+            {(activeTab === 'kundali' || activeTab === 'milan' || activeTab === 'prashna') && (
               <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
                 <div className="w-full px-2 pb-8">
                 <KundaliView
                   activeKundali={activeKundali}
                   setActiveKundali={setActiveKundali}
                   currentLocation={currentLocation}
-                  initialSubTab={activeTab === 'milan' ? 'milan' : undefined}
+                  initialSubTab={activeTab === 'milan' ? 'milan' : activeTab === 'prashna' ? 'prashna' : undefined}
                   onOpenSavedModal={() => setIsSavedProfilesModalOpen(true)}
                   onOpenUmaModal={() => setIsUmaModalOpen(true)}
                   onOpenBrandingModal={() => setIsBrandingModalOpen(true)}

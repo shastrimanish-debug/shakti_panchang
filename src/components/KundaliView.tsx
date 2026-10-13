@@ -858,7 +858,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         </div>
       )}
 
-      {!k && (
+      {!k && kundaliTab !== 'milan' && kundaliTab !== 'prashna' && (
         <div className="bg-parchment border border-wood/40 rounded-xl p-6 text-center space-y-2">
           <User className="w-8 h-8 text-gold mx-auto" />
           <h3 className="font-granth font-bold text-temple text-base">{t('kundali.noKundaliYet', 'नई कुंडली — कोई पूर्व-भरा जातक नहीं')}</h3>

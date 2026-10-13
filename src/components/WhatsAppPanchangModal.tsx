@@ -504,13 +504,29 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   const handleDownloadImage = async () => {
     if (!imageUri) return;
     const fileName = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
-
-    await shareImageFile({
-      imageUri,
-      fileName,
-      title: `दैनिक वैशाली/वैदिक पंचांग कार्ड`,
-      text: getShareText(),
-    });
+    try {
+      const res = await fetch(imageUri);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 1500);
+    } catch {
+      const a = document.createElement('a');
+      a.href = imageUri;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+      }, 1500);
+    }
   };
 
   const handleCopyText = () => {

@@ -22,6 +22,8 @@ import {
   Coins,
   Eye,
   Lock,
+  Calendar,
+  HelpCircle,
 } from 'lucide-react';
 import { SavedLocation } from '../types';
 import { AppTheme, DEVOTIONAL_THEMES, getAstrologerBranding } from '../services/storage';
@@ -417,6 +419,27 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
           </button>
 
+          {/* मासिक सनातन कालनिर्णय पंचांग */}
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('kalnirnay'))}
+            className="flex items-center gap-2.5 p-2.5 bg-gradient-to-r from-[#FFFDF9] to-[#FBF0DD] dark:bg-[#341F14] border border-[#B56A00]/40 rounded-2xl text-left col-span-2 shadow-2xs cursor-pointer active:scale-95"
+          >
+            <div className="p-2 bg-gradient-to-br from-[#B56A00] to-[#8C6239] text-white rounded-xl shadow-xs">
+              <Calendar className="w-5 h-5 text-amber-200" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center justify-between">
+                <span>📅 मासिक सनातन कालनिर्णय पंचांग</span>
+                <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-bold">12 माह</span>
+              </div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">
+                संपूर्ण १२ महीनों का पंचांग, एकादशी, प्रदोष, व्रत-त्योहार व मुहूर्त कैलेंडर
+              </div>
+            </div>
+          </button>
+
+          {/* अष्टकूट ३६ गुण विवाह मिलान */}
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('milan'))}
@@ -427,9 +450,26 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
             <div>
               <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
-                <span>{t('nav.milan', 'कुंडली मिलान')}</span>
+                <span>{t('nav.milan', 'अष्टकूट विवाह मिलान')}</span>
               </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.milanDesc', 'अष्टकूट ३६ गुण')}</div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.milanDesc', '३६ गुण व मांगलिक विचार')}</div>
+            </div>
+          </button>
+
+          {/* तात्कालिक प्रश्न कुंडली */}
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('prashna'))}
+            className="flex items-center gap-2 p-2 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch"
+          >
+            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-xl">
+              <HelpCircle className="w-4 h-4 text-[#FFD88A]" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
+                <span>तात्कालिक प्रश्न कुंडली</span>
+              </div>
+              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">तत्काल प्रश्न व कार्यसिद्धि</div>
             </div>
           </button>
 

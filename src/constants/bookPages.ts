@@ -17,6 +17,7 @@ import {
   Coins,
   Award,
   Eye,
+  HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -164,6 +165,16 @@ export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
     screenTitle: '💍 अष्टकूट मिलान व PDF',
   },
   {
+    id: 'prashna',
+    title: 'प्रश्न कुंडली',
+    label: 'प्रश्न कुंडली',
+    pageNumber: 26,
+    chapter: '',
+    desc: 'तत्काल समय की कुण्डली से होरा व कार्य सिद्धी',
+    icon: HelpCircle,
+    screenTitle: '❓ तात्कालिक प्रश्न कुण्डली',
+  },
+  {
     id: 'festivals',
     title: 'व्रत एवं त्योहार',
     label: 'व्रत एवं त्योहार',
@@ -265,6 +276,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     desc: 'तिथि, वार, नक्षत्र, योग, करण व अयनांश',
     icon: Sun,
     screenTitle: '📜 पूरा पंचांग',
+  },
+  {
+    id: 'kalnirnay',
+    title: 'मासिक सनातन कालनिर्णय पंचांग',
+    label: 'मासिक पंचांग',
+    pageNumber: 27,
+    chapter: 'मासिक काल चक्र',
+    desc: 'संपूर्ण १२ माह का कालनिर्णय कैलेंडर, एकादशी, पूर्णिमा, अमावस्या व मुख्य पर्व सूची',
+    icon: Calendar,
+    screenTitle: '📅 मासिक सनातन कालनिर्णय पंचांग',
   },
   {
     id: 'rashifal',
@@ -415,6 +436,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     desc: '36 गुण विचार, नाड़ी, भकूट, गण, योनि व PDF रिपोर्ट डाउनलोड',
     icon: Heart,
     screenTitle: 'कुंडली मिलान – 36 गुण व PDF',
+  },
+  {
+    id: 'prashna',
+    title: 'तात्कालिक प्रश्न कुण्डली व होरा निर्णय',
+    label: 'प्रश्न कुंडली',
+    pageNumber: 26,
+    chapter: '',
+    desc: 'बिना जन्म तिथि के तत्काल समय की कुण्डली से कार्य सिद्धि निर्णय',
+    icon: HelpCircle,
+    screenTitle: '❓ तात्कालिक प्रश्न कुण्डली',
   },
   {
     id: 'festivals',
