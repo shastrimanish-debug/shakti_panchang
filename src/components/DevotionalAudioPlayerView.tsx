@@ -33,6 +33,7 @@ export const DevotionalAudioPlayerView: React.FC<{
   const isPlayingRef = useRef<boolean>(false);
   const nextTimerRef = useRef<any>(null);
   const playGen = useRef(0);
+  const continuePath = useRef(false);
 
   // Stream HTML5 Audio states
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -44,10 +45,12 @@ export const DevotionalAudioPlayerView: React.FC<{
   const [seniorFontSize, setSeniorFontSize] = useState<'normal' | 'xl' | 'xxl'>('xl');
 
   // Filtered Tracks
-  const filteredTracks = DEVOTIONAL_AUDIO_TRACKS.filter((t) => {
-    if (activeCategory === 'all') return true;
-    return t.category === activeCategory;
-  });
+  const filteredTracks = useMemo(() => {
+    return DEVOTIONAL_AUDIO_TRACKS.filter((t) => {
+      if (activeCategory === 'all') return true;
+      return t.category === activeCategory;
+    });
+  }, [activeCategory]);
 
   const currentTrack: DevotionalTrack =
     filteredTracks[selectedTrackIndex] || DEVOTIONAL_AUDIO_TRACKS[0];
@@ -66,6 +69,7 @@ export const DevotionalAudioPlayerView: React.FC<{
     setIsPlaying(false);
     setActiveVerseIndex(-1);
     playGen.current += 1;
+    continuePath.current = false;
 
     if (nextTimerRef.current) {
       clearTimeout(nextTimerRef.current);
@@ -194,7 +198,23 @@ export const DevotionalAudioPlayerView: React.FC<{
 
     const updateProgress = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration || 0);
-    const handleEnded = () => stopAllPlayback();
+    const handleEnded = () => {
+      const nextIndex = selectedTrackIndex + 1;
+      const nextTrack = filteredTracks[nextIndex];
+      if (
+        isPlayingRef.current &&
+        audioSource === 'stream' &&
+        nextTrack &&
+        nextTrack.category === currentTrack.category &&
+        nextTrack.audioUrl
+      ) {
+        continuePath.current = true;
+        setSelectedTrackIndex(nextIndex);
+        setCurrentTime(0);
+        return;
+      }
+      stopAllPlayback();
+    };
 
     audio.addEventListener('timeupdate', updateProgress);
     audio.addEventListener('loadedmetadata', updateDuration);
@@ -205,7 +225,27 @@ export const DevotionalAudioPlayerView: React.FC<{
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [currentTrack, stopAllPlayback]);
+  }, [currentTrack, stopAllPlayback, selectedTrackIndex, filteredTracks, audioSource]);
+
+  useEffect(() => {
+    if (!continuePath.current) return;
+    const audio = audioRef.current;
+    const url = currentTrack.audioUrl;
+    if (!audio || !url) {
+      continuePath.current = false;
+      return;
+    }
+    continuePath.current = false;
+    audio.src = url;
+    audio.load();
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+    void audio.play().catch(() => {
+      isPlayingRef.current = false;
+      setIsPlaying(false);
+      setPlayError('अगला भाग नहीं खुला। इंटरनेट चालू रखें।');
+    });
+  }, [currentTrack.audioUrl]);
 
   // Adjust Playback Speed
   const handleRateChange = (newRate: number) => {
@@ -240,7 +280,7 @@ export const DevotionalAudioPlayerView: React.FC<{
               </span>
             </h2>
             <p className="text-[11px] text-[#D9C4A9]">
-              दुर्गा सप्तशती, शिव महिम्न स्तोत्र, हनुमान चालीसा व आरतियाँ • 100% कॉपीराइट मुक्त
+              दुर्गा सप्तशती पूरी — कवच, अर्गला, कीलक, १३ अध्याय, कुंजिका • मंत्र, स्तोत्र व आरती
             </p>
           </div>
         </div>

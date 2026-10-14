@@ -63,8 +63,55 @@ export const SHIV_MAHIMNA_STOTRAM_TEXT = `॥ अथ श्री शिवम�
 स्वयं तस्थे ताभ्यां तव किमनुवृत्तिर्न फलति ॥ १० ॥`;
 
 function chant(id: string, file: string) {
-  return `https://archive.org/download/${id}/${encodeURIComponent(file)}`;
+  const path = file.split("/").map((part) => encodeURIComponent(part)).join("/");
+  return `https://archive.org/download/${id}/${path}`;
 }
+
+const SAPT = "DeviMahatmyamRecitation";
+
+function saptPart(order: string, title: string, file: string, blurb: string): DevotionalTrack {
+  return {
+    id: `saptashati-${order}`,
+    title,
+    category: "saptashati",
+    deity: "भगवती दुर्गा",
+    duration: "गायन",
+    audioUrl: chant(SAPT, file),
+    lyricsText: `${title}\n\nयह पूरा भाग गा कर सुनाया जा रहा है। अगला भाग अपने आप चलेगा।`,
+    meaningText: blurb,
+    description: "संपूर्ण श्री दुर्गा सप्तशती — कवच, अर्गला, कीलक, १३ अध्याय, फिर कुंजिका।",
+  };
+}
+
+const SAPTASHATI_PATH: DevotionalTrack[] = [
+  saptPart("01", "१. देवी कवचम्", "Devi Mahatmyam Recitation/01 Devi Kavacham.mp3", "पाठ का आरंभ। देवी कवच शरीर और दिशाओं की रक्षा के लिए।"),
+  saptPart("02", "२. अर्गला स्तोत्रम्", "Devi Mahatmyam Recitation/02 Argala Stotram.mp3", "कवच के बाद अर्गला। देवी से वरदान की स्तुति।"),
+  saptPart("03", "३. कीलक स्तोत्रम्", "Devi Mahatmyam Recitation/03 Keelakam.mp3", "अर्गला के बाद कीलक। पाठ की सिद्धि का स्तोत्र।"),
+  saptPart("04", "४. प्रथम अध्याय", "Devi Mahatmyam Recitation/05 Chapter 1 Pradamodhyayha.mp3", "मधु-कैटभ प्रसंग। तेरह अध्यायों में पहला।"),
+  saptPart("05", "५. द्वितीय अध्याय", "Devi Mahatmyam Recitation/06 Chapter 2 Divitiyodhyayaha.mp3", "महिषासुर सेना का प्रसंग।"),
+  saptPart("06", "६. तृतीय अध्याय", "Devi Mahatmyam Recitation/07 Chapter 3 Tritiyodhyayaha.mp3", "देवी की स्तुति और महिषासुर वध का आरंभ।"),
+  saptPart("07", "७. चतुर्थ अध्याय", "Devi Mahatmyam Recitation/08 Chapter 4 Chaturthodhayayaha.mp3", "इन्द्रादि देवताओं द्वारा देवी की स्तुति।"),
+  saptPart("08", "८. पञ्चम अध्याय", "Devi Mahatmyam Recitation/09 Chapter 5 Panchamodhyayaha.mp3", "देवी का संवाद और महिमा।"),
+  saptPart("09", "९. षष्ठ अध्याय", "Devi Mahatmyam Recitation/10 Chapter 6 Shashtodhyayaha.mp3", "धूम्रलोचन वध।"),
+  saptPart("10", "१०. सप्तम अध्याय", "Devi Mahatmyam Recitation/11 Chapter 7 Saptamodhyayaha.mp3", "चण्ड-मुण्ड वध।"),
+  saptPart("11", "११. अष्टम अध्याय", "Devi Mahatmyam Recitation/12 Chapter 8 Ashtamodhyayaha.mp3", "रक्तबीज वध।"),
+  saptPart("12", "१२. नवम अध्याय", "Devi Mahatmyam Recitation/13 Chapter 9 Navamodhyayaha.mp3", "निशुम्भ वध।"),
+  saptPart("13", "१३. दशम अध्याय", "Devi Mahatmyam Recitation/14 Chapter 10 Dasamodhyayaha.mp3", "शुम्भ वध।"),
+  saptPart("14", "१४. एकादश अध्याय", "Devi Mahatmyam Recitation/15 Chapter 11 Ekadhasadhyayaha.mp3", "देवताओं की नारायणी स्तुति।"),
+  saptPart("15", "१५. द्वादश अध्याय", "Devi Mahatmyam Recitation/16 Chapter 12 Dwadhasodhyayaha.mp3", "देवी का वरदान।"),
+  saptPart("16", "१६. त्रयोदश अध्याय", "Devi Mahatmyam Recitation/17 Chapter 13 Triodasadhyayaha.mp3", "सुरथ और समाधि वैश्य का फल। तेरहवाँ अध्याय।"),
+  {
+    id: "saptashati-kunjika",
+    title: "१७. सिद्ध कुञ्जिका स्तोत्रम्",
+    category: "saptashati",
+    deity: "भगवती दुर्गा",
+    duration: "गायन",
+    audioUrl: chant("siddha-kunjika-stotram", "Siddha Kunjika Stotram.mp3"),
+    lyricsText: "॥ श्री सिद्ध कुञ्जिका स्तोत्रम् ॥\n\nतेरह अध्यायों के बाद कुंजिका। यह सप्तशती पाठ का समापन स्तोत्र है।",
+    meaningText: "रुद्रयामल का सिद्ध कुंजिका स्तोत्र। सप्तशती के अंत में बोला जाता है।",
+    description: "कवच से कुंजिका तक संपूर्ण पाठ का अंतिम भाग।",
+  },
+];
 
 export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
   {
@@ -95,27 +142,9 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
 हाथ बज्र ओ ध्वजा बिराजै। काँधे मूँज जनेऊ साजै॥
 संकर सुवन केसरीनंदन। तेज प्रताप महा जग बन्दन॥`,
     meaningText: 'गोस्वामी तुलसीदास कृत श्री हनुमान चालीसा — बल, बुद्धि, विद्या एवं आरोग्य प्रदाता संकटमोचन पाठ।',
-    description: '100% कॉपीराइट मुक्त सात्विक सुरों में श्री हनुमान चालीसा पाठ।',
+    description: '100% सात्विक सुरों में श्री हनुमान चालीसा का गान।',
   },
-  {
-    id: 'durga-saptashati-stuti',
-    title: 'श्री दुर्गा सप्तशती (प्रथम अध्याय व देवी स्तुति)',
-    category: 'saptashati',
-    deity: 'भगवती महाकाली / दुर्गा',
-    duration: '12:15',
-    audioUrl: chant("saptashati-complete-type-2", "5. Saptashati-Adhyaya 1.mp3"),
-    lyricsText: `॥ अथ प्रथमोऽध्यायः ॥
-ॐ नमश्चण्डिकायै॥
-मार्कण्डेय उवाच॥
-सावर्णिः सूर्यतनयो यो मनुः कथ्यतेऽष्टमः।
-निशामय तदुत्पत्तिं विस्तराद् गदतो मम॥
-महामायानुभावेन यथा मन्वन्तराधिपः।
-स बभूव महाभागः सावर्णिस्तनयो रवेः॥
-स्वारोचिषेऽन्तरे पूर्वं चैत्रवंशसमुद्भवः।
-सुरथो नाम राजाभूत्समस्ते क्षितिमण्डले॥`,
-    meaningText: 'मार्कण्डेय पुराणोक्त श्री दुर्गा सप्तशती — भगवती महामाया चण्डिका की महिमा, मधु-कैटभ वध एवं देवी कवच।',
-    description: 'सात्विक चण्डी पाठ एवं सुरीली देवी स्तुति।',
-  },
+  ...SAPTASHATI_PATH,
   {
     id: 'gayatri-mantra-21',
     title: 'श्री गायत्री महामंत्र (२१ बार दिव्य जाप)',
@@ -159,8 +188,8 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
   },
   {
     id: 'laxmi-aarti',
-    title: 'ॐ जय लक्ष्मी माता (श्री महालक्ष्मी आरती)',
-    category: 'aarti',
+    title: 'श्री महालक्ष्मी मंत्र',
+    category: 'mantra',
     deity: 'भगवती महालक्ष्मी',
     duration: '05:10',
     audioUrl: chant("HinduGodSongs", "Mahalakshmi Mantra.mp3"),
@@ -186,5 +215,60 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
 पट पीत मानहु तड़ित रुचि शुचि नौमि जनक सुतावरम्॥`,
     meaningText: 'गोस्वामी तुलसीदास कृत भगवान श्री राम की करुणामयी पावन स्तुति।',
     description: 'भय-शोक नाशक एवं मनःशांति प्रदायक मधुर राम स्तुति।',
+  },
+  {
+    id: 'shiva-tandav',
+    title: 'श्री शिव ताण्डव स्तोत्रम्',
+    category: 'stotra',
+    deity: 'भगवान शिव',
+    duration: 'गायन',
+    audioUrl: chant("ShivaStotrasAndMantras", "36Shiva Tandav Stotram.mp3"),
+    lyricsText: '॥ श्री शिवताण्डवस्तोत्रम् ॥\nजटाटवीगलज्जलप्रवाहपावितस्थले।',
+    meaningText: 'रावणकृत शिव ताण्डव। शिव की नृत्यमयी महिमा।',
+    description: 'शिव ताण्डव का पूरा गान।',
+  },
+  {
+    id: 'shiva-kavach',
+    title: 'श्री शिव कवचम्',
+    category: 'stotra',
+    deity: 'भगवान शिव',
+    duration: 'गायन',
+    audioUrl: chant("ShivaStotrasAndMantras", "08Shiva Kavacham.mp3"),
+    lyricsText: '॥ श्री शिव कवचम् ॥',
+    meaningText: 'शिव कवच रक्षा और अभय के लिए।',
+    description: 'शिव कवच का पूरा गान।',
+  },
+  {
+    id: 'shiva-panchakshar',
+    title: 'श्री शिव पञ्चाक्षर स्तोत्रम्',
+    category: 'stotra',
+    deity: 'भगवान शिव',
+    duration: 'गायन',
+    audioUrl: chant("ShivaStotrasAndMantras", "24Shiva Panchakshar Stotram.mp3"),
+    lyricsText: 'नागेन्द्रहाराय त्रिलोचनाय भस्माङ्गरागाय महेश्वराय।',
+    meaningText: 'नमः शिवाय का पंचाक्षर स्तोत्र।',
+    description: 'पंचाक्षर स्तोत्र का पूरा गान।',
+  },
+  {
+    id: 'om-namah-shivaya',
+    title: 'ॐ नमः शिवाय (जाप)',
+    category: 'mantra',
+    deity: 'भगवान शिव',
+    duration: 'गायन',
+    audioUrl: chant("HinduGodSongs", "Om Namah Shivaya.mp3"),
+    lyricsText: 'ॐ नमः शिवाय।',
+    meaningText: 'शिव पंचाक्षर मंत्र का जाप।',
+    description: 'ॐ नमः शिवाय का सतत गान।',
+  },
+  {
+    id: 'ganesh-mantra',
+    title: 'श्री गणेश मंत्र',
+    category: 'mantra',
+    deity: 'भगवान श्री गणेश',
+    duration: 'गायन',
+    audioUrl: chant("HinduGodSongs", "Ganesh Mantra.mp3"),
+    lyricsText: 'ॐ गं गणपतये नमः।',
+    meaningText: 'विघ्नहर्ता गणेश मंत्र।',
+    description: 'गणेश मंत्र का गान।',
   },
 ];
