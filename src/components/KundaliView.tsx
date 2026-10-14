@@ -28,6 +28,7 @@ import { SadeSatiView } from './SadeSatiView';
 import { VargaAnalysisPanel } from './VargaAnalysisPanel';
 import { KpAshtakvargaPanel } from './KpAshtakvargaPanel';
 import { JaiminiPanel } from './JaiminiPanel';
+import { Vedic3DKundaliView } from './Vedic3DKundaliView';
 import { useTranslation } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
@@ -149,7 +150,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   // Active Sub-Tab
-  const [kundaliTab, setKundaliTab] = useState<'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati' | 'kp_ashtakvarga'>(
+  const [kundaliTab, setKundaliTab] = useState<'chart' | 'cosmic_3d' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati' | 'kp_ashtakvarga'>(
     initialSubTab || 'chart'
   );
 
@@ -877,6 +878,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         {[
           { id: 'phalit', label: t('kundali.tabPrediction', 'फलादेश (Prediction)'), icon: Sparkles },
           { id: 'chart', label: t('kundali.tabLagnaVargas', 'लग्न व सम्पूर्ण वर्ग चक्र (D1 से D60)'), icon: Layers },
+          { id: 'cosmic_3d', label: '3D कुण्डली चक्र एवं UMA सिंक', icon: Compass },
           { id: 'dasha', label: t('kundali.tabDasha', 'दशा चक्र (विंशोत्तरी व जैमिनी चर दशा)'), icon: Clock },
           { id: 'milan', label: t('kundali.tabMilan', 'कुंडली मिलान (36 गुण व मांगलिक)'), icon: Heart },
           { id: 'sadesati', label: t('kundali.tabSadeSati', 'साढ़े साती एवं गोचर फल'), icon: Compass },
@@ -943,6 +945,16 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
       {kundaliTab === 'phalit' && !k && (
         <p className="text-sm text-muted p-4">फलादेश के लिए पहले जन्म विवरण भरकर कुंडली बनाएँ।</p>
+      )}
+
+      {/* Tab: 3D Cosmic Kundali & UMA Sync (Zero Data Loss Architecture) */}
+      {kundaliTab === 'cosmic_3d' && k && (
+        <Vedic3DKundaliView
+          kundali={k}
+          currentLocationName={currentLocation.name}
+          latitude={currentLocation.latitude}
+          longitude={currentLocation.longitude}
+        />
       )}
 
       {/* Tab 1: Charts & Shodashvarga (D1 to D60) */}
