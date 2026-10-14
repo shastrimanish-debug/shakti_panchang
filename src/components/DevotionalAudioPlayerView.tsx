@@ -25,7 +25,8 @@ export const DevotionalAudioPlayerView: React.FC<{
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('speech');
+  const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('stream');
+  const [playError, setPlayError] = useState<string | null>(null);
 
   // Sequential Verse Queue States (Android / iOS WebView Compliant)
   const [activeVerseIndex, setActiveVerseIndex] = useState<number>(-1);
@@ -137,27 +138,45 @@ export const DevotionalAudioPlayerView: React.FC<{
   );
 
   // Play / Pause Toggle
+  const playMusic = () => {
+    stopUmaSpeech();
+    const audio = audioRef.current;
+    if (!audio || !currentTrack.audioUrl) {
+      setPlayError('इस पाठ की गायन फ़ाइल नहीं मिली।');
+      return;
+    }
+    setPlayError(null);
+    setAudioSource('stream');
+    if (audio.ended) audio.currentTime = 0;
+    audio.playbackRate = playbackRate;
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+    void audio.play().catch(() => {
+      isPlayingRef.current = false;
+      setIsPlaying(false);
+      setPlayError('गायन नहीं खुला। इंटरनेट चालू रखें, फिर प्ले दबाएँ।');
+    });
+  };
+
   const handleTogglePlay = () => {
     if (isPlaying) {
       stopAllPlayback();
       return;
     }
-    isPlayingRef.current = true;
-    setIsPlaying(true);
-    setAudioSource('speech');
-    speakVerseAtIndex(0);
+    if (audioSource === 'speech') {
+      isPlayingRef.current = true;
+      setIsPlaying(true);
+      setPlayError(null);
+      speakVerseAtIndex(0);
+      return;
+    }
+    playMusic();
   };
 
   // Play Specific Verse
-  const handlePlaySpecificVerse = (idx: number) => {
+  const handlePlaySpecificVerse = (_idx: number) => {
     stopAllPlayback();
-
-    isPlayingRef.current = true;
-    setIsPlaying(true);
-    setAudioSource('speech');
-    window.setTimeout(() => {
-      if (isPlayingRef.current) speakVerseAtIndex(idx);
-    }, 80);
+    window.setTimeout(() => playMusic(), 60);
   };
 
   // Switch Track
@@ -354,11 +373,14 @@ export const DevotionalAudioPlayerView: React.FC<{
               ) : (
                 <>
                   <Play className="w-7 h-7 fill-stone-950" />
-                  <span>▶ पाठ/संगीत सुनें (Play)</span>
+                  <span>▶ गायन सुनें (Play)</span>
                 </>
               )}
             </button>
           </div>
+          {playError && (
+            <p className="text-xs font-bold text-rose-200">{playError}</p>
+          )}
 
           {/* Mode Switcher: Stream vs Speech Reciter */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#8C6239]/40 text-xs">
@@ -376,7 +398,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                     : 'bg-[#23140C] text-[#D9C4A9]'
                 }`}
               >
-                🎵 सुरीला भक्ति संगीत (Music Stream)
+                🎵 गायन, यूट्यूब जैसा
               </button>
               <button
                 type="button"
@@ -390,7 +412,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                     : 'bg-[#23140C] text-[#D9C4A9]'
                 }`}
               >
-                🗣 देववाणी स्पष्ट उच्चारण पाठ (Vedic Speech)
+                🗣 फोन से पढ़वाएँ
               </button>
             </div>
 
@@ -442,7 +464,7 @@ export const DevotionalAudioPlayerView: React.FC<{
               <div className="flex items-center gap-2">
                 <Volume2 className="w-4 h-4 text-amber-300" />
                 <span>
-                  🔊 श्लोक की आवाज़ चल रही है...
+                  🔊 भक्ति गायन चल रहा है...
                   {activeVerseIndex >= 0 &&
                     ` (श्लोक ${activeVerseIndex + 1} / ${verses.length})`}
                 </span>

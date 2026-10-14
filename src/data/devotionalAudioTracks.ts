@@ -62,6 +62,10 @@ export const SHIV_MAHIMNA_STOTRAM_TEXT = `॥ अथ श्री शिवम�
 ततो भक्तिश्रद्धाभरगुरुगृणद्भ्यां गिरिश यत्।
 स्वयं तस्थे ताभ्यां तव किमनुवृत्तिर्न फलति ॥ १० ॥`;
 
+function chant(id: string, file: string) {
+  return `https://archive.org/download/${id}/${encodeURIComponent(file)}`;
+}
+
 export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
   {
     id: 'shiv-mahimna',
@@ -69,7 +73,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'stotra',
     deity: 'भगवान शिव',
     duration: '08:45',
-    audioUrl: 'https://archive.org/download/ShivaMahimnaStotram/ShivaMahimnaStotram.mp3',
+    audioUrl: chant("ShivaStotrasAndMantras", "07Shiva Mahimna Stotram.mp3"),
     lyricsText: SHIV_MAHIMNA_STOTRAM_TEXT,
     meaningText: 'गंधर्वराज पुष्पदन्त विरचित श्री शिव महिम्न स्तोत्रम् — भगवान शिव के अतुलनीय प्रभाव, महिमा एवं दिव्य स्वरूप की स्तुति।',
     description: 'गंभीर सुरीली वैदिक ध्वनि में श्री शिव महिम्न स्तोत्र। वृद्धजनों के लिए सुगम पाठ एवं भक्ति संगीत।',
@@ -80,7 +84,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'bhajan',
     deity: 'श्री हनुमान जी',
     duration: '09:30',
-    audioUrl: 'https://archive.org/download/HanumanChalisa_201804/Hanuman%20Chalisa.mp3',
+    audioUrl: chant("HinduGodSongs", "Hanuman Chalisa.mp3"),
     lyricsText: `श्रीगुरु चरन सरोज रज निज मनु मुकुरु सुधारि। बरनउँ रघुबर बिमल जसु जो दायकु फल चारि॥
 बुद्धिहीन तनु जानिके सुमिरौ पवन-कुमार। बल बुद्धि बिद्या देहु मोहिं हरहु कलेस बिकार॥
 
@@ -99,7 +103,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'saptashati',
     deity: 'भगवती महाकाली / दुर्गा',
     duration: '12:15',
-    audioUrl: 'https://archive.org/download/DurgaSaptashatiFullChanting/01_Durga_Saptashati_Adhyay_1.mp3',
+    audioUrl: chant("saptashati-complete-type-2", "5. Saptashati-Adhyaya 1.mp3"),
     lyricsText: `॥ अथ प्रथमोऽध्यायः ॥
 ॐ नमश्चण्डिकायै॥
 मार्कण्डेय उवाच॥
@@ -118,7 +122,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'mantra',
     deity: 'वेदमाता गायत्री',
     duration: '11:20',
-    audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/23/Gayatri_Mantra.ogg',
+    audioUrl: chant("HinduGodSongs", "Gayatri Mantra.mp3"),
     lyricsText: `ॐ भूर्भुवः स्वः। तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि। धियो यो नः प्रचोदयात्॥`,
     meaningText: 'सृष्टि के प्रकाशक परमात्मा हमारे अंतःकरण को सद्बुद्धि व सन्मार्ग से प्रकाशित करें।',
     description: 'बुद्धि, एकाग्रता एवं आध्यात्मिक शांति हेतु २१ बार दिव्य गायत्री जाप।',
@@ -129,7 +133,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'mantra',
     deity: 'भगवान त्र्यम्बक शिव',
     duration: '15:00',
-    audioUrl: 'https://archive.org/download/MahamrityunjayMantra108Times/MahamrityunjayMantra.mp3',
+    audioUrl: chant("ShivaStotrasAndMantras", "80Maha Mrityunjay Mantra.mp3"),
     lyricsText: `ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥`,
     meaningText: 'हम त्रिनेत्रधारी सुगन्धित एवं पुष्टि को बढ़ाने वाले भगवान शिव की उपासना करते हैं। जिस प्रकार पका हुआ खरबूजा बेल से मुक्त होता है, उसी प्रकार हम मृत्यु से मुक्त होकर अमृतत्व प्राप्त करें।',
     description: 'स्वास्थ्य सुरक्षा एवं दीर्घायु हेतु महामृत्युंजय जाप।',
@@ -140,7 +144,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'aarti',
     deity: 'भगवान श्री गणेश',
     duration: '04:30',
-    audioUrl: 'https://archive.org/download/JaiGaneshDevaAarti/JaiGaneshDevaAarti.mp3',
+    audioUrl: chant("JaiGaneshJaiGaneshJaiGaneshDevaLordGaneshAarti", "Jai Ganesh Jai Ganesh Jai Ganesh Deva - Lord Ganesh Aarti.mp3"),
     lyricsText: `जय गणेश जय गणेश जय गणेश देवा।
 माता जाकी पारवती पिता महादेवा॥
 
@@ -159,7 +163,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'aarti',
     deity: 'भगवती महालक्ष्मी',
     duration: '05:10',
-    audioUrl: 'https://archive.org/download/OmJaiLaxmiMataAarti/OmJaiLaxmiMata.mp3',
+    audioUrl: chant("HinduGodSongs", "Mahalakshmi Mantra.mp3"),
     lyricsText: `ॐ जय लक्ष्मी माता, मैया जय लक्ष्मी माता।
 तुमको निसदिन ध्यावत, हर विष्णु विधाता॥
 उमा रमा ब्रह्माणी, तुम ही जग-माता।
@@ -175,7 +179,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'stotra',
     deity: 'भगवान श्री राम',
     duration: '06:15',
-    audioUrl: 'https://archive.org/download/ShriRamChandraKripaluBhajman/RamStuti.mp3',
+    audioUrl: chant("SureshanandjiShriRamchandraKripaluBhajman", "Sureshanandji-Shri-Ramchandra-Kripalu-Bhajman.mp3"),
     lyricsText: `श्रीरामचन्द्र कृपालु भजु मन हरण भवभय दारुणम्।
 नवकंज लोचन, कंज मुख, कर कंज, पद कंजारुणम्॥
 कन्दर्प अगणित अमित छवि, नवनील नीरद सुन्दरम्।
