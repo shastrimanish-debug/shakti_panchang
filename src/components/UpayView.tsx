@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../i18n';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
+import { LalKitabUpayListView } from './LalKitabUpayListView';
+import { SaralUpayPanel } from './SaralUpayPanel';
 
 interface UpayViewProps {
   activeKundali: KundaliData | null;
@@ -29,6 +31,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
+  const [upayTab, setUpayTab] = useState<'lal_kitab' | 'story_deck' | 'saral_upay'>('lal_kitab');
 
   const slides: StorySlideItem[] = [
     // Slide 1: Personalized Kundali Upay
@@ -187,19 +190,66 @@ export const UpayView: React.FC<UpayViewProps> = ({
   ];
 
   return (
-    <UniversalStoryDeck
-      slides={slides}
-      currentSlideIndex={activeSlideIndex}
-      onSlideIndexChange={setActiveSlideIndex}
-      headerTitle="ग्रह शांति व चमत्कारी उपाय"
-      headerIcon="🪔"
-      chapterNumber={13}
-      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('मेरी कुण्डली के अनुसार सबसे सटीक उपाय') : undefined}
-      onPrevChapter={onPrevChapter}
-      onNextChapter={onNextChapter}
-      prevChapterLabel="दुर्गा सप्तशती"
-      nextChapterLabel="अंकशास्त्र"
-    />
+    <div className="space-y-4">
+      {/* Mode Switcher: 100 Lal Kitab Remedies | Navagraha Story Deck | 200 Saral Upay */}
+      <div className="flex flex-wrap items-center justify-center p-1 bg-[#462B17] rounded-xl text-xs font-bold border border-[#8C6239]/60 gap-1 shadow-xs">
+        <button
+          type="button"
+          onClick={() => setUpayTab('lal_kitab')}
+          className={`flex-1 min-w-[160px] py-2 px-3 rounded-lg transition cursor-pointer ${
+            upayTab === 'lal_kitab'
+              ? 'bg-[#7F1D1D] text-amber-100 shadow-xs border border-amber-400/50'
+              : 'text-[#D9C4A9] hover:text-white'
+          }`}
+        >
+          📕 १. लाल किताब के १०० अचूक उपाय
+        </button>
+        <button
+          type="button"
+          onClick={() => setUpayTab('story_deck')}
+          className={`flex-1 min-w-[160px] py-2 px-3 rounded-lg transition cursor-pointer ${
+            upayTab === 'story_deck'
+              ? 'bg-[#B56A00] text-white shadow-xs'
+              : 'text-[#D9C4A9] hover:text-white'
+          }`}
+        >
+          🪔 २. नवग्रह व दोष शांति कार्ड
+        </button>
+        <button
+          type="button"
+          onClick={() => setUpayTab('saral_upay')}
+          className={`flex-1 min-w-[160px] py-2 px-3 rounded-lg transition cursor-pointer ${
+            upayTab === 'saral_upay'
+              ? 'bg-[#B56A00] text-white shadow-xs'
+              : 'text-[#D9C4A9] hover:text-white'
+          }`}
+        >
+          📿 ३. सरल दैनिक साधना (200 पाठ)
+        </button>
+      </div>
+
+      {upayTab === 'lal_kitab' && (
+        <LalKitabUpayListView onAskUma={onOpenUmaWithQuery} />
+      )}
+
+      {upayTab === 'story_deck' && (
+        <UniversalStoryDeck
+          slides={slides}
+          currentSlideIndex={activeSlideIndex}
+          onSlideIndexChange={setActiveSlideIndex}
+          headerTitle="ग्रह शांति व चमत्कारी उपाय"
+          headerIcon="🪔"
+          chapterNumber={13}
+          onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('मेरी कुण्डली के अनुसार सबसे सटीक उपाय') : undefined}
+          onPrevChapter={onPrevChapter}
+          onNextChapter={onNextChapter}
+          prevChapterLabel="दुर्गा सप्तशती"
+          nextChapterLabel="अंकशास्त्र"
+        />
+      )}
+
+      {upayTab === 'saral_upay' && <SaralUpayPanel />}
+    </div>
   );
 };
 export default UpayView;
