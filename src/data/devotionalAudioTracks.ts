@@ -261,6 +261,17 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     description: 'ॐ नमः शिवाय का सतत गान।',
   },
   {
+    id: 'vishnu-sahasranama',
+    title: 'श्री विष्णु सहस्रनाम',
+    category: 'stotra',
+    deity: 'भगवान विष्णु',
+    duration: 'गायन',
+    audioUrl: chant('vishnu-sahasranamam', 'Vishnu Sahasranamam.mp3'),
+    lyricsText: '॥ श्री विष्णु सहस्रनाम स्तोत्रम् ॥\nभीष्म उवाच।\nॐ विश्वं विष्णुर्वषट्कारो भूतभव्यभवत्प्रभुः।',
+    meaningText: 'महाभारत, अनुशासन पर्व का सहस्रनाम। यह गान अपलोडर ने Public Domain Mark 1.0 लिखा है।',
+    description: 'विष्णु के एक हजार नामों का गान।',
+  },
+  {
     id: 'ganesh-mantra',
     title: 'श्री गणेश मंत्र',
     category: 'mantra',

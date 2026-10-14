@@ -11,10 +11,8 @@ import {
   Sparkles,
   Sun,
   Bell,
-  ShieldCheck,
   Disc,
 } from 'lucide-react';
-import { ZeroScrollPager } from './ZeroScrollPager';
 import { devotionalAudioEngine } from '../services/devotionalAudioEngine';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 
@@ -286,12 +284,6 @@ export const DevotionalAudioPlayerView: React.FC<{
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Copyright Safe Badge */}
-          <div className="hidden sm:flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] px-2.5 py-1 rounded-full font-bold">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>100% सुरक्षित (No Copyright)</span>
-          </div>
-
           {/* Senior Citizen Font Size Selector */}
           <div className="flex items-center gap-1 bg-[#23140C] border border-[#8C6239] rounded-xl p-1 text-xs">
             <span className="text-[10px] text-[#D9C4A9] px-1 hidden sm:inline">
@@ -335,10 +327,8 @@ export const DevotionalAudioPlayerView: React.FC<{
       </div>
 
       {/* Main Content Area */}
-      <ZeroScrollPager
-        className="flex-1 min-h-0 w-full overflow-hidden"
-        contentClassName="p-3 space-y-4 max-w-4xl mx-auto"
-      >
+      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
+        <div className="p-3 space-y-4 max-w-4xl mx-auto pb-8">
         {/* Category Tabs Bar */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {[
@@ -615,7 +605,7 @@ export const DevotionalAudioPlayerView: React.FC<{
             <span>अन्य भक्ति पाठ एवं आरती सूची ({filteredTracks.length}):</span>
           </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="flex flex-col gap-2">
             {filteredTracks.map((track, idx) => {
               const isSelected = selectedTrackIndex === idx;
               return (
@@ -645,7 +635,8 @@ export const DevotionalAudioPlayerView: React.FC<{
             })}
           </div>
         </div>
-      </ZeroScrollPager>
+        </div>
+      </div>
     </div>
   );
 };
