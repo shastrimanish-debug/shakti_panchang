@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { devotionalAudioEngine } from '../services/devotionalAudioEngine';
+import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 
 export const DevotionalAudioPlayerView: React.FC<{
   onOpenUmaModal?: (query?: string) => void;
@@ -30,6 +31,7 @@ export const DevotionalAudioPlayerView: React.FC<{
   const [activeVerseIndex, setActiveVerseIndex] = useState<number>(-1);
   const isPlayingRef = useRef<boolean>(false);
   const nextTimerRef = useRef<any>(null);
+  const playGen = useRef(0);
 
   // Stream HTML5 Audio states
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -62,6 +64,7 @@ export const DevotionalAudioPlayerView: React.FC<{
     isPlayingRef.current = false;
     setIsPlaying(false);
     setActiveVerseIndex(-1);
+    playGen.current += 1;
 
     if (nextTimerRef.current) {
       clearTimeout(nextTimerRef.current);
@@ -69,6 +72,7 @@ export const DevotionalAudioPlayerView: React.FC<{
     }
 
     devotionalAudioEngine.stopTanpuraDrone();
+    stopUmaSpeech();
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
@@ -99,8 +103,8 @@ export const DevotionalAudioPlayerView: React.FC<{
       }
 
       setActiveVerseIndex(index);
+      const generation = playGen.current;
 
-      // Scroll active verse into view gently for elderly users
       setTimeout(() => {
         const elem = document.getElementById(`verse-card-${index}`);
         if (elem) {
@@ -108,107 +112,56 @@ export const DevotionalAudioPlayerView: React.FC<{
         }
       }, 100);
 
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-        // Fallback timer if SpeechSynthesis is missing
-        nextTimerRef.current = setTimeout(() => {
-          if (isPlayingRef.current) speakVerseAtIndex(index + 1);
-        }, 5000);
-        return;
-      }
-
-      try {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume();
-
-        const rawVerse = verses[index] || '';
-        // Clean text for speech engine (remove symbols that trip Android TTS)
-        const cleanText = rawVerse
-          .replace(/[*#॥|_।]/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'hi-IN';
-        utterance.rate = playbackRate * 0.85; // Calmer pace for senior citizens
-        utterance.pitch = 1.0;
-
-        // Fetch voices (handles Android voiceschanged event)
-        const voices = window.speechSynthesis.getVoices();
-        const hindiVoice = voices.find(
-          (v) =>
-            v.lang.startsWith('hi') ||
-            v.lang.includes('IN') ||
-            v.name.toLowerCase().includes('hindi')
-        );
-        if (hindiVoice) {
-          utterance.voice = hindiVoice;
-        }
-
-        const handleAdvance = () => {
-          if (nextTimerRef.current) clearTimeout(nextTimerRef.current);
+      const rawVerse = verses[index] || '';
+      void speakUma(rawVerse, {
+        rate: Math.max(0.75, playbackRate * 0.9),
+        onStart: () => {
+          if (playGen.current !== generation) return;
+          setActiveVerseIndex(index);
+        },
+        onEnd: () => {
+          if (playGen.current !== generation || !isPlayingRef.current) return;
           nextTimerRef.current = setTimeout(() => {
-            if (isPlayingRef.current) {
+            if (playGen.current === generation && isPlayingRef.current) {
               speakVerseAtIndex(index + 1);
             }
-          }, 600);
-        };
-
-        utterance.onend = handleAdvance;
-        utterance.onerror = handleAdvance;
-
-        window.speechSynthesis.speak(utterance);
-      } catch {
-        nextTimerRef.current = setTimeout(() => {
-          if (isPlayingRef.current) speakVerseAtIndex(index + 1);
-        }, 4000);
-      }
+          }, 350);
+        },
+        onError: () => {
+          if (playGen.current !== generation) return;
+          stopAllPlayback();
+        },
+      });
     },
     [verses, playbackRate, stopAllPlayback]
   );
 
   // Play / Pause Toggle
   const handleTogglePlay = () => {
-    devotionalAudioEngine.playTempleBell(880);
-
     if (isPlaying) {
       stopAllPlayback();
-    } else {
-      isPlayingRef.current = true;
-      setIsPlaying(true);
-      devotionalAudioEngine.startTanpuraDrone();
-
-      if (audioSource === 'stream' && audioRef.current && currentTrack.audioUrl) {
-        audioRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch(() => {
-            // Fallback to Sequential Verse Reciter if audio stream is blocked
-            setAudioSource('speech');
-            speakVerseAtIndex(0);
-          });
-      } else {
-        speakVerseAtIndex(0);
-      }
+      return;
     }
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+    setAudioSource('speech');
+    speakVerseAtIndex(0);
   };
 
   // Play Specific Verse
   const handlePlaySpecificVerse = (idx: number) => {
-    devotionalAudioEngine.playTempleBell(880);
     stopAllPlayback();
 
     isPlayingRef.current = true;
     setIsPlaying(true);
     setAudioSource('speech');
-    devotionalAudioEngine.startTanpuraDrone();
-    speakVerseAtIndex(idx);
+    window.setTimeout(() => {
+      if (isPlayingRef.current) speakVerseAtIndex(idx);
+    }, 80);
   };
 
   // Switch Track
   const handleSelectTrack = (idx: number) => {
-    devotionalAudioEngine.playTempleBell(880);
     stopAllPlayback();
 
     setSelectedTrackIndex(idx);
@@ -489,7 +442,7 @@ export const DevotionalAudioPlayerView: React.FC<{
               <div className="flex items-center gap-2">
                 <Volume2 className="w-4 h-4 text-amber-300" />
                 <span>
-                  🔊 तानपुरा संगीत व श्लोक उच्चारण चालू है...
+                  🔊 श्लोक की आवाज़ चल रही है...
                   {activeVerseIndex >= 0 &&
                     ` (श्लोक ${activeVerseIndex + 1} / ${verses.length})`}
                 </span>

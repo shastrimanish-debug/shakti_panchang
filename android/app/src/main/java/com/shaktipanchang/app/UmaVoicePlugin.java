@@ -18,6 +18,7 @@ import com.getcapacitor.annotation.PermissionCallback;
 
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -412,9 +413,18 @@ public class UmaVoicePlugin extends Plugin {
         Voice chosen = pickFemaleHindiVoice(tts.getVoices());
         if (chosen != null) {
             tts.setVoice(chosen);
+        } else {
+            int lang = tts.setLanguage(new Locale("hi", "IN"));
+            if (lang == TextToSpeech.LANG_MISSING_DATA || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
+                tts.setLanguage(Locale.getDefault());
+            }
         }
         tts.setSpeechRate(0.9f);
         tts.setPitch(1.0f);
+        AudioManager audio = (AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
+        if (audio != null) {
+            audio.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+        }
         waitingSpeak.remove(call);
         PluginCall previous = speakCall;
         speakCall = call;

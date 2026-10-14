@@ -151,6 +151,9 @@ class DevotionalAudioEngine {
       }
       this.harmoniumOsc = null;
     }
+    if (this.ctx && this.ctx.state === 'running') {
+      void this.ctx.suspend();
+    }
   }
 }
 
