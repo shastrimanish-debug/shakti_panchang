@@ -294,6 +294,25 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
             </div>
           </button>
+          {/* 📕 लाल किताब के १०० अचूक उपाय */}
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('lal_kitab'))}
+            className="flex items-center gap-2.5 p-3 bg-gradient-to-r from-[#4A0E17] via-[#7F1D1D] to-[#4A0E17] text-amber-100 rounded-2xl text-left transition cursor-pointer active:scale-95 col-span-2 relative m3-touch shadow-lg border-2 border-amber-400/60"
+          >
+            <div className="p-2 bg-amber-500/20 border border-amber-300/40 text-amber-200 rounded-xl shadow-xs text-lg leading-none">
+              📕
+            </div>
+            <div className="flex-1">
+              <div className="text-xs sm:text-sm font-black text-amber-200 flex items-center justify-between">
+                <span>लाल किताब के १०० अचूक उपाय (खाना नं. १-१२)</span>
+                <span className="text-[10px] bg-amber-400 text-stone-950 px-2 py-0.5 rounded-full font-black">100/100</span>
+              </div>
+              <div className="text-[10px] text-amber-100/85 font-semibold">
+                नवग्रह व १२ भावों के सिद्ध लाल किताब टोटके, सामग्री, ४३ दिन की विधि व सावधानियां
+              </div>
+            </div>
+          </button>
           {/* श्री दुर्गा सप्तशती सम्पूर्ण */}
           <button
             type="button"

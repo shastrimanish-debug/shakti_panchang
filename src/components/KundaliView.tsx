@@ -29,6 +29,7 @@ import { VargaAnalysisPanel } from './VargaAnalysisPanel';
 import { KpAshtakvargaPanel } from './KpAshtakvargaPanel';
 import { JaiminiPanel } from './JaiminiPanel';
 import { Vedic3DKundaliView } from './Vedic3DKundaliView';
+import { LalKitabUpayListView } from './LalKitabUpayListView';
 import { useTranslation } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
@@ -884,7 +885,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           { id: 'sadesati', label: t('kundali.tabSadeSati', 'साढ़े साती एवं गोचर फल'), icon: Compass },
           { id: 'kp_ashtakvarga', label: 'केपी पद्धति, अष्टकवर्ग व चर दशा', icon: Zap },
           { id: 'prashna', label: t('kundali.tabPrashna', 'प्रश्न कुंडली'), icon: HelpCircle },
-          { id: 'remedies', label: t('kundali.tabRemedies', 'वैदिक उपाय एवं रत्न'), icon: Shield },
+          { id: 'remedies', label: t('kundali.tabRemedies', '📕 लाल किताब (100 उपाय) व वैदिक रत्न'), icon: Shield },
         ].map((tab) => {
           const Icon = tab.icon;
           const isSel = kundaliTab === tab.id;
@@ -2449,55 +2450,59 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         </div>
       )}
 
-      {/* Tab 5: Vedic Remedies & Gemstone */}
-      {kundaliTab === 'remedies' && remedies && k && (
+      {/* Tab 5: Vedic Remedies, Gemstone & 100 Lal Kitab Upay */}
+      {kundaliTab === 'remedies' && (
         <div className="space-y-6">
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-5 shadow-xs space-y-4">
-            <h3 className="text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
-              <Shield className="w-5 h-5 text-[#B56A00]" />
-              {k.name} हेतु वैदिक उपाय, रत्न एवं इष्टदेव मार्गदर्शन
-            </h3>
+          {remedies && k && (
+            <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-5 shadow-xs space-y-4">
+              <h3 className="text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
+                <Shield className="w-5 h-5 text-[#B56A00]" />
+                {k.name} हेतु वैदिक उपाय, रत्न एवं इष्टदेव मार्गदर्शन
+              </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20">
-                <div className="text-[11px] text-[#8C6239] font-bold">शुभ रत्न (Lucky Gemstone)</div>
-                <div className="text-sm font-black text-[#5C3A21] mt-1">{remedies.luckyGemstone}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20">
+                  <div className="text-[11px] text-[#8C6239] font-bold">शुभ रत्न (Lucky Gemstone)</div>
+                  <div className="text-sm font-black text-[#5C3A21] mt-1">{remedies.luckyGemstone}</div>
+                </div>
+
+                <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20">
+                  <div className="text-[11px] text-[#8C6239] font-bold">इष्ट देव (Ishta Devata)</div>
+                  <div className="text-sm font-black text-[#5C3A21] mt-1">{remedies.ishtaDevata}</div>
+                </div>
+
+                <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20">
+                  <div className="text-[11px] text-[#8C6239] font-bold">शुभ रंग (Lucky Color)</div>
+                  <div className="text-sm font-black text-[#5C3A21] mt-1">{remedies.luckyColor}</div>
+                </div>
               </div>
 
-              <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20">
-                <div className="text-[11px] text-[#8C6239] font-bold">इष्ट देव (Ishta Devata)</div>
-                <div className="text-sm font-black text-[#5C3A21] mt-1">{remedies.ishtaDevata}</div>
+              <div className="bg-[#F4E8D1] p-4 rounded-lg border border-[#8C6239]/20">
+                <div className="text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1">
+                  महामंत्र (Mantra)
+                </div>
+                <p className="text-xs sm:text-sm font-black text-[#5C3A21] leading-relaxed">
+                  {remedies.mantra}
+                </p>
               </div>
 
-              <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20">
-                <div className="text-[11px] text-[#8C6239] font-bold">शुभ रंग (Lucky Color)</div>
-                <div className="text-sm font-black text-[#5C3A21] mt-1">{remedies.luckyColor}</div>
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-[#8C6239] uppercase tracking-wider">
+                  दैनिक वैदिक उपाय (Daily Upay)
+                </div>
+                <ul className="space-y-1.5 text-xs sm:text-sm text-[#5C3A21]">
+                  {remedies.remedies.map((u: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-[#B56A00] font-bold">✓</span>
+                      <span>{u}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
+          )}
 
-            <div className="bg-[#F4E8D1] p-4 rounded-lg border border-[#8C6239]/20">
-              <div className="text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1">
-                महामंत्र (Mantra)
-              </div>
-              <p className="text-xs sm:text-sm font-black text-[#5C3A21] leading-relaxed">
-                {remedies.mantra}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-[#8C6239] uppercase tracking-wider">
-                दैनिक वैदिक उपाय (Daily Upay)
-              </div>
-              <ul className="space-y-1.5 text-xs sm:text-sm text-[#5C3A21]">
-                {remedies.remedies.map((u: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-[#B56A00] font-bold">✓</span>
-                    <span>{u}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <LalKitabUpayListView onAskUma={() => onOpenUmaModal?.()} />
         </div>
       )}
 

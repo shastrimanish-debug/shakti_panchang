@@ -626,17 +626,19 @@ export function App() {
               </div>
             )}
 
-            {activeTab === 'upay' && (
-              <UpayView
-                activeKundali={activeKundali}
-                onOpenKundaliTab={() => handleSelectTab('kundali')}
-                onOpenUmaWithQuery={(query) => {
-                  setUmaInitialPrompt(query);
-                  setIsUmaModalOpen(true);
-                }}
-                onPrevChapter={handlePrevPage}
-                onNextChapter={handleNextPage}
-              />
+            {(activeTab === 'upay' || activeTab === 'lal_kitab') && (
+              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-20">
+                <UpayView
+                  activeKundali={activeKundali}
+                  onOpenKundaliTab={() => handleSelectTab('kundali')}
+                  onOpenUmaWithQuery={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                  onPrevChapter={handlePrevPage}
+                  onNextChapter={handleNextPage}
+                />
+              </div>
             )}
 
             {activeTab === 'numerology' && (

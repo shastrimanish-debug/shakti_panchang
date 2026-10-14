@@ -291,8 +291,8 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
     ids: ["panchang", "kalnirnay", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
   },
   {
-    title: { hi: "जन्म पत्रिका", en: "Birth chart", gu: "જન્મ પત્રિકા" },
-    ids: ["kundali", "milan", "prashna", "upay", "saral", "sabar", "numerology", "gemology"],
+    title: { hi: "जन्म पत्रिका व लाल किताब", en: "Birth chart & Lal Kitab", gu: "જન્મ પત્રિકા અને લાલ કિતાબ" },
+    ids: ["lal_kitab", "kundali", "milan", "prashna", "upay", "saral", "sabar", "numerology", "gemology"],
   },
   {
     title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },
@@ -361,6 +361,36 @@ export function ModuleBoard({
       </label>
       <ZeroScrollPager className="flex-1 min-h-0" resetKey={`${language}-${q}`} label={searchHint}>
         <div className="px-3 pb-3 flex flex-col gap-3">
+          {!q && (
+            <button
+              type="button"
+              onClick={() => onOpen("lal_kitab")}
+              className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-[#4A0E17] via-[#7F1D1D] to-[#4A0E17] text-amber-100 border-2 border-amber-400/60 shadow-lg flex items-center justify-between gap-3 text-left cursor-pointer active:scale-98 transition"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-300/40 flex items-center justify-center text-xl shrink-0">
+                  📕
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm sm:text-base font-black text-amber-200 truncate">
+                    {language === "en"
+                      ? "100 Authentic Lal Kitab Remedies (Khana 1-12)"
+                      : language === "gu"
+                      ? "લાલ કિતાબના ૧૦૦ અચૂક ઉપાય (ખાના નં. ૧-૧૨)"
+                      : "लाल किताब के १०० अचूक उपाय (खाना नं. १ से १२)"}
+                  </div>
+                  <div className="text-[11px] text-amber-100/85 truncate">
+                    {language === "en"
+                      ? "Planetary totke, required materials, 43-day procedure & precautions"
+                      : "नवग्रह व १२ भावों के सिद्ध लाल किताब टोटके, सामग्री, ४३ दिन की विधि व सावधानियां"}
+                  </div>
+                </div>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-amber-400 text-stone-950 text-xs font-black shrink-0 shadow-xs">
+                100 उपाय →
+              </span>
+            </button>
+          )}
           {sections.length === 0 && (
             <div className="bx-fact text-sm">
               {language === "en" ? "No service matches that name." : language === "gu" ? "આ નામની સેવા મળી નથી." : "कोई सेवा इस नाम से नहीं मिली।"}
@@ -463,6 +493,14 @@ export function TodayBoard({
           <button type="button" className="bx-tile h-auto min-h-16" onClick={() => onOpen("rashifal")}>
             <strong>{t("nav.rashifal", "राशिफल")}</strong>
             <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
+          </button>
+          <button
+            type="button"
+            className="bx-tile h-auto min-h-16 col-span-2 border-2 border-[#7F1D1D]/50"
+            onClick={() => onOpen("lal_kitab")}
+          >
+            <strong>📕 लाल किताब (100 अचूक उपाय)</strong>
+            <p>खाना नं. १ से १२ व नवग्रहों के १०० प्रामाणिक उपाय व सावधानियां</p>
           </button>
         </div>
       </div>
