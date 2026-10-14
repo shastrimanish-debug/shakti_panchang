@@ -329,6 +329,17 @@ export const DevotionalAudioPlayerView: React.FC<{
       {/* Main Content Area */}
       <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
         <div className="p-3 space-y-4 max-w-4xl mx-auto pb-8">
+        <div className="rounded-2xl border border-[#E7C27A]/70 bg-[#FFF8EC] px-3.5 py-3 text-[#3E2714] shadow-sm">
+          <p className="text-[13px] font-black leading-snug text-[#6B3A12]">
+            सूचना
+          </p>
+          <p className="mt-1 text-[13px] font-semibold leading-relaxed">
+            ये गान आपकी सुविधा के लिए इंटरनेट से जोड़े गए हैं। स्वरों का कॉपीराइट संबंधित स्वामियों के पास सुरक्षित है। शक्ति पंचांग इन रिकॉर्डिंग का स्वामी नहीं है।
+          </p>
+          <p className="mt-1.5 text-[13px] font-semibold leading-relaxed">
+            नेट धीमा हो तो आवाज़ साफ़ न आए, बीच में रुक जाए, या आए ही नहीं। इंटरनेट ठीक होने पर फिर से प्ले दबाएँ।
+          </p>
+        </div>
         {/* Category Tabs Bar */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {[
