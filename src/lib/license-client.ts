@@ -181,7 +181,7 @@ function persistAnchorTime(start: number) {
 const VIP_MASTER_KEYS = new Set<string>([]);
 
 function readTrialStart(now: number): number {
-  const key = "sp_trial_start_v20";
+  const key = "sp_trial_start_v25";
   let start = 0;
   try {
     start = Number(localStorage.getItem(key) || "0");
@@ -190,7 +190,7 @@ function readTrialStart(now: number): number {
   }
   try {
     if (typeof document !== "undefined" && document.cookie) {
-      const match = document.cookie.match(/_sp_t20=([0-9]+)/);
+      const match = document.cookie.match(/_sp_t25=([0-9]+)/);
       const saved = match ? Number(match[1]) : 0;
       if (saved > 1000000000000 && (start === 0 || saved < start)) start = saved;
     }
@@ -218,7 +218,7 @@ function readTrialStart(now: number): number {
   try {
     if (typeof document !== "undefined") {
       const expires = new Date(now + 365 * 86400000).toUTCString();
-      document.cookie = `_sp_t20=${str}; expires=${expires}; path=/; SameSite=Lax`;
+      document.cookie = `_sp_t25=${str}; expires=${expires}; path=/; SameSite=Lax`;
     }
   } catch {
     /* ignore */

@@ -15,7 +15,19 @@ export const DEFAULT_LOCATION: SavedLocation = {
 export function getStoredLocation(): SavedLocation {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_LOCATION);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        typeof parsed.latitude === 'number' &&
+        !Number.isNaN(parsed.latitude) &&
+        typeof parsed.longitude === 'number' &&
+        !Number.isNaN(parsed.longitude) &&
+        typeof parsed.name === 'string'
+      ) {
+        return parsed;
+      }
+    }
   } catch {}
   return DEFAULT_LOCATION;
 }

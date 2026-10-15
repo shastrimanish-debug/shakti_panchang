@@ -45,7 +45,9 @@ import java.util.Locale;
 public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListener {
     static final String PRODUCT_ID = "shakti_annual";
     private static final long TRIAL_MS = 7L * 24 * 60 * 60 * 1000;
-    private static final String FILE_NAME = "shakti-panchang-trial.txt";
+    private static final String FILE_NAME = "shakti-panchang-trial-v25.txt";
+    private static final String PREFS_NAME = "shakti_license_prefs_v25";
+    private static final String PREF_START = "trial_start_ms";
 
     private BillingClient billingClient;
     private PluginCall purchaseCall;
@@ -260,7 +262,7 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
         String[] parts = raw.trim().split("\\|");
         if (parts.length < 3) {
             anchor.start = now;
-            anchor.tampered = true;
+            writeFile(anchor.start, now);
             return anchor;
         }
         long start;
@@ -270,22 +272,14 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
             seen = Long.parseLong(parts[1]);
         } catch (NumberFormatException e) {
             anchor.start = now;
-            anchor.tampered = true;
+            writeFile(anchor.start, now);
             return anchor;
         }
         String expect = sign(start, seen);
         if (!expect.equals(parts[2])) {
             anchor.start = start > 0 ? start : now;
-            anchor.tampered = true;
             return anchor;
         }
-        if (now + 120000 < seen) {
-            anchor.start = start;
-            anchor.tampered = true;
-            return anchor;
-        }
-        long nextSeen = Math.max(seen, now);
-        if (nextSeen != seen) writeFile(start, nextSeen);
         anchor.start = start;
         return anchor;
     }

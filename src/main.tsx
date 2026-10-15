@@ -56,7 +56,7 @@ class AppErrorBoundary extends React.Component<
   static getDerivedStateFromError(error: unknown) {
     return {
       hasError: true,
-      errorMsg: error instanceof Error ? error.message : String(error),
+      errorMsg: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
     };
   }
 
@@ -82,9 +82,27 @@ class AppErrorBoundary extends React.Component<
           <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#9a3412', margin: '0 0 8px' }}>
             श्री शक्ति वैदिक पंचांग
           </h2>
-          <p style={{ fontSize: '13px', color: '#5c3a21', margin: '0 0 16px', maxWidth: '320px' }}>
+          <p style={{ fontSize: '13px', color: '#5c3a21', margin: '0 0 12px', maxWidth: '320px' }}>
             पृष्ठ पुनः लोड करें।
           </p>
+          {this.state.errorMsg && (
+            <pre
+              style={{
+                fontSize: '10px',
+                color: '#7a5a3a',
+                backgroundColor: '#efe2cc',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                maxWidth: '90vw',
+                overflowX: 'auto',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                marginBottom: '16px',
+              }}
+            >
+              {this.state.errorMsg}
+            </pre>
+          )}
           <button
             type="button"
             onClick={() => {

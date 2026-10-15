@@ -193,7 +193,7 @@ export function App() {
 
   // Guard Effect: If trial is expired or revoked while on another tab, immediately snap back to 'panchang'
   useEffect(() => {
-    if (!isEntitled && activeTab !== 'panchang') {
+    if (!isEntitled && activeTab !== 'panchang' && activeTab !== 'services') {
       setActiveTab('panchang');
     }
   }, [isEntitled, activeTab]);
@@ -271,8 +271,8 @@ export function App() {
     (tabId: string) => {
       setIsBookOpen(true);
       // STRICT ANTI-MOD & SUBSCRIPTION ENFORCEMENT:
-      // If trial has expired and user is not subscribed, ONLY 'panchang' tab is accessible!
-      if (!isEntitled && tabId !== 'panchang') {
+      // If trial has expired and user is not subscribed, ONLY 'panchang' and 'services' tabs are accessible!
+      if (!isEntitled && tabId !== 'panchang' && tabId !== 'services') {
         const featureNames: Record<string, string> = {
           choghadiya: 'चौघड़िया चक्र',
           muhurat: 'शुभ मुहूर्त',
@@ -355,26 +355,6 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 
-  if (!isEntitled) {
-    return (
-      <SubscriptionModal
-        isOpen
-        locked
-        onClose={() => {}}
-        reason="७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता के बिना यह ऐप बंद है।"
-      />
-    );
-  }
-
-  const pageMeta = BOOK_PAGES.find((p) => p.id === activeTab);
-  const pageTitle =
-    activeTab === "services" || activeTab === "index" || !pageMeta
-      ? t("nav.allServices", "सभी सेवाएँ")
-      : getLocalizedBookPage(pageMeta, currentLang).label;
-  const openFromDrawer = (fn: () => void) => {
-    setDrawerOpen(false);
-    fn();
-  };
   const tabMenu = useMemo(() => {
     let current: (() => boolean) | null = null;
     return {
@@ -390,6 +370,27 @@ export function App() {
       },
     };
   }, [handleSelectTab]);
+
+  const pageMeta = BOOK_PAGES.find((p) => p.id === activeTab);
+  const pageTitle =
+    activeTab === "services" || activeTab === "index" || !pageMeta
+      ? t("nav.allServices", "सभी सेवाएँ")
+      : getLocalizedBookPage(pageMeta, currentLang).label;
+  const openFromDrawer = (fn: () => void) => {
+    setDrawerOpen(false);
+    fn();
+  };
+
+  if (!isEntitled) {
+    return (
+      <SubscriptionModal
+        isOpen
+        locked
+        onClose={() => {}}
+        reason="७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता के बिना यह ऐप बंद है।"
+      />
+    );
+  }
 
   return (
     <DrawerHostContext.Provider value={drawerApi}>
