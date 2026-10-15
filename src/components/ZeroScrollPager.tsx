@@ -49,10 +49,6 @@ function collectAtoms(root: HTMLElement, pageH: number): HTMLElement[] {
 
   const visit = (el: HTMLElement) => {
     if (isSkipped(el)) return;
-    if (el.dataset.zspAtomic === "1") {
-      atoms.push(el);
-      return;
-    }
     const kids = elementChildren(el).filter((kid) => !isSkipped(kid));
     const h = el.offsetHeight;
     if (h <= 1) return;
@@ -170,19 +166,6 @@ function paint(atoms: HTMLElement[], slices: NodeSlice[] | null) {
     } else {
       el.scrollTop = 0;
     }
-  });
-  const flow = atoms[0]?.closest(".zsp-flow");
-  if (flow instanceof HTMLElement) hideEmptyShells(flow);
-}
-
-function hideEmptyShells(root: HTMLElement) {
-  const shells = Array.from(root.querySelectorAll<HTMLElement>("*")).reverse();
-  shells.forEach((el) => {
-    if (el.dataset.zspId || el.dataset.zspChrome === "1") return;
-    const kids = elementChildren(el).filter((kid) => !isSkipped(kid));
-    if (!kids.length) return;
-    const visible = kids.some((kid) => !kid.classList.contains("zsp-off"));
-    if (!visible) el.classList.add("zsp-off");
   });
 }
 
@@ -305,9 +288,6 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
     const pageH = stage.clientHeight;
     if (pageH < 32) return;
 
-    root.querySelectorAll<HTMLElement>(".zsp-off").forEach((el) => {
-      el.classList.remove("zsp-off");
-    });
     root.querySelectorAll<HTMLElement>("[data-zsp-id], [data-zsp-synthetic]").forEach((el) => {
       el.classList.remove("zsp-off");
       delete el.dataset.zspId;

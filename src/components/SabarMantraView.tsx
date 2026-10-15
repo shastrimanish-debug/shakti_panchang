@@ -51,7 +51,7 @@ export function SabarMantraView() {
           </>
         )}
       </div>
-      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="px-2 pb-16 flex flex-col gap-1.5" resetKey={`${query}-${category}-${selectedId ?? "list"}`}>
+      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain px-2 pb-16 flex flex-col gap-1.5">
         {selected ? <Detail item={selected} /> : list.map((item) => (
           <button key={item.id} type="button" className="bx-verse text-left w-full" onClick={() => setSelectedId(item.id)}>
             <div className="bx-kicker">{item.id} · {item.category}</div>
@@ -60,7 +60,7 @@ export function SabarMantraView() {
           </button>
         ))}
         {!selected && list.length === 0 ? <article className="bx-verse">कोई साबर मंत्र इस खोज में नहीं मिला।</article> : null}
-      </ZeroScrollPager>
+      </div>
     </div>
   );
 }

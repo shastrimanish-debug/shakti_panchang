@@ -78,7 +78,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   }
 
   return (
-    <ZeroScrollPager className="flex-1 min-h-0 w-full h-full">
+    <div className="flex-1 min-h-0 w-full h-full overflow-y-auto overscroll-contain">
       <DashboardView
         panchang={panchang}
         currentLocation={locationObj}
@@ -91,7 +91,7 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
         onOpenWhatsAppPanchang={onOpenWhatsAppPanchang}
         onToggleStoryMode={() => setViewMode('story')}
       />
-    </ZeroScrollPager>
+    </div>
   );
 };
 

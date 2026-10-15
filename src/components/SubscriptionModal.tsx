@@ -57,7 +57,7 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150"
       data-swipe-ignore="true"
     >
-      <div className="bg-[#FAF2E4] border-2 border-[#B56A00] rounded-2xl shadow-2xl overflow-hidden max-w-lg w-full text-[#3E2714] flex flex-col" style={{ height: "min(640px, 100%)", maxHeight: "100%" }}>
+      <div className="bg-[#FAF2E4] border-2 border-[#B56A00] rounded-2xl shadow-2xl overflow-hidden max-w-lg w-full text-[#3E2714] flex flex-col h-[90dvh] max-h-[100dvh]">
         {/* Header */}
         <div className="bg-[#5C3A21] text-[#FAF2E4] p-3.5 sm:p-4 flex items-center justify-between border-b border-[#B56A00] shrink-0">
           <div className="flex items-center gap-2.5">

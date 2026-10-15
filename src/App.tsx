@@ -48,7 +48,6 @@ import { BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TabMenuCo
 import { MoreMenuModal } from './components/MoreMenuModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
-import { FrontPage } from './components/FrontPage';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { useLicense } from './lib/license-client';
 import { useTranslation, useLanguage } from './i18n';
@@ -110,7 +109,6 @@ export function App() {
   const [theme, setTheme] = useState<AppTheme>(() => getStoredTheme());
   // Book open/closed state (true: showing Panchang content directly on startup)
   const [isBookOpen, setIsBookOpen] = useState<boolean>(true);
-  const [entered, setEntered] = useState(false);
   const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -202,16 +200,12 @@ export function App() {
 
   // Calculate high-precision Vedic Panchang based on current Date and Geo-coordinates
   const panchang = useMemo(() => {
-    try {
-      return calculateVedicPanchang(
-        currentDate,
-        currentLocation.latitude,
-        currentLocation.longitude,
-        currentLocation.timezoneHours
-      );
-    } catch {
-      return null;
-    }
+    return calculateVedicPanchang(
+      currentDate,
+      currentLocation.latitude,
+      currentLocation.longitude,
+      currentLocation.timezoneHours
+    );
   }, [currentDate, currentLocation]);
 
   useEffect(() => {
@@ -341,6 +335,26 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 
+  if (!isEntitled) {
+    return (
+      <SubscriptionModal
+        isOpen
+        locked
+        onClose={() => {}}
+        reason="७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता के बिना यह ऐप बंद है।"
+      />
+    );
+  }
+
+  const pageMeta = BOOK_PAGES.find((p) => p.id === activeTab);
+  const pageTitle =
+    activeTab === "services" || activeTab === "index" || !pageMeta
+      ? t("nav.allServices", "सभी सेवाएँ")
+      : getLocalizedBookPage(pageMeta, currentLang).label;
+  const openFromDrawer = (fn: () => void) => {
+    setDrawerOpen(false);
+    fn();
+  };
   const tabMenu = useMemo(() => {
     let current: (() => boolean) | null = null;
     return {
@@ -357,48 +371,10 @@ export function App() {
     };
   }, [handleSelectTab]);
 
-  const pageMeta = BOOK_PAGES.find((p) => p.id === activeTab);
-  const pageTitle =
-    activeTab === "services" || activeTab === "index" || !pageMeta
-      ? t("nav.allServices", "सभी सेवाएँ")
-      : getLocalizedBookPage(pageMeta, currentLang).label;
-  const openFromDrawer = (fn: () => void) => {
-    setDrawerOpen(false);
-    fn();
-  };
-
-  if (!entered || !isEntitled) {
-    return (
-      <>
-        <FrontPage
-          language={currentLang}
-          daysRemaining={licenseStatus.daysRemaining}
-          locked={!isEntitled}
-          onLanguage={(code) => {
-            void setLanguage(code);
-          }}
-          onEnter={() => {
-            if (!isEntitled) {
-              triggerSubscriptionModal("सात दिन का निःशुल्क परीक्षण समाप्त। ₹99 आजीवन या $1 सदस्यता के बिना ऐप बंद है।");
-              return;
-            }
-            setEntered(true);
-          }}
-        />
-        <SubscriptionModal
-          isOpen={isSubscriptionModalOpen}
-          onClose={() => setIsSubscriptionModalOpen(false)}
-          reason={subscriptionReason}
-          locked={!isEntitled}
-        />
-      </>
-    );
-  }
-
   return (
     <DrawerHostContext.Provider value={drawerApi}>
     <TabMenuContext.Provider value={tabMenu}>
-    <div key={`app-root-${currentLang}`} className="board h-full w-full min-h-0 overflow-hidden relative flex flex-col font-sans">
+    <div key={`app-root-${currentLang}`} className="board h-dvh w-screen overflow-hidden relative flex flex-col font-sans">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       <div className="bx-rail shrink-0">
@@ -465,7 +441,7 @@ export function App() {
             )}
 
             {activeTab === 'kalnirnay' && (
-              <ZeroScrollPager className="flex-1 min-h-0 w-full">
+              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
                 <KalnirnayMonthView
                   currentDate={currentDate}
                   onDateSelect={(d) => {
@@ -474,7 +450,7 @@ export function App() {
                   }}
                   onNavigateToReminders={() => handleSelectTab('reminders')}
                 />
-              </ZeroScrollPager>
+              </div>
             )}
 
             {activeTab === 'audio_player' && (
@@ -525,7 +501,8 @@ export function App() {
             )}
 
             {(activeTab === 'kundali' || activeTab === 'milan' || activeTab === 'prashna') && (
-              <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="w-full px-2 pb-8">
+              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
+                <div className="w-full px-2 pb-8">
                 <KundaliView
                   activeKundali={activeKundali}
                   setActiveKundali={setActiveKundali}
@@ -535,7 +512,8 @@ export function App() {
                   onOpenUmaModal={() => setIsUmaModalOpen(true)}
                   onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
                 />
-              </ZeroScrollPager>
+                </div>
+              </div>
             )}
 
             {activeTab === 'festivals' && (
@@ -642,14 +620,14 @@ export function App() {
             {activeTab === 'jain_mantras' && <JainMantraView />}
 
             {activeTab === 'saral' && (
-              <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-2 pb-16 flex flex-col gap-2" resetKey="saral">
+              <div className="flex-1 min-h-0 flex flex-col w-full overflow-y-auto overscroll-contain p-2 pb-16">
                 <div className="shrink-0 px-1 pb-2 text-[13px] font-semibold text-[#5C3A21]">सरल उपाय · 200 पाठ</div>
                 <SaralUpayPanel />
-              </ZeroScrollPager>
+              </div>
             )}
 
             {(activeTab === 'upay' || activeTab === 'lal_kitab') && (
-              <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-2.5 sm:p-4 pb-20">
+              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-20">
                 <UpayView
                   activeKundali={activeKundali}
                   onOpenKundaliTab={() => handleSelectTab('kundali')}
@@ -660,7 +638,7 @@ export function App() {
                   onPrevChapter={handlePrevPage}
                   onNextChapter={handleNextPage}
                 />
-              </ZeroScrollPager>
+              </div>
             )}
 
             {activeTab === 'numerology' && (

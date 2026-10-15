@@ -359,7 +359,8 @@ export function ModuleBoard({
           aria-label={searchHint}
         />
       </label>
-      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-3 pb-3 flex flex-col gap-3" resetKey={query}>
+      <ZeroScrollPager className="flex-1 min-h-0" resetKey={`${language}-${q}`} label={searchHint}>
+        <div className="px-3 pb-3 flex flex-col gap-3">
           {!q && (
             <button
               type="button"
@@ -416,6 +417,7 @@ export function ModuleBoard({
               </div>
             </section>
           ))}
+        </div>
       </ZeroScrollPager>
     </div>
   );
@@ -455,7 +457,8 @@ export function TodayBoard({
     [t("kundali.place", "स्थान"), place.name],
   ];
   return (
-    <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-3 space-y-3 pb-16">
+    <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
+      <div className="p-3 space-y-3 pb-16">
         <MoonPhaseChart panchang={panchang} />
         <div className="bx-fact">
           <div className="bx-kicker inline-flex items-center gap-1">
@@ -500,6 +503,7 @@ export function TodayBoard({
             <p>खाना नं. १ से १२ व नवग्रहों के १०० प्रामाणिक उपाय व सावधानियां</p>
           </button>
         </div>
-    </ZeroScrollPager>
+      </div>
+    </div>
   );
 }

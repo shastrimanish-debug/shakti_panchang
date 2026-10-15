@@ -425,7 +425,7 @@ export const DurgaSaptashatiView: React.FC<{
       )}
 
       {viewMode === "list" ? (
-        <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-20 flex flex-col gap-2" resetKey={`list-${seqIndex}-${searchQuery}`}>
+        <div className="flex-1 min-h-0 overflow-y-auto px-2 pt-1 pb-20 flex flex-col gap-2">
           {paginatedVerses.length > 0 ? (
             paginatedVerses.map((verse, vIdx) => {
               const isCurrentSpeaking = isSpeaking && speakingIndex === vIdx;
@@ -502,7 +502,7 @@ export const DurgaSaptashatiView: React.FC<{
               ))}
             </div>
           )}
-        </ZeroScrollPager>
+        </div>
       ) : (
         <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-2 pt-1 pb-16 flex flex-col gap-1.5" resetKey={`${seqIndex}-${searchQuery}-${fontSize}`}>
           {paginatedVerses.length > 0 ? (
