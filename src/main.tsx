@@ -11,7 +11,25 @@ import { LicenseProvider } from './lib/license-client';
 import { initializeSecurityGuard } from './utils/securityGuard';
 import { Capacitor } from '@capacitor/core';
 
-const CACHE_GEN = "13";
+const CACHE_GEN = "14";
+
+class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { message: string | null }> {
+  state = { message: null as string | null };
+
+  static getDerivedStateFromError(error: unknown) {
+    return { message: error instanceof Error ? error.message : "ऐप नहीं खुली" };
+  }
+
+  render() {
+    if (!this.state.message) return this.props.children;
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "#f6efe2", color: "#3a2414", padding: 24, fontFamily: "sans-serif" }}>
+        <div style={{ fontSize: 24, fontWeight: 800 }}>शक्ति पंचांग</div>
+        <p style={{ marginTop: 12, fontSize: 16, lineHeight: 1.5 }}>{this.state.message}</p>
+      </div>
+    );
+  }
+}
 
 async function freeStaleAppCache() {
   try {
@@ -70,7 +88,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <LicenseProvider>
       <LanguageProvider>
-        <App />
+        <AppErrorBoundary>
+          <App />
+        </AppErrorBoundary>
       </LanguageProvider>
     </LicenseProvider>
   </React.StrictMode>

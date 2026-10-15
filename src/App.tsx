@@ -200,12 +200,16 @@ export function App() {
 
   // Calculate high-precision Vedic Panchang based on current Date and Geo-coordinates
   const panchang = useMemo(() => {
-    return calculateVedicPanchang(
-      currentDate,
-      currentLocation.latitude,
-      currentLocation.longitude,
-      currentLocation.timezoneHours
-    );
+    try {
+      return calculateVedicPanchang(
+        currentDate,
+        currentLocation.latitude,
+        currentLocation.longitude,
+        currentLocation.timezoneHours
+      );
+    } catch {
+      return null;
+    }
   }, [currentDate, currentLocation]);
 
   useEffect(() => {
@@ -335,26 +339,6 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 
-  if (!isEntitled) {
-    return (
-      <SubscriptionModal
-        isOpen
-        locked
-        onClose={() => {}}
-        reason="७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता के बिना यह ऐप बंद है।"
-      />
-    );
-  }
-
-  const pageMeta = BOOK_PAGES.find((p) => p.id === activeTab);
-  const pageTitle =
-    activeTab === "services" || activeTab === "index" || !pageMeta
-      ? t("nav.allServices", "सभी सेवाएँ")
-      : getLocalizedBookPage(pageMeta, currentLang).label;
-  const openFromDrawer = (fn: () => void) => {
-    setDrawerOpen(false);
-    fn();
-  };
   const tabMenu = useMemo(() => {
     let current: (() => boolean) | null = null;
     return {
@@ -370,6 +354,16 @@ export function App() {
       },
     };
   }, [handleSelectTab]);
+
+  const pageMeta = BOOK_PAGES.find((p) => p.id === activeTab);
+  const pageTitle =
+    activeTab === "services" || activeTab === "index" || !pageMeta
+      ? t("nav.allServices", "सभी सेवाएँ")
+      : getLocalizedBookPage(pageMeta, currentLang).label;
+  const openFromDrawer = (fn: () => void) => {
+    setDrawerOpen(false);
+    fn();
+  };
 
   return (
     <DrawerHostContext.Provider value={drawerApi}>

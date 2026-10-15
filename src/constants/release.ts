@@ -4,5 +4,5 @@ export const GITHUB_REPO = "shakti_panchang";
 export const GITHUB_REPO_URL = "https://github.com/shastrimanish-debug/shakti_panchang";
 export const GITHUB_RELEASES_URL = "https://github.com/shastrimanish-debug/shakti_panchang/releases";
 export const GITHUB_LATEST_RELEASE_URL = "https://github.com/shastrimanish-debug/shakti_panchang/releases/latest";
-export const RELEASE_TAG = "v1.0.13";
-export const RELEASE_NAME = "शक्ति पंचांग ग्रंथ v1.0.13 (Code 13, Signed Release)";
+export const RELEASE_TAG = "v1.0.14";
+export const RELEASE_NAME = "शक्ति पंचांग ग्रंथ v1.0.14 (Code 14, Signed Release)";
