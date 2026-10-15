@@ -11,7 +11,7 @@ import { LicenseProvider } from './lib/license-client';
 import { initializeSecurityGuard } from './utils/securityGuard';
 import { Capacitor } from '@capacitor/core';
 
-const CACHE_GEN = "16";
+const CACHE_GEN = "17";
 
 class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { message: string | null }> {
   state = { message: null as string | null };

@@ -32,6 +32,7 @@ import {
   Check,
 } from "lucide-react";
 import { speakUma, stopUmaSpeech } from "../lib/umaSpeech";
+import { ZeroScrollPager } from "./ZeroScrollPager";
 import { openWhatsAppShare } from "../services/umaConsultationPdf";
 
 interface FeatureDetail {
@@ -484,7 +485,7 @@ export const FaceReadingView: React.FC<{
   }, []);
 
   return (
-    <div className="w-full h-full min-h-0 flex flex-col bg-[#FAF6EE] overflow-y-auto overscroll-contain">
+    <div className="w-full h-full min-h-0 flex flex-col bg-[#FAF6EE] overflow-hidden">
       {/* Header Banner */}
       <div className="p-3 bg-gradient-to-r from-amber-900 via-stone-900 to-amber-950 text-amber-50 shadow-md border-b border-amber-600/30 shrink-0">
         <div className="flex items-center justify-between">
@@ -527,7 +528,7 @@ export const FaceReadingView: React.FC<{
       </div>
 
       {/* Main Container */}
-      <div className="p-3 space-y-3.5 max-w-2xl mx-auto w-full">
+      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="p-3 space-y-3.5 max-w-2xl mx-auto w-full" resetKey={activeTab}>
         {/* Gender & Age Selection Bar */}
         <div className="p-2.5 rounded-xl bg-white border border-amber-200/90 shadow-2xs flex items-center justify-between gap-2 flex-wrap text-xs">
           <div className="flex items-center gap-1.5 font-bold text-amber-950">
@@ -1164,7 +1165,7 @@ export const FaceReadingView: React.FC<{
             </p>
           </div>
         )}
-      </div>
+      </ZeroScrollPager>
     </div>
   );
 };

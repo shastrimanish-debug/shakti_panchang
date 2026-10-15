@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { devotionalAudioEngine } from '../services/devotionalAudioEngine';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 export const DevotionalAudioPlayerView: React.FC<{
   onOpenUmaModal?: (query?: string) => void;
@@ -327,8 +328,7 @@ export const DevotionalAudioPlayerView: React.FC<{
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
-        <div className="p-3 space-y-4 max-w-4xl mx-auto pb-8">
+      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-3 space-y-4 max-w-4xl mx-auto pb-8">
         <div className="rounded-2xl border border-[#E7C27A]/70 bg-[#FFF8EC] px-3.5 py-3 text-[#3E2714] shadow-sm">
           <p className="text-[13px] font-black leading-snug text-[#6B3A12]">
             सूचना
@@ -646,8 +646,7 @@ export const DevotionalAudioPlayerView: React.FC<{
             })}
           </div>
         </div>
-        </div>
-      </div>
+      </ZeroScrollPager>
     </div>
   );
 };

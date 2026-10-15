@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../i18n';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface NumerologyViewProps {
   activeKundali?: KundaliData | null;
@@ -402,7 +403,7 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
       </div>
 
       {/* Main View Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-4">
+      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="p-3 space-y-4" resetKey={activeTab}>
         {/* TAB 1: CORE NUMBERS PROFILE */}
         {activeTab === 'profile' && (
           <div className="space-y-3">
@@ -791,7 +792,7 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
             </div>
           </div>
         )}
-      </div>
+      </ZeroScrollPager>
 
       {/* Footer Ask Uma Button */}
       {onOpenUmaWithQuery && (

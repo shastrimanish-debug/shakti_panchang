@@ -465,7 +465,7 @@ export function App() {
             )}
 
             {activeTab === 'kalnirnay' && (
-              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
+              <ZeroScrollPager className="flex-1 min-h-0 w-full">
                 <KalnirnayMonthView
                   currentDate={currentDate}
                   onDateSelect={(d) => {
@@ -474,7 +474,7 @@ export function App() {
                   }}
                   onNavigateToReminders={() => handleSelectTab('reminders')}
                 />
-              </div>
+              </ZeroScrollPager>
             )}
 
             {activeTab === 'audio_player' && (
@@ -525,8 +525,7 @@ export function App() {
             )}
 
             {(activeTab === 'kundali' || activeTab === 'milan' || activeTab === 'prashna') && (
-              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
-                <div className="w-full px-2 pb-8">
+              <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="w-full px-2 pb-8">
                 <KundaliView
                   activeKundali={activeKundali}
                   setActiveKundali={setActiveKundali}
@@ -536,8 +535,7 @@ export function App() {
                   onOpenUmaModal={() => setIsUmaModalOpen(true)}
                   onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
                 />
-                </div>
-              </div>
+              </ZeroScrollPager>
             )}
 
             {activeTab === 'festivals' && (
@@ -644,14 +642,14 @@ export function App() {
             {activeTab === 'jain_mantras' && <JainMantraView />}
 
             {activeTab === 'saral' && (
-              <div className="flex-1 min-h-0 flex flex-col w-full overflow-y-auto overscroll-contain p-2 pb-16">
+              <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-2 pb-16 flex flex-col gap-2" resetKey="saral">
                 <div className="shrink-0 px-1 pb-2 text-[13px] font-semibold text-[#5C3A21]">सरल उपाय · 200 पाठ</div>
                 <SaralUpayPanel />
-              </div>
+              </ZeroScrollPager>
             )}
 
             {(activeTab === 'upay' || activeTab === 'lal_kitab') && (
-              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-20">
+              <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-2.5 sm:p-4 pb-20">
                 <UpayView
                   activeKundali={activeKundali}
                   onOpenKundaliTab={() => handleSelectTab('kundali')}
@@ -662,7 +660,7 @@ export function App() {
                   onPrevChapter={handlePrevPage}
                   onNextChapter={handleNextPage}
                 />
-              </div>
+              </ZeroScrollPager>
             )}
 
             {activeTab === 'numerology' && (

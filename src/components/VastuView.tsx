@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../i18n';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
+import { ZeroScrollPager } from './ZeroScrollPager';
 
 type VastuTab = 'directions' | 'rooms' | 'checker' | 'remedies' | 'stories';
 
@@ -398,7 +399,7 @@ export const VastuView: React.FC<{
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-4">
+      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="p-3 space-y-4" resetKey={activeTab}>
         {/* TAB 1: 8 DIRECTIONS (८ दिशाएं) */}
         {activeTab === 'directions' && (
           <div className="space-y-3">
@@ -672,7 +673,7 @@ export const VastuView: React.FC<{
             </div>
           </div>
         )}
-      </div>
+      </ZeroScrollPager>
 
       {/* Footer Ask Uma Button */}
       {onOpenUmaModal && (

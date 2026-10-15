@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { speakUma, stopUmaSpeech } from "../lib/umaSpeech";
+import { ZeroScrollPager } from "./ZeroScrollPager";
 import { openWhatsAppShare } from "../services/umaConsultationPdf";
 
 export type PathVerse = { n: number; kind?: string; text: string; meaning?: string };
@@ -41,7 +42,6 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [activeSpeakingIndex, setActiveSpeakingIndex] = useState<number | null>(null);
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const verseRefs = useRef<Record<number, HTMLElement | null>>({});
 
   const fontClasses = ["text-sm leading-relaxed", "text-base leading-relaxed", "text-lg leading-loose", "text-xl leading-loose"];
@@ -296,9 +296,10 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
       </div>
 
       {/* Main Verse Reader Display */}
-      <div
-        ref={containerRef}
-        className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain px-2.5 py-3 space-y-3"
+      <ZeroScrollPager
+        className="flex-1 min-h-0 w-full"
+        contentClassName="px-2.5 py-3 space-y-3"
+        resetKey={`${searchQuery}-${selectedDohaJump}-${viewMode}-${currentPage}-${fontSizeIndex}`}
       >
         {currentPagedVerses.length === 0 ? (
           <div className="p-8 text-center text-[#8C6239] my-auto">
@@ -396,7 +397,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
             );
           })
         )}
-      </div>
+      </ZeroScrollPager>
 
       {/* Paged Mode Pagination Bar */}
       {viewMode === "paged" && totalPages > 1 && (

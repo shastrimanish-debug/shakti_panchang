@@ -267,7 +267,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
       {host ? createPortal(tools, host) : null}
 
       {/* Content View */}
-      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain px-2.5 py-2 space-y-2.5">
+      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="px-2.5 py-2 space-y-2.5" resetKey={`${selectedIndex}-${activeChapterIndex}`}>
         {atMenu ? (
           filteredKathas.map((katha, idx) => (
             <button
@@ -423,7 +423,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
             )}
           </>
         )}
-      </div>
+      </ZeroScrollPager>
 
       {/* Floating Sticky Audio Player Bar when speaking */}
       {isSpeaking && (

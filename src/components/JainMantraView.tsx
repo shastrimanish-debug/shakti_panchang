@@ -173,7 +173,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
       </div>
 
       {/* Main Container - Full Native Scroll Container for smooth Mobile/Desktop viewing */}
-      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2 sm:p-4">
+      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-2 sm:p-4" resetKey={`${searchQuery}-${selectedCategory}`}>
         <div className="max-w-5xl mx-auto space-y-3.5 pb-16">
           {/* Search Bar & Category Selector */}
           <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 shadow-xs space-y-2.5">
@@ -553,7 +553,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
             </div>
           )}
         </div>
-      </div>
+      </ZeroScrollPager>
 
       {/* Floating Sticky Audio Player Bar when speaking */}
       {speakingId !== null && currentMantra && (
