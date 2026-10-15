@@ -328,19 +328,7 @@ export const DevotionalAudioPlayerView: React.FC<{
       </div>
 
       {/* Main Content Area */}
-      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-3 space-y-4 max-w-4xl mx-auto pb-8">
-        <div className="rounded-2xl border border-[#E7C27A]/70 bg-[#FFF8EC] px-3.5 py-3 text-[#3E2714] shadow-sm">
-          <p className="text-[13px] font-black leading-snug text-[#6B3A12]">
-            सूचना
-          </p>
-          <p className="mt-1 text-[13px] font-semibold leading-relaxed">
-            ये गान आपकी सुविधा के लिए इंटरनेट से जोड़े गए हैं। स्वरों का कॉपीराइट संबंधित स्वामियों के पास सुरक्षित है। शक्ति पंचांग इन रिकॉर्डिंग का स्वामी नहीं है।
-          </p>
-          <p className="mt-1.5 text-[13px] font-semibold leading-relaxed">
-            नेट धीमा हो तो आवाज़ साफ़ न आए, बीच में रुक जाए, या आए ही नहीं। इंटरनेट ठीक होने पर फिर से प्ले दबाएँ।
-          </p>
-        </div>
-        {/* Category Tabs Bar */}
+      <div className="shrink-0 px-3 pt-3 space-y-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {[
             { id: 'all', label: '🌸 समस्त भक्ति पाठ' },
@@ -519,6 +507,14 @@ export const DevotionalAudioPlayerView: React.FC<{
               </button>
             </div>
           )}
+        </div>
+      </div>
+
+      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="px-3 pt-3 pb-4 space-y-3" resetKey={currentTrack.id}>
+        <div className="rounded-2xl border border-[#E7C27A]/70 bg-[#FFF8EC] px-3.5 py-3 text-[#3E2714] shadow-sm">
+          <p className="text-[13px] font-semibold leading-relaxed">
+            गान इंटरनेट से जुड़ते हैं। कॉपीराइट उनके स्वामियों का है। नेट धीमा हो तो आवाज़ रुक सकती है या न आए।
+          </p>
         </div>
 
         {/* Text Verses & Meaning Display for Senior Citizens */}

@@ -3,8 +3,8 @@
 - **रेपो:** https://github.com/shastrimanish-debug/shakti_panchang
 - **रिलीज़:** https://github.com/shastrimanish-debug/shakti_panchang/releases
 - **नवीनतम:** https://github.com/shastrimanish-debug/shakti_panchang/releases/latest
-- **टैग:** v1.0.17 (Production Release 17)
-- **VersionCode:** 17
-- **VersionName:** 1.0.17
+- **टैग:** v1.0.18 (Production Release 18)
+- **VersionCode:** 18
+- **VersionName:** 1.0.18
 
 स्थान चयन ऐप में सेव रहता है (`localStorage`: `shakti_selected_location`)।
