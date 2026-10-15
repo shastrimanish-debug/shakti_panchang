@@ -359,7 +359,7 @@ export function ModuleBoard({
           aria-label={searchHint}
         />
       </label>
-      <ZeroScrollPager className="flex-1 min-h-0" resetKey={`${language}-${q}`} label={searchHint}>
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <div className="px-3 pb-3 flex flex-col gap-3">
           {!q && (
             <button
@@ -418,7 +418,7 @@ export function ModuleBoard({
             </section>
           ))}
         </div>
-      </ZeroScrollPager>
+      </div>
     </div>
   );
 }
