@@ -387,7 +387,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
   }, [tithiNum]);
 
   return (
-    <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs space-y-3">
+    <div data-zsp-atomic="1" className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs space-y-3">
       {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-2.5">
         <div className="flex items-center gap-2">

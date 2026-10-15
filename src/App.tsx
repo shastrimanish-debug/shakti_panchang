@@ -7,6 +7,7 @@ import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
 import { BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TabMenuContext, TodayBoard } from './components/BoardShell';
 import { SubscriptionModal } from './components/SubscriptionModal';
+import { FrontPage } from './components/FrontPage';
 import { useLicense } from './lib/license-client';
 import { useTranslation, useLanguage } from './i18n';
 
@@ -115,6 +116,7 @@ export function App() {
   const [theme, setTheme] = useState<AppTheme>(() => getStoredTheme());
   // Book open/closed state (true: showing Panchang content directly on startup)
   const [isBookOpen, setIsBookOpen] = useState<boolean>(true);
+  const [entered, setEntered] = useState(false);
   const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -381,14 +383,31 @@ export function App() {
     fn();
   };
 
-  if (!isEntitled) {
+  if (!entered || !isEntitled) {
     return (
-      <SubscriptionModal
-        isOpen
-        locked
-        onClose={() => {}}
-        reason="७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता के बिना यह ऐप बंद है।"
-      />
+      <>
+        <FrontPage
+          language={currentLang}
+          daysRemaining={licenseStatus.daysRemaining}
+          locked={!isEntitled}
+          onLanguage={(code) => {
+            void setLanguage(code);
+          }}
+          onEnter={() => {
+            if (!isEntitled) {
+              triggerSubscriptionModal("सात दिन का निःशुल्क परीक्षण समाप्त। ₹99 आजीवन या $1 सदस्यता के बिना ऐप बंद है।");
+              return;
+            }
+            setEntered(true);
+          }}
+        />
+        <SubscriptionModal
+          isOpen={isSubscriptionModalOpen}
+          onClose={() => setIsSubscriptionModalOpen(false)}
+          reason={subscriptionReason}
+          locked={!isEntitled}
+        />
+      </>
     );
   }
 
