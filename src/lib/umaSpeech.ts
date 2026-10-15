@@ -1,7 +1,12 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
+import { toVedicPhoneticSpeech, extractPureSanskritVerse } from "./sanskritPhonetics";
 
 export interface UmaVoicePlugin {
-  speak(options: { text?: string; music?: boolean; parts?: { text: string; rate: number; pitch: number }[] }): Promise<void>;
+  speak(options: {
+    text?: string;
+    music?: boolean;
+    parts?: { text: string; rate: number; pitch: number }[];
+  }): Promise<void>;
   stopSpeaking(): Promise<void>;
   listen(): Promise<{ text: string }>;
   stop(): Promise<void>;
@@ -9,34 +14,10 @@ export interface UmaVoicePlugin {
 
 export const UmaVoice = registerPlugin<UmaVoicePlugin>("UmaVoice");
 
-/** Path is dakshin style. Everyday answers stay natural Hindi. */
-
 let bed: HTMLAudioElement | null = null;
 let bedFade: ReturnType<typeof setInterval> | null = null;
-
-function wantsPathMusic(parts: { rate: number }[]): boolean {
-  return parts.some((part) => part.rate < 0.95);
-}
-
-function startPathBed() {
-  if (Capacitor.isNativePlatform() || typeof Audio === "undefined") return;
-  if (!bed) {
-    bed = new Audio("/sitar-path.ogg");
-    bed.loop = true;
-    bed.preload = "auto";
-  }
-  if (bedFade) clearInterval(bedFade);
-  bed.volume = 0.04;
-  void bed.play().catch(() => {});
-  bedFade = setInterval(() => {
-    if (!bed) return;
-    bed.volume = Math.min(0.22, bed.volume + 0.03);
-    if (bed.volume >= 0.22 && bedFade) {
-      clearInterval(bedFade);
-      bedFade = null;
-    }
-  }, 90);
-}
+let currentNeuralAudio: HTMLAudioElement | null = null;
+const clientTtsCache = new Map<string, string>(); // cacheKey -> data URL
 
 function stopPathBed() {
   if (!bed) return;
@@ -52,10 +33,12 @@ function stopPathBed() {
     }
   }, 70);
 }
+
 let unlocked = false;
 let isCurrentlySpeaking = false;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let keepAliveTimer: any = null;
+let activeSpeakToken = 0;
 
 function clearKeepAlive() {
   if (keepAliveTimer) {
@@ -64,11 +47,10 @@ function clearKeepAlive() {
   }
 }
 
-type UmaPart = { text: string; rate: number; pitch: number };
+export type UmaPart = { text: string; rate: number; pitch: number };
 
 function stripMarkup(text: string): string {
   return text
-    // Replace English section headings with pure Hindi for clean TTS voice
     .replace(/Grah Dasha Analysis/gi, "ग्रह दशा विश्लेषण")
     .replace(/Past Insights/gi, "अतीत का विश्लेषण")
     .replace(/Future Trajectory/gi, "भविष्य कालखंड")
@@ -77,13 +59,14 @@ function stripMarkup(text: string): string {
     .replace(/\*(.*?)\*/g, "$1")
     .replace(/#{1,6}\s?/g, "")
     .replace(/[•▪●]/g, ", ")
-    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "") // strip emojis
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
     .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "।")
     .replace(/॥\s*॥/g, "।")
     .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, "")
     .replace(/श्लोक\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
     .replace(/चौपाई\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
     .replace(/दोहा\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
+    .replace(/सोरठा\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
     .replace(/सोराठा\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
     .replace(/पद\s*#?\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
     .replace(/संख्या\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, "")
@@ -92,35 +75,32 @@ function stripMarkup(text: string): string {
 }
 
 function isSanskritPath(chunk: string): boolean {
-  if (/[॥ॐः।]/.test(chunk)) return true;
-  const hindi = /(है|हैं|था|थी|का |की |के |में |और |यह |आप |लिए |करें|बता|नहीं|होता|होती)/;
+  if (/[॥ॐःऽ]/.test(chunk)) return true;
+  if (/(महिम्न|ताण्डव|स्तोत्र|शिवाय|महेश्वराय|दिगम्बराय|धीमहि|प्रचोदयात्|यजामहे|पुष्टिवर्धनम्|माङ्गल्ये|नमोऽस्तु|तस्मै|सर्वभूतेषु)/.test(chunk)) {
+    return true;
+  }
+  const hindi = /(है|हैं|था|थी|का |की |के |में |और |यह |आप |लिए |करें|बता|नहीं|होता|होती|भावार्थ)/;
   const letters = (chunk.match(/[\u0900-\u097F]/g) || []).length;
   return letters > 10 && !hindi.test(chunk);
 }
 
-/** Pure, melodious Sanskrit phonetics and continuous flowing rhythm */
+/**
+ * Pure Vedic Sanskrit phonetic reshaping (Padaccheda + Shiksha Visarga + Makara Anusvara)
+ */
 function dakshinPath(text: string): string {
-  return text
-    .replace(/ॐ/g, "ओम् ")
-    .replace(/ः/g, "ह ")
-    .replace(/॥+/g, "। ")
-    .replace(/।/g, ", ")
-    .replace(/ऽ/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return toVedicPhoneticSpeech(text);
 }
 
 function naturalHindi(text: string): string {
-  return text
-    .replace(/ॐ/g, "ओम् ")
-    .replace(/॥+/g, ". ")
-    .replace(/।/g, ", ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return toVedicPhoneticSpeech(text);
 }
 
-export function buildUmaParts(text: string): UmaPart[] {
-  const clean = stripMarkup(text);
+export function buildUmaParts(
+  text: string,
+  options?: { sanskritOnly?: boolean; rate?: number; pitch?: number }
+): UmaPart[] {
+  const sourceText = options?.sanskritOnly ? extractPureSanskritVerse(text) : text;
+  const clean = stripMarkup(sourceText);
   if (!clean) return [];
   const lines = clean
     .split(/\n+/)
@@ -140,11 +120,10 @@ export function buildUmaParts(text: string): UmaPart[] {
         const spoken = dakshinPath(pada).slice(0, 500);
         if (!spoken) continue;
 
-        // Steady, divine, smooth chanting tone (0.86 rate, 1.02 pitch)
         parts.push({
           text: spoken,
-          rate: 0.86,
-          pitch: 1.02,
+          rate: options?.rate ?? 0.84,
+          pitch: options?.pitch ?? 0.98,
         });
       }
     } else {
@@ -152,14 +131,14 @@ export function buildUmaParts(text: string): UmaPart[] {
       if (spoken) {
         parts.push({
           text: spoken,
-          rate: 0.92,
-          pitch: 1.04,
+          rate: options?.rate ?? 0.9,
+          pitch: options?.pitch ?? 1.02,
         });
       }
     }
   }
 
-  return parts.slice(0, 50);
+  return parts.slice(0, 60);
 }
 
 export function prepareUmaUtterance(text: string): string {
@@ -173,13 +152,16 @@ export function pickHindiVoice(): SpeechSynthesisVoice | null {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices();
   if (!voices || voices.length === 0) return null;
-  const female = /female|hia|hfc|hfd|neural|wavenet-a|wavenet-d|woman/i;
-  const male = /male|hid|hie|wavenet-b|wavenet-c/i;
+  const female = /female|hia|hfc|hfd|neural|wavenet-a|wavenet-d|woman|swara/i;
+  const male = /male|hid|hie|wavenet-b|wavenet-c|madhur/i;
   return (
+    // 1. Prefer dedicated Sanskrit (sa-IN) voice if installed on device
+    voices.find((v) => v.lang.toLowerCase().startsWith("sa")) ||
+    // 2. High-quality Neural Hindi voice
     voices.find((v) => v.lang.toLowerCase().startsWith("hi") && female.test(v.name) && !male.test(v.name)) ||
     voices.find((v) => v.lang.toLowerCase() === "hi-in" && !male.test(v.name)) ||
     voices.find((v) => v.lang.toLowerCase().startsWith("hi")) ||
-    voices.find((v) => /hindi|हिन्दी/i.test(v.name)) ||
+    voices.find((v) => /sanskrit|संस्कृत|hindi|हिन्दी/i.test(v.name)) ||
     null
   );
 }
@@ -199,13 +181,35 @@ export function unlockUmaSpeech() {
 export interface SpeakOptions {
   rate?: number;
   pitch?: number;
+  sanskritOnly?: boolean;
+  voiceStyle?: "pandit" | "uma";
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (err?: any) => void;
 }
 
+function stopCurrentNeuralAudio() {
+  if (currentNeuralAudio) {
+    try {
+      currentNeuralAudio.pause();
+      currentNeuralAudio.src = "";
+    } catch {
+      /* ignore */
+    }
+    currentNeuralAudio = null;
+  }
+}
+
 export async function speakUma(text: string, options?: SpeakOptions): Promise<void> {
-  const parts = buildUmaParts(text);
+  const myToken = ++activeSpeakToken;
+  stopCurrentNeuralAudio();
+
+  const parts = buildUmaParts(text, {
+    sanskritOnly: options?.sanskritOnly,
+    rate: options?.rate,
+    pitch: options?.pitch,
+  });
+
   if (!parts.length) {
     options?.onEnd?.();
     return;
@@ -213,20 +217,89 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
 
   const withMusic = false;
 
+  // 1. Native Android Plugin (Uses Neural IndianVoice + Sanskrit-Phonetic Local TTS fallback)
   if (Capacitor.isNativePlatform()) {
     try {
       isCurrentlySpeaking = true;
       options?.onStart?.();
       await UmaVoice.speak({ parts, music: withMusic });
+      if (myToken !== activeSpeakToken) return;
       isCurrentlySpeaking = false;
       options?.onEnd?.();
       return;
-    } catch (err) {
+    } catch {
+      if (myToken !== activeSpeakToken) return;
       isCurrentlySpeaking = false;
-      // Phone voice engine failed. Try the web speech engine before giving up.
+      // Fallback to web speech synthesis if native plugin rejects
     }
   }
 
+  // 2. Server-Side Vedic Pandit / Neural TTS (/api/tts/sanskrit) for pure Sanskrit/Hindi pronunciation
+  const joinedPhoneticText = parts.map((p) => p.text).join(" । ").slice(0, 1600);
+  const voiceStyle = options?.voiceStyle || "pandit";
+  const cacheKey = `${voiceStyle}:${joinedPhoneticText}`;
+
+  try {
+    let audioDataUrl = clientTtsCache.get(cacheKey);
+    if (!audioDataUrl) {
+      const resp = await fetch("/api/tts/sanskrit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: joinedPhoneticText,
+          voiceStyle,
+        }),
+        signal: AbortSignal.timeout(7500),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data?.ok && data?.audioBase64) {
+          const mime = data.mimeType || "audio/wav";
+          audioDataUrl = `data:${mime};base64,${data.audioBase64}`;
+          if (clientTtsCache.size > 100) {
+            const firstKey = clientTtsCache.keys().next().value;
+            if (firstKey) clientTtsCache.delete(firstKey);
+          }
+          clientTtsCache.set(cacheKey, audioDataUrl);
+        }
+      }
+    }
+
+    if (myToken !== activeSpeakToken) return;
+
+    if (audioDataUrl && typeof Audio !== "undefined") {
+      const audio = new Audio(audioDataUrl);
+      currentNeuralAudio = audio;
+      audio.playbackRate = Math.max(0.75, Math.min(1.25, options?.rate ? options.rate / 0.88 : 1.0));
+      isCurrentlySpeaking = true;
+      audio.onplay = () => {
+        if (myToken !== activeSpeakToken) return;
+        options?.onStart?.();
+      };
+      audio.onended = () => {
+        if (myToken !== activeSpeakToken) return;
+        isCurrentlySpeaking = false;
+        currentNeuralAudio = null;
+        options?.onEnd?.();
+      };
+      audio.onerror = () => {
+        if (myToken !== activeSpeakToken) return;
+        isCurrentlySpeaking = false;
+        currentNeuralAudio = null;
+        speakWithBrowserSynth(parts, myToken, options);
+      };
+      await audio.play();
+      return;
+    }
+  } catch {
+    // Offline or server unreachable — fall through seamlessly to local phonetic browser TTS
+  }
+
+  if (myToken !== activeSpeakToken) return;
+  speakWithBrowserSynth(parts, myToken, options);
+}
+
+function speakWithBrowserSynth(parts: UmaPart[], myToken: number, options?: SpeakOptions) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
     options?.onError?.();
     options?.onEnd?.();
@@ -241,6 +314,7 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
   let index = 0;
 
   const speakNext = () => {
+    if (myToken !== activeSpeakToken) return;
     const part = parts[index];
     if (!part) {
       clearKeepAlive();
@@ -252,21 +326,24 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     }
     const utter = new SpeechSynthesisUtterance(part.text);
     currentUtterance = utter;
-    utter.lang = "hi-IN";
+    utter.lang = voice?.lang || "hi-IN";
     utter.rate = part.rate;
     utter.pitch = part.pitch;
     if (voice) utter.voice = voice;
     utter.onstart = () => {
+      if (myToken !== activeSpeakToken) return;
       if (index === 0) {
         isCurrentlySpeaking = true;
         options?.onStart?.();
       }
     };
     utter.onend = () => {
+      if (myToken !== activeSpeakToken) return;
       index += 1;
       speakNext();
     };
     utter.onerror = (e) => {
+      if (myToken !== activeSpeakToken) return;
       clearKeepAlive();
       stopPathBed();
       isCurrentlySpeaking = false;
@@ -282,8 +359,10 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
 }
 
 export function stopUmaSpeech() {
+  activeSpeakToken += 1;
   clearKeepAlive();
   stopPathBed();
+  stopCurrentNeuralAudio();
   isCurrentlySpeaking = false;
   currentUtterance = null;
   if (Capacitor.isNativePlatform()) {
@@ -295,6 +374,7 @@ export function stopUmaSpeech() {
 }
 
 export function isUmaSpeaking(): boolean {
+  if (currentNeuralAudio && !currentNeuralAudio.paused) return true;
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     return window.speechSynthesis.speaking || isCurrentlySpeaking;
   }

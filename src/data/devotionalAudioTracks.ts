@@ -277,7 +277,6 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'bhajan',
     deity: 'श्री हनुमान जी',
     duration: '09:30',
-    audioUrl: chant('ShivaStotrasAndMantras', '24Shiva Panchakshar Stotram.mp3'),
     licenseNote: '100% Copyright-Safe In-App Vedic Reciter & Traditional Chanting',
     lyricsText: FULL_HANUMAN_CHALISA_TEXT,
     meaningText:
@@ -430,7 +429,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
 महामणिमुकुटधारणाय माणिक्यभूषणाय
 सृष्टिस्थितिप्रलयकालरौद्रावताराय ॥ ३ ॥
 
-संसारसृष्टighटनापरिवर्तनाय
+संसारसृष्टिघटनापरिवर्तनाय
 रक्षःपिशाचगणसिद्धसमाकुलाय।
 सिद्धोरगग्रहगणेन्द्रनिषेविताय
 शार्दूलचर्मवसनाय नमः शिवाय ॥ ४ ॥`,
@@ -468,7 +467,6 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'aarti',
     deity: 'भगवती महालक्ष्मी',
     duration: '05:10',
-    audioUrl: chant('DeviMahatmyamRecitation', 'Devi Mahatmyam Recitation/02 Argala Stotram.mp3'),
     licenseNote: '100% Copyright-Safe Traditional Chanting & In-App Vedic Reciter',
     lyricsText: `ॐ जय लक्ष्मी माता, मैया जय लक्ष्मी माता।
 तुमको निसदिन सेवत, हर विष्णु विधाता॥ १ ॥
@@ -493,7 +491,6 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'stotra',
     deity: 'भगवान श्री राम',
     duration: '06:15',
-    audioUrl: chant('ShivaStotrasAndMantras', '07Shiva Mahimna Stotram.mp3'),
     licenseNote: '100% Copyright-Safe Traditional Reciter Mode',
     lyricsText: `श्रीरामचन्द्र कृपालु भजु मन
 हरण भवभय दारुणम्।

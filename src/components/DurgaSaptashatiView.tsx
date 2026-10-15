@@ -22,6 +22,7 @@ import {
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { DrawerHostContext, useTabMenu } from './BoardShell';
 
@@ -188,10 +189,11 @@ export const DurgaSaptashatiView: React.FC<{
     setSpeakingIndex(idx);
 
     const verse = currentVerses[idx];
-    const verseText = `${verseWord} ${verse.number}। ${verse.sanskrit}`;
 
-    void speakUma(verseText, {
-      rate: 0.88,
+    void speakUma(verse.sanskrit, {
+      rate: 0.85,
+      sanskritOnly: true,
+      voiceStyle: 'pandit',
       onStart: () => {
         setIsSpeaking(true);
         setSpeakingIndex(idx);
@@ -526,6 +528,25 @@ export const DurgaSaptashatiView: React.FC<{
                       )}
                     </span>
                     <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="bx-iconbtn"
+                        aria-label="यह श्लोक सुनें"
+                        title="यह श्लोक शुद्ध उच्चारण में सुनें"
+                        onClick={() => {
+                          if (isCurrentSpeaking) {
+                            stopAllSpeech();
+                          } else {
+                            speakFromIndex(vIdx);
+                          }
+                        }}
+                      >
+                        {isCurrentSpeaking ? (
+                          <VolumeX className="w-3.5 h-3.5 text-rose-600" />
+                        ) : (
+                          <Volume2 className="w-3.5 h-3.5 text-amber-700" />
+                        )}
+                      </button>
                       <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
                         {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
@@ -538,6 +559,9 @@ export const DurgaSaptashatiView: React.FC<{
                     </div>
                   </div>
                   <p className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
+                  <p className="text-[11px] text-[#6B4423] bg-amber-50/70 rounded-lg px-2 py-1 border border-amber-200/60">
+                    <b className="text-[#B56A00]">पदच्छेद:</b> {formatPadacchedaGuide(verse.sanskrit)}
+                  </p>
                   <p className="bx-mean"><b style={{ color: "var(--bx-ink)" }}>{ui.meaning}</b> {verse.hindi}</p>
                 </article>
               );

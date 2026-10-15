@@ -125,7 +125,7 @@ At the very end of your response, output 3 relevant, highly helpful follow-up qu
       let responseText = "";
 
       if (ai) {
-        const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.8-flash"];
+        const modelsToTry = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
 
         for (const model of modelsToTry) {
           try {
@@ -234,7 +234,7 @@ Return ONLY a valid JSON object with the following structure:
   "remedy": "Vedic remedy and lucky gemstone based on facial traits"
 }`;
 
-      const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+      const modelsToTry = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
       let resultText = "";
 
       for (const model of modelsToTry) {
@@ -276,6 +276,151 @@ Return ONLY a valid JSON object with the following structure:
     } catch (err: any) {
       console.error("Face Analysis API error:", err);
       return res.status(200).json({ ok: false, error: err?.message || "SERVER_ERROR" });
+    }
+  });
+
+  // In-memory LRU cache for Vedic Shloka / Stotram TTS Audio
+  const ttsAudioCache = new Map<string, { audioBase64: string; mimeType: string }>();
+
+  // Vedic Sanskrit & Stotram Shuddha Uccharana TTS Endpoint
+  app.post("/api/tts/sanskrit", async (req: Request, res: Response) => {
+    try {
+      const { text, voiceStyle = "pandit" } = req.body || {};
+      if (!text || typeof text !== "string" || !text.trim()) {
+        return res.status(400).json({ ok: false, error: "TEXT_REQUIRED" });
+      }
+
+      const cleanText = text.trim().slice(0, 1800);
+      const cacheKey = `${voiceStyle}:${cleanText}`;
+      const cached = ttsAudioCache.get(cacheKey);
+      if (cached) {
+        return res.status(200).json({
+          ok: true,
+          audioBase64: cached.audioBase64,
+          mimeType: cached.mimeType,
+          cached: true,
+        });
+      }
+
+      const ai = getGeminiClient();
+      if (ai) {
+        try {
+          const voiceName = voiceStyle === "pandit" ? "Charon" : "Kore";
+          const response = await ai.models.generateContent({
+            model: "gemini-3.8-flash-lite-tts",
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `शुद्ध वैदिक संस्कृत एवं देववाणी उच्चारण में शांत, स्पष्ट और भक्तिमय लय के साथ पाठ करें: ${cleanText}`,
+                    speechMetadata: {
+                      style:
+                        "Traditional Indian Vedic Sanskrit Acharya reciting sacred Sanskrit shlokas and stotrams with 100% pure Devanagari pronunciation (shuddha uccharana), complete vowel articulation without Hindi schwa deletion, clear visarga and anusvara resonance, and serene temple cadence",
+                    },
+                  } as any,
+                ],
+              },
+            ],
+            config: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName },
+                },
+              },
+            },
+          });
+
+          const inlineData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+          if (inlineData?.data) {
+            const payload = {
+              audioBase64: inlineData.data,
+              mimeType: inlineData.mimeType || "audio/wav",
+            };
+            if (ttsAudioCache.size > 200) {
+              const firstKey = ttsAudioCache.keys().next().value;
+              if (firstKey) ttsAudioCache.delete(firstKey);
+            }
+            ttsAudioCache.set(cacheKey, payload);
+            return res.status(200).json({
+              ok: true,
+              ...payload,
+              provider: "gemini-tts",
+            });
+          }
+        } catch (geminiTtsErr: any) {
+          console.warn("Gemini TTS fallback triggered:", geminiTtsErr?.message || geminiTtsErr);
+        }
+      }
+
+      // Secondary Server-Side Fallback: Google Neural Hindi/Sanskrit Speech Stream (chunked <= 180 chars)
+      const chunks: string[] = [];
+      const sentences = cleanText.split(/(?<=[।॥,.!\n])\s+/);
+      let currentChunk = "";
+      for (const s of sentences) {
+        if ((currentChunk + " " + s).trim().length <= 180) {
+          currentChunk = (currentChunk + " " + s).trim();
+        } else {
+          if (currentChunk) chunks.push(currentChunk);
+          if (s.length <= 180) {
+            currentChunk = s.trim();
+          } else {
+            const words = s.split(/\s+/);
+            currentChunk = "";
+            for (const w of words) {
+              if ((currentChunk + " " + w).trim().length <= 180) {
+                currentChunk = (currentChunk + " " + w).trim();
+              } else {
+                if (currentChunk) chunks.push(currentChunk);
+                currentChunk = w;
+              }
+            }
+          }
+        }
+      }
+      if (currentChunk) chunks.push(currentChunk);
+
+      const mp3Buffers: Buffer[] = [];
+      for (const chunk of chunks.slice(0, 12)) {
+        const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&ttsspeed=0.82&q=${encodeURIComponent(chunk)}`;
+        const ttsResp = await fetch(url, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (ttsResp.ok) {
+          const arrBuf = await ttsResp.arrayBuffer();
+          if (arrBuf.byteLength > 200) {
+            mp3Buffers.push(Buffer.from(arrBuf));
+          }
+        }
+      }
+
+      if (mp3Buffers.length > 0) {
+        const combined = Buffer.concat(mp3Buffers);
+        const payload = {
+          audioBase64: combined.toString("base64"),
+          mimeType: "audio/mpeg",
+        };
+        if (ttsAudioCache.size > 200) {
+          const firstKey = ttsAudioCache.keys().next().value;
+          if (firstKey) ttsAudioCache.delete(firstKey);
+        }
+        ttsAudioCache.set(cacheKey, payload);
+        return res.status(200).json({
+          ok: true,
+          ...payload,
+          provider: "neural-stream",
+        });
+      }
+
+      return res.status(200).json({ ok: false, error: "TTS_UNAVAILABLE" });
+    } catch (err: any) {
+      console.warn("Error in /api/tts/sanskrit:", err?.message || err);
+      return res.status(200).json({ ok: false, error: "TTS_ERROR" });
     }
   });
 

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { devotionalAudioEngine } from '../services/devotionalAudioEngine';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
 
 /**
  * Formats any Sanskrit/Hindi verse paragraph so every चरण (half-verse ending in ।)
@@ -37,7 +38,9 @@ export const DevotionalAudioPlayerView: React.FC<{
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('speech');
+  const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('stream');
+  const [sanskritOnly, setSanskritOnly] = useState<boolean>(true);
+  const [showPadaccheda, setShowPadaccheda] = useState<boolean>(true);
   const [playError, setPlayError] = useState<string | null>(null);
 
   // Sequential Verse Queue States (Android / iOS WebView Compliant)
@@ -111,7 +114,7 @@ export const DevotionalAudioPlayerView: React.FC<{
     };
   }, [stopAllPlayback]);
 
-  // Sequential Verse-by-Verse Speech Reciter (100% Copyright-Free & Offline Ready)
+  // Sequential Verse-by-Verse Speech Reciter (100% Copyright-Free & Pure Vedic Phonetics)
   const speakVerseAtIndex = useCallback(
     (index: number) => {
       if (!isPlayingRef.current || index >= verses.length) {
@@ -131,7 +134,9 @@ export const DevotionalAudioPlayerView: React.FC<{
 
       const rawVerse = verses[index] || '';
       void speakUma(rawVerse, {
-        rate: Math.max(0.78, playbackRate * 0.92),
+        rate: Math.max(0.76, playbackRate * 0.88),
+        sanskritOnly,
+        voiceStyle: 'pandit',
         onStart: () => {
           if (playGen.current !== generation) return;
           setActiveVerseIndex(index);
@@ -150,7 +155,7 @@ export const DevotionalAudioPlayerView: React.FC<{
         },
       });
     },
-    [verses, playbackRate, stopAllPlayback]
+    [verses, playbackRate, sanskritOnly, stopAllPlayback]
   );
 
   // Start Speech Recitation with Soft Tanpura Drone
@@ -194,7 +199,7 @@ export const DevotionalAudioPlayerView: React.FC<{
       stopAllPlayback();
       return;
     }
-    if (audioSource === 'speech') {
+    if (audioSource === 'speech' || !currentTrack.audioUrl) {
       startSpeechRecitation(activeVerseIndex >= 0 ? activeVerseIndex : 0);
       return;
     }
@@ -214,6 +219,12 @@ export const DevotionalAudioPlayerView: React.FC<{
     stopAllPlayback();
     setSelectedTrackIndex(idx);
     setCurrentTime(0);
+    const nextTrack = filteredTracks[idx];
+    if (nextTrack?.audioUrl) {
+      setAudioSource('stream');
+    } else {
+      setAudioSource('speech');
+    }
   };
 
   // Update Audio Element listeners
@@ -437,8 +448,25 @@ export const DevotionalAudioPlayerView: React.FC<{
           </div>
 
           {/* Mode Toggle + Speed + Bell */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
             <div className="flex items-center bg-[#23140C] rounded-lg p-0.5 border border-[#8C6239]/50 text-[10px] font-bold">
+              {currentTrack.audioUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopAllPlayback();
+                    setAudioSource('stream');
+                  }}
+                  className={`px-2 py-0.5 rounded cursor-pointer ${
+                    audioSource === 'stream'
+                      ? 'bg-[#B56A00] text-white'
+                      : 'text-[#D9C4A9]'
+                  }`}
+                  title="पारंपरिक वैदिक पण्डित गायन (Original Chanting)"
+                >
+                  🎵 वैदिक गायन
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -446,30 +474,41 @@ export const DevotionalAudioPlayerView: React.FC<{
                   setAudioSource('speech');
                 }}
                 className={`px-2 py-0.5 rounded cursor-pointer ${
-                  audioSource === 'speech'
+                  audioSource === 'speech' || !currentTrack.audioUrl
                     ? 'bg-[#B56A00] text-white'
                     : 'text-[#D9C4A9]'
                 }`}
-                title="100% कॉपीराइट-मुक्त इन-ऐप श्लोक पाठ + तानपुरा"
+                title="शुद्ध संस्कृत पदच्छेद उच्चारण + तानपुरा"
               >
-                🗣 श्लोक पाठ
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  stopAllPlayback();
-                  setAudioSource('stream');
-                }}
-                className={`px-2 py-0.5 rounded cursor-pointer ${
-                  audioSource === 'stream'
-                    ? 'bg-[#B56A00] text-white'
-                    : 'text-[#D9C4A9]'
-                }`}
-                title="वैदिक आर्काइव गायन"
-              >
-                🎵 गायन
+                🗣 शुद्ध श्लोक उच्चारण
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setSanskritOnly((v) => !v)}
+              className={`px-2 py-1 rounded-lg border text-[10px] font-bold cursor-pointer transition ${
+                sanskritOnly
+                  ? 'bg-amber-500/20 text-amber-200 border-amber-400/50'
+                  : 'bg-[#23140C] text-[#D9C4A9] border-[#8C6239]/40'
+              }`}
+              title="केवल मूल संस्कृत श्लोक बोलें या हिंदी भावार्थ सहित"
+            >
+              {sanskritOnly ? '🕉 केवल श्लोक' : '📖 श्लोक + अर्थ'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPadaccheda((v) => !v)}
+              className={`px-2 py-1 rounded-lg border text-[10px] font-bold cursor-pointer transition ${
+                showPadaccheda
+                  ? 'bg-emerald-900/60 text-emerald-200 border-emerald-500/50'
+                  : 'bg-[#23140C] text-[#D9C4A9] border-[#8C6239]/40'
+              }`}
+              title="कठिन संस्कृत शब्दों को तोड़कर (पदच्छेद) सरल उच्चारण दिखाएं"
+            >
+              पदच्छेद {showPadaccheda ? 'ON' : 'OFF'}
+            </button>
 
             <div className="hidden sm:flex items-center gap-0.5 bg-[#23140C] rounded-lg p-0.5 border border-[#8C6239]/40">
               {[0.8, 1.0, 1.2].map((r) => (
@@ -541,6 +580,7 @@ export const DevotionalAudioPlayerView: React.FC<{
           {verses.map((versePara, pIdx) => {
             const isActive = activeVerseIndex === pIdx && isPlaying;
             const lines = formatMultiLineShloka(versePara);
+            const padacchedaText = showPadaccheda ? formatPadacchedaGuide(versePara) : '';
 
             return (
               <div
@@ -561,7 +601,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                       </span>
                       {isActive && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-black text-[#B56A00] bg-amber-200 px-2 py-0.5 rounded-full animate-pulse">
-                          <Volume2 className="w-3 h-3" /> पाठ चल रहा है
+                          <Volume2 className="w-3 h-3" /> शुद्ध उच्चारण चल रहा है
                         </span>
                       )}
                     </div>
@@ -592,6 +632,18 @@ export const DevotionalAudioPlayerView: React.FC<{
                         );
                       })}
                     </div>
+
+                    {/* Padaccheda (Sandhi-Split Easy Pronunciation Guide) */}
+                    {showPadaccheda && padacchedaText && (
+                      <div className="mt-2 pt-2 border-t border-amber-700/15 bg-[#FAF3E6] rounded-xl px-2.5 py-1.5 text-xs text-[#5C3A21]">
+                        <span className="font-black text-[#B56A00] text-[10px] uppercase tracking-wider block mb-0.5">
+                          🔱 पदच्छेद (सरल शुद्ध उच्चारण):
+                        </span>
+                        <span className="font-medium leading-relaxed whitespace-pre-line">
+                          {padacchedaText}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -605,7 +657,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                         ? 'bg-[#B56A00] text-white'
                         : 'bg-[#F4E8D1] hover:bg-[#EAD8B8] text-[#5C3A21]'
                     }`}
-                    title="यह श्लोक सुनें"
+                    title="यह श्लोक शुद्ध उच्चारण में सुनें"
                   >
                     <Volume2 className="w-4 h-4" />
                   </button>

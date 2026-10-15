@@ -58,9 +58,9 @@ public final class IndianVoice {
         );
         fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
         String stamp = fmt.format(new java.util.Date());
-        String ssml = "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>"
+        String ssml = "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='hi-IN'>"
             + "<voice name='" + VOICE + "'>"
-            + "<prosody pitch='-4Hz' rate='-6%' volume='+0%'>"
+            + "<prosody pitch='-2Hz' rate='-10%' volume='+5%'>"
             + escape(text)
             + "</prosody></voice></speak>";
         String config = "X-Timestamp:" + stamp + "\r\n"
@@ -122,12 +122,52 @@ public final class IndianVoice {
                 done.countDown();
             }
         });
-        if (!done.await(22, TimeUnit.SECONDS)) {
+        if (!done.await(8, TimeUnit.SECONDS)) {
             socket.cancel();
-            throw new Exception("voice timeout");
         }
-        if (failure.get() != null && audio.size() < 400) throw failure.get();
-        return audio.toByteArray();
+        if (audio.size() >= 400) {
+            return audio.toByteArray();
+        }
+        // Fallback to Google Neural Hindi/Sanskrit Speech Stream over HTTPS
+        byte[] fallbackMp3 = requestGoogleNeuralFallback(text);
+        if (fallbackMp3.length >= 400) {
+            return fallbackMp3;
+        }
+        if (failure.get() != null) throw failure.get();
+        throw new Exception("voice synthesis empty");
+    }
+
+    private static byte[] requestGoogleNeuralFallback(String text) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            int from = 0;
+            while (from < text.length()) {
+                int to = Math.min(text.length(), from + 170);
+                if (to < text.length()) {
+                    int space = text.lastIndexOf(' ', to);
+                    if (space > from + 40) to = space;
+                }
+                String chunk = text.substring(from, to).trim();
+                from = to;
+                if (chunk.isEmpty()) continue;
+                String encoded = java.net.URLEncoder.encode(chunk, "UTF-8");
+                String ttsUrl = "https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&ttsspeed=0.82&q=" + encoded;
+                Request req = new Request.Builder()
+                    .url(ttsUrl)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                    .build();
+                try (Response resp = CLIENT.newCall(req).execute()) {
+                    if (resp.isSuccessful() && resp.body() != null) {
+                        byte[] bytes = resp.body().bytes();
+                        if (bytes.length > 200) {
+                            out.write(bytes);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return out.toByteArray();
     }
 
     private static String cacheKey(String text) throws Exception {

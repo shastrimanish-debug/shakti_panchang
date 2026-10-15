@@ -158,18 +158,17 @@ public class UmaVoicePlugin extends Plugin {
             return;
         }
         call.setKeepAlive(true);
-        // The sitar file opens with one bright pluck. On a quiet phone that
-        // is the only thing heard when the internet voice never starts.
         sitarWanted = false;
         neuralCancel.set(true);
-        synchronized (neuralQueue) {
-            neuralQueue.clear();
-            neuralFinished = true;
-        }
+        if (tts != null) tts.stop();
         stopVoicePlayer();
         stopSitar();
-        waitingSpeak.add(call);
-        ensureTts(() -> speakNow(call, parts));
+        synchronized (neuralQueue) {
+            neuralQueue.clear();
+            neuralFinished = false;
+        }
+        neuralCancel.set(false);
+        new Thread(() -> speakIndian(call, parts)).start();
     }
 
     private void speakIndian(PluginCall call, List<SpeechPart> parts) {
@@ -178,10 +177,10 @@ public class UmaVoicePlugin extends Plugin {
             String all = joinParts(parts);
             int from = 0;
             while (from < all.length() && !neuralCancel.get()) {
-                int to = Math.min(all.length(), from + 700);
+                int to = Math.min(all.length(), from + 650);
                 if (to < all.length()) {
                     int space = all.lastIndexOf(' ', to);
-                    if (space > from + 200) to = space;
+                    if (space > from + 180) to = space;
                 }
                 String chunk = all.substring(from, to).trim();
                 from = to;
@@ -193,8 +192,10 @@ public class UmaVoicePlugin extends Plugin {
             finishNeural(call, started);
         } catch (Exception e) {
             if (!started && !neuralCancel.get()) {
-                waitingSpeak.add(call);
-                ensureTts(() -> speakNow(call, parts));
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    waitingSpeak.add(call);
+                    ensureTts(() -> speakNow(call, parts));
+                });
             } else {
                 finishNeural(call, true);
             }
@@ -376,12 +377,13 @@ public class UmaVoicePlugin extends Plugin {
         for (Voice voice : voices) {
             if (voice == null || voice.getLocale() == null) continue;
             String lang = voice.getLocale().toLanguageTag().toLowerCase(Locale.ROOT);
-            if (!lang.startsWith("hi")) continue;
+            if (!lang.startsWith("hi") && !lang.startsWith("sa")) continue;
             Set<String> features = voice.getFeatures();
             if (features != null && features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
             String name = voice.getName() == null ? "" : voice.getName().toLowerCase(Locale.ROOT);
             if (name.contains("en-") || name.startsWith("en")) continue;
             int score = 20;
+            if (lang.startsWith("sa")) score += 65; // Prefer dedicated Sanskrit voice when installed
             if (lang.equals("hi-in") || lang.contains("hi-in")) score += 40;
             if (name.contains("hia") || name.contains("hfc") || name.contains("hfd")
                 || name.contains("female") || name.contains("-a-") || name.contains("wavenet-a")) {

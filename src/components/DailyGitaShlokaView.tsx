@@ -5,6 +5,7 @@ import { Sparkles, Share2, Volume2, VolumeX, BookOpen, ChevronLeft, ChevronRight
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { useTabMenu } from './BoardShell';
 
@@ -80,10 +81,11 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
     setIsSpeaking(true);
     setCurrentSpeakingId(`gita_${s.id}`);
 
-    const textToSpeak = `अध्याय ${s.chapter} श्लोक ${s.verse}। ${s.sanskrit}। भावार्थ: ${s.localizedMeaning}`;
+    const textToSpeak = `${s.sanskrit}।\n${s.localizedMeaning}`;
 
     void speakUma(textToSpeak, {
-      rate: 0.88,
+      rate: 0.85,
+      voiceStyle: 'pandit',
       onStart: () => {
         setIsSpeaking(true);
         setCurrentSpeakingId(`gita_${s.id}`);
@@ -353,8 +355,14 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
                 >
                   {currentShloka.sanskrit}
                 </p>
+                <div className="mt-2 pt-2 border-t border-amber-400/40 text-xs text-[#5C3A21]">
+                  <span className="font-black text-[#B56A00] text-[10px] uppercase tracking-wider">
+                    🔱 पदच्छेद (सरल उच्चारण):{' '}
+                  </span>
+                  <span className="font-semibold">{formatPadacchedaGuide(currentShloka.sanskrit)}</span>
+                </div>
                 {currentShloka.transliteration && (
-                  <p className="text-[11px] text-[#8C6239] mt-2 italic font-mono">
+                  <p className="text-[11px] text-[#8C6239] mt-1.5 italic font-mono">
                     {currentShloka.transliteration}
                   </p>
                 )}
