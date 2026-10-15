@@ -1,10 +1,6 @@
 /* Shakti Board — saffron, maroon, gold. One screen, no manuscript chrome. */
 
 .board {
-  height: 100% !important;
-  min-height: 100% !important;
-  width: 100% !important;
-  max-width: 100% !important;
   --bx-bg: #f6efe2;
   --bx-panel: #fffaf3;
   --bx-ink: #3a2414;
@@ -16,9 +12,7 @@
   --bx-header: #9a3412;
   --bx-header-2: #c2410c;
   --bx-cream: #fff6e8;
-  background:
-    radial-gradient(900px 420px at 50% -8%, color-mix(in srgb, var(--bx-gold) 28%, transparent), transparent 58%),
-    linear-gradient(180deg, var(--bx-bg) 0%, color-mix(in srgb, var(--bx-line) 45%, var(--bx-bg)) 100%) !important;
+  background: #f6efe2 !important;
   color: var(--bx-ink) !important;
   font-family: "Yantramanav", "Noto Sans Devanagari", system-ui, sans-serif;
 }

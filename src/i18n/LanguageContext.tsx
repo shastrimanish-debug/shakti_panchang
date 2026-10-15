@@ -62,7 +62,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   return (
     <LanguageContext.Provider value={value}>
-      <div key={`lang-root-${language}`} className="w-full h-full">
+      <div key={`lang-root-${language}`} className="flex flex-col flex-1 min-h-0 w-full h-full">
         {children}
       </div>
     </LanguageContext.Provider>
