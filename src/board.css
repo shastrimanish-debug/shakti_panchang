@@ -12,7 +12,9 @@
   --bx-header: #9a3412;
   --bx-header-2: #c2410c;
   --bx-cream: #fff6e8;
-  background: #f6efe2 !important;
+  background:
+    radial-gradient(900px 420px at 50% -8%, color-mix(in srgb, var(--bx-gold) 28%, transparent), transparent 58%),
+    linear-gradient(180deg, var(--bx-bg) 0%, color-mix(in srgb, var(--bx-line) 45%, var(--bx-bg)) 100%) !important;
   color: var(--bx-ink) !important;
   font-family: "Yantramanav", "Noto Sans Devanagari", system-ui, sans-serif;
 }

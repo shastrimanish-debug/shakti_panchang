@@ -34,10 +34,8 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
 async function freeStaleAppCache() {
   try {
     if (localStorage.getItem("shakti_cache_gen") === CACHE_GEN) return;
-    let hadWorker = false;
     if ("serviceWorker" in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
-      hadWorker = registrations.length > 0;
       await Promise.all(registrations.map((registration) => registration.unregister()));
     }
     if ("caches" in window) {
@@ -45,7 +43,6 @@ async function freeStaleAppCache() {
       await Promise.all(keys.map((key) => caches.delete(key)));
     }
     localStorage.setItem("shakti_cache_gen", CACHE_GEN);
-    if (hadWorker) window.location.reload();
   } catch {
     // A stuck cache must not stop the panchang from opening.
   }

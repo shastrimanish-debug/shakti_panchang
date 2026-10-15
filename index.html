@@ -8,10 +8,9 @@
     <link rel="icon" type="image/png" href="./logo.png" />
     <link rel="apple-touch-icon" href="./logo.png" />
     <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#5c2612" />
+    <meta name="theme-color" content="#9a3412" />
     <style>
-      html, body, #root { margin: 0; height: 100%; background: #5c2612; color: #fff6e8; }
-      #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; font-family: sans-serif; padding: 24px; background: #5c2612; color: #fff6e8; z-index: 5; }
+      html, body, #root { margin: 0; height: 100%; background: #f6efe2; color: #3a2414; }
     </style>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -28,20 +27,8 @@
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cinzel+Decorative:wght@700;900&family=Rozha+One&family=Tiro+Devanagari+Hindi:ital@0;1&family=Yantramanav:wght@400;500;700;900&display=swap">
     </noscript>
   </head>
-  <body class="antialiased h-dvh w-screen overflow-hidden relative">
-    <div id="root">
-      <div id="boot">
-        <div style="font-size:28px;font-weight:800">शक्ति पंचांग</div>
-        <div style="margin-top:10px;font-size:15px;opacity:.9">पंचांग खुल रहा है…</div>
-      </div>
-    </div>
-    <script>
-      window.addEventListener("error", function (event) {
-        var boot = document.getElementById("boot");
-        if (!boot) return;
-        boot.querySelector("div:last-child").textContent = "ऐप नहीं खुली। एक बार बंद करके फिर खोलें।";
-      });
-    </script>
+  <body>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
