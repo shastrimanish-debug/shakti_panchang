@@ -39,27 +39,29 @@ export function scheduleMorningBriefs(
 
   const tz = timezoneHours ?? 5.5;
   const rashiName = Object.keys(RASHI_UPAY).find((name) => lagnaRashi?.startsWith(name));
-  for (let i = 0; i < 60; i++) {
-    const morning = new Date();
-    morning.setDate(morning.getDate() + i);
-    morning.setHours(6, 0, 0, 0);
-    if (morning.getTime() < Date.now() + 60_000) continue;
-    const panchang = calculateVedicPanchang(morning, latitude, longitude, tz);
-    const rahu = getInauspiciousWindows(panchang.solar, morning.getDay()).find((w) => w.title.includes("राहु"));
-    const rahuStr = rahu ? `${clock(rahu.start)} से ${clock(rahu.end)}` : "ऐप में देखें";
-    const who = personName ? `${personName}, ` : "";
-    const upay = rashiName
-      ? `${rashiName} लग्न का उपाय: ${RASHI_UPAY[rashiName]}`
-      : `${panchang.lunarRashi} चंद्र राशि का उपाय: ${RASHI_UPAY[panchang.lunarRashi] || "इष्टदेव का स्मरण।"}`;
-    const title = `${who}आज ${panchang.tithi}`;
-    const body = `आज ${panchang.tithi}, राहुकाल ${rahuStr}। ${upay}`;
-    const id = `brief-${morning.getFullYear()}-${morning.getMonth() + 1}-${morning.getDate()}`;
-    scheduleNativeReminder(id, title, body, morning.getTime());
-  }
 
-  try {
-    localStorage.setItem("sp_morning_brief_v3", stamp);
-  } catch {
-    /* ignore */
-  }
+  window.setTimeout(() => {
+    try {
+      for (let i = 0; i < 7; i++) {
+        const morning = new Date();
+        morning.setDate(morning.getDate() + i);
+        morning.setHours(6, 0, 0, 0);
+        if (morning.getTime() < Date.now() + 60_000) continue;
+        const panchang = calculateVedicPanchang(morning, latitude, longitude, tz);
+        const rahu = getInauspiciousWindows(panchang.solar, morning.getDay()).find((w) => w.title.includes("राहु"));
+        const rahuStr = rahu ? `${clock(rahu.start)} से ${clock(rahu.end)}` : "ऐप में देखें";
+        const who = personName ? `${personName}, ` : "";
+        const upay = rashiName
+          ? `${rashiName} लग्न का उपाय: ${RASHI_UPAY[rashiName]}`
+          : `${panchang.lunarRashi} चंद्र राशि का उपाय: ${RASHI_UPAY[panchang.lunarRashi] || "इष्टदेव का स्मरण।"}`;
+        const title = `${who}आज ${panchang.tithi}`;
+        const body = `आज ${panchang.tithi}, राहुकाल ${rahuStr}। ${upay}`;
+        const id = `brief-${morning.getFullYear()}-${morning.getMonth() + 1}-${morning.getDate()}`;
+        scheduleNativeReminder(id, title, body, morning.getTime());
+      }
+      localStorage.setItem("sp_morning_brief_v3", stamp);
+    } catch {
+      /* ignore */
+    }
+  }, 3000);
 }

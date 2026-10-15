@@ -3,8 +3,8 @@ import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
 import { askUma, AskUmaResponse, pingUmaServer } from '@/lib/uma';
-import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech } from '@/lib/umaSpeech';
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech, UmaVoice } from '@/lib/umaSpeech';
+import { Capacitor } from '@capacitor/core';
 import { analyzeKundali } from '../services/predictions';
 import { buildMicroAstrologyContextPrompt } from '../services/umaMicroAstrology';
 import { getAstrologerBranding } from '../services/storage';
@@ -44,14 +44,6 @@ import {
   Clock,
   Sparkle,
 } from 'lucide-react';
-
-
-interface UmaVoicePlugin {
-  listen: () => Promise<{ text: string }>;
-  stop: () => Promise<void>;
-}
-
-const UmaVoice = registerPlugin<UmaVoicePlugin>('UmaVoice');
 
 interface ChatMessage {
   id: string;

@@ -15,10 +15,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      selfDestroying: true,
       registerType: 'autoUpdate',
       includeAssets: ['logo.png', 'manifest.json'],
       manifest: {
-        id: '/',
+        id: './',
         name: 'शक्ति वैदिक पंचांग (Shakti Panchang)',
         short_name: 'शक्ति पंचांग',
         description: 'सनातन शक्ति वैदिक पंचांग - पंचांग, संपूर्ण कुण्डली, चौघड़िया, 100 वर्ष व्रत-त्योहार खोज, यात्रा दिशाशूल एवं उमा AI',
@@ -26,54 +27,20 @@ export default defineConfig({
         background_color: '#F4E8D1',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        start_url: './',
+        scope: './',
         icons: [
           {
-            src: '/logo.png',
+            src: './logo.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/logo.png',
+            src: './logo.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
-          },
-        ],
-      },
-      workbox: {
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'gstatic-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
           },
         ],
       },
@@ -82,7 +49,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: '/',
+  base: './',
   build: {
     sourcemap: false,
     chunkSizeWarningLimit: 2000,

@@ -6,47 +6,119 @@ import { LanguageProvider } from './i18n';
 import { App } from './App';
 import './index.css';
 import './board.css';
-import { registerSW } from 'virtual:pwa-register';
 import { LicenseProvider } from './lib/license-client';
 import { initializeSecurityGuard } from './utils/securityGuard';
 
 // Initialize Capacitor PWA Elements for web camera modal support
 if (typeof window !== 'undefined') {
-  defineCustomElements(window);
+  try {
+    defineCustomElements(window);
+  } catch {
+    /* ignore */
+  }
 }
 
 // Initialize anti-tamper and security safeguards
 initializeSecurityGuard();
 
-// Auto-register service worker for PWA offline capabilities in production only
+// Purge any stale Service Workers or Workbox caches that can cause a white screen after updates
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  if (import.meta.env.PROD) {
-    try {
-      registerSW({
-        immediate: true,
-        onRegisterError(error: any) {
-          console.warn('PWA service worker registration skipped:', error);
-        },
-      });
-    } catch (err) {
-      console.warn('PWA registration error:', err);
-    }
-  } else {
-    // In development mode, unregister any active service worker so Vite dev server modules are not intercepted
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
+  navigator.serviceWorker
+    .getRegistrations()
+    .then((registrations) => {
       for (const registration of registrations) {
-        registration.unregister();
+        void registration.unregister();
       }
-    });
+    })
+    .catch(() => {});
+
+  if ('caches' in window) {
+    caches
+      .keys()
+      .then((keys) => {
+        for (const key of keys) {
+          void caches.delete(key);
+        }
+      })
+      .catch(() => {});
+  }
+}
+
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; errorMsg: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, errorMsg: '' };
+  }
+
+  static getDerivedStateFromError(error: unknown) {
+    return {
+      hasError: true,
+      errorMsg: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100vw',
+            height: '100dvh',
+            backgroundColor: '#f6efe2',
+            color: '#3a2414',
+            padding: '24px',
+            textAlign: 'center',
+            fontFamily: 'system-ui, sans-serif',
+          }}
+        >
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🕉️</div>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#9a3412', margin: '0 0 8px' }}>
+            श्री शक्ति वैदिक पंचांग
+          </h2>
+          <p style={{ fontSize: '13px', color: '#5c3a21', margin: '0 0 16px', maxWidth: '320px' }}>
+            पृष्ठ पुनः लोड करें।
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              this.setState({ hasError: false, errorMsg: '' });
+              window.location.reload();
+            }}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '12px',
+              backgroundColor: '#9a3412',
+              color: '#fff6e8',
+              border: '1px solid #c8892d',
+              fontWeight: 700,
+              fontSize: '14px',
+              cursor: 'pointer',
+            }}
+          >
+            पुनः खोलें (Reload)
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
   }
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <LicenseProvider>
-      <LanguageProvider>
-        <App />
-      </LanguageProvider>
-    </LicenseProvider>
+    <AppErrorBoundary>
+      <LicenseProvider>
+        <LanguageProvider>
+          <App />
+        </LanguageProvider>
+      </LicenseProvider>
+    </AppErrorBoundary>
   </React.StrictMode>
 );

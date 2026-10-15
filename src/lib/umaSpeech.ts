@@ -1,11 +1,13 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
 
-interface UmaVoicePlugin {
+export interface UmaVoicePlugin {
   speak(options: { text?: string; music?: boolean; parts?: { text: string; rate: number; pitch: number }[] }): Promise<void>;
   stopSpeaking(): Promise<void>;
+  listen(): Promise<{ text: string }>;
+  stop(): Promise<void>;
 }
 
-const UmaVoice = registerPlugin<UmaVoicePlugin>("UmaVoice");
+export const UmaVoice = registerPlugin<UmaVoicePlugin>("UmaVoice");
 
 /** Path is dakshin style. Everyday answers stay natural Hindi. */
 

@@ -1,65 +1,71 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Navbar } from './components/Navbar';
-import { DashboardView } from './components/DashboardView';
-import { PanchangView } from './components/PanchangView';
-import { KalnirnayMonthView } from './components/KalnirnayMonthView';
-import { DevotionalAudioPlayerView } from './components/DevotionalAudioPlayerView';
-import { ChoghadiyaView } from './components/ChoghadiyaView';
-import { MuhuratView } from './components/MuhuratView';
-import { YatraView } from './components/YatraView';
-import { KundaliView } from './components/KundaliView';
-import { FestivalsView } from './components/FestivalsView';
-import { RemindersView } from './components/RemindersView';
-import { VratKathaView } from './components/VratKathaView';
-import { DurgaSaptashatiView } from './components/DurgaSaptashatiView';
-import { ScripturePathView } from './components/ScripturePathView';
-import { HANUMAN_CHALISA } from './data/hanumanChalisa';
-import sundarkandRaw from './data/sundarkand.json';
-import { VastuView } from './components/VastuView';
-import { UpayView } from './components/UpayView';
-import { SaralUpayPanel } from './components/SaralUpayPanel';
-import { SabarMantraView } from './components/SabarMantraView';
-import { JainMantraView } from './components/JainMantraView';
-import { NumerologyView } from './components/NumerologyView';
-import { PalmistryView } from './components/PalmistryView';
-import { TarotView } from './components/TarotView';
-import { GemologyView } from './components/GemologyView';
-import { FaceReadingView } from './components/FaceReadingView';
-import { IChingView } from './components/IChingView';
-import { GranthIndexView } from './components/GranthIndexView';
-import { DailyRashifalView } from './components/DailyRashifalView';
-import { DailyGitaShlokaView } from './components/DailyGitaShlokaView';
-import { WhatsAppPanchangModal } from './components/WhatsAppPanchangModal';
-import { AstrologerBrandingModal } from './components/AstrologerBrandingModal';
-import { UmaAssistantModal } from './components/UmaAssistantModal';
-import { LocationModal } from './components/LocationModal';
-import { SavedProfilesModal } from './components/SavedProfilesModal';
-import { BookCover } from './components/BookCover';
+import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
 import { scheduleMorningBriefs } from './services/morningBrief';
-import { calculateKundali } from './services/kundali';
 import { SavedLocation, KundaliData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
-import { BottomNavBar } from './components/BottomNavBar';
-import { ZeroScrollPager } from './components/ZeroScrollPager';
 import { BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TabMenuContext, TodayBoard } from './components/BoardShell';
-import { MoreMenuModal } from './components/MoreMenuModal';
-import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
-import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { useLicense } from './lib/license-client';
 import { useTranslation, useLanguage } from './i18n';
-import { getLocalizedDailyShloka, SHLOKAS } from './constants/shlokas';
-import {
-  Sparkles,
-  BookOpen,
-  ArrowLeft,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+
+const KalnirnayMonthView = React.lazy(() => import('./components/KalnirnayMonthView').then((m) => ({ default: m.KalnirnayMonthView })));
+const DevotionalAudioPlayerView = React.lazy(() => import('./components/DevotionalAudioPlayerView').then((m) => ({ default: m.DevotionalAudioPlayerView })));
+const ChoghadiyaView = React.lazy(() => import('./components/ChoghadiyaView').then((m) => ({ default: m.ChoghadiyaView })));
+const MuhuratView = React.lazy(() => import('./components/MuhuratView').then((m) => ({ default: m.MuhuratView })));
+const YatraView = React.lazy(() => import('./components/YatraView').then((m) => ({ default: m.YatraView })));
+const KundaliView = React.lazy(() => import('./components/KundaliView').then((m) => ({ default: m.KundaliView })));
+const FestivalsView = React.lazy(() => import('./components/FestivalsView').then((m) => ({ default: m.FestivalsView })));
+const RemindersView = React.lazy(() => import('./components/RemindersView').then((m) => ({ default: m.RemindersView })));
+const VratKathaView = React.lazy(() => import('./components/VratKathaView').then((m) => ({ default: m.VratKathaView })));
+const DurgaSaptashatiView = React.lazy(() => import('./components/DurgaSaptashatiView').then((m) => ({ default: m.DurgaSaptashatiView })));
+const VastuView = React.lazy(() => import('./components/VastuView').then((m) => ({ default: m.VastuView })));
+const UpayView = React.lazy(() => import('./components/UpayView').then((m) => ({ default: m.UpayView })));
+const SaralUpayPanel = React.lazy(() => import('./components/SaralUpayPanel').then((m) => ({ default: m.SaralUpayPanel })));
+const SabarMantraView = React.lazy(() => import('./components/SabarMantraView').then((m) => ({ default: m.SabarMantraView })));
+const JainMantraView = React.lazy(() => import('./components/JainMantraView').then((m) => ({ default: m.JainMantraView })));
+const NumerologyView = React.lazy(() => import('./components/NumerologyView').then((m) => ({ default: m.NumerologyView })));
+const PalmistryView = React.lazy(() => import('./components/PalmistryView').then((m) => ({ default: m.PalmistryView })));
+const TarotView = React.lazy(() => import('./components/TarotView').then((m) => ({ default: m.TarotView })));
+const GemologyView = React.lazy(() => import('./components/GemologyView').then((m) => ({ default: m.GemologyView })));
+const FaceReadingView = React.lazy(() => import('./components/FaceReadingView').then((m) => ({ default: m.FaceReadingView })));
+const IChingView = React.lazy(() => import('./components/IChingView').then((m) => ({ default: m.IChingView })));
+const DailyRashifalView = React.lazy(() => import('./components/DailyRashifalView').then((m) => ({ default: m.DailyRashifalView })));
+const DailyGitaShlokaView = React.lazy(() => import('./components/DailyGitaShlokaView').then((m) => ({ default: m.DailyGitaShlokaView })));
+const WhatsAppPanchangModal = React.lazy(() => import('./components/WhatsAppPanchangModal').then((m) => ({ default: m.WhatsAppPanchangModal })));
+const AstrologerBrandingModal = React.lazy(() => import('./components/AstrologerBrandingModal').then((m) => ({ default: m.AstrologerBrandingModal })));
+const UmaAssistantModal = React.lazy(() => import('./components/UmaAssistantModal').then((m) => ({ default: m.UmaAssistantModal })));
+const LocationModal = React.lazy(() => import('./components/LocationModal').then((m) => ({ default: m.LocationModal })));
+const SavedProfilesModal = React.lazy(() => import('./components/SavedProfilesModal').then((m) => ({ default: m.SavedProfilesModal })));
+const MoreMenuModal = React.lazy(() => import('./components/MoreMenuModal').then((m) => ({ default: m.MoreMenuModal })));
+const ThemeSelectorModal = React.lazy(() => import('./components/ThemeSelectorModal').then((m) => ({ default: m.ThemeSelectorModal })));
+const LanguageSelectorModal = React.lazy(() => import('./components/LanguageSelectorModal').then((m) => ({ default: m.LanguageSelectorModal })));
+
+const HanumanChalisaPathView = React.lazy(async () => {
+  const [{ ScripturePathView }, { HANUMAN_CHALISA }] = await Promise.all([
+    import('./components/ScripturePathView'),
+    import('./data/hanumanChalisa'),
+  ]);
+  return {
+    default: () => <ScripturePathView title="श्री हनुमान चालीसा" verses={HANUMAN_CHALISA} />,
+  };
+});
+
+const SundarkandPathView = React.lazy(async () => {
+  const [{ ScripturePathView }, { default: sundarkandRaw }] = await Promise.all([
+    import('./components/ScripturePathView'),
+    import('./data/sundarkand.json'),
+  ]);
+  return {
+    default: () => (
+      <ScripturePathView
+        title="श्री रामचरितमानस · संपूर्ण सुंदरकांड"
+        verses={sundarkandRaw as { n: number; kind?: string; text: string }[]}
+      />
+    ),
+  };
+});
 
 /**
  * Play a gentle tactile paper flip sound when turning the Granth book page
@@ -413,33 +419,17 @@ export function App() {
 
       {/* Main Responsive View Container with Smooth Vertical Scrolling */}
       <main className="flex-1 min-h-0 w-full relative flex flex-col overflow-hidden">
-        {false ? (
-          <BookCover
-            onOpenIndex={() => {
-              setIsBookOpen(true);
-              setActiveTab('index');
-              if (isAudioEnabled) playTactilePageTurnSound();
-            }}
-            onOpenBook={(targetTabId) => {
-              setIsBookOpen(true);
-              if (targetTabId) {
-                handleSelectTab(targetTabId);
-              }
-              if (isAudioEnabled) playTactilePageTurnSound();
-            }}
-            currentLocationName={currentLocation.name}
-            onOpenLocation={() => setIsLocationModalOpen(true)}
-            onOpenUma={() => {
-              setIsUmaModalOpen(true);
-            }}
-            onOpenPremium={() => {
-              triggerSubscriptionModal();
-            }}
-          />
-        ) : (
-          <div
-            key={`${activeTab}-${currentLang}`}
-            className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
+        <div
+          key={`${activeTab}-${currentLang}`}
+          className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
+        >
+          <Suspense
+            fallback={
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-2">
+                <div className="text-2xl">🕉️</div>
+                <div className="text-sm font-bold text-[#5C3A21]">अध्याय खुल रहा है...</div>
+              </div>
+            }
           >
             {(activeTab === 'services' || activeTab === 'index') && (
               <ModuleBoard language={currentLang} onOpen={handleSelectTab} />
@@ -618,16 +608,9 @@ export function App() {
               />
             )}
 
-            {activeTab === 'hanuman' && (
-              <ScripturePathView title="श्री हनुमान चालीसा" verses={HANUMAN_CHALISA} />
-            )}
+            {activeTab === 'hanuman' && <HanumanChalisaPathView />}
 
-            {activeTab === 'sundarkand' && (
-              <ScripturePathView
-                title="श्री रामचरितमानस · संपूर्ण सुंदरकांड"
-                verses={sundarkandRaw as { n: number; kind?: string; text: string }[]}
-              />
-            )}
+            {activeTab === 'sundarkand' && <SundarkandPathView />}
 
             {activeTab === 'sabar' && <SabarMantraView />}
 
@@ -722,8 +705,8 @@ export function App() {
                 onNextChapter={handleNextPage}
               />
             )}
-          </div>
-        )}
+          </Suspense>
+        </div>
       </main>
 
       {drawerOpen && (
@@ -754,106 +737,119 @@ export function App() {
         />
       )}
 
-      {/* More Options Sheet / Modal */}
-      <MoreMenuModal
-        isOpen={isMoreModalOpen}
-        onClose={() => setIsMoreModalOpen(false)}
-        onSelectTab={handleSelectTab}
-        onOpenLocationModal={() => setIsLocationModalOpen(true)}
-        onOpenUmaModal={() => {
-          setIsUmaModalOpen(true);
-        }}
-        onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
-        onToggleBookCover={() => setIsBookOpen(false)}
-        onOpenWhatsAppPanchang={() => {
-          if (!isEntitled) {
-            triggerSubscriptionModal("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।");
-            return;
-          }
-          setIsWhatsAppPanchangOpen(true);
-        }}
-        onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
-        onOpenSubscriptionModal={triggerSubscriptionModal}
-        currentLocation={currentLocation}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
-        onSetTheme={setTheme}
-        onOpenThemeModal={() => setIsThemeModalOpen(true)}
-        isAudioEnabled={isAudioEnabled}
-        onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
-      />
+      <Suspense fallback={null}>
+        {isMoreModalOpen && (
+          <MoreMenuModal
+            isOpen={isMoreModalOpen}
+            onClose={() => setIsMoreModalOpen(false)}
+            onSelectTab={handleSelectTab}
+            onOpenLocationModal={() => setIsLocationModalOpen(true)}
+            onOpenUmaModal={() => {
+              setIsUmaModalOpen(true);
+            }}
+            onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
+            onToggleBookCover={() => setIsBookOpen(false)}
+            onOpenWhatsAppPanchang={() => {
+              if (!isEntitled) {
+                triggerSubscriptionModal("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।");
+                return;
+              }
+              setIsWhatsAppPanchangOpen(true);
+            }}
+            onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
+            onOpenSubscriptionModal={triggerSubscriptionModal}
+            currentLocation={currentLocation}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            onSetTheme={setTheme}
+            onOpenThemeModal={() => setIsThemeModalOpen(true)}
+            isAudioEnabled={isAudioEnabled}
+            onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
+          />
+        )}
 
-      {/* Devotional Light & Ratri Theme Selector Modal (8+ Themes) */}
-      <ThemeSelectorModal
-        isOpen={isThemeModalOpen}
-        onClose={() => setIsThemeModalOpen(false)}
-        activeTheme={theme}
-        onSelectTheme={(newTheme) => {
-          setTheme(newTheme);
-          setIsThemeModalOpen(false);
-        }}
-      />
+        {isThemeModalOpen && (
+          <ThemeSelectorModal
+            isOpen={isThemeModalOpen}
+            onClose={() => setIsThemeModalOpen(false)}
+            activeTheme={theme}
+            onSelectTheme={(newTheme) => {
+              setTheme(newTheme);
+              setIsThemeModalOpen(false);
+            }}
+          />
+        )}
 
-      {/* Language Selector Modal (10+ Languages) */}
-      <LanguageSelectorModal
-        isOpen={isLanguageModalOpen}
-        onClose={() => setIsLanguageModalOpen(false)}
-        onLanguageSelected={async (lang) => {
-          await setLanguage(lang.code);
-        }}
-      />
+        {isLanguageModalOpen && (
+          <LanguageSelectorModal
+            isOpen={isLanguageModalOpen}
+            onClose={() => setIsLanguageModalOpen(false)}
+            onLanguageSelected={async (lang) => {
+              await setLanguage(lang.code);
+            }}
+          />
+        )}
 
-      {/* Subscription & VIP Activation Modal */}
-      <SubscriptionModal
-        isOpen={isSubscriptionModalOpen}
-        onClose={() => setIsSubscriptionModalOpen(false)}
-        reason={subscriptionReason}
-      />
+        {isSubscriptionModalOpen && (
+          <SubscriptionModal
+            isOpen={isSubscriptionModalOpen}
+            onClose={() => setIsSubscriptionModalOpen(false)}
+            reason={subscriptionReason}
+          />
+        )}
 
-      {/* WhatsApp Daily Panchang Card Generator Modal */}
-      <WhatsAppPanchangModal
-        isOpen={isWhatsAppPanchangOpen}
-        onClose={() => setIsWhatsAppPanchangOpen(false)}
-        panchang={panchang}
-        location={currentLocation}
-        currentDate={currentDate}
-        personName={activeKundali?.name}
-        onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
-      />
+        {isWhatsAppPanchangOpen && (
+          <WhatsAppPanchangModal
+            isOpen={isWhatsAppPanchangOpen}
+            onClose={() => setIsWhatsAppPanchangOpen(false)}
+            panchang={panchang}
+            location={currentLocation}
+            currentDate={currentDate}
+            personName={activeKundali?.name}
+            onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
+          />
+        )}
 
-      {/* Astrologer / Pandit Custom Visiting Card Branding Modal */}
-      <AstrologerBrandingModal
-        isOpen={isBrandingModalOpen}
-        onClose={() => setIsBrandingModalOpen(false)}
-      />
+        {isBrandingModalOpen && (
+          <AstrologerBrandingModal
+            isOpen={isBrandingModalOpen}
+            onClose={() => setIsBrandingModalOpen(false)}
+          />
+        )}
 
-      {/* Dialog Modals */}
-      <UmaAssistantModal
-        isOpen={isUmaModalOpen}
-        onClose={() => {
-          setIsUmaModalOpen(false);
-          setUmaInitialPrompt(null);
-        }}
-        panchang={panchang}
-        activeKundali={activeKundali}
-        onNavigateTab={handleSelectTab}
-        isAudioEnabled={isAudioEnabled}
-        locationName={currentLocation.name}
-        initialPrompt={umaInitialPrompt}
-      />
+        {isUmaModalOpen && (
+          <UmaAssistantModal
+            isOpen={isUmaModalOpen}
+            onClose={() => {
+              setIsUmaModalOpen(false);
+              setUmaInitialPrompt(null);
+            }}
+            panchang={panchang}
+            activeKundali={activeKundali}
+            onNavigateTab={handleSelectTab}
+            isAudioEnabled={isAudioEnabled}
+            locationName={currentLocation.name}
+            initialPrompt={umaInitialPrompt}
+          />
+        )}
 
-      <LocationModal
-        isOpen={isLocationModalOpen}
-        onClose={() => setIsLocationModalOpen(false)}
-        currentLocation={currentLocation}
-        onSelectLocation={setCurrentLocation}
-      />
+        {isLocationModalOpen && (
+          <LocationModal
+            isOpen={isLocationModalOpen}
+            onClose={() => setIsLocationModalOpen(false)}
+            currentLocation={currentLocation}
+            onSelectLocation={setCurrentLocation}
+          />
+        )}
 
-      <SavedProfilesModal
-        isOpen={isSavedProfilesModalOpen}
-        onClose={() => setIsSavedProfilesModalOpen(false)}
-        onSelectProfile={setActiveKundali}
-      />
+        {isSavedProfilesModalOpen && (
+          <SavedProfilesModal
+            isOpen={isSavedProfilesModalOpen}
+            onClose={() => setIsSavedProfilesModalOpen(false)}
+            onSelectProfile={setActiveKundali}
+          />
+        )}
+      </Suspense>
     </div>
     </TabMenuContext.Provider>
     </DrawerHostContext.Provider>
