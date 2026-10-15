@@ -1,7 +1,8 @@
 /**
  * Robust, cross-platform Content & Image Sharing Helper for AI Studio Applet
- * Handles Web Share API, WhatsApp Direct Link, Popup Blockers, and Clipboard Fallback
+ * Handles Native Android FileProvider Share, Web Share API, WhatsApp Direct Link, and Download Fallback
  */
+import { shareImageNative } from './device';
 
 export async function shareTextContent(options: {
   title?: string;
@@ -63,6 +64,12 @@ export async function shareImageFile(options: {
   const { imageUri, fileName, title, text } = options;
 
   try {
+    // 0. Native Android Capacitor Plugin Share (FileProvider + EXTRA_STREAM + EXTRA_TEXT)
+    const nativeShared = await shareImageNative(imageUri, fileName, text);
+    if (nativeShared) {
+      return 'shared';
+    }
+
     const res = await fetch(imageUri);
     const blob = await res.blob();
     const file = new File([blob], fileName, { type: 'image/png' });
@@ -104,3 +111,4 @@ export async function shareImageFile(options: {
     return shareTextContent({ title, text });
   }
 }
+

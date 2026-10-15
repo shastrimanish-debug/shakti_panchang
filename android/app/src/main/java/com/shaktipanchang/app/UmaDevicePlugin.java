@@ -5,12 +5,17 @@ import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Base64;
+import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
@@ -25,6 +30,7 @@ import com.getcapacitor.annotation.PermissionCallback;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -71,6 +77,110 @@ public class UmaDevicePlugin extends Plugin {
         } catch (Exception e) {
             call.reject("PDF share failed", e);
         }
+    }
+
+    @PluginMethod
+    public void saveImage(PluginCall call) {
+        String base64 = call.getString("base64");
+        String fileName = call.getString("fileName", "Shakti-Panchang-HD.png");
+        if (base64 == null || base64.isEmpty()) {
+            call.reject("Missing image data");
+            return;
+        }
+        try {
+            if (base64.contains(",")) {
+                base64 = base64.substring(base64.indexOf(',') + 1);
+            }
+            byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+            String cleanName = fileName.replaceAll("[\\\\/]", "_");
+            if (!cleanName.toLowerCase().endsWith(".png")) {
+                cleanName = cleanName + ".png";
+            }
+
+            ContentResolver resolver = getContext().getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, cleanName);
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ShaktiPanchang");
+                values.put(MediaStore.Images.Media.IS_PENDING, 1);
+            }
+
+            Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (uri != null) {
+                try (OutputStream out = resolver.openOutputStream(uri)) {
+                    if (out != null) {
+                        out.write(bytes);
+                    }
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    values.clear();
+                    values.put(MediaStore.Images.Media.IS_PENDING, 0);
+                    resolver.update(uri, values, null, null);
+                }
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "HD पंचांग चित्र गैलरी में सेव हो गया!", Toast.LENGTH_LONG).show()
+                    );
+                }
+                JSObject ret = new JSObject();
+                ret.put("ok", true);
+                ret.put("uri", uri.toString());
+                call.resolve(ret);
+                return;
+            }
+            // Fallback to native chooser if MediaStore insert returned null
+            shareImageInternal(bytes, cleanName, "");
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Image save failed", e);
+        }
+    }
+
+    @PluginMethod
+    public void shareImage(PluginCall call) {
+        String base64 = call.getString("base64");
+        String fileName = call.getString("fileName", "Shakti-Panchang-HD.png");
+        String text = call.getString("text", "");
+        if (base64 == null || base64.isEmpty()) {
+            call.reject("Missing image data");
+            return;
+        }
+        try {
+            if (base64.contains(",")) {
+                base64 = base64.substring(base64.indexOf(',') + 1);
+            }
+            byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+            shareImageInternal(bytes, fileName.replaceAll("[\\\\/]", "_"), text);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Image share failed", e);
+        }
+    }
+
+    private void shareImageInternal(byte[] bytes, String fileName, String text) throws Exception {
+        File dir = new File(getContext().getCacheDir(), "images");
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IllegalStateException("Could not create images folder");
+        }
+        File file = new File(dir, fileName);
+        try (FileOutputStream out = new FileOutputStream(file)) {
+            out.write(bytes);
+        }
+        Uri uri = FileProvider.getUriForFile(
+            getContext(),
+            getContext().getPackageName() + ".fileprovider",
+            file
+        );
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("image/png");
+        send.putExtra(Intent.EXTRA_STREAM, uri);
+        if (text != null && !text.isEmpty()) {
+            send.putExtra(Intent.EXTRA_TEXT, text);
+        }
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        send.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getActivity().startActivity(Intent.createChooser(send, "पंचांग कार्ड साझा करें"));
     }
 
     @PluginMethod

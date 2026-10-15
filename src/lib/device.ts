@@ -2,6 +2,8 @@ import { Capacitor, registerPlugin } from "@capacitor/core";
 
 interface UmaDevicePlugin {
   sharePdf(options: { base64: string; fileName: string }): Promise<void>;
+  saveImage(options: { base64: string; fileName: string }): Promise<{ ok?: boolean; uri?: string }>;
+  shareImage(options: { base64: string; fileName: string; text?: string }): Promise<void>;
   openUrl(options: { url: string }): Promise<void>;
   scheduleReminder(options: { id: string; title: string; body: string; timestamp: number }): Promise<void>;
   cancelReminder(options: { id: string }): Promise<void>;
@@ -42,6 +44,28 @@ export async function deliverPdf(
   const base64 = await blobToBase64(blob);
   await UmaDevice.sharePdf({ base64, fileName });
   return true;
+}
+
+export async function saveImageNative(dataUri: string, fileName: string): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+  try {
+    const base64 = dataUri.includes(",") ? dataUri.split(",")[1] : dataUri;
+    await UmaDevice.saveImage({ base64, fileName });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function shareImageNative(dataUri: string, fileName: string, text?: string): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+  try {
+    const base64 = dataUri.includes(",") ? dataUri.split(",")[1] : dataUri;
+    await UmaDevice.shareImage({ base64, fileName, text: text || "" });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function openExternal(url: string): Promise<void> {

@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { VedicPanchangData, SavedLocation } from '../types';
 import { getAstrologerBranding, AstrologerBranding } from '../services/storage';
-import { ZeroScrollPager } from './ZeroScrollPager';
 import { shareImageFile, shareTextContent } from '../lib/shareHelper';
+import { saveImageNative } from '../lib/device';
 
 interface WhatsAppPanchangModalProps {
   isOpen: boolean;
@@ -96,6 +96,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(true);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
   const [branding, setBranding] = useState<AstrologerBranding>(() => getAstrologerBranding());
 
   // Shloka for today based on day of month
@@ -517,10 +518,18 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     if (!imageUri) return;
     const fileName = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
     try {
+      // 0. Native Android Gallery Save (MediaStore Pictures/ShaktiPanchang)
+      const savedNative = await saveImageNative(imageUri, fileName);
+      if (savedNative) {
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 2500);
+        return;
+      }
+
       const blob = dataURItoBlob(imageUri);
       const file = new File([blob], fileName, { type: 'image/png' });
 
-      // 1. Mobile Web Share API first (Ideal for Android Gallery / WhatsApp / Files)
+      // 1. Mobile Web Share API first (Ideal for mobile browsers)
       if (
         typeof navigator !== 'undefined' &&
         typeof navigator.canShare === 'function' &&
@@ -531,6 +540,8 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
             title: 'दैनिक वैदिक पंचांग कार्ड (HD)',
             files: [file],
           });
+          setDownloadSuccess(true);
+          setTimeout(() => setDownloadSuccess(false), 2500);
           return;
         } catch (e: any) {
           if (e?.name === 'AbortError') return;
@@ -545,6 +556,8 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       a.target = '_blank';
       document.body.appendChild(a);
       a.click();
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 2500);
 
       setTimeout(() => {
         if (document.body.contains(a)) document.body.removeChild(a);
@@ -552,15 +565,10 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       }, 3000);
     } catch (err) {
       console.error('Download error:', err);
-      const win = window.open();
-      if (win) {
-        win.document.write(`<title>${fileName}</title><img src="${imageUri}" style="max-width:100%; height:auto;" alt="Panchang HD Card" />`);
-      } else {
-        const a = document.createElement('a');
-        a.href = imageUri;
-        a.download = fileName;
-        a.click();
-      }
+      const a = document.createElement('a');
+      a.href = imageUri;
+      a.download = fileName;
+      a.click();
     }
   };
 
@@ -576,9 +584,9 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       {/* Hidden offscreen canvas for crisp 1080x1350 rendering */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-      <div className="w-full max-w-md bg-[#FAF2E4] text-[#3E2714] rounded-2xl border-2 border-[#8C6239] shadow-2xl overflow-hidden h-[92dvh] max-h-[100dvh] flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="w-full max-w-md bg-[#FAF2E4] text-[#3E2714] rounded-2xl border-2 border-[#8C6239] shadow-2xl overflow-hidden max-h-[92dvh] flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-[#5C3A21] to-[#735133] text-[#FAF2E4] border-b border-[#8C6239]">
+        <div className="shrink-0 flex items-center justify-between p-3 bg-gradient-to-r from-[#5C3A21] to-[#735133] text-[#FAF2E4] border-b border-[#8C6239]">
           <div className="flex items-center gap-2">
             <div className="p-1 bg-[#B56A00] rounded-lg text-white">
               <Share2 className="w-4 h-4 text-[#FFD88A]" />
@@ -602,9 +610,9 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
         </div>
 
         {/* Scrollable Content */}
-        <ZeroScrollPager className="sm:p-4 flex-1 flex flex-col items-center overflow-hidden min-h-0" contentClassName="p-3 space-y-3">
+        <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-3 sm:p-4 flex flex-col items-center space-y-2.5">
           {/* Card Preview */}
-          <div className="w-full max-w-[340px] rounded-xl overflow-hidden border-2 border-[#8C6239] shadow-md bg-stone-100 relative group aspect-[4/5] flex items-center justify-center">
+          <div className="w-full max-w-[290px] sm:max-w-[330px] rounded-xl overflow-hidden border-2 border-[#8C6239] shadow-md bg-stone-100 relative group aspect-[4/5] flex items-center justify-center shrink-0">
             {isGenerating || !imageUri ? (
               <div className="text-center p-4 space-y-2">
                 <Sparkles className="w-6 h-6 text-[#B56A00] animate-spin mx-auto" />
@@ -618,12 +626,9 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
               />
             )}
           </div>
-          <div className="text-[10px] text-[#8C6239] font-bold text-center">
-            💡 यदि बटन से डाउनलोड न हो तो फ़ोटो पर उंगली दबाकर रखें और 'Download Image' चुनें
-          </div>
 
           {/* Pandit Custom Branding Indicator / Shortcut */}
-          <div className="w-full p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl flex items-center justify-between text-xs">
+          <div className="w-full p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl flex items-center justify-between text-xs shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <Award className="w-4 h-4 text-[#B56A00] shrink-0" />
               <div className="truncate">
@@ -653,7 +658,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
           </div>
 
           {/* Action Buttons Grid */}
-          <div className="w-full space-y-2">
+          <div className="w-full space-y-2 shrink-0">
             <button
               type="button"
               onClick={handleShareWhatsApp}
@@ -670,8 +675,17 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
                 disabled={!imageUri}
                 className="py-2 px-3 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
               >
-                <Download className="w-3.5 h-3.5 text-[#FFD88A]" />
-                <span>HD चित्र डाउनलोड</span>
+                {downloadSuccess ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-300" />
+                    <span className="text-emerald-200">गैलरी में सेव!</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 text-[#FFD88A]" />
+                    <span>HD चित्र डाउनलोड</span>
+                  </>
+                )}
               </button>
 
               <button
@@ -693,10 +707,10 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
               </button>
             </div>
           </div>
-        </ZeroScrollPager>
+        </div>
 
         {/* Footer */}
-        <div className="p-2.5 bg-[#F4E8D1] border-t border-[#8C6239]/20 text-center">
+        <div className="shrink-0 p-2 bg-[#F4E8D1] border-t border-[#8C6239]/20 text-center">
           <span className="text-[10px] text-[#8C6239] font-granth">
             सनातन शक्ति पंचांग • अचूक वैदिक गणना व सुविचार
           </span>
