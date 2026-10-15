@@ -11,7 +11,7 @@ import { LicenseProvider } from './lib/license-client';
 import { initializeSecurityGuard } from './utils/securityGuard';
 import { Capacitor } from '@capacitor/core';
 
-const CACHE_GEN = "11";
+const CACHE_GEN = "12";
 
 async function freeStaleAppCache() {
   try {

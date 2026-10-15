@@ -374,7 +374,7 @@ export function App() {
   return (
     <DrawerHostContext.Provider value={drawerApi}>
     <TabMenuContext.Provider value={tabMenu}>
-    <div key={`app-root-${currentLang}`} className="board h-dvh w-screen overflow-hidden relative flex flex-col font-sans">
+    <div key={`app-root-${currentLang}`} className="board h-full w-full min-h-0 overflow-hidden relative flex flex-col font-sans">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       <div className="bx-rail shrink-0">

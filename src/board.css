@@ -1,6 +1,10 @@
 /* Shakti Board — saffron, maroon, gold. One screen, no manuscript chrome. */
 
 .board {
+  height: 100% !important;
+  min-height: 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
   --bx-bg: #f6efe2;
   --bx-panel: #fffaf3;
   --bx-ink: #3a2414;

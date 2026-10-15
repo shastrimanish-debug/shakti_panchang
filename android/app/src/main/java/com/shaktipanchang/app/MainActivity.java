@@ -56,14 +56,14 @@ public class MainActivity extends BridgeActivity {
     /** Drops only the web cache and service worker. Saved kundali stays. */
     private boolean clearStaleWebCacheOnce() {
         android.content.SharedPreferences prefs = getSharedPreferences("shakti_boot", MODE_PRIVATE);
-        if (prefs.getInt("web_cache_gen", 0) >= 11) return false;
+        if (prefs.getInt("web_cache_gen", 0) >= 12) return false;
         File data = new File(getApplicationInfo().dataDir);
         deleteDir(new File(data, "app_webview/Service Worker"));
         deleteDir(new File(data, "app_webview/Cache"));
         deleteDir(new File(data, "app_webview/Code Cache"));
         deleteDir(new File(data, "app_webview/GPUCache"));
         deleteDir(new File(getCacheDir(), "WebView"));
-        prefs.edit().putInt("web_cache_gen", 11).apply();
+        prefs.edit().putInt("web_cache_gen", 12).apply();
         return true;
     }
 
