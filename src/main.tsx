@@ -9,6 +9,29 @@ import './board.css';
 import { registerSW } from 'virtual:pwa-register';
 import { LicenseProvider } from './lib/license-client';
 import { initializeSecurityGuard } from './utils/securityGuard';
+import { Capacitor } from '@capacitor/core';
+
+const CACHE_GEN = "11";
+
+async function freeStaleAppCache() {
+  try {
+    if (localStorage.getItem("shakti_cache_gen") === CACHE_GEN) return;
+    let hadWorker = false;
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      hadWorker = registrations.length > 0;
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+    localStorage.setItem("shakti_cache_gen", CACHE_GEN);
+    if (hadWorker) window.location.reload();
+  } catch {
+    // A stuck cache must not stop the panchang from opening.
+  }
+}
 
 // Initialize Capacitor PWA Elements for web camera modal support
 if (typeof window !== 'undefined') {
@@ -18,8 +41,10 @@ if (typeof window !== 'undefined') {
 // Initialize anti-tamper and security safeguards
 initializeSecurityGuard();
 
-// Auto-register service worker for PWA offline capabilities in production only
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+void freeStaleAppCache();
+
+// The installed app already has its files. A service worker only keeps a stale screen.
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
   if (import.meta.env.PROD) {
     try {
       registerSW({
