@@ -201,22 +201,12 @@ export function extractPureSanskritVerse(raw: string): string {
  */
 export function formatPadacchedaGuide(raw: string): string {
   let text = extractPureSanskritVerse(raw);
-  // Remove verse numbers like ॥ १ ॥
   text = text
-    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, '॥')
-    .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, '');
-
-  for (const [pattern, replacement] of SAMASA_PADACCHEDA_MAP) {
-    text = text.replace(pattern, replacement);
-  }
-
-  // Normalize panchama-varna conjuncts for easy reading
-  text = text
-    .replace(/[ङञ]्(?=[कखगघचछजझ])/g, 'ं')
-    .replace(/ऽ/g, '-(अ)');
-
+    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "॥")
+    .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, "");
+  text = text.replace(/ऽ/g, " अ");
   text = splitLongSanskritCompounds(text);
-  return text.replace(/[ \t]+/g, ' ').trim();
+  return text.replace(/[ \t]+/g, " ").trim();
 }
 
 /**

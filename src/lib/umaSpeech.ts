@@ -1,5 +1,5 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
-import { toVedicPhoneticSpeech, extractPureSanskritVerse } from "./sanskritPhonetics";
+import { extractPureSanskritVerse } from "./sanskritPhonetics";
 
 export interface UmaVoicePlugin {
   speak(options: {
@@ -105,15 +105,17 @@ function isSanskritPath(chunk: string): boolean {
   return letters > 10 && !hindi.test(chunk);
 }
 
-/**
- * Pure Vedic Sanskrit phonetic reshaping (Padaccheda + Shiksha Visarga + Makara Anusvara)
- */
+/** Speak the shloka as written. Do not rewrite visarga, ऋ or compounds. */
 function dakshinPath(text: string): string {
-  return toVedicPhoneticSpeech(text);
+  return text
+    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "। ")
+    .replace(/[ङञ]्(?=[कखगघ])/g, "ं")
+    .replace(/[ \t]+/g, " ")
+    .trim();
 }
 
 function naturalHindi(text: string): string {
-  return toVedicPhoneticSpeech(text);
+  return text.replace(/[ \t]+/g, " ").trim();
 }
 
 export function buildUmaParts(
