@@ -158,7 +158,7 @@ public class UmaVoicePlugin extends Plugin {
             return;
         }
         call.setKeepAlive(true);
-        sitarWanted = false;
+        sitarWanted = call.getBoolean("music", false);
         neuralCancel.set(true);
         if (tts != null) tts.stop();
         stopVoicePlayer();
@@ -168,6 +168,9 @@ public class UmaVoicePlugin extends Plugin {
             neuralFinished = false;
         }
         neuralCancel.set(false);
+        if (sitarWanted) {
+            new Handler(Looper.getMainLooper()).post(this::startSitar);
+        }
         new Thread(() -> speakIndian(call, parts)).start();
     }
 
@@ -423,6 +426,7 @@ public class UmaVoicePlugin extends Plugin {
         }
         tts.setSpeechRate(0.9f);
         tts.setPitch(1.0f);
+        if (sitarWanted) startSitar();
         AudioManager audio = (AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
         if (audio != null) {
             audio.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
@@ -503,7 +507,7 @@ public class UmaVoicePlugin extends Plugin {
                     .build());
                 sitar.prepare();
             }
-            sitar.setVolume(0.2f, 0.2f);
+            sitar.setVolume(0.32f, 0.32f);
             sitar.start();
         } catch (Exception ignored) {
             /* Music is optional. Path still speaks if the file is missing. */

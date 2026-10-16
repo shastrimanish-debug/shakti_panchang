@@ -34,7 +34,7 @@ public final class IndianVoice {
     public static File synthesize(Context context, String text) throws Exception {
         String spoken = text == null ? "" : text.trim();
         if (spoken.isEmpty()) throw new IllegalArgumentException("empty");
-        File cached = new File(context.getFilesDir(), "uma-" + cacheKey(spoken) + ".mp3");
+        File cached = new File(context.getFilesDir(), "uma-yaman-" + cacheKey(spoken) + ".mp3");
         if (cached.exists() && cached.length() > 400) return cached;
         byte[] mp3 = request(spoken);
         if (mp3.length < 400) throw new IllegalStateException("no audio");
@@ -42,6 +42,29 @@ public final class IndianVoice {
             fos.write(mp3);
         }
         return cached;
+    }
+
+    /** Yaman: Sa Re Ga tivra Ma Pa, then a gentle return. Speech, not a concert. */
+    private static final int[] YAMAN = {0, 2, 4, 6, 7, 4, 2, 0, -1, 2, 5, 7, 4, 0};
+
+    private static String yamanSpeak(String text) {
+        String[] words = text.trim().split("\\s+");
+        StringBuilder body = new StringBuilder();
+        int i = 0;
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            int step = YAMAN[i % YAMAN.length];
+            String pitch = (step >= 0 ? "+" : "") + step + "st";
+            body.append("<prosody pitch='").append(pitch).append("'>")
+                .append(escape(word))
+                .append("</prosody> ");
+            i++;
+        }
+        return "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='hi-IN'>"
+            + "<voice name='" + VOICE + "'>"
+            + "<prosody rate='-18%' volume='+4%'>"
+            + body
+            + "</prosody></voice></speak>";
     }
 
     private static byte[] request(String text) throws Exception {
@@ -58,11 +81,7 @@ public final class IndianVoice {
         );
         fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
         String stamp = fmt.format(new java.util.Date());
-        String ssml = "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='hi-IN'>"
-            + "<voice name='" + VOICE + "'>"
-            + "<prosody pitch='-2Hz' rate='-10%' volume='+5%'>"
-            + escape(text)
-            + "</prosody></voice></speak>";
+        String ssml = yamanSpeak(text);
         String config = "X-Timestamp:" + stamp + "\r\n"
             + "Content-Type:application/json; charset=utf-8\r\n"
             + "Path:speech.config\r\n\r\n"

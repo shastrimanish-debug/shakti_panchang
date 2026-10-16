@@ -19,6 +19,26 @@ let bedFade: ReturnType<typeof setInterval> | null = null;
 let currentNeuralAudio: HTMLAudioElement | null = null;
 const clientTtsCache = new Map<string, string>(); // cacheKey -> data URL
 
+function startPathBed() {
+  if (Capacitor.isNativePlatform() || typeof Audio === "undefined") return;
+  if (!bed) {
+    bed = new Audio("/sitar-path.ogg");
+    bed.loop = true;
+    bed.preload = "auto";
+  }
+  if (bedFade) clearInterval(bedFade);
+  bed.volume = 0.05;
+  void bed.play().catch(() => {});
+  bedFade = setInterval(() => {
+    if (!bed) return;
+    bed.volume = Math.min(0.28, bed.volume + 0.03);
+    if (bed.volume >= 0.28 && bedFade) {
+      clearInterval(bedFade);
+      bedFade = null;
+    }
+  }, 90);
+}
+
 function stopPathBed() {
   if (!bed) return;
   if (bedFade) clearInterval(bedFade);
@@ -108,6 +128,9 @@ export function buildUmaParts(
     .filter(Boolean);
   const parts: UmaPart[] = [];
 
+  const yaman = [0.94, 1.0, 1.08, 1.14, 1.2, 1.08, 1.0, 0.96];
+  let swara = 0;
+
   for (const line of lines) {
     const isSanskrit = isSanskritPath(line);
     if (isSanskrit) {
@@ -122,8 +145,8 @@ export function buildUmaParts(
 
         parts.push({
           text: spoken,
-          rate: options?.rate ?? 0.84,
-          pitch: options?.pitch ?? 0.98,
+          rate: options?.rate ?? 0.82,
+          pitch: options?.pitch ?? yaman[swara++ % yaman.length],
         });
       }
     } else {
@@ -215,7 +238,10 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     return;
   }
 
-  const withMusic = false;
+  const withMusic =
+    options?.voiceStyle === "pandit" ||
+    options?.sanskritOnly === true ||
+    parts.some((part) => part.rate < 0.89);
 
   // 1. Native Android Plugin (Uses Neural IndianVoice + Sanskrit-Phonetic Local TTS fallback)
   if (Capacitor.isNativePlatform()) {
@@ -230,8 +256,11 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     } catch {
       if (myToken !== activeSpeakToken) return;
       isCurrentlySpeaking = false;
+      if (withMusic) startPathBed();
       // Fallback to web speech synthesis if native plugin rejects
     }
+  } else if (withMusic) {
+    startPathBed();
   }
 
   // 2. Server-Side Vedic Pandit / Neural TTS (/api/tts/sanskrit) for pure Sanskrit/Hindi pronunciation
