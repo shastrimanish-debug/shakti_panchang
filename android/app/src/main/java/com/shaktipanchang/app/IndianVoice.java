@@ -34,7 +34,7 @@ public final class IndianVoice {
     public static File synthesize(Context context, String text) throws Exception {
         String spoken = text == null ? "" : text.trim();
         if (spoken.isEmpty()) throw new IllegalArgumentException("empty");
-        File cached = new File(context.getFilesDir(), "uma-yaman-" + cacheKey(spoken) + ".mp3");
+        File cached = new File(context.getFilesDir(), "uma-path-" + cacheKey(spoken) + ".mp3");
         if (cached.exists() && cached.length() > 400) return cached;
         byte[] mp3 = request(spoken);
         if (mp3.length < 400) throw new IllegalStateException("no audio");
@@ -44,8 +44,8 @@ public final class IndianVoice {
         return cached;
     }
 
-    /** Yaman: Sa Re Ga tivra Ma Pa, then a gentle return. Speech, not a concert. */
-    private static final int[] YAMAN = {0, 2, 4, 6, 7, 4, 2, 0, -1, 2, 5, 7, 4, 0};
+    /** A small step around Sa. Not a song, and not any singer's voice. */
+    private static final int[] YAMAN = {0, 1, 2, 1, 0, -1, 0, 1};
 
     private static String yamanSpeak(String text) {
         String[] words = text.trim().split("\\s+");

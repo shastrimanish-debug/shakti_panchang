@@ -128,7 +128,7 @@ export function buildUmaParts(
     .filter(Boolean);
   const parts: UmaPart[] = [];
 
-  const yaman = [0.94, 1.0, 1.08, 1.14, 1.2, 1.08, 1.0, 0.96];
+  const yaman = [0.98, 1.0, 1.04, 1.02, 0.98, 1.0];
   let swara = 0;
 
   for (const line of lines) {
