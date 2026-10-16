@@ -258,6 +258,8 @@ export function toVedicPhoneticSpeech(
   // 4. Sacred Bija Mantras & Pranava (ॐ)
   text = text
     .replace(/ॐ/g, ' ओऽम् ')
+    .replace(/ॠ/g, 'री')
+    .replace(/ऋ/g, 'रि')
     .replace(/ह्रीं/g, 'ह्रीम्')
     .replace(/क्लीं/g, 'क्लीम्')
     .replace(/श्रीं/g, 'श्रीम्')
