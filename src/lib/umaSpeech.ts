@@ -105,13 +105,32 @@ function isSanskritPath(chunk: string): boolean {
   return letters > 10 && !hindi.test(chunk);
 }
 
-/** Speak the shloka as written. Do not rewrite visarga, ऋ or compounds. */
+/**
+ * Hindi TTS drops visarga and the inherent अ. These rules only put those
+ * sounds back. The shloka's words are not split or rewritten.
+ */
 function dakshinPath(text: string): string {
-  return text
+  let s = text
     .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "। ")
-    .replace(/[ङञ]्(?=[कखगघ])/g, "ं")
-    .replace(/[ \t]+/g, " ")
-    .trim();
+    .replace(/ऽ/g, "")
+    .replace(/ॐ/g, "ओं")
+    .replace(/[ङञ]्(?=[\u0915-\u0939])/g, "ं");
+  s = s
+    .replace(/िः/g, "िहि")
+    .replace(/ीः/g, "ीहि")
+    .replace(/ुः/g, "ुहु")
+    .replace(/ूः/g, "ूहु")
+    .replace(/ेः/g, "ेहे")
+    .replace(/ैः/g, "ैहि")
+    .replace(/ोः/g, "ोहो")
+    .replace(/ौः/g, "ौहौ")
+    .replace(/ाः/g, "ाहा")
+    .replace(/ः/g, "ह्");
+  s = s.replace(/([\u0905-\u0939][\u093E-\u094C]?)ं(?=\s|[।॥,]|$)/g, (match, stem) => {
+    if (/^(मे|है|मै|नही|क्यो|जहा|वहा|कहा|यह|वह)$/.test(stem)) return match;
+    return `${stem}म्`;
+  });
+  return s.replace(/[ \t]+/g, " ").trim();
 }
 
 function naturalHindi(text: string): string {

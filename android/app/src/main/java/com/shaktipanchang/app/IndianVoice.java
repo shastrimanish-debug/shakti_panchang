@@ -23,7 +23,7 @@ import okhttp3.WebSocketListener;
 /** Path uses a male Hindi voice. Uma's answers stay on the woman's voice. */
 public final class IndianVoice {
     private static final String TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
-    private static final String PATH_VOICE = "mr-IN-ManoharNeural";
+    private static final String PATH_VOICE = "hi-IN-MadhurNeural";
     private static final String UMA_VOICE = "hi-IN-SwaraNeural";
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
         .connectTimeout(12, TimeUnit.SECONDS)
@@ -35,7 +35,7 @@ public final class IndianVoice {
     public static File synthesize(Context context, String text, boolean pandit, String raga) throws Exception {
         String spoken = text == null ? "" : text.trim();
         if (spoken.isEmpty()) throw new IllegalArgumentException("empty");
-        String name = pandit ? "manohar-" + (raga == null || raga.isEmpty() ? "bhairav" : raga) : "swara";
+        String name = pandit ? "madhur-" + (raga == null || raga.isEmpty() ? "bhairav" : raga) : "swara";
         File cached = new File(context.getFilesDir(), "uma-" + name + "-" + cacheKey(spoken) + ".mp3");
         if (cached.exists() && cached.length() > 400) return cached;
         byte[] mp3 = request(spoken, pandit, name);
@@ -96,8 +96,8 @@ public final class IndianVoice {
             if (open) body.append("</prosody>");
         }
         String voice = pandit ? PATH_VOICE : UMA_VOICE;
-        String lang = pandit ? "mr-IN" : "hi-IN";
-        String rate = pandit ? "-8%" : "-8%";
+        String lang = pandit ? "hi-IN" : "hi-IN";
+        String rate = pandit ? "-18%" : "-8%";
         return "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='" + lang + "'>"
             + "<voice name='" + voice + "'>"
             + "<prosody rate='" + rate + "'>"
