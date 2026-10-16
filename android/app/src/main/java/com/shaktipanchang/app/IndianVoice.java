@@ -161,7 +161,7 @@ public final class IndianVoice {
                 done.countDown();
             }
         });
-        if (!done.await(8, TimeUnit.SECONDS)) {
+        if (!done.await(20, TimeUnit.SECONDS)) {
             socket.cancel();
         }
         if (audio.size() >= 400) {

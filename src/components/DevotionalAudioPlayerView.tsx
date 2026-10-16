@@ -361,9 +361,8 @@ export const DevotionalAudioPlayerView: React.FC<{
         </div>
 
         {/* Row 3: Ultra-Compact Audio Player Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 bg-[#160B06]/90 border border-[#8C6239]/50 rounded-xl px-2.5 py-1.5">
-          {/* Play / Prev / Next + Active Track Info */}
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex flex-col gap-1.5 bg-[#160B06]/90 border border-[#8C6239]/50 rounded-xl px-2.5 py-1.5">
+          <div className="flex items-center gap-2 w-full">
             <button
               type="button"
               onClick={() =>
@@ -422,7 +421,7 @@ export const DevotionalAudioPlayerView: React.FC<{
           </div>
 
           {/* Mode Toggle + Speed + Bell */}
-          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+          <div className="flex items-center gap-1.5 w-full overflow-x-auto no-scrollbar">
             <div className="flex items-center bg-[#23140C] rounded-lg p-0.5 border border-[#8C6239]/50 text-[10px] font-bold">
               {currentTrack.audioUrl && (
                 <button

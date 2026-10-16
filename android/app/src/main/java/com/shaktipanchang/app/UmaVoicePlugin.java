@@ -410,13 +410,46 @@ public class UmaVoicePlugin extends Plugin {
         return best;
     }
 
+    private Voice pickMaleHindiVoice(Set<Voice> voices) {
+        if (voices == null) return null;
+        Voice best = null;
+        int bestScore = Integer.MIN_VALUE;
+        for (Voice voice : voices) {
+            if (voice == null || voice.getLocale() == null) continue;
+            String lang = voice.getLocale().toLanguageTag().toLowerCase(Locale.ROOT);
+            if (!lang.startsWith("hi") && !lang.startsWith("sa")) continue;
+            Set<String> features = voice.getFeatures();
+            if (features != null && features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
+            String name = voice.getName() == null ? "" : voice.getName().toLowerCase(Locale.ROOT);
+            if (name.contains("en-") || name.startsWith("en")) continue;
+            int score = 10;
+            if (lang.startsWith("sa")) score += 40;
+            if (lang.contains("hi")) score += 30;
+            if (name.contains("male") || name.contains("hid") || name.contains("hie")
+                || name.contains("wavenet-b") || name.contains("wavenet-c") || name.contains("madhur")) {
+                score += 80;
+            }
+            if (name.contains("female") || name.contains("hia") || name.contains("swara")
+                || name.contains("wavenet-a") || name.contains("wavenet-d")) {
+                score -= 80;
+            }
+            if (voice.getQuality() >= Voice.QUALITY_HIGH) score += 8;
+            if (score > bestScore) {
+                bestScore = score;
+                best = voice;
+            }
+        }
+        return best;
+    }
+
     private void speakNow(PluginCall call, List<SpeechPart> parts) {
         if (tts == null || parts.isEmpty()) {
             call.reject("Voice engine unavailable");
             return;
         }
         tts.setLanguage(new Locale("hi", "IN"));
-        Voice chosen = pickFemaleHindiVoice(tts.getVoices());
+        Voice chosen = sitarWanted ? pickMaleHindiVoice(tts.getVoices()) : pickFemaleHindiVoice(tts.getVoices());
+        if (chosen == null) chosen = pickFemaleHindiVoice(tts.getVoices());
         if (chosen != null) {
             tts.setVoice(chosen);
         } else {
@@ -425,8 +458,8 @@ public class UmaVoicePlugin extends Plugin {
                 tts.setLanguage(Locale.getDefault());
             }
         }
-        tts.setSpeechRate(0.9f);
-        tts.setPitch(1.0f);
+        tts.setSpeechRate(sitarWanted ? 0.82f : 0.9f);
+        tts.setPitch(sitarWanted ? 0.82f : 1.0f);
         if (sitarWanted) startSitar();
         AudioManager audio = (AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
         if (audio != null) {
