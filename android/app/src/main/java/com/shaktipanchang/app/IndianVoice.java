@@ -32,13 +32,13 @@ public final class IndianVoice {
 
     private IndianVoice() {}
 
-    public static File synthesize(Context context, String text, boolean pandit) throws Exception {
+    public static File synthesize(Context context, String text, boolean pandit, String raga) throws Exception {
         String spoken = text == null ? "" : text.trim();
         if (spoken.isEmpty()) throw new IllegalArgumentException("empty");
-        String tag = pandit ? "uma-pandit-" : "uma-swara-";
-        File cached = new File(context.getFilesDir(), tag + cacheKey(spoken) + ".mp3");
+        String name = pandit ? (raga == null || raga.isEmpty() ? "bhairav" : raga) : "talk";
+        File cached = new File(context.getFilesDir(), "uma-" + name + "-" + cacheKey(spoken) + ".mp3");
         if (cached.exists() && cached.length() > 400) return cached;
-        byte[] mp3 = request(spoken, pandit);
+        byte[] mp3 = request(spoken, pandit, name);
         if (mp3.length < 400) throw new IllegalStateException("no audio");
         try (FileOutputStream fos = new FileOutputStream(cached)) {
             fos.write(mp3);
@@ -46,12 +46,26 @@ public final class IndianVoice {
         return cached;
     }
 
-    /** Path sits a little above and below Sa. Not a film song, and not a person's voice. */
-    private static final int[] PATH_SWARA = {0, 2, 3, 5, 3, 2, 0, -1};
     private static final int[] UMA_SWARA = {0, 0, 1, 0};
 
-    private static String yamanSpeak(String text, boolean pandit) {
-        int[] scale = pandit ? PATH_SWARA : UMA_SWARA;
+    /** Each line walks that raga and comes back to Sa. Same male voice for every path. */
+    private static int[] phraseFor(String raga) {
+        if ("yaman".equals(raga)) return new int[] {0, 2, 4, 6, 7, 6, 4, 2, 0};
+        if ("bhairavi".equals(raga)) return new int[] {0, 1, 3, 5, 7, 5, 3, 1, 0};
+        if ("bhairav".equals(raga)) return new int[] {0, 1, 4, 5, 7, 5, 4, 1, 0};
+        if ("tandav".equals(raga)) return new int[] {4, 5, 7, 5, 4, 1, 0, 1, 4};
+        if ("durga".equals(raga)) return new int[] {0, 2, 5, 7, 5, 2, 0};
+        if ("bhupali".equals(raga)) return new int[] {0, 2, 4, 7, 4, 2, 0};
+        if ("malkauns".equals(raga)) return new int[] {0, 3, 5, 8, 5, 3, 0};
+        if ("kafi".equals(raga)) return new int[] {0, 2, 3, 5, 7, 5, 3, 2, 0};
+        if ("desh".equals(raga)) return new int[] {0, 2, 4, 7, 4, 2, -2, 0};
+        if ("khamaj".equals(raga)) return new int[] {0, 2, 4, 5, 7, 5, 4, 2, 0};
+        if ("todi".equals(raga)) return new int[] {0, 1, 3, 6, 7, 6, 3, 1, 0};
+        return new int[] {0, 1, 4, 5, 7, 5, 4, 1, 0};
+    }
+
+    private static String yamanSpeak(String text, boolean pandit, String raga) {
+        int[] scale = pandit ? phraseFor(raga) : UMA_SWARA;
         String[] words = text.trim().split("\\s+");
         StringBuilder body = new StringBuilder();
         int i = 0;
@@ -65,7 +79,7 @@ public final class IndianVoice {
             i++;
         }
         String voice = pandit ? PATH_VOICE : UMA_VOICE;
-        String rate = pandit ? "-24%" : "-8%";
+        String rate = pandit ? "-22%" : "-8%";
         return "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='hi-IN'>"
             + "<voice name='" + voice + "'>"
             + "<prosody rate='" + rate + "' volume='+4%'>"
@@ -73,7 +87,7 @@ public final class IndianVoice {
             + "</prosody></voice></speak>";
     }
 
-    private static byte[] request(String text, boolean pandit) throws Exception {
+    private static byte[] request(String text, boolean pandit, String raga) throws Exception {
         String gec = secMsGec();
         String id = UUID.randomUUID().toString().replace("-", "");
         String url = "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1"
@@ -87,7 +101,7 @@ public final class IndianVoice {
         );
         fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
         String stamp = fmt.format(new java.util.Date());
-        String ssml = yamanSpeak(text, pandit);
+        String ssml = yamanSpeak(text, pandit, raga);
         String config = "X-Timestamp:" + stamp + "\r\n"
             + "Content-Type:application/json; charset=utf-8\r\n"
             + "Path:speech.config\r\n\r\n"

@@ -194,6 +194,7 @@ export const DurgaSaptashatiView: React.FC<{
       rate: 0.85,
       sanskritOnly: true,
       voiceStyle: 'pandit',
+      raga: 'bhairavi',
       onStart: () => {
         setIsSpeaking(true);
         setSpeakingIndex(idx);

@@ -137,7 +137,19 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
     }
 
     const speechText = `${currentVerse.text}`;
+    const raga = title.includes("सुंदर")
+      ? "kafi"
+      : title.includes("हनुमान")
+        ? "desh"
+        : title.includes("विष्णु") || title.includes("सहस्र")
+          ? "yaman"
+          : title.includes("गीता")
+            ? "bhairavi"
+            : "bhairav";
     void speakUma(speechText, {
+      voiceStyle: "pandit",
+      sanskritOnly: true,
+      raga,
       onEnd: () => {
         // Auto-advance to next verse
         if (vIndex + 1 < filteredVerses.length) {

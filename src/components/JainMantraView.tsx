@@ -108,6 +108,8 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
     setSpeakingId(mantra.id);
     const speechText = `${mantra.title}। मंत्र: ${mantra.mantra}। आवश्यक जाप संख्या: ${mantra.japSankhya}। माला: ${mantra.mala}। साधना विधि: ${mantra.vidhi}। फल: ${mantra.phala}`;
     speakUma(speechText, {
+      voiceStyle: 'pandit',
+      raga: 'bhairav',
       onEnd: () => setSpeakingId(null),
       onError: () => setSpeakingId(null),
     });

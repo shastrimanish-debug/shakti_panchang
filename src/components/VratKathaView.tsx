@@ -65,8 +65,18 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
     const currentChapterText = (currentKatha.katha && currentKatha.katha[activeChapterIndex]) || currentKatha.description;
     const speechContent = `${currentKatha.title}। ${currentKatha.subtitle}। ${currentChapterText}`;
     setIsSpeaking(true);
+    const raga = /महिम्न|शिव/.test(currentKatha.title)
+      ? "yaman"
+      : /दुर्गा|सप्त|चण्डी|कवच/.test(currentKatha.title)
+        ? "bhairavi"
+        : /हनुमान|राम/.test(currentKatha.title)
+          ? "desh"
+          : "kafi";
     void speakUma(speechContent, {
-      rate: 0.88,
+      rate: 0.86,
+      voiceStyle: "pandit",
+      sanskritOnly: true,
+      raga,
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
       onError: () => setIsSpeaking(false),

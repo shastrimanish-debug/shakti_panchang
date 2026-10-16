@@ -5,6 +5,7 @@ export interface UmaVoicePlugin {
   speak(options: {
     text?: string;
     music?: boolean;
+    raga?: string;
     parts?: { text: string; rate: number; pitch: number }[];
   }): Promise<void>;
   stopSpeaking(): Promise<void>;
@@ -206,6 +207,7 @@ export interface SpeakOptions {
   pitch?: number;
   sanskritOnly?: boolean;
   voiceStyle?: "pandit" | "uma";
+  raga?: string;
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (err?: any) => void;
@@ -248,7 +250,11 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     try {
       isCurrentlySpeaking = true;
       options?.onStart?.();
-      await UmaVoice.speak({ parts, music: withMusic });
+      await UmaVoice.speak({
+        parts,
+        music: withMusic,
+        raga: withMusic ? options?.raga || "bhairav" : "",
+      });
       if (myToken !== activeSpeakToken) return;
       isCurrentlySpeaking = false;
       options?.onEnd?.();

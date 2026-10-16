@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   DEVOTIONAL_AUDIO_TRACKS,
   DevotionalTrack,
+  ragaForTrack,
 } from '../data/devotionalAudioTracks';
 import {
   Play,
@@ -137,6 +138,7 @@ export const DevotionalAudioPlayerView: React.FC<{
         rate: Math.max(0.76, playbackRate * 0.88),
         sanskritOnly,
         voiceStyle: 'pandit',
+        raga: ragaForTrack(currentTrack.id),
         onStart: () => {
           if (playGen.current !== generation) return;
           setActiveVerseIndex(index);
@@ -155,7 +157,7 @@ export const DevotionalAudioPlayerView: React.FC<{
         },
       });
     },
-    [verses, playbackRate, sanskritOnly, stopAllPlayback]
+    [verses, playbackRate, sanskritOnly, stopAllPlayback, currentTrack.id]
   );
 
   // Start Speech Recitation with Soft Tanpura Drone
@@ -175,35 +177,12 @@ export const DevotionalAudioPlayerView: React.FC<{
   );
 
   // Play Stream or Fallback Automatically to In-App Vedic Reciter
-  const playMusic = useCallback(() => {
-    stopUmaSpeech();
-    const audio = audioRef.current;
-    if (!audio || !currentTrack.audioUrl) {
-      startSpeechRecitation(0);
-      return;
-    }
-    setPlayError(null);
-    setAudioSource('stream');
-    if (audio.ended) audio.currentTime = 0;
-    audio.playbackRate = playbackRate;
-    isPlayingRef.current = true;
-    setIsPlaying(true);
-    void audio.play().catch(() => {
-      // Automatic fallback to 100% copyright-free in-app Vedic voice reciter
-      startSpeechRecitation(0);
-    });
-  }, [currentTrack.audioUrl, playbackRate, startSpeechRecitation]);
-
   const handleTogglePlay = () => {
     if (isPlaying) {
       stopAllPlayback();
       return;
     }
-    if (audioSource === 'speech' || !currentTrack.audioUrl) {
-      startSpeechRecitation(activeVerseIndex >= 0 ? activeVerseIndex : 0);
-      return;
-    }
-    playMusic();
+    startSpeechRecitation(activeVerseIndex >= 0 ? activeVerseIndex : 0);
   };
 
   // Play Specific Verse when user clicks a Shloka card
@@ -219,12 +198,7 @@ export const DevotionalAudioPlayerView: React.FC<{
     stopAllPlayback();
     setSelectedTrackIndex(idx);
     setCurrentTime(0);
-    const nextTrack = filteredTracks[idx];
-    if (nextTrack?.audioUrl) {
-      setAudioSource('stream');
-    } else {
-      setAudioSource('speech');
-    }
+    setAudioSource('speech');
   };
 
   // Update Audio Element listeners
@@ -296,7 +270,7 @@ export const DevotionalAudioPlayerView: React.FC<{
   return (
     <div className="flex-1 min-h-0 w-full h-full bg-[#FAF2E4] text-[#3E2714] flex flex-col overflow-hidden font-sans">
       {/* Hidden Audio Element */}
-      <audio ref={audioRef} src={currentTrack.audioUrl} preload="metadata" />
+      <audio ref={audioRef} preload="none" />
 
       {/* =================================================================== */}
       {/* 1. COMPACT STICKY AUDIO CONTROLLER & CATEGORY/TRACK SELECTOR        */}

@@ -167,14 +167,15 @@ public class UmaVoicePlugin extends Plugin {
             neuralQueue.clear();
             neuralFinished = false;
         }
+        final String raga = call.getString("raga", "bhairav");
         neuralCancel.set(false);
         if (sitarWanted) {
             new Handler(Looper.getMainLooper()).post(this::startSitar);
         }
-        new Thread(() -> speakIndian(call, parts)).start();
+        new Thread(() -> speakIndian(call, parts, raga)).start();
     }
 
-    private void speakIndian(PluginCall call, List<SpeechPart> parts) {
+    private void speakIndian(PluginCall call, List<SpeechPart> parts, String raga) {
         boolean started = false;
         try {
             String all = joinParts(parts);
@@ -188,7 +189,7 @@ public class UmaVoicePlugin extends Plugin {
                 String chunk = all.substring(from, to).trim();
                 from = to;
                 if (chunk.isEmpty()) continue;
-                File file = IndianVoice.synthesize(getContext(), chunk, sitarWanted);
+                File file = IndianVoice.synthesize(getContext(), chunk, sitarWanted, raga);
                 started = true;
                 enqueueNeural(call, file);
             }

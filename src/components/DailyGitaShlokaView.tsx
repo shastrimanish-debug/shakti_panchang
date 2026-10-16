@@ -86,6 +86,8 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
     void speakUma(textToSpeak, {
       rate: 0.85,
       voiceStyle: 'pandit',
+      sanskritOnly: true,
+      raga: 'bhairavi',
       onStart: () => {
         setIsSpeaking(true);
         setCurrentSpeakingId(`gita_${s.id}`);

@@ -8,7 +8,7 @@ export interface DevotionalTrack {
   category: 'stotra' | 'aarti' | 'mantra' | 'bhajan' | 'saptashati';
   deity: string;
   duration: string;
-  audioUrl?: string; // Public Domain / Archive Vedic Chanting Audio
+  audioUrl?: string; // Unused. Path is spoken in the app, never streamed.
   licenseNote?: string;
   lyricsText: string;
   meaningText?: string;
@@ -98,9 +98,8 @@ export const SHIV_MAHIMNA_STOTRAM_TEXT = `॥ अथ श्री शिवम�
 ततो भक्तिश्रद्धाभरगुरुगृणद्भ्यां गिरिश यत्।
 स्वयं तस्थे ताभ्यां तव किमनुवृत्तिर्न फलति ॥ १० ॥`;
 
-function chant(id: string, file: string) {
-  const path = file.split('/').map((part) => encodeURIComponent(part)).join('/');
-  return `https://archive.org/download/${id}/${path}`;
+function chant(_id: string, _file: string) {
+  return undefined;
 }
 
 const SAPT = 'DeviMahatmyamRecitation';
@@ -290,7 +289,7 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     category: 'mantra',
     deity: 'वेदमाता गायत्री',
     duration: '11:20',
-    audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/23/Gayatri_Mantra.ogg',
+    audioUrl: undefined,
     licenseNote: 'Wikimedia Commons Public Domain / CC-BY-SA',
     lyricsText: `ॐ भूर्भुवः स्वः।
 तत्सवितुर्वरेण्यं
@@ -543,3 +542,34 @@ export const DEVOTIONAL_AUDIO_TRACKS: DevotionalTrack[] = [
     description: 'मन की एकाग्रता और शिव कृपा के लिए पावन पंचाक्षर जाप।',
   },
 ];
+
+/** One male voice. The raga changes with the text, the speaker does not. */
+export function ragaForTrack(id: string): string {
+  if (id === 'saptashati-kunjika') return 'todi';
+  if (id.startsWith('saptashati')) return 'bhairavi';
+  switch (id) {
+    case 'shiv-mahimna':
+      return 'yaman';
+    case 'hanuman-chalisa-audio':
+      return 'desh';
+    case 'gayatri-mantra-21':
+      return 'durga';
+    case 'mahamrityunjaya-mantra':
+    case 'om-namah-shivaya':
+      return 'bhairav';
+    case 'shiva-tandav':
+      return 'tandav';
+    case 'shiva-panchakshar':
+      return 'yaman';
+    case 'shiva-kavach':
+      return 'malkauns';
+    case 'ganesh-aarti':
+      return 'bhupali';
+    case 'laxmi-aarti':
+      return 'khamaj';
+    case 'ram-stuti':
+      return 'kafi';
+    default:
+      return 'bhairav';
+  }
+}
