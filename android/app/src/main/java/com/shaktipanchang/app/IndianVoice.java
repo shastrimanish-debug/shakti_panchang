@@ -20,10 +20,11 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
-/** Indian woman voice: hi-IN-SwaraNeural. Needs internet. */
+/** Path uses a male Hindi voice. Uma's answers stay on the woman's voice. */
 public final class IndianVoice {
     private static final String TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
-    private static final String VOICE = "hi-IN-SwaraNeural";
+    private static final String PATH_VOICE = "hi-IN-MadhurNeural";
+    private static final String UMA_VOICE = "hi-IN-SwaraNeural";
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
         .connectTimeout(12, TimeUnit.SECONDS)
         .readTimeout(25, TimeUnit.SECONDS)
@@ -31,12 +32,13 @@ public final class IndianVoice {
 
     private IndianVoice() {}
 
-    public static File synthesize(Context context, String text) throws Exception {
+    public static File synthesize(Context context, String text, boolean pandit) throws Exception {
         String spoken = text == null ? "" : text.trim();
         if (spoken.isEmpty()) throw new IllegalArgumentException("empty");
-        File cached = new File(context.getFilesDir(), "uma-path-" + cacheKey(spoken) + ".mp3");
+        String tag = pandit ? "uma-pandit-" : "uma-swara-";
+        File cached = new File(context.getFilesDir(), tag + cacheKey(spoken) + ".mp3");
         if (cached.exists() && cached.length() > 400) return cached;
-        byte[] mp3 = request(spoken);
+        byte[] mp3 = request(spoken, pandit);
         if (mp3.length < 400) throw new IllegalStateException("no audio");
         try (FileOutputStream fos = new FileOutputStream(cached)) {
             fos.write(mp3);
@@ -44,30 +46,34 @@ public final class IndianVoice {
         return cached;
     }
 
-    /** A small step around Sa. Not a song, and not any singer's voice. */
-    private static final int[] YAMAN = {0, 1, 2, 1, 0, -1, 0, 1};
+    /** Path sits a little above and below Sa. Not a film song, and not a person's voice. */
+    private static final int[] PATH_SWARA = {0, 2, 3, 5, 3, 2, 0, -1};
+    private static final int[] UMA_SWARA = {0, 0, 1, 0};
 
-    private static String yamanSpeak(String text) {
+    private static String yamanSpeak(String text, boolean pandit) {
+        int[] scale = pandit ? PATH_SWARA : UMA_SWARA;
         String[] words = text.trim().split("\\s+");
         StringBuilder body = new StringBuilder();
         int i = 0;
         for (String word : words) {
             if (word.isEmpty()) continue;
-            int step = YAMAN[i % YAMAN.length];
+            int step = scale[i % scale.length];
             String pitch = (step >= 0 ? "+" : "") + step + "st";
             body.append("<prosody pitch='").append(pitch).append("'>")
                 .append(escape(word))
                 .append("</prosody> ");
             i++;
         }
+        String voice = pandit ? PATH_VOICE : UMA_VOICE;
+        String rate = pandit ? "-24%" : "-8%";
         return "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='hi-IN'>"
-            + "<voice name='" + VOICE + "'>"
-            + "<prosody rate='-18%' volume='+4%'>"
+            + "<voice name='" + voice + "'>"
+            + "<prosody rate='" + rate + "' volume='+4%'>"
             + body
             + "</prosody></voice></speak>";
     }
 
-    private static byte[] request(String text) throws Exception {
+    private static byte[] request(String text, boolean pandit) throws Exception {
         String gec = secMsGec();
         String id = UUID.randomUUID().toString().replace("-", "");
         String url = "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1"
@@ -81,7 +87,7 @@ public final class IndianVoice {
         );
         fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
         String stamp = fmt.format(new java.util.Date());
-        String ssml = yamanSpeak(text);
+        String ssml = yamanSpeak(text, pandit);
         String config = "X-Timestamp:" + stamp + "\r\n"
             + "Content-Type:application/json; charset=utf-8\r\n"
             + "Path:speech.config\r\n\r\n"

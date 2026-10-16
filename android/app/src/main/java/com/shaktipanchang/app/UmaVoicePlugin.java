@@ -188,7 +188,7 @@ public class UmaVoicePlugin extends Plugin {
                 String chunk = all.substring(from, to).trim();
                 from = to;
                 if (chunk.isEmpty()) continue;
-                File file = IndianVoice.synthesize(getContext(), chunk);
+                File file = IndianVoice.synthesize(getContext(), chunk, sitarWanted);
                 started = true;
                 enqueueNeural(call, file);
             }
