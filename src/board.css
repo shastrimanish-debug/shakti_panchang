@@ -1069,6 +1069,21 @@
   color: #3a2414;
 }
 
+.bx-chart-stage {
+  perspective: 760px;
+  padding: 6px 4px 22px;
+}
+
+.bx-chart-plate {
+  transform: rotateX(28deg);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 26px 16px rgba(58, 29, 16, 0.32));
+}
+
+.bx-chart-plate svg {
+  border-radius: 10px;
+}
+
 .bx-kundali-stage {
   position: relative;
   height: 112px;

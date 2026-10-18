@@ -129,7 +129,8 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
       </div>
 
       {/* SVG Container */}
-      <div className="w-full max-w-[360px] aspect-square relative select-none">
+      <div className="bx-chart-stage w-full max-w-[380px]">
+        <div className="bx-chart-plate w-full aspect-square relative select-none">
         {chartStyle === 'north' ? (
           <svg
             viewBox="0 0 360 360"
@@ -384,6 +385,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
             })}
           </svg>
         )}
+        </div>
       </div>
 
       {/* Chart Legend */}

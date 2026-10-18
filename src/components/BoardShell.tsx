@@ -479,14 +479,6 @@ export function TodayBoard({
             <strong>{t("nav.rashifal", "राशिफल")}</strong>
             <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
           </button>
-          <button
-            type="button"
-            className="bx-tile bx-glass h-auto min-h-16 col-span-2 border-2 border-[#7F1D1D]/50"
-            onClick={() => onOpen("lal_kitab")}
-          >
-            <strong>📕 लाल किताब (501 उपाय)</strong>
-            <p>501 कम-खर्च के अहानिकर अभ्यास, विधि और सावधानी</p>
-          </button>
         </div>
         <MoonPhaseChart panchang={panchang} />
     </ZeroScrollPager>
