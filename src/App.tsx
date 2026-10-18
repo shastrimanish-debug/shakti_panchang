@@ -638,7 +638,7 @@ export function App() {
 
             {activeTab === 'saral' && (
               <div className="flex-1 min-h-0 flex flex-col w-full overflow-y-auto overscroll-contain p-2 pb-16">
-                <div className="shrink-0 px-1 pb-2 text-[13px] font-semibold text-[#5C3A21]">सरल उपाय · 200 पाठ</div>
+                <div className="shrink-0 px-1 pb-2 text-[13px] font-semibold text-[#5C3A21]">सरल उपाय · 501 पाठ</div>
                 <SaralUpayPanel />
               </div>
             )}

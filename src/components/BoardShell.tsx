@@ -397,27 +397,25 @@ export function ModuleBoard({
               {language === "en" ? "No service matches that name." : language === "gu" ? "આ નામની સેવા મળી નથી." : "कोई सेवा इस नाम से नहीं मिली।"}
             </div>
           )}
-          {sections.map((section) => (
-            <section key={section.title} className="flex flex-col gap-2">
-              <div className="bx-kicker px-1">{section.title}</div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-stretch items-start content-start">
-                {section.pages.map((page) => {
-                  const Icon = page.icon;
-                  return (
-                    <button key={page.id} type="button" className="bx-tile bx-glass" onClick={() => onOpen(page.id)}>
-                      <span className="bx-tile-icon">
-                        <Icon className="w-4 h-4" />
-                      </span>
-                      <span>
-                        <strong>{page.label}</strong>
-                        <p>{page.desc}</p>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-stretch items-start content-start">
+            {sections.flatMap((section) =>
+              section.pages.map((page, index) => {
+                const Icon = page.icon;
+                return (
+                  <button key={page.id} type="button" className="bx-tile bx-glass" onClick={() => onOpen(page.id)}>
+                    {index === 0 ? <span className="bx-kicker">{section.title}</span> : null}
+                    <span className="bx-tile-icon">
+                      <Icon className="w-4 h-4" />
+                    </span>
+                    <span>
+                      <strong>{page.label}</strong>
+                      <p>{page.desc}</p>
+                    </span>
+                  </button>
+                );
+              }),
+            )}
+          </div>
       </ZeroScrollPager>
     </div>
   );
