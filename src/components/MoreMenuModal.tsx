@@ -389,23 +389,6 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
           </button>
 
-          {/* ग्रह शांति व चमत्कारी उपाय */}
-          <button
-            type="button"
-            onClick={() => handleAction(() => onSelectTab('upay'))}
-            className="flex items-center gap-2 p-2.5 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/30 rounded-2xl text-left transition cursor-pointer active:scale-95 relative m3-touch"
-          >
-            <div className="p-2 bg-[#5C3A21] text-[#FAF2E4] rounded-xl">
-              <Sparkles className="w-4 h-4 text-[#FFD88A]" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1">
-                <span>{t('nav.upay', 'चमत्कारी उपाय')}</span>
-              </div>
-              <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">{t('more.upayDesc', 'ग्रह शांति व लाल किताब')}</div>
-            </div>
-          </button>
-
           {/* वैदिक वास्तु शास्त्र */}
           <button
             type="button"

@@ -293,7 +293,7 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   },
   {
     title: { hi: "जन्म पत्रिका व लाल किताब", en: "Birth chart & Lal Kitab", gu: "જન્મ પત્રિકા અને લાલ કિતાબ" },
-    ids: ["lal_kitab", "kundali", "milan", "prashna", "upay", "saral", "sabar", "numerology", "gemology", "jain_mantras"],
+    ids: ["lal_kitab", "kundali", "milan", "prashna", "saral", "sabar", "numerology", "gemology", "jain_mantras"],
   },
   {
     title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },
@@ -338,7 +338,7 @@ export function ModuleBoard({
       .filter((page): page is NonNullable<typeof page> => !!page)
       .filter(matches),
   })).filter((group) => group.pages.length > 0);
-  const used = new Set(SERVICE_GROUPS.flatMap((group) => group.ids));
+  const used = new Set([...SERVICE_GROUPS.flatMap((group) => group.ids), "upay"]);
   const extra = pages.filter((page) => !used.has(page.id) && matches(page));
   if (extra.length) {
     sections.push({ title: language === "en" ? "More" : language === "gu" ? "વધુ" : "और", pages: extra });
