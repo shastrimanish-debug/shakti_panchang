@@ -995,6 +995,39 @@
   box-shadow: none;
 }
 
+/* Same iOS glass cards on every module. Paint only. Saved data is untouched. */
+.board.bx-bento main div[class*="h-full"][class*="bg-[#F"],
+.board.bx-bento main div[class*="h-full"][class*="bg-white"],
+.board.bx-bento main div[class*="min-h-0"][class*="bg-[#F"] {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.board.bx-bento main div[class*="border-b"][class*="bg-white"] {
+  background: rgba(255, 250, 243, 0.78) !important;
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(224, 177, 90, 0.4) !important;
+  box-shadow: none !important;
+}
+
+.board.bx-bento main .bx-verse,
+.board.bx-bento main .bx-fact,
+.board.bx-bento main .bx-tile,
+.board.bx-bento main div[class*="rounded-"][class*="bg-[#F"],
+.board.bx-bento main div[class*="rounded-"][class*="bg-white"],
+.board.bx-bento main div[class*="rounded-"][class*="bg-amber-50"],
+.board.bx-bento main section[class*="rounded-"][class*="bg-[#F"],
+.board.bx-bento main article[class*="rounded-"],
+.board.bx-bento main button.bx-verse {
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.94), rgba(255, 244, 228, 0.78)) !important;
+  border: 1px solid rgba(224, 177, 90, 0.5) !important;
+  border-radius: 22px !important;
+  box-shadow:
+    0 12px 26px rgba(58, 29, 16, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #3a2414;
+}
+
 .bx-kundali-stage {
   position: relative;
   height: 112px;
