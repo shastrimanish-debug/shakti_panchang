@@ -399,6 +399,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     screenTitle: '🪔 सरल उपाय',
   },
   {
+    id: 'shastrokt',
+    title: 'शास्त्रोक्त सात्त्विक उपाय',
+    label: 'शास्त्रोक्त उपाय',
+    pageNumber: 30,
+    chapter: '',
+    desc: '501 सात्त्विक उपाय, गीता-संदर्भ और प्रमाण की सीमा सहित',
+    icon: BookOpen,
+    screenTitle: '📜 शास्त्रोक्त सात्त्विक उपाय',
+  },
+  {
     id: 'sabar',
     title: 'साबर मंत्र और विस्तृत विधि',
     label: 'साबर मंत्र',

@@ -25,6 +25,7 @@ const VastuView = React.lazy(() => import('./components/VastuView').then((m) => 
 const UpayView = React.lazy(() => import('./components/UpayView').then((m) => ({ default: m.UpayView })));
 const SaralUpayPanel = React.lazy(() => import('./components/SaralUpayPanel').then((m) => ({ default: m.SaralUpayPanel })));
 const SabarMantraView = React.lazy(() => import('./components/SabarMantraView').then((m) => ({ default: m.SabarMantraView })));
+const ShastroktUpayView = React.lazy(() => import('./components/ShastroktUpayView').then((m) => ({ default: m.ShastroktUpayView })));
 const JainMantraView = React.lazy(() => import('./components/JainMantraView').then((m) => ({ default: m.JainMantraView })));
 const NumerologyView = React.lazy(() => import('./components/NumerologyView').then((m) => ({ default: m.NumerologyView })));
 const PalmistryView = React.lazy(() => import('./components/PalmistryView').then((m) => ({ default: m.PalmistryView })));
@@ -297,6 +298,7 @@ export function App() {
           sabar: '501 शाबर अभ्यास',
           jain_mantras: '501 जैन अभ्यास',
           saral: '501 सरल उपाय',
+          shastrokt: 'शास्त्रोक्त सात्त्विक उपाय',
           numerology: 'वैदिक अंक ज्योतिष एवं लो-शू चक्र',
           palmistry: 'सामुद्रिक हस्तरेखा शास्त्र',
           tarot: 'दिव्य टैरो कार्ड मार्गदर्शन',
@@ -642,6 +644,8 @@ export function App() {
                 <SaralUpayPanel />
               </div>
             )}
+
+            {activeTab === 'shastrokt' && <ShastroktUpayView />}
 
             {(activeTab === 'upay' || activeTab === 'lal_kitab') && (
               <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-20">
