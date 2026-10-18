@@ -921,3 +921,110 @@
     transform: none;
   }
 }
+
+/* Premium home palette. Scoped to the dashboard, not the data layer. */
+.bx-home {
+  --bx-gold: #e0b15a;
+  --bx-ink: #3a2414;
+  --bx-mute: #7a5430;
+  --bx-glass-fill: rgba(255, 250, 243, 0.62);
+  --bx-glass-edge: rgba(255, 228, 186, 0.72);
+  --bx-kundali-deep: #3a1d10;
+  --bx-kundali-mid: #8a4b1f;
+  --bx-kundali-shine: #f3d7a1;
+}
+
+.bx-glass {
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.82), var(--bx-glass-fill)) !important;
+  border: 1px solid var(--bx-glass-edge) !important;
+  box-shadow:
+    0 12px 28px rgba(58, 29, 16, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+}
+
+.bx-kundali {
+  display: grid;
+  grid-template-columns: 148px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 22px;
+  background:
+    radial-gradient(120px 80px at 20% 0%, rgba(243, 215, 161, 0.45), transparent 70%),
+    linear-gradient(160deg, rgba(255, 248, 236, 0.9), rgba(255, 236, 208, 0.55));
+  border: 1px solid rgba(224, 177, 90, 0.55);
+  box-shadow: 0 16px 32px rgba(58, 29, 16, 0.12);
+}
+
+.bx-kundali-stage {
+  position: relative;
+  height: 148px;
+  perspective: 640px;
+}
+
+.bx-kundali-plate {
+  width: 100%;
+  height: 100%;
+  transform: rotateX(16deg) rotateZ(-8deg);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 16px 10px rgba(42, 18, 8, 0.35));
+}
+
+.bx-kundali-plate rect,
+.bx-kundali-plate polygon,
+.bx-kundali-plate line {
+  fill: none;
+  stroke: #f3d7a1;
+  stroke-width: 1.4;
+}
+
+.bx-kundali-plate rect {
+  fill: #4a2414;
+}
+
+.bx-kundali-core {
+  position: absolute;
+  inset: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff6e8;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.bx-kundali-core span {
+  font-size: 18px;
+  color: #f3d7a1;
+}
+
+.bx-kundali-core b {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.bx-kundali-core small {
+  font-size: 10px;
+  opacity: 0.85;
+}
+
+.bx-kundali-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bx-kundali-meta span {
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: rgba(255, 252, 247, 0.55);
+  border: 1px solid rgba(224, 177, 90, 0.4);
+  color: #3a2414;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}

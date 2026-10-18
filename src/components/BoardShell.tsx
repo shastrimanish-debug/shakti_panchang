@@ -350,7 +350,7 @@ export function ModuleBoard({
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col">
+    <div className="flex-1 min-h-0 flex flex-col bx-home">
       <label className="bx-search px-3 pt-3 pb-1 shrink-0">
         <input
           value={query}
@@ -402,7 +402,7 @@ export function ModuleBoard({
                 {section.pages.map((page) => {
                   const Icon = page.icon;
                   return (
-                    <button key={page.id} type="button" className="bx-tile" onClick={() => onOpen(page.id)}>
+                    <button key={page.id} type="button" className="bx-tile bx-glass" onClick={() => onOpen(page.id)}>
                       <span className="bx-tile-icon">
                         <Icon className="w-4 h-4" />
                       </span>
@@ -455,9 +455,29 @@ export function TodayBoard({
     [t("kundali.place", "स्थान"), place.name],
   ];
   return (
-    <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="p-3 space-y-3 pb-16">
+    <ZeroScrollPager className="flex-1 min-h-0 w-full bx-home" contentClassName="p-3 space-y-3 pb-16">
+        <section className="bx-kundali" aria-label="आज की कुंडली">
+          <div className="bx-kundali-stage">
+            <svg viewBox="0 0 100 100" className="bx-kundali-plate" aria-hidden="true">
+              <rect x="3" y="3" width="94" height="94" rx="2" />
+              <polygon points="50,3 97,50 50,97 3,50" />
+              <line x1="3" y1="3" x2="97" y2="97" />
+              <line x1="97" y1="3" x2="3" y2="97" />
+            </svg>
+            <div className="bx-kundali-core">
+              <span>ॐ</span>
+              <b>{trVedic(panchang.tithi)}</b>
+              <small>{trVedic(panchang.nakshatra)}</small>
+            </div>
+          </div>
+          <div className="bx-kundali-meta">
+            <span>{trVedic(panchang.weekday)}</span>
+            <span>{t("panchang.sunSign", "सूर्य")} · {trVedic(panchang.solarRashi)}</span>
+            <span>{t("panchang.moonSign", "चंद्र")} · {trVedic(panchang.lunarRashi)}</span>
+          </div>
+        </section>
         <MoonPhaseChart panchang={panchang} />
-        <div className="bx-fact">
+        <div className="bx-fact bx-glass">
           <div className="bx-kicker inline-flex items-center gap-1">
             <Calendar className="w-3 h-3" /> {t("common.today", "आज")}
           </div>
@@ -468,32 +488,32 @@ export function TodayBoard({
         </div>
         <div className="grid grid-cols-2 gap-2">
           {facts.map(([k, v]) => (
-            <div key={k} className="bx-fact">
+            <div key={k} className="bx-fact bx-glass">
               <div className="bx-kicker">{k}</div>
               <b className="text-base mt-1">{v}</b>
             </div>
           ))}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" className="bx-tile h-auto min-h-16" onClick={onWhatsApp}>
+          <button type="button" className="bx-tile bx-glass h-auto min-h-16" onClick={onWhatsApp}>
             <strong>{t("common.share", "साझा करें")}</strong>
             <p>{t("nav.panchang", "पंचांग")}</p>
           </button>
-          <button type="button" className="bx-tile h-auto min-h-16" onClick={() => onOpen("choghadiya")}>
+          <button type="button" className="bx-tile bx-glass h-auto min-h-16" onClick={() => onOpen("choghadiya")}>
             <strong>{t("nav.choghadiya", "चौघड़िया")}</strong>
             <p>{t("panchang.auspiciousTimings", "शुभ समय")}</p>
           </button>
-          <button type="button" className="bx-tile h-auto min-h-16" onClick={() => onOpen("muhurat")}>
+          <button type="button" className="bx-tile bx-glass h-auto min-h-16" onClick={() => onOpen("muhurat")}>
             <strong>{t("nav.muhurat", "मुहूर्त")}</strong>
             <p>{t("panchang.auspiciousTimings", "काम के अनुसार समय")}</p>
           </button>
-          <button type="button" className="bx-tile h-auto min-h-16" onClick={() => onOpen("rashifal")}>
+          <button type="button" className="bx-tile bx-glass h-auto min-h-16" onClick={() => onOpen("rashifal")}>
             <strong>{t("nav.rashifal", "राशिफल")}</strong>
             <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
           </button>
           <button
             type="button"
-            className="bx-tile h-auto min-h-16 col-span-2 border-2 border-[#7F1D1D]/50"
+            className="bx-tile bx-glass h-auto min-h-16 col-span-2 border-2 border-[#7F1D1D]/50"
             onClick={() => onOpen("lal_kitab")}
           >
             <strong>📕 लाल किताब (100 अचूक उपाय)</strong>
