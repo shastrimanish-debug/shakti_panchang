@@ -968,9 +968,36 @@
   box-shadow: 0 16px 32px rgba(58, 29, 16, 0.12);
 }
 
+.board.bx-bento {
+  background:
+    radial-gradient(520px 240px at 50% -4%, rgba(224, 177, 90, 0.28), transparent 70%),
+    linear-gradient(180deg, #fff7ef 0%, #f6e4d0 100%) !important;
+}
+
+.board.bx-bento .bx-tile,
+.board.bx-bento .bx-fact,
+.board.bx-bento .bx-verse,
+.board.bx-bento .bx-glass,
+.board.bx-bento .zsp-flow > button,
+.board.bx-bento .zsp-flow > section:not(.bx-kundali),
+.board.bx-bento .zsp-flow > article {
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.94), rgba(255, 244, 228, 0.78)) !important;
+  border: 1px solid rgba(224, 177, 90, 0.55) !important;
+  border-radius: 22px !important;
+  box-shadow:
+    0 14px 28px rgba(58, 29, 16, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #3a2414;
+}
+
+.board.bx-bento .bx-more .zsp-flow > button,
+.board.bx-bento .bx-more .zsp-flow > section {
+  box-shadow: none;
+}
+
 .bx-kundali-stage {
   position: relative;
-  height: 148px;
+  height: 112px;
   perspective: 640px;
 }
 

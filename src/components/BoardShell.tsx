@@ -476,7 +476,6 @@ export function TodayBoard({
             <span>{t("panchang.moonSign", "चंद्र")} · {trVedic(panchang.lunarRashi)}</span>
           </div>
         </section>
-        <MoonPhaseChart panchang={panchang} />
         <div className="bx-fact bx-glass">
           <div className="bx-kicker inline-flex items-center gap-1">
             <Calendar className="w-3 h-3" /> {t("common.today", "आज")}
@@ -520,6 +519,7 @@ export function TodayBoard({
             <p>खाना नं. १ से १२ व नवग्रहों के १०० प्रामाणिक उपाय व सावधानियां</p>
           </button>
         </div>
+        <MoonPhaseChart panchang={panchang} />
     </ZeroScrollPager>
   );
 }
