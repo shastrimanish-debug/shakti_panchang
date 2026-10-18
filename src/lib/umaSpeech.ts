@@ -105,32 +105,12 @@ function isSanskritPath(chunk: string): boolean {
   return letters > 10 && !hindi.test(chunk);
 }
 
-/**
- * Hindi TTS drops visarga and the inherent अ. These rules only put those
- * sounds back. The shloka's words are not split or rewritten.
- */
+/** Speak the shloka as written. Rewriting visarga was making the words wrong. */
 function dakshinPath(text: string): string {
-  let s = text
+  return text
     .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "। ")
-    .replace(/ऽ/g, "")
-    .replace(/ॐ/g, "ओं")
-    .replace(/[ङञ]्(?=[\u0915-\u0939])/g, "ं");
-  s = s
-    .replace(/िः/g, "िहि")
-    .replace(/ीः/g, "ीहि")
-    .replace(/ुः/g, "ुहु")
-    .replace(/ूः/g, "ूहु")
-    .replace(/ेः/g, "ेहे")
-    .replace(/ैः/g, "ैहि")
-    .replace(/ोः/g, "ोहो")
-    .replace(/ौः/g, "ौहौ")
-    .replace(/ाः/g, "ाहा")
-    .replace(/ः/g, "ह्");
-  s = s.replace(/([\u0905-\u0939][\u093E-\u094C]?)ं(?=\s|[।॥,]|$)/g, (match, stem) => {
-    if (/^(मे|है|मै|नही|क्यो|जहा|वहा|कहा|यह|वह)$/.test(stem)) return match;
-    return `${stem}म्`;
-  });
-  return s.replace(/[ \t]+/g, " ").trim();
+    .replace(/[ \t]+/g, " ")
+    .trim();
 }
 
 function naturalHindi(text: string): string {
@@ -261,10 +241,7 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     return;
   }
 
-  const withMusic =
-    options?.voiceStyle === "pandit" ||
-    options?.sanskritOnly === true ||
-    parts.some((part) => part.rate < 0.89);
+  const pandit = options?.voiceStyle === "pandit" || options?.sanskritOnly === true;
 
   // 1. Native Android Plugin (Uses Neural IndianVoice + Sanskrit-Phonetic Local TTS fallback)
   if (Capacitor.isNativePlatform()) {
@@ -273,8 +250,8 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
       options?.onStart?.();
       await UmaVoice.speak({
         parts,
-        music: withMusic,
-        raga: withMusic ? options?.raga || "bhairav" : "",
+        music: pandit,
+        raga: pandit ? options?.raga || "bhairav" : "",
       });
       if (myToken !== activeSpeakToken) return;
       isCurrentlySpeaking = false;
@@ -283,16 +260,16 @@ export async function speakUma(text: string, options?: SpeakOptions): Promise<vo
     } catch {
       if (myToken !== activeSpeakToken) return;
       isCurrentlySpeaking = false;
-      if (withMusic) startPathBed();
+      if (pandit) startPathBed();
       // Fallback to web speech synthesis if native plugin rejects
     }
-  } else if (withMusic) {
+  } else if (pandit) {
     startPathBed();
   }
 
   // 2. Server-Side Vedic Pandit / Neural TTS (/api/tts/sanskrit) for pure Sanskrit/Hindi pronunciation
   const joinedPhoneticText = parts.map((p) => p.text).join(" । ").slice(0, 1600);
-  const voiceStyle = options?.voiceStyle || "pandit";
+  const voiceStyle = pandit ? "pandit" : "uma";
   const cacheKey = `${voiceStyle}:${joinedPhoneticText}`;
 
   try {

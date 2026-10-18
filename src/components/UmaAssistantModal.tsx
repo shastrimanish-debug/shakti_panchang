@@ -257,8 +257,9 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     }
     setPlayingVoiceId(id);
     void speakUma(text, {
-      rate: 0.88,
-      pitch: 1.02,
+      voiceStyle: "uma",
+      rate: 0.94,
+      pitch: 1.05,
       onStart: () => setPlayingVoiceId(id),
       onEnd: () => setPlayingVoiceId(null),
       onError: () => setPlayingVoiceId(null),

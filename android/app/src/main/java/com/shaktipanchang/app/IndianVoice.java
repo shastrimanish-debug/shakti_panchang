@@ -35,7 +35,7 @@ public final class IndianVoice {
     public static File synthesize(Context context, String text, boolean pandit, String raga) throws Exception {
         String spoken = text == null ? "" : text.trim();
         if (spoken.isEmpty()) throw new IllegalArgumentException("empty");
-        String name = pandit ? "madhur-" + (raga == null || raga.isEmpty() ? "bhairav" : raga) : "swara";
+        String name = pandit ? "pathv-" + (raga == null || raga.isEmpty() ? "bhairav" : raga) : "swara";
         File cached = new File(context.getFilesDir(), "uma-" + name + "-" + cacheKey(spoken) + ".mp3");
         if (cached.exists() && cached.length() > 400) return cached;
         byte[] mp3 = request(spoken, pandit, name);
@@ -81,7 +81,7 @@ public final class IndianVoice {
                 if (inGroup == 0) {
                     if (open) body.append("</prosody> ");
                     int step = scale[group % scale.length];
-                    if (step > 3) step = 3;
+                    if (step > 2) step = 2;
                     if (step < -1) step = -1;
                     group++;
                     String pitch = (step >= 0 ? "+" : "") + step + "st";
@@ -97,7 +97,7 @@ public final class IndianVoice {
         }
         String voice = pandit ? PATH_VOICE : UMA_VOICE;
         String lang = pandit ? "hi-IN" : "hi-IN";
-        String rate = pandit ? "-18%" : "-8%";
+        String rate = pandit ? "-12%" : "-6%";
         return "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='" + lang + "'>"
             + "<voice name='" + voice + "'>"
             + "<prosody rate='" + rate + "'>"
