@@ -378,7 +378,7 @@ export function ModuleBoard({
                       ? "100 Authentic Lal Kitab Remedies (Khana 1-12)"
                       : language === "gu"
                       ? "લાલ કિતાબના ૧૦૦ અચૂક ઉપાય (ખાના નં. ૧-૧૨)"
-                      : "लाल किताब के १०० अचूक उपाय (खाना नं. १ से १२)"}
+                      : "लाल किताब के 501 उपाय"}
                   </div>
                   <div className="text-[11px] text-amber-100/85 truncate">
                     {language === "en"
@@ -388,7 +388,7 @@ export function ModuleBoard({
                 </div>
               </div>
               <span className="px-3 py-1 rounded-full bg-amber-400 text-stone-950 text-xs font-black shrink-0 shadow-xs">
-                100 उपाय →
+                501 उपाय →
               </span>
             </button>
           )}
@@ -517,8 +517,8 @@ export function TodayBoard({
             className="bx-tile bx-glass h-auto min-h-16 col-span-2 border-2 border-[#7F1D1D]/50"
             onClick={() => onOpen("lal_kitab")}
           >
-            <strong>📕 लाल किताब (100 अचूक उपाय)</strong>
-            <p>खाना नं. १ से १२ व नवग्रहों के १०० प्रामाणिक उपाय व सावधानियां</p>
+            <strong>📕 लाल किताब (501 उपाय)</strong>
+            <p>501 कम-खर्च के अहानिकर अभ्यास, विधि और सावधानी</p>
           </button>
         </div>
         <MoonPhaseChart panchang={panchang} />

@@ -24,7 +24,7 @@ export const UPAY: Upay[] = raw.upay;
 
 export const CATEGORIES = [...new Set(UPAY.map((item) => item.category))];
 
-export const DIFFICULTIES = ["बहुत सरल", "सरल", "मध्यम"] as const;
+export const DIFFICULTIES = [...new Set(UPAY.map((item) => item.difficulty))];
 
 export function matchesWeekday(dayField: string, weekday: string) {
   return dayField.includes(weekday) || dayField.includes("प्रतिदिन");

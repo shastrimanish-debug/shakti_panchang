@@ -885,7 +885,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           { id: 'sadesati', label: t('kundali.tabSadeSati', 'साढ़े साती एवं गोचर फल'), icon: Compass },
           { id: 'kp_ashtakvarga', label: 'केपी पद्धति, अष्टकवर्ग व चर दशा', icon: Zap },
           { id: 'prashna', label: t('kundali.tabPrashna', 'प्रश्न कुंडली'), icon: HelpCircle },
-          { id: 'remedies', label: t('kundali.tabRemedies', '📕 लाल किताब (100 उपाय) व वैदिक रत्न'), icon: Shield },
+          { id: 'remedies', label: t('kundali.tabRemedies', '📕 लाल किताब (501 उपाय) व वैदिक रत्न'), icon: Shield },
         ].map((tab) => {
           const Icon = tab.icon;
           const isSel = kundaliTab === tab.id;

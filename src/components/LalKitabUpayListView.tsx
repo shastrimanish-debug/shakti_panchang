@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { lalKitabRepository, LalKitabRemedy } from '../data/lalKitabRepository';
+import { lalKitabRepository, LAL_KITAB_COUNT, LalKitabRemedy } from '../data/lalKitabRepository';
 import {
   Search,
   X,
@@ -30,7 +30,7 @@ export const LalKitabUpayListView: React.FC<{
 
   const handleCopyRemedy = (e: React.MouseEvent, r: LalKitabRemedy) => {
     e.stopPropagation();
-    const text = `📕 लाल किताब उपाय (${r.code}): ${r.title}\n• ग्रह: ${r.planet} (खाना नं. ${r.houseNumber})\n• समस्या: ${r.problemStatement}\n• उपाय विधि: ${r.remedyProcedure}\n• सामग्री: ${r.materialsRequired.join(', ')}\n• अवधि: ${r.durationDays} (${r.bestDayAndTime})\n• सावधानी: ${r.precaution}`;
+    const text = `📕 लाल किताब उपाय (${r.code}): ${r.title}\n• ग्रह: ${r.planet}\n• समस्या: ${r.problemStatement}\n• उपाय विधि: ${r.remedyProcedure}\n• सामग्री: ${r.materialsRequired.join(', ')}\n• अवधि: ${r.durationDays} (${r.bestDayAndTime})\n• सावधानी: ${r.precaution}`;
     navigator.clipboard.writeText(text);
     setCopiedId(r.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -47,15 +47,15 @@ export const LalKitabUpayListView: React.FC<{
             </div>
             <div>
               <h3 className="font-granth font-black text-base sm:text-lg text-amber-200">
-                लाल किताब के १०० अचूक एवं प्रामाणिक उपाय
+                लाल किताब से प्रेरित 501 अहानिकर उपाय
               </h3>
               <p className="text-xs text-amber-100/80">
-                खाना नंबर (भाव १ से १२) एवं नवग्रहों के सिद्ध टोटके, सामग्री व सावधानियां
+                कम-खर्च के अभ्यास। निश्चित ग्रह-फल की गारंटी नहीं।
               </p>
             </div>
           </div>
           <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-300/40 text-xs font-bold text-amber-200">
-            {filteredRemedies.length} / 100 उपाय उपलब्ध
+            {filteredRemedies.length} / {LAL_KITAB_COUNT} उपाय उपलब्ध
           </span>
         </div>
       </div>
@@ -143,7 +143,7 @@ export const LalKitabUpayListView: React.FC<{
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="px-2 py-0.5 rounded-md bg-[#7F1D1D] text-amber-200 text-[10px] font-extrabold">
-                      #{remedy.id} • खाना नं. {remedy.houseNumber}
+                      #{remedy.id}{remedy.houseNumber ? ` • खाना नं. ${remedy.houseNumber}` : ""} • {remedy.code}
                     </span>
                     <span className="px-2 py-0.5 rounded-md bg-amber-100 border border-amber-400/50 text-[#5C3A21] text-[10px] font-bold">
                       {remedy.planet}

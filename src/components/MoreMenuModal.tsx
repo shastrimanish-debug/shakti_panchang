@@ -298,7 +298,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
             <div className="flex-1">
               <div className="text-xs sm:text-sm font-black text-amber-200 flex items-center justify-between">
-                <span>लाल किताब के १०० अचूक उपाय (खाना नं. १-१२)</span>
+                <span>लाल किताब के 501 उपाय</span>
                 <span className="text-[10px] bg-amber-400 text-stone-950 px-2 py-0.5 rounded-full font-black">100/100</span>
               </div>
               <div className="text-[10px] text-amber-100/85 font-semibold">
@@ -360,11 +360,11 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
             <div className="flex-1">
               <div className="text-xs font-black text-stone-950 flex items-center justify-between">
-                <span>☸ 100 चमत्कारिक जैन मंत्र व विधि</span>
+                <span>☸ 501 जैन अभ्यास</span>
                 <span className="text-[10px] bg-stone-950 text-amber-300 px-2 py-0.5 rounded-full font-bold">100/100</span>
               </div>
               <div className="text-[10px] text-stone-900 font-bold">
-                नवकार महामंत्र, 48 ऋद्धि-सिद्धि, पार्श्वनाथ, पद्मावती व 100 चमत्कारिक जैन मंत्र विधि सहित
+                णमोकार, अहिंसा और मैत्री पर 501 अभ्यास
               </div>
             </div>
           </button>

@@ -202,7 +202,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
               : 'text-[#D9C4A9] hover:text-white'
           }`}
         >
-          📕 १. लाल किताब के १०० अचूक उपाय
+          📕 १. लाल किताब के 501 उपाय
         </button>
         <button
           type="button"
@@ -224,7 +224,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
               : 'text-[#D9C4A9] hover:text-white'
           }`}
         >
-          📿 ३. सरल दैनिक साधना (200 पाठ)
+          📿 ३. सरल उपाय (501)
         </button>
       </div>
 

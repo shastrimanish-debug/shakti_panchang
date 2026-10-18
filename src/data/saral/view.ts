@@ -35,14 +35,12 @@ export const BODY_PACKS: Partial<Record<LangCode, Record<string, Body>>> = {
 };
 
 export function viewOf(item: Upay, lang: LangCode) {
-  const translated =
-    lang === "hi" ? undefined : (BODY_PACKS[lang]?.[String(item.id)] ?? BODY_PACKS.en?.[String(item.id)]);
   return {
-    title: translated?.title ?? item.title,
-    problem: translated?.problem ?? item.problem,
-    method: translated?.method ?? item.method,
-    caution: translated?.caution ?? item.caution,
-    basis: translated?.basis ?? item.basis,
+    title: item.title,
+    problem: item.problem,
+    method: item.method,
+    caution: item.caution,
+    basis: item.basis,
     category: gloss(lang, item.category),
     day: gloss(lang, item.day),
     time: gloss(lang, item.time),
