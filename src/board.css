@@ -1002,6 +1002,39 @@
   width: 100%;
   margin: 0;
   justify-self: stretch;
+  height: auto !important;
+  min-height: 0;
+  padding: 8px 10px;
+  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  overflow: hidden;
+}
+
+.board.bx-bento .bx-home .grid > .bx-tile .bx-tile-icon {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+}
+
+.board.bx-bento .bx-home .grid > .bx-tile > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.board.bx-bento .bx-home .grid > .bx-tile strong {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.board.bx-bento .bx-home .grid > .bx-tile p {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 /* Same iOS glass cards on every module. Paint only. Saved data is untouched. */

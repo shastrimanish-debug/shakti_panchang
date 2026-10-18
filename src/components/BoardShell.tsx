@@ -362,36 +362,6 @@ export function ModuleBoard({
         />
       </label>
       <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-3 pb-3 flex flex-col gap-3" resetKey={query}>
-          {!q && (
-            <button
-              type="button"
-              onClick={() => onOpen("lal_kitab")}
-              className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-[#4A0E17] via-[#7F1D1D] to-[#4A0E17] text-amber-100 border-2 border-amber-400/60 shadow-lg flex items-center justify-between gap-3 text-left cursor-pointer active:scale-98 transition"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-300/40 flex items-center justify-center text-xl shrink-0">
-                  📕
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm sm:text-base font-black text-amber-200 truncate">
-                    {language === "en"
-                      ? "100 Authentic Lal Kitab Remedies (Khana 1-12)"
-                      : language === "gu"
-                      ? "લાલ કિતાબના ૧૦૦ અચૂક ઉપાય (ખાના નં. ૧-૧૨)"
-                      : "लाल किताब के 501 उपाय"}
-                  </div>
-                  <div className="text-[11px] text-amber-100/85 truncate">
-                    {language === "en"
-                      ? "Planetary totke, required materials, 43-day procedure & precautions"
-                      : "नवग्रह व १२ भावों के सिद्ध लाल किताब टोटके, सामग्री, ४३ दिन की विधि व सावधानियां"}
-                  </div>
-                </div>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-amber-400 text-stone-950 text-xs font-black shrink-0 shadow-xs">
-                501 उपाय →
-              </span>
-            </button>
-          )}
           {sections.length === 0 && (
             <div className="bx-fact text-sm">
               {language === "en" ? "No service matches that name." : language === "gu" ? "આ નામની સેવા મળી નથી." : "कोई सेवा इस नाम से नहीं मिली।"}
@@ -399,11 +369,10 @@ export function ModuleBoard({
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-stretch items-start content-start">
             {sections.flatMap((section) =>
-              section.pages.map((page, index) => {
+              section.pages.map((page) => {
                 const Icon = page.icon;
                 return (
                   <button key={page.id} type="button" className="bx-tile bx-glass" onClick={() => onOpen(page.id)}>
-                    {index === 0 ? <span className="bx-kicker">{section.title}</span> : null}
                     <span className="bx-tile-icon">
                       <Icon className="w-4 h-4" />
                     </span>
