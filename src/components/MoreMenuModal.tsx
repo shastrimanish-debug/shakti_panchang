@@ -112,20 +112,20 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             onClick={() => handleAction(() => onSelectTab('audio_player'))}
             className="w-full p-3 rounded-2xl bg-gradient-to-r from-[#5C3A21] via-[#8C6239] to-[#5C3A21] text-[#FAF2E4] font-bold flex items-center justify-between shadow-md border border-amber-400/60 transition cursor-pointer active:scale-95 m3-touch"
           >
-            <div className="flex items-center gap-3 text-left">
+            <div className="flex items-center gap-3 text-left min-w-0 flex-1">
               <div className="w-10 h-10 rounded-full bg-amber-400 text-stone-950 flex items-center justify-center shadow-md font-black shrink-0">
                 <Volume2 className="w-5 h-5 fill-current" />
               </div>
-              <div>
-                <div className="text-xs sm:text-sm font-black text-[#FFD88A] flex items-center gap-1.5">
-                  <span>🎧 सुरीला भक्ति संगीत व स्वर पाठ (70+ सुगम मोड)</span>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug">
+                  🎧 सुरीला भक्ति संगीत व स्वर पाठ (70+ सुगम मोड)
                 </div>
-                <div className="text-[10px] text-[#D9C4A9]">
+                <div className="text-[10px] text-[#D9C4A9] leading-snug mt-0.5">
                   शिव महिम्न, हनुमान चालीसा, दुर्गा सप्तशती, आरतियाँ व जाप — कॉपीराइट मुक्त सुरों में
                 </div>
               </div>
             </div>
-            <span className="text-[10px] bg-amber-400 text-stone-950 px-2.5 py-1 rounded-full font-black shrink-0 shadow-2xs">
+            <span className="text-[10px] bg-amber-400 text-stone-950 px-2.5 py-1 rounded-full font-black shrink-0">
               सुनें ▶
             </span>
           </button>
@@ -136,21 +136,21 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             onClick={() => handleAction(onOpenUmaModal)}
             className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-yellow-500 text-stone-950 font-black flex items-center justify-between shadow-lg border border-amber-300 transition cursor-pointer active:scale-95 uma-glow-badge m3-touch"
           >
-            <div className="flex items-center gap-3 text-left">
-              <div className="w-10 h-10 rounded-full bg-stone-950 text-amber-400 flex items-center justify-center shadow-md">
+            <div className="flex items-center gap-3 text-left min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-full bg-stone-950 text-amber-400 flex items-center justify-center shadow-md shrink-0">
                 <Sparkles className="w-5 h-5 fill-amber-400 text-amber-400" />
               </div>
-              <div>
-                <div className="text-sm font-black tracking-wide text-stone-950">
-                  {t('more.umaCardTitle', 'उमा वैदिक दैवज्ञ परामर्श ✨')}
+              <div className="min-w-0">
+                <div className="text-sm font-black tracking-wide text-stone-950 leading-snug">
+                  {t('more.umaCardTitle', 'उमा वैदिक दैवज्ञ परामर्श')}
                 </div>
-                <div className="text-[11px] text-stone-900 font-medium">
+                <div className="text-[11px] text-stone-900 font-medium leading-snug mt-0.5">
                   {t('more.umaCardDesc', 'कुंडली, मुहूर्त, गोचर, उपाय व प्रश्न विचार 100% सक्रिय')}
                 </div>
               </div>
             </div>
-            <span className="text-[11px] bg-stone-950 text-amber-300 px-3 py-1 rounded-full font-black shrink-0 shadow-xs">
-              {t('more.consultNow', 'परामर्श लें →')}
+            <span className="text-[11px] bg-stone-950 text-amber-300 px-3 py-1 rounded-full font-black shrink-0">
+              {t('more.consultNow', 'परामर्श')}
             </span>
           </button>
         </div>
@@ -162,15 +162,15 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             onClick={() => handleAction(() => onOpenSubscriptionModal?.())}
             className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#5C3A21] to-[#462B17] text-[#FAF2E4] border-[#B56A00]"
           >
-            <div className="flex items-center gap-2.5 text-left">
-              <div className="p-2 bg-[#B56A00] rounded-xl text-white shadow-2xs">
+            <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+              <div className="p-2 bg-[#B56A00] rounded-xl text-white shrink-0">
                 <Crown className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <div className="text-xs sm:text-sm font-bold flex items-center gap-1.5 text-[#FFD88A]">
-                  <span>{t('more.vipCardTitle', 'सदस्यता: VIP आजीवन (Lifetime) • ७ दिन फ्री ट्रायल')}</span>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-bold text-[#FFD88A] leading-snug">
+                  {t('more.vipCardTitle', 'सदस्यता: VIP आजीवन • ७ दिन फ्री ट्रायल')}
                 </div>
-                <div className="text-[10px] text-[#D9C4A9]">
+                <div className="text-[10px] text-[#D9C4A9] leading-snug mt-0.5">
                   {t('more.vipCardDesc', '₹99 (भारत) / $1 (Global) — समस्त कुण्डली, विवाह मिलान व पंचांग PDF आजीवन अनलॉक')}
                 </div>
               </div>
@@ -189,24 +189,21 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               onClick={() => handleAction(onOpenLanguageModal)}
               className="w-full p-2.5 bg-[#FAF5ED] dark:bg-[#341F14] hover:bg-[#F4E8D1] dark:hover:bg-[#3E2519] border border-[#8C6239]/40 rounded-2xl flex items-center justify-between text-left transition cursor-pointer active:scale-95 m3-touch shadow-2xs"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-gradient-to-tr from-amber-600 to-amber-500 rounded-xl text-white shadow-xs">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="p-2 bg-gradient-to-tr from-amber-600 to-amber-500 rounded-xl text-white shrink-0">
                   <Globe className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1.5">
-                    <span>{t('more.languageSection', 'ऐप की भाषा (App Language)')}</span>
-                    <span className="text-[9px] bg-amber-600 text-white px-2 py-0.2 rounded-full font-bold">
-                      {currentLang.nativeName} ({currentLang.name})
-                    </span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] leading-snug">
+                    {t('more.languageSection', 'ऐप की भाषा')}
                   </div>
-                  <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">
-                    English, हिन्दी, ગુજરાતી, मराठी, தமிழ், తెలుగు & 10+ languages
+                  <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
+                    {currentLang.nativeName} · English, हिन्दी, ગુજરાતી, मराठी
                   </div>
                 </div>
               </div>
-              <span className="text-xs text-amber-700 dark:text-amber-300 font-bold">
-                {t('common.select', 'चुनें')} →
+              <span className="text-xs text-amber-700 dark:text-amber-300 font-bold shrink-0 rounded-full px-2.5 py-1">
+                {t('common.select', 'चुनें')}
               </span>
             </button>
           </div>
@@ -220,15 +217,15 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               onClick={() => handleAction(onOpenWhatsAppPanchang)}
               className="w-full p-2.5 bg-gradient-to-r from-[#25D366] to-[#1EBE5D] hover:from-[#20bd5a] hover:to-[#1aa852] text-white rounded-2xl shadow-xs flex items-center justify-between transition cursor-pointer active:scale-95 m3-touch"
             >
-              <div className="flex items-center gap-2.5 text-left">
-                <div className="p-2 bg-white/20 rounded-xl text-white">
+              <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+                <div className="p-2 bg-white/20 rounded-xl text-white shrink-0">
                   <Share2 className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-xs font-bold flex items-center gap-1">
-                    <span>📲 {t('more.whatsappCardTitle', 'व्हाट्सएप सुप्रभात पंचांग कार्ड')}</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold leading-snug">
+                    {t('more.whatsappCardTitle', 'व्हाट्सएप सुप्रभात पंचांग कार्ड')}
                   </div>
-                  <div className="text-[10px] text-white/90">
+                  <div className="text-[10px] text-white/90 leading-snug mt-0.5">
                     {t('more.whatsappCardDesc', 'आज का पंचांग व सुविचार 1-क्लिक में शेयर करें')}
                   </div>
                 </div>
@@ -248,27 +245,23 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               onClick={() => handleAction(onOpenBrandingModal)}
               className="w-full p-2.5 bg-[#F4E8D1] dark:bg-[#341F14] hover:bg-[#EBD8BD] border border-[#8C6239]/40 rounded-2xl flex items-center justify-between text-left transition cursor-pointer active:scale-95 m3-touch"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-[#5C3A21] rounded-xl text-[#FFD88A]">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="p-2 bg-[#5C3A21] rounded-xl text-[#FFD88A] shrink-0">
                   <Award className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1.5">
-                    <span>📇 {t('more.astrologerBranding', 'ज्योतिषी विज़िटिंग कार्ड व ब्रांडिंग')}</span>
-                    {branding.enabled && (
-                      <span className="text-[9px] bg-[#B56A00] text-white px-1.5 py-0.2 rounded font-medium">
-                        {t('common.active', 'सक्रिय')}
-                      </span>
-                    )}
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] leading-snug">
+                    {t('more.astrologerBranding', 'ज्योतिषी विज़िटिंग कार्ड')}
+                    {branding.enabled ? ` · ${t('common.active', 'सक्रिय')}` : ''}
                   </div>
-                  <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9]">
+                  <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
                     {branding.enabled
                       ? `${branding.name} • ${branding.phone || branding.city}`
                       : t('more.brandingDefaultDesc', 'पंचांग कार्ड व कुंडली पर अपना नाम/नंबर जोड़ें')}
                   </div>
                 </div>
               </div>
-              <span className="text-xs text-[#B56A00] font-bold">{t('more.setBtn', 'सेट करें')} →</span>
+              <span className="text-xs text-[#B56A00] font-bold shrink-0 rounded-full px-2.5 py-1">{t('more.setBtn', 'सेट')}</span>
             </button>
           </div>
         )}
@@ -285,8 +278,8 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               <Home className="w-5 h-5 text-amber-300" />
             </div>
             <div className="flex-1">
-              <div className="text-xs font-black text-stone-950 flex items-center justify-between">
-                <span>📱 iOS Bento Box डैशबोर्ड (Widget Hub)</span>
+              <div className="text-xs font-black text-stone-950 flex items-start justify-between gap-2">
+                <span className="min-w-0 leading-snug">📱 iOS Bento Box डैशबोर्ड</span>
                 <span className="text-[10px] bg-stone-950 text-amber-300 px-2 py-0.5 rounded-full font-bold">नया</span>
               </div>
               <div className="text-[10px] text-stone-900 font-bold">

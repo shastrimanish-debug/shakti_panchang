@@ -720,7 +720,7 @@
   color: inherit;
 }
 
-.board .bx-more .zsp-flow button,
+.board .bx-more .zsp-flow button:not([style]),
 .board .bx-more .zsp-flow a {
   background-color: #fffaf3 !important;
   background-image: none !important;
@@ -755,10 +755,21 @@
   line-height: 1.35 !important;
 }
 
-.board .bx-more .zsp-flow button span[class*="rounded-full"],
-.board .bx-more .zsp-flow button span[class*="rounded-lg"] {
+.board .bx-more .zsp-flow button > span[class*="rounded-full"],
+.board .bx-more .zsp-flow button > span[class*="rounded-lg"] {
   background-color: #5c3a21 !important;
   color: #fffaf3 !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.board .bx-more .zsp-flow button.justify-between > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .board .bx-more .zsp-flow {
