@@ -121,31 +121,17 @@
   border-radius: 14px;
   display: grid;
   place-items: center;
-  color: var(--bx-cream);
-  background: linear-gradient(180deg, var(--bx-header) 0%, var(--bx-header-2) 100%);
-  border: 1.5px solid var(--bx-gold);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--bx-header) 35%, transparent);
+  color: #3a2414;
+  background: rgba(255, 252, 247, 0.88);
+  border: 1px solid rgba(224, 177, 90, 0.55);
+  box-shadow: 0 6px 14px rgba(58, 29, 16, 0.12);
+  backdrop-filter: blur(12px);
 }
 
-.bx-menu-btn::before {
-  content: "";
-  position: absolute;
-  inset: -5px;
-  border-radius: 18px;
-  border: 2px solid var(--bx-gold);
-  animation: bx-pulse 2.4s ease-out infinite;
-  pointer-events: none;
-}
-
+.bx-menu-btn::before,
 .bx-menu-btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background: linear-gradient(110deg, transparent 28%, rgba(255, 236, 190, 0.7) 48%, transparent 68%);
-  background-size: 220% 100%;
-  animation: bx-shimmer 2.4s ease-in-out infinite;
-  pointer-events: none;
+  content: none;
+  animation: none;
 }
 
 .bx-menu-bars {
@@ -166,16 +152,6 @@
   border-radius: 2px;
   background: currentColor;
   transform-origin: center;
-  animation: bx-bar 1.5s ease-in-out infinite;
-}
-
-.bx-menu-bars span:nth-child(2) {
-  width: 11px;
-  animation-delay: 0.12s;
-}
-
-.bx-menu-bars span:nth-child(3) {
-  animation-delay: 0.24s;
 }
 
 .bx-menu-btn[data-open="true"]::before,
@@ -375,6 +351,18 @@
 
 .bx-search {
   display: block;
+  position: relative;
+}
+
+.bx-search-icon {
+  position: absolute;
+  left: 24px;
+  top: calc(12px + 22px);
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #8a6238;
+  pointer-events: none;
 }
 
 .bx-search input {
@@ -384,7 +372,7 @@
   border: 1px solid var(--bx-line);
   background: var(--bx-panel);
   color: var(--bx-ink);
-  padding: 0 14px;
+  padding: 0 14px 0 36px;
   font-size: 14px;
   outline: none;
 }
@@ -993,6 +981,27 @@
 .board.bx-bento .bx-more .zsp-flow > button,
 .board.bx-bento .bx-more .zsp-flow > section {
   box-shadow: none;
+}
+
+.board.bx-bento .zsp-flow > section:not(.bx-kundali) {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.board.bx-bento .bx-home .grid {
+  justify-content: start;
+  justify-items: stretch;
+  align-items: start;
+  align-content: start;
+}
+
+.board.bx-bento .bx-home .grid > .bx-tile {
+  width: 100%;
+  margin: 0;
+  justify-self: stretch;
 }
 
 /* Same iOS glass cards on every module. Paint only. Saved data is untouched. */

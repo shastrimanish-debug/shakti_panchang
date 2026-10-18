@@ -10,6 +10,7 @@ import {
   Languages,
   Palette,
   MoreHorizontal,
+  Search,
   X,
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
@@ -352,6 +353,7 @@ export function ModuleBoard({
   return (
     <div className="flex-1 min-h-0 flex flex-col bx-home">
       <label className="bx-search px-3 pt-3 pb-1 shrink-0">
+        <Search className="bx-search-icon" aria-hidden="true" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -398,7 +400,7 @@ export function ModuleBoard({
           {sections.map((section) => (
             <section key={section.title} className="flex flex-col gap-2">
               <div className="bx-kicker px-1">{section.title}</div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-stretch items-start content-start">
                 {section.pages.map((page) => {
                   const Icon = page.icon;
                   return (
