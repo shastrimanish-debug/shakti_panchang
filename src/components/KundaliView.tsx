@@ -817,12 +817,12 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <span><strong>{selectedCity.name}</strong> ({selectedCity.latitude.toFixed(2)}°N, {selectedCity.longitude.toFixed(2)}°E)</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full">
                 <button
                   type="submit"
-                  className="px-6 py-2 min-h-11 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs sm:text-sm font-bold rounded-lg shadow-sm transition cursor-pointer"
+                  className="w-full px-6 py-3 min-h-11 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-sm font-bold rounded-xl shadow-sm transition cursor-pointer"
                 >
-                  {t('kundali.generate', 'कुंडली बनाएँ')}
+                  कुंडली बनाएँ और सहेजें
                 </button>
               </div>
             </div>
@@ -867,25 +867,25 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         <div className="bg-parchment border border-wood/40 rounded-xl p-6 text-center space-y-2">
           <User className="w-8 h-8 text-gold mx-auto" />
           <h3 className="font-granth font-bold text-temple text-base">{t('kundali.noKundaliYet', 'नई कुंडली — कोई पूर्व-भरा जातक नहीं')}</h3>
-          <p className="text-sm text-muted max-w-xl mx-auto leading-relaxed">
-            {t('kundali.noKundaliDesc', 'पैक में किसी व्यक्ति की डिफ़ॉल्ट कुंडली नहीं है। ऊपर जातक का नाम, जन्म तिथि, सही जन्म समय और स्थान भरकर कुंडली बनाएँ दबाएँ।')}
+          <p className="text-sm text-muted leading-relaxed">
+            नाम, जन्म तिथि, समय और स्थान भरकर नीचे “कुंडली बनाएँ और सहेजें” दबाएँ।
           </p>
         </div>
       )}
 
       {/* Sub-Navigation Tabs */}
       <CalcSettingsPanel compact />
-      <div className="flex flex-wrap border-b gap-1">
+      <div className="grid grid-cols-2 gap-2 pb-16">
         {[
-          { id: 'phalit', label: t('kundali.tabPrediction', 'फलादेश (Prediction)'), icon: Sparkles },
-          { id: 'chart', label: t('kundali.tabLagnaVargas', 'लग्न व सम्पूर्ण वर्ग चक्र (D1 से D60)'), icon: Layers },
-          { id: 'cosmic_3d', label: '3D कुण्डली चक्र एवं UMA सिंक', icon: Compass },
-          { id: 'dasha', label: t('kundali.tabDasha', 'दशा चक्र (विंशोत्तरी व जैमिनी चर दशा)'), icon: Clock },
-          { id: 'milan', label: t('kundali.tabMilan', 'कुंडली मिलान (36 गुण व मांगलिक)'), icon: Heart },
-          { id: 'sadesati', label: t('kundali.tabSadeSati', 'साढ़े साती एवं गोचर फल'), icon: Compass },
-          { id: 'kp_ashtakvarga', label: 'केपी पद्धति, अष्टकवर्ग व चर दशा', icon: Zap },
-          { id: 'prashna', label: t('kundali.tabPrashna', 'प्रश्न कुंडली'), icon: HelpCircle },
-          { id: 'remedies', label: t('kundali.tabRemedies', '📕 लाल किताब (501 उपाय) व वैदिक रत्न'), icon: Shield },
+          { id: 'phalit', label: 'फलादेश', icon: Sparkles },
+          { id: 'chart', label: 'वर्ग चक्र D1–D60', icon: Layers },
+          { id: 'cosmic_3d', label: '3D कुंडली', icon: Compass },
+          { id: 'dasha', label: 'विंशोत्तरी दशा', icon: Clock },
+          { id: 'milan', label: 'कुंडली मिलान', icon: Heart },
+          { id: 'sadesati', label: 'साढ़े साती', icon: Compass },
+          { id: 'kp_ashtakvarga', label: 'केपी व अष्टकवर्ग', icon: Zap },
+          { id: 'prashna', label: 'प्रश्न कुंडली', icon: HelpCircle },
+          { id: 'remedies', label: 'वैदिक उपाय व रत्न', icon: Shield },
         ].map((tab) => {
           const Icon = tab.icon;
           const isSel = kundaliTab === tab.id;
@@ -893,14 +893,14 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             <button
               key={tab.id}
               onClick={() => setKundaliTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold whitespace-nowrap rounded-t-lg transition ${
+              className={`flex items-center gap-2 min-w-0 overflow-hidden px-3 py-3 text-left text-xs font-bold rounded-2xl border ${
                 isSel
-                  ? 'bg-[#FAF2E4] text-[#5C3A21] border-t-2 border-[#B56A00] shadow-xs'
-                  : 'text-[#8C6239] hover:bg-[#FAF2E4]/60'
+                  ? 'bg-[#5C3A21] text-[#FAF2E4] border-[#5C3A21]'
+                  : 'bg-[#FAF2E4] text-[#5C3A21] border-[#8C6239]/35'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isSel ? 'text-[#B56A00]' : 'text-[#8C6239]'}`} />
-              {tab.label}
+              <Icon className={`w-4 h-4 shrink-0 ${isSel ? 'text-[#FFD88A]' : 'text-[#B56A00]'}`} />
+              <span className="min-w-0 truncate">{tab.label}</span>
             </button>
           );
         })}
