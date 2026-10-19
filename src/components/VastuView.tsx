@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import {
   VASTU_DIRECTIONS,
   VASTU_ROOM_GUIDES,
-  CHAMTKARI_VASTU_TIPS,
   VastuDirection,
   VastuZone,
 } from '../data/vastuData';
+import { Vastu501Panel } from './Vastu501Panel';
 import {
   Compass,
   Home,
@@ -136,7 +136,7 @@ export const VastuView: React.FC<{
   onNextChapter?: () => void;
 }> = ({ onOpenUmaModal, onPrevChapter, onNextChapter }) => {
   const { language, t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<VastuTab>('directions');
+  const [activeTab, setActiveTab] = useState<VastuTab>('remedies');
   const [selectedDirection, setSelectedDirection] = useState<string>('ishan');
   const [selectedRoomCheck, setSelectedRoomCheck] = useState<string>('kitchen');
   const [selectedDirCheck, setSelectedDirCheck] = useState<string>('aagneya');
@@ -392,7 +392,7 @@ export const VastuView: React.FC<{
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>अचूक उपाय</span>
+            <span>501 उपाय</span>
           </button>
         </div>
       </div>
@@ -624,54 +624,7 @@ export const VastuView: React.FC<{
         )}
 
         {/* TAB 4: REMEDIES WITHOUT DEMOLITION (अचूक उपाय) */}
-        {activeTab === 'remedies' && (
-          <div className="space-y-3">
-            <div className="p-3 rounded-2xl bg-amber-100/70 border border-amber-300 text-xs text-[#5C3A21] flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-700 shrink-0" />
-              <span>
-                ये सभी उपाय <strong>वैदिक विश्वकर्मा संहिता</strong> पर आधारित हैं, जिन्हें बिना किसी तोड़-फोड़ के सरलता से किया जा सकता है।
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {CHAMTKARI_VASTU_TIPS.map((tip) => (
-                <div
-                  key={tip.id}
-                  className="p-4 rounded-2xl bg-white border border-amber-200/90 shadow-xs space-y-2 hover:border-amber-400 transition"
-                >
-                  <h3 className="text-sm font-black text-[#5C3A21] font-granth flex items-center gap-1.5">
-                    <span className="text-amber-600">✦</span>
-                    <span>{tip.title}</span>
-                  </h3>
-
-                  <p className="text-xs text-amber-900 font-medium bg-amber-50/80 p-2 rounded-xl border border-amber-200/60">
-                    <strong>उद्देश्य: </strong>{tip.purpose}
-                  </p>
-
-                  <div className="text-[11px] space-y-1">
-                    <div>
-                      <strong>सामग्री: </strong>
-                      <span className="text-stone-700">{tip.materials}</span>
-                    </div>
-                    <div>
-                      <strong>सर्वोत्तम समय: </strong>
-                      <span className="text-stone-700">{tip.bestTime}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-1">
-                    <span className="text-[11px] font-bold text-[#8C6239]">चरणबद्ध प्रयोग विधि:</span>
-                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-[#3E2714] mt-0.5">
-                      {tip.method.map((m, idx) => (
-                        <li key={idx}>{m}</li>
-                      ))}
-                    </ol>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {activeTab === 'remedies' && <Vastu501Panel />}
       </div>
 
       {/* Footer Ask Uma Button */}
