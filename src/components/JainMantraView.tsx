@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
+  JAIN_ALL,
   JAIN_MANTRAS,
   JAIN_MANTRA_CATEGORIES,
   JainMantra,
@@ -39,7 +40,7 @@ interface JainMantraViewProps {
 
 export const JainMantraView: React.FC<JainMantraViewProps> = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('सभी 501 मंत्र');
+  const [selectedCategory, setSelectedCategory] = useState<string>(JAIN_ALL);
   const [activeMantraIndex, setActiveMantraIndex] = useState(0);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [speakingId, setSpeakingId] = useState<number | null>(null);
@@ -76,7 +77,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
   const filteredMantras = useMemo(() => {
     return JAIN_MANTRAS.filter((m) => {
       const matchesCategory =
-        selectedCategory === 'सभी 501 मंत्र' || m.category === selectedCategory;
+        selectedCategory === JAIN_ALL || m.category === selectedCategory;
       const q = searchQuery.trim().toLowerCase();
       const matchesSearch =
         !q ||
@@ -116,14 +117,14 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
   };
 
   const handleCopy = (mantra: JainMantra) => {
-    const txt = `॥ ${mantra.title} ॥\n\nमंत्र:\n${mantra.mantra}\n\nजाप संख्या: ${mantra.japSankhya}\nमाला: ${mantra.mala}\nदिशा व समय: ${mantra.disha}, ${mantra.samay}\nवस्त्र: ${mantra.vastra}\n\nसम्पूर्ण साधना विधि:\n${mantra.vidhi}\n\nचमत्कारिक फल:\n${mantra.phala}\n\n— सनातन शक्ति पंचांग (501 जैन अभ्यास)`;
+    const txt = `॥ ${mantra.title} ॥\n\nपाठ:\n${mantra.mantra}\n\nजाप संख्या: ${mantra.japSankhya}\nदेव: ${mantra.mala}\nपरंपरा: ${mantra.disha}\nसमय: ${mantra.samay}\nप्रकार: ${mantra.vastra}\n\nविधि:\n${mantra.vidhi}\n\nभाव:\n${mantra.phala}\n\n${mantra.niyam}\n\n— शक्ति पंचांग`;
     navigator.clipboard.writeText(txt);
     setCopiedId(mantra.id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleShare = async (mantra: JainMantra) => {
-    const txt = `*॥ ${mantra.title} ॥*\n\n*मंत्र:*\n${mantra.mantra}\n\n*जाप संख्या:* ${mantra.japSankhya}\n*माला:* ${mantra.mala}\n*दिशा:* ${mantra.disha} | *समय:* ${mantra.samay}\n*वस्त्र:* ${mantra.vastra}\n\n*सम्पूर्ण साधना विधि:*\n${mantra.vidhi}\n\n*चमत्कारिक फल:*\n${mantra.phala}\n\n_सनातन शक्ति पंचांग • 501 जैन अभ्यास_`;
+    const txt = `*॥ ${mantra.title} ॥*\n\n*पाठ:*\n${mantra.mantra}\n\n*जाप संख्या:* ${mantra.japSankhya}\n*देव:* ${mantra.mala}\n*समय:* ${mantra.samay}\n\n*विधि:*\n${mantra.vidhi}\n\n*भाव:*\n${mantra.phala}\n\n_${mantra.niyam}_\n_शक्ति पंचांग_`;
     
     await shareTextContent({
       title: mantra.title,
@@ -153,22 +154,22 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
             </div>
             <div>
               <h2 className="font-granth font-bold text-base sm:text-lg text-[#FAF2E4] flex items-center gap-2">
-                <span>501 जैन मंत्र एवं अहिंसा-आधारित अभ्यास</span>
+                <span>201 जैन पाठ, सूत्र और स्तोत्र</span>
                 <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-black">
-                  501/501
+                  {JAIN_MANTRAS.length}
                 </span>
               </h2>
               <p className="text-[11px] text-[#FFD88A]">
-                णमोकार, अहिंसा, संयम और मैत्री पर 501 अभ्यास। फल की गारंटी नहीं।
+                णमोकार, स्तोत्र और भाव-स्मरण। फल की गारंटी नहीं।
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-[#FFD88A] bg-[#2C180C]/80 px-3 py-1 rounded-lg border border-[#B56A00]/50">
-              {selectedCategory === 'सभी 501 मंत्र'
-                ? 'कुल 501 अभ्यास उपलब्ध'
-                : `श्रेणी परिणाम: ${filteredMantras.length} / 501`}
+              {selectedCategory === JAIN_ALL
+                ? `कुल ${JAIN_MANTRAS.length} पाठ उपलब्ध`
+                : `श्रेणी परिणाम: ${filteredMantras.length} / ${JAIN_MANTRAS.length}`}
             </span>
           </div>
         </div>
@@ -231,7 +232,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
               {/* Left Column: List of Filtered Mantras (Scrollable list with badges) */}
               <div className="lg:col-span-4 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-2.5 shadow-xs max-h-[280px] lg:max-h-[580px] overflow-y-auto space-y-1.5">
                 <div className="text-xs font-bold text-[#8C6239] border-b border-[#8C6239]/20 pb-1.5 px-1 flex items-center justify-between">
-                  <span>अभ्यास सूची (501)</span>
+                  <span>पाठ सूची ({JAIN_MANTRAS.length})</span>
                   <span className="text-[10px] text-[#B56A00] font-black">
                     {activeMantraIndex + 1} / {filteredMantras.length}
                   </span>
@@ -381,7 +382,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                     {/* Mantra Main Box */}
                     <div className="p-4 bg-[#FFFBF2] border-2 border-[#B56A00]/50 rounded-xl shadow-inner text-center space-y-2">
                       <div className="text-[10px] font-black text-[#8C6239] uppercase tracking-wider">
-                        ॥ पावन चमत्कारिक जैन मंत्र ॥
+                        ॥ जैन पाठ ॥
                       </div>
                       <div className="font-granth font-bold text-base sm:text-xl text-[#3E2714] leading-relaxed whitespace-pre-line selection:bg-[#B56A00] selection:text-white">
                         {currentMantra.mantra}
@@ -403,7 +404,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                       <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
                         <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
                           <CircleDot className="w-3.5 h-3.5 text-[#B56A00]" />
-                          <span>उपयुक्त जप माला:</span>
+                          <span>देव / स्मरण:</span>
                         </div>
                         <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.mala}</div>
                       </div>
@@ -412,7 +413,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                       <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
                         <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
                           <Compass className="w-3.5 h-3.5 text-[#B56A00]" />
-                          <span>साधना दिशा:</span>
+                          <span>परंपरा:</span>
                         </div>
                         <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.disha}</div>
                       </div>
@@ -430,7 +431,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                       <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
                         <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
                           <Shirt className="w-3.5 h-3.5 text-[#B56A00]" />
-                          <span>वस्त्र व आसन:</span>
+                          <span>पाठ का प्रकार:</span>
                         </div>
                         <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.vastra}</div>
                       </div>
@@ -439,7 +440,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                       <div className="p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl space-y-0.5">
                         <div className="text-[11px] font-bold text-[#8C6239] flex items-center gap-1.5">
                           <Gift className="w-3.5 h-3.5 text-[#B56A00]" />
-                          <span>भोग व नैवेद्य:</span>
+                          <span>नैवेद्य:</span>
                         </div>
                         <div className="text-xs font-bold text-[#5C3A21]">{currentMantra.naivedya}</div>
                       </div>
@@ -469,7 +470,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                     <div className="p-3.5 bg-[#FFF9EE] border border-[#B56A00]/40 rounded-xl space-y-1.5 text-xs">
                       <div className="font-bold text-[#8B1E1E] flex items-center gap-1.5 border-b border-[#B56A00]/20 pb-1">
                         <Award className="w-4 h-4 text-[#B56A00]" />
-                        <span>चमत्कारिक फल एवं लाभ (Phala):</span>
+                        <span>भाव और अर्थ:</span>
                       </div>
                       <p className="text-[#5C3A21] leading-relaxed font-semibold">
                         {currentMantra.phala}

@@ -1,4 +1,4 @@
-import raw from "./jain501.json";
+import raw from "./jain201.json";
 
 export interface JainMantra {
   id: number;
@@ -18,41 +18,57 @@ export interface JainMantra {
   phala: string;
 }
 
-type RawUpay = {
-  id: number;
-  category: string;
-  title: string;
-  problem: string;
-  materials: string[];
-  method: string;
-  mantra: string;
-  count: number;
-  duration_days: number;
-  day: string;
-  time: string;
-  cost: string;
-  difficulty: string;
-  basis: string;
-  caution: string;
+type RawVidhi = {
+  preparation?: string;
+  worship?: string;
+  japa_process?: string;
+  closing?: string;
 };
 
-export const JAIN_ALL = "सभी 501 मंत्र";
+type RawEntry = {
+  id: number;
+  category?: string;
+  title?: string;
+  deity?: string;
+  mantra?: string;
+  text_type?: string;
+  tradition_scope?: string;
+  meaning_or_intent?: string;
+  complete_vidhi?: RawVidhi;
+  target_japa?: number;
+  duration_days?: string;
+  best_day?: string;
+  best_time?: string;
+  authenticity_note?: string;
+};
 
-export const JAIN_MANTRAS: JainMantra[] = (raw.upay as RawUpay[]).map((item) => ({
-  id: item.id,
-  title: item.title,
-  category: item.category,
-  mantra: item.mantra,
-  japSankhya: item.count ? `${item.count} बार` : "निश्चित संख्या नहीं",
-  mala: item.difficulty,
-  disha: "सुविधा अनुसार",
-  samay: `${item.day} · ${item.time} · ${item.duration_days} दिन`,
-  vastra: item.materials.join(", "),
-  naivedya: item.cost,
-  niyam: item.caution,
-  vidhi: item.method,
-  phala: `${item.problem}\n${item.basis}`,
-}));
+export const JAIN_NOTE = "साधक अपने विवेक के अनुसार उपयोग करें। शक्ति पंचांग ने ये पाठ आपकी सुविधा के लिए उपलब्ध करवाए हैं, परिणाम की कोई गारंटी नहीं लेता।";
+
+export const JAIN_MANTRAS: JainMantra[] = ((raw.entries || []) as RawEntry[]).map((item) => {
+  const vidhi = item.complete_vidhi || {};
+  return {
+    id: item.id,
+    title: item.title || "",
+    category: item.category || "",
+    mantra: item.mantra || "",
+    japSankhya: item.target_japa ? `${item.target_japa} बार` : "सुविधा अनुसार",
+    mala: item.deity || "",
+    disha: item.tradition_scope || "",
+    samay: [item.best_day, item.best_time, item.duration_days].filter(Boolean).join(" · "),
+    vastra: item.text_type || "",
+    naivedya: "नैवेद्य आवश्यक नहीं",
+    niyam: JAIN_NOTE,
+    vidhi: [
+      vidhi.preparation ? `तैयारी: ${vidhi.preparation}` : "",
+      vidhi.worship ? `स्मरण: ${vidhi.worship}` : "",
+      vidhi.japa_process ? `पाठ: ${vidhi.japa_process}` : "",
+      vidhi.closing ? `समापन: ${vidhi.closing}` : "",
+    ].filter(Boolean).join("\n\n"),
+    phala: [item.meaning_or_intent, item.authenticity_note].filter(Boolean).join("\n\n"),
+  };
+});
+
+export const JAIN_ALL = `सभी ${JAIN_MANTRAS.length} पाठ`;
 
 export const JAIN_MANTRA_CATEGORIES = [
   JAIN_ALL,

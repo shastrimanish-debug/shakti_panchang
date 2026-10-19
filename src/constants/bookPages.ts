@@ -420,13 +420,13 @@ export const BOOK_PAGES: BookPageItem[] = [
   },
   {
     id: 'jain_mantras',
-    title: '501 जैन मंत्र एवं अहिंसा-आधारित अभ्यास',
+    title: '201 जैन पाठ, सूत्र और स्तोत्र',
     label: 'जैन मंत्र',
     pageNumber: 25,
     chapter: '',
-    desc: 'णमोकार, अहिंसा, संयम और मैत्री पर 501 अभ्यास',
+    desc: 'णमोकार, उवसग्गहरं और भाव-स्मरण',
     icon: Sparkles,
-    screenTitle: '☸ 501 जैन अभ्यास',
+    screenTitle: '☸ जैन पाठ',
   },
   {
     id: 'vastu',

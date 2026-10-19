@@ -296,7 +296,7 @@ export function App() {
           hanuman: 'श्री हनुमान चालीसा',
           sundarkand: 'संपूर्ण सुंदरकांड पाठ',
           sabar: '501 शाबर मंत्र',
-          jain_mantras: '501 जैन अभ्यास',
+          jain_mantras: '201 जैन पाठ',
           saral: '501 सरल उपाय',
           shastrokt: '501 मंत्र और विस्तृत विधि',
           numerology: 'वैदिक अंक ज्योतिष एवं लो-शू चक्र',
