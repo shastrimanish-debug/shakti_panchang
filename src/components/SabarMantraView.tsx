@@ -120,7 +120,7 @@ function Detail({ item }: { item: SabarMantra }) {
         </article>
       ) : null}
       <article className="bx-verse">
-        <div className="bx-kicker">स्रोत</div>
+        <div className="bx-kicker">सूचना</div>
         <p className="text-xs leading-relaxed">{item.caution}</p>
       </article>
     </>

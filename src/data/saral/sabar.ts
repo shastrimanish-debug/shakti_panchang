@@ -44,7 +44,7 @@ export type SabarMantra = {
   caution: string;
 };
 
-export const SABAR_NOTE = raw.source_note || "";
+export const SABAR_NOTE = "साधक अपने विवेक के अनुसार उपयोग करें। शक्ति पंचांग ने ये मंत्र आपकी सुविधा के लिए उपलब्ध करवाए हैं, परिणाम की कोई गारंटी नहीं लेता।";
 
 export const SABAR_MANTRAS: SabarMantra[] = ((raw.entries || []) as RawEntry[]).map((item) => {
   const vidhi = item.detailed_vidhi || {};
@@ -65,7 +65,7 @@ export const SABAR_MANTRAS: SabarMantra[] = ((raw.entries || []) as RawEntry[]).
     preparation: vidhi.preparation || "",
     worship: vidhi.worship || "",
     japaProcess: vidhi.japa_process || "",
-    caution: item.source_status || SABAR_NOTE,
+    caution: SABAR_NOTE,
   };
 });
 
