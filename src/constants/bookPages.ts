@@ -400,13 +400,13 @@ export const BOOK_PAGES: BookPageItem[] = [
   },
   {
     id: 'shastrokt',
-    title: 'शास्त्रोक्त सात्त्विक उपाय',
-    label: 'शास्त्रोक्त उपाय',
+    title: '501 मंत्र और विस्तृत विधि',
+    label: '501 मंत्र',
     pageNumber: 30,
     chapter: '',
-    desc: '501 सात्त्विक उपाय, गीता-संदर्भ और प्रमाण की सीमा सहित',
+    desc: 'देवता, जप-संख्या, दिन, माला, दिशा और पूरी विधि',
     icon: BookOpen,
-    screenTitle: '📜 शास्त्रोक्त सात्त्विक उपाय',
+    screenTitle: 'ॐ 501 मंत्र',
   },
   {
     id: 'sabar',
