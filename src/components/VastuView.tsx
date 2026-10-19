@@ -6,6 +6,7 @@ import {
   VastuZone,
 } from '../data/vastuData';
 import { Vastu501Panel } from './Vastu501Panel';
+import { VastuCompass } from './VastuCompass';
 import {
   Compass,
   Home,
@@ -23,7 +24,7 @@ import {
 import { useLanguage } from '../i18n';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
 
-type VastuTab = 'directions' | 'rooms' | 'checker' | 'remedies' | 'stories';
+type VastuTab = 'compass' | 'directions' | 'rooms' | 'checker' | 'remedies' | 'stories';
 
 // Extended Room Vastu Data for rich coverage
 const EXTENDED_ROOM_GUIDES = [
@@ -136,7 +137,7 @@ export const VastuView: React.FC<{
   onNextChapter?: () => void;
 }> = ({ onOpenUmaModal, onPrevChapter, onNextChapter }) => {
   const { language, t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<VastuTab>('remedies');
+  const [activeTab, setActiveTab] = useState<VastuTab>('compass');
   const [selectedDirection, setSelectedDirection] = useState<string>('ishan');
   const [selectedRoomCheck, setSelectedRoomCheck] = useState<string>('kitchen');
   const [selectedDirCheck, setSelectedDirCheck] = useState<string>('aagneya');
@@ -345,6 +346,18 @@ export const VastuView: React.FC<{
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pt-1 border-t border-amber-100">
           <button
             type="button"
+            onClick={() => setActiveTab('compass')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition flex items-center gap-1 cursor-pointer ${
+              activeTab === 'compass'
+                ? 'bg-[#B56A00] text-white shadow-xs'
+                : 'bg-amber-50 text-[#5C3A21] hover:bg-amber-100'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>कम्पास ग्रिड</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('directions')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition flex items-center gap-1 cursor-pointer ${
               activeTab === 'directions'
@@ -399,6 +412,8 @@ export const VastuView: React.FC<{
 
       {/* Main Content Area */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-4">
+        {activeTab === 'compass' && <VastuCompass />}
+
         {/* TAB 1: 8 DIRECTIONS (८ दिशाएं) */}
         {activeTab === 'directions' && (
           <div className="space-y-3">
