@@ -414,7 +414,7 @@ export const BOOK_PAGES: BookPageItem[] = [
     label: 'साबर मंत्र',
     pageNumber: 24,
     chapter: '',
-    desc: '501 शाबर परंपरा के सुरक्षित अभ्यास, विधि और सावधानी',
+    desc: '501 शाबर मंत्र, देवता, दिन, माला और पूरी विधि',
     icon: Flame,
     screenTitle: '🔱 साबर मंत्र',
   },

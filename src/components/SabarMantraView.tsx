@@ -1,23 +1,22 @@
 import React, { useMemo, useState } from "react";
-import { SABAR_CATEGORIES, SABAR_MANTRAS, type SabarMantra } from "../data/saral/sabar";
+import { SABAR_DEITIES, SABAR_MANTRAS, SABAR_NOTE, type SabarMantra } from "../data/saral/sabar";
 import { shareTextContent } from "../lib/shareHelper";
 import { Share2 } from "lucide-react";
-import { ZeroScrollPager } from "./ZeroScrollPager";
 import { useTabMenu } from "./BoardShell";
 
 export function SabarMantraView() {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
+  const [deity, setDeity] = useState("all");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const needle = query.trim().toLowerCase();
   const list = useMemo(
     () =>
       SABAR_MANTRAS.filter((item) => {
-        if (category !== "all" && item.category !== category) return false;
+        if (deity !== "all" && item.deity !== deity) return false;
         if (!needle) return true;
-        return `${item.title} ${item.use} ${item.mantra} ${item.category}`.toLowerCase().includes(needle);
+        return `${item.title} ${item.use} ${item.mantra} ${item.deity} ${item.planet}`.toLowerCase().includes(needle);
       }),
-    [category, needle],
+    [deity, needle],
   );
   const selected = SABAR_MANTRAS.find((item) => item.id === selectedId) ?? null;
   useTabMenu(() => {
@@ -35,17 +34,18 @@ export function SabarMantraView() {
           </button>
         ) : (
           <>
-            <div className="text-[13px] font-semibold">साबर मंत्र · {list.length}</div>
+            <div className="text-[13px] font-semibold">शाबर मंत्र · {list.length}</div>
+            <p className="text-[11px] leading-snug opacity-80">{SABAR_NOTE}</p>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="मंत्र या काम खोजें"
+              placeholder="मंत्र, देवता या काम खोजें"
               className="w-full rounded-xl border px-3 py-1.5 text-sm bg-transparent"
             />
             <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-              <Chip active={category === "all"} onClick={() => setCategory("all")}>सभी</Chip>
-              {SABAR_CATEGORIES.map((item) => (
-                <Chip key={item} active={category === item} onClick={() => setCategory(item)}>{item}</Chip>
+              <Chip active={deity === "all"} onClick={() => setDeity("all")}>सभी</Chip>
+              {SABAR_DEITIES.map((item) => (
+                <Chip key={item} active={deity === item} onClick={() => setDeity(item)}>{item}</Chip>
               ))}
             </div>
           </>
@@ -54,9 +54,9 @@ export function SabarMantraView() {
       <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain px-2 pb-16 flex flex-col gap-1.5">
         {selected ? <Detail item={selected} /> : list.map((item) => (
           <button key={item.id} type="button" className="bx-verse text-left w-full" onClick={() => setSelectedId(item.id)}>
-            <div className="bx-kicker">{item.id} · {item.category}</div>
+            <div className="bx-kicker">{item.deity}</div>
             <strong className="text-sm">{item.title}</strong>
-            <span className="text-xs opacity-80">{item.use} · {item.japa} · {item.day}</span>
+            <span className="text-xs opacity-80">{item.use} · {item.day}</span>
           </button>
         ))}
         {!selected && list.length === 0 ? <article className="bx-verse">कोई साबर मंत्र इस खोज में नहीं मिला।</article> : null}
@@ -67,7 +67,7 @@ export function SabarMantraView() {
 
 function Detail({ item }: { item: SabarMantra }) {
   const handleShare = () => {
-    const text = `॥ ${item.title} ॥\n(साबर मंत्र · ${item.category})\n\nमंत्र:\n${item.mantra}\n\nजाप व समय: ${item.japa} (${item.day})\nउपयोग: ${item.use}\n\nविधि:\n${item.vidhi.join('\n')}\n\nसावधानी: ${item.caution}\n\n_सनातन शक्ति पंचांग_`;
+    const text = `॥ ${item.title} ॥\n(${item.deity})\n\nमंत्र:\n${item.mantra}\n\nउद्देश्य: ${item.use}\nदिन: ${item.day}\nसमय: ${item.time}\nदिशा: ${item.direction}\nमाला: ${item.mala}\nजप: ${item.japa}\nसंकल्प: ${item.days}\n\nतैयारी: ${item.preparation}\nपूजा: ${item.worship}\nजप विधि: ${item.japaProcess}\n\n${item.caution}\n\n_शक्ति पंचांग_`;
     shareTextContent({ title: item.title, text });
   };
 
@@ -85,23 +85,43 @@ function Detail({ item }: { item: SabarMantra }) {
       </div>
 
       <article className="bx-verse">
-        <div className="bx-kicker">{item.category} · पूरा मंत्र</div>
+        <div className="bx-kicker">{item.deity} · पूरा मंत्र</div>
         <p className="font-granth whitespace-pre-wrap text-[16px] leading-relaxed">{item.mantra}</p>
+        <p className="text-sm">{item.use}</p>
       </article>
       <article className="bx-verse">
-        <div className="bx-kicker">जाप और समय</div>
-        <p>{item.japa} · {item.day}</p>
-        <p className="text-xs opacity-80">{item.use}</p>
+        <div className="bx-kicker">दिन · समय · माला</div>
+        <p className="text-sm">{item.day}</p>
+        <p className="text-sm">{item.time} · {item.direction}</p>
+        <p className="text-sm">{item.mala}</p>
+        <p className="text-xs opacity-80">{item.planet}</p>
       </article>
-      {item.vidhi.map((step, index) => (
-        <article key={index} className="bx-verse">
-          <div className="bx-kicker">विधि · चरण {index + 1}</div>
-          <p>{step}</p>
+      <article className="bx-verse">
+        <div className="bx-kicker">संख्या · संकल्प</div>
+        <p className="text-sm">{item.japa}</p>
+        <p className="text-sm">{item.days}</p>
+      </article>
+      {item.preparation ? (
+        <article className="bx-verse">
+          <div className="bx-kicker">तैयारी</div>
+          <p className="text-sm">{item.preparation}</p>
         </article>
-      ))}
+      ) : null}
+      {item.worship ? (
+        <article className="bx-verse">
+          <div className="bx-kicker">पूजा</div>
+          <p className="text-sm">{item.worship}</p>
+        </article>
+      ) : null}
+      {item.japaProcess ? (
+        <article className="bx-verse">
+          <div className="bx-kicker">जप</div>
+          <p className="text-sm">{item.japaProcess}</p>
+        </article>
+      ) : null}
       <article className="bx-verse">
-        <div className="bx-kicker">सावधानी</div>
-        <p className="text-sm">{item.caution}</p>
+        <div className="bx-kicker">स्रोत</div>
+        <p className="text-xs leading-relaxed">{item.caution}</p>
       </article>
     </>
   );
