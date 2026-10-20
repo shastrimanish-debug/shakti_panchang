@@ -850,6 +850,7 @@ export function App() {
             }}
             panchang={panchang}
             activeKundali={activeKundali}
+            onSelectKundali={(k) => setActiveKundali(k)}
             onNavigateTab={handleSelectTab}
             isAudioEnabled={isAudioEnabled}
             locationName={currentLocation.name}

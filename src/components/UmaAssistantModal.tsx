@@ -5,7 +5,7 @@ import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAusp
 import { askUma, AskUmaResponse, pingUmaServer } from '@/lib/uma';
 import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech, UmaVoice } from '@/lib/umaSpeech';
 import { Capacitor } from '@capacitor/core';
-import { analyzeKundali } from '../services/predictions';
+import { analyzeKundali, SIGN_LORDS } from '../services/predictions';
 import { buildMicroAstrologyContextPrompt } from '../services/umaMicroAstrology';
 import { getAstrologerBranding } from '../services/storage';
 import {
@@ -14,6 +14,9 @@ import {
   openWhatsAppShare,
 } from '../services/umaConsultationPdf';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
+import { calculateKundali } from '../services/kundali';
+import { saveKundaliProfile } from '../services/storage';
+import { searchGlobalCities } from '../services/globalCities';
 import {
   X,
   Send,
@@ -43,6 +46,11 @@ import {
   Shield,
   Clock,
   Sparkle,
+  Calendar,
+  MapPin,
+  UserPlus,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -66,6 +74,7 @@ interface UmaAssistantModalProps {
   isAudioEnabled?: boolean;
   locationName?: string;
   initialPrompt?: string | null;
+  onSelectKundali?: (kundali: KundaliData) => void;
 }
 
 const CATEGORY_TABS = [
@@ -176,6 +185,19 @@ At the very end of your response, output 3 relevant, highly helpful follow-up qu
 • आगामी १ वर्ष में धन व व्यापार का योग कैसा रहेगा?
 • मेरी कुण्डली के अनुसार इष्टदेव और भाग्योदय वर्ष बताएं।`;
 
+export const POPULAR_BIRTH_CITIES = [
+  { name: 'नई दिल्ली', lat: 28.6139, lon: 77.2090, tz: 5.5 },
+  { name: 'वाराणसी', lat: 25.3176, lon: 82.9739, tz: 5.5 },
+  { name: 'उज्जैन', lat: 23.1765, lon: 75.7885, tz: 5.5 },
+  { name: 'जयपुर', lat: 26.9124, lon: 75.7873, tz: 5.5 },
+  { name: 'मुंबई', lat: 19.0760, lon: 72.8777, tz: 5.5 },
+  { name: 'लखनऊ', lat: 26.8467, lon: 80.9462, tz: 5.5 },
+  { name: 'पटना', lat: 25.5941, lon: 85.1376, tz: 5.5 },
+  { name: 'अहमदाबाद', lat: 23.0225, lon: 72.5714, tz: 5.5 },
+  { name: 'कोलकाता', lat: 22.5726, lon: 88.3639, tz: 5.5 },
+  { name: 'इंदौर', lat: 22.7196, lon: 75.8577, tz: 5.5 },
+];
+
 export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   isOpen,
   onClose,
@@ -185,12 +207,31 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   isAudioEnabled = true,
   locationName = 'वाराणसी, भारत',
   initialPrompt,
+  onSelectKundali,
 }) => {
   if (!isOpen) return null;
 
+  const [currentKundali, setCurrentKundali] = useState<KundaliData | null>(activeKundali);
+
+  useEffect(() => {
+    if (activeKundali) {
+      setCurrentKundali(activeKundali);
+    }
+  }, [activeKundali]);
+
+  // Smart Birth Details Form state for users without Kundali or switching charts
+  const [isBirthFormOpen, setIsBirthFormOpen] = useState(!activeKundali);
+  const [birthName, setBirthName] = useState(activeKundali?.name || '');
+  const [birthDate, setBirthDate] = useState('1995-01-01');
+  const [birthHour, setBirthHour] = useState('10');
+  const [birthMinute, setBirthMinute] = useState('30');
+  const [birthAmPm, setBirthAmPm] = useState<'AM' | 'PM'>('AM');
+  const [birthPlace, setBirthPlace] = useState('नई दिल्ली');
+  const [isCreatingKundali, setIsCreatingKundali] = useState(false);
+
   const initialGreeting = activeKundali
     ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान ${activeKundali.name} जी! मैं उमा हूँ — ५० वर्षों के अखंड पराशारी, जैमिनी व नाड़ी ज्योतिष साधना से युक्त आपकी प्रकांड वैदिक ज्योतिष आचार्य।\n\nमैंने आपकी जन्मपत्रिका (लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, नक्षत्र: ${activeKundali.nakshatra}, वर्तमान महादशा: ${activeKundali.mahadasha}) का नवमांश (D-9), दशमांश (D-10) व विंशोत्तरी दशा स्तर पर सूक्ष्म अवलोकन कर लिया है।\n\nअपनी आजीविका, धन, विवाह, स्वास्थ्य या ग्रह शांति से संबंधित कोई भी प्रश्न पूछें। मैं आपके अतीत के दृढ संकेतों के साथ भविष्य का सटीक कालखंड और सात्विक वैदिक उपाय प्रस्तुत करूँगी।`
-    : `॥ ॐ श्री गणेशाय नमः ॥\n॥ ॐ नमः शिवाय ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैं उमा हूँ — ५० वर्षों की कठिन वैदिक ज्योतिष साधना से युक्त आपकी आचार्य।\n\nआपकी जन्मपत्रिका का D-1, D-9, D-10 व विंशोत्तरी दशा स्तर पर सूक्ष्म गणित स्थापित करने के लिए, कृपया अपना सही जन्म विवरण (नाम, जन्म तिथि, जन्म समय AM/PM, और जन्म स्थान) यहाँ साझा करें।`;
+    : `॥ ॐ श्री गणेशाय नमः ॥\n॥ ॐ नमः शिवाय ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैं उमा हूँ — ५० वर्षों की कठिन वैदिक ज्योतिष साधना से युक्त आपकी आचार्य।\n\nआपकी जन्मपत्रिका का D-1 (लग्न), D-9 (नवमांश), D-10 (दशमांश) व विंशोत्तरी दशा स्तर पर सूक्ष्म गणित स्थापित करने के लिए, कृपया नीचे दिए स्मार्ट फॉर्म में अपना जन्म विवरण (नाम, तिथि, समय व स्थान) दर्ज करें।`;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -418,7 +459,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   // 1-Click WhatsApp Share for a message
   const handleWhatsAppShare = (msgText: string, queryText?: string) => {
     const formatted = formatWhatsAppConsultationMessage({
-      activeKundali,
+      activeKundali: currentKundali,
       query: queryText || 'ज्योतिषीय जिज्ञासा',
       answer: msgText,
       panchang,
@@ -432,9 +473,9 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       setIsGeneratingPdf(true);
       const res = await downloadUmaConsultationPdf({
         panchang,
-        query: queryText || (activeKundali ? `${activeKundali.name} जी की कुण्डली विश्लेषण` : 'पंचांग एवं ज्योतिषीय परामर्श'),
+        query: queryText || (currentKundali ? `${currentKundali.name} जी की कुण्डली विश्लेषण` : 'पंचांग एवं ज्योतिषीय परामर्श'),
         answer: msgText,
-        activeKundali,
+        activeKundali: currentKundali,
         locationName,
         consultationDate: new Date(),
       });
@@ -444,7 +485,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         blobUrl: res.blobUrl,
         blob: res.blob,
         pageCount: res.pageCount,
-        title: `ज्योतिषीय परामर्श रिपोर्ट • ${activeKundali?.name || 'जातक'}`,
+        title: `ज्योतिषीय परामर्श रिपोर्ट • ${currentKundali?.name || 'जातक'}`,
       });
     } catch (err) {
       console.error('Error generating Consultation PDF:', err);
@@ -469,19 +510,19 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     try {
       const q = `${topicPrompt} (यजमान: ${clientBotName || 'यजमान'})`;
       const panchangCtx = buildPanchangContext(panchang);
-      const kundaliCtx = activeKundali ? buildKundaliContext(activeKundali) : undefined;
+      const kundaliCtx = currentKundali ? buildKundaliContext(currentKundali) : undefined;
 
       const res = await askUma({
         query: q,
         panchangContext: panchangCtx,
         kundaliContext: kundaliCtx,
         panchang,
-        activeKundali,
+        activeKundali: currentKundali,
         systemPrompt: UMA_ASTROLOGER_SYSTEM_PROMPT,
       });
 
       const formatted = formatWhatsAppConsultationMessage({
-        activeKundali: activeKundali ? { ...activeKundali, name: clientBotName || activeKundali.name } : null,
+        activeKundali: currentKundali ? { ...currentKundali, name: clientBotName || currentKundali.name } : null,
         query: topicPrompt,
         answer: res.text,
         panchang,
@@ -492,6 +533,74 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       console.error('Error generating client bot message:', err);
     } finally {
       setIsGeneratingBotMsg(false);
+    }
+  };
+
+  // Quick Smart Birth Details Kundali Creator
+  const handleCreateQuickKundali = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const nameTrimmed = birthName.trim() || 'यजमान';
+    setIsCreatingKundali(true);
+    try {
+      const cityMatch = POPULAR_BIRTH_CITIES.find(
+        (c) => c.name.toLowerCase() === birthPlace.trim().toLowerCase()
+      );
+      let lat = cityMatch ? cityMatch.lat : 28.6139;
+      let lon = cityMatch ? cityMatch.lon : 77.2090;
+      let tz = cityMatch ? cityMatch.tz : 5.5;
+
+      if (!cityMatch) {
+        const searched = searchGlobalCities(birthPlace.trim(), 1);
+        if (searched.length > 0) {
+          lat = searched[0].latitude;
+          lon = searched[0].longitude;
+          tz = searched[0].timezoneHours || 5.5;
+        }
+      }
+
+      const timeStr = `${birthHour}:${birthMinute} ${birthAmPm}`;
+      const d = new Date(birthDate);
+
+      const newKundali = calculateKundali(
+        nameTrimmed,
+        d,
+        timeStr,
+        birthPlace.trim() || 'नई दिल्ली',
+        lat,
+        lon,
+        tz
+      );
+
+      saveKundaliProfile(newKundali);
+      setCurrentKundali(newKundali);
+      if (onSelectKundali) {
+        onSelectKundali(newKundali);
+      }
+      setIsBirthFormOpen(false);
+
+      const welcomeMsg: ChatMessage = {
+        id: `kundali_welcome_${Date.now()}`,
+        sender: 'uma',
+        text: `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान **${newKundali.name}** जी! आपकी जन्मपत्रिका सफलता पूर्वक स्थापित हो गई है:\n• **लग्न राशि:** ${newKundali.lagnaRashi} (लग्नेश: ${SIGN_LORDS[newKundali.lagnaRashi] || 'गुरु'})\n• **जन्म चंद्र राशि:** ${newKundali.moonRashi} (नक्षत्र: ${newKundali.nakshatra})\n• **सक्रिय विंशोत्तरी दशा:** महादशा **${newKundali.mahadasha}** • अंतर्दशा **${newKundali.antardasha}**\n\nअब आपकी कुण्डली का D-1, D-9 नवमांश, D-10 दशमांश एवं गोचर स्तर पर सूक्ष्म विश्लेषण सक्रिय है। आप करियर, धन, विवाह, स्वास्थ्य या ग्रह शांति से संबंधित अपना कोई भी प्रश्न पूछें।`,
+        timestamp: new Date(),
+        source: 'local_vedic',
+        actionPayload: { type: 'open_kundali', label: 'सम्पूर्ण जन्मकुंडली चार्ट देखें' },
+      };
+
+      setMessages((prev) => [...prev, welcomeMsg]);
+
+      // If user had an input query typed, automatically submit it!
+      if (inputQuery.trim()) {
+        const pending = inputQuery.trim();
+        setTimeout(() => {
+          handleSubmit(pending, newKundali);
+        }, 500);
+      }
+    } catch (err) {
+      console.error('Failed to create quick kundali:', err);
+      alert('कुंडली गणना में त्रुटि आई। कृपया जन्म विवरण पुनः जाँचें।');
+    } finally {
+      setIsCreatingKundali(false);
     }
   };
 
@@ -530,7 +639,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 स्थान: ${locationName}`;
   };
 
-  const handleSubmit = async (queryText: string) => {
+  const handleSubmit = async (queryText: string, overrideKundali?: KundaliData | null) => {
     const text = queryText.trim();
     if (!text || isLoading) return;
     setInputQuery('');
@@ -551,8 +660,9 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     setIsLoading(true);
 
     try {
+      const targetKundali = overrideKundali !== undefined ? overrideKundali : currentKundali;
       const panchangCtx = buildPanchangContext(panchang);
-      const kundaliCtx = activeKundali ? buildKundaliContext(activeKundali) : undefined;
+      const kundaliCtx = targetKundali ? buildKundaliContext(targetKundali) : undefined;
 
       const chatHistory = messages.slice(-12).map((m) => ({
         sender: m.sender,
@@ -565,7 +675,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         kundaliContext: kundaliCtx,
         chatHistory,
         panchang,
-        activeKundali,
+        activeKundali: targetKundali,
         systemPrompt: UMA_ASTROLOGER_SYSTEM_PROMPT,
       });
 
@@ -763,56 +873,240 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           </div>
         )}
 
-        {/* Active Kundali Awareness Banner (Software Alexa Feature) */}
+        {/* Active Kundali Awareness Banner */}
         <div className="bg-[#F4E8D1] py-2 px-3 sm:px-4 border-b border-[#8C6239]/30 flex flex-wrap items-center justify-between gap-2 shadow-xs">
-          {activeKundali ? (
+          {currentKundali ? (
             <div className="flex items-center gap-2 text-xs text-[#5C3A21] flex-wrap">
               <span className="bg-[#7A1D1D] text-white px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1">
                 <UserCheck className="w-3 h-3 text-[#FFD88A]" />
-                सक्रिय कुंडली: {activeKundali.name}
+                सक्रिय कुंडली: {currentKundali.name}
               </span>
               <span className="font-semibold">
-                लग्न: <strong className="text-[#7A1D1D]">{activeKundali.lagnaRashi}</strong> | चंद्र:{' '}
-                <strong className="text-[#7A1D1D]">{activeKundali.moonRashi}</strong> ({activeKundali.nakshatra}) | दशा:{' '}
-                <strong className="text-[#7A1D1D]">{activeKundali.mahadasha}</strong>
+                लग्न: <strong className="text-[#7A1D1D]">{currentKundali.lagnaRashi}</strong> | चंद्र:{' '}
+                <strong className="text-[#7A1D1D]">{currentKundali.moonRashi}</strong> ({currentKundali.nakshatra}) | दशा:{' '}
+                <strong className="text-[#7A1D1D]">{currentKundali.mahadasha}</strong>
               </span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-xs text-[#8C6239]">
               <AlertCircle className="w-3.5 h-3.5 text-[#B56A00]" />
               <span className="font-serif">
-                कोई सक्रिय कुंडली नहीं चुनी गई। सामान्य ज्योतिष व पंचांग सक्रिय है।
+                कोई सक्रिय कुंडली नहीं चुनी गई। सटीक व्यक्तिगत फलादेश हेतु जन्म विवरण दर्ज करें।
               </span>
             </div>
           )}
 
-          {/* Quick Action Button for 1-Tap Full Reading */}
-          {activeKundali ? (
-            <button
-              onClick={() =>
-                handleSubmit(
-                  'मेरी सम्पूर्ण जन्म कुंडली का गहन विश्लेषण करें: प्रमुख राजयोग, ग्रह स्थिति, वर्तमान महादशा का फल और कष्ट निवारण हेतु सटीक सात्विक उपाय बताएं।'
-                )
-              }
-              className="px-2.5 py-1 bg-gradient-to-r from-[#B56A00] to-[#8C6239] text-white rounded-lg text-xs font-bold shadow-xs hover:from-[#8C6239] hover:to-[#5C3A21] transition flex items-center gap-1 cursor-pointer shrink-0"
-            >
-              <Sparkles className="w-3 h-3 text-amber-200" />
-              <span>✨ सम्पूर्ण कुंडली फलादेश व उपाय</span>
-            </button>
-          ) : (
-            onNavigateTab && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {currentKundali && (
               <button
-                onClick={() => {
-                  onClose();
-                  onNavigateTab('kundali');
-                }}
-                className="px-2.5 py-1 bg-[#7A1D1D] text-white rounded-lg text-xs font-bold shadow-xs hover:bg-[#5C1414] transition flex items-center gap-1 cursor-pointer"
+                onClick={() =>
+                  handleSubmit(
+                    'मेरी सम्पूर्ण जन्म कुंडली का गहन विश्लेषण करें: प्रमुख राजयोग, ग्रह स्थिति, वर्तमान महादशा का फल और कष्ट निवारण हेतु सटीक सात्विक उपाय बताएं।'
+                  )
+                }
+                className="px-2.5 py-1 bg-gradient-to-r from-[#B56A00] to-[#8C6239] text-white rounded-lg text-xs font-bold shadow-xs hover:from-[#8C6239] hover:to-[#5C3A21] transition flex items-center gap-1 cursor-pointer shrink-0"
               >
-                <span>➕ कुंडली बनाएँ / लोड करें</span>
+                <Sparkles className="w-3 h-3 text-amber-200" />
+                <span>✨ सम्पूर्ण फलादेश</span>
               </button>
-            )
-          )}
+            )}
+
+            <button
+              onClick={() => setIsBirthFormOpen((prev) => !prev)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1 cursor-pointer shrink-0 ${
+                isBirthFormOpen
+                  ? 'bg-[#5C3A21] text-amber-100'
+                  : currentKundali
+                  ? 'bg-[#FAF2E4] text-[#7A1D1D] hover:bg-[#EBDCC0] border border-[#8C6239]/40'
+                  : 'bg-[#7A1D1D] text-white hover:bg-[#5C1414] animate-pulse'
+              }`}
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>{isBirthFormOpen ? 'विवरण बंद करें' : currentKundali ? '🔄 विवरण बदलें / नया जातक' : '➕ जन्म विवरण भरें'}</span>
+              {isBirthFormOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Collapsible Smart Birth Details Input Card */}
+        {isBirthFormOpen && (
+          <div className="bg-gradient-to-br from-[#FFFDF8] via-[#FAF2E4] to-[#F4E8D1] border-b-2 border-[#B58738] p-3 sm:p-4 shadow-inner space-y-3">
+            <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#7A1D1D] text-[#FFD88A] flex items-center justify-center text-xs font-bold">
+                  ॐ
+                </span>
+                <div>
+                  <h4 className="font-serif font-bold text-sm text-[#7A1D1D]">
+                    स्मार्ट जन्म विवरण इनपुट — उमा सटीक कुंडली फलादेश
+                  </h4>
+                  <p className="text-[11px] text-[#5C3A21]">
+                    अपना या किसी भी जातक का जन्म विवरण भरें। उमा तुरंत D-1, D-9, D-10 व विंशोत्तरी दशा स्तर पर सूक्ष्म गणित स्थापित कर लेंगी।
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBirthFormOpen(false)}
+                className="text-[#8C6239] hover:text-[#5C1414] p-1 rounded-full cursor-pointer"
+                title="बंद करें"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateQuickKundali} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                {/* 1. Name */}
+                <div>
+                  <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 flex items-center gap-1 font-serif">
+                    <User className="w-3 h-3 text-[#B56A00]" />
+                    <span>जातक का नाम *</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={birthName}
+                    onChange={(e) => setBirthName(e.target.value)}
+                    placeholder="उदा. राहुल शर्मा"
+                    required
+                    className="w-full bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-xs text-[#3E2714] focus:outline-none focus:ring-1 focus:ring-[#7A1D1D]"
+                  />
+                </div>
+
+                {/* 2. Birth Date */}
+                <div>
+                  <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 flex items-center gap-1 font-serif">
+                    <Calendar className="w-3 h-3 text-[#B56A00]" />
+                    <span>जन्म तिथि *</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    required
+                    className="w-full bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-xs text-[#3E2714] focus:outline-none focus:ring-1 focus:ring-[#7A1D1D]"
+                  />
+                </div>
+
+                {/* 3. Birth Time */}
+                <div>
+                  <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 flex items-center gap-1 font-serif">
+                    <Clock className="w-3 h-3 text-[#B56A00]" />
+                    <span>जन्म समय *</span>
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={birthHour}
+                      onChange={(e) => setBirthHour(e.target.value.padStart(2, '0'))}
+                      className="w-12 text-center bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg py-1.5 text-xs text-[#3E2714]"
+                      title="घंटे (1-12)"
+                    />
+                    <span className="text-[#8C6239] font-bold">:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={birthMinute}
+                      onChange={(e) => setBirthMinute(e.target.value.padStart(2, '0'))}
+                      className="w-12 text-center bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg py-1.5 text-xs text-[#3E2714]"
+                      title="मिनट (0-59)"
+                    />
+                    <div className="flex rounded-lg overflow-hidden border border-[#8C6239]/40 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setBirthAmPm('AM')}
+                        className={`px-1.5 py-1.5 font-bold cursor-pointer ${
+                          birthAmPm === 'AM'
+                            ? 'bg-[#7A1D1D] text-white'
+                            : 'bg-[#FFFDF8] text-[#5C3A21] hover:bg-[#F4E8D1]'
+                        }`}
+                      >
+                        AM
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBirthAmPm('PM')}
+                        className={`px-1.5 py-1.5 font-bold cursor-pointer ${
+                          birthAmPm === 'PM'
+                            ? 'bg-[#7A1D1D] text-white'
+                            : 'bg-[#FFFDF8] text-[#5C3A21] hover:bg-[#F4E8D1]'
+                        }`}
+                      >
+                        PM
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Birth Place */}
+                <div>
+                  <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 flex items-center gap-1 font-serif">
+                    <MapPin className="w-3 h-3 text-[#B56A00]" />
+                    <span>जन्म स्थान / शहर *</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={birthPlace}
+                    onChange={(e) => setBirthPlace(e.target.value)}
+                    placeholder="उदा. नई दिल्ली, वाराणसी, जयपुर"
+                    required
+                    className="w-full bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-xs text-[#3E2714] focus:outline-none focus:ring-1 focus:ring-[#7A1D1D]"
+                  />
+                </div>
+              </div>
+
+              {/* Quick Popular City Selector Pills */}
+              <div className="flex items-center gap-1 overflow-x-auto py-1 text-[11px]">
+                <span className="text-[#8C6239] font-serif shrink-0">लोकप्रिय शहर:</span>
+                {POPULAR_BIRTH_CITIES.map((c) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => setBirthPlace(c.name)}
+                    className={`px-2 py-0.5 rounded-full border transition cursor-pointer shrink-0 font-serif ${
+                      birthPlace === c.name
+                        ? 'bg-[#7A1D1D] text-white border-[#7A1D1D]'
+                        : 'bg-[#FFFDF8] text-[#5C3A21] hover:bg-[#FAF2E4] border-[#8C6239]/30'
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsBirthFormOpen(false)}
+                  className="px-3 py-1.5 bg-[#FAF2E4] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg text-xs font-serif cursor-pointer"
+                >
+                  रद्द करें
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingKundali}
+                  className="px-4 py-1.5 bg-gradient-to-r from-[#7A1D1D] via-[#8F2121] to-[#B56A00] hover:from-[#5C1414] hover:to-[#8C6239] text-[#FFFDF8] rounded-lg text-xs font-bold font-serif shadow-md transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isCreatingKundali ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>कुंडली गणना जारी है...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-[#FFD88A]" />
+                      <span>✨ कुंडली तैयार करें व उमा से परामर्श लें</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Listening Status Bar when Mic is active */}
         {isListening && (
@@ -864,21 +1158,21 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         {/* Messages List Container */}
         <div className="flex-1 sm:p-5 p-3 bg-[#FAF2E4] overflow-y-auto min-h-0 space-y-4">
           {/* Active Kundali Banner Chip */}
-          {activeKundali && (
+          {currentKundali && (
             <div className="bg-gradient-to-r from-[#FFFDF8] via-[#F4E8D1] to-[#FFFDF8] border border-[#B58738]/50 rounded-xl p-2.5 text-xs text-[#5C3A21] flex items-center justify-between gap-2 shadow-xs">
               <div className="flex items-center gap-2 overflow-hidden">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
                 <span className="font-serif font-bold text-[#7A1D1D] truncate">
-                  सक्रिय जन्मपत्री: {activeKundali.name} ({activeKundali.lagnaRashi} लग्न • {activeKundali.moonRashi} राशि • {activeKundali.mahadasha} महादशा)
+                  सक्रिय जन्मपत्री: {currentKundali.name} ({currentKundali.lagnaRashi} लग्न • {currentKundali.moonRashi} राशि • {currentKundali.mahadasha} महादशा)
                 </span>
               </div>
               <button
                 type="button"
-                onClick={() => onNavigateTab && onNavigateTab('kundali')}
+                onClick={() => setIsBirthFormOpen(true)}
                 className="text-[11px] text-[#8F2121] font-bold hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer bg-[#FAF2E4] px-2 py-1 rounded border border-[#8C6239]/30"
               >
                 <span>बदलें</span>
-                <ExternalLink className="w-3 h-3" />
+                <UserPlus className="w-3 h-3" />
               </button>
             </div>
           )}
@@ -961,8 +1255,21 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     </div>
                   )}
 
-                  {/* Navigation Action Buttons */}
-                  {msg.actionPayload && onNavigateTab && (
+                  {/* Navigation Action Buttons / Smart Birth Trigger */}
+                  {isUma && !currentKundali && (
+                    <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsBirthFormOpen(true)}
+                        className="text-xs font-bold text-[#7A1D1D] hover:bg-[#FAF2E4] flex items-center gap-1.5 bg-[#F4E8D1] px-3 py-1.5 rounded-lg border border-[#B58738] cursor-pointer shadow-xs transition hover:scale-[1.01]"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
+                        <span>✨ यहीं जन्म विवरण भरें (सटीक कुंडली फलादेश)</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {msg.actionPayload && onNavigateTab && currentKundali && (
                     <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between flex-wrap gap-2">
                       <button
                         onClick={() => {
@@ -1123,9 +1430,9 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               placeholder={
-                activeKundali
-                  ? `उमा से ${activeKundali.name} जी की कुंडली, करियर, विवाह, दशा या उपाय पूछें...`
-                  : 'उमा से कोई भी ज्योतिषीय प्रश्न, राहुकाल, चौघड़िया या उपाय पूछें...'
+                currentKundali
+                  ? `उमा से ${currentKundali.name} जी की कुंडली, करियर, विवाह, दशा या उपाय पूछें...`
+                  : 'उमा से कोई भी ज्योतिषीय प्रश्न, करियर, विवाह, व्यापार या उपाय पूछें...'
               }
               className="flex-1 bg-[#FFFDF8] border-2 border-[#8C6239]/40 focus:border-[#7A1D1D] rounded-xl px-3.5 py-2 sm:py-2.5 text-xs sm:text-base font-serif text-[#3E2714] placeholder:text-[#8C6239]/70 outline-none shadow-inner"
             />
