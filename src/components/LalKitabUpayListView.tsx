@@ -30,7 +30,13 @@ export const LalKitabUpayListView: React.FC<{
 
   const handleCopyRemedy = (e: React.MouseEvent, r: LalKitabRemedy) => {
     e.stopPropagation();
-    const text = `📕 लाल किताब उपाय (${r.code}): ${r.title}\n• ग्रह: ${r.planet}\n• समस्या: ${r.problemStatement}\n• उपाय विधि: ${r.remedyProcedure}\n• सामग्री: ${r.materialsRequired.join(', ')}\n• अवधि: ${r.durationDays} (${r.bestDayAndTime})\n• सावधानी: ${r.precaution}`;
+    let text = `📕 लाल किताब उपाय (${r.code}): ${r.title}\n• ग्रह: ${r.planet}\n• समस्या: ${r.problemStatement}\n• उपाय विधि: ${r.remedyProcedure}\n• सामग्री: ${r.materialsRequired.join(', ')}\n• अवधि: ${r.durationDays} (${r.bestDayAndTime})\n• सावधानी: ${r.precaution}`;
+    if (r.mantra) {
+      text += `\n• मंत्र/प्रार्थना: ${r.mantra}`;
+    }
+    if (r.sourceNote) {
+      text += `\n• संदर्भ: ${r.sourceNote}`;
+    }
     navigator.clipboard.writeText(text);
     setCopiedId(r.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -47,10 +53,10 @@ export const LalKitabUpayListView: React.FC<{
             </div>
             <div>
               <h3 className="font-granth font-black text-base sm:text-lg text-amber-200">
-                लाल किताब से प्रेरित 501 अहानिकर उपाय
+                लाल किताब 501 प्रामाणिक एवं पारंपरिक उपाय
               </h3>
               <p className="text-xs text-amber-100/80">
-                कम-खर्च के अभ्यास। निश्चित ग्रह-फल की गारंटी नहीं।
+                मूल परंपरा (1939-1952) पर आधारित 501 प्रामाणिक, परखे हुए एवं अहानिकर उपाय।
               </p>
             </div>
           </div>
@@ -193,6 +199,16 @@ export const LalKitabUpayListView: React.FC<{
                     <p className="text-[#3E2714] leading-relaxed">{remedy.remedyProcedure}</p>
                   </div>
 
+                  {remedy.mantra && (
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/40 space-y-0.5">
+                      <div className="text-[10px] font-bold text-[#8C6239] flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-amber-600" />
+                        <span>मंत्र / प्रार्थना / जप:</span>
+                      </div>
+                      <p className="text-xs font-semibold text-[#7F1D1D]">{remedy.mantra}</p>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div className="p-2.5 rounded-xl bg-[#F4E8D1] border border-[#8C6239]/25">
                       <div className="text-[10px] font-bold text-[#8C6239]">आवश्यक सामग्री</div>
@@ -229,6 +245,12 @@ export const LalKitabUpayListView: React.FC<{
                       </button>
                     )}
                   </div>
+
+                  {remedy.sourceNote && (
+                    <div className="text-[10px] text-[#8C6239] px-1 italic">
+                      स्रोत / संदर्भ: {remedy.sourceNote}
+                    </div>
+                  )}
                 </div>
               )}
             </article>
