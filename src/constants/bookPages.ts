@@ -578,9 +578,25 @@ export const BOOK_PAGES: BookPageItem[] = [
     icon: Coins,
     screenTitle: '☯️ आई-चिंग दैवज्ञ परामर्श',
   },
+  {
+    id: 'devta_arpan',
+    title: 'देवता अर्पण फल व पूजन सामग्री (शास्त्रीय विधान)',
+    label: 'देवता अर्पण फल',
+    pageNumber: 31,
+    chapter: 'एकविंशति अध्याय',
+    desc: '१४+ देवी-देवताओं पर अर्पण सामग्री, शास्त्रीय फल, मनोकामना सिद्धि, निषेध नियम व मंत्र',
+    icon: Sparkles,
+    screenTitle: '🪔 देवता अर्पण फल व पूजन सामग्री',
+  },
 ];
 
 const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
+  devta_arpan: {
+    title: 'Divine Offerings & Blessings (Devta Arpan Fal)',
+    label: 'Devta Arpan',
+    desc: 'Sacred offerings for 14+ deities, benefits, mantras, prohibited items & rituals',
+    screenTitle: '🪔 Divine Offerings & Blessings',
+  },
   panchang: {
     title: 'Daily Panchang & Ephemeris',
     label: 'Panchang',

@@ -494,6 +494,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           
           <button
+            onClick={() => onNavigateTab('devta_arpan')}
+            className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-amber-500/20 border-2 border-[#D4AF37] hover:border-amber-600 transition flex flex-col items-center text-center gap-2 group shadow-sm m3-touch relative overflow-hidden"
+          >
+            <span className="absolute top-1 right-1 text-[9px] bg-[#7A1D1D] text-[#FFD88A] px-1.5 py-0.2 rounded-full font-bold">
+              नया
+            </span>
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-600 via-orange-600 to-red-600 text-white shadow-md group-hover:scale-110 transition-transform">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-black text-[#5C1414] dark:text-amber-200">देवता अर्पण फल</span>
+          </button>
+
+          <button
             onClick={() => onNavigateTab('kundali')}
             className="p-3.5 rounded-2xl bg-amber-50/80 dark:bg-stone-900/80 border border-amber-500/20 hover:bg-amber-100 dark:hover:bg-stone-800 transition flex flex-col items-center text-center gap-2 group shadow-xs m3-touch"
           >

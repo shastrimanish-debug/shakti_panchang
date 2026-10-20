@@ -33,6 +33,7 @@ const TarotView = React.lazy(() => import('./components/TarotView').then((m) => 
 const GemologyView = React.lazy(() => import('./components/GemologyView').then((m) => ({ default: m.GemologyView })));
 const FaceReadingView = React.lazy(() => import('./components/FaceReadingView').then((m) => ({ default: m.FaceReadingView })));
 const IChingView = React.lazy(() => import('./components/IChingView').then((m) => ({ default: m.IChingView })));
+const DevtaArpanView = React.lazy(() => import('./components/DevtaArpanView').then((m) => ({ default: m.DevtaArpanView })));
 const DailyRashifalView = React.lazy(() => import('./components/DailyRashifalView').then((m) => ({ default: m.DailyRashifalView })));
 const DailyGitaShlokaView = React.lazy(() => import('./components/DailyGitaShlokaView').then((m) => ({ default: m.DailyGitaShlokaView })));
 const WhatsAppPanchangModal = React.lazy(() => import('./components/WhatsAppPanchangModal').then((m) => ({ default: m.WhatsAppPanchangModal })));
@@ -43,6 +44,7 @@ const SavedProfilesModal = React.lazy(() => import('./components/SavedProfilesMo
 const MoreMenuModal = React.lazy(() => import('./components/MoreMenuModal').then((m) => ({ default: m.MoreMenuModal })));
 const ThemeSelectorModal = React.lazy(() => import('./components/ThemeSelectorModal').then((m) => ({ default: m.ThemeSelectorModal })));
 const LanguageSelectorModal = React.lazy(() => import('./components/LanguageSelectorModal').then((m) => ({ default: m.LanguageSelectorModal })));
+const ReleaseNotesModal = React.lazy(() => import('./components/ReleaseNotesModal').then((m) => ({ default: m.ReleaseNotesModal })));
 
 const HanumanChalisaPathView = React.lazy(async () => {
   const [{ ScripturePathView }, { HANUMAN_CHALISA }] = await Promise.all([
@@ -120,6 +122,7 @@ export function App() {
   const [entered, setEntered] = useState(false);
   const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
+  const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState<boolean>(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerHost, setDrawerHost] = useState<HTMLElement | null>(null);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
@@ -729,6 +732,16 @@ export function App() {
                 onNextChapter={handleNextPage}
               />
             )}
+
+            {activeTab === 'devta_arpan' && (
+              <DevtaArpanView
+                onSelectTab={handleSelectTab}
+                onOpenUmaWithPrompt={(prompt) => {
+                  setUmaInitialPrompt(prompt);
+                  setIsUmaModalOpen(true);
+                }}
+              />
+            )}
           </Suspense>
         </div>
       </main>
@@ -789,6 +802,7 @@ export function App() {
             onOpenThemeModal={() => setIsThemeModalOpen(true)}
             isAudioEnabled={isAudioEnabled}
             onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
+            onOpenReleaseNotes={() => setIsReleaseNotesOpen(true)}
           />
         )}
 
@@ -872,6 +886,15 @@ export function App() {
             isOpen={isSavedProfilesModalOpen}
             onClose={() => setIsSavedProfilesModalOpen(false)}
             onSelectProfile={setActiveKundali}
+          />
+        )}
+
+        {isReleaseNotesOpen && (
+          <ReleaseNotesModal
+            isOpen={isReleaseNotesOpen}
+            onClose={() => setIsReleaseNotesOpen(false)}
+            onNavigateTab={handleSelectTab}
+            onOpenUma={() => setIsUmaModalOpen(true)}
           />
         )}
       </Suspense>

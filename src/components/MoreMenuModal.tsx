@@ -49,6 +49,7 @@ interface MoreMenuModalProps {
   onOpenThemeModal?: () => void;
   isAudioEnabled: boolean;
   onToggleAudio: () => void;
+  onOpenReleaseNotes?: () => void;
 }
 
 export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
@@ -69,6 +70,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   onOpenThemeModal,
   isAudioEnabled,
   onToggleAudio,
+  onOpenReleaseNotes,
 }) => {
   const { t, currentOption, language } = useLanguage();
   const currentLang = currentOption;
@@ -126,6 +128,33 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
             <span className="text-[11px] bg-stone-950 text-amber-300 px-3 py-1 rounded-full font-black shrink-0">
               {t('more.consultNow', 'परामर्श')}
+            </span>
+          </button>
+        </div>
+
+        {/* Devta Arpan Fal Dedicated Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('devta_arpan'))}
+            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-amber-600 via-orange-600 to-red-700 text-[#FAF2E4] border-[#D4AF37]"
+          >
+            <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+              <div className="p-2 bg-[#2C0A0A] rounded-xl text-amber-300 shrink-0 text-lg">
+                🪔
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
+                  <span>देवता अर्पण फल व पूजन सामग्री</span>
+                  <span className="text-[9px] bg-red-950 text-amber-300 px-1.5 py-0.2 rounded font-bold">नया</span>
+                </div>
+                <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
+                  १४+ देवता, ५०+ अर्पण सामग्री, प्रत्यक्ष फल, निषेध व मंत्र
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] bg-[#2C0A0A] text-[#FFD88A] px-2.5 py-1 rounded-lg font-bold shrink-0">
+              खोलें →
             </span>
           </button>
         </div>
@@ -356,6 +385,35 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               {isAudioEnabled ? t('more.turnOff', 'बंद करें') : t('more.turnOn', 'चालू करें')}
             </button>
           </div>
+        </div>
+
+        {/* Release Notes v1.0.27 (Code 27) Trigger */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(onOpenReleaseNotes)}
+            className="w-full p-2.5 bg-[#FAF5ED] dark:bg-[#341F14] hover:bg-[#F4E8D1] border border-[#8C6239]/40 rounded-2xl flex items-center justify-between text-left transition cursor-pointer active:scale-95 shadow-2xs"
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="p-2 bg-[#7A1D1D] rounded-xl text-[#FFD88A] shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] leading-snug flex items-center gap-1.5">
+                  <span>नवीनतम रिलीज़ नोट्स (Release Notes)</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 font-black">
+                    v1.0.27 (Code 27)
+                  </span>
+                </div>
+                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
+                  देवता अर्पण फल संग्रह व उमा दैवज्ञ 2.0 (डायनामिक कालखंड)
+                </div>
+              </div>
+            </div>
+            <span className="text-xs text-[#B56A00] dark:text-amber-300 font-bold shrink-0">
+              देखें →
+            </span>
+          </button>
         </div>
 
         {/* Sacred Brand Footer */}

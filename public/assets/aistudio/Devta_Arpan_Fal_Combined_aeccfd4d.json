@@ -1,0 +1,308 @@
+{
+  "module": "Devta Arpan Fal",
+  "module_version": "1.0.0",
+  "language": "hi",
+  "theme_config": {
+    "background_color": "#FFF9F0",
+    "primary_text_color": "#333333",
+    "highlight_color": "#B64D18",
+    "secondary_element_color": "#966A45"
+  },
+  "devta_arpan_modules": [
+    {
+      "deity": "भगवान गणेश",
+      "deity_id": "ganesh",
+      "header_title": "गणेश जी पर क्या चढ़ाने से क्या फल मिलता है? 卐",
+      "offerings": [
+        {
+          "id": "ganesh_01",
+          "item_icon": "🌿",
+          "holy_symbol": "卐",
+          "action_text": "दूर्वा (घास) चढ़ाने से –",
+          "highlighted_benefit": "मानसिक शांति व धन वृद्धि"
+        },
+        {
+          "id": "ganesh_02",
+          "item_icon": "🥟",
+          "holy_symbol": "卐",
+          "action_text": "मोदक या लड्डू का भोग लगाने से –",
+          "highlighted_benefit": "मनोकामना पूर्ति"
+        },
+        {
+          "id": "ganesh_03",
+          "item_icon": "🔴",
+          "holy_symbol": "卐",
+          "action_text": "सिंदूर चढ़ाने से –",
+          "highlighted_benefit": "सौभाग्य व संकटों से रक्षा"
+        },
+        {
+          "id": "ganesh_04",
+          "item_icon": "🌺",
+          "holy_symbol": "卐",
+          "action_text": "लाल गुड़हल चढ़ाने से –",
+          "highlighted_benefit": "कार्यों में निर्विघ्न सफलता"
+        }
+      ]
+    },
+    {
+      "deity": "माता पार्वती",
+      "deity_id": "parvati",
+      "header_title": "माता पार्वती पर क्या चढ़ाने से क्या फल मिलता है? 🌸",
+      "offerings": [
+        {
+          "id": "parvati_01",
+          "item_icon": "💄",
+          "holy_symbol": "🌸",
+          "action_text": "सुहाग सामग्री चढ़ाने से –",
+          "highlighted_benefit": "अखंड सौभाग्य की प्राप्ति"
+        },
+        {
+          "id": "parvati_02",
+          "item_icon": "🥢",
+          "holy_symbol": "🌸",
+          "action_text": "लौंग का जोड़ा चढ़ाने से –",
+          "highlighted_benefit": "रुके हुए कार्य पूर्ण"
+        },
+        {
+          "id": "parvati_03",
+          "item_icon": "🧣",
+          "holy_symbol": "🌸",
+          "action_text": "लाल चुनरी चढ़ाने से –",
+          "highlighted_benefit": "विशेष इच्छा पूर्ति"
+        },
+        {
+          "id": "parvati_04",
+          "item_icon": "🥥",
+          "holy_symbol": "🌸",
+          "action_text": "साबुत नारियल चढ़ाने से –",
+          "highlighted_benefit": "पारिवारिक शांति"
+        }
+      ]
+    },
+    {
+      "deity": "माता काली",
+      "deity_id": "kali",
+      "header_title": "माता काली पर क्या चढ़ाने से क्या फल मिलता है? 🗡️",
+      "offerings": [
+        {
+          "id": "kali_01",
+          "item_icon": "🍋",
+          "holy_symbol": "🗡️",
+          "action_text": "नींबू की माला चढ़ाने से –",
+          "highlighted_benefit": "शत्रुओं व तंत्र-बाधा का नाश"
+        },
+        {
+          "id": "kali_02",
+          "item_icon": "⚫",
+          "holy_symbol": "🗡️",
+          "action_text": "काले तिल चढ़ाने से –",
+          "highlighted_benefit": "राहु-केतु दोष निवारण"
+        },
+        {
+          "id": "kali_03",
+          "item_icon": "🌺",
+          "holy_symbol": "🗡️",
+          "action_text": "लाल गुड़हल चढ़ाने से –",
+          "highlighted_benefit": "अज्ञात भय से मुक्ति"
+        },
+        {
+          "id": "kali_04",
+          "item_icon": "🍃",
+          "holy_symbol": "🗡️",
+          "action_text": "मीठा पान चढ़ाने से –",
+          "highlighted_benefit": "मुकदमों में विजय"
+        }
+      ]
+    },
+    {
+      "deity": "भैरव बाबा",
+      "deity_id": "bhairav",
+      "header_title": "भैरव बाबा पर क्या चढ़ाने से क्या फल मिलता है? 🐾",
+      "offerings": [
+        {
+          "id": "bhairav_01",
+          "item_icon": "🛢️",
+          "holy_symbol": "🐾",
+          "action_text": "सरसों का तेल चढ़ाने से –",
+          "highlighted_benefit": "शनि दोष शांति"
+        },
+        {
+          "id": "bhairav_02",
+          "item_icon": "🥨",
+          "holy_symbol": "🐾",
+          "action_text": "इमरती या जलेबी का भोग लगाने से –",
+          "highlighted_benefit": "दुर्घटनाओं से बचाव"
+        },
+        {
+          "id": "bhairav_03",
+          "item_icon": "🧆",
+          "holy_symbol": "🐾",
+          "action_text": "उड़द के वड़े चढ़ाने से –",
+          "highlighted_benefit": "गुप्त शत्रुओं का नाश"
+        }
+      ]
+    },
+    {
+      "deity": "भगवान विष्णु",
+      "deity_id": "vishnu",
+      "header_title": "विष्णु जी पर क्या चढ़ाने से क्या फल मिलता है? 🐚",
+      "offerings": [
+        {
+          "id": "vishnu_01",
+          "item_icon": "🌿",
+          "holy_symbol": "🐚",
+          "action_text": "तुलसी दल चढ़ाने से –",
+          "highlighted_benefit": "असीम कृपा व मोक्ष"
+        },
+        {
+          "id": "vishnu_02",
+          "item_icon": "🌼",
+          "holy_symbol": "🐚",
+          "action_text": "पीले फूल चढ़ाने से –",
+          "highlighted_benefit": "सुख-समृद्धि की प्राप्ति"
+        },
+        {
+          "id": "vishnu_03",
+          "item_icon": "🟡",
+          "holy_symbol": "🐚",
+          "action_text": "केसर या हल्दी का तिलक लगाने से –",
+          "highlighted_benefit": "विवाह बाधा मुक्ति"
+        },
+        {
+          "id": "vishnu_04",
+          "item_icon": "🥛",
+          "holy_symbol": "🐚",
+          "action_text": "पंचामृत चढ़ाने से –",
+          "highlighted_benefit": "आरोग्य व उत्तम स्वास्थ्य"
+        }
+      ]
+    },
+    {
+      "deity": "माता लक्ष्मी",
+      "deity_id": "lakshmi",
+      "header_title": "माता लक्ष्मी पर क्या चढ़ाने से क्या फल मिलता है? 🪷",
+      "offerings": [
+        {
+          "id": "lakshmi_01",
+          "item_icon": "🪷",
+          "holy_symbol": "🪷",
+          "action_text": "कमल का फूल चढ़ाने से –",
+          "highlighted_benefit": "स्थाई धन व ऐश्वर्य"
+        },
+        {
+          "id": "lakshmi_02",
+          "item_icon": "🍚",
+          "holy_symbol": "🪷",
+          "action_text": "खीर का भोग लगाने से –",
+          "highlighted_benefit": "दरिद्रता का नाश"
+        },
+        {
+          "id": "lakshmi_03",
+          "item_icon": "📿",
+          "holy_symbol": "🪷",
+          "action_text": "कमलगट्टा चढ़ाने से –",
+          "highlighted_benefit": "व्यापार में भारी मुनाफा"
+        },
+        {
+          "id": "lakshmi_04",
+          "item_icon": "🐚",
+          "holy_symbol": "🪷",
+          "action_text": "पीली कौड़ी चढ़ाने से –",
+          "highlighted_benefit": "तिजोरी में बरकत"
+        }
+      ]
+    },
+    {
+      "deity": "माता सरस्वती",
+      "deity_id": "saraswati",
+      "header_title": "माता सरस्वती पर क्या चढ़ाने से क्या फल मिलता है? 📖",
+      "offerings": [
+        {
+          "id": "saraswati_01",
+          "item_icon": "💮",
+          "holy_symbol": "📖",
+          "action_text": "सफेद फूल चढ़ाने से –",
+          "highlighted_benefit": "विद्या व एकाग्रता की प्राप्ति"
+        },
+        {
+          "id": "saraswati_02",
+          "item_icon": "🍬",
+          "holy_symbol": "📖",
+          "action_text": "मिश्री का भोग लगाने से –",
+          "highlighted_benefit": "वाणी में मधुरता"
+        },
+        {
+          "id": "saraswati_03",
+          "item_icon": "🦚",
+          "holy_symbol": "📖",
+          "action_text": "मोरपंख चढ़ाने से –",
+          "highlighted_benefit": "कला व स्मरण शक्ति में वृद्धि"
+        },
+        {
+          "id": "saraswati_04",
+          "item_icon": "🖊️",
+          "holy_symbol": "📖",
+          "action_text": "कलम (Pen) अर्पित करने से –",
+          "highlighted_benefit": "परीक्षा में शत-प्रतिशत सफलता"
+        }
+      ]
+    },
+    {
+      "deity": "भगवान शिव (शिवलिंग)",
+      "deity_id": "shivling",
+      "header_title": "शिवलिंग पर क्या चढ़ाने से क्या फल मिलता है? 🔱",
+      "offerings": [
+        {
+          "id": "shivling_01",
+          "item_icon": "⚫",
+          "holy_symbol": "🔱",
+          "action_text": "काली मिर्च चढ़ाने से –",
+          "highlighted_benefit": "रोग मुक्ति"
+        },
+        {
+          "id": "shivling_02",
+          "item_icon": "🥣",
+          "holy_symbol": "🔱",
+          "action_text": "घी चढ़ाने से –",
+          "highlighted_benefit": "मानसिक ऊर्जा जागृत"
+        },
+        {
+          "id": "shivling_03",
+          "item_icon": "🛢️",
+          "holy_symbol": "🔱",
+          "action_text": "सरसों का तेल चढ़ाने से –",
+          "highlighted_benefit": "शत्रुओं का नाश"
+        }
+      ]
+    },
+    {
+      "deity": "भगवान हनुमान",
+      "deity_id": "hanuman",
+      "header_title": "हनुमान जी पर क्या चढ़ाने से क्या फल मिलता है? 🚩",
+      "offerings": [
+        {
+          "id": "hanuman_01",
+          "item_icon": "🔴",
+          "holy_symbol": "🚩",
+          "action_text": "सिंदूर चढ़ाने से –",
+          "highlighted_benefit": "संकटों से रक्षा"
+        },
+        {
+          "id": "hanuman_02",
+          "item_icon": "🌿",
+          "holy_symbol": "🚩",
+          "action_text": "तुलसी दल चढ़ाने से –",
+          "highlighted_benefit": "श्री राम की कृपा"
+        },
+        {
+          "id": "hanuman_03",
+          "item_icon": "🟠",
+          "holy_symbol": "🚩",
+          "action_text": "बूंदी के लड्डू चढ़ाने से –",
+          "highlighted_benefit": "ग्रह दोष शांति"
+        }
+      ]
+    }
+  ],
+  "religious_disclaimer": "यह सामग्री धार्मिक मान्यताओं और लोक-परंपराओं पर आधारित है। बताए गए फल निश्चित या वैज्ञानिक रूप से प्रमाणित परिणामों की गारंटी नहीं हैं। पूजा में स्थानीय मंदिर और परंपरा के नियमों का पालन करें।"
+}
