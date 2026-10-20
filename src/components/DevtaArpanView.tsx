@@ -137,9 +137,9 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
   };
 
   return (
-    <div className="min-h-full pb-20 bg-gradient-to-b from-[#FFFDF9] via-[#FAF3E8] to-[#F5ECE0] text-[#3E2714] font-sans">
+    <div className="h-full flex-1 min-h-0 overflow-y-auto overscroll-contain pb-28 bg-gradient-to-b from-[#FFFDF9] via-[#FAF3E8] to-[#F5ECE0] text-[#3E2714] font-sans">
       {/* Divine Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#7A1D1D] via-[#942626] to-[#5C1414] text-[#FAF2E4] px-4 py-5 sm:px-6 sm:py-6 shadow-md border-b-2 border-[#D4AF37]">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#7A1D1D] via-[#942626] to-[#5C1414] text-[#FAF2E4] px-4 py-3.5 sm:px-6 sm:py-5 shadow-md border-b-2 border-[#D4AF37]">
         <div className="absolute -right-6 -bottom-8 opacity-10 pointer-events-none text-9xl">
           🪔
         </div>
@@ -395,6 +395,50 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
           </div>
         )}
 
+        {/* Quick Offerings Jump Bar */}
+        {!filteredOfferings.isGlobalSearch && (
+          <div className="bg-[#FAF2E4]/90 rounded-2xl p-3 border border-[#D4AF37]/50 space-y-2 shadow-xs">
+            <div className="flex items-center justify-between text-xs font-bold text-[#8C4A00]">
+              <span className="flex items-center gap-1.5">
+                <span className="text-base">🌿</span>
+                <span className="font-granth text-sm font-black text-[#5C1414]">
+                  {currentDeity.deity} की मुख्य अर्पण सामग्रियां ({currentDeity.offerings.length}):
+                </span>
+              </span>
+              <span className="text-[11px] text-[#A67C52] font-medium hidden sm:inline">
+                सामग्री पर टैप करें 👇
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {currentDeity.offerings.map((item) => (
+                <button
+                  key={`pill_${item.id}`}
+                  type="button"
+                  onClick={() => {
+                    document.getElementById(`offering_${item.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-white hover:bg-amber-100 text-[#5C1414] border border-[#DFCBB5] hover:border-amber-500 text-xs font-bold flex items-center gap-1 shadow-2xs transition active:scale-95 cursor-pointer"
+                >
+                  <span className="text-sm">{item.item_icon}</span>
+                  <span>{item.action_text.replace(/[–-]/g, '').trim()}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Offerings Grid Header */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#B64D18] animate-pulse" />
+            <h3 className="font-granth text-base sm:text-lg font-black text-[#5C1414]">
+              {filteredOfferings.isGlobalSearch
+                ? `खोज परिणाम: अर्पण सामग्री व फल (${filteredOfferings.results.length})`
+                : `${currentDeity.deity} — क्या अर्पण करें व क्या फल मिलेगा (${filteredOfferings.results.length} सामग्री)`}
+            </h3>
+          </div>
+        </div>
+
         {/* Offerings Grid */}
         {filteredOfferings.results.length === 0 ? (
           <div className="bg-white/80 rounded-2xl p-8 text-center space-y-2 border border-dashed border-[#DFCBB5]">
@@ -423,14 +467,18 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
 
               return (
                 <div
+                  id={`offering_${item.id}`}
                   key={`${deity.deity_id}_${item.id}`}
-                  className="bg-white/95 rounded-2xl p-4 border border-[#DFCBB5] hover:border-[#D4AF37] shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3 group"
+                  className="bg-white/95 rounded-2xl p-4 border border-[#DFCBB5] hover:border-[#D4AF37] shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3 group scroll-mt-24"
                 >
                   <div className="space-y-2.5">
                     {/* Top row: Deity badge (if search) and holy symbol */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-2xl leading-none">{item.item_icon}</span>
+                        <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-[#7A1D1D] text-[#FFD88A]">
+                          अर्पण सामग्री
+                        </span>
                         {filteredOfferings.isGlobalSearch && (
                           <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#FAF2E4] text-[#7A1D1D] border border-[#DFCBB5] truncate">
                             {deity.avatar_icon} {deity.deity}
