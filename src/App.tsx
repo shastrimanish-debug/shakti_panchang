@@ -317,13 +317,17 @@ export function App() {
       }
 
       const targetIdx = BOOK_PAGES.findIndex((p) => p.id === tabId);
-      if (targetIdx !== -1) {
-        setTurnDirection(targetIdx >= currentIndex ? 'forward' : 'backward');
+      if (tabId === 'services' || tabId === 'index') {
+        setTurnDirection('backward');
+        setActiveTab(tabId);
+      } else if (targetIdx !== -1) {
+        setTurnDirection(targetIdx >= (currentIndex === -1 ? 0 : currentIndex) ? 'forward' : 'backward');
         const target = BOOK_PAGES[targetIdx];
         setActiveTab(target.id);
         if (isAudioEnabled) playTactilePageTurnSound();
         notifyPageTurn(target.label, target.pageNumber);
       } else {
+        setTurnDirection('forward');
         setActiveTab(tabId);
       }
     },
@@ -446,7 +450,9 @@ export function App() {
       <main className="flex-1 min-h-0 w-full relative flex flex-col overflow-hidden">
         <div
           key={`${activeTab}-${currentLang}`}
-          className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
+          className={`flex-1 min-h-0 w-full flex flex-col overflow-hidden ${
+            turnDirection === 'backward' ? 'fading-slide-backward' : 'fading-slide-forward'
+          }`}
         >
           <Suspense
             fallback={
@@ -761,11 +767,17 @@ export function App() {
           }
           active={activeTab}
           onClose={() => setDrawerOpen(false)}
-          onBack={() => openFromDrawer(() => setActiveTab("services"))}
+          onBack={() => openFromDrawer(() => {
+            setTurnDirection('backward');
+            setActiveTab("services");
+          })}
           onPlace={() => openFromDrawer(() => setIsLocationModalOpen(true))}
           onLanguage={() => openFromDrawer(() => setIsLanguageModalOpen(true))}
           onTheme={() => openFromDrawer(() => setIsThemeModalOpen(true))}
-          onServices={() => openFromDrawer(() => setActiveTab("services"))}
+          onServices={() => openFromDrawer(() => {
+            setTurnDirection('backward');
+            setActiveTab("services");
+          })}
           onPanchang={() => openFromDrawer(() => handleSelectTab("panchang"))}
           onKundali={() => openFromDrawer(() => handleSelectTab("kundali"))}
           onUma={() => openFromDrawer(() => setIsUmaModalOpen(true))}

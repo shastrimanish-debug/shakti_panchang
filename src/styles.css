@@ -96,34 +96,41 @@
 
 @keyframes pageTurnForward {
   0% {
-    opacity: 0.5;
-    transform: translateY(6px);
+    opacity: 0;
+    transform: translate3d(18px, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes pageTurnBackward {
   0% {
-    opacity: 0.5;
-    transform: translateY(-6px);
+    opacity: 0;
+    transform: translate3d(-18px, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
+.fading-slide-forward,
 .book-page-turn-forward {
-  animation: pageTurnForward 0.12s ease-out forwards;
-  will-change: opacity, transform;
+  animation: pageTurnForward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
+.fading-slide-backward,
 .book-page-turn-backward {
-  animation: pageTurnBackward 0.12s ease-out forwards;
-  will-change: opacity, transform;
+  animation: pageTurnBackward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.fading-slide-entry {
+  animation: pageTurnForward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
 .granth-leaf-stack {

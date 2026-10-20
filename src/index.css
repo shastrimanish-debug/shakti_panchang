@@ -522,3 +522,77 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #b56a00;
 }
+
+/* ==========================================================================
+   📖 Grantha Page-Turn: Subtle Fading-Slide Entry Animation for Content Views
+   ========================================================================== */
+@keyframes fadingSlideForward {
+  0% {
+    opacity: 0;
+    transform: translate3d(18px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadingSlideBackward {
+  0% {
+    opacity: 0;
+    transform: translate3d(-18px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadingSlideEntry {
+  0% {
+    opacity: 0;
+    transform: translate3d(14px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.fading-slide-forward {
+  animation: fadingSlideForward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.fading-slide-backward {
+  animation: fadingSlideBackward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.fading-slide-entry {
+  animation: fadingSlideEntry 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Granth page turn alias classes */
+.book-page-turn-forward {
+  animation: fadingSlideForward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.book-page-turn-backward {
+  animation: fadingSlideBackward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fading-slide-forward,
+  .fading-slide-backward,
+  .fading-slide-entry,
+  .book-page-turn-forward,
+  .book-page-turn-backward {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
