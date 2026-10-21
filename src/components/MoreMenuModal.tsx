@@ -29,6 +29,7 @@ import { SavedLocation } from '../types';
 import { AppTheme, DEVOTIONAL_THEMES, getAstrologerBranding } from '../services/storage';
 import { useLicense } from '../lib/license-client';
 import { useLanguage } from '../i18n';
+import { triggerHapticSelection } from '../utils/haptics';
 import { ZeroScrollPager } from './ZeroScrollPager';
 
 interface MoreMenuModalProps {
@@ -82,6 +83,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   const branding = getAstrologerBranding();
 
   const handleAction = (cb?: () => void) => {
+    triggerHapticSelection();
     if (cb) cb();
     onClose();
   };
@@ -98,7 +100,10 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              triggerHapticSelection();
+              onClose();
+            }}
             className="bx-iconbtn shrink-0"
             aria-label={t('common.close', 'बंद करें')}
           >

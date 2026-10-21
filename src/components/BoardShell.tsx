@@ -19,6 +19,7 @@ import { ZeroScrollPager } from "./ZeroScrollPager";
 import { MoonPhaseChart } from "./MoonPhaseChart";
 import { trVedic } from "../i18n/vedicTranslate";
 import { useLanguage } from "../i18n";
+import { triggerHapticSelection } from "../utils/haptics";
 
 function clock(d?: Date) {
   if (!d) return "—";
@@ -58,7 +59,10 @@ export function BoardMenuButton({
       type="button"
       className="bx-menu-btn"
       data-open={open ? "true" : "false"}
-      onClick={onClick}
+      onClick={() => {
+        triggerHapticSelection();
+        onClick();
+      }}
       aria-expanded={open}
       aria-label={open ? t("common.close", "बंद करें") : t("nav.more", "मेनू")}
     >
@@ -129,17 +133,39 @@ export function BoardDrawer({
             <div className="text-[15px] font-semibold leading-none">{brand}</div>
             <div className="bx-kicker mt-1 truncate">{title}</div>
           </div>
-          <button type="button" className="bx-iconbtn" onClick={onClose} aria-label={t("common.close", "बंद करें")}>
+          <button
+            type="button"
+            className="bx-iconbtn"
+            onClick={() => {
+              triggerHapticSelection();
+              onClose();
+            }}
+            aria-label={t("common.close", "बंद करें")}
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
         {showBack && (
-          <button type="button" className="bx-navbtn w-full mt-3" onClick={onBack}>
+          <button
+            type="button"
+            className="bx-navbtn w-full mt-3"
+            onClick={() => {
+              triggerHapticSelection();
+              onBack();
+            }}
+          >
             <ChevronLeft className="w-4 h-4" />
             {t("nav.allServices", "सभी सेवाएँ")}
           </button>
         )}
-        <button type="button" className="bx-navbtn w-full mt-2" onClick={onPlace}>
+        <button
+          type="button"
+          className="bx-navbtn w-full mt-2"
+          onClick={() => {
+            triggerHapticSelection();
+            onPlace();
+          }}
+        >
           <MapPin className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">{place}</span>
         </button>
@@ -153,7 +179,10 @@ export function BoardDrawer({
                 key={item.id}
                 type="button"
                 data-on={on ? "true" : "false"}
-                onClick={item.onClick}
+                onClick={() => {
+                  triggerHapticSelection();
+                  item.onClick();
+                }}
                 className="bx-drawer-nav"
               >
                 <span className="bx-tile-icon w-7 h-7">
@@ -165,11 +194,25 @@ export function BoardDrawer({
           })}
         </nav>
         <div className="grid grid-cols-2 gap-2 mt-3">
-          <button type="button" className="bx-navbtn" onClick={onTheme}>
+          <button
+            type="button"
+            className="bx-navbtn"
+            onClick={() => {
+              triggerHapticSelection();
+              onTheme();
+            }}
+          >
             <Palette className="w-4 h-4" />
             {t("common.theme", "थीम")}
           </button>
-          <button type="button" className="bx-navbtn" onClick={onLanguage}>
+          <button
+            type="button"
+            className="bx-navbtn"
+            onClick={() => {
+              triggerHapticSelection();
+              onLanguage();
+            }}
+          >
             <Languages className="w-4 h-4" />
             {t("common.language", "भाषा")}
           </button>
@@ -206,7 +249,10 @@ export function BoardHeader({
       {showBack ? (
         <button
           type="button"
-          onClick={onBack}
+          onClick={() => {
+            triggerHapticSelection();
+            onBack();
+          }}
           className="bx-head-btn shrink-0"
           aria-label={t("nav.allServices", "सभी सेवाएँ")}
         >
@@ -223,16 +269,35 @@ export function BoardHeader({
       </div>
       <button
         type="button"
-        onClick={onPlace}
+        onClick={() => {
+          triggerHapticSelection();
+          onPlace();
+        }}
         className="bx-head-btn max-w-[32%] min-w-0 shrink"
       >
         <MapPin className="w-3.5 h-3.5 shrink-0" />
         <span className="truncate">{place}</span>
       </button>
-      <button type="button" onClick={onTheme} className="bx-head-btn shrink-0" aria-label="थीम">
+      <button
+        type="button"
+        onClick={() => {
+          triggerHapticSelection();
+          onTheme();
+        }}
+        className="bx-head-btn shrink-0"
+        aria-label="थीम"
+      >
         <Palette className="w-4 h-4" />
       </button>
-      <button type="button" onClick={onLanguage} className="bx-head-btn shrink-0" aria-label={t("common.language", "भाषा")}>
+      <button
+        type="button"
+        onClick={() => {
+          triggerHapticSelection();
+          onLanguage();
+        }}
+        className="bx-head-btn shrink-0"
+        aria-label={t("common.language", "भाषा")}
+      >
         <Languages className="w-4 h-4" />
       </button>
     </header>
@@ -272,7 +337,10 @@ export function BoardDock({
             key={item.id}
             type="button"
             data-on={on ? "true" : "false"}
-            onClick={item.onClick}
+            onClick={() => {
+              triggerHapticSelection();
+              item.onClick();
+            }}
             className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium min-w-0 px-0.5"
           >
             <span className="bx-tile-icon w-7 h-7">
@@ -372,7 +440,15 @@ export function ModuleBoard({
               section.pages.map((page) => {
                 const Icon = page.icon;
                 return (
-                  <button key={page.id} type="button" className="bx-tile bx-glass" onClick={() => onOpen(page.id)}>
+                  <button
+                    key={page.id}
+                    type="button"
+                    className="bx-tile bx-glass"
+                    onClick={() => {
+                      triggerHapticSelection();
+                      onOpen(page.id);
+                    }}
+                  >
                     <span className="bx-tile-icon">
                       <Icon className="w-4 h-4" />
                     </span>
@@ -463,19 +539,47 @@ export function TodayBoard({
           ))}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" className="bx-tile bx-glass h-auto min-h-16" onClick={onWhatsApp}>
+          <button
+            type="button"
+            className="bx-tile bx-glass h-auto min-h-16"
+            onClick={() => {
+              triggerHapticSelection();
+              onWhatsApp();
+            }}
+          >
             <strong>{t("common.share", "साझा करें")}</strong>
             <p>{t("nav.panchang", "पंचांग")}</p>
           </button>
-          <button type="button" className="bx-tile bx-glass h-auto min-h-16" onClick={() => onOpen("choghadiya")}>
+          <button
+            type="button"
+            className="bx-tile bx-glass h-auto min-h-16"
+            onClick={() => {
+              triggerHapticSelection();
+              onOpen("choghadiya");
+            }}
+          >
             <strong>{t("nav.choghadiya", "चौघड़िया")}</strong>
             <p>{t("panchang.auspiciousTimings", "शुभ समय")}</p>
           </button>
-          <button type="button" className="bx-tile bx-glass h-auto min-h-16" onClick={() => onOpen("muhurat")}>
+          <button
+            type="button"
+            className="bx-tile bx-glass h-auto min-h-16"
+            onClick={() => {
+              triggerHapticSelection();
+              onOpen("muhurat");
+            }}
+          >
             <strong>{t("nav.muhurat", "मुहूर्त")}</strong>
             <p>{t("panchang.auspiciousTimings", "काम के अनुसार समय")}</p>
           </button>
-          <button type="button" className="bx-tile bx-glass h-auto min-h-16" onClick={() => onOpen("rashifal")}>
+          <button
+            type="button"
+            className="bx-tile bx-glass h-auto min-h-16"
+            onClick={() => {
+              triggerHapticSelection();
+              onOpen("rashifal");
+            }}
+          >
             <strong>{t("nav.rashifal", "राशिफल")}</strong>
             <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
           </button>

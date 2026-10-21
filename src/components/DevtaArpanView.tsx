@@ -23,6 +23,7 @@ import {
   Heart,
   ExternalLink,
 } from 'lucide-react';
+import { triggerHapticSelection } from '../utils/haptics';
 
 interface DevtaArpanViewProps {
   onSelectTab?: (tabId: string) => void;
@@ -165,14 +166,20 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
 
           <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
             <button
-              onClick={() => setShowRulesModal(true)}
+              onClick={() => {
+                triggerHapticSelection();
+                setShowRulesModal(true);
+              }}
               className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[#FFD88A] text-xs font-bold border border-[#D4AF37]/50 flex items-center gap-1.5 transition cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>सामान्य अर्पण नियम</span>
             </button>
             <button
-              onClick={() => setShowProhibitionView(!showProhibitionView)}
+              onClick={() => {
+                triggerHapticSelection();
+                setShowProhibitionView(!showProhibitionView);
+              }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition cursor-pointer ${
                 showProhibitionView
                   ? 'bg-rose-900 text-white border-rose-400'
@@ -205,6 +212,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                 <button
                   key={d.deity_id}
                   onClick={() => {
+                    triggerHapticSelection();
                     setSelectedDeityId(d.deity_id);
                     setSearchQuery('');
                   }}
@@ -246,7 +254,10 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  triggerHapticSelection();
+                  setSearchQuery('');
+                }}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-0.5"
               >
                 <X className="w-4 h-4" />
@@ -263,7 +274,10 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
             {CATEGORY_TABS.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => {
+                  triggerHapticSelection();
+                  setSelectedCategory(cat.id);
+                }}
                 className={`shrink-0 px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer flex items-center gap-1 ${
                   selectedCategory === cat.id
                     ? 'bg-[#7A1D1D] text-white border-[#7A1D1D] shadow-xs'

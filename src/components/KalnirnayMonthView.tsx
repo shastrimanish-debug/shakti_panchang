@@ -21,6 +21,7 @@ import { saveAppReminder } from '../services/storage';
 import { getGoogleCalendarUrl, generateSingleEventICS, downloadICSBlob } from '../services/calendarExport';
 import { useLanguage } from '../i18n';
 import { trVedic } from '../i18n/vedicTranslate';
+import { triggerHapticSelection } from '../utils/haptics';
 
 interface KalnirnayMonthViewProps {
   currentDate: Date;
@@ -109,6 +110,7 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
 
   // Navigation handlers
   const handlePrevMonth = () => {
+    triggerHapticSelection();
     if (selectedMonth === 0) {
       setSelectedYear((prev) => Math.max(1925, prev - 1));
       setSelectedMonth(11);
@@ -118,6 +120,7 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
   };
 
   const handleNextMonth = () => {
+    triggerHapticSelection();
     if (selectedMonth === 11) {
       setSelectedYear((prev) => Math.min(2125, prev + 1));
       setSelectedMonth(0);
@@ -127,6 +130,7 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
   };
 
   const handleGoToday = () => {
+    triggerHapticSelection();
     const now = new Date();
     setSelectedYear(now.getFullYear());
     setSelectedMonth(now.getMonth());
@@ -270,7 +274,10 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveFilter(tab.id as any)}
+                onClick={() => {
+                  triggerHapticSelection();
+                  setActiveFilter(tab.id as any);
+                }}
                 className={`px-2 py-1 rounded text-[11px] font-bold transition cursor-pointer ${
                   activeFilter === tab.id
                     ? 'bg-[#8B1E1E] text-white shadow-xs'
@@ -337,7 +344,10 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
             return (
               <div
                 key={day.dayNumber}
-                onClick={() => setSelectedDayNumber(day.dayNumber)}
+                onClick={() => {
+                  triggerHapticSelection();
+                  setSelectedDayNumber(day.dayNumber);
+                }}
                 className={`min-h-[85px] sm:min-h-[110px] p-1 sm:p-2 transition relative flex flex-col justify-between cursor-pointer ${
                   day.isSunday ? 'bg-red-50/40' : 'bg-white'
                 } ${

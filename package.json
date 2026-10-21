@@ -19,6 +19,7 @@
     "@capacitor/camera": "^8.2.5",
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",
+    "@capacitor/haptics": "^8.0.2",
     "@google/genai": "^2.21.0",
     "@ionic/pwa-elements": "^3.4.0",
     "astronomy-engine": "^2.1.19",

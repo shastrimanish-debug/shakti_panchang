@@ -10,6 +10,7 @@ import { SubscriptionModal } from './components/SubscriptionModal';
 import { FrontPage } from './components/FrontPage';
 import { useLicense } from './lib/license-client';
 import { useTranslation, useLanguage } from './i18n';
+import { triggerHapticSelection } from './utils/haptics';
 
 const KalnirnayMonthView = React.lazy(() => import('./components/KalnirnayMonthView').then((m) => ({ default: m.KalnirnayMonthView })));
 const DevotionalAudioPlayerView = React.lazy(() => import('./components/DevotionalAudioPlayerView').then((m) => ({ default: m.DevotionalAudioPlayerView })));
@@ -252,6 +253,7 @@ export function App() {
       triggerSubscriptionModal("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग का मुख्य पृष्ठ उपलब्ध है।");
       return;
     }
+    triggerHapticSelection();
     setTurnDirection('backward');
     const prev = getLocalizedBookPage(BOOK_PAGES[prevIndex], currentLang);
     setActiveTab(prev.id);
@@ -265,6 +267,7 @@ export function App() {
       triggerSubscriptionModal("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग का मुख्य पृष्ठ उपलब्ध है।");
       return;
     }
+    triggerHapticSelection();
     setTurnDirection('forward');
     const next = getLocalizedBookPage(BOOK_PAGES[nextIndex], currentLang);
     setActiveTab(next.id);
@@ -275,6 +278,7 @@ export function App() {
   // Navigate directly to a tab
   const handleSelectTab = useCallback(
     (tabId: string) => {
+      triggerHapticSelection();
       setIsBookOpen(true);
       // STRICT ANTI-MOD & SUBSCRIPTION ENFORCEMENT:
       // If trial has expired and user is not subscribed, ONLY 'panchang' and 'services' tabs are accessible!
@@ -427,9 +431,22 @@ export function App() {
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       <div className="bx-rail shrink-0">
-        <BoardMenuButton open={drawerOpen} onClick={() => setDrawerOpen((open) => !open)} />
+        <BoardMenuButton
+          open={drawerOpen}
+          onClick={() => {
+            triggerHapticSelection();
+            setDrawerOpen((open) => !open);
+          }}
+        />
         {activeTab !== "services" && activeTab !== "index" && (
-          <button type="button" className="bx-tabmenu" onClick={() => tabMenu.go()}>
+          <button
+            type="button"
+            className="bx-tabmenu"
+            onClick={() => {
+              triggerHapticSelection();
+              tabMenu.go();
+            }}
+          >
             मुख्य मेनू
           </button>
         )}
