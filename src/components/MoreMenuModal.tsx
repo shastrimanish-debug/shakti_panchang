@@ -392,7 +392,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </div>
         </div>
 
-        {/* Release Notes v1.0.27 (Code 27) Trigger */}
+        {/* Release Notes v1.0.28 (Code 28) Trigger */}
         <div className="mt-2.5">
           <button
             type="button"
@@ -407,11 +407,11 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                 <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] leading-snug flex items-center gap-1.5">
                   <span>नवीनतम रिलीज़ नोट्स (Release Notes)</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 font-black">
-                    v1.0.27 (Code 27)
+                    v1.0.28 (Code 28)
                   </span>
                 </div>
                 <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
-                  देवता अर्पण फल संग्रह व उमा दैवज्ञ 2.0 (डायनामिक कालखंड)
+                  कैपेसिटर हैप्टिक्स स्पर्श, दैनिक संस्कृत सुभाषितम् व स्मूथ पेज-टर्न
                 </div>
               </div>
             </div>

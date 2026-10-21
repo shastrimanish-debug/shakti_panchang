@@ -20,6 +20,7 @@ import { MoonPhaseChart } from "./MoonPhaseChart";
 import { trVedic } from "../i18n/vedicTranslate";
 import { useLanguage } from "../i18n";
 import { triggerHapticSelection } from "../utils/haptics";
+import { DailyShlokaCard } from "./DailyShlokaCard";
 
 function clock(d?: Date) {
   if (!d) return "—";
@@ -530,6 +531,13 @@ export function TodayBoard({
             {trVedic(panchang.weekday)} · {trVedic(panchang.nakshatra)}
           </div>
         </div>
+
+        {/* Daily Rotating Sanskrit Shloka with Hindi Translation & Share Button */}
+        <DailyShlokaCard
+          date={panchang.solar.sunrise || new Date()}
+          onExploreMore={() => onOpen("gita")}
+        />
+
         <div className="grid grid-cols-2 gap-2">
           {facts.map(([k, v]) => (
             <div key={k} className="bx-fact bx-glass">
