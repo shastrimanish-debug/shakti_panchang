@@ -12,11 +12,17 @@ import {
   MoreHorizontal,
   Search,
   X,
+  Share2,
+  Download,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
 import { ZeroScrollPager } from "./ZeroScrollPager";
-import { MoonPhaseChart } from "./MoonPhaseChart";
+import { MoonPhaseChart, generateHdMoonPanchangDataUrl } from "./MoonPhaseChart";
+import { saveImageNative } from "../lib/device";
+import { shareImageFile } from "../lib/shareHelper";
 import { trVedic } from "../i18n/vedicTranslate";
 import { useLanguage } from "../i18n";
 import { triggerHapticSelection } from "../utils/haptics";
@@ -479,13 +485,18 @@ export function TodayBoard({
   onOpen: (id: string) => void;
 }) {
   const { t } = useLanguage();
+  const [isSavingHd, setIsSavingHd] = useState(false);
+  const [isSharingHd, setIsSharingHd] = useState(false);
+  const [hdNotice, setHdNotice] = useState<string | null>(null);
+
   if (!panchang) {
     return <div className="p-4 text-sm">{t("common.loading", "पंचांग गणना हो रही है।")}</div>;
   }
+
   const facts: [string, string][] = [
     [t("panchang.tithi", "तिथि"), trVedic(panchang.tithi)],
     [t("panchang.paksha", "पक्ष"), trVedic(panchang.paksha)],
-    [t("panchang.nakshatra", "नक्षत्र"), `${trVedic(panchang.nakshatra)} · ${panchang.pada}`],
+    [t("panchang.nakshatra", "नक्षत्र"), `${trVedic(panchang.nakshatra)} · चरण ${panchang.pada}`],
     [t("panchang.yoga", "योग"), trVedic(panchang.yoga)],
     [t("panchang.karana", "करण"), trVedic(panchang.karana)],
     [t("panchang.weekday", "वार"), trVedic(panchang.weekday)],
@@ -500,43 +511,114 @@ export function TodayBoard({
     [t("panchang.shareMoonSunSign", "अयनांश"), `${panchang.ayanamshaName} · ${panchang.ayanamsha.toFixed(2)}°`],
     [t("kundali.place", "स्थान"), place.name],
   ];
+
+  const handleSaveHd = async () => {
+    triggerHapticSelection();
+    if (isSavingHd) return;
+    setIsSavingHd(true);
+    setHdNotice(null);
+    try {
+      const dataUrl = await generateHdMoonPanchangDataUrl(panchang, place.name);
+      const slug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
+      await saveImageNative(dataUrl, `shakti-panchang-hd-${slug}.png`);
+      setHdNotice("✓ Full HD (1080p) पंचांग चित्र सेव हो गया!");
+      setTimeout(() => setHdNotice(null), 4000);
+    } catch {
+      setHdNotice("HD सेव करने में त्रुटि हुई, पुनः प्रयास करें।");
+    } finally {
+      setIsSavingHd(false);
+    }
+  };
+
+  const handleShareHd = async () => {
+    triggerHapticSelection();
+    if (isSharingHd) return;
+    setIsSharingHd(true);
+    setHdNotice(null);
+    try {
+      const dataUrl = await generateHdMoonPanchangDataUrl(panchang, place.name);
+      const slug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
+      const shareText = [
+        `🕉️ *आज का वैदिक पंचांग एवं चन्द्र कला (${place.name})*`,
+        `• तिथि: ${trVedic(panchang.paksha)} ${trVedic(panchang.tithi)}`,
+        `• नक्षत्र: ${trVedic(panchang.nakshatra)} (चरण ${panchang.pada})`,
+        `• योग: ${trVedic(panchang.yoga)} | करण: ${trVedic(panchang.karana)}`,
+        `• वार: ${trVedic(panchang.weekday)} | मास: ${trVedic(panchang.masa)}`,
+        `• सूर्योदय: ${clock(panchang.solar.sunrise)} | सूर्यास्त: ${clock(panchang.solar.sunset)}`,
+        `• सूर्य राशि: ${trVedic(panchang.solarRashi)} | चन्द्र राशि: ${trVedic(panchang.lunarRashi)}`,
+      ].join("\n");
+      await shareImageFile({
+        imageUri: dataUrl,
+        fileName: `shakti-panchang-hd-${slug}.png`,
+        title: "आज का वैदिक पंचांग (Full HD)",
+        text: shareText,
+      });
+    } catch {
+      // User dismissed share sheet
+    } finally {
+      setIsSharingHd(false);
+    }
+  };
+
   return (
-    <ZeroScrollPager className="flex-1 min-h-0 w-full bx-home" contentClassName="p-3 space-y-3 pb-16">
-        <section className="bx-kundali" aria-label="आज की कुंडली">
-          <div className="bx-kundali-stage">
-            <svg viewBox="0 0 100 100" className="bx-kundali-plate" aria-hidden="true">
-              <rect x="3" y="3" width="94" height="94" rx="2" />
-              <polygon points="50,3 97,50 50,97 3,50" />
-              <line x1="3" y1="3" x2="97" y2="97" />
-              <line x1="97" y1="3" x2="3" y2="97" />
-            </svg>
-            <div className="bx-kundali-core">
-              <span>ॐ</span>
-              <b>{trVedic(panchang.tithi)}</b>
-              <small>{trVedic(panchang.nakshatra)}</small>
+    <div className="flex-1 min-h-0 w-full bx-home overflow-y-auto overscroll-contain p-3 space-y-3.5 pb-24">
+      {/* 1. First on Screen: Moon Phase & Tithi Orbit with Built-in Share & HD Save */}
+      <MoonPhaseChart
+        panchang={panchang}
+        placeName={place.name}
+        onWhatsApp={onWhatsApp}
+      />
+
+      {/* 2. Directly Below Moon Phase: Complete Panchang Details + Share & HD Save Options */}
+      <section className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/25 pb-2.5">
+          <div>
+            <div className="bx-kicker inline-flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-[#B56A00]" />
+              <span>{t("common.today", "आज का सम्पूर्ण पंचांग विवरण")}</span>
             </div>
+            <h3 className="font-granth font-black text-base sm:text-lg text-[#5C3A21] mt-0.5">
+              {trVedic(panchang.paksha)} · {trVedic(panchang.tithi)} ({trVedic(panchang.weekday)})
+            </h3>
           </div>
-          <div className="bx-kundali-meta">
-            <span>{trVedic(panchang.weekday)}</span>
-            <span>{t("panchang.sunSign", "सूर्य")} · {trVedic(panchang.solarRashi)}</span>
-            <span>{t("panchang.moonSign", "चंद्र")} · {trVedic(panchang.lunarRashi)}</span>
-          </div>
-        </section>
-        <div className="bx-fact bx-glass">
-          <div className="bx-kicker inline-flex items-center gap-1">
-            <Calendar className="w-3 h-3" /> {t("common.today", "आज")}
-          </div>
-          <b className="mt-1">{trVedic(panchang.tithi)}</b>
-          <div className="text-sm mt-1" style={{ color: "var(--bx-mute)" }}>
-            {trVedic(panchang.weekday)} · {trVedic(panchang.nakshatra)}
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleShareHd}
+              disabled={isSharingHd}
+              className="px-3 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+            >
+              {isSharingHd ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFD88A]" />
+              ) : (
+                <Share2 className="w-3.5 h-3.5 text-[#FFD88A]" />
+              )}
+              <span>शेयर करें</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSaveHd}
+              disabled={isSavingHd}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+            >
+              {isSavingHd ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-200" />
+              ) : (
+                <Download className="w-3.5 h-3.5 text-amber-200" />
+              )}
+              <span>HD में सेव करें</span>
+            </button>
           </div>
         </div>
 
-        {/* Daily Rotating Sanskrit Shloka with Hindi Translation & Share Button */}
-        <DailyShlokaCard
-          date={panchang.solar.sunrise || new Date()}
-          onExploreMore={() => onOpen("gita")}
-        />
+        {hdNotice && (
+          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            <span>{hdNotice}</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           {facts.map(([k, v]) => (
@@ -546,53 +628,83 @@ export function TodayBoard({
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            className="bx-tile bx-glass h-auto min-h-16"
-            onClick={() => {
-              triggerHapticSelection();
-              onWhatsApp();
-            }}
-          >
-            <strong>{t("common.share", "साझा करें")}</strong>
-            <p>{t("nav.panchang", "पंचांग")}</p>
-          </button>
-          <button
-            type="button"
-            className="bx-tile bx-glass h-auto min-h-16"
-            onClick={() => {
-              triggerHapticSelection();
-              onOpen("choghadiya");
-            }}
-          >
-            <strong>{t("nav.choghadiya", "चौघड़िया")}</strong>
-            <p>{t("panchang.auspiciousTimings", "शुभ समय")}</p>
-          </button>
-          <button
-            type="button"
-            className="bx-tile bx-glass h-auto min-h-16"
-            onClick={() => {
-              triggerHapticSelection();
-              onOpen("muhurat");
-            }}
-          >
-            <strong>{t("nav.muhurat", "मुहूर्त")}</strong>
-            <p>{t("panchang.auspiciousTimings", "काम के अनुसार समय")}</p>
-          </button>
-          <button
-            type="button"
-            className="bx-tile bx-glass h-auto min-h-16"
-            onClick={() => {
-              triggerHapticSelection();
-              onOpen("rashifal");
-            }}
-          >
-            <strong>{t("nav.rashifal", "राशिफल")}</strong>
-            <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
-          </button>
+      </section>
+
+      {/* 3. 3D Mini Kundali Glimpse Card */}
+      <section className="bx-kundali" aria-label="आज की कुंडली">
+        <div className="bx-kundali-stage">
+          <svg viewBox="0 0 100 100" className="bx-kundali-plate" aria-hidden="true">
+            <rect x="3" y="3" width="94" height="94" rx="2" />
+            <polygon points="50,3 97,50 50,97 3,50" />
+            <line x1="3" y1="3" x2="97" y2="97" />
+            <line x1="97" y1="3" x2="3" y2="97" />
+          </svg>
+          <div className="bx-kundali-core">
+            <span>ॐ</span>
+            <b>{trVedic(panchang.tithi)}</b>
+            <small>{trVedic(panchang.nakshatra)}</small>
+          </div>
         </div>
-        <MoonPhaseChart panchang={panchang} />
-    </ZeroScrollPager>
+        <div className="bx-kundali-meta">
+          <span>{trVedic(panchang.weekday)}</span>
+          <span>{t("panchang.sunSign", "सूर्य")} · {trVedic(panchang.solarRashi)}</span>
+          <span>{t("panchang.moonSign", "चंद्र")} · {trVedic(panchang.lunarRashi)}</span>
+        </div>
+      </section>
+
+      {/* 4. Daily Rotating Sanskrit Shloka with Hindi Translation & Share Button */}
+      <DailyShlokaCard
+        date={panchang.solar.sunrise || new Date()}
+        onExploreMore={() => onOpen("gita")}
+      />
+
+      {/* 5. Quick Action Tiles */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          className="bx-tile bx-glass h-auto min-h-16"
+          onClick={() => {
+            triggerHapticSelection();
+            onWhatsApp();
+          }}
+        >
+          <strong>{t("common.share", "व्हाट्सएप कार्ड")}</strong>
+          <p>{t("nav.panchang", "पंचांग साझा व HD सेव")}</p>
+        </button>
+        <button
+          type="button"
+          className="bx-tile bx-glass h-auto min-h-16"
+          onClick={() => {
+            triggerHapticSelection();
+            onOpen("choghadiya");
+          }}
+        >
+          <strong>{t("nav.choghadiya", "चौघड़िया")}</strong>
+          <p>{t("panchang.auspiciousTimings", "शुभ समय")}</p>
+        </button>
+        <button
+          type="button"
+          className="bx-tile bx-glass h-auto min-h-16"
+          onClick={() => {
+            triggerHapticSelection();
+            onOpen("muhurat");
+          }}
+        >
+          <strong>{t("nav.muhurat", "मुहूर्त")}</strong>
+          <p>{t("panchang.auspiciousTimings", "काम के अनुसार समय")}</p>
+        </button>
+        <button
+          type="button"
+          className="bx-tile bx-glass h-auto min-h-16"
+          onClick={() => {
+            triggerHapticSelection();
+            onOpen("rashifal");
+          }}
+        >
+          <strong>{t("nav.rashifal", "राशिफल")}</strong>
+          <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
+        </button>
+      </div>
+    </div>
   );
 }

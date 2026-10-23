@@ -662,8 +662,8 @@ export const Vedic3DKundaliView: React.FC<{
                           textAnchor="middle"
                           dominantBaseline="middle"
                           fill="#FDE68A"
-                          fontSize="12"
-                          fontWeight="800"
+                          fontSize="13.5"
+                          fontWeight="900"
                         >
                           {z.sym} {z.hi}
                         </text>
@@ -675,8 +675,8 @@ export const Vedic3DKundaliView: React.FC<{
                           textAnchor="middle"
                           dominantBaseline="middle"
                           fill="#FCA5A5"
-                          fontSize="10"
-                          fontWeight="700"
+                          fontSize="11.5"
+                          fontWeight="800"
                         >
                           भाव {idx + 1} ({houseCell?.rashiName || z.hi})
                         </text>
@@ -689,7 +689,7 @@ export const Vedic3DKundaliView: React.FC<{
                 {vedicState.planetaryDegrees.map((p, i) => {
                   const angleDeg = p.absoluteLongitude - 90;
                   const rad = (angleDeg * Math.PI) / 180;
-                  const orbitRadius = 104 + (i % 3) * 14;
+                  const orbitRadius = 100 + (i % 3) * 16;
                   const px = 250 + orbitRadius * Math.cos(rad);
                   const py = 250 + orbitRadius * Math.sin(rad);
                   const pColor = PLANET_COLORS[p.planetName] || '#FBBF24';
@@ -706,17 +706,17 @@ export const Vedic3DKundaliView: React.FC<{
                         x2={px}
                         y2={py}
                         stroke={pColor}
-                        strokeWidth="1"
-                        strokeOpacity="0.35"
+                        strokeWidth="1.3"
+                        strokeOpacity="0.45"
                         strokeDasharray="2 3"
                       />
                       <circle
                         cx={px}
                         cy={py}
-                        r="13"
+                        r="18"
                         fill="#090D16"
                         stroke={pColor}
-                        strokeWidth="2.2"
+                        strokeWidth="2.6"
                       />
                       {/* Counter-rotate text so planet name stays upright while wheel spins */}
                       <g transform={`translate(${px}, ${py}) rotate(${-rotationZ})`}>
@@ -724,10 +724,10 @@ export const Vedic3DKundaliView: React.FC<{
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill={pColor}
-                          fontSize="9.5"
+                          fontSize="12.5"
                           fontWeight="900"
                         >
-                          {p.planetName.slice(0, 2)}
+                          {p.planetName}
                         </text>
                       </g>
                     </g>

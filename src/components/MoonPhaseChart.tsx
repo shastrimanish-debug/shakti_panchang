@@ -1,16 +1,341 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { VedicPanchangData } from '../types';
-import { Moon, Sparkles, Clock, Compass, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Moon,
+  Sparkles,
+  Clock,
+  Info,
+  ChevronDown,
+  ChevronUp,
+  Share2,
+  Download,
+  CheckCircle2,
+  Loader2,
+  MessageCircle,
+} from 'lucide-react';
+import { saveImageNative } from '../lib/device';
+import { shareImageFile } from '../lib/shareHelper';
+import { triggerHapticSelection } from '../utils/haptics';
+import { trVedic } from '../i18n/vedicTranslate';
 
 interface MoonPhaseChartProps {
   panchang: VedicPanchangData;
+  placeName?: string;
+  onWhatsApp?: () => void;
 }
 
-export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
+function formatClock(d?: Date): string {
+  if (!d) return '—';
+  return d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Generates a Full HD (1080 x 1760) PNG Data URL containing the 3D Lunar Phase & Tithi Orbit
+ * at the top and the complete Vedic Panchang details directly below it.
+ */
+export async function generateHdMoonPanchangDataUrl(
+  panchang: VedicPanchangData,
+  placeName: string = 'उज्जैन'
+): Promise<string> {
+  const canvas = document.createElement('canvas');
+  const W = 1080;
+  const H = 1760;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2D context unavailable');
+
+  const rawDiff = (((panchang.moonLongitude - panchang.sunLongitude) % 360) + 360) % 360;
+  const tNum = Math.floor(rawDiff / 12) + 1;
+  const prog = panchang.tithiProgress ?? (rawDiff % 12) / 12;
+  const rad = (rawDiff * Math.PI) / 180;
+  const illum = Math.max(0, Math.min(100, ((1 - Math.cos(rad)) / 2) * 100));
+  const isWaxing = rawDiff <= 180;
+  const tithiProgressPct = Math.round(prog * 100);
+
+  // 1. Royal Parchment & Deep Cosmic Background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#1D110A');
+  bgGrad.addColorStop(0.38, '#2C1A10');
+  bgGrad.addColorStop(0.42, '#FAF2E4');
+  bgGrad.addColorStop(1, '#F3E3C9');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Outer Ornate Golden Border
+  ctx.strokeStyle = '#D4A048';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(24, 24, W - 48, H - 48);
+  ctx.strokeStyle = 'rgba(181, 106, 0, 0.45)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(36, 36, W - 72, H - 72);
+
+  // 2. Top Sacred Header
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#FFD88A';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.fillText('॥ श्री गणेशाय नमः • शक्ति सनातन पंचांग ॥', W / 2, 82);
+
+  ctx.fillStyle = '#FFF8EB';
+  ctx.font = '900 44px sans-serif';
+  ctx.fillText('चन्द्र कला एवं तिथि प्रगति चक्र (HD)', W / 2, 138);
+
+  const dateStr = (panchang.solar.sunrise || new Date()).toLocaleDateString('hi-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  ctx.fillStyle = '#E5B869';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText(`📅 ${dateStr}  •  ${trVedic(panchang.weekday)}  •  📍 ${placeName}`, W / 2, 182);
+
+  // 3. Celestial Moon Phase & Orbit Box (Top Half)
+  const mCx = 320;
+  const mCy = 415;
+  const moonR = 128;
+  const arcInner = moonR + 24;
+  const arcOuter = moonR + 42;
+
+  // Starfield around Moon
+  const stars = [
+    [90, 260], [150, 310], [110, 520], [510, 260], [490, 540],
+    [220, 250], [440, 280], [130, 410], [520, 400],
+  ];
+  stars.forEach(([sx, sy], i) => {
+    ctx.beginPath();
+    ctx.arc(sx, sy, i % 2 === 0 ? 3.2 : 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 244, 214, 0.65)';
+    ctx.fill();
+  });
+
+  // Moon Outer Glow
+  const glowGrad = ctx.createRadialGradient(mCx, mCy, moonR * 0.7, mCx, mCy, moonR * 1.45);
+  glowGrad.addColorStop(0, 'rgba(255, 232, 175, 0.35)');
+  glowGrad.addColorStop(1, 'rgba(255, 232, 175, 0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(mCx, mCy, moonR * 1.45, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Unlit Dark Moon Base Sphere
+  const darkGrad = ctx.createRadialGradient(mCx - 30, mCy - 30, 20, mCx, mCy, moonR);
+  darkGrad.addColorStop(0, '#3B2C20');
+  darkGrad.addColorStop(0.7, '#22170F');
+  darkGrad.addColorStop(1, '#120B06');
+  ctx.fillStyle = darkGrad;
+  ctx.beginPath();
+  ctx.arc(mCx, mCy, moonR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Illuminated Moon Surface (clipped using exact spherical terminator)
+  ctx.save();
+  ctx.beginPath();
+  if (rawDiff >= 0.5 && rawDiff <= 359.5) {
+    const cosAngle = Math.cos((rawDiff * Math.PI) / 180);
+    const rx = Math.abs(moonR * cosAngle);
+    if (Math.abs(rawDiff - 180) < 0.8) {
+      ctx.arc(mCx, mCy, moonR, 0, Math.PI * 2);
+    } else if (rawDiff <= 180) {
+      // Waxing: right side lit
+      ctx.arc(mCx, mCy, moonR, -Math.PI / 2, Math.PI / 2, false);
+      ctx.ellipse(
+        mCx,
+        mCy,
+        rx,
+        moonR,
+        0,
+        Math.PI / 2,
+        -Math.PI / 2,
+        rawDiff < 90
+      );
+    } else {
+      // Waning: left side lit
+      ctx.arc(mCx, mCy, moonR, -Math.PI / 2, Math.PI / 2, true);
+      ctx.ellipse(
+        mCx,
+        mCy,
+        rx,
+        moonR,
+        0,
+        Math.PI / 2,
+        -Math.PI / 2,
+        rawDiff <= 270
+      );
+    }
+    ctx.closePath();
+    const litGrad = ctx.createRadialGradient(
+      mCx + (isWaxing ? 35 : -35),
+      mCy - 35,
+      15,
+      mCx,
+      mCy,
+      moonR * 1.1
+    );
+    litGrad.addColorStop(0, '#FFFDF6');
+    litGrad.addColorStop(0.5, '#F5EBD6');
+    litGrad.addColorStop(0.85, '#DAC7A4');
+    litGrad.addColorStop(1, '#B89F74');
+    ctx.fillStyle = litGrad;
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Subtle Lunar Maria Craters
+  const craters = [
+    { x: mCx - 34, y: mCy - 40, r: 24 },
+    { x: mCx + 40, y: mCy - 26, r: 22 },
+    { x: mCx + 48, y: mCy + 28, r: 26 },
+    { x: mCx - 40, y: mCy + 36, r: 28 },
+  ];
+  craters.forEach((c) => {
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(40, 26, 14, 0.14)';
+    ctx.fill();
+  });
+
+  // Tithi Progress Track Ring
+  const ringR = (arcInner + arcOuter) / 2;
+  ctx.beginPath();
+  ctx.arc(mCx, mCy, ringR, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(92, 58, 33, 0.65)';
+  ctx.lineWidth = arcOuter - arcInner;
+  ctx.stroke();
+
+  // Active Golden Tithi Progress Arc
+  const startA = -Math.PI / 2;
+  const endA = startA + Math.max(0.03, Math.min(1, prog)) * Math.PI * 2;
+  ctx.beginPath();
+  ctx.arc(mCx, mCy, ringR, startA, endA, false);
+  ctx.strokeStyle = '#FFC83B';
+  ctx.lineWidth = arcOuter - arcInner;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Right-side Astronomical Stats inside Top Cosmic Panel
+  ctx.textAlign = 'left';
+  const statX = 560;
+  ctx.fillStyle = '#FFD88A';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText(isWaxing ? '▲ शुक्ल पक्ष (वर्धमान चन्द्र)' : '▼ कृष्ण पक्ष (क्षीयमान चन्द्र)', statX, 265);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '900 40px sans-serif';
+  ctx.fillText(`${trVedic(panchang.paksha)} • ${trVedic(panchang.tithi)}`, statX, 322);
+
+  // Stat Box 1: Illumination & Elongation
+  ctx.fillStyle = 'rgba(255, 248, 231, 0.12)';
+  ctx.strokeStyle = 'rgba(229, 160, 36, 0.55)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(statX, 350, 455, 115, 18);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#E5B869';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.fillText('चन्द्र प्रकाश (Illumination)', statX + 22, 388);
+  ctx.fillText('सूर्य-चन्द्र अंतर', statX + 275, 388);
+
+  ctx.fillStyle = '#FFFDF4';
+  ctx.font = '900 38px sans-serif';
+  ctx.fillText(`${illum.toFixed(1)}%`, statX + 22, 440);
+  ctx.fillText(`${rawDiff.toFixed(1)}°`, statX + 275, 440);
+
+  // Stat Box 2: Tithi Progress & Moon Rashi
+  ctx.fillStyle = 'rgba(255, 248, 231, 0.12)';
+  ctx.beginPath();
+  ctx.roundRect(statX, 482, 455, 130, 18);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFD88A';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText(`तिथि प्रगति: ${tithiProgressPct}% व्यतीत (तिथि ${tNum}/30)`, statX + 22, 524);
+  ctx.fillStyle = '#FFF8EB';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText(`चन्द्र राशि: ${trVedic(panchang.lunarRashi)} • ${trVedic(panchang.nakshatra)}`, statX + 22, 564);
+  if (panchang.tithiSpan) {
+    ctx.fillStyle = '#E5B869';
+    ctx.font = '600 21px sans-serif';
+    ctx.fillText(
+      `समाप्ति: ${formatClock(panchang.tithiSpan.end)} तक (आगे: ${trVedic(panchang.tithiSpan.nextName)})`,
+      statX + 22,
+      596
+    );
+  }
+
+  // 4. Lower Half: Today's Complete Panchang Details Table
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5C3A21';
+  ctx.font = '900 36px sans-serif';
+  ctx.fillText('॥ आज का सम्पूर्ण वैदिक पंचांग विवरण ॥', W / 2, 742);
+
+  const facts: [string, string][] = [
+    ['तिथि (Tithi)', trVedic(panchang.tithi)],
+    ['पक्ष (Paksha)', trVedic(panchang.paksha)],
+    ['नक्षत्र व चरण', `${trVedic(panchang.nakshatra)} · चरण ${panchang.pada}`],
+    ['योग (Yoga)', trVedic(panchang.yoga)],
+    ['करण (Karana)', trVedic(panchang.karana)],
+    ['वार (Weekday)', trVedic(panchang.weekday)],
+    ['मास (Lunar Month)', trVedic(panchang.masa)],
+    ['विक्रम संवत्', panchang.samvat],
+    ['शक संवत्', panchang.sakaSamvat],
+    ['सूर्योदय / सूर्यास्त', `${formatClock(panchang.solar.sunrise)} / ${formatClock(panchang.solar.sunset)}`],
+    ['सूर्य राशि', trVedic(panchang.solarRashi)],
+    ['चन्द्र राशि', trVedic(panchang.lunarRashi)],
+    ['अयनांश (Ayanamsha)', `${panchang.ayanamshaName} (${panchang.ayanamsha.toFixed(2)}°)`],
+    ['पंचांग स्थान', placeName],
+  ];
+
+  const startY = 778;
+  const colW = 480;
+  const rowH = 114;
+  facts.forEach(([label, val], idx) => {
+    const col = idx % 2;
+    const row = Math.floor(idx / 2);
+    const x = col === 0 ? 52 : 548;
+    const y = startY + row * rowH;
+
+    ctx.fillStyle = '#FFFDF8';
+    ctx.strokeStyle = 'rgba(140, 98, 57, 0.45)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x, y, colW, rowH - 14, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#8C6239';
+    ctx.font = 'bold 21px sans-serif';
+    ctx.fillText(label, x + 22, y + 36);
+
+    ctx.fillStyle = '#3E2412';
+    ctx.font = '900 28px sans-serif';
+    ctx.fillText(String(val).slice(0, 28), x + 22, y + 76);
+  });
+
+  // Footer Branding
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5C3A21';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText('🕉️ शक्ति पंचांग (Shakti Panchang) • दृक-सिद्ध वैदिक गणना • Full HD 1080p', W / 2, H - 54);
+
+  return canvas.toDataURL('image/png', 1.0);
+}
+
+export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
+  panchang,
+  placeName = 'उज्जैन',
+  onWhatsApp,
+}) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [selectedTithiIndex, setSelectedTithiIndex] = useState<number | null>(null);
   const [showOrbitCycle, setShowOrbitCycle] = useState(false);
+  const [isSavingHd, setIsSavingHd] = useState(false);
+  const [isSharingHd, setIsSharingHd] = useState(false);
+  const [statusNotice, setStatusNotice] = useState<string | null>(null);
 
   // 1. Precise Astronomical Calculations
   const {
@@ -25,13 +350,10 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
     rashi,
     nakshatra,
   } = useMemo(() => {
-    // Difference between Moon and Sun sidereal / tropical longitudes (0 to 360 deg)
-    const rawDiff = ((panchang.moonLongitude - panchang.sunLongitude) % 360 + 360) % 360;
-    // Each Tithi is 12 degrees
+    const rawDiff = (((panchang.moonLongitude - panchang.sunLongitude) % 360) + 360) % 360;
     const tNum = Math.floor(rawDiff / 12) + 1; // 1 to 30
     const prog = (rawDiff % 12) / 12; // 0.0 to 1.0
 
-    // Accurate illumination fraction: (1 - cos(elongation)) / 2
     const rad = (rawDiff * Math.PI) / 180;
     const illum = Math.max(0, Math.min(100, ((1 - Math.cos(rad)) / 2) * 100));
     const waxing = rawDiff <= 180;
@@ -50,12 +372,65 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
     };
   }, [panchang]);
 
+  const handleSaveHdImage = async () => {
+    triggerHapticSelection();
+    if (isSavingHd) return;
+    setIsSavingHd(true);
+    setStatusNotice(null);
+    try {
+      const dataUrl = await generateHdMoonPanchangDataUrl(panchang, placeName);
+      const dateSlug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
+      const fileName = `shakti-panchang-hd-${dateSlug}.png`;
+      await saveImageNative(dataUrl, fileName);
+      setStatusNotice('✓ Full HD (1080p) पंचांग व चन्द्र कला चित्र सफलतापूर्वक सेव हो गया!');
+      setTimeout(() => setStatusNotice(null), 4000);
+    } catch {
+      setStatusNotice('HD चित्र सेव करने में त्रुटि हुई, कृपया पुनः प्रयास करें।');
+    } finally {
+      setIsSavingHd(false);
+    }
+  };
+
+  const handleShareHdPanchang = async () => {
+    triggerHapticSelection();
+    if (isSharingHd) return;
+    setIsSharingHd(true);
+    setStatusNotice(null);
+    try {
+      const dataUrl = await generateHdMoonPanchangDataUrl(panchang, placeName);
+      const dateSlug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
+      const fileName = `shakti-panchang-hd-${dateSlug}.png`;
+      const shareText = [
+        `🌙 *चन्द्र कला एवं आज का पंचांग (${placeName})*`,
+        `• तिथि: ${trVedic(panchang.paksha)} ${trVedic(panchang.tithi)} (${tithiProgressPct}% व्यतीत)`,
+        `• चन्द्र प्रकाश: ${illuminationPct.toFixed(1)}% (${elongationDeg.toFixed(1)}° रेखांश)`,
+        `• नक्षत्र: ${trVedic(panchang.nakshatra)} (चरण ${panchang.pada})`,
+        `• योग: ${trVedic(panchang.yoga)} | करण: ${trVedic(panchang.karana)}`,
+        `• वार: ${trVedic(panchang.weekday)} | मास: ${trVedic(panchang.masa)}`,
+        `• सूर्योदय: ${formatClock(panchang.solar.sunrise)} | सूर्यास्त: ${formatClock(panchang.solar.sunset)}`,
+        `• सूर्य राशि: ${trVedic(panchang.solarRashi)} | चन्द्र राशि: ${trVedic(panchang.lunarRashi)}`,
+        `🕉️ *शक्ति सनातन पंचांग*`,
+      ].join('\n');
+
+      await shareImageFile({
+        imageUri: dataUrl,
+        fileName,
+        title: 'आज का वैदिक पंचांग एवं चन्द्र कला (HD)',
+        text: shareText,
+      });
+    } catch {
+      // User cancelled share or fallback completed
+    } finally {
+      setIsSharingHd(false);
+    }
+  };
+
   // 2. D3 Visualization Rendering
   useEffect(() => {
     if (!svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove(); // Clear previous render
+    svg.selectAll('*').remove();
 
     const width = 280;
     const height = 240;
@@ -69,25 +444,23 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
 
     const defs = svg.append('defs');
 
-    // Glow filter for moon moonlight
-    const filter = defs.append('filter')
+    const filter = defs
+      .append('filter')
       .attr('id', 'moon-glow')
       .attr('x', '-30%')
       .attr('y', '-30%')
       .attr('width', '160%')
       .attr('height', '160%');
 
-    filter.append('feGaussianBlur')
-      .attr('stdDeviation', '6')
-      .attr('result', 'blur');
-
-    filter.append('feComposite')
+    filter.append('feGaussianBlur').attr('stdDeviation', '6').attr('result', 'blur');
+    filter
+      .append('feComposite')
       .attr('in', 'SourceGraphic')
       .attr('in2', 'blur')
       .attr('operator', 'over');
 
-    // Subtle starfield background pattern
-    const bgGrad = defs.append('radialGradient')
+    const bgGrad = defs
+      .append('radialGradient')
       .attr('id', 'space-bg')
       .attr('cx', '50%')
       .attr('cy', '50%')
@@ -96,8 +469,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
     bgGrad.append('stop').attr('offset', '0%').attr('stop-color', '#261C14');
     bgGrad.append('stop').attr('offset', '100%').attr('stop-color', '#150E09');
 
-    // Lit Moon Gradient (creamy lunar surface)
-    const litMoonGrad = defs.append('radialGradient')
+    const litMoonGrad = defs
+      .append('radialGradient')
       .attr('id', 'lit-moon-surface')
       .attr('cx', isWaxing ? '65%' : '35%')
       .attr('cy', '35%')
@@ -108,8 +481,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
     litMoonGrad.append('stop').attr('offset', '80%').attr('stop-color', '#D9C8A7');
     litMoonGrad.append('stop').attr('offset', '100%').attr('stop-color', '#BFAC87');
 
-    // Dark Moon Gradient (Earthshine / ash light)
-    const darkMoonGrad = defs.append('radialGradient')
+    const darkMoonGrad = defs
+      .append('radialGradient')
       .attr('id', 'dark-moon-surface')
       .attr('cx', '50%')
       .attr('cy', '50%')
@@ -119,18 +492,20 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
     darkMoonGrad.append('stop').attr('offset', '70%').attr('stop-color', '#20160F');
     darkMoonGrad.append('stop').attr('offset', '100%').attr('stop-color', '#120B06');
 
-    // Golden Arc Progress Gradient
-    const arcGrad = defs.append('linearGradient')
+    const arcGrad = defs
+      .append('linearGradient')
       .attr('id', 'tithi-arc-grad')
-      .attr('x1', '0%').attr('y1', '0%')
-      .attr('x2', '100%').attr('y2', '100%');
+      .attr('x1', '0%')
+      .attr('y1', '0%')
+      .attr('x2', '100%')
+      .attr('y2', '100%');
 
     arcGrad.append('stop').attr('offset', '0%').attr('stop-color', '#E5A024');
     arcGrad.append('stop').attr('offset', '50%').attr('stop-color', '#FFC83B');
     arcGrad.append('stop').attr('offset', '100%').attr('stop-color', '#B56A00');
 
-    // Backdrop Card Canvas
-    svg.append('rect')
+    svg
+      .append('rect')
       .attr('x', 4)
       .attr('y', 4)
       .attr('width', width - 8)
@@ -141,13 +516,21 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('stroke-width', 1.2)
       .attr('stroke-opacity', 0.45);
 
-    // Subtle decorative celestial stars
     const starCoords = [
-      [24, 28], [55, 48], [42, 160], [240, 32], [225, 75],
-      [250, 150], [80, 200], [210, 205], [30, 95], [255, 110]
+      [24, 28],
+      [55, 48],
+      [42, 160],
+      [240, 32],
+      [225, 75],
+      [250, 150],
+      [80, 200],
+      [210, 205],
+      [30, 95],
+      [255, 110],
     ];
     starCoords.forEach(([sx, sy], idx) => {
-      svg.append('circle')
+      svg
+        .append('circle')
         .attr('cx', sx)
         .attr('cy', sy)
         .attr('r', idx % 3 === 0 ? 1.5 : 1)
@@ -155,8 +538,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
         .attr('opacity', 0.35 + (idx % 4) * 0.15);
     });
 
-    // Outer Aura Glow Ring
-    svg.append('circle')
+    svg
+      .append('circle')
       .attr('cx', cx)
       .attr('cy', cy)
       .attr('r', moonRadius + 2)
@@ -166,8 +549,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('opacity', Math.min(0.5, illuminationPct / 180))
       .attr('filter', 'url(#moon-glow)');
 
-    // 1. Base Dark Moon Sphere (Unlit Hemisphere with Earthshine)
-    svg.append('circle')
+    svg
+      .append('circle')
       .attr('cx', cx)
       .attr('cy', cy)
       .attr('r', moonRadius)
@@ -176,17 +559,17 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('stroke-width', 0.8)
       .attr('stroke-opacity', 0.6);
 
-    // Subtle Lunar Crater Mare Textures (astronomically styled maria)
     const mariaGroup = svg.append('g').attr('opacity', 0.18);
     const mariaCraters = [
-      { x: cx - 14, y: cy - 18, rx: 11, ry: 9, rot: 15 }, // Mare Imbrium
-      { x: cx + 18, y: cy - 12, rx: 10, ry: 13, rot: -10 }, // Mare Serenitatis
-      { x: cx + 22, y: cy + 12, rx: 13, ry: 9, rot: 25 }, // Mare Tranquillitatis
-      { x: cx - 18, y: cy + 16, rx: 14, ry: 11, rot: -15 }, // Oceanus Procellarum
-      { x: cx + 2, y: cy + 24, rx: 8, ry: 6, rot: 5 }, // Mare Nubium
+      { x: cx - 14, y: cy - 18, rx: 11, ry: 9, rot: 15 },
+      { x: cx + 18, y: cy - 12, rx: 10, ry: 13, rot: -10 },
+      { x: cx + 22, y: cy + 12, rx: 13, ry: 9, rot: 25 },
+      { x: cx - 18, y: cy + 16, rx: 14, ry: 11, rot: -15 },
+      { x: cx + 2, y: cy + 24, rx: 8, ry: 6, rot: 5 },
     ];
     mariaCraters.forEach((c) => {
-      mariaGroup.append('ellipse')
+      mariaGroup
+        .append('ellipse')
         .attr('cx', c.x)
         .attr('cy', c.y)
         .attr('rx', c.rx)
@@ -195,17 +578,13 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
         .attr('fill', '#000');
     });
 
-    // 2. Mathematically Exact Lunar Terminator & Lit Path
-    const theta = elongationDeg; // 0 to 360
+    const theta = elongationDeg;
     const R = moonRadius;
 
-    // Helper to build D3 path for the illuminated region
     function buildLitMoonPath(angle: number, r: number): string {
-      // 0 deg: New Moon (None lit)
       if (angle < 0.5 || angle > 359.5) {
         return '';
       }
-      // 180 deg: Full Moon (Fully lit)
       if (Math.abs(angle - 180) < 0.5) {
         return `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`;
       }
@@ -214,22 +593,12 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       const rx = Math.abs(r * cosAngle);
 
       if (angle <= 180) {
-        // Shukla Paksha (Waxing): Right side is illuminated
-        // Outer arc on right: from (cx, cy - r) to (cx, cy + r)
         const outerArc = `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r}`;
-        // Terminator arc returning to (cx, cy - r)
-        // If angle < 90 (crescent): terminator bends towards the right (sweep = 0)
-        // If angle >= 90 (gibbous): terminator bends into dark left side (sweep = 1)
         const sweep = angle < 90 ? 0 : 1;
         const innerTerminator = `A ${rx} ${r} 0 0 ${sweep} ${cx} ${cy - r}`;
         return `${outerArc} ${innerTerminator} Z`;
       } else {
-        // Krishna Paksha (Waning): Left side is illuminated
-        // Outer arc on left: from (cx, cy - r) to (cx, cy + r)
         const outerArc = `M ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx} ${cy + r}`;
-        // Terminator arc returning to (cx, cy - r)
-        // If angle > 270 (crescent): terminator bends towards left (sweep = 1)
-        // If angle <= 270 (gibbous): terminator bends into dark right side (sweep = 0)
         const sweep = angle > 270 ? 1 : 0;
         const innerTerminator = `A ${rx} ${r} 0 0 ${sweep} ${cx} ${cy - r}`;
         return `${outerArc} ${innerTerminator} Z`;
@@ -238,7 +607,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
 
     const litPath = buildLitMoonPath(theta, R);
     if (litPath) {
-      svg.append('path')
+      svg
+        .append('path')
         .attr('d', litPath)
         .attr('fill', 'url(#lit-moon-surface)')
         .attr('stroke', '#FFF8E7')
@@ -246,13 +616,12 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
         .attr('opacity', 0.98);
     }
 
-    // 3. D3 TITHI PROGRESS RADIAL ARC GAUGE
-    const arcGenerator = d3.arc<d3.DefaultArcObject>()
+    const arcGenerator = d3
+      .arc<d3.DefaultArcObject>()
       .innerRadius(arcInnerRadius)
       .outerRadius(arcOuterRadius)
       .cornerRadius(4);
 
-    // Background track ring
     const trackArc = arcGenerator({
       innerRadius: arcInnerRadius,
       outerRadius: arcOuterRadius,
@@ -260,42 +629,45 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       endAngle: 2 * Math.PI,
     });
 
-    svg.append('path')
+    svg
+      .append('path')
       .attr('d', trackArc)
       .attr('transform', `translate(${cx}, ${cy})`)
       .attr('fill', '#3D2A1C')
       .attr('opacity', 0.65);
 
-    // Active progress arc (smooth animated entrance)
     const targetAngle = 2 * Math.PI * Math.max(0.02, Math.min(1.0, tithiProgress));
 
-    const progressPath = svg.append('path')
+    const progressPath = svg
+      .append('path')
       .attr('transform', `translate(${cx}, ${cy})`)
       .attr('fill', 'url(#tithi-arc-grad)')
       .attr('filter', 'drop-shadow(0px 0px 4px rgba(229,160,36,0.5))');
 
-    // Smooth transition with D3
-    progressPath.transition()
+    progressPath
+      .transition()
       .duration(750)
       .attrTween('d', () => {
         const interpolate = d3.interpolate(0.01, targetAngle);
         return (t) => {
-          return arcGenerator({
-            innerRadius: arcInnerRadius,
-            outerRadius: arcOuterRadius,
-            startAngle: 0,
-            endAngle: interpolate(t),
-          }) || '';
+          return (
+            arcGenerator({
+              innerRadius: arcInnerRadius,
+              outerRadius: arcOuterRadius,
+              startAngle: 0,
+              endAngle: interpolate(t),
+            }) || ''
+          );
         };
       });
 
-    // Needle / Indicator Orb at the tip of the Tithi arc
-    const tipAngle = targetAngle - Math.PI / 2; // offset for trig coordinate
+    const tipAngle = targetAngle - Math.PI / 2;
     const tipRadius = (arcInnerRadius + arcOuterRadius) / 2;
     const tipX = cx + tipRadius * Math.cos(tipAngle);
     const tipY = cy + tipRadius * Math.sin(tipAngle);
 
-    svg.append('circle')
+    svg
+      .append('circle')
       .attr('cx', tipX)
       .attr('cy', tipY)
       .attr('r', 5)
@@ -304,7 +676,6 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('stroke-width', 2)
       .attr('filter', 'drop-shadow(0 0 3px #FFC83B)');
 
-    // 4. Tick Marks on Orbit (0%, 25%, 50%, 75% markers)
     [0, 0.25, 0.5, 0.75].forEach((frac) => {
       const a = frac * 2 * Math.PI - Math.PI / 2;
       const x1 = cx + (arcInnerRadius - 3) * Math.cos(a);
@@ -312,17 +683,19 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       const x2 = cx + (arcOuterRadius + 3) * Math.cos(a);
       const y2 = cy + (arcOuterRadius + 3) * Math.sin(a);
 
-      svg.append('line')
-        .attr('x1', x1).attr('y1', y1)
-        .attr('x2', x2).attr('y2', y2)
+      svg
+        .append('line')
+        .attr('x1', x1)
+        .attr('y1', y1)
+        .attr('x2', x2)
+        .attr('y2', y2)
         .attr('stroke', '#FAF2E4')
         .attr('stroke-width', 1)
         .attr('stroke-opacity', 0.4);
     });
 
-    // 5. Center Bottom Status Badges
-    // Tithi & Progress Text
-    svg.append('text')
+    svg
+      .append('text')
       .attr('x', cx)
       .attr('y', cy + arcOuterRadius + 22)
       .attr('text-anchor', 'middle')
@@ -332,7 +705,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('font-family', 'sans-serif')
       .text(`${pakshaName} • ${tithiName}`);
 
-    svg.append('text')
+    svg
+      .append('text')
       .attr('x', cx)
       .attr('y', cy + arcOuterRadius + 37)
       .attr('text-anchor', 'middle')
@@ -341,8 +715,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('font-weight', '700')
       .text(`तिथि व्यतीत: ${tithiProgressPct}% (${(tithiProgress * 12).toFixed(1)}° / 12°)`);
 
-    // Top Header In-SVG Label
-    svg.append('text')
+    svg
+      .append('text')
       .attr('x', 14)
       .attr('y', 22)
       .attr('fill', '#E5D2B8')
@@ -351,7 +725,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('letter-spacing', '0.5px')
       .text('दशम-कला चन्द्र दर्शन (D3 Engine)');
 
-    svg.append('text')
+    svg
+      .append('text')
       .attr('x', width - 14)
       .attr('y', 22)
       .attr('text-anchor', 'end')
@@ -359,16 +734,27 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
       .attr('font-size', '10px')
       .attr('font-weight', '800')
       .text(isWaxing ? '▲ शुक्ल (वर्धमान)' : '▼ कृष्ण (क्षीयमान)');
-
   }, [elongationDeg, tithiProgress, illuminationPct, isWaxing, pakshaName, tithiName, tithiProgressPct]);
 
   // 30-Day Tithi Cycle Map for quick lookup
   const all30Tithis = useMemo(() => {
     const list = [];
     const tithiNames = [
-      'प्रतिपदा', 'द्वितीया', 'तृतीया', 'चतुर्थी', 'पंचमी',
-      'षष्ठी', 'सप्तमी', 'अष्टमी', 'नवमी', 'दशमी',
-      'एकादशी', 'द्वादशी', 'त्रयोदशी', 'चतुर्दशी', 'पूर्णिमा / अमावस्या'
+      'प्रतिपदा',
+      'द्वितीया',
+      'तृतीया',
+      'चतुर्थी',
+      'पंचमी',
+      'षष्ठी',
+      'सप्तमी',
+      'अष्टमी',
+      'नवमी',
+      'दशमी',
+      'एकादशी',
+      'द्वादशी',
+      'त्रयोदशी',
+      'चतुर्दशी',
+      'पूर्णिमा / अमावस्या',
     ];
     for (let i = 1; i <= 30; i++) {
       const isShukla = i <= 15;
@@ -387,7 +773,10 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
   }, [tithiNum]);
 
   return (
-    <div data-zsp-atomic="1" className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs space-y-3">
+    <div
+      data-zsp-atomic="1"
+      className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs space-y-3"
+    >
       {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-2.5">
         <div className="flex items-center gap-2">
@@ -409,7 +798,10 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
 
         <button
           type="button"
-          onClick={() => setShowOrbitCycle(!showOrbitCycle)}
+          onClick={() => {
+            triggerHapticSelection();
+            setShowOrbitCycle(!showOrbitCycle);
+          }}
           className="text-xs font-bold text-[#5C3A21] hover:text-[#8B1E1E] bg-[#F4E8D1] hover:bg-[#EBDDC1] border border-[#8C6239]/30 rounded-lg px-2.5 py-1 flex items-center gap-1 transition cursor-pointer"
         >
           <span>{showOrbitCycle ? 'चक्र संक्षेप' : '३० तिथि महा-चक्र'}</span>
@@ -506,6 +898,59 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
         </div>
       </div>
 
+      {/* Prominent Share & HD Save Action Bar */}
+      <div className="pt-2 border-t border-[#8C6239]/25 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={handleShareHdPanchang}
+          disabled={isSharingHd}
+          className="flex-1 min-w-[140px] py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-[#5C3A21] to-[#7A4B2A] hover:brightness-110 text-[#FAF2E4] font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
+        >
+          {isSharingHd ? (
+            <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
+          ) : (
+            <Share2 className="w-4 h-4 text-[#FFD88A]" />
+          )}
+          <span>पंचांग शेयर करें (Share)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSaveHdImage}
+          disabled={isSavingHd}
+          className="flex-1 min-w-[140px] py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
+        >
+          {isSavingHd ? (
+            <Loader2 className="w-4 h-4 animate-spin text-amber-200" />
+          ) : (
+            <Download className="w-4 h-4 text-amber-200" />
+          )}
+          <span>HD में सेव करें (1080p)</span>
+        </button>
+
+        {onWhatsApp && (
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticSelection();
+              onWhatsApp();
+            }}
+            className="py-2.5 px-3 rounded-xl bg-[#F4E8D1] hover:bg-[#E8D5B5] border border-[#8C6239]/40 text-[#5C3A21] font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
+            title="व्हाट्सएप सुप्रभात पंचांग कार्ड स्टूडियो"
+          >
+            <MessageCircle className="w-4 h-4 text-emerald-700" />
+            <span>व्हाट्सएप कार्ड</span>
+          </button>
+        )}
+      </div>
+
+      {statusNotice && (
+        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+          <span>{statusNotice}</span>
+        </div>
+      )}
+
       {/* 30-Tithi Interactive Orbit Strip (Expandable) */}
       {showOrbitCycle && (
         <div className="mt-3 pt-3 border-t border-[#8C6239]/20 space-y-2 animate-in fade-in duration-200">
@@ -524,7 +969,10 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
                 <button
                   key={t.index}
                   type="button"
-                  onClick={() => setSelectedTithiIndex(t.index)}
+                  onClick={() => {
+                    triggerHapticSelection();
+                    setSelectedTithiIndex(t.index);
+                  }}
                   className={`p-1 rounded-md text-[10px] transition cursor-pointer flex flex-col items-center justify-between min-h-[52px] ${
                     t.isCurrent
                       ? 'bg-[#B56A00] text-white font-black shadow-xs ring-2 ring-[#B56A00]/40'
@@ -548,7 +996,8 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({ panchang }) => {
           {selectedTithiIndex && (
             <div className="p-2 bg-white rounded-lg border border-[#8C6239]/30 text-xs flex items-center justify-between animate-in fade-in duration-100">
               <span className="font-bold text-[#5C3A21]">
-                तिथि {selectedTithiIndex}: {all30Tithis[selectedTithiIndex - 1]?.paksha} {all30Tithis[selectedTithiIndex - 1]?.name}
+                तिथि {selectedTithiIndex}: {all30Tithis[selectedTithiIndex - 1]?.paksha}{' '}
+                {all30Tithis[selectedTithiIndex - 1]?.name}
               </span>
               <span className="text-[#8C6239]">
                 अनुमानित चन्द्र कला: {all30Tithis[selectedTithiIndex - 1]?.illum}% प्रकाश

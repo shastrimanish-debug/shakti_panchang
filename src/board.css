@@ -1070,18 +1070,36 @@
 }
 
 .bx-chart-stage {
-  perspective: 760px;
-  padding: 6px 4px 22px;
+  perspective: 920px;
+  padding: 8px 6px 26px;
 }
 
 .bx-chart-plate {
-  transform: rotateX(28deg);
+  transform: rotateX(16deg);
   transform-style: preserve-3d;
-  filter: drop-shadow(0 26px 16px rgba(58, 29, 16, 0.32));
+  border-radius: 14px;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+  box-shadow:
+    0 4px 0 #7a4b24,
+    0 8px 0 #5c3416,
+    0 12px 0 #3d200c,
+    0 24px 30px rgba(42, 18, 8, 0.42),
+    inset 0 2px 3px rgba(255, 246, 214, 0.75);
+}
+
+.bx-chart-plate.bx-chart-plate-deep {
+  transform: rotateX(27deg) rotateZ(-1.5deg);
+  box-shadow:
+    0 6px 0 #7a4b24,
+    0 11px 0 #5c3416,
+    0 16px 0 #3d200c,
+    0 32px 36px rgba(42, 18, 8, 0.5),
+    inset 0 2px 4px rgba(255, 246, 214, 0.85);
 }
 
 .bx-chart-plate svg {
-  border-radius: 10px;
+  border-radius: 12px;
+  display: block;
 }
 
 .bx-kundali-stage {
