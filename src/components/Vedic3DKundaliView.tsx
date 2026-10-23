@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { KundaliData } from '../types';
 import { calculateVedicPanchang, RASHIS, calculateVargaSign } from '../services/astronomy';
 import { analyzeKundali } from '../services/predictions';
+import { KundaliChart } from './KundaliChart';
 import {
   Sparkles,
   Compass,
@@ -800,6 +801,16 @@ export const Vedic3DKundaliView: React.FC<{
                 {selectedPlanet.degreeInSign.toFixed(2)}° (भाव {selectedPlanet.houseNumber})
               </span>
             )}
+          </div>
+
+          {/* Embedded Three.js 3D Planetary Yantra Chart */}
+          <div className="w-full mt-4">
+            <KundaliChart
+              lagnaDegree={kundali.lagnaDegree}
+              planets={kundali.planets}
+              vargaDivision={activeChartDivision === 'D9' ? 9 : 1}
+              chartTitle={`${kundali.name} — Three.js 3D ${activeChartDivision} चक्र`}
+            />
           </div>
         </div>
 

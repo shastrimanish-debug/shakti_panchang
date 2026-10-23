@@ -183,7 +183,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   // Varga selector state
   const [selectedVarga, setSelectedVarga] = useState<number>(10);
   const [chartViewMode, setChartViewMode] = useState<'twin' | 'shodashvarga'>('twin');
-  const [chartSubPage, setChartSubPage] = useState<'twin' | 'planets' | 'vargas'>('vargas');
+  const [chartSubPage, setChartSubPage] = useState<'twin' | 'planets' | 'vargas'>('twin');
   const [vargaViewType, setVargaViewType] = useState<'priority_analysis' | 'explorer'>('explorer');
   const [milanSubPage, setMilanSubPage] = useState<'score' | 'ashtakoot' | 'manglik'>('score');
   const [isFormExpanded, setIsFormExpanded] = useState<boolean>(true);
@@ -334,7 +334,22 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     setKundaliTab('chart');
   };
 
-  const k = activeKundali;
+  const liveTransitKundali = useMemo(() => {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    return calculateKundali(
+      'तत्काल लग्न कुण्डली (Live)',
+      now,
+      `${hh}:${mm}`,
+      currentLocation.name,
+      currentLocation.latitude,
+      currentLocation.longitude,
+      currentLocation.timezoneHours
+    );
+  }, [currentLocation]);
+
+  const k = activeKundali || liveTransitKundali;
   const analysis = useMemo(() => (k ? analyzeKundali(k) : null), [k]);
 
   // Initialize inspected dasha on active kundali
