@@ -92,15 +92,15 @@ const ZODIAC_GLYPHS = [
 ];
 
 const PLANET_COLORS: Record<string, string> = {
-  'सूर्य': '#FF9800',
-  'चंद्र': '#E2E8F0',
-  'मंगल': '#EF4444',
-  'बुध': '#22C55E',
-  'गुरु': '#FACC15',
-  'शुक्र': '#F472B6',
-  'शनि': '#60A5FA',
-  'राहु': '#A855F7',
-  'केतु': '#FB923C',
+  'सूर्य': '#EA580C',
+  'चंद्र': '#0284C7',
+  'मंगल': '#DC2626',
+  'बुध': '#059669',
+  'गुरु': '#D97706',
+  'शुक्र': '#DB2777',
+  'शनि': '#4F46E5',
+  'राहु': '#7E22CE',
+  'केतु': '#C2410C',
 };
 
 /**
@@ -242,7 +242,7 @@ export const Vedic3DKundaliView: React.FC<{
   const [rotationZ, setRotationZ] = useState<number>(0);
   const [rotationX, setRotationX] = useState<number>(22);
   const [rotationY, setRotationY] = useState<number>(-8);
-  const [cameraDistance, setCameraDistance] = useState<number>(1100);
+  const [cameraDistance] = useState<number>(1100);
   const [activeChartDivision, setActiveChartDivision] = useState<'D1' | 'D9'>('D1');
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetaryDegreeItem | null>(null);
 
@@ -288,7 +288,7 @@ export const Vedic3DKundaliView: React.FC<{
     setRotationY(-8);
   };
 
-  // Daily Panchang & Gochar Transit Data for Glassmorphism Overlays
+  // Daily Panchang & Gochar Transit Data
   const livePanchang = useMemo(() => {
     return calculateVedicPanchang(new Date(), latitude, longitude);
   }, [latitude, longitude]);
@@ -304,29 +304,62 @@ export const Vedic3DKundaliView: React.FC<{
   };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border-2 border-amber-500/40 bg-gradient-to-br from-[#060919] via-[#0F172A] to-[#1E1024] text-amber-50 shadow-2xl">
-      {/* Ambient Cosmic Nebula Glows (Saffron, Royal Navy & Gold) */}
-      <div className="pointer-events-none absolute -top-24 -left-24 w-96 h-96 rounded-full bg-amber-500/15 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/3 -right-24 w-96 h-96 rounded-full bg-orange-600/15 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 left-1/3 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl" />
-
-      {/* Top Zero-Data-Loss Architecture & Controls Header */}
-      <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-b border-amber-500/25 bg-slate-950/60 backdrop-blur-xl">
+    <div
+      className="relative rounded-2xl overflow-hidden border-2 border-[#B56A00]/65 shadow-xl"
+      style={{
+        background: 'linear-gradient(165deg, #FFFDF9 0%, #FAF2E4 55%, #F3E3C6 100%)',
+        color: '#3E1F0D',
+      }}
+    >
+      {/* Top Royal Vedic Swarna-Mandir Header */}
+      <div
+        className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-b border-[#D97706]/50"
+        style={{
+          background: 'linear-gradient(90deg, #3E1F0D 0%, #5C2D0C 50%, #3E1F0D 100%)',
+          color: '#FFF6D6',
+        }}
+      >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-600 to-amber-700 flex items-center justify-center shadow-lg shadow-orange-600/30 border border-amber-300/50">
-            <Compass className="w-5 h-5 text-slate-950 animate-spin" style={{ animationDuration: '14s' }} />
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md border border-[#FDE68A]/60"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+            }}
+          >
+            <Compass
+              className="w-5 h-5 animate-spin"
+              style={{ animationDuration: '14s', color: '#2A1205' }}
+            />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-granth font-black text-base sm:text-lg bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 bg-clip-text text-transparent">
-                3D ब्रह्माण्डीय कुण्डली चक्र एवं UMA सिंक
+            <div className="flex flex-wrap items-center gap-2">
+              <h3
+                className="font-granth font-black text-base sm:text-lg"
+                style={{ color: '#FFE8A3' }}
+              >
+                3D वैदिक स्वर्ण-यंत्र कुण्डली एवं UMA ज्योतिष सिंक
               </h3>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                <ShieldCheck className="w-3 h-3" /> 0% Data Loss State
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                  color: '#A7F3D0',
+                  borderColor: 'rgba(52, 211, 153, 0.45)',
+                }}
+              >
+                <ShieldCheck className="w-3 h-3" /> सुरक्षित कुण्डली स्मृति
               </span>
             </div>
-            <p className="text-[11px] text-amber-200/70">
-              जातक: <strong className="text-amber-300">{vedicState.nativeName}</strong> • लग्न: <strong className="text-amber-300">{vedicState.lagnaRashi} ({vedicState.lagnaDegree.toFixed(1)}°)</strong> • महादशा: <strong className="text-orange-300">{vedicState.currentMahadasha.mahadashaLord}/{vedicState.currentMahadasha.antardashaLord}</strong>
+            <p className="text-[11px]" style={{ color: '#FDE68A' }}>
+              जातक: <strong style={{ color: '#FFFFFF' }}>{vedicState.nativeName}</strong> • लग्न:{' '}
+              <strong style={{ color: '#FFFFFF' }}>
+                {vedicState.lagnaRashi} ({vedicState.lagnaDegree.toFixed(1)}°)
+              </strong>{' '}
+              • महादशा:{' '}
+              <strong style={{ color: '#FDBA74' }}>
+                {vedicState.currentMahadasha.mahadashaLord}/
+                {vedicState.currentMahadasha.antardashaLord}
+              </strong>
             </p>
           </div>
         </div>
@@ -334,26 +367,31 @@ export const Vedic3DKundaliView: React.FC<{
         {/* 3D Wheel & Architecture Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* D-1 / D-9 Toggle */}
-          <div className="flex items-center bg-slate-900/90 p-0.5 rounded-lg border border-amber-500/30">
+          <div
+            className="flex items-center p-0.5 rounded-lg border border-[#D97706]/60"
+            style={{ backgroundColor: '#2A1205' }}
+          >
             <button
               type="button"
               onClick={() => setActiveChartDivision('D1')}
-              className={`px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+              className="px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer"
+              style={
                 activeChartDivision === 'D1'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow'
-                  : 'text-amber-200/70 hover:text-amber-200'
-              }`}
+                  ? { backgroundColor: '#F59E0B', color: '#2A1205', fontWeight: 900 }
+                  : { color: '#FFF3C4' }
+              }
             >
               D-1 लग्न
             </button>
             <button
               type="button"
               onClick={() => setActiveChartDivision('D9')}
-              className={`px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+              className="px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer"
+              style={
                 activeChartDivision === 'D9'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow'
-                  : 'text-amber-200/70 hover:text-amber-200'
-              }`}
+                  ? { backgroundColor: '#F59E0B', color: '#2A1205', fontWeight: 900 }
+                  : { color: '#FFF3C4' }
+              }
             >
               D-9 नवमांश
             </button>
@@ -363,7 +401,8 @@ export const Vedic3DKundaliView: React.FC<{
           <button
             type="button"
             onClick={() => setIsSpinning((s) => !s)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900/80 hover:bg-slate-800 text-amber-300 border border-amber-500/30 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-[#D97706]/60 transition cursor-pointer"
+            style={{ backgroundColor: '#2A1205', color: '#FFF3C4' }}
           >
             {isSpinning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
             <span>{isSpinning ? 'चक्र रोकें' : '3D चक्र घुमाएँ'}</span>
@@ -373,68 +412,97 @@ export const Vedic3DKundaliView: React.FC<{
           <button
             type="button"
             onClick={() => setIsUmaOpen((o) => !o)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border"
+            style={
               isUmaOpen
-                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-orange-500/20'
-                : 'bg-slate-900/80 text-amber-300 border-amber-500/30 hover:bg-slate-800'
-            }`}
+                ? {
+                    backgroundColor: '#F59E0B',
+                    color: '#2A1205',
+                    borderColor: '#FDE68A',
+                    fontWeight: 900,
+                  }
+                : {
+                    backgroundColor: '#2A1205',
+                    color: '#FFF3C4',
+                    borderColor: '#D97706',
+                  }
+            }
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>UMA AI सिंक {isUmaOpen ? 'सक्रिय' : 'खोलें'}</span>
+            <span>UMA ज्योतिष सिंक {isUmaOpen ? 'सक्रिय' : 'खोलें'}</span>
           </button>
 
           {/* View Complete Android Jetpack Compose Code */}
           <button
             type="button"
             onClick={() => setShowComposeCodeModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-950/90 hover:bg-indigo-900 text-indigo-200 border border-indigo-400/40 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-[#D97706]/60 transition cursor-pointer"
+            style={{ backgroundColor: '#4A200A', color: '#FFE8A3' }}
           >
-            <Code2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>Kotlin Compose 3D Code</span>
+            <Code2 className="w-3.5 h-3.5" />
+            <span>Kotlin 3D Code</span>
           </button>
         </div>
       </div>
 
-      {/* Main 3D Stage + Glassmorphism Overlays + UMA Assistant Sync */}
+      {/* Main 3D Stage + Bhojpatra Cards + UMA Assistant Sync */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 p-4 sm:p-6 items-start">
-        {/* Left Column: Glassmorphism Daily Panchang & Gochar Transit Floating Cards */}
+        {/* Left Column: Royal Vedic Bhojpatra Daily Panchang & Gochar Cards */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Frosted Glass Card 1: Daily Panchang */}
-          <div className="rounded-2xl p-4 bg-white/[0.06] backdrop-blur-xl border border-amber-400/25 shadow-xl space-y-3">
-            <div className="flex items-center justify-between border-b border-amber-400/20 pb-2">
+          {/* Card 1: Daily Panchang */}
+          <div
+            className="rounded-2xl p-4 border border-[#C88A2B]/60 shadow-sm space-y-3"
+            style={{ backgroundColor: '#FFFDF8' }}
+          >
+            <div className="flex items-center justify-between border-b border-[#C88A2B]/30 pb-2">
               <div className="flex items-center gap-2">
-                <Sun className="w-4 h-4 text-amber-400" />
-                <h4 className="font-granth font-bold text-sm text-amber-200">
-                  दैनिक पंचांग (Glass Overlay)
+                <Sun className="w-4 h-4 text-[#B45309]" />
+                <h4 className="font-granth font-black text-sm text-[#4A200A]">
+                  तात्कालिक पंचांग
                 </h4>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+              <span
+                className="text-[10px] px-2 py-0.5 rounded font-bold"
+                style={{ backgroundColor: '#5C2D0C', color: '#FFF3C4' }}
+              >
                 {currentLocationName.split(' ')[0]}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2 rounded-lg bg-slate-950/50 border border-white/10">
-                <div className="text-[10px] text-amber-200/60">तिथि (Tithi)</div>
-                <div className="font-bold text-amber-100 truncate">
+              <div
+                className="p-2 rounded-lg border border-[#C88A2B]/40"
+                style={{ backgroundColor: '#FAF2E4' }}
+              >
+                <div className="text-[10px] font-bold text-[#7C2D12]">तिथि (Tithi)</div>
+                <div className="font-black text-[#2A1205] truncate">
                   {livePanchang.paksha} {livePanchang.tithi}
                 </div>
               </div>
-              <div className="p-2 rounded-lg bg-slate-950/50 border border-white/10">
-                <div className="text-[10px] text-amber-200/60">नक्षत्र (Nakshatra)</div>
-                <div className="font-bold text-amber-100 truncate">{livePanchang.nakshatra}</div>
+              <div
+                className="p-2 rounded-lg border border-[#C88A2B]/40"
+                style={{ backgroundColor: '#FAF2E4' }}
+              >
+                <div className="text-[10px] font-bold text-[#7C2D12]">नक्षत्र (Nakshatra)</div>
+                <div className="font-black text-[#2A1205] truncate">{livePanchang.nakshatra}</div>
               </div>
-              <div className="p-2 rounded-lg bg-slate-950/50 border border-white/10">
-                <div className="text-[10px] text-amber-200/60">योग (Yoga)</div>
-                <div className="font-bold text-amber-100 truncate">{livePanchang.yoga}</div>
+              <div
+                className="p-2 rounded-lg border border-[#C88A2B]/40"
+                style={{ backgroundColor: '#FAF2E4' }}
+              >
+                <div className="text-[10px] font-bold text-[#7C2D12]">योग (Yoga)</div>
+                <div className="font-black text-[#2A1205] truncate">{livePanchang.yoga}</div>
               </div>
-              <div className="p-2 rounded-lg bg-slate-950/50 border border-white/10">
-                <div className="text-[10px] text-amber-200/60">करण (Karana)</div>
-                <div className="font-bold text-amber-100 truncate">{livePanchang.karana}</div>
+              <div
+                className="p-2 rounded-lg border border-[#C88A2B]/40"
+                style={{ backgroundColor: '#FAF2E4' }}
+              >
+                <div className="text-[10px] font-bold text-[#7C2D12]">करण (Karana)</div>
+                <div className="font-black text-[#2A1205] truncate">{livePanchang.karana}</div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-amber-200/80 pt-1">
+            <div className="flex items-center justify-between text-[11px] font-bold text-[#5C3A21] pt-1">
               <span>
                 🌅 सूर्योदय:{' '}
                 {livePanchang.solar.sunrise.toLocaleTimeString('hi-IN', {
@@ -452,48 +520,71 @@ export const Vedic3DKundaliView: React.FC<{
             </div>
           </div>
 
-          {/* Frosted Glass Card 2: Planetary Degrees & Gochar Transit */}
-          <div className="rounded-2xl p-4 bg-white/[0.06] backdrop-blur-xl border border-amber-400/25 shadow-xl space-y-3">
-            <div className="flex items-center justify-between border-b border-amber-400/20 pb-2">
+          {/* Card 2: Planetary Degrees & Gochar Transit */}
+          <div
+            className="rounded-2xl p-4 border border-[#C88A2B]/60 shadow-sm space-y-3"
+            style={{ backgroundColor: '#FFFDF8' }}
+          >
+            <div className="flex items-center justify-between border-b border-[#C88A2B]/30 pb-2">
               <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-orange-400" />
-                <h4 className="font-granth font-bold text-sm text-amber-200">
-                  ग्रह स्पष्ट एवं गोचर (Gochar)
+                <Flame className="w-4 h-4 text-[#B91C1C]" />
+                <h4 className="font-granth font-black text-sm text-[#4A200A]">
+                  ग्रह स्पष्ट एवं भाव स्थिति
                 </h4>
               </div>
-              <span className="text-[10px] text-amber-300/80 font-semibold">कणिकीय अंश</span>
+              <span className="text-[10px] text-[#7C2D12] font-bold">स्पष्ट अंश</span>
             </div>
 
-            <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
               {vedicState.planetaryDegrees.map((p) => {
-                const color = PLANET_COLORS[p.planetName] || '#FBBF24';
+                const color = PLANET_COLORS[p.planetName] || '#B45309';
                 const isSelected = selectedPlanet?.planetName === p.planetName;
                 return (
                   <button
                     key={p.planetName}
                     type="button"
                     onClick={() => setSelectedPlanet(p)}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer border ${
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition cursor-pointer border"
+                    style={
                       isSelected
-                        ? 'bg-amber-500/25 border-amber-400 text-white'
-                        : 'bg-slate-950/45 border-white/5 hover:bg-white/10 text-amber-100'
-                    }`}
+                        ? {
+                            backgroundColor: '#5C2D0C',
+                            borderColor: '#D97706',
+                            color: '#FFF3C4',
+                          }
+                        : {
+                            backgroundColor: '#FAF2E4',
+                            borderColor: 'rgba(200, 138, 43, 0.4)',
+                            color: '#2A1205',
+                          }
+                    }
                   >
                     <div className="flex items-center gap-2">
                       <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}` }}
+                        className="w-3 h-3 rounded-full shrink-0 border border-white/60"
+                        style={{ backgroundColor: color }}
                       />
-                      <span className="font-bold">{p.planetName}</span>
+                      <span className="font-black text-xs sm:text-sm">{p.planetName}</span>
                       {p.isRetrograde && (
-                        <span className="text-[9px] px-1 rounded bg-red-500/30 text-red-300 font-bold">
+                        <span
+                          className="text-[10px] px-1.5 py-0.5 rounded font-black"
+                          style={{ backgroundColor: '#FEE2E2', color: '#991B1B' }}
+                        >
                           वक्री
                         </span>
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="text-amber-300 font-semibold">{p.rashiName}</span>{' '}
-                      <span className="text-[11px] text-amber-200/70">
+                      <span
+                        className="font-black"
+                        style={{ color: isSelected ? '#FDE68A' : '#7C2D12' }}
+                      >
+                        {p.rashiName}
+                      </span>{' '}
+                      <span
+                        className="text-[11px] font-bold"
+                        style={{ color: isSelected ? '#FFF3C4' : '#5C3A21' }}
+                      >
                         {p.degreeInSign.toFixed(1)}° (भाव {p.houseNumber})
                       </span>
                     </div>
@@ -504,62 +595,69 @@ export const Vedic3DKundaliView: React.FC<{
           </div>
 
           {/* 3D Camera & Parallax Sliders */}
-          <div className="rounded-2xl p-4 bg-white/[0.05] backdrop-blur-xl border border-amber-400/20 space-y-2.5">
+          <div
+            className="rounded-2xl p-4 border border-[#C88A2B]/60 shadow-sm space-y-2.5"
+            style={{ backgroundColor: '#FFFDF8' }}
+          >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5" /> 3D GraphicsLayer Camera
+              <span className="text-xs font-black text-[#4A200A] flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-[#B45309]" /> 3D झुकाव नियंत्रक (Tilt)
               </span>
               <button
                 type="button"
                 onClick={handleResetParallax}
-                className="text-[10px] text-amber-400 hover:underline cursor-pointer"
+                className="text-[11px] font-bold text-[#9A3412] hover:underline cursor-pointer"
               >
-                Reset Tilt
+                रीसेट करें
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-bold text-[#5C3A21]">
               <label className="space-y-1">
-                <span className="text-amber-200/70">RotationX: {rotationX.toFixed(0)}°</span>
+                <span>झुकाव X: {rotationX.toFixed(0)}°</span>
                 <input
                   type="range"
                   min={-35}
                   max={45}
                   value={rotationX}
                   onChange={(e) => setRotationX(Number(e.target.value))}
-                  className="w-full accent-amber-500"
+                  className="w-full accent-[#B45309]"
                 />
               </label>
               <label className="space-y-1">
-                <span className="text-amber-200/70">RotationY: {rotationY.toFixed(0)}°</span>
+                <span>झुकाव Y: {rotationY.toFixed(0)}°</span>
                 <input
                   type="range"
                   min={-30}
                   max={30}
                   value={rotationY}
                   onChange={(e) => setRotationY(Number(e.target.value))}
-                  className="w-full accent-amber-500"
+                  className="w-full accent-[#B45309]"
                 />
               </label>
             </div>
           </div>
         </div>
 
-        {/* Center Column: Interactive 3D Rotating Zodiac Wheel (graphicsLayer equivalent) */}
+        {/* Center Column: Interactive 3D Rotating Zodiac Wheel + Three.js 3D Yantra */}
         <div
           ref={wheelContainerRef}
           onMouseMove={handlePointerMove}
           onMouseLeave={handleResetParallax}
           className={`${
             isUmaOpen ? 'lg:col-span-5' : 'lg:col-span-9'
-          } flex flex-col items-center justify-center min-h-[430px] sm:min-h-[500px] rounded-2xl bg-gradient-to-b from-slate-950/70 via-[#0B132B]/80 to-slate-950/70 border border-amber-500/30 p-4 relative overflow-hidden transition-all duration-500`}
+          } flex flex-col items-center justify-center min-h-[430px] sm:min-h-[500px] rounded-2xl border-2 border-[#B56A00]/65 p-4 relative overflow-hidden transition-all duration-500 shadow-md`}
           style={{
             perspective: `${cameraDistance}px`,
+            background:
+              'radial-gradient(circle at 50% 35%, #5C280E 0%, #381808 62%, #240E04 100%)',
           }}
         >
-          {/* Subtle Cosmic Radial Rings */}
+          {/* Subtle Warm Golden Mandal Rings */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] rounded-full border border-amber-500/15" />
-            <div className="position-absolute w-[260px] h-[260px] sm:w-[320px] sm:h-[320px] rounded-full border border-orange-500/15" />
+            <div
+              className="w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] rounded-full border"
+              style={{ borderColor: 'rgba(251, 191, 36, 0.22)' }}
+            />
           </div>
 
           {/* 3D Transformed Zodiac Wheel SVG */}
@@ -572,75 +670,69 @@ export const Vedic3DKundaliView: React.FC<{
           >
             <svg
               viewBox="0 0 500 500"
-              className="w-[310px] h-[310px] sm:w-[410px] sm:h-[410px] drop-shadow-[0_25px_35px_rgba(245,158,11,0.28)]"
+              className="w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] drop-shadow-[0_20px_30px_rgba(0,0,0,0.55)]"
             >
               <defs>
-                <radialGradient id="cosmicCoreGrad" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#FF6F00" stopOpacity="0.35" />
-                  <stop offset="55%" stopColor="#0F172A" stopOpacity="0.92" />
-                  <stop offset="100%" stopColor="#050814" stopOpacity="0.98" />
+                <radialGradient id="vedicSanctumGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#FFF8E7" />
+                  <stop offset="58%" stopColor="#F8E5C0" />
+                  <stop offset="100%" stopColor="#E2BE82" />
                 </radialGradient>
-                <linearGradient id="goldRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FDE68A" />
+                <linearGradient id="swarnaRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FEF08A" />
                   <stop offset="50%" stopColor="#F59E0B" />
-                  <stop offset="100%" stopColor="#B45309" />
-                </linearGradient>
-                <linearGradient id="saffronRingGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#EA580C" stopOpacity="0.5" />
-                  <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.35" />
-                  <stop offset="100%" stopColor="#1E3A8A" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#9A3412" />
                 </linearGradient>
               </defs>
 
               {/* Outer Rotating Zodiac Rim (rotationZ) */}
               <g transform={`rotate(${rotationZ} 250 250)`}>
-                {/* Outer Gold Bezel */}
+                {/* Outer Royal Maroon & Gold Rim */}
                 <circle
                   cx="250"
                   cy="250"
-                  r="238"
-                  fill="url(#cosmicCoreGrad)"
-                  stroke="url(#goldRimGrad)"
-                  strokeWidth="4"
+                  r="242"
+                  fill="#4A1D0A"
+                  stroke="url(#swarnaRimGrad)"
+                  strokeWidth="5"
                 />
-                {/* Zodiac Rashi Ring */}
+                {/* Inner Bhojpatra Sanctum Disk */}
                 <circle
                   cx="250"
                   cy="250"
-                  r="192"
-                  fill="none"
-                  stroke="url(#goldRimGrad)"
-                  strokeWidth="2"
-                  strokeDasharray="4 2"
+                  r="194"
+                  fill="url(#vedicSanctumGrad)"
+                  stroke="#9A3412"
+                  strokeWidth="3"
                 />
                 {/* Nakshatra / House Inner Ring */}
                 <circle
                   cx="250"
                   cy="250"
-                  r="138"
+                  r="142"
                   fill="none"
-                  stroke="#F59E0B"
-                  strokeWidth="1.5"
-                  strokeOpacity="0.55"
+                  stroke="#B45309"
+                  strokeWidth="2"
+                  strokeDasharray="5 3"
                 />
 
-                {/* 12 Rashi Sectors, Spokes & Glyphs */}
+                {/* 12 Rashi Sectors, Spokes & High-Contrast Glyphs */}
                 {ZODIAC_GLYPHS.map((z, idx) => {
                   const startAngle = idx * 30 - 90;
                   const midAngle = startAngle + 15;
                   const rad = (startAngle * Math.PI) / 180;
                   const midRad = (midAngle * Math.PI) / 180;
 
-                  const x1 = 250 + 75 * Math.cos(rad);
-                  const y1 = 250 + 75 * Math.sin(rad);
-                  const x2 = 250 + 238 * Math.cos(rad);
-                  const y2 = 250 + 238 * Math.sin(rad);
+                  const x1 = 250 + 70 * Math.cos(rad);
+                  const y1 = 250 + 70 * Math.sin(rad);
+                  const x2 = 250 + 242 * Math.cos(rad);
+                  const y2 = 250 + 242 * Math.sin(rad);
 
-                  const tx = 250 + 214 * Math.cos(midRad);
-                  const ty = 250 + 214 * Math.sin(midRad);
+                  const tx = 250 + 218 * Math.cos(midRad);
+                  const ty = 250 + 218 * Math.sin(midRad);
 
-                  const hx = 250 + 165 * Math.cos(midRad);
-                  const hy = 250 + 165 * Math.sin(midRad);
+                  const hx = 250 + 168 * Math.cos(midRad);
+                  const hy = 250 + 168 * Math.sin(midRad);
 
                   const houseCell = activeGrid[idx];
 
@@ -652,32 +744,37 @@ export const Vedic3DKundaliView: React.FC<{
                         y1={y1}
                         x2={x2}
                         y2={y2}
-                        stroke="#F59E0B"
-                        strokeWidth="1.2"
-                        strokeOpacity="0.4"
+                        stroke="#8C4A0E"
+                        strokeWidth="1.6"
+                        strokeOpacity="0.55"
                       />
 
-                      {/* Rashi Label on Outer Ring */}
+                      {/* Rashi Label on Outer Maroon Ring (Bright Swarna Gold Text) */}
                       <g transform={`translate(${tx}, ${ty}) rotate(${midAngle + 90})`}>
                         <text
                           textAnchor="middle"
                           dominantBaseline="middle"
-                          fill="#FDE68A"
-                          fontSize="13.5"
+                          fill="#FFF3C4"
+                          fontSize="14.5"
                           fontWeight="900"
                         >
                           {z.sym} {z.hi}
                         </text>
                       </g>
 
-                      {/* House Number & Sign in Inner Ring */}
+                      {/* House Number & Sign in Inner Bhojpatra Ring */}
                       <g transform={`translate(${hx}, ${hy}) rotate(${-rotationZ})`}>
                         <text
                           textAnchor="middle"
                           dominantBaseline="middle"
-                          fill="#FCA5A5"
-                          fontSize="11.5"
-                          fontWeight="800"
+                          fill="#5C230A"
+                          fontSize="12.5"
+                          fontWeight="900"
+                          style={{
+                            paintOrder: 'stroke fill',
+                            stroke: '#FFFDF8',
+                            strokeWidth: '3px',
+                          }}
                         >
                           भाव {idx + 1} ({houseCell?.rashiName || z.hi})
                         </text>
@@ -686,14 +783,14 @@ export const Vedic3DKundaliView: React.FC<{
                   );
                 })}
 
-                {/* Planetary Orbits & Glowing 3D Nodes */}
+                {/* Planetary Orbits & Large High-Contrast 3D Nodes */}
                 {vedicState.planetaryDegrees.map((p, i) => {
                   const angleDeg = p.absoluteLongitude - 90;
                   const rad = (angleDeg * Math.PI) / 180;
-                  const orbitRadius = 100 + (i % 3) * 16;
+                  const orbitRadius = 96 + (i % 3) * 18;
                   const px = 250 + orbitRadius * Math.cos(rad);
                   const py = 250 + orbitRadius * Math.sin(rad);
-                  const pColor = PLANET_COLORS[p.planetName] || '#FBBF24';
+                  const pColor = PLANET_COLORS[p.planetName] || '#B45309';
 
                   return (
                     <g
@@ -707,26 +804,31 @@ export const Vedic3DKundaliView: React.FC<{
                         x2={px}
                         y2={py}
                         stroke={pColor}
-                        strokeWidth="1.3"
-                        strokeOpacity="0.45"
-                        strokeDasharray="2 3"
+                        strokeWidth="1.8"
+                        strokeOpacity="0.6"
+                        strokeDasharray="3 3"
                       />
                       <circle
                         cx={px}
                         cy={py}
-                        r="18"
-                        fill="#090D16"
+                        r="21"
+                        fill="#FFFDF9"
                         stroke={pColor}
-                        strokeWidth="2.6"
+                        strokeWidth="3.2"
                       />
                       {/* Counter-rotate text so planet name stays upright while wheel spins */}
                       <g transform={`translate(${px}, ${py}) rotate(${-rotationZ})`}>
                         <text
                           textAnchor="middle"
                           dominantBaseline="central"
-                          fill={pColor}
-                          fontSize="12.5"
+                          fill="#2A1205"
+                          fontSize="14"
                           fontWeight="900"
+                          style={{
+                            paintOrder: 'stroke fill',
+                            stroke: '#FFFFFF',
+                            strokeWidth: '2.5px',
+                          }}
                         >
                           {p.planetName}
                         </text>
@@ -736,30 +838,30 @@ export const Vedic3DKundaliView: React.FC<{
                 })}
               </g>
 
-              {/* Stationary Sacred Center Hub (Saffron-Gold Bindu Mandala) */}
+              {/* Stationary Sacred Center Hub (Royal Maroon & 24K Gold Bindu Mandala) */}
               <circle
                 cx="250"
                 cy="250"
-                r="68"
-                fill="#0F172A"
-                stroke="url(#goldRimGrad)"
-                strokeWidth="3"
+                r="66"
+                fill="#4A1D0A"
+                stroke="url(#swarnaRimGrad)"
+                strokeWidth="3.5"
               />
               <circle
                 cx="250"
                 cy="250"
-                r="56"
+                r="55"
                 fill="none"
-                stroke="#F97316"
-                strokeWidth="1"
+                stroke="#FCD34D"
+                strokeWidth="1.2"
                 strokeDasharray="3 3"
               />
               <text
                 x="250"
-                y="236"
+                y="235"
                 textAnchor="middle"
-                fill="#FBBF24"
-                fontSize="22"
+                fill="#FDE68A"
+                fontSize="24"
                 fontWeight="900"
               >
                 ॐ
@@ -768,19 +870,19 @@ export const Vedic3DKundaliView: React.FC<{
                 x="250"
                 y="256"
                 textAnchor="middle"
-                fill="#FDE68A"
-                fontSize="11"
-                fontWeight="800"
+                fill="#FFFFFF"
+                fontSize="12"
+                fontWeight="900"
               >
                 {activeChartDivision} लग्न: {vedicState.lagnaRashi}
               </text>
               <text
                 x="250"
-                y="272"
+                y="273"
                 textAnchor="middle"
-                fill="#FB923C"
-                fontSize="9.5"
-                fontWeight="700"
+                fill="#FCD34D"
+                fontSize="10.5"
+                fontWeight="800"
               >
                 {vedicState.lagnaDegree.toFixed(2)}°
               </text>
@@ -788,15 +890,36 @@ export const Vedic3DKundaliView: React.FC<{
           </div>
 
           {/* Bottom Interactive Status Strip inside 3D Stage */}
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-[11px] text-amber-200/80">
-            <span className="px-2.5 py-1 rounded-full bg-white/5 border border-amber-500/20">
-              चक्र कोण (rotationZ): <strong>{rotationZ.toFixed(0)}°</strong>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5 text-[11px]">
+            <span
+              className="px-2.5 py-1 rounded-lg border font-bold"
+              style={{
+                backgroundColor: 'rgba(255, 248, 231, 0.14)',
+                borderColor: 'rgba(251, 191, 36, 0.45)',
+                color: '#FFF3C4',
+              }}
+            >
+              चक्र कोण: <strong>{rotationZ.toFixed(0)}°</strong>
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-white/5 border border-amber-500/20">
-              Parallax Tilt: <strong>X:{rotationX.toFixed(0)}° / Y:{rotationY.toFixed(0)}°</strong>
+            <span
+              className="px-2.5 py-1 rounded-lg border font-bold"
+              style={{
+                backgroundColor: 'rgba(255, 248, 231, 0.14)',
+                borderColor: 'rgba(251, 191, 36, 0.45)',
+                color: '#FFF3C4',
+              }}
+            >
+              3D झुकाव: <strong>X:{rotationX.toFixed(0)}° / Y:{rotationY.toFixed(0)}°</strong>
             </span>
             {selectedPlanet && (
-              <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400 text-amber-200 font-bold">
+              <span
+                className="px-3 py-1 rounded-lg border font-black"
+                style={{
+                  backgroundColor: '#F59E0B',
+                  borderColor: '#FEF08A',
+                  color: '#2A1205',
+                }}
+              >
                 चयनित ग्रह: {selectedPlanet.planetName} — {selectedPlanet.rashiName}{' '}
                 {selectedPlanet.degreeInSign.toFixed(2)}° (भाव {selectedPlanet.houseNumber})
               </span>
@@ -809,38 +932,53 @@ export const Vedic3DKundaliView: React.FC<{
               lagnaDegree={kundali.lagnaDegree}
               planets={kundali.planets}
               vargaDivision={activeChartDivision === 'D9' ? 9 : 1}
-              chartTitle={`${kundali.name} — Three.js 3D ${activeChartDivision} चक्र`}
+              chartTitle={`${kundali.name} — 3D ${activeChartDivision} कुण्डली चक्र`}
             />
           </div>
         </div>
 
-        {/* Right Column: UMA AI Assistant Smooth Slide-In Sync Panel */}
+        {/* Right Column: UMA AI Assistant Smooth Slide-In Sync Panel (Royal Bhojpatra Theme) */}
         {isUmaOpen && (
-          <div className="lg:col-span-4 rounded-2xl bg-gradient-to-b from-amber-950/40 via-slate-900/85 to-slate-950/90 backdrop-blur-2xl border border-amber-400/35 p-4 sm:p-5 shadow-2xl space-y-4 animate-in fade-in slide-in-from-right-6 duration-300">
-            <div className="flex items-center justify-between border-b border-amber-400/25 pb-3">
+          <div
+            className="lg:col-span-4 rounded-2xl border-2 border-[#C88A2B]/70 p-4 sm:p-5 shadow-md space-y-4"
+            style={{ backgroundColor: '#FFFDF8' }}
+          >
+            <div className="flex items-center justify-between border-b border-[#C88A2B]/35 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-600 via-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-500/30">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center font-black shadow-xs border border-[#FDE68A]"
+                  style={{
+                    background: 'linear-gradient(135deg, #7C2D12 0%, #B45309 100%)',
+                    color: '#FFF3C4',
+                  }}
+                >
                   उमा
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <h4 className="font-granth font-black text-sm sm:text-base text-amber-200">
-                      UMA AI ज्योतिष सिंक
+                    <h4 className="font-granth font-black text-sm sm:text-base text-[#4A200A]">
+                      UMA ज्योतिष विश्लेषण सिंक
                     </h4>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
                   </div>
-                  <p className="text-[10px] text-amber-200/70">
-                    Non-blocking Real-time 3D Kundali Sync
+                  <p className="text-[10px] font-bold text-[#7C2D12]">
+                    3D कुण्डली एवं दशा लाइव समन्वय
                   </p>
                 </div>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 font-bold">
-                Live Sync
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-md font-bold"
+                style={{ backgroundColor: '#5C2D0C', color: '#FFF3C4' }}
+              >
+                सक्रिय
               </span>
             </div>
 
             {/* UMA Topic Selector */}
-            <div className="grid grid-cols-4 gap-1 bg-slate-950/70 p-1 rounded-xl border border-amber-500/20 text-[11px] font-bold">
+            <div
+              className="grid grid-cols-4 gap-1 p-1 rounded-xl border border-[#C88A2B]/50 text-[11px] font-bold"
+              style={{ backgroundColor: '#F4E8D1' }}
+            >
               {[
                 { id: 'summary', label: 'सार' },
                 { id: 'dasha', label: 'महादशा' },
@@ -851,11 +989,12 @@ export const Vedic3DKundaliView: React.FC<{
                   key={t.id}
                   type="button"
                   onClick={() => setUmaSelectedTopic(t.id as any)}
-                  className={`py-1.5 rounded-lg transition cursor-pointer ${
+                  className="py-1.5 rounded-lg transition cursor-pointer"
+                  style={
                     umaSelectedTopic === t.id
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow'
-                      : 'text-amber-200/70 hover:text-amber-200'
-                  }`}
+                      ? { backgroundColor: '#5C2D0C', color: '#FFF3C4', fontWeight: 900 }
+                      : { color: '#5C3A21' }
+                  }
                 >
                   {t.label}
                 </button>
@@ -863,32 +1002,39 @@ export const Vedic3DKundaliView: React.FC<{
             </div>
 
             {/* UMA Synchronized Astrological Prediction Content */}
-            <div className="space-y-3 text-xs leading-relaxed text-amber-100/90 max-h-[340px] overflow-y-auto pr-1">
+            <div className="space-y-3 text-xs leading-relaxed text-[#3E1F0D] max-h-[420px] overflow-y-auto pr-1">
               {umaSelectedTopic === 'summary' && (
                 <>
-                  <div className="p-3 rounded-xl bg-white/[0.05] border border-amber-400/20 space-y-1.5">
-                    <div className="text-amber-300 font-bold flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" /> जातक का 3D लग्न विश्लेषण
+                  <div
+                    className="p-3 rounded-xl border border-[#C88A2B]/45 space-y-1.5"
+                    style={{ backgroundColor: '#FAF2E4' }}
+                  >
+                    <div className="text-[#7C2D12] font-black flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#B45309]" /> जातक का 3D लग्न विश्लेषण
                     </div>
                     {analysis.summaryLines.map((line, idx) => (
-                      <p key={idx} className="text-xs text-amber-50/90">
+                      <p key={idx} className="text-xs font-medium text-[#2A1205]">
                         • {line}
                       </p>
                     ))}
                   </div>
-                  {analysis.areas.slice(0, 2).map((area) => (
+                  {analysis.areas.slice(0, 3).map((area) => (
                     <div
                       key={area.id}
-                      className="p-3 rounded-xl bg-slate-950/60 border border-white/10 space-y-1"
+                      className="p-3 rounded-xl border border-[#C88A2B]/40 space-y-1"
+                      style={{ backgroundColor: '#FAF2E4' }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-amber-300">{area.title}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 font-bold">
+                        <span className="font-black text-[#4A200A]">{area.title}</span>
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded font-bold"
+                          style={{ backgroundColor: '#5C2D0C', color: '#FFF3C4' }}
+                        >
                           {area.strength}
                         </span>
                       </div>
-                      <p className="text-amber-100/80">{area.finding}</p>
-                      <p className="text-[11px] text-orange-300">उपाय: {area.remedy}</p>
+                      <p className="text-[#3E1F0D] font-medium">{area.finding}</p>
+                      <p className="text-[11px] font-bold text-[#9A3412]">उपाय: {area.remedy}</p>
                     </div>
                   ))}
                 </>
@@ -896,33 +1042,39 @@ export const Vedic3DKundaliView: React.FC<{
 
               {umaSelectedTopic === 'dasha' && (
                 <div className="space-y-3">
-                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-orange-950/70 to-amber-950/50 border border-amber-400/30 space-y-2">
-                    <div className="text-[11px] text-amber-300 font-bold uppercase tracking-wider">
-                      वर्तमान विंशोत्तरी महादशा पेलोड
+                  <div
+                    className="p-3.5 rounded-xl border border-[#C88A2B]/60 space-y-2"
+                    style={{ backgroundColor: '#FAF2E4' }}
+                  >
+                    <div className="text-[11px] text-[#7C2D12] font-black uppercase tracking-wider">
+                      वर्तमान विंशोत्तरी महादशा
                     </div>
-                    <div className="text-sm font-black text-white">
+                    <div className="text-sm font-black text-[#2A1205]">
                       {vedicState.currentMahadasha.mahadashaLord} महादशा →{' '}
                       {vedicState.currentMahadasha.antardashaLord} अंतर्दशा →{' '}
                       {vedicState.currentMahadasha.pratyantardashaLord} प्रत्यंतर
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden">
+                    <div className="w-full h-2.5 rounded-full bg-[#E5D2B8] overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-amber-400 to-orange-500"
+                        className="h-full bg-gradient-to-r from-[#B45309] to-[#F59E0B]"
                         style={{ width: `${vedicState.currentMahadasha.progressPercent}%` }}
                       />
                     </div>
-                    <p className="text-xs text-amber-100/90">{analysis.dashaNarrative}</p>
+                    <p className="text-xs font-medium text-[#3E1F0D]">{analysis.dashaNarrative}</p>
                   </div>
                 </div>
               )}
 
               {umaSelectedTopic === 'gochar' && (
                 <div className="space-y-2.5">
-                  <div className="p-3 rounded-xl bg-white/[0.05] border border-amber-400/20">
-                    <div className="font-bold text-amber-300 mb-1">
+                  <div
+                    className="p-3 rounded-xl border border-[#C88A2B]/45"
+                    style={{ backgroundColor: '#FAF2E4' }}
+                  >
+                    <div className="font-black text-[#7C2D12] mb-1">
                       तात्कालिक पंचांग एवं गोचर प्रभाव
                     </div>
-                    <p className="text-amber-100/85">
+                    <p className="text-[#2A1205] font-medium">
                       आज {livePanchang.paksha} {livePanchang.tithi} तथा{' '}
                       {livePanchang.nakshatra} नक्षत्र के संयोग में आपकी जन्म राशि{' '}
                       <strong>{kundali.moonRashi}</strong> पर{' '}
@@ -933,7 +1085,8 @@ export const Vedic3DKundaliView: React.FC<{
                   {analysis.yogas.slice(0, 3).map((y, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-lg bg-slate-950/60 border border-amber-500/20 text-amber-100"
+                      className="p-2.5 rounded-lg border border-[#C88A2B]/40 font-bold text-[#3E1F0D]"
+                      style={{ backgroundColor: '#FAF2E4' }}
                     >
                       ✨ {y}
                     </div>
@@ -943,19 +1096,20 @@ export const Vedic3DKundaliView: React.FC<{
 
               {umaSelectedTopic === 'varga' && (
                 <div className="space-y-2">
-                  <div className="text-xs font-bold text-amber-300">
-                    SavedStateHandle D-1 एवं D-9 भाव सारणी:
+                  <div className="text-xs font-black text-[#4A200A]">
+                    D-1 एवं D-9 भाव सारणी:
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {activeGrid.slice(0, 6).map((cell) => (
+                    {activeGrid.map((cell) => (
                       <div
                         key={cell.houseNumber}
-                        className="p-2 rounded-lg bg-slate-950/60 border border-white/10"
+                        className="p-2 rounded-lg border border-[#C88A2B]/40"
+                        style={{ backgroundColor: '#FAF2E4' }}
                       >
-                        <div className="text-[10px] text-amber-400 font-bold">
+                        <div className="text-[10px] text-[#7C2D12] font-black">
                           भाव {cell.houseNumber} ({cell.rashiName})
                         </div>
-                        <div className="text-[11px] text-white truncate">
+                        <div className="text-[11px] font-bold text-[#2A1205] truncate">
                           {cell.planets.length > 0 ? cell.planets.join(', ') : '— शांत भाव —'}
                         </div>
                       </div>
@@ -971,11 +1125,17 @@ export const Vedic3DKundaliView: React.FC<{
       {/* Modal: Complete Untruncated Android Jetpack Compose 3D Implementation */}
       {showComposeCodeModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-950 border-2 border-amber-500/50 rounded-2xl max-w-4xl w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-amber-500/30 bg-slate-900">
+          <div
+            className="border-2 border-[#D97706] rounded-2xl max-w-4xl w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl"
+            style={{ backgroundColor: '#2A1205', color: '#FFF3C4' }}
+          >
+            <div
+              className="flex items-center justify-between px-5 py-3.5 border-b border-[#D97706]/40"
+              style={{ backgroundColor: '#3E1F0D' }}
+            >
               <div className="flex items-center gap-2">
-                <Code2 className="w-5 h-5 text-amber-400" />
-                <h3 className="font-bold text-sm sm:text-base text-amber-200">
+                <Code2 className="w-5 h-5 text-[#F59E0B]" />
+                <h3 className="font-bold text-sm sm:text-base text-[#FFF3C4]">
                   Shakti Panchang — Android Jetpack Compose 3D Kundali & SavedStateHandle Architecture
                 </h3>
               </div>
@@ -983,7 +1143,8 @@ export const Vedic3DKundaliView: React.FC<{
                 <button
                   type="button"
                   onClick={handleCopyKotlinCode}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+                  style={{ backgroundColor: '#F59E0B', color: '#2A1205' }}
                 >
                   {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedCode ? 'Copied!' : 'Copy Full Kotlin Code'}</span>
@@ -991,13 +1152,17 @@ export const Vedic3DKundaliView: React.FC<{
                 <button
                   type="button"
                   onClick={() => setShowComposeCodeModal(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-200 cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer border border-[#D97706]"
+                  style={{ backgroundColor: '#5C2D0C', color: '#FFF3C4' }}
                 >
                   बंद करें ✕
                 </button>
               </div>
             </div>
-            <pre className="p-4 text-xs text-amber-100/90 font-mono overflow-auto leading-relaxed">
+            <pre
+              className="p-4 text-xs font-mono overflow-auto leading-relaxed"
+              style={{ color: '#FFF6D6' }}
+            >
               {ANDROID_COMPOSE_COMPLETE_CODE}
             </pre>
           </div>

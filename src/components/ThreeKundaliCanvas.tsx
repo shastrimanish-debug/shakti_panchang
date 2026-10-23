@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RASHIS } from '../services/astronomy';
 import { triggerHapticSelection } from '../utils/haptics';
 
@@ -20,6 +19,7 @@ export interface ThreeKundaliCanvasProps {
   signPlanets: Record<number, ThreeFormattedPlanet[]>;
   showDegrees: boolean;
   fontScale?: 'large' | 'xlarge';
+  onFallback?: () => void;
 }
 
 interface House3DCoord {
@@ -62,38 +62,24 @@ const SOUTH_3D_CELLS = [
 ];
 
 const PLANET_3D_COLORS: Record<string, number> = {
-  सूर्य: 0xf97316,
-  चंद्र: 0x38bdf8,
-  मंगल: 0xef4444,
-  बुध: 0x22c55e,
-  गुरु: 0xfacc15,
-  शुक्र: 0xf472b6,
-  शनि: 0x818cf8,
-  राहु: 0xa855f7,
-  केतु: 0xfb923c,
+  सूर्य: 0xea580c,
+  चंद्र: 0x0284c7,
+  मंगल: 0xdc2626,
+  बुध: 0x16a34a,
+  गुरु: 0xd97706,
+  शुक्र: 0xdb2777,
+  शनि: 0x4f46e5,
+  राहु: 0x7e22ce,
+  केतु: 0xc2410c,
 };
 
 // Pre-allocated math helpers at module scope (zero GC in render loop)
 const _camTargetPos = new THREE.Vector3();
 const _lookTargetPos = new THREE.Vector3(0, 0, 0);
 
-function detectSoftwareWebGL(): boolean {
-  try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    if (!gl) return true;
-    const ext = gl.getExtension('WEBGL_debug_renderer_info');
-    const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
-    const gpu = String(gl.getParameter(param));
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-    return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
-  } catch {
-    return true;
-  }
-}
-
 /**
- * Creates a high-contrast, large-font CanvasTexture for a group of planets in a house/sign
+ * Creates a Royal Vedic Bhojpatra & Swarna Gold floating plaque for planets
+ * High-contrast large Devanagari typography on warm ivory-gold parchment
  */
 function createPlanetClusterBadgeTexture(
   planets: ThreeFormattedPlanet[],
@@ -105,8 +91,8 @@ function createPlanetClusterBadgeTexture(
   const cols = planets.length > 2 ? 2 : 1;
   const rows = Math.ceil(planets.length / cols);
 
-  const cellW = fontScale === 'xlarge' ? 370 : 330;
-  const cellH = fontScale === 'xlarge' ? 112 : 98;
+  const cellW = fontScale === 'xlarge' ? 380 : 340;
+  const cellH = fontScale === 'xlarge' ? 116 : 102;
   const padX = 28;
   const padY = 22;
 
@@ -117,25 +103,27 @@ function createPlanetClusterBadgeTexture(
 
   const ctx = canvas.getContext('2d');
   if (ctx) {
-    // High-contrast deep obsidian-gold plaque background
+    // Royal Warm Bhojpatra Ivory-Gold Gradient Background
     const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, '#1C0E07');
-    grad.addColorStop(1, '#0F0703');
+    grad.addColorStop(0, '#FFFDF9');
+    grad.addColorStop(0.65, '#FFF5E0');
+    grad.addColorStop(1, '#F7E2B8');
     ctx.fillStyle = grad;
 
     ctx.beginPath();
     ctx.roundRect(6, 6, W - 12, H - 12, 26);
     ctx.fill();
 
-    // Bright high-contrast double gold border
-    ctx.strokeStyle = '#FBBF24';
-    ctx.lineWidth = 6;
+    // Outer Royal Maroon-Bronze Border
+    ctx.strokeStyle = '#6B2D0E';
+    ctx.lineWidth = 8;
     ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(255, 248, 220, 0.35)';
-    ctx.lineWidth = 2;
+    // Inner Swarna Gold Bevel Border
+    ctx.strokeStyle = '#D97706';
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.roundRect(14, 14, W - 28, H - 28, 20);
+    ctx.roundRect(15, 15, W - 30, H - 30, 18);
     ctx.stroke();
 
     planets.forEach((p, idx) => {
@@ -144,15 +132,14 @@ function createPlanetClusterBadgeTexture(
       const cx = padX + col * cellW + cellW / 2;
       const cy = padY + row * cellH + cellH / 2;
 
-      // High-contrast color coding on dark plaque
+      // High-contrast Vedic Ink Colors on Warm Ivory Plaque
       const nameColor = p.isRetro
-        ? '#FCA5A5' // Bright Coral Red for Retrograde
+        ? '#B91C1C' // Deep Kumkum Red for Retrograde
         : p.isBenefic
-        ? '#86EFAC' // High-contrast Mint Green for Benefic
-        : '#FEF08A'; // Radiant Gold-Cream for Surya/Mangal/Shani
+        ? '#065F46' // Deep Emerald Green for Benefic
+        : '#2A1205'; // Deep Sacred Mahogany-Black for Surya/Mangal/Shani
 
-      const fontSize = fontScale === 'xlarge' ? 54 : 46;
-      const degFontSize = fontScale === 'xlarge' ? 38 : 33;
+      const fontSize = fontScale === 'xlarge' ? 56 : 48;
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -161,14 +148,14 @@ function createPlanetClusterBadgeTexture(
       const degTag = showDegrees ? ` ${p.degreeStr}` : '';
       const fullLabel = `${p.name}${retroTag}${degTag}`;
 
-      // Strong dark text shadow + outline for maximum contrast
       ctx.font = `900 ${fontSize}px "Tiro Devanagari Hindi", "Noto Sans Devanagari", sans-serif`;
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 7;
-      ctx.strokeText(fullLabel, cx, cy - ( degFontSize ? 2 : 0 ));
+      // Crisp white halo stroke for 100% readability
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 8;
+      ctx.strokeText(fullLabel, cx, cy);
 
       ctx.fillStyle = nameColor;
-      ctx.fillText(fullLabel, cx, cy - ( degFontSize ? 2 : 0 ));
+      ctx.fillText(fullLabel, cx, cy);
     });
   }
 
@@ -180,7 +167,7 @@ function createPlanetClusterBadgeTexture(
 }
 
 /**
- * Creates a high-contrast Zodiac Sign / Rashi number medallion badge texture
+ * Creates a Royal Vedic Rashi Medallion texture
  */
 function createRashiMedallionTexture(
   signNum: number,
@@ -189,25 +176,33 @@ function createRashiMedallionTexture(
   maxAnisotropy: number
 ): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
+  canvas.width = 272;
   canvas.height = 128;
   const ctx = canvas.getContext('2d');
   if (ctx) {
-    ctx.fillStyle = isLagna ? '#9A3412' : '#FFFBEB';
-    ctx.strokeStyle = isLagna ? '#FDE047' : '#78350F';
+    const grad = ctx.createLinearGradient(0, 0, 0, 128);
+    if (isLagna) {
+      grad.addColorStop(0, '#9A3412');
+      grad.addColorStop(1, '#5C1906');
+    } else {
+      grad.addColorStop(0, '#FFF8E7');
+      grad.addColorStop(1, '#F3D99E');
+    }
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = isLagna ? '#FBBF24' : '#8C4A0E';
     ctx.lineWidth = 8;
     ctx.beginPath();
-    ctx.roundRect(8, 8, 240, 112, 32);
+    ctx.roundRect(8, 8, 256, 112, 32);
     ctx.fill();
     ctx.stroke();
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = isLagna ? '#FEF08A' : '#291305';
-    ctx.font = '900 44px sans-serif';
+    ctx.fillStyle = isLagna ? '#FFF3C4' : '#3E1F0D';
+    ctx.font = '900 44px "Tiro Devanagari Hindi", sans-serif';
     ctx.fillText(
       isLagna ? `लग्न ${signNum} • ${rashiName}` : `${signNum} • ${rashiName}`,
-      128,
+      136,
       64
     );
   }
@@ -225,6 +220,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
   signPlanets,
   showDegrees,
   fontScale: initialFontScale = 'xlarge',
+  onFallback,
 }) => {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [cameraPreset, setCameraPreset] = useState<'perspective' | 'deep' | 'top'>('perspective');
@@ -233,6 +229,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
 
   const triggerPresetRef = useRef<((preset: 'perspective' | 'deep' | 'top') => void) | null>(null);
   const rebuildContentRef = useRef<(() => void) | null>(null);
+  const onFallbackRef = useRef(onFallback);
+  onFallbackRef.current = onFallback;
 
   const latestPropsRef = useRef({
     chartStyle,
@@ -255,67 +253,83 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
     const container = mountRef.current;
     if (!container) return;
 
-    const isSoftwareGl = detectSoftwareWebGL();
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: 'high-performance',
+        alpha: false,
+      });
+    } catch {
+      onFallbackRef.current?.();
+      return;
+    }
+
+    const gl = renderer.getContext();
+    if (!gl || gl.isContextLost()) {
+      renderer.dispose();
+      onFallbackRef.current?.();
+      return;
+    }
+
     const width = container.clientWidth || 360;
     const height = container.clientHeight || 360;
 
+    // Warm Royal Sandalwood & Copper-Gold Temple Backdrop (Never pitch-black or white)
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x160c06);
-    scene.fog = new THREE.FogExp2(0x160c06, 0.025);
+    scene.background = new THREE.Color(0x3a1d0c);
+    scene.fog = new THREE.FogExp2(0x3a1d0c, 0.018);
 
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
     camera.position.set(0, 11.2, 8.2);
     camera.lookAt(0, 0, 0.3);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: !isSoftwareGl,
-      powerPreference: 'high-performance',
-    });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.toneMappingExposure = 1.22;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height);
-    renderer.shadowMap.enabled = !isSoftwareGl;
+    renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // Studio Environment Map (RoomEnvironment)
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const envTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envTexture;
-    pmremGenerator.dispose();
+    // Handle WebGL context loss gracefully so a white broken canvas box can NEVER appear
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      onFallbackRef.current?.();
+    };
+    renderer.domElement.addEventListener('webglcontextlost', handleContextLost, false);
 
-    // 3-Point Warm/Cool Studio Lighting Rig
-    const hemiLight = new THREE.HemisphereLight(0xfffbeb, 0x3b1d0b, 0.95);
+    // 3-Point Warm Royal Vedic Temple Lighting Rig (Zero PMREM shader delay)
+    const ambientLight = new THREE.AmbientLight(0xfff3d6, 0.85);
+    scene.add(ambientLight);
+
+    const hemiLight = new THREE.HemisphereLight(0xfffbeb, 0x5c2d0c, 1.15);
     scene.add(hemiLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffedd5, 2.2);
-    keyLight.position.set(6, 14, 8);
-    if (!isSoftwareGl) {
-      keyLight.castShadow = true;
-      keyLight.shadow.mapSize.set(1024, 1024);
-      keyLight.shadow.camera.near = 1;
-      keyLight.shadow.camera.far = 30;
-      const d = 7.5;
-      keyLight.shadow.camera.left = -d;
-      keyLight.shadow.camera.right = d;
-      keyLight.shadow.camera.top = d;
-      keyLight.shadow.camera.bottom = -d;
-      keyLight.shadow.bias = -0.0005;
-      keyLight.shadow.normalBias = 0.02;
-    }
+    const keyLight = new THREE.DirectionalLight(0xfff5e0, 2.3);
+    keyLight.position.set(6, 15, 8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 30;
+    const d = 7.5;
+    keyLight.shadow.camera.left = -d;
+    keyLight.shadow.camera.right = d;
+    keyLight.shadow.camera.top = d;
+    keyLight.shadow.camera.bottom = -d;
+    keyLight.shadow.bias = -0.0005;
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0xf59e0b, 1.1);
-    rimLight.position.set(-7, 9, -6);
+    const rimLight = new THREE.DirectionalLight(0xfbbf24, 1.35);
+    rimLight.position.set(-7, 10, -6);
     scene.add(rimLight);
 
     // OrbitControls
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = !isSoftwareGl;
+    controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.maxPolarAngle = Math.PI / 2.15;
     controls.minPolarAngle = 0.05;
@@ -323,26 +337,27 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
     controls.maxDistance = 20;
     controls.target.set(0, 0, 0.25);
 
-    // Soft Contact Shadow Grounding Plane
+    // Soft Warm Temple Floor Halo Plane
     const contactCanvas = document.createElement('canvas');
     contactCanvas.width = 256;
     contactCanvas.height = 256;
     const cCtx = contactCanvas.getContext('2d');
     if (cCtx) {
-      const g = cCtx.createRadialGradient(128, 128, 20, 128, 128, 124);
-      g.addColorStop(0, 'rgba(0,0,0,0.65)');
-      g.addColorStop(1, 'rgba(0,0,0,0)');
+      const g = cCtx.createRadialGradient(128, 128, 18, 128, 128, 124);
+      g.addColorStop(0, 'rgba(245, 158, 11, 0.35)');
+      g.addColorStop(0.6, 'rgba(30, 12, 4, 0.55)');
+      g.addColorStop(1, 'rgba(30, 12, 4, 0)');
       cCtx.fillStyle = g;
       cCtx.fillRect(0, 0, 256, 256);
     }
     const contactTex = new THREE.CanvasTexture(contactCanvas);
     const contactPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(14.5, 14.5),
+      new THREE.PlaneGeometry(15.2, 15.2),
       new THREE.MeshBasicMaterial({
         map: contactTex,
         transparent: true,
         depthWrite: false,
-        opacity: 0.55,
+        opacity: 0.75,
       })
     );
     contactPlane.rotation.x = -Math.PI / 2;
@@ -355,7 +370,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
 
     const disposableGeometries: THREE.BufferGeometry[] = [];
     const disposableMaterials: THREE.Material[] = [];
-    const disposableTextures: THREE.Texture[] = [envTexture, contactTex];
+    const disposableTextures: THREE.Texture[] = [contactTex];
 
     function clearDynamicGroup() {
       while (chartRootGroup.children.length > 0) {
@@ -367,12 +382,12 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
       while (disposableMaterials.length > 0) {
         disposableMaterials.pop()?.dispose();
       }
-      while (disposableTextures.length > 2) {
+      while (disposableTextures.length > 1) {
         disposableTextures.pop()?.dispose();
       }
     }
 
-    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+    const maxAnisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 4);
 
     function buildChartScene() {
       clearDynamicGroup();
@@ -385,67 +400,73 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         fontScale: fScale,
       } = latestPropsRef.current;
 
-      // Shared PBR Materials for the Composite 3D Yantra Plinth
-      const mahoganyMat = new THREE.MeshStandardMaterial({
-        color: 0x3e1f0d,
-        roughness: 0.55,
-        metalness: 0.15,
+      // Royal Vedic Bhojpatra, Kumkum & Swarna Gold Materials
+      const royalMaroonMat = new THREE.MeshStandardMaterial({
+        color: 0x5c230a,
+        roughness: 0.45,
+        metalness: 0.2,
       });
-      const sandalwoodFloorMat = new THREE.MeshStandardMaterial({
-        color: 0xfaf0dc,
-        roughness: 0.72,
-        metalness: 0.05,
+      const bhojpatraFloorMat = new THREE.MeshStandardMaterial({
+        color: 0xfff6e0,
+        roughness: 0.58,
+        metalness: 0.06,
       });
-      const brushedGoldMat = new THREE.MeshPhysicalMaterial({
-        color: 0xd99b26,
-        roughness: 0.24,
-        metalness: 0.88,
-        clearcoat: 0.4,
+      const swarnaGoldMat = new THREE.MeshStandardMaterial({
+        color: 0xe5a024,
+        roughness: 0.25,
+        metalness: 0.78,
+        emissive: 0x78350f,
+        emissiveIntensity: 0.14,
       });
-      const bronzeWallMat = new THREE.MeshStandardMaterial({
-        color: 0x6b3e1b,
-        roughness: 0.42,
-        metalness: 0.55,
+      const copperBronzeWallMat = new THREE.MeshStandardMaterial({
+        color: 0x8a4215,
+        roughness: 0.36,
+        metalness: 0.52,
       });
-      disposableMaterials.push(mahoganyMat, sandalwoodFloorMat, brushedGoldMat, bronzeWallMat);
+      disposableMaterials.push(
+        royalMaroonMat,
+        bhojpatraFloorMat,
+        swarnaGoldMat,
+        copperBronzeWallMat
+      );
 
-      // 1. Stepped Temple Plinth Base (Composite Group)
+      // 1. Stepped Temple Plinth Base
       const lowerPlinthGeo = new THREE.BoxGeometry(11.1, 0.35, 11.1);
       const upperPlinthGeo = new THREE.BoxGeometry(10.5, 0.28, 10.5);
-      const floorGeo = new THREE.BoxGeometry(9.8, 0.12, 9.8);
+      const floorGeo = new THREE.BoxGeometry(9.8, 0.14, 9.8);
       disposableGeometries.push(lowerPlinthGeo, upperPlinthGeo, floorGeo);
 
-      const lowerPlinth = new THREE.Mesh(lowerPlinthGeo, mahoganyMat);
+      const lowerPlinth = new THREE.Mesh(lowerPlinthGeo, royalMaroonMat);
       lowerPlinth.position.y = -0.38;
       lowerPlinth.receiveShadow = true;
       chartRootGroup.add(lowerPlinth);
 
-      const upperPlinth = new THREE.Mesh(upperPlinthGeo, bronzeWallMat);
+      const upperPlinth = new THREE.Mesh(upperPlinthGeo, copperBronzeWallMat);
       upperPlinth.position.y = -0.14;
       upperPlinth.receiveShadow = true;
       chartRootGroup.add(upperPlinth);
 
-      const sanctumFloor = new THREE.Mesh(floorGeo, sandalwoodFloorMat);
-      sanctumFloor.position.y = 0.02;
+      const sanctumFloor = new THREE.Mesh(floorGeo, bhojpatraFloorMat);
+      sanctumFloor.position.y = 0.03;
       sanctumFloor.receiveShadow = true;
       chartRootGroup.add(sanctumFloor);
 
       // 2. Outer Raised 3D Temple Walls + 4 Corner Kalash Pillars
       const wallThickness = 0.22;
-      const wallHeight = 0.42;
+      const wallHeight = 0.44;
       const hWallGeo = new THREE.BoxGeometry(10.04, wallHeight, wallThickness);
       const vWallGeo = new THREE.BoxGeometry(wallThickness, wallHeight, 10.04);
-      const cornerPillarGeo = new THREE.CylinderGeometry(0.24, 0.3, 0.68, 16);
-      const cornerDomeGeo = new THREE.SphereGeometry(0.22, 16, 12);
+      const cornerPillarGeo = new THREE.CylinderGeometry(0.24, 0.3, 0.7, 16);
+      const cornerDomeGeo = new THREE.SphereGeometry(0.23, 16, 12);
       disposableGeometries.push(hWallGeo, vWallGeo, cornerPillarGeo, cornerDomeGeo);
 
-      const northWall = new THREE.Mesh(hWallGeo, brushedGoldMat);
+      const northWall = new THREE.Mesh(hWallGeo, swarnaGoldMat);
       northWall.position.set(0, wallHeight / 2, -4.92);
-      const southWall = new THREE.Mesh(hWallGeo, brushedGoldMat);
+      const southWall = new THREE.Mesh(hWallGeo, swarnaGoldMat);
       southWall.position.set(0, wallHeight / 2, 4.92);
-      const westWall = new THREE.Mesh(vWallGeo, brushedGoldMat);
+      const westWall = new THREE.Mesh(vWallGeo, swarnaGoldMat);
       westWall.position.set(-4.92, wallHeight / 2, 0);
-      const eastWall = new THREE.Mesh(vWallGeo, brushedGoldMat);
+      const eastWall = new THREE.Mesh(vWallGeo, swarnaGoldMat);
       eastWall.position.set(4.92, wallHeight / 2, 0);
       chartRootGroup.add(northWall, southWall, westWall, eastWall);
 
@@ -455,32 +476,39 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         [-4.92, 4.92],
         [4.92, 4.92],
       ].forEach(([cx, cz]) => {
-        const pillar = new THREE.Mesh(cornerPillarGeo, bronzeWallMat);
+        const pillar = new THREE.Mesh(cornerPillarGeo, royalMaroonMat);
         pillar.position.set(cx, 0.28, cz);
-        const dome = new THREE.Mesh(cornerDomeGeo, brushedGoldMat);
-        dome.position.set(cx, 0.66, cz);
+        const dome = new THREE.Mesh(cornerDomeGeo, swarnaGoldMat);
+        dome.position.set(cx, 0.68, cz);
         chartRootGroup.add(pillar, dome);
       });
 
       // Helper to add an extruded 3D wall segment between two (x,z) points
-      const addWallSegment = (x1: number, z1: number, x2: number, z2: number, height = 0.34, thick = 0.14) => {
+      const addWallSegment = (
+        x1: number,
+        z1: number,
+        x2: number,
+        z2: number,
+        height = 0.35,
+        thick = 0.15
+      ) => {
         const dx = x2 - x1;
         const dz = z2 - z1;
         const len = Math.hypot(dx, dz);
         const angle = Math.atan2(dx, dz);
 
         const baseGeo = new THREE.BoxGeometry(thick, height, len);
-        const capGeo = new THREE.BoxGeometry(thick * 0.75, 0.06, len);
+        const capGeo = new THREE.BoxGeometry(thick * 0.78, 0.07, len);
         disposableGeometries.push(baseGeo, capGeo);
 
-        const wallMesh = new THREE.Mesh(baseGeo, bronzeWallMat);
+        const wallMesh = new THREE.Mesh(baseGeo, copperBronzeWallMat);
         wallMesh.position.set((x1 + x2) / 2, height / 2, (z1 + z2) / 2);
         wallMesh.rotation.y = angle;
-        wallMesh.castShadow = !isSoftwareGl;
+        wallMesh.castShadow = true;
         wallMesh.receiveShadow = true;
 
-        const capMesh = new THREE.Mesh(capGeo, brushedGoldMat);
-        capMesh.position.set((x1 + x2) / 2, height + 0.03, (z1 + z2) / 2);
+        const capMesh = new THREE.Mesh(capGeo, swarnaGoldMat);
+        capMesh.position.set((x1 + x2) / 2, height + 0.035, (z1 + z2) / 2);
         capMesh.rotation.y = angle;
 
         chartRootGroup.add(wallMesh, capMesh);
@@ -500,7 +528,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         // 3D Rashi Medallion Pedestal
         const medGeo = new THREE.CylinderGeometry(0.42, 0.48, 0.16, 20);
         disposableGeometries.push(medGeo);
-        const medMesh = new THREE.Mesh(medGeo, isLagna ? brushedGoldMat : bronzeWallMat);
+        const medMesh = new THREE.Mesh(medGeo, isLagna ? swarnaGoldMat : copperBronzeWallMat);
         medMesh.position.set(rx, 0.14, rz);
         chartRootGroup.add(medMesh);
 
@@ -515,13 +543,13 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         disposableMaterials.push(rashiSpriteMat);
         const rashiSprite = new THREE.Sprite(rashiSpriteMat);
         rashiSprite.position.set(rx, 0.42, rz);
-        rashiSprite.scale.set(isLagna ? 1.55 : 1.35, isLagna ? 0.78 : 0.68, 1);
+        rashiSprite.scale.set(isLagna ? 1.62 : 1.4, isLagna ? 0.78 : 0.68, 1);
         rashiSprite.renderOrder = 5;
         chartRootGroup.add(rashiSprite);
 
         if (pList.length === 0) return;
 
-        // Spawn 3D Planetary Orbs in the Chamber (Composite 3-part Group per planet)
+        // Spawn 3D Planetary Orbs in the Chamber
         const sphereGeo = new THREE.SphereGeometry(0.22, 20, 16);
         const ringGeo = new THREE.TorusGeometry(0.3, 0.035, 10, 24);
         const basePedGeo = new THREE.CylinderGeometry(0.18, 0.24, 0.14, 16);
@@ -534,30 +562,29 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
           const orbX = px + Math.cos(theta) * spreadRadius;
           const orbZ = pz + Math.sin(theta) * spreadRadius;
 
-          const pColor = PLANET_3D_COLORS[p.name] || 0xfbbf24;
-          const planetMat = new THREE.MeshPhysicalMaterial({
+          const pColor = PLANET_3D_COLORS[p.name] || 0xd97706;
+          const planetMat = new THREE.MeshStandardMaterial({
             color: pColor,
-            roughness: 0.22,
+            roughness: 0.25,
             metalness: 0.35,
-            clearcoat: 0.8,
             emissive: pColor,
-            emissiveIntensity: 0.18,
+            emissiveIntensity: 0.2,
           });
           disposableMaterials.push(planetMat);
 
           const planetGroup = new THREE.Group();
           planetGroup.position.set(orbX, 0.12, orbZ);
 
-          const ped = new THREE.Mesh(basePedGeo, brushedGoldMat);
+          const ped = new THREE.Mesh(basePedGeo, swarnaGoldMat);
           ped.position.y = 0.07;
           planetGroup.add(ped);
 
           const orb = new THREE.Mesh(sphereGeo, planetMat);
           orb.position.y = 0.32;
-          orb.castShadow = !isSoftwareGl;
+          orb.castShadow = true;
           planetGroup.add(orb);
 
-          const halo = new THREE.Mesh(ringGeo, brushedGoldMat);
+          const halo = new THREE.Mesh(ringGeo, swarnaGoldMat);
           halo.position.y = 0.32;
           halo.rotation.x = Math.PI / 2.4;
           planetGroup.add(halo);
@@ -583,9 +610,9 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
 
         const badgeSprite = new THREE.Sprite(badgeMat);
         const rows = Math.ceil(pList.length / (pList.length > 2 ? 2 : 1));
-        const baseHeight = (fScale === 'xlarge' ? 0.68 : 0.58) * (0.75 + rows * 0.42);
+        const baseHeight = (fScale === 'xlarge' ? 0.72 : 0.62) * (0.76 + rows * 0.42);
         badgeSprite.scale.set(baseHeight * aspect, baseHeight, 1);
-        badgeSprite.position.set(px, 0.92 + (rows > 1 ? 0.12 : 0), pz);
+        badgeSprite.position.set(px, 0.94 + (rows > 1 ? 0.12 : 0), pz);
         badgeSprite.renderOrder = 15;
         chartRootGroup.add(badgeSprite);
       };
@@ -602,7 +629,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         // Central 3D Bindu Lotus Hub
         const hubGeo = new THREE.CylinderGeometry(0.45, 0.55, 0.48, 24);
         disposableGeometries.push(hubGeo);
-        const hubMesh = new THREE.Mesh(hubGeo, brushedGoldMat);
+        const hubMesh = new THREE.Mesh(hubGeo, swarnaGoldMat);
         hubMesh.position.set(0, 0.24, 0);
         chartRootGroup.add(hubMesh);
 
@@ -628,7 +655,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         // Raised Central Brahmasthan Platform
         const centerAltarGeo = new THREE.BoxGeometry(4.75, 0.26, 4.75);
         disposableGeometries.push(centerAltarGeo);
-        const centerAltar = new THREE.Mesh(centerAltarGeo, bronzeWallMat);
+        const centerAltar = new THREE.Mesh(centerAltarGeo, royalMaroonMat);
         centerAltar.position.set(0, 0.16, 0);
         chartRootGroup.add(centerAltar);
 
@@ -653,9 +680,6 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
     }
 
     buildChartScene();
-    if (!isSoftwareGl) {
-      renderer.compile(scene, camera);
-    }
 
     // Smooth Damped Camera Transition State
     let activeTransition = false;
@@ -663,39 +687,17 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
     let lastTime = performance.now();
 
     let frameId = 0;
-    let renderBusy = false;
-    let renderDirty = false;
-
-    function afterDraw(cb: () => void) {
-      const gl = renderer.getContext() as WebGL2RenderingContext;
-      if (!gl || typeof gl.fenceSync !== 'function') {
-        frameId = window.setTimeout(cb, 80);
-        return;
-      }
-      const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-      gl.flush();
-      const poll = () => {
-        const state = sync && gl.getSyncParameter(sync, gl.SYNC_STATUS);
-        if (state === gl.UNSIGNALED) {
-          frameId = window.setTimeout(poll, 5);
-        } else {
-          if (sync) gl.deleteSync(sync);
-          frameId = window.setTimeout(cb, 80);
-        }
-      };
-      frameId = window.setTimeout(poll, 5);
-    }
+    let renderScheduled = false;
 
     function requestRender() {
-      if (renderBusy) {
-        renderDirty = true;
-        return;
-      }
-      renderBusy = true;
+      if (renderScheduled) return;
+      renderScheduled = true;
       frameId = requestAnimationFrame((now) => {
-        renderDirty = false;
+        renderScheduled = false;
         const dt = Math.min(0.1, (now - lastTime) / 1000);
         lastTime = now;
+
+        let needsMoreFrames = false;
 
         if (activeTransition) {
           camera.position.x = THREE.MathUtils.damp(camera.position.x, _camTargetPos.x, 7, dt);
@@ -709,23 +711,19 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
             camera.position.copy(_camTargetPos);
             activeTransition = false;
           } else {
-            renderDirty = true;
+            needsMoreFrames = true;
           }
         }
 
-        const controlsChanged = controls.update();
-        if (controlsChanged && !isSoftwareGl) {
-          renderDirty = true;
+        if (controls.update()) {
+          needsMoreFrames = true;
         }
 
         renderer.render(scene, camera);
 
-        const done = () => {
-          renderBusy = false;
-          if (renderDirty) requestRender();
-        };
-        if (isSoftwareGl) afterDraw(done);
-        else done();
+        if (needsMoreFrames) {
+          requestRender();
+        }
       });
     }
 
@@ -772,8 +770,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
 
     return () => {
       window.removeEventListener('resize', onResize);
+      renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
       cancelAnimationFrame(frameId);
-      clearTimeout(frameId);
       controls.dispose();
       clearDynamicGroup();
       while (disposableTextures.length > 0) {
@@ -789,13 +787,19 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
   }, [chartStyle, ascSignIdx, housePlanets, signPlanets, showDegrees, fontScale]);
 
   return (
-    <div className="relative w-full aspect-square max-w-[440px] rounded-2xl overflow-hidden border-2 border-[#B56A00]/60 shadow-lg bg-[#160C06]">
-      {/* Dedicated Empty WebGL Canvas Container */}
+    <div
+      className="relative w-full aspect-square max-w-[440px] rounded-2xl overflow-hidden border-2 border-[#B56A00] shadow-lg"
+      style={{ backgroundColor: '#3A1D0C' }}
+    >
+      {/* Dedicated WebGL Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-      {/* Minimal Top-Left Spec Badge (Zero Side-Panel Occlusion) */}
-      <div className="absolute top-2.5 left-2.5 pointer-events-none px-2.5 py-1 rounded-lg bg-[#1C0E07]/90 border border-[#F59E0B]/45 text-[10px] font-bold text-[#FDE68A] tracking-wide">
-        Three.js 3D यंत्र • घुमाएँ व ज़ूम करें
+      {/* Top-Left Spec Badge (Warm Royal Maroon & Gold) */}
+      <div
+        className="absolute top-2.5 left-2.5 pointer-events-none px-2.5 py-1 rounded-lg border border-[#F59E0B]/60 text-[10px] font-bold tracking-wide"
+        style={{ backgroundColor: 'rgba(62, 31, 13, 0.92)', color: '#FFF3C4' }}
+      >
+        Three.js 3D स्वर्ण यंत्र • घुमाएँ व ज़ूम करें
       </div>
 
       {/* Collapsible Unified Bottom Control Dock */}
@@ -806,13 +810,17 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
             triggerHapticSelection();
             setDockCollapsed((prev) => !prev);
           }}
-          className="px-3 py-0.5 rounded-t-lg bg-[#231209] border border-b-0 border-[#D97706]/50 text-[10px] font-bold text-[#FDE68A] cursor-pointer"
+          className="px-3 py-0.5 rounded-t-lg border border-b-0 border-[#D97706]/70 text-[10px] font-bold cursor-pointer"
+          style={{ backgroundColor: '#4A2410', color: '#FFF3C4' }}
         >
           {dockCollapsed ? '▴ 3D नियंत्रक दिखाएँ' : '▾ नियंत्रक छिपाएँ'}
         </button>
 
         {!dockCollapsed && (
-          <div className="w-full px-2.5 py-1.5 rounded-xl bg-[#1A0D06]/95 border border-[#D97706]/55 flex flex-wrap items-center justify-between gap-1.5 shadow-md">
+          <div
+            className="w-full px-2.5 py-1.5 rounded-xl border border-[#D97706]/70 flex flex-wrap items-center justify-between gap-1.5 shadow-md"
+            style={{ backgroundColor: 'rgba(54, 25, 10, 0.95)' }}
+          >
             <div className="flex items-center gap-1">
               {[
                 { id: 'perspective', label: '3D कोण' },
@@ -828,11 +836,12 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
                     setCameraPreset(mode);
                     triggerPresetRef.current?.(mode);
                   }}
-                  className={`px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                  style={
                     cameraPreset === p.id
-                      ? 'bg-[#D97706] text-stone-950 font-black'
-                      : 'bg-[#2C180C] text-[#FDE68A] hover:bg-[#3D2212]'
-                  }`}
+                      ? { backgroundColor: '#F59E0B', color: '#2A1205', fontWeight: 900 }
+                      : { backgroundColor: '#5C2D14', color: '#FFF3C4' }
+                  }
                 >
                   {p.label}
                 </button>
@@ -845,7 +854,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
                 triggerHapticSelection();
                 setFontScale((prev) => (prev === 'xlarge' ? 'large' : 'xlarge'));
               }}
-              className="px-2 py-1 rounded-lg text-[10px] font-black bg-[#3D2212] text-[#FEF08A] border border-[#F59E0B]/40 cursor-pointer"
+              className="px-2 py-1 rounded-lg text-[10px] font-black border border-[#F59E0B]/60 cursor-pointer"
+              style={{ backgroundColor: '#FFF3C4', color: '#3E1F0D' }}
               title="ग्रहों के फ़ॉन्ट का आकार बदलें"
             >
               {fontScale === 'xlarge' ? 'फ़ॉन्ट: अति-बड़ा (XL)' : 'फ़ॉन्ट: बड़ा (L)'}

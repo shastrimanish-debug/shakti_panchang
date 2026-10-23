@@ -1288,9 +1288,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                           key={v.division}
                           onClick={() => {
                             setSelectedVarga(v.division);
-                            document.getElementById(`varga-chart-${v.division}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            document.getElementById('varga-main-chart-viewer')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                           }}
-                          className={`p-2 rounded-lg border text-left transition flex flex-col justify-between ${
+                          className={`p-2 rounded-lg border text-left transition flex flex-col justify-between cursor-pointer ${
                             isSel
                               ? 'bg-[#5C3A21] text-[#FAF2E4] border-[#5C3A21] shadow-xs ring-2 ring-[#B56A00]'
                               : 'bg-[#F4E8D1] text-[#5C3A21] border-[#8C6239]/30 hover:bg-[#EBDCC0]'
@@ -1317,7 +1317,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </div>
 
               {/* Chart and Significance Details */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div id="varga-main-chart-viewer" className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 <div className="lg:col-span-5 space-y-3">
                   <KundaliChart
                     lagnaDegree={k.lagnaDegree}
@@ -1373,7 +1373,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       <span>{vargaListFilter === 'shodash' ? 'षोडशवर्ग (16 वर्गीय चक्रों) की सूची' : 'सम्पूर्ण D1 से D60 वर्गीय चक्रों की सूची'}</span>
                       <span className="text-[10px] text-[#FFD88A]">क्लिक कर चार्ट देखें</span>
                     </div>
-                    <div className="">
+                    <div className="max-h-80 overflow-y-auto">
                       <table className="w-full text-left text-xs">
                         <tbody className="divide-y divide-[#8C6239]/20">
                           {(vargaListFilter === 'shodash'
@@ -1407,20 +1407,58 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           )}
 
               <div className="space-y-4">
-                <h4 className="text-sm font-bold font-granth text-[#5C3A21]">D1 से D60 तक सभी वर्ग चक्र</h4>
-                {ALL_D1_TO_D60_VARGAS.map((varga) => (
-                  <div key={varga.division} id={`varga-chart-${varga.division}`} className="space-y-1">
-                    <div className="text-xs font-bold text-[#5C3A21]">{varga.code}: {varga.name}</div>
-                    <p className="text-[11px] text-[#735133] leading-relaxed">{varga.desc}</p>
-                    <KundaliChart
-                      lagnaDegree={k.lagnaDegree}
-                      planets={k.planets}
-                      vargaDivision={varga.division}
-                      chartTitle={`${k.name} — ${varga.code}`}
-                      allowToggleStyle={false}
-                    />
+                <div className="flex flex-wrap items-center justify-between gap-2 bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/35">
+                  <div>
+                    <h4 className="text-sm font-black font-granth text-[#4A200A]">
+                      {vargaListFilter === 'shodash'
+                        ? 'मुख्य १६ षोडशवर्ग 3D चक्र (D1 – D60)'
+                        : 'सम्पूर्ण ६० वर्गीय 3D चक्र (D1 से D60 तक)'}
+                    </h4>
+                    <p className="text-[11px] text-[#735133]">
+                      प्रत्येक चार्ट 3D उभरे वैदिक यंत्र रूप में प्रदर्शित है — किसी भी चार्ट पर &ldquo;✦ Three.js 3D में देखें&rdquo; दबाकर पूर्ण 3D मॉडल घुमाएँ।
+                    </p>
                   </div>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => setVargaListFilter(vargaListFilter === 'shodash' ? 'all60' : 'shodash')}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#5C2D0C] text-[#FFF3C4] border border-[#D97706] cursor-pointer"
+                  >
+                    {vargaListFilter === 'shodash'
+                      ? 'सभी 60 चक्र (D1-D60) खोलें'
+                      : 'केवल 16 मुख्य षोडशवर्ग दिखाएँ'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(vargaListFilter === 'shodash'
+                    ? ALL_D1_TO_D60_VARGAS.filter((v) => v.isShodash)
+                    : ALL_D1_TO_D60_VARGAS
+                  ).map((varga) => (
+                    <div
+                      key={varga.division}
+                      id={`varga-chart-${varga.division}`}
+                      className="space-y-1.5 bg-[#FAF2E4]/70 p-2.5 rounded-2xl border border-[#8C6239]/25"
+                    >
+                      <div className="flex items-center justify-between px-1">
+                        <div className="text-xs font-black text-[#4A200A]">
+                          {varga.code}: {varga.name}
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#F4E8D1] text-[#7C2D12] font-bold border border-[#C88A2B]/40">
+                          विभाजन 1/{varga.division}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#5C3A21] px-1 leading-relaxed">{varga.desc}</p>
+                      <KundaliChart
+                        lagnaDegree={k.lagnaDegree}
+                        planets={k.planets}
+                        vargaDivision={varga.division}
+                        chartTitle={`${k.name} — ${varga.code}`}
+                        allowToggleStyle={false}
+                        defaultRenderMode="relief3d"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Bottom Pagination */}
