@@ -372,7 +372,7 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   },
   {
     title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },
-    ids: ["devta_arpan", "durga", "audio_player", "hanuman", "sundarkand", "gita", "vratkatha", "vastu", "reminders"],
+    ids: ["granth_puran", "devta_arpan", "durga", "audio_player", "hanuman", "sundarkand", "gita", "vratkatha", "vastu", "reminders"],
   },
   {
     title: { hi: "दर्शन", en: "Reading", gu: "દર્શન" },
@@ -655,7 +655,7 @@ export function TodayBoard({
       {/* 4. Daily Rotating Sanskrit Shloka with Hindi Translation & Share Button */}
       <DailyShlokaCard
         date={panchang.solar.sunrise || new Date()}
-        onExploreMore={() => onOpen("gita")}
+        onExploreMore={() => onOpen("granth_puran")}
       />
 
       {/* 5. Quick Action Tiles */}
@@ -703,6 +703,17 @@ export function TodayBoard({
         >
           <strong>{t("nav.rashifal", "राशिफल")}</strong>
           <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
+        </button>
+        <button
+          type="button"
+          className="bx-tile bx-glass h-auto min-h-16 col-span-2"
+          onClick={() => {
+            triggerHapticSelection();
+            onOpen("granth_puran");
+          }}
+        >
+          <strong>{t("nav.granthPuran", "प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय")}</strong>
+          <p>{t("nav.granthPuranDesc", "श्रीमद्भगवद्गीता, १० प्रमुख उपनिषद्, अष्टादश महापुराण व वैदिक सूक्त सार")}</p>
         </button>
       </div>
     </div>

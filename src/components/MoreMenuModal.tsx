@@ -164,6 +164,32 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </button>
         </div>
 
+        {/* Ancient Granth, Upanishads & Puranas Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('granth_puran'))}
+            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-[#FAF2E4] dark:bg-[#341F14] text-[#3E2714] dark:text-[#FAF2E4] border-[#B56A00]"
+          >
+            <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+              <div className="p-2 bg-[#5C3A21] rounded-xl text-[#FFD88A] shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-black text-[#5C3A21] dark:text-[#FFD88A] leading-snug">
+                  प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय
+                </div>
+                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
+                  श्रीमद्भगवद्गीता, ईश-कठ-मुण्डक उपनिषद्, अष्टादश पुराण व वेद-सूक्त
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] bg-[#5C3A21] text-[#FFD88A] px-2.5 py-1 rounded-lg font-bold shrink-0">
+              पढ़ें →
+            </span>
+          </button>
+        </div>
+
         {/* Subscription / VIP Status Card */}
         <div className="mt-2.5">
           <button

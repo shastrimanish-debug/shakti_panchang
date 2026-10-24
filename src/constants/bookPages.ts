@@ -156,6 +156,16 @@ export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
     screenTitle: '📜 श्रीमद्भगवद्गीता ज्ञान',
   },
   {
+    id: 'granth_puran',
+    title: 'प्राचीन ग्रन्थ, उपनिषद् व महापुराण',
+    label: 'ग्रन्थ व उपनिषद्',
+    pageNumber: 32,
+    chapter: 'वेदान्त एवं पुराण संहिता',
+    desc: 'भगवद्गीता, ईश-कठ-मुण्डक उपनिषद्, भागवत-शिव-विष्णु महापुराण व वेद सूक्त',
+    icon: BookOpen,
+    screenTitle: '📚 प्राचीन ग्रन्थ, उपनिषद् व पुराण स्वाध्याय',
+  },
+  {
     id: 'yatra',
     title: 'यात्रा',
     label: 'यात्रा',
@@ -588,9 +598,25 @@ export const BOOK_PAGES: BookPageItem[] = [
     icon: Sparkles,
     screenTitle: '🪔 देवता अर्पण फल व पूजन सामग्री',
   },
+  {
+    id: 'granth_puran',
+    title: 'प्राचीन ग्रन्थ, उपनिषद् एवं अष्टादश महापुराण सार',
+    label: 'ग्रन्थ व उपनिषद्',
+    pageNumber: 32,
+    chapter: 'द्वाविंशति अध्याय',
+    desc: 'श्रीमद्भगवद्गीता, प्रमुख उपनिषद् (ईश, केन, कठ, मुण्डक, माण्डूक्य), महापुराण व वैदिक सूक्त',
+    icon: BookOpen,
+    screenTitle: '📚 प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय',
+  },
 ];
 
 const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
+  granth_puran: {
+    title: 'Ancient Scriptures: Bhagavad Gita, Upanishads & Mahapuranas',
+    label: 'Granth & Upanishads',
+    desc: 'Excerpts, Sanskrit padaccheda, translations & commentary from Gita, Upanishads & Puranas',
+    screenTitle: '📚 Ancient Scriptures & Upanishads',
+  },
   devta_arpan: {
     title: 'Divine Offerings & Blessings (Devta Arpan Fal)',
     label: 'Devta Arpan',
@@ -899,6 +925,12 @@ const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string;
     label: 'ગ્રંથ સૂચિ',
     desc: 'તમામ અધ્યાયો, સ્તોત્રો અને સાધનોની સંપૂર્ણ યાદી',
     screenTitle: '📖 ગ્રંથ અનુક્રમણિકા',
+  },
+  granth_puran: {
+    title: 'પ્રાચીન ગ્રંથ, ઉપનિષદ અને અષ્ટાદશ મહાપુરાણ સાર',
+    label: 'ગ્રંથ અને ઉપનિષદ',
+    desc: 'શ્રીમદ્ ભગવદ્ ગીતા, પ્રમુખ ઉપનિષદો, ભાગવત-શિવ-વિષ્ણુ મહાપુરાણ અને વૈદિક સૂક્તો',
+    screenTitle: '📚 પ્રાચીન ગ્રંથ અને ઉપનિષદ સ્વાધ્યાય',
   },
 };
 

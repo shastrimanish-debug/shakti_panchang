@@ -37,6 +37,7 @@ const IChingView = React.lazy(() => import('./components/IChingView').then((m) =
 const DevtaArpanView = React.lazy(() => import('./components/DevtaArpanView').then((m) => ({ default: m.DevtaArpanView })));
 const DailyRashifalView = React.lazy(() => import('./components/DailyRashifalView').then((m) => ({ default: m.DailyRashifalView })));
 const DailyGitaShlokaView = React.lazy(() => import('./components/DailyGitaShlokaView').then((m) => ({ default: m.DailyGitaShlokaView })));
+const GranthPuranView = React.lazy(() => import('./components/GranthPuranView').then((m) => ({ default: m.GranthPuranView })));
 const WhatsAppPanchangModal = React.lazy(() => import('./components/WhatsAppPanchangModal').then((m) => ({ default: m.WhatsAppPanchangModal })));
 const AstrologerBrandingModal = React.lazy(() => import('./components/AstrologerBrandingModal').then((m) => ({ default: m.AstrologerBrandingModal })));
 const UmaAssistantModal = React.lazy(() => import('./components/UmaAssistantModal').then((m) => ({ default: m.UmaAssistantModal })));
@@ -300,6 +301,7 @@ export function App() {
           vastu: 'वैदिक वास्तु शास्त्र',
           rashifal: 'दैनिक राशिफल',
           gita: 'श्रीमद्भगवद्गीता श्लोक',
+          granth_puran: 'प्राचीन ग्रन्थ, उपनिषद् एवं महापुराण स्वाध्याय',
           hanuman: 'श्री हनुमान चालीसा',
           sundarkand: 'संपूर्ण सुंदरकांड पाठ',
           sabar: '501 शाबर मंत्र',
@@ -624,6 +626,19 @@ export function App() {
             {activeTab === 'gita' && (
               <DailyGitaShlokaView
                 onBackToPanchang={() => handleSelectTab('panchang')}
+                onOpenUmaModal={(query?: string) => {
+                  if (query) setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
+
+            {activeTab === 'granth_puran' && (
+              <GranthPuranView
+                onBackToPanchang={() => handleSelectTab('panchang')}
+                onSelectTab={handleSelectTab}
                 onOpenUmaModal={(query?: string) => {
                   if (query) setUmaInitialPrompt(query);
                   setIsUmaModalOpen(true);
