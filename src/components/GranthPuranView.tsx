@@ -304,9 +304,19 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
   );
 
   return (
-    <div className="w-full h-full min-h-0 flex flex-col bg-[#FCF8EC] dark:bg-[#1E120A] text-[#2C180C] dark:text-[#FAF2E4] overflow-hidden select-none relative">
+    <div
+      className="w-full h-full min-h-0 flex flex-col overflow-hidden select-none relative"
+      style={{ backgroundColor: '#FAF3E3', color: '#1F1006' }}
+    >
       {/* Top Sacred Manuscript Header */}
-      <header className="shrink-0 bg-gradient-to-r from-[#462B17] via-[#5C3A21] to-[#3E2714] text-[#FAF2E4] px-3 py-2.5 shadow-sm flex items-center justify-between border-b border-[#B56A00]/40 z-20">
+      <header
+        className="shrink-0 px-3 py-2.5 shadow-sm flex items-center justify-between border-b z-20"
+        style={{
+          backgroundColor: '#FFF9EE',
+          borderColor: '#D6B485',
+          color: '#2A1004',
+        }}
+      >
         <div className="flex items-center gap-2 min-w-0">
           {onBackToPanchang && (
             <button
@@ -315,10 +325,15 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 triggerHapticSelection();
                 onBackToPanchang();
               }}
-              className="px-2.5 py-1.5 rounded-xl bg-[#2C180C] border border-amber-500/40 text-amber-300 hover:bg-amber-900/40 transition cursor-pointer flex items-center gap-1 text-xs font-semibold shrink-0"
+              style={{
+                backgroundColor: '#FFF2DC',
+                color: '#4A1805',
+                borderColor: '#C89656',
+              }}
+              className="px-2.5 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0"
               title="पंचांग पर वापस जाएं"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" style={{ color: '#7C2D12' }} />
               <span className="hidden sm:inline">
                 {langKey === 'en' ? 'Panchang' : langKey === 'gu' ? 'પંચાંગ' : 'पंचांग'}
               </span>
@@ -331,24 +346,35 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               triggerHapticSelection();
               setIsTocOpen(!isTocOpen);
             }}
-            className="px-2.5 py-1.5 rounded-xl bg-[#2C180C] border border-amber-500/40 text-amber-300 hover:bg-amber-900/40 transition cursor-pointer flex items-center gap-1.5 shrink-0"
+            style={{
+              backgroundColor: '#FFF2DC',
+              color: '#4A1805',
+              borderColor: '#C89656',
+            }}
+            className="px-2.5 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1.5 shrink-0"
             title="ग्रन्थ अनुक्रमणिका"
           >
-            <Menu className="w-4 h-4" />
-            <span className="text-xs font-semibold hidden sm:inline">
+            <Menu className="w-4 h-4" style={{ color: '#7C2D12' }} />
+            <span className="text-xs font-bold hidden sm:inline">
               {langKey === 'en' ? 'Index' : langKey === 'gu' ? 'અનુક્રમણિકા' : 'अनुक्रमणिका'}
             </span>
           </button>
 
           <div className="min-w-0">
-            <h1 className="text-xs sm:text-sm font-bold font-granth tracking-wide text-[#FFD88A] truncate">
+            <h1
+              className="text-xs sm:text-sm font-bold font-granth tracking-wide truncate"
+              style={{ color: '#6E1409' }}
+            >
               {langKey === 'en'
                 ? 'Ancient Granths, Upanishads & Puranas'
                 : langKey === 'gu'
                   ? 'પ્રાચીન ગ્રંથ, ઉપનિષદ અને મહાપુરાણ સાર'
                   : 'प्राचीन ग्रन्थ, उपनिषद् एवं महापुराण स्वाध्याय'}
             </h1>
-            <p className="text-[11px] text-[#E5D2B8] truncate">
+            <p
+              className="text-[11px] font-semibold truncate"
+              style={{ color: '#4A2511' }}
+            >
               {currentExcerpt
                 ? `${currentExcerpt.scriptureName[langKey]} · ${currentExcerpt.reference}`
                 : TRADITION_META[activeTradition].subtitleHi}
@@ -361,17 +387,26 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
             type="button"
             onClick={() => handleToggleSpeak()}
             disabled={!currentExcerpt}
-            className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 cursor-pointer transition ${
+            style={
               isSpeaking
-                ? 'bg-rose-700 text-white border-rose-500'
-                : 'bg-[#3E2714] text-amber-200 border-amber-500/30 hover:bg-amber-900/40'
-            }`}
+                ? {
+                    backgroundColor: '#BE123C',
+                    color: '#FFFFFF',
+                    borderColor: '#9F1239',
+                  }
+                : {
+                    backgroundColor: '#FFF2DC',
+                    color: '#3D1605',
+                    borderColor: '#C89656',
+                  }
+            }
+            className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer transition"
             title="सस्वर संस्कृत व हिंदी पाठ सुनें"
           >
             {isSpeaking ? (
-              <VolumeX className="w-3.5 h-3.5" />
+              <VolumeX className="w-3.5 h-3.5" style={{ color: '#FFFFFF' }} />
             ) : (
-              <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+              <Volume2 className="w-3.5 h-3.5" style={{ color: '#9A3412' }} />
             )}
             <span className="hidden xs:inline">
               {isSpeaking
@@ -390,10 +425,15 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               triggerHapticSelection();
               setViewMode((m) => (m === 'reader' ? 'catalog' : 'reader'));
             }}
-            className="px-2.5 py-1.5 rounded-lg bg-[#3E2714] border border-amber-500/30 text-xs text-amber-200 font-semibold hover:bg-amber-900/40 flex items-center gap-1 cursor-pointer"
+            style={{
+              backgroundColor: '#FFF2DC',
+              color: '#3D1605',
+              borderColor: '#C89656',
+            }}
+            className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer"
             title="पठन मोड बदलें"
           >
-            <LayoutList className="w-3.5 h-3.5 text-amber-300" />
+            <LayoutList className="w-3.5 h-3.5" style={{ color: '#9A3412' }} />
             <span className="hidden sm:inline">
               {viewMode === 'reader'
                 ? langKey === 'en'
@@ -408,7 +448,12 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
           <button
             type="button"
             onClick={cycleFontSize}
-            className="px-2.5 py-1.5 rounded-lg bg-[#3E2714] border border-amber-500/30 text-xs text-amber-200 font-semibold hover:bg-amber-900/40 cursor-pointer"
+            style={{
+              backgroundColor: '#FFF2DC',
+              color: '#3D1605',
+              borderColor: '#C89656',
+            }}
+            className="px-2.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer"
             title="अक्षर आकार बदलें"
           >
             {fontSize === 'sm'
@@ -429,17 +474,27 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   `${currentExcerpt.scriptureName.hi} (${currentExcerpt.reference}) के श्लोक "${currentExcerpt.sanskrit.split('\n')[0]}" का गहरा वेदान्त रहस्य और दैनिक जीवन में प्रयोग समझाइए।`
                 );
               }}
-              className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-400 text-stone-950 text-xs font-bold flex items-center gap-1 shadow-xs hover:brightness-105 active:scale-95 transition cursor-pointer"
+              style={{
+                backgroundColor: '#9A3412',
+                color: '#FFFFFF',
+                borderColor: '#7C2D12',
+              }}
+              className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 shadow-xs active:scale-95 transition cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 fill-stone-950" />
-              <span>{langKey === 'en' ? 'Ask Uma' : 'उमा भाष्य'}</span>
+              <Sparkles className="w-3.5 h-3.5" style={{ color: '#FDE68A' }} />
+              <span style={{ color: '#FFFFFF' }}>
+                {langKey === 'en' ? 'Ask Uma' : 'उमा भाष्य'}
+              </span>
             </button>
           )}
         </div>
       </header>
 
       {/* Tradition Filter Bar + Search Bar */}
-      <div className="shrink-0 bg-[#FAF2E4] dark:bg-[#28180E] border-b border-[#DFCBB5] dark:border-[#4A2E1B] px-3 py-2 space-y-2">
+      <div
+        className="shrink-0 border-b px-3 py-2 space-y-2"
+        style={{ backgroundColor: '#F6EBD8', borderColor: '#D6B892' }}
+      >
         {/* Segmented Tradition Selector */}
         <div
           className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"
@@ -465,11 +520,20 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   triggerHapticSelection();
                   setActiveTradition(tabId);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer shrink-0 ${
+                style={
                   isActive
-                    ? 'bg-[#5C3A21] text-[#FFD88A] shadow-2xs'
-                    : 'bg-[#F2E5CF] dark:bg-[#362013] text-[#5C3A21] dark:text-[#E5D2B8] hover:bg-[#E6D3B3]'
-                }`}
+                    ? {
+                        backgroundColor: '#8B1E1E',
+                        color: '#FFFFFF',
+                        borderColor: '#6E1409',
+                      }
+                    : {
+                        backgroundColor: '#FFFDF8',
+                        color: '#2C1206',
+                        borderColor: '#C8A986',
+                      }
+                }
+                className="px-3 py-1.5 rounded-lg border text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0"
               >
                 {label}
                 {tabId === 'bookmarked' && bookmarkedCount > 0
@@ -491,37 +555,61 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   setSelectedScriptureFilter('ALL');
                   setSelectedIndex(0);
                 }}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap cursor-pointer transition ${
+                style={
                   selectedScriptureFilter === 'ALL'
-                    ? 'bg-[#8C4A00] text-white'
-                    : 'bg-white/80 dark:bg-[#1E120A] text-[#5C3A21] dark:text-[#D9C4A9] border border-[#DFCBB5]/70'
-                }`}
+                    ? {
+                        backgroundColor: '#9A3412',
+                        color: '#FFFFFF',
+                        borderColor: '#7C2D12',
+                      }
+                    : {
+                        backgroundColor: '#FFFDF9',
+                        color: '#3A1807',
+                        borderColor: '#CFAF8A',
+                      }
+                }
+                className="px-2.5 py-1 rounded-md border text-[11px] font-bold whitespace-nowrap cursor-pointer transition"
               >
                 {langKey === 'en' ? 'All Texts' : 'सभी ग्रन्थ'}
               </button>
-              {availableScriptureNames.map((scr) => (
-                <button
-                  key={scr.key}
-                  type="button"
-                  onClick={() => {
-                    triggerHapticSelection();
-                    setSelectedScriptureFilter(scr.key);
-                    setSelectedIndex(0);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap cursor-pointer transition ${
-                    selectedScriptureFilter === scr.key
-                      ? 'bg-[#8C4A00] text-white'
-                      : 'bg-white/80 dark:bg-[#1E120A] text-[#5C3A21] dark:text-[#D9C4A9] border border-[#DFCBB5]/70'
-                  }`}
-                >
-                  {scr.label}
-                </button>
-              ))}
+              {availableScriptureNames.map((scr) => {
+                const isSelectedScr = selectedScriptureFilter === scr.key;
+                return (
+                  <button
+                    key={scr.key}
+                    type="button"
+                    onClick={() => {
+                      triggerHapticSelection();
+                      setSelectedScriptureFilter(scr.key);
+                      setSelectedIndex(0);
+                    }}
+                    style={
+                      isSelectedScr
+                        ? {
+                            backgroundColor: '#9A3412',
+                            color: '#FFFFFF',
+                            borderColor: '#7C2D12',
+                          }
+                        : {
+                            backgroundColor: '#FFFDF9',
+                            color: '#3A1807',
+                            borderColor: '#CFAF8A',
+                          }
+                    }
+                    className="px-2.5 py-1 rounded-md border text-[11px] font-bold whitespace-nowrap cursor-pointer transition"
+                  >
+                    {scr.label}
+                  </button>
+                );
+              })}
             </div>
           )}
 
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-3.5 h-3.5 text-[#8C6239] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search
+              className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: '#6E3B16' }}
+            />
             <input
               type="text"
               value={searchQuery}
@@ -536,13 +624,19 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                     ? 'શ્લોક, ઉપનિષદ, ગીતા અધ્યાય કે વિષય શોધો...'
                     : 'श्लोक, उपनिषद्, गीता अध्याय, पुराण या विषय खोजें...'
               }
-              className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-white dark:bg-[#1E120A] border border-[#DFCBB5] dark:border-[#5C3A21] text-xs text-[#2C180C] dark:text-[#FAF2E4] placeholder:text-[#8C6239]/70 focus:outline-none focus:border-[#B56A00]"
+              style={{
+                backgroundColor: '#FFFFFF',
+                color: '#1F1006',
+                borderColor: '#C8A986',
+              }}
+              className="w-full pl-8 pr-7 py-1.5 rounded-lg border text-xs font-medium placeholder:text-[#6E4726] focus:outline-none focus:border-[#9A3412]"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8C6239] hover:text-[#2C180C]"
+                style={{ color: '#5C2D0C' }}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
                 aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
@@ -559,13 +653,20 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
           onClick={() => setIsTocOpen(false)}
         >
           <aside
-            className="w-4/5 max-w-sm h-full bg-[#FAF2E4] dark:bg-[#23140C] border-r border-[#B56A00] shadow-2xl flex flex-col overflow-hidden"
+            style={{ backgroundColor: '#FAF2E4', borderColor: '#9A3412' }}
+            className="w-4/5 max-w-sm h-full border-r shadow-2xl flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-3 border-b border-[#DFCBB5] dark:border-[#4A2E1B] flex items-center justify-between">
+            <div
+              className="p-3 border-b flex items-center justify-between"
+              style={{ backgroundColor: '#FFF8EB', borderColor: '#D6B892' }}
+            >
               <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#8C4A00] dark:text-amber-400" />
-                <h3 className="font-granth font-bold text-sm text-[#462B17] dark:text-[#FFD88A]">
+                <BookOpen className="w-4 h-4" style={{ color: '#8B1E1E' }} />
+                <h3
+                  className="font-granth font-bold text-sm"
+                  style={{ color: '#3A1405' }}
+                >
                   {langKey === 'en'
                     ? `Scripture Index (${filteredExcerpts.length})`
                     : `ग्रन्थ श्लोक अनुक्रमणिका (${filteredExcerpts.length})`}
@@ -574,7 +675,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsTocOpen(false)}
-                className="p-1 rounded-lg bg-[#E6D3B3] dark:bg-[#3A2214] text-[#462B17] dark:text-[#FAF2E4]"
+                style={{ backgroundColor: '#F2DFC4', color: '#3A1405' }}
+                className="p-1 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -593,27 +695,39 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       setViewMode('reader');
                       setIsTocOpen(false);
                     }}
-                    className={`w-full text-left p-2.5 rounded-xl border transition cursor-pointer flex items-start justify-between gap-2 ${
+                    style={
                       isSelected
-                        ? 'bg-[#5C3A21] text-[#FFF6E5] border-[#B56A00]'
-                        : 'bg-white/90 dark:bg-[#2C190F] text-[#3E2714] dark:text-[#FAF2E4] border-[#DFCBB5]/60 hover:bg-[#F4E8D1]'
-                    }`}
+                        ? {
+                            backgroundColor: '#8B1E1E',
+                            color: '#FFFFFF',
+                            borderColor: '#6E1409',
+                          }
+                        : {
+                            backgroundColor: '#FFFDF9',
+                            color: '#241005',
+                            borderColor: '#D6B892',
+                          }
+                    }
+                    className="w-full text-left p-2.5 rounded-xl border transition cursor-pointer flex items-start justify-between gap-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold truncate">
+                      <div
+                        className="text-xs font-bold truncate"
+                        style={{ color: isSelected ? '#FFFFFF' : '#241005' }}
+                      >
                         {item.scriptureName[langKey]} · {item.reference}
                       </div>
                       <div
-                        className={`text-[11px] truncate mt-0.5 ${
-                          isSelected
-                            ? 'text-amber-200'
-                            : 'text-[#735133] dark:text-[#D9C4A9]'
-                        }`}
+                        className="text-[11px] truncate mt-0.5 font-medium"
+                        style={{ color: isSelected ? '#FDE68A' : '#5C2D0C' }}
                       >
                         {item.sanskrit.split('\n')[0]}
                       </div>
                     </div>
-                    <span className="text-[11px] opacity-80 shrink-0">
+                    <span
+                      className="text-[11px] font-bold shrink-0"
+                      style={{ color: isSelected ? '#FDE68A' : '#7C2D12' }}
+                    >
                       #{idx + 1}
                     </span>
                   </button>
@@ -627,9 +741,22 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
       {/* Main Content Area */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3 sm:px-5 sm:py-4 space-y-4 pb-20">
         {filteredExcerpts.length === 0 ? (
-          <div className="max-w-xl mx-auto my-8 p-6 rounded-2xl bg-[#FAF2E4] dark:bg-[#2A180E] border border-[#DFCBB5] text-center space-y-3">
-            <BookMarked className="w-8 h-8 text-[#8C4A00] mx-auto" />
-            <h3 className="font-granth font-bold text-base text-[#462B17] dark:text-[#FFD88A]">
+          <div
+            style={{
+              backgroundColor: '#FFFDF8',
+              borderColor: '#D6B892',
+              color: '#241005',
+            }}
+            className="max-w-xl mx-auto my-8 p-6 rounded-2xl border text-center space-y-3"
+          >
+            <BookMarked
+              className="w-8 h-8 mx-auto"
+              style={{ color: '#8B1E1E' }}
+            />
+            <h3
+              className="font-granth font-bold text-base"
+              style={{ color: '#3A1405' }}
+            >
               {activeTradition === 'bookmarked'
                 ? langKey === 'en'
                   ? 'No Bookmarked Verses Yet'
@@ -638,7 +765,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   ? 'No Matching Scripture Excerpts Found'
                   : 'इस खोज से संबंधित कोई श्लोक नहीं मिला'}
             </h3>
-            <p className="text-xs text-[#6B4E36] dark:text-[#D9C4A9]">
+            <p className="text-xs font-medium" style={{ color: '#4A2511' }}>
               {activeTradition === 'bookmarked'
                 ? langKey === 'en'
                   ? 'Tap the bookmark icon on any Bhagavad Gita, Upanishad, or Purana verse to save it here for daily reflection.'
@@ -654,7 +781,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 setSelectedScriptureFilter('ALL');
                 setSearchQuery('');
               }}
-              className="px-4 py-2 rounded-xl bg-[#5C3A21] text-[#FFD88A] text-xs font-semibold cursor-pointer"
+              style={{ backgroundColor: '#8B1E1E', color: '#FFFFFF' }}
+              className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer"
             >
               {langKey === 'en' ? 'Show All Scriptures' : 'सभी ग्रन्थ देखें'}
             </button>
@@ -663,7 +791,13 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
           /* ================= FOCUSED MANUSCRIPT READER MODE ================= */
           <div className="max-w-3xl mx-auto space-y-4">
             {/* Top Excerpt Navigation & Metadata Bar */}
-            <div className="flex items-center justify-between gap-2 bg-[#FAF2E4] dark:bg-[#28180E] px-3 py-2 rounded-xl border border-[#DFCBB5] dark:border-[#4A2E1B]">
+            <div
+              style={{
+                backgroundColor: '#FFF8EB',
+                borderColor: '#D6B892',
+              }}
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl border"
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -673,20 +807,31 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       filteredExcerpts.length
                   );
                 }}
-                className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1E120A] border border-[#DFCBB5] dark:border-[#5C3A21] text-xs font-semibold text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1 cursor-pointer active:scale-95"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  color: '#3A1405',
+                  borderColor: '#C8A986',
+                }}
+                className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4" style={{ color: '#7C2D12' }} />
                 <span>{langKey === 'en' ? 'Prev' : 'पूर्व श्लोक'}</span>
               </button>
 
               <div className="text-center min-w-0 px-2">
-                <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] truncate">
+                <div
+                  className="text-xs sm:text-sm font-bold truncate"
+                  style={{ color: '#6E1409' }}
+                >
                   {currentExcerpt.scriptureName[langKey]}
                 </div>
-                <div className="text-[11px] text-[#735133] dark:text-[#D9C4A9] truncate">
+                <div
+                  className="text-[11px] font-semibold truncate"
+                  style={{ color: '#4A2511' }}
+                >
                   <span>{currentExcerpt.subSource[langKey]}</span>
                   <span aria-hidden="true"> · </span>
-                  <span className="tabular-nums">
+                  <span className="tabular-nums font-bold">
                     {safeIndex + 1} / {filteredExcerpts.length}
                   </span>
                 </div>
@@ -698,36 +843,66 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   triggerHapticSelection();
                   setSelectedIndex((safeIndex + 1) % filteredExcerpts.length);
                 }}
-                className="px-2.5 py-1 rounded-lg bg-[#5C3A21] text-[#FFD88A] text-xs font-semibold flex items-center gap-1 cursor-pointer active:scale-95"
+                style={{
+                  backgroundColor: '#8B1E1E',
+                  color: '#FFFFFF',
+                  borderColor: '#6E1409',
+                }}
+                className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95"
               >
-                <span>{langKey === 'en' ? 'Next' : 'अगला श्लोक'}</span>
-                <ChevronRight className="w-4 h-4" />
+                <span style={{ color: '#FFFFFF' }}>
+                  {langKey === 'en' ? 'Next' : 'अगला श्लोक'}
+                </span>
+                <ChevronRight className="w-4 h-4" style={{ color: '#FFFFFF' }} />
               </button>
             </div>
 
             {/* Sacred Bhojpatra / Manuscript Card */}
-            <article className="rounded-2xl bg-[#FFFDF8] dark:bg-[#24150C] border border-[#D5BC9D] dark:border-[#5C3A21] shadow-xs p-4 sm:p-6 space-y-5">
-              {/* Quiet Unboxed Editorial Metadata Header */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E8DCCB] dark:border-[#3E2714] text-xs text-[#735133] dark:text-[#D9C4A9]">
+            <article
+              style={{
+                backgroundColor: '#FFFDF9',
+                borderColor: '#D4B083',
+                color: '#1F1006',
+              }}
+              className="rounded-2xl border shadow-xs p-4 sm:p-6 space-y-5"
+            >
+              {/* Editorial Metadata Header */}
+              <div
+                style={{ borderColor: '#E5CFAF', color: '#4A2511' }}
+                className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b text-xs font-semibold"
+              >
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-semibold text-[#8C4A00] dark:text-amber-300">
+                  <span className="font-bold" style={{ color: '#8B1E1E' }}>
                     {currentExcerpt.rishiOrSpeaker[langKey]}
                   </span>
                   <span aria-hidden="true">·</span>
-                  <span>{currentExcerpt.themeTag[langKey]}</span>
+                  <span style={{ color: '#3A1807' }}>
+                    {currentExcerpt.themeTag[langKey]}
+                  </span>
                   <span aria-hidden="true">·</span>
-                  <span>{currentExcerpt.reference}</span>
+                  <span style={{ color: '#5C2D0C' }}>
+                    {currentExcerpt.reference}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => toggleBookmark(currentExcerpt.id)}
-                    className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                    style={
                       bookmarks[currentExcerpt.id]
-                        ? 'bg-amber-100 dark:bg-amber-900/40 border-amber-500 text-[#8C4A00] dark:text-amber-300'
-                        : 'bg-transparent border-[#DFCBB5] text-[#735133] hover:text-[#2C180C]'
-                    }`}
+                        ? {
+                            backgroundColor: '#FEF3C7',
+                            borderColor: '#D97706',
+                            color: '#9A3412',
+                          }
+                        : {
+                            backgroundColor: '#FFF8EB',
+                            borderColor: '#CFAF8A',
+                            color: '#4A2511',
+                          }
+                    }
+                    className="p-1.5 rounded-lg border transition cursor-pointer"
                     title={
                       bookmarks[currentExcerpt.id]
                         ? 'बुकमार्क हटाएँ'
@@ -744,11 +919,19 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCopy(currentExcerpt)}
-                    className="p-1.5 rounded-lg border border-[#DFCBB5] text-[#735133] dark:text-[#D9C4A9] hover:text-[#2C180C] transition cursor-pointer"
+                    style={{
+                      backgroundColor: '#FFF8EB',
+                      borderColor: '#CFAF8A',
+                      color: '#4A2511',
+                    }}
+                    className="p-1.5 rounded-lg border transition cursor-pointer"
                     title="श्लोक व अर्थ कॉपी करें"
                   >
                     {copiedId === currentExcerpt.id ? (
-                      <Check className="w-4 h-4 text-emerald-600" />
+                      <Check
+                        className="w-4 h-4"
+                        style={{ color: '#15803D' }}
+                      />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}
@@ -757,26 +940,44 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleShare(currentExcerpt)}
-                    className="px-2.5 py-1 rounded-lg bg-[#25D366]/15 border border-[#25D366]/40 text-[#15803D] dark:text-emerald-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    style={{
+                      backgroundColor: '#DCFCE7',
+                      borderColor: '#86EFAC',
+                      color: '#14532D',
+                    }}
+                    className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer"
                     title="व्हाट्सएप पर साझा करें"
                   >
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-3.5 h-3.5" style={{ color: '#15803D' }} />
                     <span>{langKey === 'en' ? 'Share' : 'शेयर'}</span>
                   </button>
                 </div>
               </div>
 
               {/* Primary Sanskrit Shloka / Mantra Display */}
-              <div className="py-3 px-3 sm:px-5 rounded-xl bg-[#FAF2E4]/75 dark:bg-[#1A0F08] border border-[#E2CFAF] dark:border-[#4A2E1B] text-center space-y-3">
-                <div className="text-xs font-granth text-[#8C4A00] dark:text-amber-400 tracking-widest">
+              <div
+                style={{
+                  backgroundColor: '#FFF6E0',
+                  borderColor: '#D99B4E',
+                }}
+                className="py-4 px-3 sm:px-5 rounded-xl border-2 text-center space-y-3"
+              >
+                <div
+                  className="text-xs font-granth font-bold tracking-widest"
+                  style={{ color: '#9A3412' }}
+                >
                   ॥ श्री परमात्मने नमः ॥
                 </div>
                 <p
-                  className={`font-granth font-bold text-[#3E1F0D] dark:text-[#FFD88A] whitespace-pre-line ${sanskritFontClass}`}
+                  style={{ color: '#4A0E0E' }}
+                  className={`font-granth font-bold whitespace-pre-line ${sanskritFontClass}`}
                 >
                   {currentExcerpt.sanskrit}
                 </p>
-                <p className="text-xs sm:text-sm italic text-[#6B4E36] dark:text-[#C9B398] max-w-2xl mx-auto leading-relaxed">
+                <p
+                  style={{ color: '#3B1D0A' }}
+                  className="text-xs sm:text-sm italic font-medium max-w-2xl mx-auto leading-relaxed"
+                >
                   {currentExcerpt.transliteration}
                 </p>
               </div>
@@ -784,7 +985,10 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               {/* Padaccheda (Phonetic Syllable Guide) & Word-by-Word Breakdown */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A]">
+                  <span
+                    className="text-xs sm:text-sm font-bold"
+                    style={{ color: '#5C1909' }}
+                  >
                     {langKey === 'en'
                       ? 'Padaccheda & Word-by-Word Meaning'
                       : langKey === 'gu'
@@ -794,7 +998,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowPadaccheda((prev) => !prev)}
-                    className="text-xs font-semibold text-[#8C4A00] dark:text-amber-400 underline cursor-pointer"
+                    style={{ color: '#8B1E1E' }}
+                    className="text-xs font-bold underline cursor-pointer"
                   >
                     {showPadaccheda
                       ? langKey === 'en'
@@ -807,25 +1012,48 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 </div>
 
                 {showPadaccheda && (
-                  <div className="p-3.5 rounded-xl bg-[#F8EFE0]/70 dark:bg-[#2B190E] border border-[#E2D2BE] dark:border-[#4A2E1B] space-y-3">
-                    <div className="text-xs text-[#5C3A21] dark:text-[#E5D2B8] leading-relaxed">
-                      <span className="font-semibold text-[#8C4A00] dark:text-amber-300">
-                        {langKey === 'en' ? 'Pronunciation Guide: ' : 'उच्चारण पदच्छेद: '}
+                  <div
+                    style={{
+                      backgroundColor: '#FAF0DC',
+                      borderColor: '#D6B892',
+                    }}
+                    className="p-3.5 rounded-xl border space-y-3"
+                  >
+                    <div
+                      className="text-xs sm:text-sm font-medium leading-relaxed"
+                      style={{ color: '#241005' }}
+                    >
+                      <span
+                        className="font-bold"
+                        style={{ color: '#8B1E1E' }}
+                      >
+                        {langKey === 'en'
+                          ? 'Pronunciation Guide: '
+                          : 'उच्चारण पदच्छेद: '}
                       </span>
                       {formatPadacchedaGuide(currentExcerpt.sanskrit)}
                     </div>
 
                     {currentExcerpt.wordMeanings.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[#E2D2BE]/70 dark:border-[#4A2E1B]">
+                      <div
+                        style={{ borderColor: '#DEC3A0' }}
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 border-t"
+                      >
                         {currentExcerpt.wordMeanings.map((wm, idx) => (
                           <div
                             key={idx}
-                            className="text-xs flex items-baseline gap-1.5"
+                            className="text-xs sm:text-sm flex items-baseline gap-1.5"
                           >
-                            <span className="font-granth font-bold text-[#462B17] dark:text-[#FFD88A]">
+                            <span
+                              className="font-granth font-bold shrink-0"
+                              style={{ color: '#6E1409' }}
+                            >
                               {wm.sanskritWord} :
                             </span>
-                            <span className="text-[#5C3A21] dark:text-[#D9C4A9]">
+                            <span
+                              className="font-medium"
+                              style={{ color: '#1F1006' }}
+                            >
                               {langKey === 'en' ? wm.meaningEn : wm.meaningHi}
                             </span>
                           </div>
@@ -838,7 +1066,10 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
 
               {/* Translation (Bhavartha) */}
               <div className="space-y-1.5 pt-1">
-                <h2 className="text-xs font-bold text-[#8C4A00] dark:text-amber-400">
+                <h2
+                  className="text-xs sm:text-sm font-bold"
+                  style={{ color: '#8B1E1E' }}
+                >
                   {langKey === 'en'
                     ? 'Sacred Translation (Bhavartha)'
                     : langKey === 'gu'
@@ -846,15 +1077,25 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       : 'सरल भावार्थ'}
                 </h2>
                 <p
-                  className={`text-[#2C180C] dark:text-[#FAF2E4] font-medium ${bodyFontClass}`}
+                  style={{ color: '#1A0C04' }}
+                  className={`font-semibold ${bodyFontClass}`}
                 >
                   {currentExcerpt.meaning[langKey] || currentExcerpt.meaning.hi}
                 </p>
               </div>
 
               {/* Philosophical Commentary (Vedanta / Purana Bhashya) */}
-              <div className="p-4 rounded-xl bg-[#FAF2E4] dark:bg-[#2D1A0E] border border-[#DFCBB5] dark:border-[#5C3A21] space-y-1.5">
-                <h3 className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A]">
+              <div
+                style={{
+                  backgroundColor: '#FBF2E1',
+                  borderColor: '#D4B083',
+                }}
+                className="p-4 rounded-xl border space-y-1.5"
+              >
+                <h3
+                  className="text-xs sm:text-sm font-bold"
+                  style={{ color: '#6E1409' }}
+                >
                   {langKey === 'en'
                     ? 'Philosophical Commentary (Tattva Chintan)'
                     : langKey === 'gu'
@@ -862,7 +1103,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       : 'शास्त्रीय भाष्य एवं तत्त्व-चिंतन'}
                 </h3>
                 <p
-                  className={`text-[#3E2714] dark:text-[#E5D2B8] ${bodyFontClass}`}
+                  style={{ color: '#1F1006' }}
+                  className={`font-medium ${bodyFontClass}`}
                 >
                   {currentExcerpt.commentary[langKey] ||
                     currentExcerpt.commentary.hi}
@@ -870,15 +1112,27 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               </div>
 
               {/* Practical Daily Sadhana */}
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-600/30 space-y-1">
-                <h3 className="text-xs font-bold text-[#8C4A00] dark:text-amber-300">
+              <div
+                style={{
+                  backgroundColor: '#FFF3D6',
+                  borderColor: '#D99B4E',
+                }}
+                className="p-3.5 rounded-xl border space-y-1"
+              >
+                <h3
+                  className="text-xs sm:text-sm font-bold"
+                  style={{ color: '#8B1E1E' }}
+                >
                   {langKey === 'en'
                     ? 'Daily Life Application (Sadhana)'
                     : langKey === 'gu'
                       ? 'દૈનિક જીવનમાં આચરણ (સાધના)'
                       : 'दैनिक जीवन में आचरण (साधना सूत्र)'}
                 </h3>
-                <p className="text-xs sm:text-sm text-[#462B17] dark:text-[#FAF2E4] leading-relaxed">
+                <p
+                  style={{ color: '#241005' }}
+                  className="text-xs sm:text-sm font-medium leading-relaxed"
+                >
                   {currentExcerpt.practicalApplication[langKey] ||
                     currentExcerpt.practicalApplication.hi}
                 </p>
@@ -894,11 +1148,22 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               return (
                 <div
                   key={item.id}
-                  className="p-4 rounded-2xl bg-[#FFFDF8] dark:bg-[#24150C] border border-[#DFCBB5] dark:border-[#4A2E1B] shadow-2xs space-y-2.5"
+                  style={{
+                    backgroundColor: '#FFFDF9',
+                    borderColor: '#D6B892',
+                    color: '#1F1006',
+                  }}
+                  className="p-4 rounded-2xl border shadow-2xs space-y-2.5"
                 >
-                  <div className="flex items-center justify-between gap-2 text-xs text-[#735133] dark:text-[#D9C4A9]">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-bold text-[#5C3A21] dark:text-[#FFD88A]">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div
+                      className="flex flex-wrap items-center gap-1.5 font-semibold"
+                      style={{ color: '#4A2511' }}
+                    >
+                      <span
+                        className="font-bold"
+                        style={{ color: '#6E1409' }}
+                      >
                         {item.scriptureName[langKey]}
                       </span>
                       <span aria-hidden="true">·</span>
@@ -911,11 +1176,20 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       <button
                         type="button"
                         onClick={() => handleToggleSpeak(item, idx)}
-                        className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 cursor-pointer ${
+                        style={
                           isItemSpeaking
-                            ? 'bg-rose-700 text-white border-rose-600'
-                            : 'bg-[#FAF2E4] dark:bg-[#341F14] text-[#5C3A21] dark:text-[#FFD88A] border-[#DFCBB5]'
-                        }`}
+                            ? {
+                                backgroundColor: '#BE123C',
+                                color: '#FFFFFF',
+                                borderColor: '#9F1239',
+                              }
+                            : {
+                                backgroundColor: '#FFF5E1',
+                                color: '#3A1405',
+                                borderColor: '#C8A986',
+                              }
+                        }
+                        className="px-2 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                       >
                         {isItemSpeaking ? (
                           <VolumeX className="w-3 h-3" />
@@ -928,14 +1202,17 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       <button
                         type="button"
                         onClick={() => toggleBookmark(item.id)}
-                        className="p-1.5 rounded-lg border border-[#DFCBB5] text-[#735133] dark:text-[#D9C4A9] cursor-pointer"
+                        style={{
+                          backgroundColor: '#FFF8EB',
+                          borderColor: '#C8A986',
+                          color: '#4A2511',
+                        }}
+                        className="p-1.5 rounded-lg border cursor-pointer"
                         aria-label="Bookmark"
                       >
                         <Bookmark
                           className={`w-3.5 h-3.5 ${
-                            bookmarks[item.id]
-                              ? 'fill-[#8C4A00] text-[#8C4A00] dark:fill-amber-400 dark:text-amber-400'
-                              : ''
+                            bookmarks[item.id] ? 'fill-[#8B1E1E] text-[#8B1E1E]' : ''
                           }`}
                         />
                       </button>
@@ -947,18 +1224,28 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                           setSelectedIndex(idx);
                           setViewMode('reader');
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-[#5C3A21] text-[#FFD88A] text-[11px] font-semibold cursor-pointer"
+                        style={{
+                          backgroundColor: '#8B1E1E',
+                          color: '#FFFFFF',
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer"
                       >
                         {langKey === 'en' ? 'Read Full' : 'विस्तार से पढ़ें'}
                       </button>
                     </div>
                   </div>
 
-                  <p className="font-granth font-bold text-base sm:text-lg text-[#3E1F0D] dark:text-[#FFD88A] whitespace-pre-line leading-relaxed">
+                  <p
+                    style={{ color: '#4A0E0E' }}
+                    className="font-granth font-bold text-base sm:text-lg whitespace-pre-line leading-relaxed"
+                  >
                     {item.sanskrit}
                   </p>
 
-                  <p className="text-xs sm:text-sm text-[#2C180C] dark:text-[#FAF2E4] leading-relaxed">
+                  <p
+                    style={{ color: '#1F1006' }}
+                    className="text-xs sm:text-sm font-medium leading-relaxed"
+                  >
                     {item.meaning[langKey] || item.meaning.hi}
                   </p>
                 </div>
@@ -969,9 +1256,15 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
 
         {/* Cross-Links to Dedicated Full-Text Paath Modules in Main Navigation */}
         {onSelectTab && (
-          <section className="max-w-3xl mx-auto pt-3 border-t border-[#DFCBB5] dark:border-[#4A2E1B] space-y-2.5">
+          <section
+            style={{ borderColor: '#D6B892' }}
+            className="max-w-3xl mx-auto pt-3 border-t space-y-2.5"
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A]">
+              <h3
+                className="text-xs sm:text-sm font-bold"
+                style={{ color: '#5C1909' }}
+              >
                 {langKey === 'en'
                   ? 'Complete Devotional Paath & Stotra Modules'
                   : langKey === 'gu'
@@ -984,7 +1277,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                     <button
                       type="button"
                       onClick={onPrevChapter}
-                      className="text-[#8C4A00] dark:text-amber-300 font-semibold hover:underline cursor-pointer"
+                      style={{ color: '#8B1E1E' }}
+                      className="font-bold hover:underline cursor-pointer"
                     >
                       ← पूर्व अध्याय
                     </button>
@@ -993,7 +1287,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                     <button
                       type="button"
                       onClick={onNextChapter}
-                      className="text-[#8C4A00] dark:text-amber-300 font-semibold hover:underline cursor-pointer"
+                      style={{ color: '#8B1E1E' }}
+                      className="font-bold hover:underline cursor-pointer"
                     >
                       अगला अध्याय →
                     </button>
@@ -1009,12 +1304,22 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   triggerHapticSelection();
                   onSelectTab('durga');
                 }}
-                className="p-2.5 rounded-xl bg-[#FAF2E4] dark:bg-[#28180E] border border-[#DFCBB5] dark:border-[#4A2E1B] text-left hover:border-[#B56A00] transition cursor-pointer"
+                style={{
+                  backgroundColor: '#FFFDF8',
+                  borderColor: '#D6B892',
+                }}
+                className="p-2.5 rounded-xl border text-left hover:border-[#8B1E1E] transition cursor-pointer"
               >
-                <div className="text-xs font-bold text-[#462B17] dark:text-[#FFD88A]">
+                <div
+                  className="text-xs font-bold"
+                  style={{ color: '#6E1409' }}
+                >
                   श्री दुर्गा सप्तशती
                 </div>
-                <div className="text-[11px] text-[#735133] dark:text-[#D9C4A9] mt-0.5">
+                <div
+                  className="text-[11px] font-medium mt-0.5"
+                  style={{ color: '#4A2511' }}
+                >
                   १३ अध्याय व कवच पाठ
                 </div>
               </button>
@@ -1025,12 +1330,22 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   triggerHapticSelection();
                   onSelectTab('sundarkand');
                 }}
-                className="p-2.5 rounded-xl bg-[#FAF2E4] dark:bg-[#28180E] border border-[#DFCBB5] dark:border-[#4A2E1B] text-left hover:border-[#B56A00] transition cursor-pointer"
+                style={{
+                  backgroundColor: '#FFFDF8',
+                  borderColor: '#D6B892',
+                }}
+                className="p-2.5 rounded-xl border text-left hover:border-[#8B1E1E] transition cursor-pointer"
               >
-                <div className="text-xs font-bold text-[#462B17] dark:text-[#FFD88A]">
+                <div
+                  className="text-xs font-bold"
+                  style={{ color: '#6E1409' }}
+                >
                   संपूर्ण सुंदरकांड
                 </div>
-                <div className="text-[11px] text-[#735133] dark:text-[#D9C4A9] mt-0.5">
+                <div
+                  className="text-[11px] font-medium mt-0.5"
+                  style={{ color: '#4A2511' }}
+                >
                   श्री रामचरितमानस सोपान
                 </div>
               </button>
@@ -1041,12 +1356,22 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   triggerHapticSelection();
                   onSelectTab('hanuman');
                 }}
-                className="p-2.5 rounded-xl bg-[#FAF2E4] dark:bg-[#28180E] border border-[#DFCBB5] dark:border-[#4A2E1B] text-left hover:border-[#B56A00] transition cursor-pointer"
+                style={{
+                  backgroundColor: '#FFFDF8',
+                  borderColor: '#D6B892',
+                }}
+                className="p-2.5 rounded-xl border text-left hover:border-[#8B1E1E] transition cursor-pointer"
               >
-                <div className="text-xs font-bold text-[#462B17] dark:text-[#FFD88A]">
+                <div
+                  className="text-xs font-bold"
+                  style={{ color: '#6E1409' }}
+                >
                   श्री हनुमान चालीसा
                 </div>
-                <div className="text-[11px] text-[#735133] dark:text-[#D9C4A9] mt-0.5">
+                <div
+                  className="text-[11px] font-medium mt-0.5"
+                  style={{ color: '#4A2511' }}
+                >
                   दोहा एवं ४० चौपाई
                 </div>
               </button>
@@ -1057,12 +1382,22 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   triggerHapticSelection();
                   onSelectTab('vratkatha');
                 }}
-                className="p-2.5 rounded-xl bg-[#FAF2E4] dark:bg-[#28180E] border border-[#DFCBB5] dark:border-[#4A2E1B] text-left hover:border-[#B56A00] transition cursor-pointer"
+                style={{
+                  backgroundColor: '#FFFDF8',
+                  borderColor: '#D6B892',
+                }}
+                className="p-2.5 rounded-xl border text-left hover:border-[#8B1E1E] transition cursor-pointer"
               >
-                <div className="text-xs font-bold text-[#462B17] dark:text-[#FFD88A]">
+                <div
+                  className="text-xs font-bold"
+                  style={{ color: '#6E1409' }}
+                >
                   व्रत कथा व आरती
                 </div>
-                <div className="text-[11px] text-[#735133] dark:text-[#D9C4A9] mt-0.5">
+                <div
+                  className="text-[11px] font-medium mt-0.5"
+                  style={{ color: '#4A2511' }}
+                >
                   एकादशी व पौराणिक कथाएं
                 </div>
               </button>
