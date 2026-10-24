@@ -4,7 +4,8 @@ import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
 import { askUma, AskUmaResponse, pingUmaServer, UmaActionType, isNumerologyQuery } from '@/lib/uma';
-import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech, UmaVoice } from '@/lib/umaSpeech';
+import { UmaVoice } from '@/lib/umaSpeech';
+import { umaVoice } from '../services/UmaVoiceService';
 import { Capacitor } from '@capacitor/core';
 import { analyzeKundali, SIGN_LORDS } from '../services/predictions';
 import { buildMicroAstrologyContextPrompt, buildMicroAstrologyProfile } from '../services/umaMicroAstrology';
@@ -331,15 +332,15 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
   const speakHindi = (text: string, id: string) => {
     if (playingVoiceId === id) {
-      stopUmaSpeech();
+      umaVoice.stop();
       setPlayingVoiceId(null);
       return;
     }
     setPlayingVoiceId(id);
-    void speakUma(text, {
+    void umaVoice.speak(text, {
       voiceStyle: "uma",
       rate: 0.94,
-      pitch: 1.05,
+      pitch: 1.04,
       onStart: () => setPlayingVoiceId(id),
       onEnd: () => setPlayingVoiceId(null),
       onError: () => setPlayingVoiceId(null),
@@ -348,7 +349,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      unlockUmaSpeech();
+      umaVoice.unlockAudio();
       // Only auto-speak init_1 if NO initialPrompt was passed
       if (autoSpeak && (!initialPrompt || !initialPrompt.trim()) && messages.length === 1 && messages[0].id === 'init_1') {
         const timer = setTimeout(() => {
@@ -374,16 +375,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   }, [messages.length]);
 
   useEffect(() => {
-    if (!('speechSynthesis' in window)) return;
-    const load = () => window.speechSynthesis.getVoices();
-    load();
-    window.speechSynthesis.addEventListener('voiceschanged', load);
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', load);
-  }, []);
-
-  useEffect(() => {
     if (!isOpen) {
-      stopUmaSpeech();
+      umaVoice.stop();
       setPlayingVoiceId(null);
       if (isListening && recognitionRef.current) {
         recognitionRef.current.stop();
@@ -867,7 +860,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  stopUmaSpeech();
+                  umaVoice.stop();
                   setPlayingVoiceId(null);
                 }}
                 className="px-2 py-1 rounded-lg bg-amber-300 text-[#4A1010] text-[11px] font-black flex items-center gap-1 cursor-pointer animate-pulse"
@@ -919,7 +912,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               onClick={() => {
                 const next = !autoSpeak;
                 setAutoSpeak(next);
-                if (!next) stopUmaSpeech();
+                if (!next) umaVoice.stop();
               }}
               className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition cursor-pointer ${
                 autoSpeak

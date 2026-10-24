@@ -24,6 +24,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { triggerHapticSelection } from '../utils/haptics';
+import { umaVoice } from '../services/UmaVoiceService';
 
 interface DevtaArpanViewProps {
   onSelectTab?: (tabId: string) => void;
@@ -105,21 +106,22 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
   };
 
   const handleSpeakMantra = (id: string, text: string) => {
-    if (!('speechSynthesis' in window)) return;
     if (speakingId === id) {
-      window.speechSynthesis.cancel();
+      umaVoice.stop();
       setSpeakingId(null);
       return;
     }
-    window.speechSynthesis.cancel();
-    const cleanText = text.replace(/[॥।]/g, ' ');
-    const u = new SpeechSynthesisUtterance(cleanText);
-    u.lang = 'hi-IN';
-    u.rate = 0.85;
-    u.onend = () => setSpeakingId(null);
-    u.onerror = () => setSpeakingId(null);
+    umaVoice.stop();
     setSpeakingId(id);
-    window.speechSynthesis.speak(u);
+    void umaVoice.speak(text, {
+      rate: 0.88,
+      pitch: 1.02,
+      voiceStyle: 'pandit',
+      sanskritOnly: true,
+      onStart: () => setSpeakingId(id),
+      onEnd: () => setSpeakingId(null),
+      onError: () => setSpeakingId(null),
+    });
   };
 
   const handleShareWhatsApp = (deityName: string, item: DevtaOfferingItem) => {

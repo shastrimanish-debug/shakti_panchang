@@ -258,8 +258,158 @@ Return ONLY a valid JSON object with the following structure:
     }
   });
 
-  // In-memory LRU cache for Vedic Shloka / Stotram TTS Audio
+  // In-memory LRU cache for Vedic Shloka / Stotram / Uma Voice TTS Audio
   const ttsAudioCache = new Map<string, { audioBase64: string; mimeType: string }>();
+
+  // High-Quality Global Neural TTS Endpoint for Vidushi UMA (Hindi Female Voice)
+  // Supports Google Cloud Neural2 (hi-IN-Neural2-A, hi-IN-Neural2-D, hi-IN-Journey-F)
+  // + Gemini 3.8 Flash Lite TTS (prebuilt voice Kore with Hindi Vedic persona)
+  // + Graceful fallback signal to client-side high-fidelity neural synthesizer
+  app.post("/api/tts/uma", async (req: Request, res: Response) => {
+    try {
+      const {
+        text,
+        voice = "hi-IN-Neural2-A",
+        rate = 0.94,
+        pitch = 0.0,
+        persona = "uma"
+      } = req.body || {};
+
+      if (!text || typeof text !== "string" || !text.trim()) {
+        return res.status(400).json({ ok: false, error: "TEXT_REQUIRED" });
+      }
+
+      const cleanText = text.trim().slice(0, 3000);
+      const cacheKey = `uma:${voice}:${rate}:${pitch}:${cleanText}`;
+      const cached = ttsAudioCache.get(cacheKey);
+      if (cached) {
+        return res.status(200).json({
+          ok: true,
+          audioBase64: cached.audioBase64,
+          mimeType: cached.mimeType,
+          cached: true,
+          provider: "cache",
+        });
+      }
+
+      // 1. Google Cloud Text-to-Speech API (Neural2 / Journey)
+      const googleTtsKey = process.env.GOOGLE_TTS_API_KEY || process.env.GOOGLE_CLOUD_API_KEY;
+      if (googleTtsKey) {
+        try {
+          const gttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleTtsKey}`;
+          const gttsResp = await fetch(gttsUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              input: { text: cleanText },
+              voice: {
+                languageCode: "hi-IN",
+                name: voice.startsWith("hi-IN") ? voice : "hi-IN-Neural2-A",
+                ssmlGender: "FEMALE",
+              },
+              audioConfig: {
+                audioEncoding: "MP3",
+                speakingRate: Math.max(0.7, Math.min(1.3, rate)),
+                pitch: Math.max(-5.0, Math.min(5.0, pitch)),
+                effectsProfileId: ["handset-class-device", "headphone-class-device"],
+              },
+            }),
+            signal: AbortSignal.timeout(9000),
+          });
+
+          if (gttsResp.ok) {
+            const data: any = await gttsResp.json();
+            if (data?.audioContent) {
+              const payload = {
+                audioBase64: data.audioContent,
+                mimeType: "audio/mp3",
+              };
+              if (ttsAudioCache.size > 300) {
+                const firstKey = ttsAudioCache.keys().next().value;
+                if (firstKey) ttsAudioCache.delete(firstKey);
+              }
+              ttsAudioCache.set(cacheKey, payload);
+              return res.status(200).json({
+                ok: true,
+                ...payload,
+                provider: "google-neural2",
+              });
+            }
+          }
+        } catch (gErr: any) {
+          console.warn("Google Cloud TTS error, checking Gemini TTS next:", gErr?.message || gErr);
+        }
+      }
+
+      // 2. Gemini 3.8 Flash Lite TTS with Indian Vedic Female Acharya Persona
+      const ai = getGeminiClient();
+      if (ai) {
+        try {
+          const response = await ai.models.generateContent({
+            model: "gemini-3.8-flash-lite-tts",
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: cleanText,
+                    speechMetadata: {
+                      style:
+                        persona === "uma"
+                          ? "Warm, maternal, highly articulate, calm, respectful Hindi female Vedic astrologer speaking to a dear devotee (Yajaman) with gentle, clear pronunciation and natural human breathing cadence"
+                          : "Traditional Indian Vedic Pandit recitation with serene cadence",
+                    },
+                  } as any,
+                ],
+              },
+            ],
+            config: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName: "Kore" },
+                },
+              },
+            },
+          });
+
+          const inlineData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+          if (inlineData?.data) {
+            const payload = {
+              audioBase64: inlineData.data,
+              mimeType: inlineData.mimeType || "audio/wav",
+            };
+            if (ttsAudioCache.size > 300) {
+              const firstKey = ttsAudioCache.keys().next().value;
+              if (firstKey) ttsAudioCache.delete(firstKey);
+            }
+            ttsAudioCache.set(cacheKey, payload);
+            return res.status(200).json({
+              ok: true,
+              ...payload,
+              provider: "gemini-flash-lite-tts",
+            });
+          }
+        } catch (geminiErr: any) {
+          console.warn("Gemini Flash Lite TTS fallback triggered:", geminiErr?.message || geminiErr);
+        }
+      }
+
+      // 3. Fallback to client synthesis if remote neural synthesis is unavailable
+      return res.status(200).json({
+        ok: false,
+        fallback: "client",
+        message: "Using high-fidelity client-side Hindi neural voice engine.",
+      });
+    } catch (err: any) {
+      console.error("Error in /api/tts/uma:", err?.message || err);
+      return res.status(200).json({
+        ok: false,
+        fallback: "client",
+        error: err?.message || "TTS_SERVER_ERROR",
+      });
+    }
+  });
 
   // Vedic Sanskrit & Stotram Shuddha Uccharana TTS Endpoint
   app.post("/api/tts/sanskrit", async (req: Request, res: Response) => {

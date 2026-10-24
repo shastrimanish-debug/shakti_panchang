@@ -31,7 +31,7 @@ import {
   Play,
   Check,
 } from "lucide-react";
-import { speakUma, stopUmaSpeech } from "../lib/umaSpeech";
+import { umaVoice } from "../services/UmaVoiceService";
 import { openWhatsAppShare } from "../services/umaConsultationPdf";
 
 interface FeatureDetail {
@@ -459,7 +459,7 @@ export const FaceReadingView: React.FC<{
   // Audio Speech Readout
   const handleAudioSpeech = async () => {
     if (isSpeaking) {
-      stopUmaSpeech();
+      umaVoice.stop();
       setIsSpeaking(false);
       return;
     }
@@ -467,7 +467,14 @@ export const FaceReadingView: React.FC<{
     setIsSpeaking(true);
     const speechText = `सामुद्रिक मुखाकृति विश्लेषण। आपकी मुखाकृति स्वरूप ${analysis.faceShape} है। ${analysis.faceShapeDesc} आपका सामुद्रिक भाग्य सूचकांक ${analysis.vitalityScore} प्रतिशत है।`;
 
-    await speakUma(speechText, { onEnd: () => setIsSpeaking(false) });
+    await umaVoice.speak(speechText, {
+      voiceStyle: "uma",
+      rate: 0.94,
+      pitch: 1.04,
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
   };
 
   // Share Result on WhatsApp

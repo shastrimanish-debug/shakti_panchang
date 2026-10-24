@@ -30,6 +30,7 @@ import { calculateSpecialYogas, calculatePanchakAndBhadra } from '../services/ho
 import { getDailyShloka, getLocalizedDailyShloka } from '../constants/shlokas';
 import { useLanguage } from '../i18n';
 import { trVedic } from '../i18n/vedicTranslate';
+import { umaVoice } from '../services/UmaVoiceService';
 
 export interface DashboardViewProps {
   panchang: VedicPanchangData | null;
@@ -127,19 +128,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const toggleSpeech = () => {
     if (isPlayingAudio) {
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      umaVoice.stop();
       setIsPlayingAudio(false);
     } else {
-      if ('speechSynthesis' in window) {
-        const textToSpeak = `${dailyShloka.sanskrit}. ${dailyShloka.meaning}`;
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = language === 'en' ? 'en-IN' : 'hi-IN';
-        utterance.rate = 0.9;
-        utterance.onend = () => setIsPlayingAudio(false);
-        utterance.onerror = () => setIsPlayingAudio(false);
-        window.speechSynthesis.speak(utterance);
-        setIsPlayingAudio(true);
-      }
+      const textToSpeak = `${dailyShloka.sanskrit}। ${dailyShloka.meaning}`;
+      setIsPlayingAudio(true);
+      void umaVoice.speak(textToSpeak, {
+        rate: 0.92,
+        pitch: 1.04,
+        voiceStyle: 'uma',
+        onStart: () => setIsPlayingAudio(true),
+        onEnd: () => setIsPlayingAudio(false),
+        onError: () => setIsPlayingAudio(false),
+      });
     }
   };
 

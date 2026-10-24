@@ -1,5 +1,6 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { extractPureSanskritVerse } from "./sanskritPhonetics";
+import { umaVoice } from "../services/UmaVoiceService";
 
 export interface UmaVoicePlugin {
   speak(options: {
@@ -17,8 +18,6 @@ export const UmaVoice = registerPlugin<UmaVoicePlugin>("UmaVoice");
 
 let bed: HTMLAudioElement | null = null;
 let bedFade: ReturnType<typeof setInterval> | null = null;
-let currentNeuralAudio: HTMLAudioElement | null = null;
-const clientTtsCache = new Map<string, string>(); // cacheKey -> data URL
 
 function startPathBed() {
   if (Capacitor.isNativePlatform() || typeof Audio === "undefined") return;
@@ -57,16 +56,7 @@ function stopPathBed() {
 
 let unlocked = false;
 let isCurrentlySpeaking = false;
-let currentUtterance: SpeechSynthesisUtterance | null = null;
-let keepAliveTimer: any = null;
 let activeSpeakToken = 0;
-
-function clearKeepAlive() {
-  if (keepAliveTimer) {
-    clearInterval(keepAliveTimer);
-    keepAliveTimer = null;
-  }
-}
 
 export type UmaPart = { text: string; rate: number; pitch: number };
 
@@ -193,14 +183,7 @@ export function pickHindiVoice(): SpeechSynthesisVoice | null {
 
 export function unlockUmaSpeech() {
   unlocked = true;
-  if (Capacitor.isNativePlatform()) return;
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  try {
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.cancel();
-  } catch {
-    /* ignore */
-  }
+  umaVoice.unlockAudio();
 }
 
 export interface SpeakOptions {
@@ -214,202 +197,46 @@ export interface SpeakOptions {
   onError?: (err?: any) => void;
 }
 
-function stopCurrentNeuralAudio() {
-  if (currentNeuralAudio) {
-    try {
-      currentNeuralAudio.pause();
-      currentNeuralAudio.src = "";
-    } catch {
-      /* ignore */
-    }
-    currentNeuralAudio = null;
-  }
-}
-
 export async function speakUma(text: string, options?: SpeakOptions): Promise<void> {
-  const myToken = ++activeSpeakToken;
-  stopCurrentNeuralAudio();
-
-  const parts = buildUmaParts(text, {
-    sanskritOnly: options?.sanskritOnly,
-    rate: options?.rate,
-    pitch: options?.pitch,
-  });
-
-  if (!parts.length) {
-    options?.onEnd?.();
-    return;
-  }
-
   const pandit = options?.voiceStyle === "pandit" || options?.sanskritOnly === true;
-
-  // 1. Native Android Plugin (Uses Neural IndianVoice + Sanskrit-Phonetic Local TTS fallback)
-  if (Capacitor.isNativePlatform()) {
-    try {
-      isCurrentlySpeaking = true;
-      options?.onStart?.();
-      await UmaVoice.speak({
-        parts,
-        music: pandit,
-        raga: pandit ? options?.raga || "bhairav" : "",
-      });
-      if (myToken !== activeSpeakToken) return;
-      isCurrentlySpeaking = false;
-      options?.onEnd?.();
-      return;
-    } catch {
-      if (myToken !== activeSpeakToken) return;
-      isCurrentlySpeaking = false;
-      if (pandit) startPathBed();
-      // Fallback to web speech synthesis if native plugin rejects
-    }
-  } else if (pandit) {
+  if (pandit) {
     startPathBed();
   }
 
-  // 2. Server-Side Vedic Pandit / Neural TTS (/api/tts/sanskrit) for pure Sanskrit/Hindi pronunciation
-  const joinedPhoneticText = parts.map((p) => p.text).join(" । ").slice(0, 1600);
-  const voiceStyle = pandit ? "pandit" : "uma";
-  const cacheKey = `${voiceStyle}:${joinedPhoneticText}`;
-
-  try {
-    let audioDataUrl = clientTtsCache.get(cacheKey);
-    if (!audioDataUrl) {
-      const resp = await fetch("/api/tts/sanskrit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: joinedPhoneticText,
-          voiceStyle,
-        }),
-        signal: AbortSignal.timeout(7500),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        if (data?.ok && data?.audioBase64) {
-          const mime = data.mimeType || "audio/wav";
-          audioDataUrl = `data:${mime};base64,${data.audioBase64}`;
-          if (clientTtsCache.size > 100) {
-            const firstKey = clientTtsCache.keys().next().value;
-            if (firstKey) clientTtsCache.delete(firstKey);
-          }
-          clientTtsCache.set(cacheKey, audioDataUrl);
-        }
-      }
-    }
-
-    if (myToken !== activeSpeakToken) return;
-
-    if (audioDataUrl && typeof Audio !== "undefined") {
-      const audio = new Audio(audioDataUrl);
-      currentNeuralAudio = audio;
-      audio.playbackRate = Math.max(0.75, Math.min(1.25, options?.rate ? options.rate / 0.88 : 1.0));
+  isCurrentlySpeaking = true;
+  return umaVoice.speak(text, {
+    rate: options?.rate ?? (pandit ? 0.88 : 0.94),
+    pitch: options?.pitch ?? (pandit ? 1.0 : 1.04),
+    voiceStyle: options?.voiceStyle ?? (pandit ? "pandit" : "uma"),
+    sanskritOnly: options?.sanskritOnly,
+    onStart: () => {
       isCurrentlySpeaking = true;
-      audio.onplay = () => {
-        if (myToken !== activeSpeakToken) return;
-        options?.onStart?.();
-      };
-      audio.onended = () => {
-        if (myToken !== activeSpeakToken) return;
-        isCurrentlySpeaking = false;
-        currentNeuralAudio = null;
-        options?.onEnd?.();
-      };
-      audio.onerror = () => {
-        if (myToken !== activeSpeakToken) return;
-        isCurrentlySpeaking = false;
-        currentNeuralAudio = null;
-        speakWithBrowserSynth(parts, myToken, options);
-      };
-      await audio.play();
-      return;
-    }
-  } catch {
-    // Offline or server unreachable — fall through seamlessly to local phonetic browser TTS
-  }
-
-  if (myToken !== activeSpeakToken) return;
-  speakWithBrowserSynth(parts, myToken, options);
-}
-
-function speakWithBrowserSynth(parts: UmaPart[], myToken: number, options?: SpeakOptions) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    options?.onError?.();
-    options?.onEnd?.();
-    return;
-  }
-
-  const synth = window.speechSynthesis;
-  clearKeepAlive();
-  synth.cancel();
-  synth.resume();
-  const voice = pickHindiVoice();
-  let index = 0;
-
-  const speakNext = () => {
-    if (myToken !== activeSpeakToken) return;
-    const part = parts[index];
-    if (!part) {
-      clearKeepAlive();
+      options?.onStart?.();
+    },
+    onEnd: () => {
       stopPathBed();
       isCurrentlySpeaking = false;
-      currentUtterance = null;
       options?.onEnd?.();
-      return;
-    }
-    const utter = new SpeechSynthesisUtterance(part.text);
-    currentUtterance = utter;
-    utter.lang = voice?.lang || "hi-IN";
-    utter.rate = part.rate;
-    utter.pitch = part.pitch;
-    if (voice) utter.voice = voice;
-    utter.onstart = () => {
-      if (myToken !== activeSpeakToken) return;
-      if (index === 0) {
-        isCurrentlySpeaking = true;
-        options?.onStart?.();
-      }
-    };
-    utter.onend = () => {
-      if (myToken !== activeSpeakToken) return;
-      index += 1;
-      speakNext();
-    };
-    utter.onerror = (e) => {
-      if (myToken !== activeSpeakToken) return;
-      clearKeepAlive();
+    },
+    onError: (err) => {
       stopPathBed();
       isCurrentlySpeaking = false;
-      currentUtterance = null;
-      options?.onError?.(e);
-      options?.onEnd?.();
-    };
-    synth.speak(utter);
-  };
-
-  if (!unlocked) unlockUmaSpeech();
-  speakNext();
+      options?.onError?.(err);
+    },
+  });
 }
 
 export function stopUmaSpeech() {
   activeSpeakToken += 1;
-  clearKeepAlive();
   stopPathBed();
-  stopCurrentNeuralAudio();
   isCurrentlySpeaking = false;
-  currentUtterance = null;
+  umaVoice.stop();
   if (Capacitor.isNativePlatform()) {
     UmaVoice.stopSpeaking().catch(() => {});
-  }
-  if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
   }
 }
 
 export function isUmaSpeaking(): boolean {
-  if (currentNeuralAudio && !currentNeuralAudio.paused) return true;
-  if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    return window.speechSynthesis.speaking || isCurrentlySpeaking;
-  }
-  return isCurrentlySpeaking;
+  return umaVoice.isSpeaking() || isCurrentlySpeaking;
 }
+

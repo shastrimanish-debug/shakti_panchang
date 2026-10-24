@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getDailyShloka, DailyShloka, SHLOKAS, getLocalizedDailyShloka, shlokaChrome } from '../constants/shlokas';
 import { BookOpen, Copy, Check, Volume2, VolumeX, Sparkles, RefreshCw, Share2 } from 'lucide-react';
-import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { umaVoice } from '../services/UmaVoiceService';
 import { useLanguage } from '../i18n';
 import { triggerHapticSelection } from '../utils/haptics';
 
@@ -27,7 +27,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
   // Clean up speech synthesis on unmount
   useEffect(() => {
     return () => {
-      stopUmaSpeech();
+      umaVoice.stop();
     };
   }, []);
 
@@ -57,16 +57,17 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
   const handleSpeak = () => {
     triggerHapticSelection();
     if (isSpeaking) {
-      stopUmaSpeech();
+      umaVoice.stop();
       setIsSpeaking(false);
       return;
     }
     setIsSpeaking(true);
-    void speakUma(`${shloka.sanskrit}। ${loc.meaning}`, {
-      rate: 0.85,
+    void umaVoice.speak(`${shloka.sanskrit}। ${loc.meaning}`, {
+      rate: 0.88,
+      pitch: 1.02,
       voiceStyle: 'pandit',
       sanskritOnly: true,
-      raga: 'bhairav',
+      onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
       onError: () => setIsSpeaking(false),
     });
@@ -78,7 +79,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
     const nextIndex = (currentIndex + 1) % SHLOKAS.length;
     setShloka(SHLOKAS[nextIndex]);
     if (isSpeaking) {
-      stopUmaSpeech();
+      umaVoice.stop();
       setIsSpeaking(false);
     }
   };

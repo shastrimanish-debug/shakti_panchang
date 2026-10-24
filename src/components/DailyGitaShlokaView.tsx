@@ -4,7 +4,7 @@ import { shlokaChrome } from '../constants/shlokas';
 import { Sparkles, Share2, Volume2, VolumeX, BookOpen, ChevronLeft, ChevronRight, Copy, Check, Bookmark, Menu, X, Search, ArrowLeft } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { useLanguage } from '../i18n';
-import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { umaVoice } from '../services/UmaVoiceService';
 import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { useTabMenu } from './BoardShell';
@@ -66,13 +66,13 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
   const currentShloka = filteredShlokas[selectedShlokaIndex] || filteredShlokas[0] || localizedShlokas[0];
 
   const stopAllSpeech = () => {
-    stopUmaSpeech();
+    umaVoice.stop();
     setIsSpeaking(false);
     setCurrentSpeakingId(null);
   };
 
   const speakShlokaFromIndex = (index: number) => {
-    stopUmaSpeech();
+    umaVoice.stop();
     if (index < 0 || index >= filteredShlokas.length) {
       stopAllSpeech();
       return;
@@ -85,11 +85,11 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
 
     const textToSpeak = `${s.sanskrit}।\n${s.localizedMeaning}`;
 
-    void speakUma(textToSpeak, {
-      rate: 0.85,
+    void umaVoice.speak(textToSpeak, {
+      rate: 0.88,
+      pitch: 1.02,
       voiceStyle: 'pandit',
       sanskritOnly: true,
-      raga: 'bhairavi',
       onStart: () => {
         setIsSpeaking(true);
         setCurrentSpeakingId(`gita_${s.id}`);
@@ -299,7 +299,7 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
               onClick={() => {
                 setSelectedShlokaIndex(idx);
                 if (isSpeaking) {
-                  stopUmaSpeech();
+                  umaVoice.stop();
                   setIsSpeaking(false);
                 }
               }}

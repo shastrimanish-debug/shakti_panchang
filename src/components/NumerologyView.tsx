@@ -12,7 +12,7 @@ import {
   reduceToSingleDigit,
 } from '../services/numerology';
 import { synthesizeNumerologyVerdict } from '../lib/uma';
-import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import { umaVoice } from '../services/UmaVoiceService';
 import {
   Sparkles,
   Hash,
@@ -191,13 +191,20 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
 
   const handleToggleSpeakUma = async () => {
     if (isSpeakingUma) {
-      stopUmaSpeech();
+      umaVoice.stop();
       setIsSpeakingUma(false);
       return;
     }
     setIsSpeakingUma(true);
     try {
-      await speakUma(`${topicQuickCard.title}। ${topicQuickCard.detail}। ${offlineUmaReport}`);
+      await umaVoice.speak(`${topicQuickCard.title}। ${topicQuickCard.detail}। ${offlineUmaReport}`, {
+        voiceStyle: 'uma',
+        rate: 0.94,
+        pitch: 1.04,
+        onStart: () => setIsSpeakingUma(true),
+        onEnd: () => setIsSpeakingUma(false),
+        onError: () => setIsSpeakingUma(false),
+      });
     } finally {
       setIsSpeakingUma(false);
     }
