@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
-import { askUma, AskUmaResponse, pingUmaServer } from '@/lib/uma';
+import { askUma, AskUmaResponse, pingUmaServer, UmaActionType, isNumerologyQuery } from '@/lib/uma';
 import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech, UmaVoice } from '@/lib/umaSpeech';
 import { Capacitor } from '@capacitor/core';
 import { analyzeKundali, SIGN_LORDS } from '../services/predictions';
@@ -60,7 +60,7 @@ interface ChatMessage {
   timestamp: Date;
   source?: 'gemini' | 'grok' | 'openrouter' | 'local_vedic';
   actionPayload?: {
-    type: 'open_panchang' | 'open_choghadiya' | 'open_kundali' | 'open_yatra' | 'open_muhurat';
+    type: UmaActionType;
     label: string;
   };
 }
@@ -79,6 +79,7 @@ interface UmaAssistantModalProps {
 
 const CATEGORY_TABS = [
   { id: 'all', label: 'समस्त प्रश्न' },
+  { id: 'numerology', label: '🔢 अंक ज्योतिष' },
   { id: 'kundali', label: 'कुंडली व फलादेश' },
   { id: 'upay', label: 'सात्विक उपाय' },
   { id: 'career', label: 'करियर व धन' },
@@ -88,23 +89,31 @@ const CATEGORY_TABS = [
 ];
 
 const BOT_QUICK_TOPICS = [
+  { id: 'numerology', label: '🔢 मूलांक, भाग्यांक व नाम सुधार', prompt: 'मेरे मूलांक, भाग्यांक, नामांक स्पेलिंग व लो-शू चक्र का सम्पूर्ण फलादेश और उपाय बताएं' },
   { id: 'vivah', label: '💍 विवाह व मांगलिक विचार', prompt: 'मेरी कुंडली में विवाह योग, दांपत्य सुख व मांगलिक परिहार' },
   { id: 'career', label: '💼 नौकरी व पदोन्नति योग', prompt: 'दशम भाव, नौकरी में पदोन्नति, स्थानांतरण व कार्यक्षेत्र फलादेश' },
   { id: 'dhan', label: '💰 व्यापार, धन लाभ व ऋण मुक्ति', prompt: 'धन भाव, व्यापार में समृद्धि व आर्थिक उन्नति के सात्विक उपाय' },
   { id: 'health', label: '🩺 स्वास्थ्य रक्षा व महामृत्युंजय', prompt: 'स्वास्थ्य रक्षा, अरिष्ट निवारण एवं महामृत्युंजय जप विधान' },
   { id: 'sadesati', label: '🪐 शनि साढ़ेसाती व ढैया फल', prompt: 'शनि की साढ़ेसाती का प्रभाव, चरण व कष्ट निवारण के अचूक उपाय' },
-  { id: 'ratna', label: '💎 भाग्य रत्न व रुद्राक्ष परामर्श', prompt: 'मेरी कुंडली के अनुसार सर्वोत्तम भाग्य रत्न, धातु व रुद्राक्ष' },
+  { id: 'ratna', label: '💎 भाग्य रत्न व रुद्राक्ष परामर्श', prompt: 'मेरी कुंडली व मूलांक के अनुसार सर्वोत्तम भाग्य रत्न, धातु व रुद्राक्ष' },
   { id: 'muhurat', label: '⏰ आज का शुभ मुहूर्त व चौघड़िया', prompt: 'आज का अमृत चौघड़िया, अभिजित मुहूर्त व शुभ कार्य समय' },
 ];
 
 const SUGGESTIONS_MAP: Record<string, string[]> = {
   all: [
+    'मेरे मूलांक, भाग्यांक व नामांक का सम्पूर्ण फलादेश व लो-शू राजयोग बताओ',
     'मेरी सम्पूर्ण कुंडली चेक करके फलादेश व उपाय बताओ',
-    'वर्तमान महादशा का मेरे जीवन पर क्या प्रभाव है?',
+    'मेरे नाम की स्पेलिंग और मोबाइल नंबर को भाग्यशाली कैसे बनाएं?',
     'करियर व नौकरी में उन्नति के शास्त्रोक्त उपाय बताओ',
-    'क्या मेरी कुंडली में मांगलिक दोष या साढ़ेसाती है?',
     'आज का राहुकाल और शुभ चौघड़िया समय बताओ',
     'कष्ट निवारण व ग्रह शांति के सिद्ध मंत्र व दान',
+  ],
+  numerology: [
+    'मेरे मूलांक, भाग्यांक व नामांक का सम्पूर्ण फलादेश और उपाय बताओ',
+    'कीरो/कॉल्डियन पद्धति से मेरे नाम की स्पेलिंग शुभ है या सुधार करें?',
+    'मेरे लो-शू ग्रिड (3x3) में कौन से राजयोग हैं और अनुपस्थित अंकों के उपाय क्या हैं?',
+    'मेरे मूलांक के अनुसार कौन सा मोबाइल नंबर और वाहन नंबर सबसे लकी रहेगा?',
+    'इस वर्ष (Personal Year) मेरा करियर, धन और भाग्योदय कैसा रहेगा?',
   ],
   kundali: [
     'मेरी सम्पूर्ण कुंडली चेक करके फलादेश व उपाय बताओ',
@@ -146,10 +155,10 @@ const SUGGESTIONS_MAP: Record<string, string[]> = {
 };
 
 /**
- * उमा दैवज्ञ - प्रकांड वैदिक ज्योतिष आचार्य (५० वर्षों का पराशारी, जैमिनी व नाड़ी सिद्धांत अनुभव)
+ * उमा दैवज्ञ - प्रकांड वैदिक ज्योतिष एवं अंक-शास्त्र आचार्य (५० वर्षों का पराशारी, जैमिनी, नाड़ी व लो-शू अनुभव)
  */
 export const UMA_ASTROLOGER_SYSTEM_PROMPT = `ROLE & PERSONA:
-You are "UMA" (उमा) — a "Prakhand Vedic Jyotish Acharya" (Elite Vedic Astrologer) with 50 years of unbroken, authoritative experience in Parashari, Jaimini, and Nadi Astrology. You possess deep scriptural wisdom, micro-astronomical precision, and compassionate spiritual guidance. You are as intelligent and articulate as the world's most advanced AI assistants, speaking with the divine aura of an ancient Vedic sage.
+You are "UMA" (उमा) — a "Prakhand Vedic Jyotish & Ank-Shastra Acharya" (Elite Vedic Astrologer & Numerologist) with 50 years of unbroken, authoritative experience in Parashari, Jaimini, Nadi Astrology, Chaldean/Pythagorean Numerology (Ank Jyotish), Lo Shu Grid (3x3), Vastu, and Samudrik Shastra. You possess deep scriptural wisdom, micro-astronomical and numerological precision, and compassionate spiritual guidance.
 
 TONE & LANGUAGE:
 - Address the user respectfully as "यजमान" (Yajaman) or "वत्स" (Vats).
@@ -220,7 +229,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   }, [activeKundali]);
 
   // Smart Birth Details Form state for users without Kundali or switching charts
-  const [isBirthFormOpen, setIsBirthFormOpen] = useState(!activeKundali);
+  // Never force-open birth form when an initialPrompt (like Ank Jyotish or Panchang query) is passed!
+  const [isBirthFormOpen, setIsBirthFormOpen] = useState(!activeKundali && !initialPrompt);
   const [birthName, setBirthName] = useState(activeKundali?.name || '');
   const [birthDate, setBirthDate] = useState('1995-01-01');
   const [birthHour, setBirthHour] = useState('10');
@@ -228,10 +238,11 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [birthAmPm, setBirthAmPm] = useState<'AM' | 'PM'>('AM');
   const [birthPlace, setBirthPlace] = useState('नई दिल्ली');
   const [isCreatingKundali, setIsCreatingKundali] = useState(false);
+  const autoSubmittedPromptRef = useRef<string | null>(null);
 
   const initialGreeting = activeKundali
-    ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान ${activeKundali.name} जी! मैं उमा हूँ — ५० वर्षों के अखंड पराशारी, जैमिनी व नाड़ी ज्योतिष साधना से युक्त आपकी प्रकांड वैदिक ज्योतिष आचार्य।\n\nमैंने आपकी जन्मपत्रिका (लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, नक्षत्र: ${activeKundali.nakshatra}, वर्तमान महादशा: ${activeKundali.mahadasha}) का नवमांश (D-9), दशमांश (D-10) व विंशोत्तरी दशा स्तर पर सूक्ष्म अवलोकन कर लिया है।\n\nअपनी आजीविका, धन, विवाह, स्वास्थ्य या ग्रह शांति से संबंधित कोई भी प्रश्न पूछें। मैं आपके अतीत के दृढ संकेतों के साथ भविष्य का सटीक कालखंड और सात्विक वैदिक उपाय प्रस्तुत करूँगी।`
-    : `॥ ॐ श्री गणेशाय नमः ॥\n॥ ॐ नमः शिवाय ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैं उमा हूँ — ५० वर्षों की कठिन वैदिक ज्योतिष साधना से युक्त आपकी आचार्य।\n\nआपकी जन्मपत्रिका का D-1 (लग्न), D-9 (नवमांश), D-10 (दशमांश) व विंशोत्तरी दशा स्तर पर सूक्ष्म गणित स्थापित करने के लिए, कृपया नीचे दिए स्मार्ट फॉर्म में अपना जन्म विवरण (नाम, तिथि, समय व स्थान) दर्ज करें।`;
+    ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान ${activeKundali.name} जी! मैं उमा हूँ — ५० वर्षों के अखंड पराशारी, जैमिनी, नाड़ी ज्योतिष व अंक-शास्त्र साधना से युक्त आपकी प्रकांड वैदिक आचार्य।\n\nमैंने आपकी जन्मपत्रिका (लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, नक्षत्र: ${activeKundali.nakshatra}, वर्तमान महादशा: ${activeKundali.mahadasha}) तथा आपके मूलांक-भाग्यांक व लो-शू चक्र का सूक्ष्म अवलोकन कर लिया है।\n\nआप अंक ज्योतिष, आजीविका, धन, विवाह, स्वास्थ्य या ग्रह शांति से संबंधित कोई भी प्रश्न पूछें (ऑफ़लाइन व ऑनलाइन १००% सटीक गणना)।`
+    : `॥ ॐ श्री गणेशाय नमः ॥\n॥ ॐ नमः शिवाय ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैं उमा हूँ — ५० वर्षों की कठिन वैदिक ज्योतिष एवं अंक-शास्त्र साधना से युक्त आपकी आचार्य।\n\nआप मुझसे **अंक ज्योतिष (मूलांक, भाग्यांक, नामांक स्पेलिंग, लो-शू राजयोग, मोबाइल/वाहन अंक)**, **आज का पंचांग व मुहूर्त**, **वास्तु**, **हस्तरेखा**, **रत्न** अथवा **जन्म कुण्डली** का कोई भी प्रश्न सीधे पूछ सकते हैं (बिना इंटरनेट के भी १००% सटीक सूक्ष्म गणित सक्रिय है)।`;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -242,13 +253,9 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     },
   ]);
   const [inputQuery, setInputQuery] = useState(initialPrompt || '');
-  const [activeCategory, setActiveCategory] = useState('all');
-
-  useEffect(() => {
-    if (isOpen && initialPrompt) {
-      setInputQuery(initialPrompt);
-    }
-  }, [isOpen, initialPrompt]);
+  const [activeCategory, setActiveCategory] = useState(
+    initialPrompt && isNumerologyQuery(initialPrompt) ? 'numerology' : 'all'
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
@@ -707,6 +714,23 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       setIsLoading(false);
     }
   };
+
+  // Auto-submit initialPrompt when modal opens with a prompt (e.g. from Ank Jyotish, Panchang, Muhurat, etc.)
+  useEffect(() => {
+    if (isOpen && initialPrompt && initialPrompt.trim()) {
+      setIsBirthFormOpen(false);
+      if (isNumerologyQuery(initialPrompt)) {
+        setActiveCategory('numerology');
+      }
+      if (autoSubmittedPromptRef.current !== initialPrompt) {
+        autoSubmittedPromptRef.current = initialPrompt;
+        const timer = setTimeout(() => {
+          void handleSubmit(initialPrompt);
+        }, 120);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isOpen, initialPrompt]);
 
   const suggestions = SUGGESTIONS_MAP[activeCategory] || SUGGESTIONS_MAP.all;
 
@@ -1256,7 +1280,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   )}
 
                   {/* Navigation Action Buttons / Smart Birth Trigger */}
-                  {isUma && !currentKundali && (
+                  {isUma && !currentKundali && msg.actionPayload?.type === 'open_kundali' && (
                     <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between flex-wrap gap-2">
                       <button
                         type="button"
@@ -1269,7 +1293,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     </div>
                   )}
 
-                  {msg.actionPayload && onNavigateTab && currentKundali && (
+                  {msg.actionPayload && onNavigateTab && (msg.actionPayload.type !== 'open_kundali' || currentKundali) && (
                     <div className="mt-3 pt-2.5 border-t border-[#8C6239]/20 flex items-center justify-between flex-wrap gap-2">
                       <button
                         onClick={() => {
@@ -1279,6 +1303,11 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                           if (msg.actionPayload?.type === 'open_kundali') onNavigateTab('kundali');
                           if (msg.actionPayload?.type === 'open_yatra') onNavigateTab('yatra');
                           if (msg.actionPayload?.type === 'open_muhurat') onNavigateTab('muhurat');
+                          if (msg.actionPayload?.type === 'open_numerology') onNavigateTab('numerology');
+                          if (msg.actionPayload?.type === 'open_vastu') onNavigateTab('vastu');
+                          if (msg.actionPayload?.type === 'open_palmistry') onNavigateTab('palmistry');
+                          if (msg.actionPayload?.type === 'open_gemology') onNavigateTab('gemology');
+                          if (msg.actionPayload?.type === 'open_upay') onNavigateTab('upay');
                         }}
                         className="text-xs font-bold text-[#7A1D1D] hover:text-[#5C1414] hover:underline flex items-center gap-1 bg-[#F4E8D1] px-3 py-1.5 rounded-lg border border-[#8C6239]/30 cursor-pointer shadow-xs"
                       >
