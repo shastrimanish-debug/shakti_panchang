@@ -4,6 +4,7 @@ import {
   synthesizeDynamicMicroVerdict,
   synthesizePanchangAstrologyVerdict,
   buildMicroAstrologyContextPrompt,
+  generateTraditionalUpayParchi,
 } from "../services/umaMicroAstrology";
 import {
   calculateMulank,
@@ -954,6 +955,17 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
               finalText = `${aiText.split("---")[0].trim()}\n\n---\n📜 **सूक्ष्म गणितीय प्रमाण पत्रिका (Sookshma Ganit Verification):**\n${sec2Match[0].trim()}\n\n---${
                 aiText.includes("[अगले प्रश्न]") ? "\n" + aiText.slice(aiText.indexOf("[अगले प्रश्न]")) : ""
               }`;
+            }
+          }
+
+          if (!finalText.includes("①")) {
+            const parchi = generateTraditionalUpayParchi(effectiveKundali, panchang);
+            const parchiBlock = `\n\n📋 **पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक — संक्षिप्त ६-सूत्रीय विधान):**\n${parchi.formattedTextBlock}\n*(💡 नीचे दिए **'📋 उपाय पर्ची'** बटन पर क्लिक करके आप इस पारंपरिक लेटरहेड पर्ची को देख, संपादित व डाउनलोड/शेयर कर सकते हैं।)*`;
+            if (finalText.includes("[अगले प्रश्न]")) {
+              const idx = finalText.indexOf("[अगले प्रश्न]");
+              finalText = `${finalText.slice(0, idx).trim()}${parchiBlock}\n\n---\n${finalText.slice(idx)}`;
+            } else {
+              finalText = `${finalText.trim()}${parchiBlock}`;
             }
           }
 

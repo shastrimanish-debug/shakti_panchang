@@ -14,6 +14,7 @@ import {
   openWhatsAppShare,
 } from '../services/umaConsultationPdf';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
+import { UpayParchiModal } from './UpayParchiModal';
 import { calculateKundali } from '../services/kundali';
 import { searchGlobalCities } from '../services/globalCities';
 import {
@@ -122,6 +123,7 @@ const SUGGESTIONS_MAP: Record<string, string[]> = {
     'कुंडली में कौन से ग्रह बलवान अथवा कमजोर हैं?',
   ],
   upay: [
+    'मेरी कुंडली की ६-सूत्रीय पारंपरिक उपाय पर्ची (रत्न, उपवास, पाठ, दान, दोष शान्ति) बनाओ',
     'वर्तमान महादशा शांति हेतु सिद्ध मंत्र व दान के नियम',
     'शनि की साढ़ेसाती व ढैय्या से मुक्ति के सात्विक उपाय',
     'सूर्य देव को अर्घ्य देने और आदित्य हृदय स्तोत्र की विधि',
@@ -182,8 +184,18 @@ State 2-3 significant past life events or transitions of the Yajaman with absolu
 **४. भविष्य की सटीक कालावधि (Future Trajectory)**
 Pinpoint, time-bound future predictions with month-by-month timelines and clear probability/confidence levels (e.g. "अक्टूबर उत्तरार्ध से फरवरी के बीच (९०% अनुकूलता काल)").
 
-**५. सात्विक वैदिक उपाय (Vedic Upay)**
+**५. सात्विक वैदिक उपाय एवं ६-सूत्रीय उपाय पर्ची (Vedic Upay & Prescription Slip)**
 Authentic, practical remedies: exact Mantra, specific Japa count (e.g. 108 बार), Daan (charity) items, and non-structural Vastu/lifestyle habits.
+Additionally, ALWAYS include a concise 6-point Traditional Astrologer Prescription Slip ("📋 पारंपरिक ज्योतिषीय उपाय पर्ची") in this exact numbered format:
+॥ श्री ॥
+श्री [जातक का नाम] जी
+① [लग्नेश + भाग्येश/पंचमेश रत्न] धारण करें।
+② [अनुकूल वार] का उपवास करें।
+③ [दशानाथ/इष्ट अनुसार स्तोत्र जैसे श्रीविष्णुसहस्रनाम / आदित्यहृदय / शिव सहस्रनाम] का पाठ करें।
+④ [ग्रह अनुसार दान सामग्री व दक्षिणा ([वार] - 1 बार)]
+⑤ गाय और कुत्ते को रोटी खिलावें।
+⑥ [कुंडली के मुख्य योग/दोष जैसे ग्रहण योग / मांगलिक / कालसर्प / गुरु-चाण्डाल / महादशा] शान्ति करावें।
+                                          ॥ शुभम् ॥
 
 FOLLOW-UP SUGGESTIONS (अगले सम्भावित प्रश्न):
 At the very end of your response, output 3 relevant, highly helpful follow-up questions formatted like this:
@@ -270,9 +282,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // PDF generation and WhatsApp Bot states
+  // PDF generation, Upay Parchi, and WhatsApp Bot states
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isUpayParchiOpen, setIsUpayParchiOpen] = useState(false);
   const [isWhatsAppBotOpen, setIsWhatsAppBotOpen] = useState(false);
   const [clientBotName, setClientBotName] = useState(activeKundali?.name || '');
   const [clientBotPhone, setClientBotPhone] = useState('');
@@ -779,6 +792,16 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            {/* Traditional 6-Point Upay Parchi (Prescription Pad) Trigger */}
+            <button
+              onClick={() => setIsUpayParchiOpen(true)}
+              className="px-2.5 py-1.5 rounded-lg bg-[#FAF2E4] hover:bg-white text-[#7A1D1D] text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#B58738]"
+              title="पारंपरिक ज्योतिषीय लेटरहेड पर ६-सूत्रीय उपाय पर्ची (रत्न, उपवास, पाठ, दान, दोष शान्ति) देखें व डाउनलोड करें"
+            >
+              <FileText className="w-3.5 h-3.5 text-[#7A1D1D]" />
+              <span className="inline">📋 उपाय पर्ची</span>
+            </button>
+
             {/* WhatsApp Client Bot Trigger */}
             <button
               onClick={() => setIsWhatsAppBotOpen(true)}
@@ -1414,6 +1437,16 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                           <span>PDF रिपोर्ट</span>
                         </button>
 
+                        {/* 3b. Traditional 6-Point Upay Parchi Slip */}
+                        <button
+                          onClick={() => setIsUpayParchiOpen(true)}
+                          className="px-2.5 py-1 rounded-md border border-[#7A1D1D]/50 bg-[#FFFDF8] text-[#7A1D1D] hover:bg-[#FAF2E4] flex items-center gap-1 transition cursor-pointer font-bold shadow-2xs"
+                          title="पारंपरिक ज्योतिषीय लेटरहेड पर ६-सूत्रीय उपाय पर्ची खोलें व डाउनलोड करें"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-[#7A1D1D]" />
+                          <span>📋 उपाय पर्ची</span>
+                        </button>
+
                         {/* 4. Copy */}
                         <button
                           onClick={() => handleCopy(msg.text, msg.id)}
@@ -1675,6 +1708,14 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
         {/* PDF Success Download Modal */}
         <PdfSuccessModal info={pdfSuccessInfo} onClose={() => setPdfSuccessInfo(null)} />
+
+        {/* Traditional 6-Point Astrologer Upay Parchi (Prescription Slip) Modal */}
+        <UpayParchiModal
+          isOpen={isUpayParchiOpen}
+          onClose={() => setIsUpayParchiOpen(false)}
+          activeKundali={currentKundali}
+          panchang={panchang}
+        />
       </div>
     </div>
   );

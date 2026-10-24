@@ -733,6 +733,189 @@ const PLANET_REMEDY: Record<string, { mantra: string; japaCount: string; daan: s
   },
 };
 
+export interface TraditionalUpayParchiData {
+  salutation: string;
+  serialNo: string;
+  dateStr: string;
+  lagnaInfo: string;
+  detectedDoshaYoga: string;
+  points: string[];
+  formattedTextBlock: string;
+}
+
+const LAGNA_RATNA_YUGMA: Record<string, { ratnaLine: string; upvasDay: string }> = {
+  मेष: { ratnaLine: 'मूंगा + माणिक्य रत्न धारण करें।', upvasDay: 'मंगलवार का उपवास करें।' },
+  वृषभ: { ratnaLine: 'ओपल (या हीरा) + पन्ना रत्न धारण करें।', upvasDay: 'शुक्रवार का उपवास करें।' },
+  मिथुन: { ratnaLine: 'पन्ना + ओपल रत्न धारण करें।', upvasDay: 'बुधवार का उपवास करें।' },
+  कर्क: { ratnaLine: 'मोती + माणिक रत्न धारण करें।', upvasDay: 'रविवार (या सोमवार) का उपवास करें।' },
+  सिंह: { ratnaLine: 'माणिक + पुखराज (या मूंगा) रत्न धारण करें।', upvasDay: 'रविवार का उपवास करें।' },
+  कन्या: { ratnaLine: 'पन्ना + ओपल रत्न धारण करें।', upvasDay: 'बुधवार का उपवास करें।' },
+  तुला: { ratnaLine: 'ओपल (या हीरा) + पन्ना रत्न धारण करें।', upvasDay: 'शुक्रवार का उपवास करें।' },
+  वृश्चिक: { ratnaLine: 'मूंगा + मोती (या पुखराज) रत्न धारण करें।', upvasDay: 'मंगलवार (या गुरुवार) का उपवास करें।' },
+  धनु: { ratnaLine: 'पुखराज + माणिक रत्न धारण करें।', upvasDay: 'गुरुवार का उपवास करें।' },
+  मकर: { ratnaLine: 'नीलम (या नीली) + ओपल रत्न धारण करें।', upvasDay: 'शनिवार (या शुक्रवार) का उपवास करें।' },
+  कुंभ: { ratnaLine: 'नीलम (या ओपल) + पन्ना रत्न धारण करें।', upvasDay: 'शनिवार का उपवास करें।' },
+  मीन: { ratnaLine: 'पुखराज + मोती रत्न धारण करें।', upvasDay: 'गुरुवार का उपवास करें।' },
+};
+
+const PLANET_STOTRA_PATH: Record<string, string> = {
+  सूर्य: 'श्री आदित्यहृदय स्तोत्र का पाठ करें।',
+  चंद्र: 'श्री शिव सहस्रनाम (या रुद्राष्टक) का पाठ करें।',
+  मंगल: 'श्री सुन्दरकाण्ड (या ऋणमोचक मंगल स्तोत्र) का पाठ करें।',
+  बुध: 'श्रीविष्णुसहस्रनाम का पाठ करें।',
+  गुरु: 'श्रीविष्णुसहस्रनाम का पाठ करें।',
+  शुक्र: 'श्रीसूक्त (या दुर्गा सप्तशती कवच) का पाठ करें।',
+  शनि: 'श्री हनुमान चालीसा व दशरथ कृत शनि स्तोत्र का पाठ करें।',
+  राहु: 'श्री दुर्गा सप्तशती (कवच, अर्गला, कीलक) का पाठ करें।',
+  केतु: 'श्री गणेश संकटनाशन स्तोत्र व विष्णुसहस्रनाम का पाठ करें।',
+};
+
+const PLANET_PARCHI_DAAN: Record<string, string> = {
+  गुरु: 'पीला कपड़ा, चने की दाल, गुड़, हल्दी, दक्षिणा (गुरुवार - 1 बार)',
+  सूर्य: 'लाल कपड़ा, गेहूँ, गुड़, तांबा, लाल चंदन, दक्षिणा (रविवार - 1 बार)',
+  चंद्र: 'सफेद कपड़ा, बासमती चावल, मिश्री, दूध, कपूर, दक्षिणा (सोमवार - 1 बार)',
+  मंगल: 'लाल कपड़ा, लाल मसूर की दाल, गुड़, तांबा, सिंदूर, दक्षिणा (मंगलवार - 1 बार)',
+  बुध: 'हरा कपड़ा, साबुत हरी मूंग, काँसा, हरी इलायची, दक्षिणा (बुधवार - 1 बार)',
+  शुक्र: 'सफेद रेशमी कपड़ा, चावल, देशी घी, मिश्री, दही, दक्षिणा (शुक्रवार - 1 बार)',
+  शनि: 'काला कपड़ा, काली उड़द, काले तिल, सरसों का तेल, लोहा, दक्षिणा (शनिवार - 1 बार)',
+  राहु: 'नीला कपड़ा, सप्तधान्य, जटा नारियल, काले तिल, दक्षिणा (शनिवार - 1 बार)',
+  केतु: 'दो-रंगा कंबल, तिल के लड्डू, केला, ध्वजा, दक्षिणा (मंगलवार - 1 बार)',
+};
+
+/**
+ * Generates an authentic 6-point Vedic Astrologer Prescription Slip ("परामर्श पर्ची / उपाय पत्रक")
+ * modeled directly after traditional Kashi/Ujjain/Burhanpur Jyotishacharya letterheads.
+ */
+export function generateTraditionalUpayParchi(
+  k?: KundaliData | null,
+  panchang?: VedicPanchangData | null
+): TraditionalUpayParchiData {
+  const now = panchang?.date || new Date();
+  const dateStr = now.toLocaleDateString('hi-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  if (!k) {
+    const defaultPoints = [
+      'मोती + माणिक रत्न धारण करें।',
+      'रविवार का उपवास करें।',
+      'श्रीविष्णुसहस्रनाम का पाठ करें।',
+      'पीला कपड़ा, चने की दाल, गुड़, हल्दी, दक्षिणा (गुरुवार - 1 बार)',
+      'गाय और कुत्ते को रोटी खिलावें।',
+      'ग्रहण योग / नवग्रह शान्ति करावें।',
+    ];
+    const circled = ['①', '②', '③', '④', '⑤', '⑥'];
+    const formattedTextBlock = [
+      `॥ श्री ॥`,
+      `श्री यजमान जी`,
+      ...defaultPoints.map((pt, i) => `${circled[i]} ${pt}`),
+      `                                          ॥ शुभम् ॥`,
+    ].join('\n');
+
+    return {
+      salutation: 'श्री यजमान जी',
+      serialNo: '108',
+      dateStr,
+      lagnaInfo: 'तात्कालिक प्रश्न लग्न',
+      detectedDoshaYoga: 'ग्रहण योग / नवग्रह शान्ति',
+      points: defaultPoints,
+      formattedTextBlock,
+    };
+  }
+
+  const rawName = (k.name || 'यजमान').trim();
+  const hasHonorific = /^(श्री|श्रीमती|सुश्री|कु\.|डॉ\.|पं\.)/.test(rawName);
+  const salutation = hasHonorific ? rawName : `श्री ${rawName} जी`;
+
+  const lagna = k.lagnaRashi || 'कर्क';
+  const lagnaPreset = LAGNA_RATNA_YUGMA[lagna] || LAGNA_RATNA_YUGMA['कर्क'];
+
+  // Point 1: Gemstones (Lagna + Trikona)
+  const point1 = lagnaPreset.ratnaLine;
+
+  // Point 2: Fasting day (Upvas)
+  const point2 = lagnaPreset.upvasDay;
+
+  // Point 3: Classical Stotra / Path based on Mahadasha / Antardasha / Guru
+  const maha = k.mahadasha || 'गुरु';
+  const antar = k.antardasha || 'सूर्य';
+  const point3 =
+    PLANET_STOTRA_PATH[maha] ||
+    PLANET_STOTRA_PATH[antar] ||
+    'श्रीविष्णुसहस्रनाम का पाठ करें।';
+
+  // Point 4: Daan (Specific items + weekday - 1 time)
+  const daanPlanet = PLANET_PARCHI_DAAN[maha]
+    ? maha
+    : PLANET_PARCHI_DAAN[antar]
+    ? antar
+    : 'गुरु';
+  const point4 = PLANET_PARCHI_DAAN[daanPlanet] || PLANET_PARCHI_DAAN['गुरु'];
+
+  // Point 5: Gau & Shwan Seva
+  const point5 = 'गाय और कुत्ते को रोटी खिलावें।';
+
+  // Point 6: Detect actual Yoga / Dosha from planetary houses in Kundali
+  const getHouse = (pName: string) => k.planets?.find((p) => p.planet === pName)?.house ?? -1;
+  const sunH = getHouse('सूर्य');
+  const moonH = getHouse('चंद्र');
+  const marsH = getHouse('मंगल');
+  const jupH = getHouse('गुरु');
+  const satH = getHouse('शनि');
+  const rahuH = getHouse('राहु');
+  const ketuH = getHouse('केतु');
+
+  let point6 = `${maha} महादशा एवं नवग्रह शान्ति करावें।`;
+  let detectedDoshaYoga = `${maha} महादशा शान्ति`;
+
+  if (
+    (sunH > 0 && (sunH === rahuH || sunH === ketuH)) ||
+    (moonH > 0 && (moonH === rahuH || moonH === ketuH))
+  ) {
+    point6 = 'ग्रहण योग शान्ति करावें।';
+    detectedDoshaYoga = 'ग्रहण योग (सूर्य/चंद्र-राहु/केतु युति)';
+  } else if (jupH > 0 && (jupH === rahuH || jupH === ketuH)) {
+    point6 = 'गुरु-चाण्डाल योग शान्ति करावें।';
+    detectedDoshaYoga = 'गुरु-चाण्डाल योग';
+  } else if (marsH > 0 && (marsH === rahuH || marsH === ketuH)) {
+    point6 = 'अंगारक योग शान्ति करावें।';
+    detectedDoshaYoga = 'अंगारक योग (मंगल-राहु युति)';
+  } else if (satH > 0 && satH === moonH) {
+    point6 = 'विष योग शान्ति एवं रुद्राभिषेक करावें।';
+    detectedDoshaYoga = 'विष योग (शनि-चंद्र युति)';
+  } else if (satH > 0 && (satH === rahuH || satH === ketuH)) {
+    point6 = 'शापित दोष / प्रेत दोष शान्ति करावें।';
+    detectedDoshaYoga = 'शनि-राहु शापित योग';
+  } else if (sunH > 0 && sunH === satH) {
+    point6 = 'पितृ दोष शान्ति करावें।';
+    detectedDoshaYoga = 'सूर्य-शनि पितृ दोष संकेत';
+  } else if (k.isManglik) {
+    point6 = 'मंगल भात पूजा / मांगलिक दोष शान्ति करावें।';
+    detectedDoshaYoga = 'मांगलिक दोष';
+  }
+
+  const points = [point1, point2, point3, point4, point5, point6];
+  const circled = ['①', '②', '③', '④', '⑤', '⑥'];
+  const formattedTextBlock = [
+    `॥ श्री ॥`,
+    `${salutation}`,
+    ...points.map((pt, i) => `${circled[i]} ${pt}`),
+    `                                          ॥ शुभम् ॥`,
+  ].join('\n');
+
+  return {
+    salutation,
+    serialNo: String(100 + ((rawName.length * 7) % 899)),
+    dateStr,
+    lagnaInfo: `${k.lagnaRashi} लग्न • ${k.moonRashi} राशि • ${k.mahadasha} महादशा`,
+    detectedDoshaYoga,
+    points,
+    formattedTextBlock,
+  };
+}
+
 export interface TopicInsight {
   house: number;
   secondaryHouses: number[];
@@ -1105,7 +1288,12 @@ export function synthesizeDynamicMicroVerdict(
     upaySection += `२. **नक्षत्र एवं इष्ट कवच:** जन्म नक्षत्र **${profile.moonNakshatra}** के बल हेतु प्रत्येक मास के जन्म नक्षत्र दिवस पर शिव/विष्णु अभिषेक करें।\n`;
   }
   upaySection += `३. **शास्त्रीय दान विधान:** ${remMain.daan}\n`;
-  upaySection += `४. **दैनिक आचार व आरूढ़ लग्न (${profile.jaiminiSummary.arudhaLagna.split(' ')[0]}) जागृति:** ${remMain.habit}`;
+  upaySection += `४. **दैनिक आचार व आरूढ़ लग्न (${profile.jaiminiSummary.arudhaLagna.split(' ')[0]}) जागृति:** ${remMain.habit}\n\n`;
+
+  const parchi = generateTraditionalUpayParchi(k, panchang);
+  upaySection += `📋 **पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक — संक्षिप्त ६-सूत्रीय विधान):**\n`;
+  upaySection += `${parchi.formattedTextBlock}\n`;
+  upaySection += `*(💡 नीचे दिए **'📋 उपाय पर्ची'** बटन पर क्लिक करके आप इस पारंपरिक लेटरहेड पर्ची को देख, संपादित व डाउनलोड/शेयर कर सकते हैं।)*`;
 
   return `॥ ॐ श्री गणेशाय नमः • सूक्ष्म वैदिक गणना एवं षोडशवर्ग निर्णय ॥
 
@@ -1233,7 +1421,10 @@ ${topic.shloka}
 
 • **कार्येश (${prashnaHouse.lord}) सिद्ध बीज मंत्र:** नित्य प्रातः *${rem.mantra}* (${rem.japaCount})
 • **शास्त्रीय दान:** ${rem.daan}
-• **दैनिक नियम:** ${rem.habit}${notice}
+• **दैनिक नियम:** ${rem.habit}
+
+📋 **पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक):**
+${generateTraditionalUpayParchi(prashnaKundali, panchang).formattedTextBlock}${notice}
 
 ---
 [अगले प्रश्न]:

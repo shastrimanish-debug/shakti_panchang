@@ -32,6 +32,7 @@ import { Vedic3DKundaliView } from './Vedic3DKundaliView';
 import { LalKitabUpayListView } from './LalKitabUpayListView';
 import { PrashnaJyotishPanel } from './PrashnaJyotishPanel';
 import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
+import { UpayParchiModal } from './UpayParchiModal';
 import { useTranslation } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
@@ -248,6 +249,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [girlCharan, setGirlCharan] = useState<number>(2);
   const [girlIsManglik, setGirlIsManglik] = useState<boolean>(false);
   const [milanPosterData, setMilanPosterData] = useState<ShlokaPosterData | null>(null);
+  const [isUpayParchiOpen, setIsUpayParchiOpen] = useState(false);
 
   const handleLoadSampleMilan = () => {
     setMilanInputMode('dob');
@@ -632,6 +634,16 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   <FileText className="w-3.5 h-3.5 text-[#FFD88A]" />
                 )}
                 <span>1-पृष्ठ PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsUpayParchiOpen(true)}
+                className="px-2.5 py-1.5 bg-[#FFFDF8] hover:bg-[#FAF2E4] text-[#7A1D1D] border border-[#7A1D1D]/50 text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer active:scale-95"
+                title="पारंपरिक ज्योतिषीय लेटरहेड पर ६-सूत्रीय उपाय पर्ची (Prescription Pad)"
+              >
+                <FileText className="w-3.5 h-3.5 text-[#7A1D1D]" />
+                <span>📋 उपाय पर्ची</span>
               </button>
 
               <button
@@ -2564,10 +2576,20 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         <div className="space-y-6">
           {remedies && k && (
             <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-5 shadow-xs space-y-4">
-              <h3 className="text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
-                <Shield className="w-5 h-5 text-[#B56A00]" />
-                {k.name} हेतु वैदिक उपाय, रत्न एवं इष्टदेव मार्गदर्शन
-              </h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-[#B56A00]" />
+                  {k.name} हेतु वैदिक उपाय, रत्न एवं इष्टदेव मार्गदर्शन
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsUpayParchiOpen(true)}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:brightness-110 text-[#FFD88A] text-xs font-bold rounded-lg shadow-sm border border-[#B58738] flex items-center gap-1.5 cursor-pointer transition"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>📋 पारंपरिक ६-सूत्रीय उपाय पर्ची (Prescription Pad) खोलें</span>
+                </button>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-[#F4E8D1] p-3.5 rounded-lg border border-[#8C6239]/20">
@@ -2627,6 +2649,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
         reason={subscriptionReason}
+      />
+
+      {/* Traditional 6-Point Astrologer Upay Parchi (Prescription Pad) Modal */}
+      <UpayParchiModal
+        isOpen={isUpayParchiOpen}
+        onClose={() => setIsUpayParchiOpen(false)}
+        activeKundali={k}
       />
     </div>
   );
