@@ -8,6 +8,7 @@ import { useLanguage } from '../i18n';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { DrawerHostContext, useTabMenu } from './BoardShell';
+import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 
 interface VratKathaViewProps {
   onBackToPanchang?: () => void;
@@ -31,6 +32,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [shareToast, setShareToast] = useState<string | null>(null);
+  const [posterData, setPosterData] = useState<ShlokaPosterData | null>(null);
   const [atMenu, setAtMenu] = useState(false);
 
   useTabMenu(() => {
@@ -265,13 +267,37 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
           </h2>
         </div>
 
-        {currentKatha.katha && currentKatha.katha.length > 1 && !atMenu && (
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="text-[11px] font-bold text-[#B56A00] bg-[#FAF2E4] px-2 py-0.5 rounded-md border border-[#B56A00]/30">
+        <div className="flex items-center gap-1.5 shrink-0">
+          {!atMenu && (
+            <button
+              type="button"
+              onClick={() =>
+                setPosterData({
+                  title: currentKatha.title,
+                  reference: currentKatha.subtitle || 'पौराणिक व्रत कथा',
+                  sanskrit:
+                    currentKatha.shlok && currentKatha.shlok.trim()
+                      ? currentKatha.shlok
+                      : `${currentKatha.title}\n(${currentKatha.subtitle})`,
+                  meaning:
+                    currentKatha.shlokMeaning && currentKatha.shlokMeaning.trim()
+                      ? `${currentKatha.shlokMeaning}\n\n${body.slice(0, 260)}...`
+                      : `${body.slice(0, 320)}...`,
+                  accentTag: '🪔 सनातन व्रत कथा एवं महात्म्य',
+                })
+              }
+              style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer"
+            >
+              📸 स्टेटस कार्ड
+            </button>
+          )}
+          {currentKatha.katha && currentKatha.katha.length > 1 && !atMenu && (
+            <span className="text-[11px] font-bold text-[#6E1409] bg-[#FAF2E4] px-2 py-0.5 rounded-md border border-[#B56A00]/40">
               अध्याय {activeChapterIndex + 1}/{currentKatha.katha.length}
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {host ? createPortal(tools, host) : null}
@@ -470,6 +496,11 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
           </div>
         </div>
       )}
+      <ShlokaPosterModal
+        isOpen={posterData !== null}
+        onClose={() => setPosterData(null)}
+        data={posterData}
+      />
     </div>
   );
 };

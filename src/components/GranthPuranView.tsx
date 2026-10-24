@@ -29,6 +29,7 @@ import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { triggerHapticSelection } from '../utils/haptics';
 import { useTabMenu } from './BoardShell';
+import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 
 export interface GranthPuranViewProps {
   onBackToPanchang?: () => void;
@@ -70,6 +71,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
     null
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [posterData, setPosterData] = useState<ShlokaPosterData | null>(null);
 
   const [bookmarks, setBookmarks] = useState<Record<string, boolean>>(() => {
     try {
@@ -939,6 +941,30 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
 
                   <button
                     type="button"
+                    onClick={() => {
+                      triggerHapticSelection();
+                      setPosterData({
+                        title: currentExcerpt.scriptureName[langKey] || currentExcerpt.scriptureName.hi,
+                        reference: `${currentExcerpt.subSource[langKey] || currentExcerpt.subSource.hi} · ${currentExcerpt.reference}`,
+                        sanskrit: currentExcerpt.sanskrit,
+                        meaning: `${currentExcerpt.meaning[langKey] || currentExcerpt.meaning.hi}\n\nवेदान्त दर्शन: ${currentExcerpt.commentary[langKey] || currentExcerpt.commentary.hi}`,
+                        speaker: currentExcerpt.rishiOrSpeaker[langKey] || currentExcerpt.rishiOrSpeaker.hi,
+                        accentTag: `📜 ${currentExcerpt.themeTag[langKey] || currentExcerpt.themeTag.hi}`,
+                      });
+                    }}
+                    style={{
+                      backgroundColor: '#6E1409',
+                      borderColor: '#4A0E0E',
+                      color: '#FFFFFF',
+                    }}
+                    className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    title="HD स्टेटस इमेज कार्ड डाउनलोड/शेयर करें"
+                  >
+                    <span>📸 स्टेटस कार्ड</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleShare(currentExcerpt)}
                     style={{
                       backgroundColor: '#DCFCE7',
@@ -1405,6 +1431,12 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
           </section>
         )}
       </div>
+
+      <ShlokaPosterModal
+        isOpen={posterData !== null}
+        onClose={() => setPosterData(null)}
+        data={posterData}
+      />
     </div>
   );
 };

@@ -8,13 +8,17 @@ import {
   Sparkles,
   Award,
   Calendar,
-  Sun,
-  Moon,
   Clock,
-  ExternalLink,
+  Smartphone,
 } from 'lucide-react';
 import { VedicPanchangData, SavedLocation } from '../types';
 import { getAstrologerBranding, AstrologerBranding } from '../services/storage';
+import {
+  getDayChoghadiya,
+  getNightChoghadiya,
+  getInauspiciousWindows,
+  getAuspiciousWindows,
+} from '../services/choghadiya';
 import { shareImageFile, shareTextContent } from '../lib/shareHelper';
 import { saveImageNative } from '../lib/device';
 
@@ -27,6 +31,8 @@ interface WhatsAppPanchangModalProps {
   personName?: string;
   onOpenBrandingModal?: () => void;
 }
+
+type CardTemplateMode = 'panchang' | 'choghadiya' | 'status_9_16';
 
 const DAILY_SHLOKAS = [
   {
@@ -63,7 +69,6 @@ function dataURItoBlob(dataURI: string): Blob {
   return new Blob([ab], { type: mimeString });
 }
 
-// Safe rounded rectangle for Canvas across all browser/webview versions
 function safeRoundRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -93,22 +98,118 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   onOpenBrandingModal,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [templateMode, setTemplateMode] = useState<CardTemplateMode>('panchang');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(true);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
   const [branding, setBranding] = useState<AstrologerBranding>(() => getAstrologerBranding());
 
-  // Shloka for today based on day of month
   const shlokaIndex = currentDate.getDate() % DAILY_SHLOKAS.length;
   const currentShloka = DAILY_SHLOKAS[shlokaIndex];
 
-  // Refresh branding when opened
   useEffect(() => {
     if (isOpen) {
       setBranding(getAstrologerBranding());
     }
   }, [isOpen]);
+
+  // Real calculated Choghadiya, Rahukaal & Abhijit Muhurat
+  const weekday = currentDate.getDay();
+  const dayChoghadiyas = getDayChoghadiya(panchang.solar, weekday);
+  const nightChoghadiyas = getNightChoghadiya(panchang.solar, weekday);
+  const inauspiciousWindows = getInauspiciousWindows(panchang.solar, weekday);
+  const auspiciousWindows = getAuspiciousWindows(panchang.solar);
+
+  const fmtShort = (d: Date) =>
+    d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+
+  const rahuWin =
+    inauspiciousWindows.find((w) => w.title.includes('राहु')) || inauspiciousWindows[0];
+  const rahuStr = rahuWin
+    ? `${fmtShort(rahuWin.start)} - ${fmtShort(rahuWin.end)}`
+    : '12:00 - 13:30';
+
+  const abhijitWin =
+    auspiciousWindows.find((w) => w.title.includes('अभिजित')) || auspiciousWindows[0];
+  const abhijitStr = abhijitWin
+    ? `${fmtShort(abhijitWin.start)} – ${fmtShort(abhijitWin.end)}`
+    : '11:52 – 12:42';
+
+  const drawFooterBranding = (
+    ctx: CanvasRenderingContext2D,
+    W: number,
+    leftX: number,
+    footerY: number
+  ) => {
+    if (branding.enabled && branding.name) {
+      const cardGrad = ctx.createLinearGradient(leftX, footerY, W - leftX, footerY + 230);
+      cardGrad.addColorStop(0, '#5C3A21');
+      cardGrad.addColorStop(1, '#3E2714');
+      ctx.fillStyle = cardGrad;
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX, footerY, W - leftX * 2, 230, 20);
+      ctx.fill();
+      ctx.strokeStyle = '#FFD88A';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFD88A';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('॥ प्रामाणिक वैदिक ज्योतिष एवं कर्मकांड परामर्श ॥', W / 2, footerY + 42);
+
+      ctx.fillStyle = '#FAF2E4';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText(branding.name, W / 2, footerY + 92);
+
+      ctx.fillStyle = '#FFD88A';
+      ctx.font = '24px sans-serif';
+      ctx.fillText(branding.title || 'वैदिक ज्योतिषी', W / 2, footerY + 130);
+
+      ctx.fillStyle = '#FAF2E4';
+      ctx.font = 'bold 25px sans-serif';
+      const contactStr = [
+        branding.phone ? `📞 ${branding.phone}` : '',
+        branding.city ? `📍 ${branding.city}` : '',
+        branding.sansthan ? `🏛️ ${branding.sansthan}` : '',
+      ]
+        .filter(Boolean)
+        .join('   •   ');
+      ctx.fillText(contactStr || 'सनातन शक्ति पंचांग', W / 2, footerY + 172);
+
+      if (branding.specialization) {
+        ctx.fillStyle = 'rgba(255, 216, 138, 0.88)';
+        ctx.font = '19px sans-serif';
+        ctx.fillText(`विशेषज्ञता: ${branding.specialization}`, W / 2, footerY + 208);
+      }
+    } else {
+      ctx.fillStyle = '#5C3A21';
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX, footerY, W - leftX * 2, 230, 20);
+      ctx.fill();
+      ctx.strokeStyle = '#B56A00';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFD88A';
+      ctx.font = 'bold 36px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('सनातन शक्ति पंचांग', W / 2, footerY + 70);
+
+      ctx.fillStyle = '#FAF2E4';
+      ctx.font = '24px sans-serif';
+      ctx.fillText('अचूक वैदिक खगोलशास्त्र • सूर्य सिद्धान्त एवं लाहिरी अयनांश', W / 2, footerY + 118);
+
+      ctx.fillStyle = '#FFD88A';
+      ctx.font = '22px sans-serif';
+      ctx.fillText('॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥', W / 2, footerY + 162);
+
+      ctx.fillStyle = 'rgba(250, 242, 228, 0.78)';
+      ctx.font = '19px sans-serif';
+      ctx.fillText('दैनिक पंचांग, शुभ मुहूर्त, चौघड़िया एवं कुंडली मिलान', W / 2, footerY + 198);
+    }
+  };
 
   const generateCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -119,7 +220,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     setIsGenerating(true);
 
     const W = 1080;
-    const H = 1350;
+    const H = templateMode === 'status_9_16' ? 1920 : 1350;
     canvas.width = W;
     canvas.height = H;
 
@@ -139,8 +240,8 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.fillRect(rx, ry, 2, 2);
     }
 
-    // 2. Double Ornate Borders (सुवर्ण वेष्टन)
-    ctx.strokeStyle = '#B56A00';
+    // 2. Double Ornate Borders
+    ctx.strokeStyle = '#8B1E1E';
     ctx.lineWidth = 8;
     ctx.strokeRect(24, 24, W - 48, H - 48);
 
@@ -148,15 +249,14 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.lineWidth = 2.5;
     ctx.strokeRect(36, 36, W - 72, H - 72);
 
-    // Corner Vedic Ornaments
     const drawCorner = (cx: number, cy: number) => {
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.fillStyle = '#B56A00';
+      ctx.fillStyle = '#8B1E1E';
       ctx.beginPath();
       ctx.arc(0, 0, 10, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#8C6239';
+      ctx.strokeStyle = '#B56A00';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(0, 0, 18, 0, Math.PI * 2);
@@ -169,27 +269,33 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     drawCorner(W - 50, H - 50);
 
     // 3. Sacred Invocation Top
-    ctx.fillStyle = '#B56A00';
+    ctx.fillStyle = '#8B1E1E';
     ctx.font = 'bold 28px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('॥ ॐ श्री गणेशाय नमः ॥', W / 2, 85);
 
     // 4. Header Badge
-    const headerGrad = ctx.createLinearGradient(W / 2 - 320, 105, W / 2 + 320, 180);
-    headerGrad.addColorStop(0, '#5C3A21');
-    headerGrad.addColorStop(0.5, '#462B17');
-    headerGrad.addColorStop(1, '#5C3A21');
+    const headerGrad = ctx.createLinearGradient(W / 2 - 340, 105, W / 2 + 340, 185);
+    headerGrad.addColorStop(0, '#6E1409');
+    headerGrad.addColorStop(0.5, '#4A0E0E');
+    headerGrad.addColorStop(1, '#6E1409');
     ctx.fillStyle = headerGrad;
     ctx.beginPath();
-    safeRoundRect(ctx, W / 2 - 340, 105, 680, 80, 20);
+    safeRoundRect(ctx, W / 2 - 350, 105, 700, 80, 20);
     ctx.fill();
     ctx.strokeStyle = '#FFD88A';
     ctx.lineWidth = 3;
     ctx.stroke();
 
     ctx.fillStyle = '#FFD88A';
-    ctx.font = 'bold 38px sans-serif';
-    ctx.fillText('दैनिक वैदिक पञ्चाङ्गम्', W / 2, 160);
+    ctx.font = 'bold 36px sans-serif';
+    const headerText =
+      templateMode === 'choghadiya'
+        ? 'आज का शुभ चौघड़िया व मुहूर्त'
+        : templateMode === 'status_9_16'
+          ? 'आज का सुभाषित एवं पंचांग दर्शन'
+          : 'दैनिक वैदिक पञ्चाङ्गम्';
+    ctx.fillText(headerText, W / 2, 158);
 
     // 5. Date & Location Bar
     const dateStr = currentDate.toLocaleDateString('hi-IN', {
@@ -198,12 +304,12 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       month: 'long',
       year: 'numeric',
     });
-    ctx.fillStyle = '#3E2714';
+    ctx.fillStyle = '#241005';
     ctx.font = 'bold 30px sans-serif';
     ctx.fillText(dateStr, W / 2, 235);
 
-    ctx.fillStyle = '#735133';
-    ctx.font = '24px sans-serif';
+    ctx.fillStyle = '#5C2D0C';
+    ctx.font = 'bold 24px sans-serif';
     const locName = location.name.split('(')[0].trim();
     const who = personName ? `${personName} • ` : '';
     ctx.fillText(`${who}स्थान: ${locName} • संवत्: ${panchang.samvat || '2083'}`, W / 2, 275);
@@ -212,229 +318,386 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.strokeStyle = '#8C6239';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(80, 305);
-    ctx.lineTo(W - 80, 305);
+    ctx.moveTo(80, 302);
+    ctx.lineTo(W - 80, 302);
     ctx.stroke();
 
-    // 6. Panchang 5 Core Limbs Cards (Grid 2x2 + 1)
-    const card = (x: number, y: number, w: number, h: number, title: string, value: string, sub: string, iconStr: string) => {
-      ctx.fillStyle = '#FAF2E4';
-      ctx.beginPath();
-      safeRoundRect(ctx, x, y, w, h, 14);
-      ctx.fill();
-      ctx.strokeStyle = '#8C6239';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Icon circle
-      ctx.fillStyle = '#5C3A21';
-      ctx.beginPath();
-      ctx.arc(x + 36, y + h / 2, 24, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#FFD88A';
-      ctx.font = 'bold 20px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(iconStr, x + 36, y + h / 2 + 7);
-
-      // Title & Value
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#8C6239';
-      ctx.font = 'bold 20px sans-serif';
-      ctx.fillText(title, x + 72, y + 36);
-
-      ctx.fillStyle = '#3E2714';
-      ctx.font = 'bold 26px sans-serif';
-      ctx.fillText(value, x + 72, y + 68);
-
-      if (sub) {
-        ctx.fillStyle = '#B56A00';
-        ctx.font = '19px sans-serif';
-        ctx.fillText(sub, x + 72, y + 96);
-      }
-    };
-
-    const cardW = 445;
-    const cardH = 115;
     const leftX = 75;
-    const rightX = 560;
 
-    // Tithi
-    const tithiSub = panchang.tithiSpan
-      ? `समाप्ति: ${panchang.tithiSpan.end.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}`
-      : panchang.paksha;
-    card(leftX, 330, cardW, cardH, 'तिथि (Tithi)', `${panchang.tithi}`, tithiSub, '🌙');
+    if (templateMode === 'choghadiya') {
+      // ================== CHOGHADIYA POSTER MODE ==================
+      const colW = 445;
+      const rightX = 560;
 
-    // Nakshatra
-    const nakSub = panchang.nakshatraSpan
-      ? `समाप्ति: ${panchang.nakshatraSpan.end.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}`
-      : `चरण ${panchang.pada}`;
-    card(rightX, 330, cardW, cardH, 'नक्षत्र (Nakshatra)', `${panchang.nakshatra}`, nakSub, '⭐');
-
-    // Yoga
-    card(leftX, 465, cardW, cardH, 'योग (Yoga)', `${panchang.yoga}`, 'शुभ कार्य सिद्धि', '☸');
-
-    // Karana
-    card(rightX, 465, cardW, cardH, 'करण (Karana)', `${panchang.karana}`, 'तिथि अर्ध भाग', '⚡');
-
-    // 7. Sunrise, Sunset & Rahu Kaal Banner
-    const sunBoxY = 605;
-    ctx.fillStyle = '#5C3A21';
-    ctx.beginPath();
-    safeRoundRect(ctx, leftX, sunBoxY, W - 150, 115, 16);
-    ctx.fill();
-    ctx.strokeStyle = '#B56A00';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    ctx.textAlign = 'center';
-    const sRise = panchang.solar ? panchang.solar.sunrise.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '06:15';
-    const sSet = panchang.solar ? panchang.solar.sunset.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '18:22';
-
-    // 3 sections in sun box
-    const sec1 = leftX + (W - 150) * 0.18;
-    const sec2 = leftX + (W - 150) * 0.5;
-    const sec3 = leftX + (W - 150) * 0.82;
-
-    ctx.fillStyle = '#FFD88A';
-    ctx.font = '20px sans-serif';
-    ctx.fillText('🌅 सूर्योदय', sec1, sunBoxY + 42);
-    ctx.fillStyle = '#FAF2E4';
-    ctx.font = 'bold 28px sans-serif';
-    ctx.fillText(sRise, sec1, sunBoxY + 84);
-
-    ctx.fillStyle = '#FFD88A';
-    ctx.font = '20px sans-serif';
-    ctx.fillText('🌄 सूर्यास्त', sec2, sunBoxY + 42);
-    ctx.fillStyle = '#FAF2E4';
-    ctx.font = 'bold 28px sans-serif';
-    ctx.fillText(sSet, sec2, sunBoxY + 84);
-
-    ctx.fillStyle = '#FFB4A2';
-    ctx.font = '20px sans-serif';
-    ctx.fillText('⚠️ राहुकाल', sec3, sunBoxY + 42);
-    ctx.fillStyle = '#FAF2E4';
-    ctx.font = 'bold 26px sans-serif';
-    const rahuStr = '12:20 - 13:50';
-    ctx.fillText(rahuStr, sec3, sunBoxY + 84);
-
-    // 8. Shubh Muhurat / Abhijit Bar
-    const muhuratY = 740;
-    ctx.fillStyle = '#FAF2E4';
-    ctx.beginPath();
-    safeRoundRect(ctx, leftX, muhuratY, W - 150, 75, 14);
-    ctx.fill();
-    ctx.strokeStyle = '#8C6239';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#B56A00';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.fillText('✨ आज का अभिजित मुहूर्त (श्रेष्ठ समय):', leftX + 25, muhuratY + 47);
-
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#3E2714';
-    ctx.font = 'bold 25px sans-serif';
-    ctx.fillText('11:56 AM – 12:45 PM (सर्वकार्य सिद्धि)', W - leftX - 25, muhuratY + 47);
-
-    // 9. Daily Sacred Subhashita / Shloka Box
-    const shlokaY = 835;
-    ctx.fillStyle = '#FAF2E4';
-    ctx.beginPath();
-    safeRoundRect(ctx, leftX, shlokaY, W - 150, 160, 16);
-    ctx.fill();
-    ctx.strokeStyle = '#B56A00';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#B56A00';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.fillText('॥ आज का पावन सुभाषित व विचार ॥', W / 2, shlokaY + 40);
-
-    ctx.fillStyle = '#3E2714';
-    ctx.font = 'italic bold 23px serif';
-    ctx.fillText(currentShloka.shloka, W / 2, shlokaY + 82);
-
-    ctx.fillStyle = '#735133';
-    ctx.font = '20px sans-serif';
-    ctx.fillText(`“${currentShloka.meaning}”`, W / 2, shlokaY + 124);
-
-    // 10. Footer Section (Astrologer Visiting Card OR Sacred Brand)
-    const footerY = 1020;
-    if (branding.enabled && branding.name) {
-      // Astrologer Digital Visiting Card
-      const cardGrad = ctx.createLinearGradient(leftX, footerY, W - leftX, footerY + 230);
-      cardGrad.addColorStop(0, '#5C3A21');
-      cardGrad.addColorStop(1, '#3E2714');
-      ctx.fillStyle = cardGrad;
+      // Day Choghadiya Header
+      ctx.fillStyle = '#8B1E1E';
       ctx.beginPath();
-      safeRoundRect(ctx, leftX, footerY, W - 150, 230, 20);
+      safeRoundRect(ctx, leftX, 322, colW, 54, 12);
       ctx.fill();
-      ctx.strokeStyle = '#FFD88A';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // Top banner inside card
       ctx.fillStyle = '#FFD88A';
-      ctx.font = 'bold 20px sans-serif';
+      ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('॥ प्रामाणिक वैदिक ज्योतिष एवं कर्मकांड परामर्श ॥', W / 2, footerY + 42);
+      ctx.fillText('☀️ दिन का चौघड़िया', leftX + colW / 2, 358);
 
-      // Astrologer Name
-      ctx.fillStyle = '#FAF2E4';
-      ctx.font = 'bold 36px sans-serif';
-      ctx.fillText(branding.name, W / 2, footerY + 92);
-
-      // Designation
-      ctx.fillStyle = '#FFD88A';
-      ctx.font = '24px sans-serif';
-      ctx.fillText(branding.title || 'वैदिक ज्योतिषी', W / 2, footerY + 130);
-
-      // Contacts line
-      ctx.fillStyle = '#FAF2E4';
-      ctx.font = 'bold 25px sans-serif';
-      const contactStr = [
-        branding.phone ? `📞 ${branding.phone}` : '',
-        branding.city ? `📍 ${branding.city}` : '',
-        branding.sansthan ? `🏛️ ${branding.sansthan}` : '',
-      ].filter(Boolean).join('   •   ');
-      ctx.fillText(contactStr, W / 2, footerY + 172);
-
-      if (branding.specialization) {
-        ctx.fillStyle = 'rgba(255, 216, 138, 0.85)';
-        ctx.font = '19px sans-serif';
-        ctx.fillText(`विशेषज्ञता: ${branding.specialization}`, W / 2, footerY + 208);
-      }
-    } else {
-      // Default Sacred Shakti Panchang Granth Brand
-      ctx.fillStyle = '#5C3A21';
+      // Night Choghadiya Header
+      ctx.fillStyle = '#3E2714';
       ctx.beginPath();
-      safeRoundRect(ctx, leftX, footerY, W - 150, 230, 20);
+      safeRoundRect(ctx, rightX, 322, colW, 54, 12);
+      ctx.fill();
+      ctx.fillStyle = '#FFD88A';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText('🌙 रात्रि का चौघड़िया', rightX + colW / 2, 358);
+
+      const drawChogRow = (
+        x: number,
+        y: number,
+        name: string,
+        timeRange: string,
+        nature: string
+      ) => {
+        const isGood = nature === 'auspicious';
+        const isNeutral = nature === 'neutral';
+        ctx.fillStyle = isGood ? '#ECFDF5' : isNeutral ? '#FFFBEB' : '#FFFDF9';
+        ctx.beginPath();
+        safeRoundRect(ctx, x, y, colW, 52, 10);
+        ctx.fill();
+        ctx.strokeStyle = isGood ? '#10B981' : isNeutral ? '#F59E0B' : '#D6B892';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = isGood ? '#065F46' : isNeutral ? '#92400E' : '#7F1D1D';
+        ctx.font = 'bold 22px sans-serif';
+        const tag = isGood ? '✦ शुभ' : isNeutral ? '• चल' : '× त्याज्य';
+        ctx.fillText(`${name} (${tag})`, x + 16, y + 34);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#241005';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText(timeRange, x + colW - 16, y + 34);
+      };
+
+      dayChoghadiyas.slice(0, 8).forEach((ch, idx) => {
+        const rowY = 388 + idx * 60;
+        drawChogRow(
+          leftX,
+          rowY,
+          ch.hindiName,
+          `${fmtShort(ch.start)} - ${fmtShort(ch.end)}`,
+          ch.nature
+        );
+      });
+
+      nightChoghadiyas.slice(0, 8).forEach((ch, idx) => {
+        const rowY = 388 + idx * 60;
+        drawChogRow(
+          rightX,
+          rowY,
+          ch.hindiName,
+          `${fmtShort(ch.start)} - ${fmtShort(ch.end)}`,
+          ch.nature
+        );
+      });
+
+      // Abhijit & Rahukaal strip
+      const stripY = 885;
+      ctx.fillStyle = '#FFFDF9';
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX, stripY, W - 150, 110, 16);
       ctx.fill();
       ctx.strokeStyle = '#B56A00';
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      ctx.fillStyle = '#FFD88A';
-      ctx.font = 'bold 36px serif';
       ctx.textAlign = 'center';
-      ctx.fillText('सनातन शक्ति पंचांग', W / 2, footerY + 70);
+      ctx.fillStyle = '#15803D';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText(`✨ अभिजित मुहूर्त (सर्वश्रेष्ठ): ${abhijitStr}`, W / 2, stripY + 44);
 
-      ctx.fillStyle = '#FAF2E4';
-      ctx.font = '24px sans-serif';
-      ctx.fillText('अचूक वैदिक खगोलशास्त्र • सूर्य सिद्धान्त एवं लाहिरी अयनांश', W / 2, footerY + 118);
+      ctx.fillStyle = '#991B1B';
+      ctx.font = 'bold 23px sans-serif';
+      ctx.fillText(
+        `⚠️ राहुकाल (त्याज्य समय): ${rahuStr}   •   तिथि: ${panchang.tithi} (${panchang.nakshatra})`,
+        W / 2,
+        stripY + 86
+      );
+
+      drawFooterBranding(ctx, W, leftX, 1020);
+    } else if (templateMode === 'status_9_16') {
+      // ================== 9:16 WHATSAPP STATUS MODE ==================
+      // Big Sacred Shloka Card + Today's Panchang Summary
+      const boxW = W - 150;
+
+      // Shloka Hero Box
+      const heroY = 335;
+      const heroH = 560;
+      ctx.fillStyle = '#FFFDF9';
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX, heroY, boxW, heroH, 26);
+      ctx.fill();
+      ctx.strokeStyle = '#8B1E1E';
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#8B1E1E';
+      ctx.font = 'bold 28px serif';
+      ctx.fillText('॥ आज का पावन वैदिक सुभाषित ॥', W / 2, heroY + 60);
+
+      // Wrap Sanskrit
+      ctx.fillStyle = '#4A0E0E';
+      ctx.font = 'bold 38px serif';
+      const words = currentShloka.shloka.split(' ');
+      const lines: string[] = [];
+      let cur = '';
+      for (const w of words) {
+        const cand = cur ? `${cur} ${w}` : w;
+        if (ctx.measureText(cand).width > boxW - 100 && cur) {
+          lines.push(cur);
+          cur = w;
+        } else {
+          cur = cand;
+        }
+      }
+      if (cur) lines.push(cur);
+
+      let sy = heroY + 145;
+      for (const l of lines) {
+        ctx.fillText(l, W / 2, sy);
+        sy += 56;
+      }
+
+      // Meaning inside hero
+      ctx.fillStyle = '#FFF6E0';
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX + 36, heroY + 320, boxW - 72, 200, 18);
+      ctx.fill();
+      ctx.strokeStyle = '#D97706';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#8B1E1E';
+      ctx.font = 'bold 25px sans-serif';
+      ctx.fillText('✦ हिंदी भावार्थ ✦', W / 2, heroY + 368);
+
+      ctx.fillStyle = '#1F1006';
+      ctx.font = 'bold 27px sans-serif';
+      const mWords = currentShloka.meaning.split(' ');
+      const mLines: string[] = [];
+      let mCur = '';
+      for (const w of mWords) {
+        const cand = mCur ? `${mCur} ${w}` : w;
+        if (ctx.measureText(cand).width > boxW - 130 && mCur) {
+          mLines.push(mCur);
+          mCur = w;
+        } else {
+          mCur = cand;
+        }
+      }
+      if (mCur) mLines.push(mCur);
+
+      let my = heroY + 420;
+      for (const ml of mLines.slice(0, 3)) {
+        ctx.fillText(ml, W / 2, my);
+        my += 42;
+      }
+
+      // Today's Panchang Summary Box in Status
+      const pBoxY = 935;
+      const pBoxH = 620;
+      ctx.fillStyle = '#FFF8EB';
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX, pBoxY, boxW, pBoxH, 24);
+      ctx.fill();
+      ctx.strokeStyle = '#8C6239';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#6E1409';
+      ctx.font = 'bold 30px serif';
+      ctx.fillText('📜 आज के पंचांग के प्रमुख बिंदु', W / 2, pBoxY + 56);
+
+      const rows = [
+        ['🌙 तिथि व पक्ष', `${panchang.tithi} (${panchang.paksha})`],
+        ['⭐ नक्षत्र व चरण', `${panchang.nakshatra} (चरण ${panchang.pada})`],
+        ['☸ योग व करण', `${panchang.yoga}  •  ${panchang.karana}`],
+        [
+          '🌅 सूर्योदय व सूर्यास्त',
+          `${panchang.solar ? fmtShort(panchang.solar.sunrise) : '06:15'}  —  ${panchang.solar ? fmtShort(panchang.solar.sunset) : '18:22'}`,
+        ],
+        ['✨ अभिजित मुहूर्त (शुभ)', abhijitStr],
+        ['⚠️ राहुकाल (त्याज्य)', rahuStr],
+      ];
+
+      rows.forEach(([label, val], idx) => {
+        const ry = pBoxY + 90 + idx * 84;
+        ctx.fillStyle = '#FFFDF9';
+        ctx.beginPath();
+        safeRoundRect(ctx, leftX + 28, ry, boxW - 56, 68, 14);
+        ctx.fill();
+        ctx.strokeStyle = '#D6B892';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#6E1409';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillText(label, leftX + 52, ry + 43);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#1F1006';
+        ctx.font = 'bold 25px sans-serif';
+        ctx.fillText(val, leftX + boxW - 52, ry + 43);
+      });
+
+      drawFooterBranding(ctx, W, leftX, 1600);
+    } else {
+      // ================== DEFAULT PANCHANG POSTER MODE ==================
+      const card = (
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        title: string,
+        value: string,
+        sub: string,
+        iconStr: string
+      ) => {
+        ctx.fillStyle = '#FFFDF9';
+        ctx.beginPath();
+        safeRoundRect(ctx, x, y, w, h, 14);
+        ctx.fill();
+        ctx.strokeStyle = '#8C6239';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#6E1409';
+        ctx.beginPath();
+        ctx.arc(x + 36, y + h / 2, 24, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FFD88A';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(iconStr, x + 36, y + h / 2 + 7);
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#6E1409';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText(title, x + 72, y + 36);
+
+        ctx.fillStyle = '#1F1006';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText(value, x + 72, y + 68);
+
+        if (sub) {
+          ctx.fillStyle = '#9A3412';
+          ctx.font = 'bold 19px sans-serif';
+          ctx.fillText(sub, x + 72, y + 96);
+        }
+      };
+
+      const cardW = 445;
+      const cardH = 115;
+      const rightX = 560;
+
+      const tithiSub = panchang.tithiSpan
+        ? `समाप्ति: ${fmtShort(panchang.tithiSpan.end)}`
+        : panchang.paksha;
+      card(leftX, 330, cardW, cardH, 'तिथि (Tithi)', `${panchang.tithi}`, tithiSub, '🌙');
+
+      const nakSub = panchang.nakshatraSpan
+        ? `समाप्ति: ${fmtShort(panchang.nakshatraSpan.end)}`
+        : `चरण ${panchang.pada}`;
+      card(rightX, 330, cardW, cardH, 'नक्षत्र (Nakshatra)', `${panchang.nakshatra}`, nakSub, '⭐');
+
+      card(leftX, 465, cardW, cardH, 'योग (Yoga)', `${panchang.yoga}`, 'शुभ कार्य सिद्धि', '☸');
+      card(rightX, 465, cardW, cardH, 'करण (Karana)', `${panchang.karana}`, 'तिथि अर्ध भाग', '⚡');
+
+      // Sunrise, Sunset & Rahu Kaal Banner
+      const sunBoxY = 605;
+      ctx.fillStyle = '#5C3A21';
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX, sunBoxY, W - 150, 115, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#B56A00';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.textAlign = 'center';
+      const sRise = panchang.solar ? fmtShort(panchang.solar.sunrise) : '06:15';
+      const sSet = panchang.solar ? fmtShort(panchang.solar.sunset) : '18:22';
+
+      const sec1 = leftX + (W - 150) * 0.18;
+      const sec2 = leftX + (W - 150) * 0.5;
+      const sec3 = leftX + (W - 150) * 0.82;
 
       ctx.fillStyle = '#FFD88A';
-      ctx.font = '22px sans-serif';
-      ctx.fillText('॥ ॐ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥', W / 2, footerY + 162);
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('🌅 सूर्योदय', sec1, sunBoxY + 42);
+      ctx.fillStyle = '#FAF2E4';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText(sRise, sec1, sunBoxY + 84);
 
-      ctx.fillStyle = 'rgba(250, 242, 228, 0.7)';
-      ctx.font = '19px sans-serif';
-      ctx.fillText('दैनिक पंचांग, शुभ मुहूर्त, चौघड़िया एवं कुंडली मिलान', W / 2, footerY + 198);
+      ctx.fillStyle = '#FFD88A';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('🌄 सूर्यास्त', sec2, sunBoxY + 42);
+      ctx.fillStyle = '#FAF2E4';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText(sSet, sec2, sunBoxY + 84);
+
+      ctx.fillStyle = '#FFB4A2';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('⚠️ राहुकाल', sec3, sunBoxY + 42);
+      ctx.fillStyle = '#FAF2E4';
+      ctx.font = 'bold 26px sans-serif';
+      ctx.fillText(rahuStr, sec3, sunBoxY + 84);
+
+      // Shubh Muhurat / Abhijit Bar
+      const muhuratY = 740;
+      ctx.fillStyle = '#FFFDF9';
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX, muhuratY, W - 150, 75, 14);
+      ctx.fill();
+      ctx.strokeStyle = '#8C6239';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#8B1E1E';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('✨ आज का अभिजित मुहूर्त (श्रेष्ठ समय):', leftX + 25, muhuratY + 47);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#1F1006';
+      ctx.font = 'bold 25px sans-serif';
+      ctx.fillText(`${abhijitStr} (सर्वकार्य सिद्धि)`, W - leftX - 25, muhuratY + 47);
+
+      // Daily Sacred Subhashita / Shloka Box
+      const shlokaY = 835;
+      ctx.fillStyle = '#FFFDF9';
+      ctx.beginPath();
+      safeRoundRect(ctx, leftX, shlokaY, W - 150, 160, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#B56A00';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#8B1E1E';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('॥ आज का पावन सुभाषित व विचार ॥', W / 2, shlokaY + 40);
+
+      ctx.fillStyle = '#4A0E0E';
+      ctx.font = 'bold 23px serif';
+      ctx.fillText(currentShloka.shloka, W / 2, shlokaY + 82);
+
+      ctx.fillStyle = '#241005';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(`“${currentShloka.meaning}”`, W / 2, shlokaY + 124);
+
+      drawFooterBranding(ctx, W, leftX, 1020);
     }
 
-    // Finished rendering
     try {
       const dataUrl = canvas.toDataURL('image/png');
       setImageUri(dataUrl);
@@ -443,19 +706,31 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [panchang, location, currentDate, branding, currentShloka, personName]);
+  }, [
+    panchang,
+    location,
+    currentDate,
+    branding,
+    currentShloka,
+    personName,
+    templateMode,
+    dayChoghadiyas,
+    nightChoghadiyas,
+    rahuStr,
+    abhijitStr,
+  ]);
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
+      const t = setTimeout(() => {
         generateCanvas();
-      }, 80);
+      }, 60);
+      return () => clearTimeout(t);
     }
   }, [isOpen, generateCanvas]);
 
   if (!isOpen) return null;
 
-  // Text message format for WhatsApp
   const dateFormatted = currentDate.toLocaleDateString('hi-IN', {
     weekday: 'long',
     day: 'numeric',
@@ -466,18 +741,25 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
   const getShareText = () => {
     let txt = `*॥ श्री गणेशाय नमः ॥*\n`;
-    txt += `*दैनिक वैदिक पञ्चाङ्गम् — शक्ति पंचांग*\n`;
+    txt += `*दैनिक वैदिक पञ्चाङ्गम् एवं चौघड़िया — शक्ति पंचांग*\n`;
     txt += `📅 *दिनांक:* ${dateFormatted}\n`;
     txt += `📍 *स्थान:* ${locShort}\n`;
     txt += `──────────────────\n`;
     txt += `🌙 *तिथि:* ${panchang.tithi} (${panchang.paksha})\n`;
     txt += `⭐ *नक्षत्र:* ${panchang.nakshatra} (चरण ${panchang.pada})\n`;
-    txt += `☸ *योग:* ${panchang.yoga}\n`;
-    txt += `⚡ *करण:* ${panchang.karana}\n`;
-    txt += `🌅 *सूर्योदय:* ${panchang.solar ? panchang.solar.sunrise.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '06:15'}\n`;
-    txt += `🌄 *सूर्यास्त:* ${panchang.solar ? panchang.solar.sunset.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '18:22'}\n`;
-    txt += `✨ *अभिजित मुहूर्त:* 11:56 AM – 12:45 PM\n`;
-    txt += `⚠️ *राहुकाल:* 12:20 PM – 01:50 PM\n`;
+    txt += `☸ *योग:* ${panchang.yoga}  •  *करण:* ${panchang.karana}\n`;
+    txt += `🌅 *सूर्योदय:* ${panchang.solar ? fmtShort(panchang.solar.sunrise) : '06:15'} | 🌄 *सूर्यास्त:* ${panchang.solar ? fmtShort(panchang.solar.sunset) : '18:22'}\n`;
+    txt += `✨ *अभिजित मुहूर्त:* ${abhijitStr}\n`;
+    txt += `⚠️ *राहुकाल:* ${rahuStr}\n`;
+    if (templateMode === 'choghadiya') {
+      txt += `──────────────────\n`;
+      txt += `☀️ *आज के शुभ दिन चौघड़िया:*\n`;
+      dayChoghadiyas
+        .filter((c) => c.nature === 'auspicious' || c.nature === 'neutral')
+        .forEach((c) => {
+          txt += `• ${c.hindiName}: ${fmtShort(c.start)} – ${fmtShort(c.end)}\n`;
+        });
+    }
     txt += `──────────────────\n`;
     txt += `📖 *सुभाषित:* ${currentShloka.shloka}\n`;
     txt += `(अर्थ: ${currentShloka.meaning})\n`;
@@ -497,7 +779,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
   const handleShareWhatsApp = async () => {
     const text = getShareText();
-    const fileName = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
+    const fileName = `Shakti-Panchang-${templateMode}-${currentDate.toISOString().slice(0, 10)}.png`;
 
     if (imageUri) {
       await shareImageFile({
@@ -516,9 +798,8 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
   const handleDownloadImage = async () => {
     if (!imageUri) return;
-    const fileName = `Shakti-Panchang-${currentDate.toISOString().slice(0, 10)}.png`;
+    const fileName = `Shakti-Panchang-${templateMode}-${currentDate.toISOString().slice(0, 10)}.png`;
     try {
-      // 0. Native Android Gallery Save (MediaStore Pictures/ShaktiPanchang)
       const savedNative = await saveImageNative(imageUri, fileName);
       if (savedNative) {
         setDownloadSuccess(true);
@@ -529,7 +810,6 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       const blob = dataURItoBlob(imageUri);
       const file = new File([blob], fileName, { type: 'image/png' });
 
-      // 1. Mobile Web Share API first (Ideal for mobile browsers)
       if (
         typeof navigator !== 'undefined' &&
         typeof navigator.canShare === 'function' &&
@@ -548,7 +828,6 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
         }
       }
 
-      // 2. Direct Blob Link Download
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
@@ -563,8 +842,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
         if (document.body.contains(a)) document.body.removeChild(a);
         URL.revokeObjectURL(blobUrl);
       }, 3000);
-    } catch (err) {
-      console.error('Download error:', err);
+    } catch {
       const a = document.createElement('a');
       a.href = imageUri;
       a.download = fileName;
@@ -580,65 +858,152 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-      {/* Hidden offscreen canvas for crisp 1080x1350 rendering */}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-      <div className="w-full max-w-md bg-[#FAF2E4] text-[#3E2714] rounded-2xl border-2 border-[#8C6239] shadow-2xl overflow-hidden max-h-[92dvh] flex flex-col animate-in zoom-in-95 duration-200">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: '#FAF3E3',
+          color: '#1F1006',
+          borderColor: '#8B1E1E',
+        }}
+        className="w-full max-w-md rounded-2xl border-2 shadow-2xl overflow-hidden max-h-[92dvh] flex flex-col animate-in zoom-in-95 duration-200"
+      >
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between p-3 bg-gradient-to-r from-[#5C3A21] to-[#735133] text-[#FAF2E4] border-b border-[#8C6239]">
+        <div
+          style={{
+            backgroundColor: '#6E1409',
+            color: '#FFFFFF',
+            borderColor: '#D97706',
+          }}
+          className="shrink-0 flex items-center justify-between p-3 border-b"
+        >
           <div className="flex items-center gap-2">
-            <div className="p-1 bg-[#B56A00] rounded-lg text-white">
-              <Share2 className="w-4 h-4 text-[#FFD88A]" />
+            <div
+              style={{ backgroundColor: '#8B1E1E', color: '#FDE047' }}
+              className="p-1.5 rounded-lg"
+            >
+              <Share2 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-granth font-bold text-sm sm:text-base text-[#FAF2E4]">
-                दैनिक व्हाट्सएप पंचांग कार्ड
+              <h3
+                className="font-granth font-bold text-sm sm:text-base"
+                style={{ color: '#FFFFFF' }}
+              >
+                HD पंचांग, चौघड़िया व स्टेटस कार्ड
               </h3>
-              <p className="text-[10px] text-[#FFD88A]">
-                1-क्लिक में आज का पंचांग व सुविचार स्टेटस/ग्रुप्स पर शेयर करें
+              <p className="text-[11px]" style={{ color: '#FDE68A' }}>
+                ज्योतिषी ब्रांडिंग के साथ पंचांग या चौघड़िया फोटो शेयर करें
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 hover:bg-white/10 rounded-full text-[#FAF2E4]/80 hover:text-white transition cursor-pointer"
+            style={{ backgroundColor: '#4A0E0E', color: '#FFFFFF' }}
+            className="p-1.5 rounded-lg cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* 3-Template Switcher Bar */}
+        <div
+          style={{
+            backgroundColor: '#FFF8EB',
+            borderColor: '#D6B892',
+          }}
+          className="shrink-0 px-3 py-2 border-b grid grid-cols-3 gap-1.5"
+        >
+          {(
+            [
+              { id: 'panchang', label: '📜 पंचांग कार्ड', icon: Calendar },
+              { id: 'choghadiya', label: '⏰ शुभ चौघड़िया', icon: Clock },
+              { id: 'status_9_16', label: '📱 स्टेटस (9:16)', icon: Smartphone },
+            ] as const
+          ).map((tab) => {
+            const active = templateMode === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setTemplateMode(tab.id)}
+                style={
+                  active
+                    ? {
+                        backgroundColor: '#8B1E1E',
+                        color: '#FFFFFF',
+                        borderColor: '#6E1409',
+                      }
+                    : {
+                        backgroundColor: '#FFFFFF',
+                        color: '#3A1405',
+                        borderColor: '#C8A986',
+                      }
+                }
+                className="py-1.5 px-2 rounded-lg border text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+              >
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Scrollable Content */}
         <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-3 sm:p-4 flex flex-col items-center space-y-2.5">
           {/* Card Preview */}
-          <div className="w-full max-w-[290px] sm:max-w-[330px] rounded-xl overflow-hidden border-2 border-[#8C6239] shadow-md bg-stone-100 relative group aspect-[4/5] flex items-center justify-center shrink-0">
+          <div
+            style={{
+              backgroundColor: '#E5CFAF',
+              borderColor: '#8B1E1E',
+            }}
+            className={`w-full ${
+              templateMode === 'status_9_16'
+                ? 'max-w-[230px] aspect-[9/16]'
+                : 'max-w-[290px] sm:max-w-[320px] aspect-[4/5]'
+            } rounded-xl overflow-hidden border-2 shadow-md flex items-center justify-center shrink-0`}
+          >
             {isGenerating || !imageUri ? (
               <div className="text-center p-4 space-y-2">
-                <Sparkles className="w-6 h-6 text-[#B56A00] animate-spin mx-auto" />
-                <p className="text-xs font-bold text-[#5C3A21]">एचडी पंचांग कार्ड तैयार हो रहा है...</p>
+                <Sparkles className="w-6 h-6 animate-spin mx-auto" style={{ color: '#8B1E1E' }} />
+                <p className="text-xs font-bold" style={{ color: '#3A1405' }}>
+                  एचडी पोस्टर कार्ड तैयार हो रहा है...
+                </p>
               </div>
             ) : (
               <img
                 src={imageUri}
                 alt="दैनिक पंचांग कार्ड"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-contain rounded-lg"
               />
             )}
           </div>
 
           {/* Pandit Custom Branding Indicator / Shortcut */}
-          <div className="w-full p-2.5 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl flex items-center justify-between text-xs shrink-0">
+          <div
+            style={{
+              backgroundColor: '#FFFDF9',
+              borderColor: '#D6B892',
+            }}
+            className="w-full p-2.5 border rounded-xl flex items-center justify-between text-xs shrink-0"
+          >
             <div className="flex items-center gap-2 min-w-0">
-              <Award className="w-4 h-4 text-[#B56A00] shrink-0" />
+              <Award className="w-4 h-4 shrink-0" style={{ color: '#8B1E1E' }} />
               <div className="truncate">
-                <span className="font-bold text-[#5C3A21]">
+                <span className="font-bold" style={{ color: '#241005' }}>
                   {branding.enabled && branding.name
                     ? `परामर्शदाता: ${branding.name}`
                     : 'साधारण ब्रांडिंग (शक्ति पंचांग)'}
                 </span>
-                <span className="text-[10px] text-[#735133] block truncate">
-                  {branding.enabled ? `📞 ${branding.phone || branding.city}` : 'कार्ड पर अपना नाम/नंबर जोड़ें'}
+                <span className="text-[11px] block truncate" style={{ color: '#5C2D0C' }}>
+                  {branding.enabled
+                    ? `📞 ${branding.phone || branding.city}`
+                    : 'कार्ड पर अपना नाम, पद व मोबाइल नंबर जोड़ें'}
                 </span>
               </div>
             </div>
@@ -650,7 +1015,8 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
                   onClose();
                   onOpenBrandingModal();
                 }}
-                className="text-[11px] px-2.5 py-1 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] font-bold rounded-lg shrink-0 cursor-pointer"
+                style={{ backgroundColor: '#8B1E1E', color: '#FFFFFF' }}
+                className="text-[11px] px-2.5 py-1 font-bold rounded-lg shrink-0 cursor-pointer"
               >
                 {branding.enabled ? 'बदलें' : 'कार्ड बनाएँ'}
               </button>
@@ -662,7 +1028,8 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
             <button
               type="button"
               onClick={handleShareWhatsApp}
-              className="w-full py-2.5 px-4 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer active:scale-95"
+              style={{ backgroundColor: '#15803D', color: '#FFFFFF' }}
+              className="w-full py-2.5 px-4 font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer active:scale-95"
             >
               <Share2 className="w-4 h-4" />
               <span>व्हाट्सएप पर शेयर करें (WhatsApp Share)</span>
@@ -673,16 +1040,17 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
                 type="button"
                 onClick={handleDownloadImage}
                 disabled={!imageUri}
-                className="py-2 px-3 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
+                style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
+                className="py-2 px-3 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
               >
                 {downloadSuccess ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-emerald-300" />
-                    <span className="text-emerald-200">गैलरी में सेव!</span>
+                    <Check className="w-3.5 h-3.5" style={{ color: '#86EFAC' }} />
+                    <span>गैलरी में सेव!</span>
                   </>
                 ) : (
                   <>
-                    <Download className="w-3.5 h-3.5 text-[#FFD88A]" />
+                    <Download className="w-3.5 h-3.5" style={{ color: '#FDE047' }} />
                     <span>HD चित्र डाउनलोड</span>
                   </>
                 )}
@@ -691,29 +1059,27 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
               <button
                 type="button"
                 onClick={handleCopyText}
-                className="py-2 px-3 bg-[#FAF2E4] hover:bg-[#EBD8BD] border border-[#8C6239] text-[#5C3A21] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  color: '#3A1405',
+                  borderColor: '#C8A986',
+                }}
+                className="py-2 px-3 border font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
               >
                 {copySuccess ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-700">कॉपी हो गया!</span>
+                    <Check className="w-3.5 h-3.5" style={{ color: '#15803D' }} />
+                    <span>कॉपी हो गया!</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5 text-[#8C6239]" />
+                    <Copy className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
                     <span>टेक्स्ट कॉपी करें</span>
                   </>
                 )}
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="shrink-0 p-2 bg-[#F4E8D1] border-t border-[#8C6239]/20 text-center">
-          <span className="text-[10px] text-[#8C6239] font-granth">
-            सनातन शक्ति पंचांग • अचूक वैदिक गणना व सुविचार
-          </span>
         </div>
       </div>
     </div>

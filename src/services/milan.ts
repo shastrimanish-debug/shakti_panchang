@@ -57,6 +57,13 @@ export interface MilanEvaluationResult {
     isPariharApplicable: boolean;
     pariharReason: string;
   };
+  rajjuVedha: {
+    boyRajju: string;
+    girlRajju: string;
+    hasRajjuDosha: boolean;
+    hasVedhaDosha: boolean;
+    note: string;
+  };
   conclusion: string;
   auspiciousRemedies: string[];
 }
@@ -496,6 +503,37 @@ export function evaluateKundaliMilan(boy: KundaliData, girl: KundaliData): Milan
   auspiciousRemedies.push('विवाह पूर्व कुलदेवी/कुलदेवता का पूजन व आशीर्वाद अवश्य ग्रहण करें।');
   auspiciousRemedies.push('गौरी-शंकर रुद्राक्ष अथवा शिव-पार्वती की संयुक्त आराधना से दांपत्य में अगाध प्रेम बना रहता है।');
 
+  // Rajju & Vedha Evaluation (Dashakoota Classical Check)
+  const RAJJU_GROUPS = ['पाद रज्जु', 'कटि रज्जु', 'नाभि रज्जु', 'कण्ठ रज्जु', 'शिरो रज्जु'];
+  const getRajju = (nak: number) => {
+    const pos = nak % 9;
+    if (pos === 0 || pos === 8) return RAJJU_GROUPS[0];
+    if (pos === 1 || pos === 7) return RAJJU_GROUPS[1];
+    if (pos === 2 || pos === 6) return RAJJU_GROUPS[2];
+    if (pos === 3 || pos === 5) return RAJJU_GROUPS[3];
+    return RAJJU_GROUPS[4];
+  };
+  const boyRajju = getRajju(boyNakIdx >= 0 ? boyNakIdx : 0);
+  const girlRajju = getRajju(girlNakIdx >= 0 ? girlNakIdx : 0);
+  const hasRajjuDosha = boyRajju === girlRajju && boyLord !== girlLord;
+
+  // Vedha Nakshatra Pairs (0-indexed)
+  const VEDHA_PAIRS: [number, number][] = [
+    [0, 17], [1, 16], [2, 15], [3, 14], [5, 21],
+    [6, 20], [7, 19], [8, 18], [9, 26], [10, 25],
+    [11, 24], [12, 23], [4, 22],
+  ];
+  const hasVedhaDosha = VEDHA_PAIRS.some(
+    ([a, b]) => (boyNakIdx === a && girlNakIdx === b) || (boyNakIdx === b && girlNakIdx === a)
+  );
+
+  let rajjuVedhaNote = 'रज्जु एवं वेध दोष से मुक्त — वैवाहिक आयुष्य व सौभाग्य सुदृढ़ है।';
+  if (hasVedhaDosha) {
+    rajjuVedhaNote = 'नक्षत्र वेध दोष उपस्थित है; विवाह पूर्व नक्षत्र शांति पूजन कराना श्रेयस्कर है।';
+  } else if (hasRajjuDosha) {
+    rajjuVedhaNote = `दोनों का "${boyRajju}" समान होने से रज्जु साम्य है, किंतु ग्रह मैत्री/तारा शुद्धि से परिहार संभव है।`;
+  }
+
   return {
     totalScore,
     maxScore: 36,
@@ -538,6 +576,13 @@ export function evaluateKundaliMilan(boy: KundaliData, girl: KundaliData): Milan
       isPariharApplicable: isGanaParihar,
       pariharReason: ganaPariharReason,
     },
+    rajjuVedha: {
+      boyRajju,
+      girlRajju,
+      hasRajjuDosha,
+      hasVedhaDosha,
+      note: rajjuVedhaNote,
+    },
     conclusion: `${verdict} ${isManglikCancelled ? 'मांगलिक दोष का परिहार उपलब्ध है।' : 'मांगलिक दोष निवारण आवश्यक है।'}`,
     auspiciousRemedies,
   };
@@ -551,14 +596,19 @@ export function createQuickKundaliFromRashiNakshatra(
   name: string,
   rashiIdx: number,
   nakIdx: number,
-  isManglik: boolean = false
+  isManglik: boolean = false,
+  charan: number = 1,
+  lagnaRashiIdx?: number
 ): KundaliData {
   const varna = getVarna(rashiIdx);
   const vashya = RASHI_VASHYAS[rashiIdx] || 'मानव';
   const gana = NAKSHATRA_GANAS[nakIdx] || 'देव';
   const yoni = NAKSHATRA_YONIS[nakIdx] || 'अश्व';
   const nadi = NAKSHATRA_NADIS[nakIdx] || 'मध्य';
-  const marsHouse = isManglik ? 1 : 3;
+  const effectiveLagnaIdx = typeof lagnaRashiIdx === 'number' ? lagnaRashiIdx : rashiIdx;
+  const marsHouse = isManglik ? 7 : 3;
+  const moonHouse = ((rashiIdx - effectiveLagnaIdx + 12) % 12) + 1;
+  const safeCharan = Math.max(1, Math.min(4, charan));
 
   return {
     name: name.trim() || 'जातक',
@@ -568,13 +618,13 @@ export function createQuickKundaliFromRashiNakshatra(
     latitude: 23.1765,
     longitude: 75.7885,
     timezoneHours: 5.5,
-    lagnaDegree: 0,
-    lagnaRashi: RASHIS[rashiIdx],
-    lagnaRashiNumber: rashiIdx + 1,
+    lagnaDegree: effectiveLagnaIdx * 30 + 15,
+    lagnaRashi: RASHIS[effectiveLagnaIdx],
+    lagnaRashiNumber: effectiveLagnaIdx + 1,
     moonRashi: RASHIS[rashiIdx],
     sunRashi: RASHIS[rashiIdx],
     nakshatra: NAKSHATRAS[nakIdx],
-    charan: '1',
+    charan: String(safeCharan),
     nadi,
     gana,
     yoni,
@@ -590,23 +640,23 @@ export function createQuickKundaliFromRashiNakshatra(
         englishName: 'Moon',
         degree: rashiIdx * 30 + 15,
         degreeInRashi: 15,
-        house: 1,
+        house: moonHouse,
         rashi: RASHIS[rashiIdx],
         rashiNumber: rashiIdx + 1,
         isRetrograde: false,
         latitude: 0,
         speed: 13.2,
         nakshatra: NAKSHATRAS[nakIdx],
-        pada: 1,
+        pada: safeCharan,
       },
       {
         planet: 'मंगल',
         englishName: 'Mars',
-        degree: isManglik ? 15 : 75,
+        degree: ((effectiveLagnaIdx + marsHouse - 1) % 12) * 30 + 15,
         degreeInRashi: 15,
         house: marsHouse,
-        rashi: RASHIS[(rashiIdx + marsHouse - 1) % 12],
-        rashiNumber: ((rashiIdx + marsHouse - 1) % 12) + 1,
+        rashi: RASHIS[(effectiveLagnaIdx + marsHouse - 1) % 12],
+        rashiNumber: ((effectiveLagnaIdx + marsHouse - 1) % 12) + 1,
         isRetrograde: false,
         latitude: 0,
         speed: 0.5,

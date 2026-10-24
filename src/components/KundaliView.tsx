@@ -30,6 +30,8 @@ import { KpAshtakvargaPanel } from './KpAshtakvargaPanel';
 import { JaiminiPanel } from './JaiminiPanel';
 import { Vedic3DKundaliView } from './Vedic3DKundaliView';
 import { LalKitabUpayListView } from './LalKitabUpayListView';
+import { PrashnaJyotishPanel } from './PrashnaJyotishPanel';
+import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 import { useTranslation } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
@@ -56,6 +58,7 @@ import {
   MoveHorizontal,
   Compass,
   Award,
+  Share2,
 } from 'lucide-react';
 
 export const SHODASHVARGA_OPTIONS = [
@@ -228,18 +231,23 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
 
   // Ashtakoot Milan Boy & Girl Form
-  const [boyName, setBoyName] = useState(() => t('kundali.groomDefault', 'વર (વર પક્ષ)'));
+  const [boyName, setBoyName] = useState('वर (श्री राम)');
   const [boyDob, setBoyDob] = useState('');
   const [boyTob, setBoyTob] = useState('');
-  const [girlName, setGirlName] = useState(() => t('kundali.brideDefault', 'કન્યા (કન્યા પક્ષ)'));
+  const [girlName, setGirlName] = useState('कन्या (सीता)');
   const [girlDob, setGirlDob] = useState('');
   const [girlTob, setGirlTob] = useState('');
   const [isDownloadingMilanPdf, setIsDownloadingMilanPdf] = useState(false);
   const [milanInputMode, setMilanInputMode] = useState<'rashi' | 'dob'>('rashi');
-  const [boyRashiIdx, setBoyRashiIdx] = useState<number>(0); // मेष
-  const [boyNakIdx, setBoyNakIdx] = useState<number>(0); // अश्विनी
-  const [girlRashiIdx, setGirlRashiIdx] = useState<number>(3); // कर्क
-  const [girlNakIdx, setGirlNakIdx] = useState<number>(7); // पुष्य
+  const [boyRashiIdx, setBoyRashiIdx] = useState<number>(3); // कर्क
+  const [boyNakIdx, setBoyNakIdx] = useState<number>(6); // पुनर्वसु
+  const [boyCharan, setBoyCharan] = useState<number>(1);
+  const [boyIsManglik, setBoyIsManglik] = useState<boolean>(false);
+  const [girlRashiIdx, setGirlRashiIdx] = useState<number>(0); // मेष
+  const [girlNakIdx, setGirlNakIdx] = useState<number>(1); // भरणी
+  const [girlCharan, setGirlCharan] = useState<number>(2);
+  const [girlIsManglik, setGirlIsManglik] = useState<boolean>(false);
+  const [milanPosterData, setMilanPosterData] = useState<ShlokaPosterData | null>(null);
 
   const handleLoadSampleMilan = () => {
     setMilanInputMode('dob');
@@ -250,10 +258,6 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     setGirlDob('1997-05-15');
     setGirlTob('08:30');
   };
-
-  // Prashna Question State
-  const [prashnaText, setPrashnaText] = useState(() => t('kundali.prashnaDefault', 'શું આ કાર્ય સફળ થશે?'));
-  const [prashnaData, setPrashnaData] = useState<KundaliData | null>(null);
 
   // Dasha Drill-down state
   const [inspectedMaha, setInspectedMaha] = useState<string>('');
@@ -368,13 +372,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
   const boyKundali = milanReady
     ? milanInputMode === 'rashi'
-      ? createQuickKundaliFromRashiNakshatra(boyName.trim() || 'वर', boyRashiIdx, boyNakIdx)
+      ? createQuickKundaliFromRashiNakshatra(boyName.trim() || 'वर', boyRashiIdx, boyNakIdx, boyIsManglik, boyCharan)
       : calculateKundali(boyName.trim(), new Date(boyDob), boyTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
     : null;
 
   const girlKundali = milanReady
     ? milanInputMode === 'rashi'
-      ? createQuickKundaliFromRashiNakshatra(girlName.trim() || 'कन्या', girlRashiIdx, girlNakIdx)
+      ? createQuickKundaliFromRashiNakshatra(girlName.trim() || 'कन्या', girlRashiIdx, girlNakIdx, girlIsManglik, girlCharan)
       : calculateKundali(girlName.trim(), new Date(girlDob), girlTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
     : null;
 
@@ -572,8 +576,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         onClose={() => setPdfSuccessInfo(null)}
       />
 
-      {/* Top Input Form & Actions (Collapsible on Mobile for Screen-fit view) */}
-      {!isFormExpanded && k ? (
+      {/* Top Input Form & Actions (Hidden on Milan & Prashna tabs so couple/prashna tools are front-and-center) */}
+      {kundaliTab !== 'milan' && kundaliTab !== 'prashna' && (!isFormExpanded && k ? (
         <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex items-center gap-2.5">
@@ -846,7 +850,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             )}
           </form>
         </div>
-      )}
+      ))}
 
       {/* Non-Subscribed Banner Alert */}
       {!subStatus.entitled && (
@@ -1994,34 +1998,59 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     />
 
                     {milanInputMode === 'rashi' ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">चंद्र राशि</label>
-                          <select
-                            value={boyRashiIdx}
-                            onChange={(e) => setBoyRashiIdx(Number(e.target.value))}
-                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                          >
-                            {RASHIS.map((r, idx) => (
-                              <option key={r} value={idx}>
-                                {idx + 1}. {r}
-                              </option>
-                            ))}
-                          </select>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">चंद्र राशि</label>
+                            <select
+                              value={boyRashiIdx}
+                              onChange={(e) => setBoyRashiIdx(Number(e.target.value))}
+                              className="w-full bg-white border border-[#8C6239]/40 rounded p-1.5 text-xs font-bold text-[#2B1105]"
+                            >
+                              {RASHIS.map((r, idx) => (
+                                <option key={r} value={idx}>
+                                  {idx + 1}. {r}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म नक्षत्र</label>
+                            <select
+                              value={boyNakIdx}
+                              onChange={(e) => setBoyNakIdx(Number(e.target.value))}
+                              className="w-full bg-white border border-[#8C6239]/40 rounded p-1.5 text-xs font-bold text-[#2B1105]"
+                            >
+                              {NAKSHATRAS.map((n, idx) => (
+                                <option key={n} value={idx}>
+                                  {idx + 1}. {n}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">जन्म नक्षत्र</label>
-                          <select
-                            value={boyNakIdx}
-                            onChange={(e) => setBoyNakIdx(Number(e.target.value))}
-                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                          >
-                            {NAKSHATRAS.map((n, idx) => (
-                              <option key={n} value={idx}>
-                                {idx + 1}. {n}
-                              </option>
-                            ))}
-                          </select>
+                        <div className="grid grid-cols-2 gap-2 items-center">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">नक्षत्र चरण (Pada)</label>
+                            <select
+                              value={boyCharan}
+                              onChange={(e) => setBoyCharan(Number(e.target.value))}
+                              className="w-full bg-white border border-[#8C6239]/40 rounded p-1.5 text-xs font-bold text-[#2B1105]"
+                            >
+                              {[1, 2, 3, 4].map((c) => (
+                                <option key={c} value={c}>चरण {c}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <label className="flex items-center gap-1.5 text-xs font-bold text-[#4A0E0E] pt-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={boyIsManglik}
+                              onChange={(e) => setBoyIsManglik(e.target.checked)}
+                              className="rounded border-[#8C6239]"
+                            />
+                            <span>वर मांगलिक है?</span>
+                          </label>
                         </div>
                       </div>
                     ) : (
@@ -2048,7 +2077,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       <span className="text-xs font-bold text-rose-900 uppercase">कन्या विवरण (Girl)</span>
                       {girlKundali && (
                         <span className="text-[10px] font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded border border-rose-200">
-                          {girlKundali.moonRashi} • {girlKundali.nakshatra} ({girlKundali.nadi} नाड़ी)
+                          {girlKundali.moonRashi} • {girlKundali.nakshatra} (चरण {girlKundali.charan} • {girlKundali.nadi} नाड़ी)
                         </span>
                       )}
                     </div>
@@ -2061,34 +2090,59 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     />
 
                     {milanInputMode === 'rashi' ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">चंद्र राशि</label>
-                          <select
-                            value={girlRashiIdx}
-                            onChange={(e) => setGirlRashiIdx(Number(e.target.value))}
-                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                          >
-                            {RASHIS.map((r, idx) => (
-                              <option key={r} value={idx}>
-                                {idx + 1}. {r}
-                              </option>
-                            ))}
-                          </select>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">चंद्र राशि</label>
+                            <select
+                              value={girlRashiIdx}
+                              onChange={(e) => setGirlRashiIdx(Number(e.target.value))}
+                              className="w-full bg-white border border-[#8C6239]/40 rounded p-1.5 text-xs font-bold text-[#2B1105]"
+                            >
+                              {RASHIS.map((r, idx) => (
+                                <option key={r} value={idx}>
+                                  {idx + 1}. {r}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म नक्षत्र</label>
+                            <select
+                              value={girlNakIdx}
+                              onChange={(e) => setGirlNakIdx(Number(e.target.value))}
+                              className="w-full bg-white border border-[#8C6239]/40 rounded p-1.5 text-xs font-bold text-[#2B1105]"
+                            >
+                              {NAKSHATRAS.map((n, idx) => (
+                                <option key={n} value={idx}>
+                                  {idx + 1}. {n}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">जन्म नक्षत्र</label>
-                          <select
-                            value={girlNakIdx}
-                            onChange={(e) => setGirlNakIdx(Number(e.target.value))}
-                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                          >
-                            {NAKSHATRAS.map((n, idx) => (
-                              <option key={n} value={idx}>
-                                {idx + 1}. {n}
-                              </option>
-                            ))}
-                          </select>
+                        <div className="grid grid-cols-2 gap-2 items-center">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">नक्षत्र चरण (Pada)</label>
+                            <select
+                              value={girlCharan}
+                              onChange={(e) => setGirlCharan(Number(e.target.value))}
+                              className="w-full bg-white border border-[#8C6239]/40 rounded p-1.5 text-xs font-bold text-[#2B1105]"
+                            >
+                              {[1, 2, 3, 4].map((c) => (
+                                <option key={c} value={c}>चरण {c}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <label className="flex items-center gap-1.5 text-xs font-bold text-[#4A0E0E] pt-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={girlIsManglik}
+                              onChange={(e) => setGirlIsManglik(e.target.checked)}
+                              className="rounded border-[#8C6239]"
+                            />
+                            <span>कन्या मांगलिक है?</span>
+                          </label>
                         </div>
                       </div>
                     ) : (
@@ -2111,7 +2165,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 </div>
               </div>
 
-              {/* Milan Result Banner with Bhojpatra PDF Download Button */}
+              {/* Milan Result Banner with Bhojpatra PDF Download & HD Status Card Buttons */}
               {!milanResult ? (
                 <div className="bg-leaf border border-wood/40 rounded-xl p-5 text-sm text-muted">
                   वर और कन्या दोनों का पूरा नाम, जन्म तिथि और समय भरें — तब ही मिलान बनेगा। पैक में कोई पूर्व-भरी कुंडली नहीं है।
@@ -2126,7 +2180,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <div
                       className={`px-4 py-2 rounded-lg font-black text-xs sm:text-sm border ${
                         milanResult.verdictGrade === 'excellent'
@@ -2144,6 +2198,24 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                         ? 'मध्यम विवाह योग्य (18-20)'
                         : 'अस्वीकार्य / दोषयुक्त (<18)'}
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!boyKundali || !girlKundali) return;
+                        setMilanPosterData({
+                          title: 'अष्टकूट विवाह कुंडली मिलान पत्रिका',
+                          reference: `वर: ${boyKundali.name} (${boyKundali.moonRashi}) ❤️ कन्या: ${girlKundali.name} (${girlKundali.moonRashi})`,
+                          sanskrit: `प्राप्त गुण: ${milanResult.totalScore} / 36 गुण\nमांगलिक विचार: ${milanResult.manglikAnalysis?.verdict || 'निर्दोष'}`,
+                          meaning: `${milanResult.verdict}\n\n• नाड़ी: वर (${boyKundali.nadi}) - कन्या (${girlKundali.nadi})\n• भकूट: ${milanResult.bhakootDosha?.relationType || 'शुभ'}\n• रज्जु/वेध: ${milanResult.rajjuVedha?.note || 'शुभ'}`,
+                          accentTag: '💍 वैदिक विवाह मेलापक',
+                        });
+                      }}
+                      className="px-3.5 py-2 bg-[#6E1409] hover:bg-[#540F07] text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>📸 विवाह मिलान HD कार्ड</span>
+                    </button>
 
                     <button
                       onClick={handleDownloadMilanPdf}
@@ -2359,6 +2431,40 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Rajju & Vedha Dosha Card (Dashakoota) */}
+                {milanResult.rajjuVedha && (
+                  <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-4 space-y-2 md:col-span-2">
+                    <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-1.5">
+                      <span className="text-xs font-bold text-[#5C3A21] flex items-center gap-1">
+                        <Award className="w-4 h-4 text-[#B56A00]" />
+                        दशकूट रज्जु एवं नक्षत्र वेध विचार
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          milanResult.rajjuVedha.hasRajjuDosha || milanResult.rajjuVedha.hasVedhaDosha
+                            ? 'bg-amber-100 text-amber-900'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}
+                      >
+                        {milanResult.rajjuVedha.hasVedhaDosha
+                          ? 'वेध विचारणीय'
+                          : milanResult.rajjuVedha.hasRajjuDosha
+                          ? 'रज्जु साम्य'
+                          : 'रज्जु व वेध शुद्ध'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#5C3A21] space-y-1">
+                      <div>
+                        <strong>वर रज्जु:</strong> {milanResult.rajjuVedha.boyRajju} |{' '}
+                        <strong>कन्या रज्जु:</strong> {milanResult.rajjuVedha.girlRajju}
+                      </div>
+                      <div className="text-[11px] text-[#735133] leading-relaxed pt-1">
+                        {milanResult.rajjuVedha.note}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Auspicious Remedies & Conclusions */}
@@ -2448,59 +2554,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         )
       )}
 
-      {/* Tab 4: Prashna Kundali */}
+      {/* Tab 4: Prashna Jyotish, Mook Prashna, Ramshalaka & Hanuman Prashnavali */}
       {kundaliTab === 'prashna' && (
-        <div className="space-y-6">
-          <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-5 shadow-xs space-y-3">
-            <h3 className="text-base font-bold font-granth text-[#5C3A21] flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-[#B56A00]" />
-              तात्कालिक प्रश्न कुंडली (Horary Astrological Chart)
-            </h3>
-            <p className="text-xs text-[#735133]">
-              जब किसी व्यक्ति के पास जन्म समय या कुंडली उपलब्ध न हो, अथवा तात्कालिक प्रश्न का उत्तर जानना हो, तो प्रश्न पूछने के ठीक उस क्षण का आकाशीय चक्र निर्मित किया जाता है।
-            </p>
-
-            <div className="flex flex-wrap gap-2 pt-2">
-              <input
-                type="text"
-                value={prashnaText}
-                onChange={(e) => setPrashnaText(e.target.value)}
-                className="flex-1 min-w-[200px] bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] outline-none"
-                placeholder="अपना प्रश्न यहाँ लिखें..."
-              />
-              <button
-                onClick={() => {
-                  const pk = generatePrashnaKundali(prashnaText, currentLocation.latitude, currentLocation.longitude);
-                  setPrashnaData(pk);
-                }}
-                className="px-4 py-2 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs sm:text-sm font-bold rounded-lg transition"
-              >
-                प्रश्न कुंडली बनाएँ
-              </button>
-            </div>
-          </div>
-
-          {prashnaData && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              <KundaliChart
-                lagnaDegree={prashnaData.lagnaDegree}
-                planets={prashnaData.planets}
-                chartTitle={prashnaData.name}
-              />
-              <div className="bg-[#FAF2E4] border border-[#8C6239]/30 rounded-xl p-5 space-y-3 text-xs sm:text-sm">
-                <div className="font-bold text-[#5C3A21] text-base border-b border-[#8C6239]/20 pb-2">
-                  प्रश्न लग्न विचार
-                </div>
-                <div><strong>प्रश्न लग्न:</strong> {prashnaData.lagnaRashi}</div>
-                <div><strong>चंद्र स्थिति:</strong> {prashnaData.moonRashi} ({prashnaData.nakshatra} नक्षत्र)</div>
-                <div><strong>समय:</strong> {prashnaData.birthTime} ({currentLocation.name})</div>
-                <p className="text-xs text-[#735133] leading-relaxed pt-2">
-                  वैदिक प्रश्न शास्त्रानुसार यदि लग्न में शुभ ग्रह (गुरु, शुक्र, बुध, चंद्र) हों अथवा लग्न स्वामी केंद्र/त्रिकोण में स्थित हो, तो कार्य में सफलता की प्रबल संभावना बनती है।
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+        <PrashnaJyotishPanel currentLocation={selectedCity} />
       )}
 
       {/* Tab 5: Vedic Remedies, Gemstone & 100 Lal Kitab Upay */}
@@ -2558,6 +2614,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           <LalKitabUpayListView onAskUma={() => onOpenUmaModal?.()} />
         </div>
       )}
+
+      {/* HD Vivah Milan Poster Card Modal */}
+      <ShlokaPosterModal
+        isOpen={milanPosterData !== null}
+        onClose={() => setMilanPosterData(null)}
+        data={milanPosterData}
+      />
 
       {/* ₹99 / Year Annual Subscription Modal */}
       <SubscriptionModal

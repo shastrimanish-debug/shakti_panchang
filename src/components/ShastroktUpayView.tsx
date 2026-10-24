@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { SHASTROKT_DEITIES, SHASTROKT_NOTE, SHASTROKT_UPAY, type ShastroktUpay } from "../data/shastrokt";
 import { useTabMenu } from "./BoardShell";
+import { ShlokaPosterModal, ShlokaPosterData } from "./ShlokaPosterModal";
 
 export function ShastroktUpayView() {
   const [query, setQuery] = useState("");
@@ -32,13 +33,14 @@ export function ShastroktUpayView() {
           </button>
         ) : (
           <>
-            <div className="text-[13px] font-semibold">501 मंत्र · {list.length}</div>
-            <p className="text-[11px] leading-snug opacity-80">{SHASTROKT_NOTE}</p>
+            <div className="text-[13px] font-bold" style={{ color: "#4A0E0E" }}>501 मंत्र · {list.length}</div>
+            <p className="text-[11px] leading-snug font-semibold" style={{ color: "#4A2511" }}>{SHASTROKT_NOTE}</p>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="मंत्र, देवता या उद्देश्य खोजें"
-              className="w-full rounded-xl border px-3 py-1.5 text-sm bg-transparent"
+              className="w-full rounded-xl border px-3 py-1.5 text-sm bg-white"
+              style={{ color: "#1F1006", borderColor: "#C89D66" }}
             />
             <div className="flex gap-1.5 overflow-x-auto pb-0.5">
               <Chip active={deity === "all"} onClick={() => setDeity("all")}>सभी</Chip>
@@ -53,8 +55,8 @@ export function ShastroktUpayView() {
         {selected ? <Detail item={selected} /> : list.map((item) => (
           <button key={item.id} type="button" className="bx-verse text-left w-full" onClick={() => setSelectedId(item.id)}>
             <div className="bx-kicker">{item.id} · {item.deity}</div>
-            <strong className="text-sm">{item.title}</strong>
-            <span className="text-xs opacity-80">{item.mantra}</span>
+            <strong className="text-sm font-bold" style={{ color: "#241004" }}>{item.title}</strong>
+            <span className="text-xs font-semibold" style={{ color: "#4A0E0E" }}>{item.mantra}</span>
           </button>
         ))}
         {!selected && list.length === 0 ? <article className="bx-verse">इस खोज में कोई मंत्र नहीं मिला।</article> : null}
@@ -64,6 +66,7 @@ export function ShastroktUpayView() {
 }
 
 function Detail({ item }: { item: ShastroktUpay }) {
+  const [posterData, setPosterData] = useState<ShlokaPosterData | null>(null);
   const steps: [string, string][] = [
     ["तैयारी", item.preparation],
     ["पूजा", item.worship],
@@ -73,10 +76,28 @@ function Detail({ item }: { item: ShastroktUpay }) {
   ];
   return (
     <>
+      <div className="flex justify-end px-1 pt-1">
+        <button
+          type="button"
+          onClick={() =>
+            setPosterData({
+              title: item.title,
+              reference: `${item.deity} · ${item.category}`,
+              sanskrit: item.mantra,
+              meaning: `उद्देश्य: ${item.purpose}\nविधि: ${item.method}\nफल: ${item.benefit}`,
+              accentTag: "🕉️ शास्त्रोक्त वैदिक मंत्र",
+            })
+          }
+          style={{ backgroundColor: "#6E1409", color: "#FFFFFF" }}
+          className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+        >
+          📸 स्टेटस कार्ड
+        </button>
+      </div>
       <article className="bx-verse">
         <div className="bx-kicker">{item.deity} · {item.category}</div>
-        <p className="font-granth text-[18px] leading-relaxed">{item.mantra}</p>
-        <p className="text-sm">{item.purpose}</p>
+        <p className="font-granth font-bold text-[18px] leading-relaxed" style={{ color: "#4A0E0E" }}>{item.mantra}</p>
+        <p className="text-sm font-semibold" style={{ color: "#241004" }}>{item.purpose}</p>
       </article>
       <article className="bx-verse">
         <div className="bx-kicker">संक्षिप्त विधि</div>
@@ -107,9 +128,14 @@ function Detail({ item }: { item: ShastroktUpay }) {
       </article>
       <article className="bx-verse">
         <div className="bx-kicker">स्रोत</div>
-        <p className="text-xs leading-relaxed">{item.source}</p>
-        <p className="text-xs leading-relaxed opacity-80">{item.caution}</p>
+        <p className="text-xs leading-relaxed font-semibold" style={{ color: "#241004" }}>{item.source}</p>
+        <p className="text-xs leading-relaxed font-semibold" style={{ color: "#4A2511" }}>{item.caution}</p>
       </article>
+      <ShlokaPosterModal
+        isOpen={posterData !== null}
+        onClose={() => setPosterData(null)}
+        data={posterData}
+      />
     </>
   );
 }

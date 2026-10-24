@@ -25,6 +25,7 @@ import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { DrawerHostContext, useTabMenu } from './BoardShell';
+import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 
 interface RawChapterShloka {
   n: number;
@@ -82,6 +83,7 @@ export const DurgaSaptashatiView: React.FC<{
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [bookmarks, setBookmarks] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [posterData, setPosterData] = useState<ShlokaPosterData | null>(null);
   const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
   useTabMenu(() => {
     if (isTocOpen) return false;
@@ -450,6 +452,23 @@ export const DurgaSaptashatiView: React.FC<{
                       )}
                     </span>
                     <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPosterData({
+                            title: 'श्री दुर्गा सप्तशती (चण्डी पाठ)',
+                            reference: `${currentSeqItem.name} • ${verseWord} ${verse.number}`,
+                            sanskrit: verse.sanskrit,
+                            meaning: verse.hindi,
+                            accentTag: '🔱 जय माँ जगदम्बा',
+                          })
+                        }
+                        style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
+                        className="px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer"
+                        title="HD स्टेटस कार्ड बनाएं"
+                      >
+                        📸 स्टेटस
+                      </button>
                       <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
                         {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
@@ -547,6 +566,23 @@ export const DurgaSaptashatiView: React.FC<{
                         ) : (
                           <Volume2 className="w-3.5 h-3.5 text-amber-700" />
                         )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPosterData({
+                            title: 'श्री दुर्गा सप्तशती (चण्डी पाठ)',
+                            reference: `${currentSeqItem.name} • ${verseWord} ${verse.number}`,
+                            sanskrit: verse.sanskrit,
+                            meaning: verse.hindi,
+                            accentTag: '🔱 जय माँ जगदम्बा',
+                          })
+                        }
+                        style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
+                        className="px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer"
+                        title="HD स्टेटस कार्ड बनाएं"
+                      >
+                        📸 स्टेटस
                       </button>
                       <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
                         {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -667,6 +703,11 @@ export const DurgaSaptashatiView: React.FC<{
           </div>
         </div>
       )}
+      <ShlokaPosterModal
+        isOpen={posterData !== null}
+        onClose={() => setPosterData(null)}
+        data={posterData}
+      />
     </div>
   );
 };

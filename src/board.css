@@ -678,13 +678,20 @@
 }
 
 .bx-verse {
-  border: 1px solid var(--bx-line);
+  border: 1.5px solid #C89D66;
   border-radius: 14px;
-  background: var(--bx-panel);
-  padding: 8px 10px;
+  background: #FFFDF8;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  color: #1F1006;
+}
+
+.bx-verse .bx-kicker {
+  color: #6E1409 !important;
+  font-weight: 800;
+  font-size: 12px;
 }
 
 .bx-verse .bx-sans,
@@ -693,14 +700,17 @@
 }
 
 .bx-verse .bx-sans {
-  line-height: 1.45;
-  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.65;
+  font-weight: 700;
+  color: #4A0E0E !important;
 }
 
 .bx-verse .bx-mean {
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--bx-mute);
+  font-size: 13.5px;
+  line-height: 1.6;
+  font-weight: 600;
+  color: #241004 !important;
 }
 
 .bx-iconbtn svg,

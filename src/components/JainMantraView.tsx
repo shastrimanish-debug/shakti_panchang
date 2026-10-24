@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 
 interface JainMantraViewProps {
   onBackToPanchang?: () => void;
@@ -43,6 +44,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>(JAIN_ALL);
   const [activeMantraIndex, setActiveMantraIndex] = useState(0);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [posterData, setPosterData] = useState<ShlokaPosterData | null>(null);
   const [speakingId, setSpeakingId] = useState<number | null>(null);
   const [bookmarks, setBookmarks] = useState<Record<number, boolean>>(() => {
     try {
@@ -146,27 +148,36 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
   return (
     <div className="flex-1 min-h-0 w-full flex flex-col bg-[#FCF8EC] text-[#3E2714] relative overflow-hidden font-sans">
       {/* Top Banner Header */}
-      <div className="p-3 sm:p-4 bg-gradient-to-r from-[#5C3A21] via-[#462B17] to-[#5C3A21] text-[#FAF2E4] border-b-2 border-[#B56A00] shadow-md shrink-0">
+      <div
+        className="p-3 sm:p-4 border-b-2 shadow-xs shrink-0"
+        style={{ backgroundColor: '#FFF9EE', borderColor: '#D6B485', color: '#2A1004' }}
+      >
         <div className="flex flex-wrap items-center justify-between gap-2 max-w-5xl mx-auto">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#B56A00] to-[#8B1E1E] border-2 border-[#FFD88A] flex items-center justify-center text-[#FFD88A] font-black text-lg shadow-md shrink-0">
+            <div
+              className="w-10 h-10 rounded-full border-2 flex items-center justify-center font-black text-lg shadow-xs shrink-0"
+              style={{ backgroundColor: '#6E1409', borderColor: '#D97706', color: '#FFD88A' }}
+            >
               ☸
             </div>
             <div>
-              <h2 className="font-granth font-bold text-base sm:text-lg text-[#FAF2E4] flex items-center gap-2">
+              <h2 className="font-granth font-bold text-base sm:text-lg flex items-center gap-2" style={{ color: '#6E1409' }}>
                 <span>201 जैन पाठ, सूत्र और स्तोत्र</span>
                 <span className="text-[10px] bg-[#B56A00] text-white px-2 py-0.5 rounded-full font-black">
                   {JAIN_MANTRAS.length}
                 </span>
               </h2>
-              <p className="text-[11px] text-[#FFD88A]">
-                णमोकार, स्तोत्र और भाव-स्मरण। फल की गारंटी नहीं।
+              <p className="text-[11px] font-semibold" style={{ color: '#4A2511' }}>
+                णमोकार महामंत्र, कल्याण मंदिर स्तोत्र, भक्तामर स्तोत्र एवं भाव-स्मरण
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#FFD88A] bg-[#2C180C]/80 px-3 py-1 rounded-lg border border-[#B56A00]/50">
+            <span
+              className="text-xs font-bold px-3 py-1 rounded-lg border"
+              style={{ backgroundColor: '#FFF2DC', color: '#4A1805', borderColor: '#C89656' }}
+            >
               {selectedCategory === JAIN_ALL
                 ? `कुल ${JAIN_MANTRAS.length} पाठ उपलब्ध`
                 : `श्रेणी परिणाम: ${filteredMantras.length} / ${JAIN_MANTRAS.length}`}
@@ -328,6 +339,24 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                           ) : (
                             <Copy className="w-4 h-4" />
                           )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPosterData({
+                              title: currentMantra.title,
+                              reference: `जैन पाठ #${currentMantra.id} • ${currentMantra.category}`,
+                              sanskrit: currentMantra.mantra,
+                              meaning: `${currentMantra.phala}\n\nविधि: ${currentMantra.vidhi}`,
+                              accentTag: '☸ श्री जिनवाणी एवं जैन स्तोत्र',
+                            })
+                          }
+                          style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+                          title="HD स्टेटस कार्ड बनाएं"
+                        >
+                          📸 स्टेटस कार्ड
                         </button>
 
                         <button
@@ -591,6 +620,11 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
           </div>
         </div>
       )}
+      <ShlokaPosterModal
+        isOpen={posterData !== null}
+        onClose={() => setPosterData(null)}
+        data={posterData}
+      />
     </div>
   );
 };

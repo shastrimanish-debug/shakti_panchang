@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { speakUma, stopUmaSpeech } from "../lib/umaSpeech";
 import { openWhatsAppShare } from "../services/umaConsultationPdf";
+import { ShlokaPosterModal, ShlokaPosterData } from "./ShlokaPosterModal";
 
 export type PathVerse = { n: number; kind?: string; text: string; meaning?: string };
 
@@ -38,6 +39,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
     }
   });
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [posterData, setPosterData] = useState<ShlokaPosterData | null>(null);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [activeSpeakingIndex, setActiveSpeakingIndex] = useState<number | null>(null);
 
@@ -370,6 +372,25 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                       <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? "fill-amber-600 text-amber-600" : ""}`} />
                     </button>
 
+                    {/* HD Status Card */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPosterData({
+                          title,
+                          reference: `${verse.kind || "पद"} #${verse.n}`,
+                          sanskrit: verse.text,
+                          meaning: verse.meaning || `${title} — प्रामाणिक सनातन पाठ एवं नित्य स्वाध्याय।`,
+                          accentTag: `📖 ${title}`,
+                        })
+                      }
+                      style={{ backgroundColor: "#6E1409", color: "#FFFFFF" }}
+                      className="px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer"
+                      title="HD स्टेटस कार्ड डाउनलोड/शेयर करें"
+                    >
+                      📸 स्टेटस
+                    </button>
+
                     {/* Copy */}
                     <button
                       type="button"
@@ -393,14 +414,20 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                 </div>
 
                 {/* Verse Text Body */}
-                <p className={`font-granth text-[#3E2714] whitespace-pre-wrap ${fontClasses[fontSizeIndex]}`}>
+                <p
+                  style={{ color: "#4A0E0E" }}
+                  className={`font-granth font-bold whitespace-pre-wrap ${fontClasses[fontSizeIndex]}`}
+                >
                   {verse.text}
                 </p>
 
                 {/* Optional Meaning */}
                 {verse.meaning && (
-                  <div className="pt-1.5 text-xs text-stone-700 bg-amber-50/70 p-2 rounded-xl border border-amber-200/60 font-sans leading-relaxed">
-                    <span className="font-bold text-amber-900">भावार्थ: </span>
+                  <div
+                    style={{ backgroundColor: "#FAF2E4", color: "#241004", borderColor: "#D6B892" }}
+                    className="pt-1.5 text-xs sm:text-sm font-semibold p-2.5 rounded-xl border font-sans leading-relaxed"
+                  >
+                    <span className="font-black" style={{ color: "#6E1409" }}>भावार्थ: </span>
                     {verse.meaning}
                   </div>
                 )}
@@ -493,6 +520,11 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
           </div>
         </div>
       )}
+      <ShlokaPosterModal
+        isOpen={posterData !== null}
+        onClose={() => setPosterData(null)}
+        data={posterData}
+      />
     </div>
   );
 }

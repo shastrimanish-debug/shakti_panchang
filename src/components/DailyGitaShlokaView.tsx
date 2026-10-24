@@ -8,6 +8,7 @@ import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { useTabMenu } from './BoardShell';
+import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 
 interface DailyGitaShlokaViewProps {
   onBackToPanchang?: () => void;
@@ -38,6 +39,7 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
     return true;
   });
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [posterData, setPosterData] = useState<ShlokaPosterData | null>(null);
 
   const localizedShlokas = useMemo(() => {
     return GITA_SHLOKAS.map((item) => {
@@ -130,19 +132,26 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
   };
 
   return (
-    <div className="w-full h-full min-h-0 flex flex-col bg-[#FCF8EC] text-[#2C180C] overflow-hidden select-none relative">
+    <div
+      className="w-full h-full min-h-0 flex flex-col overflow-hidden select-none relative"
+      style={{ backgroundColor: '#FAF3E3', color: '#1F1006' }}
+    >
       {/* Header Bar */}
-      <header className="shrink-0 bg-gradient-to-r from-[#462B17] via-[#5C3A21] to-[#3E2714] text-[#FAF2E4] px-3 py-2.5 shadow-md flex items-center justify-between border-b border-[#B56A00]/40 z-20">
+      <header
+        className="shrink-0 px-3 py-2.5 shadow-sm flex items-center justify-between border-b z-20"
+        style={{ backgroundColor: '#FFF9EE', borderColor: '#D6B485', color: '#2A1004' }}
+      >
         <div className="flex items-center gap-2">
           {/* Back to Panchang Button */}
           {onBackToPanchang && (
             <button
               type="button"
               onClick={onBackToPanchang}
-              className="px-2 py-1 rounded-xl bg-[#2C180C] border border-amber-500/40 text-amber-300 hover:bg-amber-900/40 transition cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0"
+              style={{ backgroundColor: '#FFF2DC', color: '#4A1805', borderColor: '#C89656' }}
+              className="px-2 py-1 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0"
               title="पंचांग पर वापस जाएं"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" style={{ color: '#7C2D12' }} />
               <span className="hidden sm:inline">पंचांग</span>
             </button>
           )}
@@ -151,21 +160,25 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
           <button
             type="button"
             onClick={() => setIsTocOpen(!isTocOpen)}
-            className="p-1.5 rounded-xl bg-[#2C180C] border border-amber-500/40 text-amber-300 hover:bg-amber-900/40 transition cursor-pointer flex items-center gap-1"
+            style={{ backgroundColor: '#FFF2DC', color: '#4A1805', borderColor: '#C89656' }}
+            className="p-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1"
             title="गीता श्लोक अनुक्रमणिका"
           >
-            <Menu className="w-4 h-4" />
+            <Menu className="w-4 h-4" style={{ color: '#7C2D12' }} />
             <span className="text-[10px] font-bold hidden sm:inline">श्लोक सूचकांक</span>
           </button>
 
           <div>
-            <h2 className="text-xs sm:text-sm font-black font-granth tracking-wide text-[#FFD88A] flex items-center gap-1.5">
+            <h2 className="text-xs sm:text-sm font-black font-granth tracking-wide flex items-center gap-1.5" style={{ color: '#6E1409' }}>
               <span>{chrome.gitaTitle}</span>
-              <span className="text-[10px] bg-amber-500/20 text-amber-200 px-1.5 py-0.5 rounded-full border border-amber-400/30">
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded-full border font-bold"
+                style={{ backgroundColor: '#FEF3C7', color: '#7C2D12', borderColor: '#D97706' }}
+              >
                 भगवान श्री कृष्ण वाणी
               </span>
             </h2>
-            <p className="text-[10px] text-[#E5D2B8] truncate max-w-[200px] sm:max-w-md">
+            <p className="text-[10px] font-bold truncate max-w-[200px] sm:max-w-md" style={{ color: '#4A2511' }}>
               {currentShloka ? `${chrome.chapter} ${currentShloka.chapter} • ${chrome.verse} ${currentShloka.verse}` : 'श्रीमद्भगवद्गीता'}
             </p>
           </div>
@@ -175,32 +188,35 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
           <button
             type="button"
             onClick={handleToggleSpeak}
-            className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer transition ${
+            style={
               isSpeaking
-                ? 'bg-rose-600 text-white border-rose-700 animate-pulse'
-                : 'bg-[#3E2714] text-amber-200 border-amber-500/30 hover:bg-amber-900/40'
-            }`}
+                ? { backgroundColor: '#BE123C', color: '#FFFFFF', borderColor: '#9F1239' }
+                : { backgroundColor: '#FFF2DC', color: '#3D1605', borderColor: '#C89656' }
+            }
+            className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer transition"
             title="सस्वर पाठ सुनें / बंद करें"
           >
-            {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
+            {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" style={{ color: '#9A3412' }} />}
             <span>{isSpeaking ? 'रुकें' : 'पाठ सुनें'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setFontSize(fontSize === 'sm' ? 'base' : fontSize === 'base' ? 'lg' : 'sm')}
-            className="px-2 py-1 rounded-lg bg-[#3E2714] border border-amber-500/30 text-[10px] text-amber-200 font-bold hover:bg-amber-900/40"
+            style={{ backgroundColor: '#FFF2DC', color: '#3D1605', borderColor: '#C89656' }}
+            className="px-2 py-1 rounded-lg border text-[10px] font-bold cursor-pointer"
           >
-            {fontSize === 'sm' ? 'अ (छोटा)' : fontSize === 'base' ? 'अ (मध्यम)' : 'अ (बड़ा)'}
+            {fontSize === 'sm' ? 'अ-' : fontSize === 'base' ? 'अ' : 'अ+'}
           </button>
 
           {onOpenUmaModal && (
             <button
               type="button"
               onClick={() => onOpenUmaModal(`श्रीमद्भगवद्गीता अध्याय ${currentShloka.chapter} श्लोक ${currentShloka.verse} का जीवन में व्यावहारिक अर्थ समझाइए।`)}
-              className="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 text-stone-950 text-xs font-black flex items-center gap-1 shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer"
+              style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
+              className="px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1 shadow-xs transition cursor-pointer"
             >
-              <Sparkles className="w-3 h-3 fill-stone-950" />
+              <Sparkles className="w-3 h-3" style={{ color: '#FDE68A' }} />
               <span>उमा</span>
             </button>
           )}
@@ -313,6 +329,27 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPosterData({
+                        title: 'श्रीमद्भगवद्गीता दिव्य श्लोक',
+                        reference: `अध्याय ${currentShloka.chapter} • श्लोक ${currentShloka.verse}`,
+                        sanskrit: currentShloka.sanskrit,
+                        meaning: `${currentShloka.localizedMeaning}${
+                          currentShloka.localizedReflection ? `\n\nजीवन सूत्र: ${currentShloka.localizedReflection}` : ''
+                        }`,
+                        speaker: 'भगवान श्री कृष्ण',
+                        accentTag: '🪈 श्रीमद्भगवद्गीता उपदेश',
+                      })
+                    }
+                    style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
+                    className="px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    title="HD स्टेटस कार्ड बनाएं"
+                  >
+                    <span>📸 स्टेटस कार्ड</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => handleCopy(`gita_${currentShloka.id}`, currentShloka.sanskrit, currentShloka.localizedMeaning)}
@@ -500,6 +537,11 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
           </div>
         </div>
       )}
+      <ShlokaPosterModal
+        isOpen={posterData !== null}
+        onClose={() => setPosterData(null)}
+        data={posterData}
+      />
     </div>
   );
 };
