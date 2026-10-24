@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
+import { MapPin, Sparkles } from 'lucide-react';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
@@ -433,25 +434,72 @@ export function App() {
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       <div className="bx-rail shrink-0">
-        <BoardMenuButton
-          open={drawerOpen}
-          onClick={() => {
-            triggerHapticSelection();
-            setDrawerOpen((open) => !open);
-          }}
-        />
-        {activeTab !== "services" && activeTab !== "index" && (
+        <div className="flex items-center gap-2 min-w-0">
+          <BoardMenuButton
+            open={drawerOpen}
+            onClick={() => {
+              triggerHapticSelection();
+              setDrawerOpen((open) => !open);
+            }}
+          />
+          {activeTab !== "services" && activeTab !== "index" && (
+            <button
+              type="button"
+              className="bx-tabmenu"
+              onClick={() => {
+                triggerHapticSelection();
+                tabMenu.go();
+              }}
+            >
+              मुख्य मेनू
+            </button>
+          )}
+        </div>
+
+        {/* Right: Persistent City Selector ("शहर चुनें") & Uma AI Button */}
+        <div className="flex items-center gap-1.5 min-w-0 ml-auto">
+          <button
+            type="button"
+            className="bx-tabmenu max-w-[190px] sm:max-w-[260px]"
+            style={{
+              backgroundColor: '#5C3A21',
+              color: '#FAF2E4',
+              borderColor: '#B56A00',
+            }}
+            onClick={() => {
+              triggerHapticSelection();
+              setIsLocationModalOpen(true);
+            }}
+            title="शहर / स्थान बदलें (Select City)"
+          >
+            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#FFD88A' }} />
+            <span className="truncate">{currentLocation.name}</span>
+            <span
+              style={{ backgroundColor: '#B56A00', color: '#FFFFFF' }}
+              className="text-[10px] px-1.5 py-0.2 rounded-full font-black shrink-0"
+            >
+              शहर चुनें ▾
+            </span>
+          </button>
+
           <button
             type="button"
             className="bx-tabmenu"
+            style={{
+              backgroundColor: '#FFF7E6',
+              color: '#7A1D1D',
+              borderColor: '#D4A048',
+            }}
             onClick={() => {
               triggerHapticSelection();
-              tabMenu.go();
+              setIsUmaModalOpen(true);
             }}
+            title="उमा वैदिक दैवज्ञ"
           >
-            मुख्य मेनू
+            <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#B56A00' }} />
+            <span className="hidden xs:inline">उमा</span>
           </button>
-        )}
+        </div>
       </div>
 
       {/* Floating Page Turn Toast Notice */}
@@ -489,6 +537,9 @@ export function App() {
               <TodayBoard
                 panchang={panchang}
                 place={currentLocation}
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                onPlace={() => setIsLocationModalOpen(true)}
                 onWhatsApp={() => setIsWhatsAppPanchangOpen(true)}
                 onOpen={handleSelectTab}
               />
@@ -498,6 +549,8 @@ export function App() {
               <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
                 <KalnirnayMonthView
                   currentDate={currentDate}
+                  currentLocation={currentLocation}
+                  onOpenLocationModal={() => setIsLocationModalOpen(true)}
                   onDateSelect={(d) => {
                     setCurrentDate(d);
                     handleSelectTab('panchang');

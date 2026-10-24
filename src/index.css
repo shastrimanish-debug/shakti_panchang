@@ -525,65 +525,55 @@
 }
 
 /* ==========================================================================
-   📖 Grantha Page-Turn: Subtle Fading-Slide Entry Animation for Content Views
+   📖 Grantha Page-Turn: Subtle Fade Entry Animation for Content Views
+   (Uses opacity only at rest so position:fixed modals are never clipped)
    ========================================================================== */
 @keyframes fadingSlideForward {
   0% {
     opacity: 0;
-    transform: translate3d(18px, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes fadingSlideBackward {
   0% {
     opacity: 0;
-    transform: translate3d(-18px, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes fadingSlideEntry {
   0% {
     opacity: 0;
-    transform: translate3d(14px, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 .fading-slide-forward {
-  animation: fadingSlideForward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: fadingSlideForward 0.18s ease-out;
 }
 
 .fading-slide-backward {
-  animation: fadingSlideBackward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: fadingSlideBackward 0.18s ease-out;
 }
 
 .fading-slide-entry {
-  animation: fadingSlideEntry 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: fadingSlideEntry 0.18s ease-out;
 }
 
 /* Granth page turn alias classes */
 .book-page-turn-forward {
-  animation: fadingSlideForward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: fadingSlideForward 0.18s ease-out;
 }
 
 .book-page-turn-backward {
-  animation: fadingSlideBackward 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: fadingSlideBackward 0.18s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Share2,
   Download,
@@ -286,41 +287,84 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
     ctx.fillText(cleanTitle, W / 2, bannerY + bannerH / 2 + 12);
 
     // 5. Subtitle / Scripture Kicker
-    let cursorY = bannerY + bannerH + (format === 'status_9_16' ? 52 : 42);
+    let headerBottomY = bannerY + bannerH + (format === 'status_9_16' ? 46 : 38);
     const kickerText = data.headerKicker || data.reference || data.sourceLabel;
     if (kickerText) {
       ctx.fillStyle = pal.kickerColor;
-      ctx.font = 'bold 25px sans-serif';
-      ctx.fillText(kickerText, W / 2, cursorY);
-      cursorY += format === 'status_9_16' ? 38 : 28;
+      ctx.font = 'bold 26px sans-serif';
+      ctx.fillText(kickerText, W / 2, headerBottomY);
+      headerBottomY += format === 'status_9_16' ? 40 : 30;
     }
 
     const badgeText = data.extraBadge || data.accentTag || (data.speaker ? `प्रवक्ता/ऋषि: ${data.speaker}` : '');
     if (badgeText) {
       ctx.fillStyle = pal.outerBorder;
       ctx.font = 'bold 25px sans-serif';
-      ctx.fillText(badgeText, W / 2, cursorY);
-      cursorY += format === 'status_9_16' ? 36 : 28;
+      ctx.fillText(badgeText, W / 2, headerBottomY);
+      headerBottomY += format === 'status_9_16' ? 38 : 28;
     }
 
-    // 6. Main Sanskrit / Verse Manuscript Box
+    // Pre-calculate Sanskrit & Meaning boxes so we can vertically balance the card
     const padX = 76;
     const boxW = W - padX * 2;
     const textMaxW = boxW - 88;
+    const footerH = 215;
+    const footerY = H - footerH - 58;
 
-    // Pre-calculate Sanskrit wrapped lines
     const sanskritFontSize =
-      data.sanskrit.length > 260 ? 28 : data.sanskrit.length > 160 ? 32 : 36;
+      data.sanskrit.length > 260
+        ? 28
+        : data.sanskrit.length > 160
+        ? 33
+        : format === 'status_9_16'
+        ? 38
+        : 35;
     ctx.font = `bold ${sanskritFontSize}px serif`;
     const sanskritLines = wrapCanvasParagraphs(ctx, data.sanskrit, textMaxW).slice(
       0,
       format === 'status_9_16' ? 11 : 7
     );
-    const sanskritLineH = Math.round(sanskritFontSize * 1.48);
-    const sanskritBoxH =
-      Math.max(180, sanskritLines.length * sanskritLineH + 90) +
-      (data.transliteration && format === 'status_9_16' ? 54 : 0);
+    const sanskritLineH = Math.round(sanskritFontSize * 1.5);
+    const sanskritContentH =
+      sanskritLines.length * sanskritLineH +
+      (data.transliteration && format === 'status_9_16' ? 48 : 0);
+    const sanskritBoxH = Math.max(
+      format === 'status_9_16' ? 230 : 185,
+      sanskritContentH + (format === 'status_9_16' ? 120 : 94)
+    );
 
+    const meaningFontSize =
+      data.meaning.length > 320
+        ? 25
+        : data.meaning.length > 200
+        ? 28
+        : format === 'status_9_16'
+        ? 31
+        : 28;
+    ctx.font = `bold ${meaningFontSize}px sans-serif`;
+    const meaningLines = wrapCanvasParagraphs(ctx, data.meaning, textMaxW);
+    const meaningLineH = Math.round(meaningFontSize * 1.48);
+    const maxAllowedMeaningLines = format === 'status_9_16' ? 12 : 6;
+    const visibleMeaningLines = meaningLines.slice(0, maxAllowedMeaningLines);
+    const meaningContentH = visibleMeaningLines.length * meaningLineH;
+    const meaningBoxH = Math.max(
+      format === 'status_9_16' ? 220 : 175,
+      meaningContentH + (format === 'status_9_16' ? 120 : 92)
+    );
+
+    const gapBetweenBoxes = format === 'status_9_16' ? 34 : 24;
+    const availableZoneH = footerY - 28 - headerBottomY;
+    const baseStackH = sanskritBoxH + gapBetweenBoxes + meaningBoxH;
+    const leftoverH = availableZoneH - baseStackH;
+    const showVedicBlessingCard = format === 'status_9_16' && leftoverH >= 150;
+    const blessingCardH = showVedicBlessingCard ? 128 : 0;
+    const totalStackH =
+      baseStackH + (showVedicBlessingCard ? gapBetweenBoxes + blessingCardH : 0);
+
+    let cursorY =
+      headerBottomY + Math.max(8, Math.floor((availableZoneH - totalStackH) / 2));
+
+    // 6. Main Sanskrit / Verse Manuscript Box
     ctx.fillStyle = pal.cardBg;
     ctx.beginPath();
     safeRoundRect(ctx, padX, cursorY, boxW, sanskritBoxH, 24);
@@ -329,14 +373,17 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    // Decorative top flourish inside Sanskrit card
     ctx.fillStyle = pal.kickerColor;
-    ctx.font = 'bold 22px serif';
-    ctx.fillText('✦ मूल पाठ / श्लोक ✦', W / 2, cursorY + 40);
+    ctx.font = 'bold 23px serif';
+    ctx.fillText('✦ मूल पाठ / मुख्य विवरण ✦', W / 2, cursorY + 42);
 
     ctx.fillStyle = pal.sanskritColor;
     ctx.font = `bold ${sanskritFontSize}px serif`;
-    let sLineY = cursorY + 86;
+    const sanskritStartOffset = Math.max(
+      88,
+      Math.floor((sanskritBoxH - 46 - sanskritContentH) / 2) + 64
+    );
+    let sLineY = cursorY + sanskritStartOffset;
     for (const line of sanskritLines) {
       ctx.fillText(line, W / 2, sLineY);
       sLineY += sanskritLineH;
@@ -349,18 +396,15 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
         data.transliteration.length > 95
           ? `${data.transliteration.slice(0, 92)}...`
           : data.transliteration;
-      ctx.fillText(trClean, W / 2, sLineY + 14);
+      ctx.fillText(trClean, W / 2, sLineY + 12);
     }
 
-    cursorY += sanskritBoxH + (format === 'status_9_16' ? 38 : 26);
+    cursorY += sanskritBoxH + gapBetweenBoxes;
 
-    // 7. Hindi / English Bhavartha (Meaning) Box
-    const footerReserve = format === 'status_9_16' ? 320 : 275;
-    const availableMeaningH = Math.max(190, H - cursorY - footerReserve);
-
+    // 7. Hindi / English Bhavartha (Meaning) Box — Sized naturally and centered
     ctx.fillStyle = pal.meaningBg;
     ctx.beginPath();
-    safeRoundRect(ctx, padX, cursorY, boxW, availableMeaningH, 22);
+    safeRoundRect(ctx, padX, cursorY, boxW, meaningBoxH, 22);
     ctx.fill();
     ctx.strokeStyle = pal.meaningBorder;
     ctx.lineWidth = 2.5;
@@ -370,31 +414,48 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
     ctx.font = 'bold 25px sans-serif';
     ctx.fillText('॥ दिव्य भावार्थ एवं जीवन संदेश ॥', W / 2, cursorY + 44);
 
-    const meaningFontSize =
-      data.meaning.length > 320 ? 24 : data.meaning.length > 200 ? 26 : 29;
-    ctx.font = `bold ${meaningFontSize}px sans-serif`;
-    const meaningLines = wrapCanvasParagraphs(ctx, data.meaning, textMaxW);
-    const meaningLineH = Math.round(meaningFontSize * 1.45);
-    const maxMeaningLines = Math.max(
-      3,
-      Math.floor((availableMeaningH - 76) / meaningLineH)
-    );
-    const visibleMeaningLines = meaningLines.slice(0, maxMeaningLines);
-
     ctx.fillStyle = pal.meaningText;
-    let mLineY = cursorY + 90;
+    ctx.font = `bold ${meaningFontSize}px sans-serif`;
+    const meaningStartOffset = Math.max(
+      92,
+      Math.floor((meaningBoxH - 50 - meaningContentH) / 2) + 66
+    );
+    let mLineY = cursorY + meaningStartOffset;
     for (let i = 0; i < visibleMeaningLines.length; i++) {
       let lineStr = visibleMeaningLines[i];
-      if (i === visibleMeaningLines.length - 1 && meaningLines.length > maxMeaningLines) {
+      if (i === visibleMeaningLines.length - 1 && meaningLines.length > maxAllowedMeaningLines) {
         lineStr = `${lineStr.slice(0, Math.max(0, lineStr.length - 3))}...`;
       }
       ctx.fillText(lineStr, W / 2, mLineY);
       mLineY += meaningLineH;
     }
 
+    cursorY += meaningBoxH + gapBetweenBoxes;
+
+    // 7B. Optional Sacred Vedic Blessing Medallion in 9:16 mode when space permits
+    if (showVedicBlessingCard) {
+      ctx.fillStyle = pal.cardBg;
+      ctx.beginPath();
+      safeRoundRect(ctx, padX, cursorY, boxW, blessingCardH, 20);
+      ctx.fill();
+      ctx.strokeStyle = pal.innerBorder;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = pal.kickerColor;
+      ctx.font = 'bold 24px serif';
+      ctx.fillText('॥ शुभमस्तु • कल्याणमस्तु • धर्मो रक्षति रक्षितः ॥', W / 2, cursorY + 52);
+
+      ctx.fillStyle = pal.meaningText;
+      ctx.font = 'bold 21px sans-serif';
+      ctx.fillText(
+        'सनातन वैदिक ज्योतिष एवं शास्त्र-सम्मत प्रमाणिक मार्गदर्शन',
+        W / 2,
+        cursorY + 92
+      );
+    }
+
     // 8. Footer Branding Card (Astrologer Custom Visiting Card OR Shakti Panchang Seal)
-    const footerH = 215;
-    const footerY = H - footerH - 58;
 
     const footGrad = ctx.createLinearGradient(padX, footerY, W - padX, footerY + footerH);
     footGrad.addColorStop(0, pal.footerBg1);
@@ -571,9 +632,9 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  return (
+  const modalNode = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200"
       onClick={onClose}
     >
       <canvas ref={canvasRef} style={{ display: 'none' }} />
@@ -585,9 +646,9 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
           color: '#1F1006',
           borderColor: '#8B1E1E',
         }}
-        className="w-full max-w-md rounded-2xl border-2 shadow-2xl overflow-hidden max-h-[92dvh] flex flex-col"
+        className="w-full max-w-md rounded-2xl border-2 shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col my-auto"
       >
-        {/* Modal Header */}
+        {/* Modal Header (Always Visible) */}
         <div
           style={{
             backgroundColor: '#6E1409',
@@ -614,20 +675,20 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
             type="button"
             onClick={onClose}
             style={{ backgroundColor: '#4A0E0E', color: '#FFFFFF' }}
-            className="p-1.5 rounded-lg cursor-pointer"
+            className="p-1.5 rounded-lg cursor-pointer shrink-0"
             aria-label="बंद करें"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Format & Theme Controls */}
+        {/* Format & Theme Controls (Always Visible) */}
         <div
           style={{
             backgroundColor: '#FFF8EB',
             borderColor: '#D6B892',
           }}
-          className="shrink-0 px-3 py-2 border-b flex flex-wrap items-center justify-between gap-2"
+          className="shrink-0 px-3 py-2 border-b flex flex-wrap items-center justify-between gap-1.5"
         >
           {/* Size Toggle */}
           <div className="flex items-center gap-1">
@@ -710,15 +771,17 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
           </div>
         </div>
 
-        {/* Scrollable Poster Preview */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col items-center space-y-2.5">
+        {/* Scrollable Poster Preview + Astrologer Branding */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2.5 sm:p-3 flex flex-col items-center space-y-2.5">
           <div
             style={{
               backgroundColor: '#E5CFAF',
               borderColor: '#8B1E1E',
             }}
             className={`w-full ${
-              format === 'status_9_16' ? 'max-w-[235px] aspect-[9/16]' : 'max-w-[280px] aspect-[4/5]'
+              format === 'status_9_16'
+                ? 'max-w-[205px] sm:max-w-[230px] aspect-[9/16]'
+                : 'max-w-[260px] sm:max-w-[280px] aspect-[4/5]'
             } rounded-xl overflow-hidden border-2 shadow-md flex items-center justify-center shrink-0`}
           >
             {isGenerating || !imageUri ? (
@@ -747,7 +810,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
               backgroundColor: '#FFFDF9',
               borderColor: '#D6B892',
             }}
-            className="w-full p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs shrink-0"
+            className="w-full p-2 rounded-xl border flex items-center justify-between gap-2 text-xs shrink-0"
           >
             <div className="flex items-center gap-2 min-w-0">
               <Award className="w-4 h-4 shrink-0" style={{ color: '#8B1E1E' }} />
@@ -779,66 +842,76 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
               </button>
             )}
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="w-full space-y-2 shrink-0">
+        {/* Sticky Bottom Action Buttons (Never Clipped) */}
+        <div
+          style={{
+            backgroundColor: '#FFF8EB',
+            borderColor: '#D6B892',
+          }}
+          className="shrink-0 p-2.5 sm:p-3 border-t space-y-2"
+        >
+          <button
+            type="button"
+            onClick={handleSharePoster}
+            style={{ backgroundColor: '#15803D', color: '#FFFFFF' }}
+            className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-95"
+          >
+            <Share2 className="w-4 h-4" />
+            <span>व्हाट्सएप स्टेटस / ग्रुप पर शेयर करें</span>
+          </button>
+
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={handleSharePoster}
-              style={{ backgroundColor: '#15803D', color: '#FFFFFF' }}
-              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-95"
+              onClick={handleDownloadPoster}
+              disabled={!imageUri}
+              style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
+              className="py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
             >
-              <Share2 className="w-4 h-4" />
-              <span>व्हाट्सएप स्टेटस / ग्रुप पर शेयर करें</span>
+              {downloadSuccess ? (
+                <>
+                  <Check className="w-3.5 h-3.5" style={{ color: '#86EFAC' }} />
+                  <span>डाउनलोड हुआ!</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" style={{ color: '#FDE047' }} />
+                  <span>HD इमेज सेव करें</span>
+                </>
+              )}
             </button>
 
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleDownloadPoster}
-                disabled={!imageUri}
-                style={{ backgroundColor: '#6E1409', color: '#FFFFFF' }}
-                className="py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
-              >
-                {downloadSuccess ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" style={{ color: '#86EFAC' }} />
-                    <span>डाउनलोड हुआ!</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-3.5 h-3.5" style={{ color: '#FDE047' }} />
-                    <span>HD इमेज सेव करें</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCopyCaption}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  color: '#3A1405',
-                  borderColor: '#C8A986',
-                }}
-                className="py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                {copySuccess ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" style={{ color: '#15803D' }} />
-                    <span>कॉपी हो गया!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
-                    <span>टेक्स्ट कॉपी करें</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleCopyCaption}
+              style={{
+                backgroundColor: '#FFFFFF',
+                color: '#3A1405',
+                borderColor: '#C8A986',
+              }}
+              className="py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              {copySuccess ? (
+                <>
+                  <Check className="w-3.5 h-3.5" style={{ color: '#15803D' }} />
+                  <span>कॉपी हो गया!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
+                  <span>टेक्स्ट कॉपी करें</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalNode, document.body)
+    : modalNode;
 };

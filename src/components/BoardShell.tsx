@@ -7,6 +7,8 @@ import {
   Sun,
   UserRound,
   ChevronLeft,
+  ChevronRight,
+  RotateCcw,
   Languages,
   Palette,
   MoreHorizontal,
@@ -476,15 +478,21 @@ export function ModuleBoard({
 export function TodayBoard({
   panchang,
   place,
+  currentDate,
+  onDateChange,
+  onPlace,
   onWhatsApp,
   onOpen,
 }: {
   panchang: VedicPanchangData | null;
   place: SavedLocation;
+  currentDate?: Date;
+  onDateChange?: (d: Date) => void;
+  onPlace?: () => void;
   onWhatsApp: () => void;
   onOpen: (id: string) => void;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isSavingHd, setIsSavingHd] = useState(false);
   const [isSharingHd, setIsSharingHd] = useState(false);
   const [hdNotice, setHdNotice] = useState<string | null>(null);
@@ -493,6 +501,38 @@ export function TodayBoard({
     return <div className="p-4 text-sm">{t("common.loading", "पंचांग गणना हो रही है।")}</div>;
   }
 
+  const activeDate = currentDate || panchang.date || new Date();
+  const dateLocale = language === "en" ? "en-US" : language === "gu" ? "gu-IN" : "hi-IN";
+  const formattedDate = activeDate.toLocaleDateString(dateLocale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  const handlePrevDay = () => {
+    triggerHapticSelection();
+    if (!onDateChange) return;
+    const prev = new Date(activeDate);
+    prev.setDate(prev.getDate() - 1);
+    onDateChange(prev);
+  };
+
+  const handleNextDay = () => {
+    triggerHapticSelection();
+    if (!onDateChange) return;
+    const next = new Date(activeDate);
+    next.setDate(next.getDate() + 1);
+    onDateChange(next);
+  };
+
+  const handleTodayReset = () => {
+    triggerHapticSelection();
+    if (!onDateChange) return;
+    onDateChange(new Date());
+  };
+
+  const placeLabelKey = t("kundali.place", "स्थान");
   const facts: [string, string][] = [
     [t("panchang.tithi", "तिथि"), trVedic(panchang.tithi)],
     [t("panchang.paksha", "पक्ष"), trVedic(panchang.paksha)],
@@ -509,7 +549,7 @@ export function TodayBoard({
     [t("panchang.sunSign", "सूर्य राशि"), trVedic(panchang.solarRashi)],
     [t("panchang.moonSign", "चंद्र राशि"), trVedic(panchang.lunarRashi)],
     [t("panchang.shareMoonSunSign", "अयनांश"), `${panchang.ayanamshaName} · ${panchang.ayanamsha.toFixed(2)}°`],
-    [t("kundali.place", "स्थान"), place.name],
+    [placeLabelKey, place.name],
   ];
 
   const handleSaveHd = async () => {
@@ -562,6 +602,92 @@ export function TodayBoard({
 
   return (
     <div className="flex-1 min-h-0 w-full bx-home overflow-y-auto overscroll-contain p-3 space-y-3.5 pb-24">
+      {/* 0. Top Location (शहर चुनें) & Date Control Bar */}
+      <section className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-2.5 sm:p-3 shadow-xs flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticSelection();
+              onPlace?.();
+            }}
+            style={{ backgroundColor: "#5C3A21", color: "#FAF2E4", borderColor: "#B56A00" }}
+            className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+            title="शहर / स्थान बदलें"
+          >
+            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "#FFD88A" }} />
+            <span className="truncate max-w-[130px] sm:max-w-[180px]">{place.name}</span>
+            <span
+              style={{ backgroundColor: "#B56A00", color: "#FFFFFF" }}
+              className="text-[10px] px-1.5 py-0.5 rounded font-black shrink-0"
+            >
+              शहर बदलें ▾
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticSelection();
+              onOpen("kalnirnay");
+            }}
+            className="px-2.5 py-1.5 rounded-xl bg-[#F4E8D1] hover:bg-[#E8D5B5] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold flex items-center gap-1 transition cursor-pointer active:scale-95"
+          >
+            <Calendar className="w-3.5 h-3.5 text-[#8B1E1E]" />
+            <span>मासिक कैलेंडर</span>
+          </button>
+        </div>
+
+        {onDateChange && (
+          <div className="flex items-center gap-1 bg-[#F4E8D1] px-1.5 py-1 rounded-xl border border-[#8C6239]/35">
+            <button
+              type="button"
+              onClick={handlePrevDay}
+              className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
+              title="पिछला दिन"
+              aria-label="पिछला दिन"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <label className="relative flex items-center px-1.5 cursor-pointer">
+              <span className="text-xs font-bold text-[#5C3A21] whitespace-nowrap">
+                📅 {formattedDate}
+              </span>
+              <input
+                type="date"
+                value={activeDate.toISOString().split("T")[0]}
+                onChange={(e) => {
+                  if (e.target.valueAsDate) onDateChange(e.target.valueAsDate);
+                }}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full"
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={handleTodayReset}
+              style={{ backgroundColor: "#8B1E1E", color: "#FFFFFF" }}
+              className="px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+              title="आज की तिथि पर लौटें"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>आज</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextDay}
+              className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
+              title="अगला दिन"
+              aria-label="अगला दिन"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </section>
+
       {/* 1. First on Screen: Moon Phase & Tithi Orbit with Built-in Share & HD Save */}
       <MoonPhaseChart
         panchang={panchang}
@@ -621,12 +747,34 @@ export function TodayBoard({
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          {facts.map(([k, v]) => (
-            <div key={k} className="bx-fact bx-glass">
-              <div className="bx-kicker">{k}</div>
-              <b className="text-base mt-1">{v}</b>
-            </div>
-          ))}
+          {facts.map(([k, v]) =>
+            k === placeLabelKey && onPlace ? (
+              <button
+                key={k}
+                type="button"
+                onClick={() => {
+                  triggerHapticSelection();
+                  onPlace();
+                }}
+                className="bx-fact bx-glass text-left cursor-pointer hover:border-[#8B1E1E]"
+                title="शहर / स्थान बदलें"
+              >
+                <div className="bx-kicker flex items-center justify-between gap-1">
+                  <span>{k}</span>
+                  <span className="text-[10px] font-bold underline text-[#8B1E1E]">शहर बदलें ▾</span>
+                </div>
+                <b className="text-base mt-1 flex items-center gap-1 truncate">
+                  <MapPin className="w-3.5 h-3.5 text-[#B56A00] shrink-0" />
+                  <span className="truncate">{v}</span>
+                </b>
+              </button>
+            ) : (
+              <div key={k} className="bx-fact bx-glass">
+                <div className="bx-kicker">{k}</div>
+                <b className="text-base mt-1">{v}</b>
+              </div>
+            )
+          )}
         </div>
       </section>
 

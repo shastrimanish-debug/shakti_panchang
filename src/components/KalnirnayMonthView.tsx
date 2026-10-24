@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { getKalnirnayMonthData, KalnirnayDayData } from '../services/kalnirnay';
+import { SavedLocation } from '../types';
 import {
   Calendar,
   ChevronLeft,
@@ -16,6 +17,7 @@ import {
   Check,
   Filter,
   Info,
+  MapPin,
 } from 'lucide-react';
 import { saveAppReminder } from '../services/storage';
 import { getGoogleCalendarUrl, generateSingleEventICS, downloadICSBlob } from '../services/calendarExport';
@@ -25,12 +27,16 @@ import { triggerHapticSelection } from '../utils/haptics';
 
 interface KalnirnayMonthViewProps {
   currentDate: Date;
+  currentLocation?: SavedLocation;
+  onOpenLocationModal?: () => void;
   onDateSelect?: (date: Date) => void;
   onNavigateToReminders?: () => void;
 }
 
 export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
   currentDate,
+  currentLocation,
+  onOpenLocationModal,
   onDateSelect,
   onNavigateToReminders,
 }) => {
@@ -178,10 +184,10 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
   };
 
   return (
-    <div className="space-y-5">
-      {/* 1. Header Bar: Month, Year, Samvat & Controls */}
+    <div className="space-y-4 p-2.5 sm:p-4 pb-24">
+      {/* 1. Header Bar: Month, Year, Samvat, City Selector & Controls */}
       <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3.5 sm:p-5 shadow-xs space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
           <div>
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-[#B56A00]" />
@@ -198,8 +204,32 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
             </p>
           </div>
 
-          {/* Quick Month Selectors */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* City Selector + Quick Month Selectors */}
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            {onOpenLocationModal && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticSelection();
+                  onOpenLocationModal();
+                }}
+                style={{ backgroundColor: '#5C3A21', color: '#FAF2E4', borderColor: '#B56A00' }}
+                className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 shadow-xs transition cursor-pointer active:scale-95"
+                title="शहर / स्थान बदलें"
+              >
+                <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#FFD88A' }} />
+                <span className="truncate max-w-[110px] sm:max-w-[150px]">
+                  {currentLocation?.name || 'उज्जैन'}
+                </span>
+                <span
+                  style={{ backgroundColor: '#B56A00', color: '#FFFFFF' }}
+                  className="text-[10px] px-1.5 py-0.2 rounded font-black shrink-0"
+                >
+                  शहर बदलें ▾
+                </span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handlePrevMonth}

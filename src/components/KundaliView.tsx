@@ -200,6 +200,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [dob, setDob] = useState('');
   const [tob, setTob] = useState('');
   const [selectedCity, setSelectedCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
+  const [boyCity, setBoyCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
+  const [girlCity, setGirlCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
+  const [cityPickerTarget, setCityPickerTarget] = useState<'main' | 'boy' | 'girl'>('main');
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
 
   // Synchronize form inputs if activeKundali changes
@@ -375,13 +378,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const boyKundali = milanReady
     ? milanInputMode === 'rashi'
       ? createQuickKundaliFromRashiNakshatra(boyName.trim() || 'वर', boyRashiIdx, boyNakIdx, boyIsManglik, boyCharan)
-      : calculateKundali(boyName.trim(), new Date(boyDob), boyTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
+      : calculateKundali(boyName.trim(), new Date(boyDob), boyTob, boyCity.name, boyCity.latitude, boyCity.longitude)
     : null;
 
   const girlKundali = milanReady
     ? milanInputMode === 'rashi'
       ? createQuickKundaliFromRashiNakshatra(girlName.trim() || 'कन्या', girlRashiIdx, girlNakIdx, girlIsManglik, girlCharan)
-      : calculateKundali(girlName.trim(), new Date(girlDob), girlTob, currentLocation.name, currentLocation.latitude, currentLocation.longitude)
+      : calculateKundali(girlName.trim(), new Date(girlDob), girlTob, girlCity.name, girlCity.latitude, girlCity.longitude)
     : null;
 
   const milanResult = boyKundali && girlKundali ? calculateAshtakootMilan(boyKundali, girlKundali) : null;
@@ -565,9 +568,29 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       <LocationModal
         isOpen={isCityModalOpen}
         onClose={() => setIsCityModalOpen(false)}
-        currentLocation={selectedCity}
+        currentLocation={
+          cityPickerTarget === 'boy'
+            ? boyCity
+            : cityPickerTarget === 'girl'
+              ? girlCity
+              : selectedCity
+        }
+        title={
+          cityPickerTarget === 'boy'
+            ? 'वर (Boy) का जन्म शहर / स्थान चुनें'
+            : cityPickerTarget === 'girl'
+              ? 'कन्या (Girl) का जन्म शहर / स्थान चुनें'
+              : 'जातक का जन्म शहर / स्थान चुनें'
+        }
+        persistGlobal={cityPickerTarget === 'main'}
         onSelectLocation={(loc) => {
-          setSelectedCity(loc);
+          if (cityPickerTarget === 'boy') {
+            setBoyCity(loc);
+          } else if (cityPickerTarget === 'girl') {
+            setGirlCity(loc);
+          } else {
+            setSelectedCity(loc);
+          }
           setIsCityModalOpen(false);
         }}
       />
@@ -831,7 +854,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </label>
               <button
                 type="button"
-                onClick={() => setIsCityModalOpen(true)}
+                onClick={() => {
+                  setCityPickerTarget('main');
+                  setIsCityModalOpen(true);
+                }}
                 className="w-full bg-[#F4E8D1] hover:bg-[#EBDBC0] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] flex items-center justify-between transition text-left cursor-pointer"
               >
                 <span className="truncate flex items-center gap-1.5">
@@ -1976,7 +2002,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                             : 'text-[#5C3A21] hover:bg-[#FAF2E4]'
                         }`}
                       >
-                        🗓️ जन्म तिथि व समय
+                        🗓️ जन्म तिथि, समय व शहर
                       </button>
                     </div>
 
@@ -2008,6 +2034,29 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
                       placeholder="वर का नाम"
                     />
+
+                    {/* Boy Birth City Selector */}
+                    <div>
+                      <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">
+                        वर का जन्म शहर / स्थान (Birth City)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCityPickerTarget('boy');
+                          setIsCityModalOpen(true);
+                        }}
+                        className="w-full bg-white hover:bg-[#FAF2E4] border border-[#8C6239]/40 rounded p-1.5 text-xs font-bold text-[#2B1105] flex items-center justify-between transition cursor-pointer"
+                      >
+                        <span className="flex items-center gap-1.5 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-[#B56A00] shrink-0" />
+                          <span className="truncate">{boyCity.name}</span>
+                        </span>
+                        <span className="text-[10px] text-[#B56A00] underline font-bold shrink-0 ml-1">
+                          📍 शहर चुनें ▾
+                        </span>
+                      </button>
+                    </div>
 
                     {milanInputMode === 'rashi' ? (
                       <div className="space-y-2">
@@ -2067,18 +2116,24 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="date"
-                          value={boyDob}
-                          onChange={(e) => setBoyDob(e.target.value)}
-                          className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                        />
-                        <input
-                          type="time"
-                          value={boyTob}
-                          onChange={(e) => setBoyTob(e.target.value)}
-                          className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                        />
+                        <div>
+                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म तिथि</label>
+                          <input
+                            type="date"
+                            value={boyDob}
+                            onChange={(e) => setBoyDob(e.target.value)}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म समय</label>
+                          <input
+                            type="time"
+                            value={boyTob}
+                            onChange={(e) => setBoyTob(e.target.value)}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2100,6 +2155,29 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
                       placeholder="कन्या का नाम"
                     />
+
+                    {/* Girl Birth City Selector */}
+                    <div>
+                      <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">
+                        कन्या का जन्म शहर / स्थान (Birth City)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCityPickerTarget('girl');
+                          setIsCityModalOpen(true);
+                        }}
+                        className="w-full bg-white hover:bg-[#FAF2E4] border border-[#8C6239]/40 rounded p-1.5 text-xs font-bold text-[#2B1105] flex items-center justify-between transition cursor-pointer"
+                      >
+                        <span className="flex items-center gap-1.5 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-[#B56A00] shrink-0" />
+                          <span className="truncate">{girlCity.name}</span>
+                        </span>
+                        <span className="text-[10px] text-[#B56A00] underline font-bold shrink-0 ml-1">
+                          📍 शहर चुनें ▾
+                        </span>
+                      </button>
+                    </div>
 
                     {milanInputMode === 'rashi' ? (
                       <div className="space-y-2">
@@ -2159,18 +2237,24 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="date"
-                          value={girlDob}
-                          onChange={(e) => setGirlDob(e.target.value)}
-                          className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                        />
-                        <input
-                          type="time"
-                          value={girlTob}
-                          onChange={(e) => setGirlTob(e.target.value)}
-                          className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
-                        />
+                        <div>
+                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म तिथि</label>
+                          <input
+                            type="date"
+                            value={girlDob}
+                            onChange={(e) => setGirlDob(e.target.value)}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म समय</label>
+                          <input
+                            type="time"
+                            value={girlTob}
+                            onChange={(e) => setGirlTob(e.target.value)}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>

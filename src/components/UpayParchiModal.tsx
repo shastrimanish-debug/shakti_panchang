@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { KundaliData, VedicPanchangData } from '../types';
 import {
   generateTraditionalUpayParchi,
@@ -404,9 +405,9 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     openWhatsAppShare(buildPlainTextSlip());
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-3xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-3xl max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden">
         {/* Top Modal Bar */}
         <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] px-4 py-3 flex items-center justify-between border-b-2 border-[#B58738]">
           <div className="flex items-center gap-2.5">
@@ -795,6 +796,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
