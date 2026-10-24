@@ -6,8 +6,8 @@ import { askUma, AskUmaResponse, pingUmaServer, UmaActionType, isNumerologyQuery
 import { speakUma, stopUmaSpeech, isUmaSpeaking, unlockUmaSpeech, UmaVoice } from '@/lib/umaSpeech';
 import { Capacitor } from '@capacitor/core';
 import { analyzeKundali, SIGN_LORDS } from '../services/predictions';
-import { buildMicroAstrologyContextPrompt } from '../services/umaMicroAstrology';
-import { getAstrologerBranding } from '../services/storage';
+import { buildMicroAstrologyContextPrompt, buildMicroAstrologyProfile } from '../services/umaMicroAstrology';
+import { getAstrologerBranding, getSavedKundaliProfiles, saveKundaliProfile } from '../services/storage';
 import {
   downloadUmaConsultationPdf,
   formatWhatsAppConsultationMessage,
@@ -15,7 +15,6 @@ import {
 } from '../services/umaConsultationPdf';
 import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import { calculateKundali } from '../services/kundali';
-import { saveKundaliProfile } from '../services/storage';
 import { searchGlobalCities } from '../services/globalCities';
 import {
   X,
@@ -220,18 +219,25 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [currentKundali, setCurrentKundali] = useState<KundaliData | null>(activeKundali);
+  const savedProfilesList = getSavedKundaliProfiles();
+  const [currentKundali, setCurrentKundali] = useState<KundaliData | null>(
+    () => activeKundali || savedProfilesList[0] || null
+  );
 
   useEffect(() => {
     if (activeKundali) {
       setCurrentKundali(activeKundali);
+    } else if (!currentKundali && savedProfilesList.length > 0) {
+      setCurrentKundali(savedProfilesList[0]);
     }
   }, [activeKundali]);
 
+  const liveMicroProfile = currentKundali ? buildMicroAstrologyProfile(currentKundali, panchang) : null;
+
   // Smart Birth Details Form state for users without Kundali or switching charts
   // Never force-open birth form when an initialPrompt (like Ank Jyotish or Panchang query) is passed!
-  const [isBirthFormOpen, setIsBirthFormOpen] = useState(!activeKundali && !initialPrompt);
-  const [birthName, setBirthName] = useState(activeKundali?.name || '');
+  const [isBirthFormOpen, setIsBirthFormOpen] = useState(!currentKundali && !initialPrompt);
+  const [birthName, setBirthName] = useState(currentKundali?.name || '');
   const [birthDate, setBirthDate] = useState('1995-01-01');
   const [birthHour, setBirthHour] = useState('10');
   const [birthMinute, setBirthMinute] = useState('30');
@@ -240,9 +246,9 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [isCreatingKundali, setIsCreatingKundali] = useState(false);
   const autoSubmittedPromptRef = useRef<string | null>(null);
 
-  const initialGreeting = activeKundali
-    ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान ${activeKundali.name} जी! मैं उमा हूँ — ५० वर्षों के अखंड पराशारी, जैमिनी, नाड़ी ज्योतिष व अंक-शास्त्र साधना से युक्त आपकी प्रकांड वैदिक आचार्य।\n\nमैंने आपकी जन्मपत्रिका (लग्न: ${activeKundali.lagnaRashi}, चंद्र: ${activeKundali.moonRashi}, नक्षत्र: ${activeKundali.nakshatra}, वर्तमान महादशा: ${activeKundali.mahadasha}) तथा आपके मूलांक-भाग्यांक व लो-शू चक्र का सूक्ष्म अवलोकन कर लिया है।\n\nआप अंक ज्योतिष, आजीविका, धन, विवाह, स्वास्थ्य या ग्रह शांति से संबंधित कोई भी प्रश्न पूछें (ऑफ़लाइन व ऑनलाइन १००% सटीक गणना)।`
-    : `॥ ॐ श्री गणेशाय नमः ॥\n॥ ॐ नमः शिवाय ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैं उमा हूँ — ५० वर्षों की कठिन वैदिक ज्योतिष एवं अंक-शास्त्र साधना से युक्त आपकी आचार्य।\n\nआप मुझसे **अंक ज्योतिष (मूलांक, भाग्यांक, नामांक स्पेलिंग, लो-शू राजयोग, मोबाइल/वाहन अंक)**, **आज का पंचांग व मुहूर्त**, **वास्तु**, **हस्तरेखा**, **रत्न** अथवा **जन्म कुण्डली** का कोई भी प्रश्न सीधे पूछ सकते हैं (बिना इंटरनेट के भी १००% सटीक सूक्ष्म गणित सक्रिय है)।`;
+  const initialGreeting = currentKundali && liveMicroProfile
+    ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान **${currentKundali.name}** जी! मैं उमा हूँ — ५० वर्षों के अखंड पराशारी, जैमिनी, कृष्णमूर्ति (KP), षोडशवर्ग (D1–D60) व अंक-शास्त्र साधना से युक्त आपकी वैदिक आचार्य।\n\nमैंने आपकी जन्मपत्रिका का **सूक्ष्म गणित (Sookshma Ganit)** स्थापित कर लिया है:\n• **लग्न स्पष्ट:** ${liveMicroProfile.lagnaRashi} (${liveMicroProfile.lagnaDMS}) | **चंद्र स्पष्ट:** ${liveMicroProfile.moonRashi} (${liveMicroProfile.moonDMS}, नक्षत्र: ${liveMicroProfile.moonNakshatra} चरण ${liveMicroProfile.moonPada})\n• **विंशोत्तरी ४-स्तरीय सूक्ष्म दशा:** महादशा **${liveMicroProfile.mahadasha}** • अंतर्दशा **${liveMicroProfile.antardasha}** • प्रत्यंतर **${liveMicroProfile.pratyantardasha}** • सूक्ष्म दशा **${liveMicroProfile.sookshmadasha}**\n• **जैमिनी आत्मकारक (AK):** ${liveMicroProfile.jaiminiSummary.atmakaraka.split(' ')[0]} | **सर्वाष्टकवर्ग कुल बिंदु:** ${liveMicroProfile.ashtakvargaSummary.totalSav}\n\nआप करियर, धन, विवाह, कर्ज मुक्ति, स्वास्थ्य या अंक ज्योतिष का कोई भी प्रश्न पूछें — आपको अंश-कला-विकला व सूक्ष्म दशा सहित १००% सटीक उत्तर मिलेगा।`
+    : `॥ ॐ श्री गणेशाय नमः ॥\n॥ ॐ नमः शिवाय ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैं उमा हूँ — ५० वर्षों की कठिन वैदिक ज्योतिष (पराशरी, KP उपनक्षत्र, षोडशवर्ग, अष्टकवर्ग, तात्कालिक प्रश्न-कुण्डली) एवं अंक-शास्त्र साधना से युक्त आपकी आचार्य।\n\nआप मुझसे **अंक ज्योतिष (कॉल्डियन अक्षर-गणित, संयुक्त अंक, लो-शू ८-तल प्रतिशत, ४ जीवन शिखर, मोबाइल/वाहन अंक-युग्म)**, **कुण्डली फलादेश** अथवा **तात्कालिक प्रश्न-कुण्डली** से कोई भी प्रश्न सीधे पूछ सकते हैं (ऑनलाइन व ऑफ़लाइन १००% सटीक सूक्ष्म गणित सक्रिय है)।`;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -897,25 +903,50 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           </div>
         )}
 
-        {/* Active Kundali Awareness Banner */}
+        {/* Active Kundali & Sookshma Ganit Telemetry Banner */}
         <div className="bg-[#F4E8D1] py-2 px-3 sm:px-4 border-b border-[#8C6239]/30 flex flex-wrap items-center justify-between gap-2 shadow-xs">
-          {currentKundali ? (
-            <div className="flex items-center gap-2 text-xs text-[#5C3A21] flex-wrap">
+          {currentKundali && liveMicroProfile ? (
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#5C3A21] flex-wrap">
               <span className="bg-[#7A1D1D] text-white px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1">
                 <UserCheck className="w-3 h-3 text-[#FFD88A]" />
-                सक्रिय कुंडली: {currentKundali.name}
+                {currentKundali.name}
               </span>
+              {savedProfilesList.length > 1 && (
+                <select
+                  value={`${currentKundali.name}_${currentKundali.birthTime}`}
+                  onChange={(e) => {
+                    const found = savedProfilesList.find(
+                      (p) => `${p.name}_${p.birthTime}` === e.target.value
+                    );
+                    if (found) {
+                      setCurrentKundali(found);
+                      if (onSelectKundali) onSelectKundali(found);
+                    }
+                  }}
+                  className="bg-white border border-[#8C6239]/40 rounded px-1.5 py-0.5 text-[11px] font-bold text-[#7A1D1D]"
+                  title="अन्य सहेजी गई कुण्डली चुनें"
+                >
+                  {savedProfilesList.map((p, idx) => (
+                    <option key={`${p.name}_${p.birthTime}_${idx}`} value={`${p.name}_${p.birthTime}`}>
+                      {p.name} ({p.lagnaRashi})
+                    </option>
+                  ))}
+                </select>
+              )}
               <span className="font-semibold">
-                लग्न: <strong className="text-[#7A1D1D]">{currentKundali.lagnaRashi}</strong> | चंद्र:{' '}
-                <strong className="text-[#7A1D1D]">{currentKundali.moonRashi}</strong> ({currentKundali.nakshatra}) | दशा:{' '}
-                <strong className="text-[#7A1D1D]">{currentKundali.mahadasha}</strong>
+                लग्न: <strong className="text-[#7A1D1D]">{liveMicroProfile.lagnaRashi} ({liveMicroProfile.lagnaDMS})</strong> | चंद्र:{' '}
+                <strong className="text-[#7A1D1D]">{liveMicroProfile.moonRashi}</strong> ({liveMicroProfile.moonNakshatra}-{liveMicroProfile.moonPada}) | सूक्ष्म दशा:{' '}
+                <strong className="text-[#7A1D1D]">
+                  {liveMicroProfile.mahadasha}•{liveMicroProfile.antardasha}•{liveMicroProfile.pratyantardasha}•{liveMicroProfile.sookshmadasha}
+                </strong>{' '}
+                | AK: <strong className="text-[#7A1D1D]">{liveMicroProfile.jaiminiSummary.atmakaraka.split(' ')[0]}</strong>
               </span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-xs text-[#8C6239]">
-              <AlertCircle className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span className="font-serif">
-                कोई सक्रिय कुंडली नहीं चुनी गई। सटीक व्यक्तिगत फलादेश हेतु जन्म विवरण दर्ज करें।
+            <div className="flex items-center gap-2 text-xs text-[#7A1D1D]">
+              <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
+              <span className="font-serif font-semibold">
+                🔮 तात्कालिक प्रश्न-कुण्डली एवं होरा सूक्ष्म गणित सक्रिय (जन्म कुण्डली जोड़ने हेतु दाएं बटन दबाएं)
               </span>
             </div>
           )}

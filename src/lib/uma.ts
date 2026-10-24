@@ -1,6 +1,5 @@
-import { KundaliData, PlanetPosition, VedicPanchangData } from "../types";
+import { KundaliData, VedicPanchangData } from "../types";
 import { getLicenseStatus } from "./license-client";
-import { calculateSadeSati } from "../services/sadesati";
 import {
   synthesizeDynamicMicroVerdict,
   synthesizePanchangAstrologyVerdict,
@@ -25,6 +24,7 @@ import {
 } from "../services/choghadiya";
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from "../services/disha";
 import { calculateKundali } from "../services/kundali";
+import { getSavedKundaliProfiles } from "../services/storage";
 
 export type UmaActionType =
   | "open_panchang"
@@ -69,8 +69,6 @@ export interface AskUmaResponse {
   };
 }
 
-const UMA_PHP_URL = "https://myshivshakti.in/shaktipanchang/uma/v1/uma.php";
-
 export type UmaLinkState = "online" | "local" | "nokey";
 
 export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers: string[] }> {
@@ -80,7 +78,11 @@ export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers:
     }
     const healthResp = await fetch("/api/health", { signal: AbortSignal.timeout(2500) }).catch(() => null);
     if (healthResp && healthResp.ok) {
-      return { state: "online", providers: ["gemini", "local_vedic"] };
+      const data = await healthResp.json().catch(() => null);
+      if (data?.hasGeminiKey) {
+        return { state: "online", providers: ["gemini", "local_vedic"] };
+      }
+      return { state: "local", providers: ["local_vedic"] };
     }
     return { state: "local", providers: ["local_vedic"] };
   } catch {
@@ -93,9 +95,180 @@ export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers:
  */
 export function isNumerologyQuery(query: string): boolean {
   const q = (query || "").toLowerCase();
-  return /अंक|मूलांक|भाग्यांक|नामांक|लो-शू|लो शू|लोशू|कुआं|कुआ अंक|स्पेलिंग|नेम सुधार|नाम सुधार|व्यक्तिगत वर्ष|मोबाइल नंबर|मोबाइल अंक|वाहन नंबर|वाहन अंक|गाड़ी नंबर|लकी नंबर|शुभ अंक|mulank|moolank|bhagyank|namank|numerology|loshu|lo shu|kua number|personal year|name spelling|lucky number|ank jyotish|ankjyotish/.test(
+  return /अंक|मूलांक|भाग्यांक|नामांक|लो-शू|लो शू|लोशू|कुआं|कुआ अंक|स्पेलिंग|नेम सुधार|नाम सुधार|व्यक्तिगत वर्ष|व्यक्तिगत मास|मोबाइल नंबर|मोबाइल अंक|वाहन नंबर|वाहन अंक|गाड़ी नंबर|लकी नंबर|शुभ अंक|पिनैकल|शिखर अंक|mulank|moolank|bhagyank|namank|numerology|loshu|lo shu|kua number|personal year|name spelling|lucky number|ank jyotish|ankjyotish/.test(
     q
   );
+}
+
+/**
+ * Compound Number Esoteric Vibration Dictionary (Chaldean 10 to 52)
+ */
+const COMPOUND_VIBRATIONS: Record<number, { title: string; nature: "अति शुभ" | "शुभ" | "सावधानी/संघर्ष"; desc: string }> = {
+  10: { title: "भाग्य चक्र (Wheel of Fortune)", nature: "अति शुभ", desc: "सम्मान, आत्मविश्वास व उतार-चढ़ाव के बाद उच्च सफलता का सूचक।" },
+  11: { title: "गुप्त अग्नि व अंतर्ज्ञान अंक", nature: "सावधानी/संघर्ष", desc: "तीव्र अंतर्दृष्टि किंतु निर्णयों में द्विविधा से बचना आवश्यक।" },
+  12: { title: "त्याग व मानसिक मंथन अंक", nature: "सावधानी/संघर्ष", desc: "दूसरों के लिए अधिक श्रम; अनुबंधों में सतर्कता रखें।" },
+  13: { title: "कायाकल्प व नवनिर्माण अंक", nature: "सावधानी/संघर्ष", desc: "अप्रत्याशित परिवर्तन के माध्यम से नई शक्ति व भाग्योदय।" },
+  14: { title: "व्यापारिक गतिशीलता व संचार अंक", nature: "शुभ", desc: "जनसंपर्क, मीडिया, व्यापार व धन प्रवाह में तीव्रता।" },
+  15: { title: "आकर्षण, कला व लक्ष्मी कृपा अंक", nature: "अति शुभ", desc: "सम्मोहन शक्ति, वाणी से धन लाभ और उच्च लोगों से सहयोग।" },
+  16: { title: "ढहता मीनार (Shattered Citadel - चेतावनी अंक)", nature: "सावधानी/संघर्ष", desc: "अहंकार या अति-विश्वास से बचें; नामांक को 15, 19, 23 या 24 पर लाना श्रेष्ठ।" },
+  17: { title: "अमर सप्तर्षि तारा (Star of the Magi)", nature: "अति शुभ", desc: "प्रारंभिक संघर्ष के बाद स्थायी प्रसिद्धि, अध्यात्म और अटूट यश।" },
+  18: { title: "सूर्य-शनि द्वंद्व व रक्त-संघर्ष अंक", nature: "सावधानी/संघर्ष", desc: "पारिवारिक/व्यावसायिक विवाद की आशंका; स्पेलिंग सुधारकर 19 या 23 करना उत्तम।" },
+  19: { title: "स्वर्ग का राजकुमार (Prince of Heaven)", nature: "अति शुभ", desc: "सर्वोच्च सफलता, राजकीय सम्मान, सौभाग्य और हर संकट से विजय।" },
+  20: { title: "आध्यात्मिक जागरण (The Awakening)", nature: "शुभ", desc: "भौतिक दौड़ से अधिक उच्च उद्देश्य, नई योजना और विलंब से भाग्योदय।" },
+  21: { title: "ब्रह्माण्ड मुकुट (Crown of the Magi)", nature: "अति शुभ", desc: "कठोर परिश्रम के पश्चात निश्चित विजय, उच्च पद और धन-संपदा।" },
+  22: { title: "मास्टर बिल्डर / भ्रम से सावधानी", nature: "सावधानी/संघर्ष", desc: "बड़े सपने किंतु व्यावहारिक सतर्कता अत्यंत आवश्यक।" },
+  23: { title: "राजकीय सिंह तारा (Royal Star of the Lion)", nature: "अति शुभ", desc: "उच्चाधिकारियों का संरक्षण, प्रचंड भाग्योदय, व्यापार व करियर में शीर्ष सिद्धि।" },
+  24: { title: "शुक्र का प्रेम, धन व सौभाग्य अंक", nature: "अति शुभ", desc: "विपरीत लिंग एवं वरिष्ठ जनों से सहयोग, आभूषण, कला व अखंड लक्ष्मी योग।" },
+  25: { title: "अनुभवजन्य प्रज्ञा व विजय अंक", nature: "शुभ", desc: "पूर्व अनुभवों व सूक्ष्म विश्लेषण से २५ वर्ष के बाद विशेष भाग्योदय।" },
+  26: { title: "शनि-सूर्य साझेदारी चेतावनी अंक", nature: "सावधानी/संघर्ष", desc: "गलत साझेदारी या निवेश से हानि संभव; स्पेलिंग को 23, 24 या 27 पर सुधारें।" },
+  27: { title: "राजदंड अंक (The Sceptre)", nature: "अति शुभ", desc: "नेतृत्व क्षमता, बौद्धिक अधिकार, प्रशासन और स्वतंत्र निर्णय से सफलता।" },
+  28: { title: "विरोधाभास व कानूनी सतर्कता अंक", nature: "सावधानी/संघर्ष", desc: "प्रारंभिक लाभ के बाद विश्वासघात से बचाव जरूरी; नामांक सुधार हितकारी।" },
+  29: { title: "अनिश्चितता व भावनात्मक परीक्षा अंक", nature: "सावधानी/संघर्ष", desc: "मित्रों के चयन में सावधानी रखें; नाम स्पेलिंग को 23, 24 या 32 करें।" },
+  30: { title: "बृहस्पति की एकाग्र मेधा अंक", nature: "शुभ", desc: "शिक्षा, परामर्श, दर्शन व ज्ञान के बल पर प्रतिष्ठा।" },
+  31: { title: "आत्मनिर्भर एकांत साधक अंक", nature: "शुभ", desc: "स्वयं के दम पर मौलिक कार्य खड़ा करने की क्षमता।" },
+  32: { title: "जादुई संचार व जन-आकर्षण अंक", nature: "अति शुभ", desc: "23 के समान ही राष्ट्रव्यापी संपर्क, व्यापार विस्तार व लोकप्रियता प्रदाता।" },
+  33: { title: "कुबेर व गुरु-शुक्र महा-अंक", nature: "अति शुभ", desc: "अखंड धन, सात्विक ऐश्वर्य, समाज में सम्मान और दैवीय कृपा।" },
+  37: { title: "राजकीय मैत्री व स्वर्णिम आकर्षण अंक", nature: "अति शुभ", desc: "सूर्य (1) और केतु (7) के योग से हर कार्य में चमत्कारिक सफलता व समृद्धि।" },
+  41: { title: "नेतृत्व व अजेय विजय अंक", nature: "अति शुभ", desc: "19 और 23 के समान उच्च पद व व्यापारिक साम्राज्य प्रदाता।" },
+  42: { title: "शुक्र-चंद्र ऐश्वर्य अंक", nature: "अति शुभ", desc: "24 के समान ही धन, सुख-सुविधा और कलात्मक सफलता।" },
+  45: { title: "मंगल-बुध रणनीतिक विजय अंक", nature: "अति शुभ", desc: "तीव्र बुद्धि व साहस से बड़े प्रोजेक्ट्स में सफलता।" },
+  46: { title: "राजमुकुट व स्थायी संपत्ति अंक", nature: "अति शुभ", desc: "भूमि, भवन, नेतृत्व व दीर्घकालिक धन कोष।" },
+  50: { title: "स्वतंत्र मेधा व व्यापार सम्राट अंक", nature: "अति शुभ", desc: "बुध की सर्वोच्च ऊर्जा से व्यापार, आईटी व वित्त में बड़ी सफलता।" },
+  51: { title: "योद्धा सेनापति अंक", nature: "अति शुभ", desc: "प्रशासन, सेना, राजनीति व साहसिक उपक्रमों में त्वरित उन्नति।" },
+};
+
+function getCompoundVibrationDetail(compound: number): { title: string; nature: string; desc: string } {
+  if (COMPOUND_VIBRATIONS[compound]) return COMPOUND_VIBRATIONS[compound];
+  const single = reduceToSingleDigit(compound);
+  if ([1, 3, 5, 6].includes(single)) {
+    return {
+      title: `शुभ संयुक्त स्पंदन (${compound})`,
+      nature: "शुभ",
+      desc: "यह संयुक्त अंक आपके कर्म व बौद्धिक प्रयासों को सकारात्मक गति प्रदान करता है।",
+    };
+  }
+  return {
+    title: `कर्मप्रधान संयुक्त स्पंदन (${compound})`,
+    nature: "सावधानी/संघर्ष",
+    desc: "यह संयुक्त अंक धैर्य व कठिन परिश्रम के पश्चात ही स्थायी फल देता है।",
+  };
+}
+
+/**
+ * Computes Chaldean letter-by-letter breakdown string (e.g. M(4)+A(1)+N(5)...)
+ */
+function buildLetterByLetterBreakdown(rawName: string): {
+  chaldeanFormula: string;
+  pythagoreanFormula: string;
+} {
+  const CHALDEAN_MAP: Record<string, number> = {
+    A: 1, I: 1, J: 1, Q: 1, Y: 1,
+    B: 2, K: 2, R: 2,
+    C: 3, G: 3, L: 3, S: 3,
+    D: 4, M: 4, T: 4,
+    E: 5, H: 5, N: 5, X: 5,
+    U: 6, V: 6, W: 6,
+    O: 7, Z: 7,
+    F: 8, P: 8,
+  };
+  const PYTHAGOREAN_MAP: Record<string, number> = {
+    A: 1, J: 1, S: 1,
+    B: 2, K: 2, T: 2,
+    C: 3, L: 3, U: 3,
+    D: 4, M: 4, V: 4,
+    E: 5, N: 5, W: 5,
+    F: 6, O: 6, X: 6,
+    G: 7, P: 7, Y: 7,
+    H: 8, Q: 8, Z: 8,
+    I: 9, R: 9,
+  };
+
+  const clean = (rawName || "YAJAMAN").toUpperCase().replace(/[^A-Z]/g, "");
+  if (!clean) {
+    return { chaldeanFormula: "Y(1)+A(1)+J(1)+A(1)+M(4)+A(1)+N(5)", pythagoreanFormula: "Y(7)+A(1)+J(1)+A(1)+M(4)+A(1)+N(5)" };
+  }
+
+  const cParts: string[] = [];
+  const pParts: string[] = [];
+  for (const ch of clean) {
+    cParts.push(`${ch}(${CHALDEAN_MAP[ch] || 1})`);
+    pParts.push(`${ch}(${PYTHAGOREAN_MAP[ch] || 1})`);
+  }
+  return {
+    chaldeanFormula: cParts.join(" + "),
+    pythagoreanFormula: pParts.join(" + "),
+  };
+}
+
+/**
+ * Analyzes adjacent 2-digit pairs in a Mobile or Vehicle number
+ */
+function analyzeDigitPairsMicro(digitsStr: string): {
+  pairsStr: string;
+  shubhPairs: string[];
+  cautionPairs: string[];
+  last4Compound: number;
+  last4Single: number;
+} {
+  const digits = digitsStr.replace(/\D/g, "");
+  const SHUBH_PAIRS: Record<string, string> = {
+    "19": "सूर्य-मंगल नेतृत्व व उच्च पद योग",
+    "91": "प्रशासनिक शक्ति व सम्मान योग",
+    "37": "गुरु-केतु आध्यात्मिक व शैक्षिक राजयोग",
+    "73": "उच्च प्रज्ञा व परामर्श सफलता योग",
+    "56": "बुध-शुक्र अखंड लक्ष्मी व व्यापार प्रवाह",
+    "65": "आर्थिक समृद्धि व लग्जरी योग",
+    "15": "सूर्य-बुध बुधादित्य व्यापार सिद्धि",
+    "51": "तीव्र निर्णय व बैंकिंग लाभ योग",
+    "25": "चंद्र-बुध जनसंपर्क व तरल धन योग",
+    "52": "मीडिया, वाणी व कोष वृद्धि योग",
+    "39": "गुरु-मंगल पराक्रम व भूमि-विजय योग",
+    "93": "ऊर्जा व प्रतिष्ठा वृद्धि योग",
+    "69": "शुक्र-मंगल आकर्षण व संपत्ति योग",
+    "96": "कला व उद्यम सिद्धि योग",
+    "35": "गुरु-बुध ज्ञान व व्यापार विस्तार",
+    "53": "वित्तीय प्रबंधन व लाभ योग",
+  };
+  const CAUTION_PAIRS: Record<string, string> = {
+    "28": "चंद्र-शनि विष योग (मानसिक तनाव/विलंब)",
+    "82": "शनि-चंद्र भावनात्मक उतार-चढ़ाव",
+    "48": "राहु-शनि संघर्ष व अनावश्यक देरी",
+    "84": "शनि-राहु आकस्मिक अवरोध",
+    "18": "सूर्य-शनि पिता/अधिकारी मतभेद व संघर्ष",
+    "81": "शनि-सूर्य अधिकार द्वंद्व",
+    "26": "चंद्र-शुक्र अनियंत्रित व्यय",
+    "62": "भावुकता से आर्थिक हानि",
+    "44": "राहु द्वित्व — भ्रम व अस्थिरता",
+    "88": "शनि द्वित्व — कठोर श्रम के बाद विलंब से फल",
+  };
+
+  const allPairs: string[] = [];
+  const shubhFound: string[] = [];
+  const cautionFound: string[] = [];
+
+  for (let i = 0; i < digits.length - 1; i++) {
+    const pair = digits.slice(i, i + 2);
+    if (pair === "00") continue;
+    allPairs.push(pair);
+    if (SHUBH_PAIRS[pair]) {
+      shubhFound.push(`**${pair}** (${SHUBH_PAIRS[pair]})`);
+    } else if (CAUTION_PAIRS[pair]) {
+      cautionFound.push(`**${pair}** (${CAUTION_PAIRS[pair]})`);
+    }
+  }
+
+  const last4 = digits.slice(-4);
+  let last4Compound = 0;
+  for (const ch of last4) last4Compound += parseInt(ch, 10) || 0;
+  const last4Single = reduceToSingleDigit(last4Compound);
+
+  return {
+    pairsStr: allPairs.join(" → "),
+    shubhPairs: Array.from(new Set(shubhFound)),
+    cautionPairs: Array.from(new Set(cautionFound)),
+    last4Compound,
+    last4Single,
+  };
 }
 
 /**
@@ -110,17 +283,19 @@ function buildNameSpellingSuggestions(
   bhagyankNum: number
 ): string {
   const cleanName = (rawName || "YAJAMAN").trim().toUpperCase().replace(/[^A-Z\s]/g, "") || "YAJAMAN";
-  const isFriendly = friendlyNumbers.includes(currentSingle) || currentSingle === mulankNum || currentSingle === bhagyankNum;
+  const badCompounds = [16, 18, 22, 26, 28, 29, 35, 38, 43, 44, 47, 48];
+  const isFriendly =
+    (friendlyNumbers.includes(currentSingle) || currentSingle === mulankNum || currentSingle === bhagyankNum) &&
+    !badCompounds.includes(currentCompound);
 
-  // Chaldean letter values for quick adjustments
   const letterAdditions: Array<{ char: string; val: number; hint: string }> = [
-    { char: "A", val: 1, hint: "'A' (सूर्य का अक्षर, मान +1)" },
-    { char: "I", val: 1, hint: "'I' (सूर्य का अक्षर, मान +1)" },
-    { char: "E", val: 5, hint: "'E' (बुध का अक्षर, मान +5)" },
-    { char: "N", val: 5, hint: "'N' (बुध का अक्षर, मान +5)" },
-    { char: "S", val: 3, hint: "'S' (गुरु का अक्षर, मान +3)" },
-    { char: "U", val: 6, hint: "'U' (शुक्र का अक्षर, मान +6)" },
-    { char: "R", val: 2, hint: "'R' (चंद्र का अक्षर, मान +2)" },
+    { char: "A", val: 1, hint: "'A' (सूर्य अक्षर, मान +1)" },
+    { char: "I", val: 1, hint: "'I' (सूर्य अक्षर, मान +1)" },
+    { char: "E", val: 5, hint: "'E' (बुध अक्षर, मान +5)" },
+    { char: "N", val: 5, hint: "'N' (बुध अक्षर, मान +5)" },
+    { char: "S", val: 3, hint: "'S' (गुरु अक्षर, मान +3)" },
+    { char: "U", val: 6, hint: "'U' (शुक्र अक्षर, मान +6)" },
+    { char: "R", val: 2, hint: "'R' (चंद्र अक्षर, मान +2)" },
   ];
 
   const suggestions: string[] = [];
@@ -133,34 +308,33 @@ function buildNameSpellingSuggestions(
     if (
       (friendlyNumbers.includes(newSingle) || newSingle === mulankNum || newSingle === bhagyankNum) &&
       newSingle !== 8 &&
-      newCompound !== 18 &&
-      newCompound !== 26 &&
-      newCompound !== 35 &&
-      newCompound !== 44
+      !badCompounds.includes(newCompound)
     ) {
       const modifiedFirst = `${firstWord}${item.char}`;
       const fullModified = restWords ? `${modifiedFirst} ${restWords}` : modifiedFirst;
       const planetName = NUMBER_DATA[newSingle]?.planet?.split(" ")[0] || "शुभ ग्रह";
+      const vib = getCompoundVibrationDetail(newCompound);
       suggestions.push(
-        `• **${fullModified}** → संयुक्त अंक **${newCompound}**, नामांक **${newSingle}** (${planetName} प्रधान — ${item.hint} जोड़ने पर)`
+        `  • **${fullModified}** → संयुक्त अंक **${newCompound}** (*${vib.title}*) → नामांक **${newSingle}** (${planetName} प्रधान — ${item.hint} जोड़ने पर)`
       );
       if (suggestions.length >= 3) break;
     }
   }
 
   if (isFriendly) {
-    return `✓ **आपका वर्तमान नाम «${cleanName}» (संयुक्त अंक ${currentCompound} → नामांक ${currentSingle})** आपके मूलांक ${mulankNum} व भाग्यांक ${bhagyankNum} के **पूर्णतः अनुकूल एवं शुभ** है! आपको स्पेलिंग बदलने की आवश्यकता नहीं है; केवल हस्ताक्षर करते समय नाम के नीचे ऊपर उठती हुई रेखा खींचें और अंत में बिंदु (.) लगाएं।`;
+    const vib = getCompoundVibrationDetail(currentCompound);
+    return `✓ **आपका वर्तमान नाम «${cleanName}» (संयुक्त अंक ${currentCompound} [${vib.title}] → नामांक ${currentSingle})** आपके मूलांक ${mulankNum} व भाग्यांक ${bhagyankNum} के **१००% अनुकूल एवं राजयोगकारी** है! स्पेलिंग बदलने की आवश्यकता नहीं है; केवल हस्ताक्षर में पहला अक्षर बड़ा रखें, नीचे बाएं से दाएं १५° ऊपर उठती हुई रेखा खींचें और अंत में बिंदु (.) लगाएं।`;
   }
 
   if (suggestions.length === 0) {
-    return `⚠️ आपका वर्तमान नाम **«${cleanName}»** (संयुक्त अंक ${currentCompound} → नामांक ${currentSingle}) आपके मूलांक ${mulankNum} से सम/प्रतिकूल है। इसे मित्र अंक (**${friendlyNumbers.join(", ")}**) पर लाने हेतु नाम में 1 या 5 मान वाले अक्षर (A, I, E, N) का समावेश करें।`;
+    return `⚠️ आपका वर्तमान नाम **«${cleanName}»** (संयुक्त अंक ${currentCompound} → नामांक ${currentSingle}) आपके मूलांक ${mulankNum} से सम/संघर्षकारी है। इसे मित्र अंक (**${friendlyNumbers.join(", ")}**) के शुभ संयुक्त अंक (19, 23, 24, 32, 37, 41) पर लाने हेतु नाम में 'A' (+1) या 'E' (+5) का समावेश करें।`;
   }
 
-  return `⚠️ आपका वर्तमान नाम **«${cleanName}»** (संयुक्त अंक ${currentCompound} → नामांक ${currentSingle}) मूलांक ${mulankNum} के लिए थोड़ा संघर्षकारी है। भाग्योदय हेतु कीरो/कॉल्डियन पद्धति के अनुसार ये शुभ स्पेलिंग विकल्प सर्वोत्तम हैं:\n${suggestions.join("\n")}`;
+  return `⚠️ आपका वर्तमान नाम **«${cleanName}»** (संयुक्त अंक ${currentCompound} → नामांक ${currentSingle}) मूलांक ${mulankNum} व भाग्यांक ${bhagyankNum} से पूर्ण सामंजस्य में नहीं है। कीरो/कॉल्डियन सूक्ष्म ध्वनि-स्पंदन गणित के अनुसार ये संशोधित स्पेलिंग विकल्प सर्वोत्तम हैं:\n${suggestions.join("\n")}`;
 }
 
 /**
- * Full Offline Deterministic Ank Jyotish (Numerology) Synthesis Engine
+ * Full Offline Deterministic Ank Jyotish (Numerology) Micro-Synthesis Engine
  */
 export function synthesizeNumerologyVerdict(
   userQuery: string,
@@ -168,10 +342,12 @@ export function synthesizeNumerologyVerdict(
   panchang?: VedicPanchangData | null
 ): UmaResponse {
   const q = (userQuery || "").trim();
-  const qLower = q.toLowerCase();
 
-  // 1. Extract Name from query or activeKundali
-  let personName = kundali?.name || "यजमान";
+  // Check if user has a saved Kundali in storage if none was passed
+  const effectiveKundali = kundali || (typeof window !== "undefined" ? getSavedKundaliProfiles()[0] || null : null);
+
+  // 1. Extract Name from query or effectiveKundali
+  let personName = effectiveKundali?.name || "YAJAMAN";
   const nameMatch =
     q.match(/नाम[:\s-]+([A-Za-z\u0900-\u097F\s]{2,30}?)(?:,|है|जन्म|तिथि|मूलांक|\.|;|$)/i) ||
     q.match(/name[:\s-]+([A-Za-z\s]{2,30}?)(?:,|is|dob|birth|\.|;|$)/i) ||
@@ -183,7 +359,7 @@ export function synthesizeNumerologyVerdict(
     }
   }
 
-  // 2. Extract Birth Date (DD/MM/YYYY or DD-MM-YYYY or YYYY-MM-DD) from query or activeKundali
+  // 2. Extract Birth Date (DD/MM/YYYY or DD-MM-YYYY or YYYY-MM-DD) from query or effectiveKundali
   let day = 28;
   let month = 10;
   let year = 1995;
@@ -202,8 +378,8 @@ export function synthesizeNumerologyVerdict(
     month = Math.min(12, Math.max(1, parseInt(ymdMatch[2], 10)));
     day = Math.min(31, Math.max(1, parseInt(ymdMatch[3], 10)));
     hasExplicitDob = true;
-  } else if (kundali?.birthDate) {
-    const kd = new Date(kundali.birthDate);
+  } else if (effectiveKundali?.birthDate) {
+    const kd = new Date(effectiveKundali.birthDate);
     if (!isNaN(kd.getTime())) {
       day = kd.getDate();
       month = kd.getMonth() + 1;
@@ -219,7 +395,6 @@ export function synthesizeNumerologyVerdict(
     }
   }
 
-  // Check if user explicitly asked about a specific Mulank / Bhagyank number
   const explicitMulankMatch =
     q.match(/(?:मूलांक|mulank|moolank)\s*[:\-]?\s*([1-9१-९])/i) ||
     q.match(/अंक\s*([1-9१-९])\s*का/i);
@@ -244,22 +419,68 @@ export function synthesizeNumerologyVerdict(
     bhagyankNum = parseHindiDigit(explicitBhagyankMatch[1]);
   }
 
-  // Gender detection
   const gender: "male" | "female" = /स्त्री|महिला|लड़की|female|woman|girl/i.test(q) ? "female" : "male";
 
-  // Perform full Numerology Calculations
+  // Core Numerology Calculations
   const mulank = NUMBER_DATA[mulankNum] || NUMBER_DATA[1];
   const bhagyank = NUMBER_DATA[bhagyankNum] || NUMBER_DATA[1];
   const chaldean = calculateNamank(personName, "chaldean");
   const pythagorean = calculateNamank(personName, "pythagorean");
+  const letterBreakdown = buildLetterByLetterBreakdown(personName);
+  const compoundVib = getCompoundVibrationDetail(chaldean.compound);
   const namankInfo = NUMBER_DATA[chaldean.single] || NUMBER_DATA[1];
   const kuaNum = calculateKuaNumber(year, gender);
   const kuaInfo = NUMBER_DATA[kuaNum] || NUMBER_DATA[1];
-  const currentYear = (panchang?.date || new Date()).getFullYear();
-  const personalYear = calculatePersonalYear(day, month, currentYear);
-  const loshu = calculateLoshuGrid(day, month, year);
 
-  // Extract optional Mobile or Vehicle Number from query
+  const refDate = panchang?.date || new Date();
+  const currentYear = refDate.getFullYear();
+  const currentMonth = refDate.getMonth() + 1;
+  const currentDayOfMonth = refDate.getDate();
+
+  // 3-Tier Time Cycles: Personal Year, Personal Month, Personal Day
+  const personalYear = calculatePersonalYear(day, month, currentYear);
+  const personalMonthNum = reduceToSingleDigit(personalYear.yearNum + currentMonth);
+  const personalDayNum = reduceToSingleDigit(personalMonthNum + currentDayOfMonth);
+  const pMonthData = NUMBER_DATA[personalMonthNum] || NUMBER_DATA[1];
+  const pDayData = NUMBER_DATA[personalDayNum] || NUMBER_DATA[1];
+
+  // 4 Life Pinnacle Cycles (शिखर चक्र व भाग्योदय आयु काल)
+  const monthSingle = reduceToSingleDigit(month);
+  const yearSingle = reduceToSingleDigit(year);
+  const p1EndAge = 36 - bhagyankNum;
+  const p2EndAge = p1EndAge + 9;
+  const p3EndAge = p2EndAge + 9;
+  const pinnacle1 = reduceToSingleDigit(mulankNum + monthSingle);
+  const pinnacle2 = reduceToSingleDigit(mulankNum + yearSingle);
+  const pinnacle3 = reduceToSingleDigit(pinnacle1 + pinnacle2);
+  const pinnacle4 = reduceToSingleDigit(monthSingle + yearSingle);
+
+  const challenge1 = Math.abs(mulankNum - monthSingle) || 1;
+  const challenge2 = Math.abs(mulankNum - yearSingle) || 2;
+  const mainChallenge = Math.abs(challenge1 - challenge2) || 1;
+
+  // Lo Shu 8-Plane Micro-Matrix
+  const loshu = calculateLoshuGrid(day, month, year);
+  const planeDefs = [
+    { name: "बौद्धिक/मानसिक तल (Mental Plane)", nums: [4, 9, 2] },
+    { name: "भावनात्मक/आध्यात्मिक तल (Emotional Plane)", nums: [3, 5, 7] },
+    { name: "व्यावहारिक/भौतिक तल (Practical Plane)", nums: [8, 1, 6] },
+    { name: "विचार/योजना तल (Thought Plane)", nums: [4, 3, 8] },
+    { name: "दृढ़ इच्छाशक्ति तल (Will Plane)", nums: [9, 5, 1] },
+    { name: "कर्म/तत्परता तल (Action Plane)", nums: [2, 7, 6] },
+    { name: "स्वर्ण राजयोग (Golden Raj Yoga)", nums: [4, 5, 6] },
+    { name: "रजत/पृथ्वी राजयोग (Silver Raj Yoga)", nums: [2, 5, 8] },
+  ];
+
+  const planePercentLines = planeDefs
+    .map((pl) => {
+      const presentCount = pl.nums.filter((n) => (loshu.counts[n] || 0) > 0).length;
+      const pct = Math.round((presentCount / 3) * 100);
+      return `  - **${pl.name} (${pl.nums.join("-")}):** **${pct}% सक्रिय** (${presentCount}/3 अंक उपस्थित)`;
+    })
+    .join("\n");
+
+  // Extract Mobile or Vehicle Number from query for Pair-by-Pair Micro-Scan
   const mobileMatch = q.match(/(?:मोबाइल(?:\s*नंबर)?[:\s-]*)?(\b[6-9]\d{9}\b)/);
   const vehicleMatch = q.match(/\b([A-Z]{2}\s*\d{1,2}\s*[A-Z]{1,3}\s*\d{4})\b/i);
 
@@ -271,9 +492,21 @@ export function synthesizeNumerologyVerdict(
     const mSingle = reduceToSingleDigit(mSum);
     const mData = NUMBER_DATA[mSingle] || NUMBER_DATA[1];
     const mFriendly = mulank.friendlyNumbers.includes(mSingle) || bhagyank.friendlyNumbers.includes(mSingle);
-    mobileSection = `\n• **📱 मोबाइल नंबर विश्लेषण (${mStr}):** कुल अंक योग = **${mSum} → मूलांक ${mSingle}** (${mData.planet})। यह नंबर आपके मूलांक ${mulankNum} के लिए **${
-      mFriendly ? "अत्यंत शुभ व भाग्योदयकारी ✓" : "सामान्य/संघर्षकारी ⚠️ (मित्र अंक " + mulank.friendlyNumbers.join(", ") + " के कुल योग वाला नंबर श्रेष्ठ रहेगा)"
-    }** है।`;
+    const pairAnalysis = analyzeDigitPairsMicro(mStr);
+
+    mobileSection =
+      `\n• **📱 मोबाइल नंबर सूक्ष्म अंक-युग्म स्कैन (${mStr}):**\n` +
+      `  - **कुल संयुक्त योग:** **${mSum} → एकल अंक ${mSingle}** (${mData.planet}) | अंतिम ४ अंक योग: **${pairAnalysis.last4Compound} → ${pairAnalysis.last4Single}**\n` +
+      `  - **अंक-युग्म श्रृंखला (Digit Pairs):** ${pairAnalysis.pairsStr}\n` +
+      `  - **शुभ धन/राजयोग युग्म:** ${pairAnalysis.shubhPairs.length ? pairAnalysis.shubhPairs.join(", ") : "सामान्य युग्म"}\n` +
+      `  - **सावधानी/संघर्ष युग्म:** ${pairAnalysis.cautionPairs.length ? pairAnalysis.cautionPairs.join(", ") : "कोई अशुभ युग्म नहीं ✓"}\n` +
+      `  - **निर्णय:** यह मोबाइल नंबर आपके मूलांक ${mulankNum} व भाग्यांक ${bhagyankNum} के लिए **${
+        mFriendly && pairAnalysis.cautionPairs.length === 0
+          ? "सर्वोत्तम, धन-आकर्षक व भाग्योदयकारी ✓"
+          : mFriendly
+          ? "कुल योग शुभ है किंतु आंतरिक युग्मों के संतुलन हेतु फोन के पीछे लाल/पीले रंग से अपना कुआं अंक (" + kuaNum + ") लिखें"
+          : "संघर्षकारी ⚠️ — मित्र अंक (" + mulank.friendlyNumbers.join(", ") + ") के कुल योग व 19/37/56/65 युग्म वाला नंबर लें"
+      }**।`;
   }
 
   let vehicleSection = "";
@@ -288,9 +521,16 @@ export function synthesizeNumerologyVerdict(
     const vSingle = reduceToSingleDigit(vSum);
     const vData = NUMBER_DATA[vSingle] || NUMBER_DATA[1];
     const vFriendly = mulank.friendlyNumbers.includes(vSingle) || bhagyank.friendlyNumbers.includes(vSingle);
-    vehicleSection = `\n• **🚗 वाहन नंबर विश्लेषण (${vStr}):** कुल योग अंक = **${vSingle}** (${vData.planet})। यह वाहन अंक आपके लिए **${
-      vFriendly ? "सुरक्षित, शुभ व समृद्धिदायक ✓" : "सामान्य ⚠️ (वाहन में श्री यंत्र या हनुमान चालीसा स्थापित करें)"
-    }** है।`;
+    const vPairs = analyzeDigitPairsMicro(vStr);
+
+    vehicleSection =
+      `\n• **🚗 वाहन नंबर सूक्ष्म परीक्षण (${vStr}):**\n` +
+      `  - **अक्षर+अंक संयुक्त योग:** **${vSum} → वाहन मूलांक ${vSingle}** (${vData.planet}) | अंतिम ४ अंक (${vStr.slice(-4)}) योग: **${vPairs.last4Compound} → ${vPairs.last4Single}**\n` +
+      `  - **निर्णय:** यह वाहन अंक आपके लिए **${
+        vFriendly && vSingle !== 8
+          ? "सुरक्षित, मंगलमय व समृद्धिदायक ✓"
+          : "सामान्य/सतर्कता अपेक्षित ⚠️ (वाहन में तांबे का स्वस्तिक या मारुति यंत्र स्थापित करें)"
+      }** है।`;
   }
 
   // Mulank-Bhagyank relationship
@@ -301,39 +541,20 @@ export function synthesizeNumerologyVerdict(
   const isDriverConductorEnemy =
     mulank.enemyNumbers.includes(bhagyankNum) || bhagyank.enemyNumbers.includes(mulankNum);
 
+  const synergyScore = isDriverConductorFriendly ? 94 : isDriverConductorEnemy ? 74 : 84;
   const synergyVerdict = isDriverConductorFriendly
-    ? `आपका **मूलांक ${mulankNum} (${mulank.planet.split(" ")[0]})** और **भाग्यांक ${bhagyankNum} (${bhagyank.planet.split(" ")[0]})** परस्पर **परम मित्र** हैं! यह संयोग जीवन में उच्च पद, तीव्र भाग्योदय, स्थायी धन और मान-सम्मान प्रदान करता है।`
+    ? `आपका **मूलांक ${mulankNum} (${mulank.planet.split(" ")[0]})** और **भाग्यांक ${bhagyankNum} (${bhagyank.planet.split(" ")[0]})** परस्पर **परम मित्र (${synergyScore}% सामंजस्य)** हैं! यह संयोग जीवन में उच्च पद, तीव्र भाग्योदय, स्थायी कोष और नेतृत्व प्रदान करता है।`
     : isDriverConductorEnemy
-    ? `आपका **मूलांक ${mulankNum} (${mulank.planet.split(" ")[0]})** और **भाग्यांक ${bhagyankNum} (${bhagyank.planet.split(" ")[0]})** में वैचारिक द्वंद्व रहता है, जिसके कारण प्रारंभिक संघर्ष के बाद ही बड़ी सफलता मिलती है। नामांक व मित्र अंक (${mulank.friendlyNumbers.join(", ")}) के संतुलन से यह दोष पूर्णतः शांत हो जाता है।`
-    : `आपका **मूलांक ${mulankNum} (${mulank.planet.split(" ")[0]})** और **भाग्यांक ${bhagyankNum} (${bhagyank.planet.split(" ")[0]})** परस्पर **सम व संतुलित** हैं। सुनियोजित कर्म और सही नामांक स्पेलिंग से आपको जीवन में स्थिर उन्नति व ऐश्वर्य की प्राप्ति होगी।`;
-
-  // Lo Shu Grid Planes & Missing Remedies
-  const completedPlanes = loshu.completedPlanes || [];
-  const planesSummary =
-    completedPlanes.length > 0
-      ? completedPlanes.map((p) => `**${p.name}** (${p.numbers.join("-")}: ${p.significance})`).join("; ")
-      : "कोई पूर्ण रेखा नहीं (कर्म व इच्छाशक्ति के संतुलन से सफलता)";
-
-  const rajYogaSummary =
-    loshu.goldenRajYoga && loshu.silverRajYoga
-      ? "🌟 **महा-राजयोग:** आपके लो-शू चक्र में **स्वर्ण राजयोग (4-5-6)** एवं **रजत राजयोग (2-5-8)** दोनों पूर्ण हैं! यह करोड़पति योग, भूमि-भवन और अखंड ऐश्वर्य का द्योतक है।"
-      : loshu.goldenRajYoga
-      ? "✨ **स्वर्ण राजयोग (4-5-6 पूर्ण):** आपके लो-शू चक्र में गोल्डन राजयोग सक्रिय है, जो जीवन में उच्च कोटि की प्रसिद्धि, धन और प्रबंधन क्षमता देता है।"
-      : loshu.silverRajYoga
-      ? "🥈 **रजत/पृथ्वी राजयोग (2-5-8 पूर्ण):** आपके लो-शू चक्र में सिल्वर राजयोग सक्रिय है, जो अचल संपत्ति, भूमि, मकान और स्थायी कोष प्रदान करता है।"
-      : `अंक **5 (बुध/ब्रह्मस्थान)** ${
-          (loshu.counts[5] || 0) > 0
-            ? "आपके ग्रिड में उपस्थित है जो पूरे चक्र को ऊर्जा देता है"
-            : "अनुपस्थित है, अतः केंद्र बल बढ़ाने हेतु पन्ना/तुलसी या क्रिस्टल ब्रेसलेट धारण करना अत्यंत शुभ रहेगा"
-        }।`;
+    ? `आपका **मूलांक ${mulankNum} (${mulank.planet.split(" ")[0]})** और **भाग्यांक ${bhagyankNum} (${bhagyank.planet.split(" ")[0]})** में ग्रहीय द्वंद्व (${synergyScore}% सामंजस्य) है, जिससे ३२-३५ वर्ष की आयु तक संघर्ष के बाद बड़ी सफलता मिलती है। नामांक व मित्र सेतु अंक (**${mulank.friendlyNumbers.join(", ")}**) से यह दोष पूर्णतः शांत हो जाता है।`
+    : `आपका **मूलांक ${mulankNum} (${mulank.planet.split(" ")[0]})** और **भाग्यांक ${bhagyankNum} (${bhagyank.planet.split(" ")[0]})** परस्पर **सम व संतुलित (${synergyScore}% सामंजस्य)** हैं। सही नामांक स्पेलिंग से आपको स्थिर उन्नति व ऐश्वर्य की प्राप्ति होगी।`;
 
   const presentNumsStr = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     .filter((n) => (loshu.counts[n] || 0) > 0)
-    .map((n) => `${n} (x${loshu.counts[n]})`)
+    .map((n) => `**${n}** (x${loshu.counts[n]} — ${loshu.counts[n] >= 3 ? "अति-आवृत्ति/प्रबल" : loshu.counts[n] === 2 ? "द्विगुणित बल" : "संतुलित"})`)
     .join(", ");
 
   const missingRemediesList = loshu.missingNumbers
-    .slice(0, 4)
+    .slice(0, 5)
     .map((m) => {
       const rem = MISSING_NUMBER_REMEDIES[m];
       return rem ? `  - **${rem.title}:** ${rem.remedies[0]}` : "";
@@ -351,47 +572,55 @@ export function synthesizeNumerologyVerdict(
   );
 
   const dobLabel = `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
+  const dobDigitsMath = `${String(day).padStart(2, "0").split("").join("+")}+${String(month).padStart(2, "0").split("").join("+")}+${String(year).split("").join("+")}`;
 
-  const text = `॥ ॐ श्री गणेशाय नमः ॥
-॥ वैदिक अंक-ज्योतिष एवं लो-शू चक्र सूक्ष्म निर्णय — विदुषी उमा ॥
+  const text = `॥ ॐ श्री गणेशाय नमः • सूक्ष्म वैदिक एवं कॉल्डियन अंक-शास्त्र निर्णय ॥
 
-**१. त्वरित अंक फलादेश (Executive Numerology Verdict)**
-कल्याणमस्तु यजमान **${personName}** जी! जन्म तिथि **${dobLabel}** की सूक्ष्म अंक-गणना के अनुसार आपका **मूलांक (Driver) ${mulankNum}** तथा **भाग्यांक (Conductor) ${bhagyankNum}** है। ${synergyVerdict}
+**१. त्वरित सूक्ष्म अंक फलादेश (Executive Micro-Numerology Verdict)**
+कल्याणमस्तु यजमान **${personName}** जी! जन्म तिथि **${dobLabel}** के सूक्ष्म अंक-गणित के अनुसार आपका **मूलांक (Driver) ${mulankNum}** तथा **भाग्यांक (Conductor) ${bhagyankNum}** (${dobDigitsMath} → ${bhagyankNum}) है। ${synergyVerdict}
 
-**२. चतुर्मुखी अंक-गणित एवं ग्रह स्वामित्व (Core Numbers Math)**
-• **मूलांक (Driver Number): अंक ${mulankNum}** — स्वामी: **${mulank.planet}** | देवता: ${mulank.deity} | तत्व: ${mulank.element}
-  *स्वभाव व शक्ति:* ${mulank.nature}
-• **भाग्यांक (Conductor Number): अंक ${bhagyankNum}** — स्वामी: **${bhagyank.planet}** | देवता: ${bhagyank.deity}
-  *भाग्य दिशा:* ${bhagyank.nature}
-• **नामांक (Chaldean Name Number): संयुक्त अंक ${chaldean.compound} → एकल अंक ${chaldean.single}** (${namankInfo.planet.split(" ")[0]}) | पाइथागोरियन नामांक: **${pythagorean.single}** (${pythagorean.compound})
-• **कुआं अंक (Lo Shu Kua Angel Number): अंक ${kuaNum}** (${kuaInfo.planet.split(" ")[0]}) — इसे प्रतिदिन बाएं हाथ की कलाई पर नीले/हरे पेन से लिखना आपके लिए धन व अवसर आकर्षित करेगा।${mobileSection}${vehicleSection}
+**२. अक्षर-दर-अक्षर नामांक स्पंदन एवं चतुर्मुखी अंक-गणित (Micro Core Math)**
+• **मूलांक (Driver): अंक ${mulankNum}** (${ day } → ${mulankNum}) — स्वामी: **${mulank.planet}** | देवता: ${mulank.deity} | तत्व: ${mulank.element}
+  *मूल शक्ति:* ${mulank.nature}
+• **भाग्यांक (Conductor): अंक ${bhagyankNum}** (${dobDigitsMath} → ${bhagyankNum}) — स्वामी: **${bhagyank.planet}** | देवता: ${bhagyank.deity}
+  *प्रारब्ध दिशा:* ${bhagyank.nature}
+• **कॉल्डियन (Chaldean) अक्षर-गणित («${personName.toUpperCase()}»):**
+  - *सूत्र:* \`${letterBreakdown.chaldeanFormula}\` = **संयुक्त अंक ${chaldean.compound} → एकल नामांक ${chaldean.single}** (${namankInfo.planet.split(" ")[0]})
+  - *संयुक्त अंक ${chaldean.compound} का गुप्त स्पंदन:* **${compoundVib.title} (${compoundVib.nature})** — ${compoundVib.desc}
+• **पाइथागोरियन (Pythagorean) अक्षर-गणित:**
+  - *सूत्र:* \`${letterBreakdown.pythagoreanFormula}\` = **संयुक्त अंक ${pythagorean.compound} → एकल अंक ${pythagorean.single}**
+• **लो-शू कुआं एंजेल अंक (Kua Number): अंक ${kuaNum}** (${kuaInfo.planet.split(" ")[0]}) — बाएं हाथ की कलाई पर हरे/नीले पेन से प्रतिदिन **${kuaNum}** लिखें।${mobileSection}${vehicleSection}
 
-**३. लो-शू ग्रिड (3x3), राजयोग एवं तत्व विश्लेषण**
-• **ग्रिड में उपस्थित अंक:** ${presentNumsStr || mulankNum}
-• **अनुपस्थित (Missing) अंक:** ${loshu.missingNumbers.length > 0 ? loshu.missingNumbers.join(", ") : "कोई नहीं (सम्पूर्ण ग्रिड)"}
-• **निर्मित योग रेखाएं:** ${planesSummary}
-• **राजयोग स्थिति:** ${rajYogaSummary}
+**३. लो-शू ग्रिड (3x3) अष्ट-तल प्रतिशत एवं राजयोग सूक्ष्म मैट्रिक्स**
+• **ग्रिड में उपस्थित अंक व आवृत्ति भार:** ${presentNumsStr || mulankNum}
+• **अनुपस्थित (Missing) अंक:** **${loshu.missingNumbers.length > 0 ? loshu.missingNumbers.join(", ") : "कोई नहीं (१००% पूर्ण ग्रिड)"}**
+• **लो-शू के ८ तलों (8 Planes) की सक्रियता प्रतिशत:**
+${planePercentLines}
 
-**४. व्यक्तिगत वर्ष ${currentYear} एवं करियर/व्यापार दिशा**
-• **व्यक्तिगत वर्ष अंक (Personal Year ${currentYear}): अंक ${personalYear.yearNum}** — **${personalYear.theme}**
-  *वार्षिक मार्गदर्शन:* ${personalYear.advice}
-• **सर्वोत्तम करियर व व्यापार क्षेत्र:** ${Array.from(new Set([...mulank.careers, ...bhagyank.careers])).slice(0, 8).join(", ")}।
-• **शुभ सहयोगी अंक:** **${mulank.friendlyNumbers.join(", ")}** | **शुभ तिथियां:** **${mulank.luckyDates.join(", ")}**
-• **शुभ वार:** ${mulank.luckyDays.join(", ")} | **शुभ रंग:** ${mulank.luckyColors.join(", ")}
+**४. त्रि-स्तरीय काल-चक्र (वर्ष-मास-दिवस) एवं ४ जीवन शिखर (Pinnacles)**
+• **व्यक्तिगत वर्ष ${currentYear} (Personal Year):** **अंक ${personalYear.yearNum}** (*${personalYear.theme}*) — ${personalYear.advice}
+• **वर्तमान व्यक्तिगत मास (Personal Month ${currentMonth}/${currentYear}):** **अंक ${personalMonthNum}** (${pMonthData.planet.split(" ")[0]} प्रभाव) | **आज का व्यक्तिगत दिवस (Personal Day):** **अंक ${personalDayNum}** (${pDayData.planet.split(" ")[0]} प्रभाव)
+• **जीवन के ४ महा-शिखर चक्र (4 Life Pinnacles & Breakthrough Ages):**
+  १. *प्रथम शिखर (आयु 0 से ${p1EndAge} वर्ष):* **शिखर अंक ${pinnacle1}** (${NUMBER_DATA[pinnacle1]?.planet.split(" ")[0]}) | चुनौती अंक: ${challenge1}
+  २. *द्वितीय शिखर (आयु ${p1EndAge + 1} से ${p2EndAge} वर्ष):* **शिखर अंक ${pinnacle2}** (${NUMBER_DATA[pinnacle2]?.planet.split(" ")[0]}) — **मुख्य करियर व धन विस्तार काल** | चुनौती अंक: ${challenge2}
+  ३. *तृतीय सर्वोच्च शिखर (आयु ${p2EndAge + 1} से ${p3EndAge} वर्ष):* **शिखर अंक ${pinnacle3}** (${NUMBER_DATA[pinnacle3]?.planet.split(" ")[0]}) — **स्वर्णिम संपत्ति व प्रतिष्ठा काल** | मुख्य चुनौती: ${mainChallenge}
+  ४. *चतुर्थ शिखर (आयु ${p3EndAge + 1} वर्ष से आजीवन):* **शिखर अंक ${pinnacle4}** (${NUMBER_DATA[pinnacle4]?.planet.split(" ")[0]}) — स्थायी ऐश्वर्य व आध्यात्मिक नेतृत्व
+• **सर्वोत्तम करियर/व्यापार क्षेत्र:** ${Array.from(new Set([...mulank.careers, ...bhagyank.careers])).slice(0, 8).join(", ")}।
+• **शुभ मित्र अंक:** **${mulank.friendlyNumbers.join(", ")}** | **शुभ तिथियां:** **${mulank.luckyDates.join(", ")}** | **शुभ वार:** ${mulank.luckyDays.join(", ")} | **शुभ रंग:** ${mulank.luckyColors.join(", ")}
 
 **५. नाम स्पेलिंग सुधार एवं अचूक अंक-ज्योतिष उपाय**
 • **नामांक स्पेलिंग परीक्षण:**
 ${spellingAdvice}
-• **भाग्य रत्न व रुद्राक्ष:** रत्न: **${mulank.luckyGem}** (अथवा भाग्यांक रत्न: ${bhagyank.luckyGem}) | रुद्राक्ष: **${mulank.rudraksha}**
-• **सूर्य-जल चिकित्सा:** ${mulank.waterBottleColor} में पेयजल भरकर धूप में चार्ज कर नित्य पिएं।
+• **भाग्य रत्न व रुद्राक्ष:** मुख्य रत्न: **${mulank.luckyGem}** (भाग्यांक सहायक रत्न: ${bhagyank.luckyGem}) | रुद्राक्ष: **${mulank.rudraksha}**
+• **सूर्य-जल रंग चिकित्सा:** ${mulank.waterBottleColor} में पेयजल भरकर धूप में चार्ज कर नित्य पिएं।
 • **सिद्ध अंक मंत्र जप:** *${mulank.mantra}* (नित्य ${mulank.japaCount})
-${missingRemediesList ? `• **अनुपस्थित अंकों (${loshu.missingNumbers.slice(0, 4).join(", ")}) के विशेष उपाय:**\n${missingRemediesList}` : ""}
+${missingRemediesList ? `• **अनुपस्थित अंकों (${loshu.missingNumbers.slice(0, 5).join(", ")}) को जागृत करने के उपाय:**\n${missingRemediesList}` : ""}
 
 ---
 [अगले प्रश्न]:
-• मेरे नाम (${personName}) की स्पेलिंग और हस्ताक्षर को और अधिक भाग्यशाली कैसे बनाएं?
-• मेरे मूलांक ${mulankNum} व भाग्यांक ${bhagyankNum} के अनुसार कौन सा व्यापार या नौकरी सर्वोत्तम है?
-• मेरे लो-शू ग्रिड के अनुपस्थित अंकों (${loshu.missingNumbers.slice(0, 3).join(", ") || "5"}) को जागृत करने के सरल घरेलू उपाय बताएं।`;
+• मेरे नाम (${personName}) की स्पेलिंग और हस्ताक्षर को संयुक्त अंक 19, 23 या 24 पर कैसे सेट करें?
+• मेरे मोबाइल नंबर और वाहन नंबर के अंक-युग्म (Digit Pairs) मेरे मूलांक ${mulankNum} के लिए कैसे हैं?
+• मेरे लो-शू ग्रिड के अनुपस्थित अंकों (${loshu.missingNumbers.slice(0, 3).join(", ") || "5"}) के लिए कौन सा क्रिस्टल या ब्रेसलेट धारण करें?`;
 
   return {
     ok: true,
@@ -399,7 +628,7 @@ ${missingRemediesList ? `• **अनुपस्थित अंकों (${lo
     text,
     actionPayload: {
       type: "open_numerology",
-      label: "अंक ज्योतिष व लो-शू चक्र देखें",
+      label: "अंक ज्योतिष व लो-शू चक्र खोलें",
     },
   };
 }
@@ -454,7 +683,7 @@ function synthesizeLiveMuhuratPanchangVerdict(
   const isYatra = /यात्रा|दिशाशूल|प्रस्थान|दिशा/.test(q);
   const isChoghadiya = /चौघड़िया|राहुकाल|अभिजित|मुहूर्त/.test(q);
 
-  const text = `॥ ॐ सूर्याय नमः • वैदिक पंचांग, चौघड़िया एवं मुहूर्त निर्णय ॥
+  const text = `॥ ॐ सूर्याय नमः • वैदिक पंचांग, चौघड़िया एवं मुहूर्त सूक्ष्म निर्णय ॥
 
 **१. त्वरित मुहूर्त निष्कर्ष (Executive Verdict)**
 प्रणाम यजमान! आज **${wDay}** (${now.toLocaleDateString("hi-IN")}), **${paksha} पक्ष** की **${tithi}** तिथि एवं **${nakshatra}** नक्षत्र है। ${
@@ -486,8 +715,8 @@ ${shubhChogs}
 ---
 [अगले प्रश्न]:
 • आज नया व्यापार, वाहन क्रय या शुभ कार्य किस चौघड़िया में करें?
-• मेरे मूलांक व भाग्यांक के अनुसार आज का दिन कैसा रहेगा?
-• मेरी जन्म कुंडली के अनुसार वर्तमान गोचर का फल बताएं।`;
+• मेरे मूलांक व भाग्यांक के अनुसार आज का व्यक्तिगत दिवस कैसा रहेगा?
+• मेरी जन्म कुंडली के अनुसार आज का तारा बल और चंद्र बल कैसा है?`;
 
   return {
     ok: true,
@@ -515,29 +744,29 @@ function synthesizeSpecializedShastraVerdict(
     return {
       ok: true,
       source: "local_vedic",
-      text: `॥ ॐ वास्तुपुरुषायाय नमः • विश्वकर्मा प्रकाश एवं मयमतम् वास्तु निर्णय ॥
+      text: `॥ ॐ वास्तुपुरुषायाय नमः • विश्वकर्मा प्रकाश एवं मयमतम् वास्तु सूक्ष्म निर्णय ॥
 
 **१. त्वरित वास्तु फलादेश (Executive Vastu Takeaway)**
-प्रणाम यजमान! बिना तोड़-फोड़ के वैदिक पंचतत्व (जल, अग्नि, पृथ्वी, वायु, आकाश) के संतुलन से घर व कार्यस्थल का वास्तु दोष १००% शांत किया जा सकता है।
+प्रणाम यजमान! बिना तोड़-फोड़ के वैदिक पंचतत्व (जल, अग्नि, पृथ्वी, वायु, आकाश) एवं १६ महावास्तु ज़ोन के संतुलन से घर व कार्यस्थल का वास्तु दोष १००% शांत किया जा सकता है।
 
 **२. अष्ट-दिशा एवं पंचतत्व सूक्ष्म गणित**
-• **ईशान कोण (North-East — जल व गुरु तत्व):** यह देवस्थान व मानसिक शांति का कोण है। यहाँ मंदिर, जल स्रोत या ध्यान कक्ष रखें। यहाँ भारी सामान या शौचालय कभी न रखें।
-• **आग्नेय कोण (South-East — अग्नि व शुक्र तत्व):** यहाँ रसोईघर (पूर्व मुखी होकर भोजन बनाना) एवं विद्युत उपकरण सर्वोत्तम फल देते हैं।
-• **नैऋत्य कोण (South-West — पृथ्वी व राहु/शनि तत्व):** यह गृहस्वामी के शयनकक्ष (Master Bedroom) व भारी अलमारी के लिए सर्वश्रेष्ठ है; इससे नेतृत्व व स्थिरता बढ़ती है।
-• **उत्तर एवं कुबेर स्थान (North — बुध व कुबेर):** तिजोरी का मुख **उत्तर** या **पूर्व** दिशा की ओर खुलना चाहिए; इससे अखंड धन प्रवाह बना रहता है।
+• **ईशान कोण (North-East 0°–45° — जल व देवगुरु बृहस्पति तत्व):** यह वास्तु पुरुष का शिरोभाग (मस्तिष्क) है। यहाँ मंदिर, जल पात्र, ध्यान कक्ष रखें। यहाँ भारी सामान, सीढ़ियां या शौचालय होने पर न्यूरो/आर्थिक बाधा आती है (निवारण: समुद्री नमक व स्फटिक श्रीयंत्र)।
+• **आग्नेय कोण (South-East 112.5°–157.5° — अग्नि व शुक्र तत्व):** यहाँ रसोईघर (पूर्व मुखी होकर भोजन बनाना) एवं विद्युत उपकरण सर्वोत्तम फल देते हैं; इससे नकद धन प्रवाह (Cash Flow) बना रहता है।
+• **नैऋत्य कोण (South-West 202.5°–247.5° — पृथ्वी व राहु/शनि तत्व):** यह गृहस्वामी के शयनकक्ष (Master Bedroom) व भारी अलमारी के लिए सर्वश्रेष्ठ है; इससे नेतृत्व, स्थिरता व बचत बढ़ती है।
+• **उत्तर एवं कुबेर स्थान (North 337.5°–22.5° — बुध व कुबेर):** तिजोरी का पृष्ठ भाग दक्षिण दीवार से सटा हो और उसका मुख **उत्तर** (कुबेर) या **पूर्व** (इंद्र) दिशा की ओर खुले।
 
 **३. बिना तोड़-फोड़ के ५ अचूक सात्विक वास्तु उपाय**
-१. **मुख्य द्वार ऊर्जा:** मुख्य द्वार पर अष्टगंध या सिंदूर से **स्वस्तिक (卐)** बनाएं और पंचमुखी हनुमान जी अथवा गणेश जी स्थापित करें।
-२. **नकारात्मक ऊर्जा हरण:** घर के पोंछे के पानी में गुरुवार को छोड़कर थोड़ा **सेंधा नमक (Rock Salt)** या समुद्री नमक मिलाएं।
-३. **ईशान कोण शुद्धि:** ईशान कोण (उत्तर-पूर्व) में कांच के पात्र में जल व गुलाब की पंखुड़ियां अथवा स्फटिक श्री यंत्र स्थापित करें।
-४. **धन आकर्षण:** तिजोरी में लाल वस्त्र में ५ गोमती चक्र, ११ कौड़ियां और साबुत हल्दी की गांठ बांधकर रखें।
-५. **सायंकाल धूप-दीप:** नित्य संध्या में कपूर और लौंग जलाकर पूरे घर में आरती की ध्वनि करें।
+१. **मुख्य द्वार ऊर्जा (द्वार वेध निवारण):** मुख्य द्वार के दोनों ओर अष्टगंध/सिंदूर से **स्वस्तिक (卐)** बनाएं और ऊपर पंचमुखी हनुमान जी स्थापित करें।
+२. **नकारात्मक ऊर्जा हरण:** घर के पोंछे के पानी में गुरुवार को छोड़कर एक चुटकी **सेंधा नमक (Rock Salt)** व फिटकरी मिलाएं।
+३. **ईशान कोण शुद्धि:** ईशान कोण में कांच या तांबे के पात्र में स्वच्छ जल व गुलाब की पंखुड़ियां रखें तथा प्रतिदिन बदलें।
+४. **कुबेर कोष पोटली:** तिजोरी में लाल वस्त्र में ५ गोमती चक्र, ११ पीली कौड़ियां, १ चांदी का सिक्का और साबुत हल्दी की गांठ बांधकर रखें।
+५. **सायंकाल धूप-दीप:** नित्य संध्या में भीमसेनी कपूर और २ लौंग जलाकर पूरे घर में आरती की ध्वनि करें।
 
 ---
 [अगले प्रश्न]:
-• धन वृद्धि के लिए तिजोरी और लॉकर किस दिशा में रखें?
-• मेरे मूलांक व कुआं अंक के अनुसार मेरी शुभ दिशा कौन सी है?
-• मेरी कुंडली के अनुसार भूमि व मकान बनने का योग कब है?`,
+• धन वृद्धि और कर्ज मुक्ति के लिए तिजोरी व लॉकर किस कोण में रखें?
+• मेरे मूलांक व कुआं अंक के अनुसार मेरी सबसे शुभ दिशा कौन सी है?
+• मेरी कुंडली के चतुर्थ भाव (D-4) के अनुसार भूमि व मकान बनने का योग कब है?`,
       actionPayload: { type: "open_vastu", label: "वास्तु शास्त्र अध्याय खोलें" },
     };
   }
@@ -547,28 +776,28 @@ function synthesizeSpecializedShastraVerdict(
     return {
       ok: true,
       source: "local_vedic",
-      text: `॥ ॐ सामुद्रिक शास्त्राय नमः • नारद एवं गरुड़ पुराणोक्त हस्तरेखा निर्णय ॥
+      text: `॥ ॐ सामुद्रिक शास्त्राय नमः • नारद एवं गरुड़ पुराणोक्त हस्तरेखा सूक्ष्म निर्णय ॥
 
 **१. त्वरित हस्तरेखा निष्कर्ष (Samudrik Verdict)**
-यजमान! सामुद्रिक शास्त्र के अनुसार हथेली की रेखाएं आपके कर्म, विचार और प्रारब्ध का दर्पण हैं। पुरुषों के दाएं हाथ (कर्म हाथ) और स्त्रियों के बाएं हाथ (अथवा सक्रिय कर्म हाथ) से सटीक फलित देखा जाता है।
+यजमान! सामुद्रिक शास्त्र के अनुसार बायां हाथ आपके जन्मजात प्रारब्ध (D-1) और दायां/सक्रिय हाथ आपके वर्तमान पुरुषार्थ व कर्म (D-9/D-10) का दर्पण है।
 
-**२. प्रमुख रेखाओं एवं ग्रह पर्वतों का शास्त्रीय गणित**
-• **जीवन रेखा (Life Line — शुक्र पर्वत को घेरती हुई):** यदि यह गहरी, गुलाबी और बिना टूटी हो, तो दीर्घायु, उत्तम रोग-प्रतिरोधक क्षमता और पारिवारिक सुख देती है।
-• **भाग्य रेखा (Fate/Saturn Line — मणिबंध से शनि पर्वत तक):** मध्यमा उंगली के नीचे शनि पर्वत तक जाने वाली स्पष्ट रेखा ३०-३५ वर्ष की आयु के बाद प्रचंड भाग्योदय व स्थायी धन दर्शाती है।
-• **हृदय एवं मस्तिष्क रेखा:** गुरु पर्वत (तर्जनी के नीचे) तक जाने वाली हृदय रेखा सात्विक प्रेम व निष्ठा देती है; समानांतर व लंबी मस्तिष्क रेखा तीव्र विश्लेषण क्षमता देती है।
-• **सूर्य रेखा (Apollo Line — अनामिका के नीचे):** यह रेखा राजकीय सम्मान, उच्च पद, व्यापारिक ख्याति और समाज में प्रतिष्ठा दिलाती है।
-• **M-चिह्न, मत्स्य चिह्न व त्रिभुज:** हथेली में 'M' का निशान या भाग्य रेखा पर मछली (Fish) का चिह्न आकस्मिक धन लाभ व स्वअर्जित संपत्ति का प्रबल राजयोग है।
+**२. प्रमुख रेखाओं, ग्रह पर्वतों एवं धन कोठरी का सूक्ष्म गणित**
+• **जीवन रेखा (Life Line — शुक्र पर्वत को घेरती हुई):** यदि यह गहरी, गुलाबी और बिना द्वीप/कटाव के हो, तो ८०+ वर्ष की दीर्घायु, प्रबल रोग-प्रतिरोधक क्षमता और अचल संपत्ति देती है।
+• **भाग्य/शनि रेखा (Fate Line — मणिबंध से मध्यमा उंगली तक):** मणिबंध या चंद्र पर्वत से निकलकर शनि पर्वत तक जाने वाली स्पष्ट रेखा २८, ३२ या ३५ वर्ष की आयु के बाद प्रचंड भाग्योदय व स्थायी धन दर्शाती है।
+• **धन की कोठरी (Money Triangle — राहु क्षेत्र):** मस्तिष्क रेखा, भाग्य रेखा और बुध रेखा से मिलकर हथेली के मध्य में बनने वाला बंद त्रिभुज करोड़पति कोष व अटूट संचित धन का लक्षण है।
+• **सूर्य रेखा (Apollo Line — अनामिका के नीचे):** यह रेखा राजकीय सम्मान, उच्च प्रशासनिक पद, ख्याति और यश दिलाती है।
+• **M-चिह्न, मत्स्य चिह्न व गज-लक्ष्मी योग:** हथेली में स्पष्ट 'M' का निशान या केतु/मणिबंध के पास मछली (Fish) का चिह्न आकस्मिक धन लाभ व स्वअर्जित साम्राज्य का राजयोग है।
 
-**३. हस्त-ऊर्जा जागृत करने के वैदिक उपाय**
+**३. हस्त-पर्वत जागृत करने के वैदिक उपाय**
 १. **प्रातः कर-दर्शन:** सुबह जागते ही दोनों हथेलियां मिलाकर दर्शन करें — *"कराग्रे वसते लक्ष्मीः करमध्ये सरस्वती। करमूले तु गोविन्दः प्रभाते करदर्शनम्॥"*
-२. **गुरु व सूर्य पर्वत बल:** नित्य तर्जनी व अनामिका से चंदन/केसर का तिलक मस्तक पर लगाएं।
-३. **सात्विक दान:** अपने हाथों से गौ-ग्रास, पक्षियों को सप्तधान्य और अन्न दान करने से हथेली की अशुभ आड़ी रेखाएं भी शुभ फल देने लगती हैं।
+२. **गुरु व सूर्य पर्वत बल:** नित्य अनामिका उंगली से केसर/रक्त चंदन का तिलक मस्तक पर लगाएं।
+३. **सात्विक दान:** अपने हाथों से गौ-ग्रास, पक्षियों को सप्तधान्य और अन्न दान करने से हथेली की राहु रेखाएं (आड़ी बाधा रेखाएं) निष्प्रभावी हो जाती हैं।
 
 ---
 [अगले प्रश्न]:
-• हथेली में धन की कोठरी (Money Triangle) कैसे बनती है?
+• हथेली में धन की कोठरी (Money Triangle) और राजयोग चिह्न कैसे पहचानें?
 • मेरी जन्म कुंडली और मूलांक के अनुसार मेरा भाग्य रत्न कौन सा है?
-• मेरे नाम की स्पेलिंग और हस्ताक्षर कैसे सुधारें?`,
+• मेरे नाम की स्पेलिंग और हस्ताक्षर को भाग्यशाली कैसे बनाएं?`,
       actionPayload: { type: "open_palmistry", label: "हस्तरेखा अध्याय खोलें" },
     };
   }
@@ -578,20 +807,21 @@ function synthesizeSpecializedShastraVerdict(
     const lagnaRashi = kundali?.lagnaRashi || "मेष";
     const moonRashi = kundali?.moonRashi || "वृषभ";
     const dasha = kundali?.mahadasha || "गुरु";
+    const antar = kundali?.antardasha || "शुक्र";
 
-    const LAGNA_GEM_MAP: Record<string, { lagnaGem: string; bhagyaGem: string; panchottarGem: string; avoid: string; rudraksha: string }> = {
-      "मेष": { lagnaGem: "मूंगा (Red Coral - मंगल)", bhagyaGem: "पुखराज (Yellow Sapphire - गुरु)", panchottarGem: "माणिक्य (Ruby - सूर्य)", avoid: "पन्ना, हीरा व नीलम", rudraksha: "३ मुखी व ५ मुखी रुद्राक्ष" },
-      "वृषभ": { lagnaGem: "हीरा / ओपल (Diamond/Opal - शुक्र)", bhagyaGem: "नीलम (Blue Sapphire - शनि)", panchottarGem: "पन्ना (Emerald - बुध)", avoid: "पुखराज, मूंगा व मोती", rudraksha: "६ मुखी व ७ मुखी रुद्राक्ष" },
-      "मिथुन": { lagnaGem: "पन्ना (Emerald - बुध)", bhagyaGem: "नीलम (Blue Sapphire - शनि)", panchottarGem: "हीरा / ओपल (शुक्र)", avoid: "मूंगा व माणिक्य", rudraksha: "४ मुखी व ६ मुखी रुद्राक्ष" },
-      "कर्क": { lagnaGem: "मोती (Natural Pearl - चंद्र)", bhagyaGem: "पुखराज (Yellow Sapphire - गुरु)", panchottarGem: "मूंगा (Red Coral - मंगल)", avoid: "नीलम, हीरा व पन्ना", rudraksha: "२ मुखी व ३ मुखी रुद्राक्ष" },
-      "सिंह": { lagnaGem: "माणिक्य (Ruby - सूर्य)", bhagyaGem: "मूंगा (Red Coral - मंगल)", panchottarGem: "पुखराज (Yellow Sapphire - गुरु)", avoid: "नीलम व हीरा", rudraksha: "१ मुखी या १२ मुखी व ३ मुखी रुद्राक्ष" },
-      "कन्या": { lagnaGem: "पन्ना (Emerald - बुध)", bhagyaGem: "हीरा / ओपल (शुक्र)", panchottarGem: "नीलम (शनि)", avoid: "मूंगा, मोती व माणिक्य", rudraksha: "४ मुखी व ६ मुखी रुद्राक्ष" },
-      "तुला": { lagnaGem: "हीरा / सफेद जरकन / ओपल (शुक्र)", bhagyaGem: "पन्ना (Emerald - बुध)", panchottarGem: "नीलम (Blue Sapphire - शनि)", avoid: "माणिक्य, मूंगा व पुखराज", rudraksha: "६ मुखी व ७ मुखी रुद्राक्ष" },
-      "वृश्चिक": { lagnaGem: "मूंगा (Red Coral - मंगल)", bhagyaGem: "मोती (Pearl - चंद्र)", panchottarGem: "पुखराज (Yellow Sapphire - गुरु)", avoid: "पन्ना, हीरा व नीलम", rudraksha: "३ मुखी व ५ मुखी रुद्राक्ष" },
-      "धनु": { lagnaGem: "पुखराज (Yellow Sapphire - गुरु)", bhagyaGem: "माणिक्य (Ruby - सूर्य)", panchottarGem: "मूंगा (Red Coral - मंगल)", avoid: "हीरा, नीलम व पन्ना", rudraksha: "५ मुखी व १/१२ मुखी रुद्राक्ष" },
-      "मकर": { lagnaGem: "नीलम (Blue Sapphire - शनि)", bhagyaGem: "पन्ना (Emerald - बुध)", panchottarGem: "हीरा / ओपल (शुक्र)", avoid: "माणिक्य, मोती व मूंगा", rudraksha: "७ मुखी व ६ मुखी रुद्राक्ष" },
-      "कुंभ": { lagnaGem: "नीलम (Blue Sapphire - शनि)", bhagyaGem: "हीरा / ओपल (शुक्र)", panchottarGem: "पन्ना (Emerald - बुध)", avoid: "माणिक्य, मोती व मूंगा", rudraksha: "७ मुखी व ४ मुखी रुद्राक्ष" },
-      "मीन": { lagnaGem: "पुखराज (Yellow Sapphire - गुरु)", bhagyaGem: "मूंगा (Red Coral - मंगल)", panchottarGem: "मोती (Pearl - चंद्र)", avoid: "पन्ना, हीरा व नीलम", rudraksha: "५ मुखी व २ मुखी रुद्राक्ष" },
+    const LAGNA_GEM_MAP: Record<string, { lagnaGem: string; bhagyaGem: string; panchottarGem: string; avoid: string; rudraksha: string; metal: string; finger: string }> = {
+      "मेष": { lagnaGem: "मूंगा (Red Coral - मंगल)", bhagyaGem: "पुखराज (Yellow Sapphire - गुरु)", panchottarGem: "माणिक्य (Ruby - सूर्य)", avoid: "पन्ना, हीरा व नीलम", rudraksha: "३ मुखी व ५ मुखी रुद्राक्ष", metal: "स्वर्ण या तांबा", finger: "अनामिका / तर्जनी" },
+      "वृषभ": { lagnaGem: "हीरा / ओपल (Diamond/Opal - शुक्र)", bhagyaGem: "नीलम (Blue Sapphire - शनि)", panchottarGem: "पन्ना (Emerald - बुध)", avoid: "पुखराज, मूंगा व मोती", rudraksha: "६ मुखी व ७ मुखी रुद्राक्ष", metal: "चांदी या प्लैटिनम", finger: "मध्यमा / कनिष्ठा" },
+      "मिथुन": { lagnaGem: "पन्ना (Emerald - बुध)", bhagyaGem: "नीलम (Blue Sapphire - शनि)", panchottarGem: "हीरा / ओपल (शुक्र)", avoid: "मूंगा व माणिक्य", rudraksha: "४ मुखी व ६ मुखी रुद्राक्ष", metal: "स्वर्ण या चांदी", finger: "कनिष्ठा / मध्यमा" },
+      "कर्क": { lagnaGem: "मोती (Natural Pearl - चंद्र)", bhagyaGem: "पुखराज (Yellow Sapphire - गुरु)", panchottarGem: "मूंगा (Red Coral - मंगल)", avoid: "नीलम, हीरा व पन्ना", rudraksha: "२ मुखी व ३ मुखी रुद्राक्ष", metal: "चांदी या स्वर्ण", finger: "कनिष्ठा / तर्जनी" },
+      "सिंह": { lagnaGem: "माणिक्य (Ruby - सूर्य)", bhagyaGem: "मूंगा (Red Coral - मंगल)", panchottarGem: "पुखराज (Yellow Sapphire - गुरु)", avoid: "नीलम व हीरा", rudraksha: "१ मुखी या १२ मुखी व ३ मुखी रुद्राक्ष", metal: "स्वर्ण या तांबा", finger: "अनामिका / तर्जनी" },
+      "कन्या": { lagnaGem: "पन्ना (Emerald - बुध)", bhagyaGem: "हीरा / ओपल (शुक्र)", panchottarGem: "नीलम (शनि)", avoid: "मूंगा, मोती व माणिक्य", rudraksha: "४ मुखी व ६ मुखी रुद्राक्ष", metal: "स्वर्ण या चांदी", finger: "कनिष्ठा / मध्यमा" },
+      "तुला": { lagnaGem: "हीरा / सफेद जरकन / ओपल (शुक्र)", bhagyaGem: "नीलम (Blue Sapphire - शनि)", panchottarGem: "पन्ना (Emerald - बुध)", avoid: "माणिक्य, मूंगा व पुखराज", rudraksha: "६ मुखी व ७ मुखी रुद्राक्ष", metal: "चांदी या पंचधातु", finger: "मध्यमा / कनिष्ठा" },
+      "वृश्चिक": { lagnaGem: "मूंगा (Red Coral - मंगल)", bhagyaGem: "मोती (Pearl - चंद्र)", panchottarGem: "पुखराज (Yellow Sapphire - गुरु)", avoid: "पन्ना, हीरा व नीलम", rudraksha: "३ मुखी व ५ मुखी रुद्राक्ष", metal: "स्वर्ण, तांबा या चांदी", finger: "अनामिका / तर्जनी" },
+      "धनु": { lagnaGem: "पुखराज (Yellow Sapphire - गुरु)", bhagyaGem: "माणिक्य (Ruby - सूर्य)", panchottarGem: "मूंगा (Red Coral - मंगल)", avoid: "हीरा, नीलम व पन्ना", rudraksha: "५ मुखी व १/१२ मुखी रुद्राक्ष", metal: "स्वर्ण या पीतल", finger: "तर्जनी / अनामिका" },
+      "मकर": { lagnaGem: "नीलम (Blue Sapphire - शनि)", bhagyaGem: "पन्ना (Emerald - बुध)", panchottarGem: "हीरा / ओपल (शुक्र)", avoid: "माणिक्य, मोती व मूंगा", rudraksha: "७ मुखी व ६ मुखी रुद्राक्ष", metal: "पंचधातु या चांदी", finger: "मध्यमा / कनिष्ठा" },
+      "कुंभ": { lagnaGem: "नीलम (Blue Sapphire - शनि)", bhagyaGem: "हीरा / ओपल (शुक्र)", panchottarGem: "पन्ना (Emerald - बुध)", avoid: "माणिक्य, मोती व मूंगा", rudraksha: "७ मुखी व ४ मुखी रुद्राक्ष", metal: "पंचधातु या चांदी", finger: "मध्यमा / कनिष्ठा" },
+      "मीन": { lagnaGem: "पुखराज (Yellow Sapphire - गुरु)", bhagyaGem: "मूंगा (Red Coral - मंगल)", panchottarGem: "मोती (Pearl - चंद्र)", avoid: "पन्ना, हीरा व नीलम", rudraksha: "५ मुखी व २ मुखी रुद्राक्ष", metal: "स्वर्ण या चांदी", finger: "तर्जनी / अनामिका" },
     };
 
     const gInfo = LAGNA_GEM_MAP[lagnaRashi] || LAGNA_GEM_MAP["मेष"];
@@ -599,32 +829,33 @@ function synthesizeSpecializedShastraVerdict(
     return {
       ok: true,
       source: "local_vedic",
-      text: `॥ ॐ रत्नेश्वराय नमः • त्रिकोण सिद्धांत आधारित रत्न एवं रुद्राक्ष निर्णय ॥
+      text: `॥ ॐ रत्नेश्वराय नमः • त्रिकोण सिद्धांत आधारित रत्न एवं रुद्राक्ष सूक्ष्म निर्णय ॥
 
 **१. त्वरित रत्न परामर्श (Executive Gemology Verdict)**
 ${
   kundali
-    ? `यजमान **${kundali.name}** जी! आपकी **${lagnaRashi} लग्न** व **${moonRashi} राशि** (महादशा: **${dasha}**) के त्रिकोण (१-५-९ भाव) गणित के अनुसार आपके लिए **${gInfo.bhagyaGem}** और **${gInfo.lagnaGem}** सर्वोत्तम जीवन-रत्न हैं।`
-    : `यजमान! वैदिक रत्न शास्त्र में सदैव लग्नेश (प्रथम भाव), पंचमेश (बुद्धि/इष्ट) और भाग्येश (नवम भाव) के रत्न ही धारण किए जाते हैं; षष्ठ, अष्टम व द्वादश भाव के रत्न कभी नहीं पहने जाते।`
+    ? `यजमान **${kundali.name}** जी! आपकी **${lagnaRashi} लग्न** व **${moonRashi} राशि** (सक्रिय दशा: **${dasha}–${antar}**) के त्रिकोण (१-५-९ भाव) गणित के अनुसार आपके लिए **${gInfo.bhagyaGem}** और **${gInfo.lagnaGem}** सर्वोत्तम जीवन-रत्न हैं।`
+    : `यजमान! वैदिक रत्न शास्त्र में सदैव लग्नेश (प्रथम भाव), पंचमेश (बुद्धि/इष्ट) और भाग्येश (नवम भाव) के रत्न ही धारण किए जाते हैं; षष्ठ, अष्टम व द्वादश (मारक/त्रिक) भाव के रत्न कभी नहीं पहने जाते।`
 }
 
-**२. आपके लिए शुभ रत्न एवं रुद्राक्ष गणित (${lagnaRashi} लग्न आधार पर)**
-• **लग्न रत्न (स्वास्थ्य व आत्मबल हेतु):** **${gInfo.lagnaGem}**
+**२. आपके लिए शुभ रत्न, धातु, उंगली एवं रुद्राक्ष गणित (${lagnaRashi} लग्न आधार पर)**
+• **लग्न रत्न (स्वास्थ्य, व्यक्तित्व व आत्मबल हेतु):** **${gInfo.lagnaGem}**
 • **भाग्य रत्न (भाग्योदय, धन व करियर हेतु):** **${gInfo.bhagyaGem}**
-• **पंचम/विद्या-इष्ट रत्न:** **${gInfo.panchottarGem}**
+• **पंचम/विद्या-इष्ट रत्न (प्रज्ञा व संतान सुख हेतु):** **${gInfo.panchottarGem}**
+• **धारण धातु व उंगली:** धातु: **${gInfo.metal}** | उंगली: दाएं हाथ की **${gInfo.finger}**
 • **सर्वश्रेष्ठ वैदिक रुद्राक्ष:** **${gInfo.rudraksha}** *(रुद्राक्ष का कोई दुष्प्रभाव नहीं होता और यह तुरंत सकारात्मक आभा मंडल बनाता है)*
-• **❌ वर्जित रत्न (कभी न पहनें):** **${gInfo.avoid}**
+• **❌ वर्जित रत्न (भूलकर भी न पहनें):** **${gInfo.avoid}**
 
 **३. रत्न प्राण-प्रतिष्ठा एवं धारण विधि**
-१. **रत्ती भार:** अपने शरीर के वजन के प्रति १० किलोग्राम पर १ रत्ती (उदा. ६० किलो वजन हेतु ६ से सवा ६ रत्ती) दोषरहित रत्न चुनें।
-२. **पंचामृत अभिषेक:** धारण करने से पूर्व संबंधित ग्रह के वार को प्रातः कच्चे दूध, गंगाजल, शहद, घी व शक्कर (पंचामृत) से स्नान कराएं।
+१. **रत्ती भार:** अपने शरीर के वजन के प्रति १० किलोग्राम पर १ रत्ती (उदा. ६० किलो वजन हेतु ६.२५ रत्ती) दोषरहित रत्न चुनें।
+२. **पंचामृत अभिषेक:** धारण करने से पूर्व संबंधित ग्रह के वार को प्रातः शुक्ल पक्ष की होरा में कच्चे दूध, गंगाजल, शहद, घी व शक्कर (पंचामृत) से स्नान कराएं।
 ३. **मंत्र जाग्रति:** धूप-दीप दिखाकर संबंधित ग्रह के बीज मंत्र का १०८ बार जप करके दाएं हाथ की निर्दिष्ट उंगली में धारण करें।
 
 ---
 [अगले प्रश्न]:
 • मेरे मूलांक व भाग्यांक के अनुसार कौन सा रत्न और रुद्राक्ष शुभ है?
-• मेरी कुंडली में वर्तमान महादशा (${dasha}) के लिए कौन सा उपाय करें?
-• बिना रत्न खरीदे ग्रहों को बली करने की वैदिक औषधि व जड़ (जड़ी) कौन सी है?`,
+• मेरी कुंडली में वर्तमान महादशा (${dasha}–${antar}) के लिए कौन सा उपरत्न या जड़ी धारण करें?
+• बिना रत्न खरीदे ग्रहों को बली करने की वैदिक औषधि व मंत्र विधान क्या है?`,
       actionPayload: { type: "open_gemology", label: "रत्न विज्ञान अध्याय खोलें" },
     };
   }
@@ -644,22 +875,49 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
     systemPrompt,
   } = params;
 
+  // Automatically pick up saved Kundali if activeKundali prop was not passed
+  const effectiveKundali =
+    activeKundali ||
+    tryParseKundaliFromQuery(query) ||
+    (typeof window !== "undefined" ? getSavedKundaliProfiles()[0] || null : null);
+
   const isNumQuery = isNumerologyQuery(query);
 
-  // Build automatic numerology context so online AI also knows exact numbers
+  // 1. ALWAYS compute our 100% deterministic Sookshma Ganit (Micro-Calculation) response first!
+  const localRes = await generateUma({ query, kundali: effectiveKundali, panchang });
+
+  // For Numerology queries, the deterministic Micro-Numerology Engine has 100% exact Chaldean/Pythagorean
+  // letter-by-letter math, compound vibrations, 8 Lo Shu planes %, 4 Pinnacles, and digit-pair scans.
+  if (isNumQuery) {
+    return {
+      ok: true,
+      text: localRes.text,
+      source: "local_vedic",
+      actionPayload: localRes.actionPayload || {
+        type: "open_numerology",
+        label: "अंक ज्योतिष व लो-शू चक्र देखें",
+      },
+    };
+  }
+
+  // Build automatic numerology + micro-astrology context for online Gemini AI
   let autoNumerologyCtx = numerologyContext || "";
-  if (!autoNumerologyCtx && (isNumQuery || activeKundali)) {
-    const localNum = synthesizeNumerologyVerdict(query, activeKundali, panchang);
+  if (!autoNumerologyCtx && effectiveKundali) {
+    const localNum = synthesizeNumerologyVerdict(query, effectiveKundali, panchang);
     autoNumerologyCtx = `\n[अंक ज्योतिष सूक्ष्म गणना]:\n${localNum.text}`;
   }
 
-  const combinedKundaliContext = [kundaliContext, autoNumerologyCtx].filter(Boolean).join("\n\n");
+  const microKundaliCtx =
+    kundaliContext || (effectiveKundali ? buildMicroAstrologyContextPrompt(effectiveKundali, panchang) : "");
+  const combinedKundaliContext = [microKundaliCtx, autoNumerologyCtx, `\n[शास्त्रीय सूक्ष्म गणना संदर्भ]:\n${localRes.text}`]
+    .filter(Boolean)
+    .join("\n\n");
 
-  const defaultAction: AskUmaResponse["actionPayload"] = isNumQuery
-    ? { type: "open_numerology", label: "अंक ज्योतिष व लो-शू चक्र देखें" }
-    : activeKundali
-    ? { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" }
-    : { type: "open_panchang", label: "आज का पंचांग देखें" };
+  const defaultAction: AskUmaResponse["actionPayload"] =
+    localRes.actionPayload ||
+    (effectiveKundali
+      ? { type: "open_kundali", label: "जन्मकुंडली विस्तार देखें" }
+      : { type: "open_panchang", label: "आज का पंचांग देखें" });
 
   // Primary online API endpoint (/api/uma/chat)
   if (typeof navigator === "undefined" || navigator.onLine !== false) {
@@ -671,7 +929,7 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
           "Content-Type": "application/json",
           "x-license-token": lic.token,
         },
-        signal: AbortSignal.timeout(18000),
+        signal: AbortSignal.timeout(15000),
         body: JSON.stringify({
           query,
           panchangContext,
@@ -685,66 +943,39 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
       if (resp.ok) {
         const data = await resp.json();
         if (data?.ok && typeof data.text === "string" && data.text.trim()) {
-          const provider = data?.provider;
-          const source =
-            provider === "grok" || provider === "openrouter" || provider === "gemini"
-              ? provider
-              : "gemini";
+          const aiText = data.text.trim();
+          // Verify that the AI response contains micro-calculations; if it omitted the micro-table,
+          // append the exact Sookshma Ganit Section 2 from localRes so the user NEVER loses micro-precision!
+          const hasMicroDegrees = /°|उपनक्षत्र|Sub-Lord|सर्वाष्टकवर्ग|प्रत्यंतर|सूक्ष्म दशा/.test(aiText);
+          let finalText = aiText;
+          if (!hasMicroDegrees && localRes.text.includes("**२.")) {
+            const sec2Match = localRes.text.match(/\*\*२\.[\s\S]*?(?=\n\*\*३\.|\n---|$)/);
+            if (sec2Match) {
+              finalText = `${aiText.split("---")[0].trim()}\n\n---\n📜 **सूक्ष्म गणितीय प्रमाण पत्रिका (Sookshma Ganit Verification):**\n${sec2Match[0].trim()}\n\n---${
+                aiText.includes("[अगले प्रश्न]") ? "\n" + aiText.slice(aiText.indexOf("[अगले प्रश्न]")) : ""
+              }`;
+            }
+          }
+
           return {
             ok: true,
-            text: data.text.trim(),
-            source,
-            actionPayload: defaultAction,
-          };
-        }
-      }
-    } catch (err) {
-      console.warn("/api/uma/chat primary call failed, trying backup/offline:", err);
-    }
-
-    // Backup external server call
-    try {
-      const lic = getLicenseStatus();
-      const resp = await fetch(UMA_PHP_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-license-token": lic.token,
-        },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({
-          query,
-          panchangContext,
-          kundaliContext: combinedKundaliContext,
-          chatHistory,
-          systemPrompt,
-          licenseToken: lic.token,
-        }),
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        if (data?.ok && typeof data.text === "string" && data.text.trim()) {
-          return {
-            ok: true,
-            text: data.text.trim(),
+            text: finalText,
             source: "gemini",
             actionPayload: defaultAction,
           };
         }
       }
     } catch (err) {
-      console.warn("UMA_PHP_URL backup failed, using 100% deterministic local Vedic engine:", err);
+      console.warn("/api/uma/chat unavailable, using 100% deterministic Sookshma Ganit engine:", err);
     }
   }
 
-  // 100% Deterministic Local Vedic & Numerology Calculation Engine (Works completely offline!)
-  const localRes = await generateUma({ query, kundali: activeKundali, panchang });
+  // 100% Deterministic Local Vedic & Numerology Sookshma Ganit Engine (Works completely offline!)
   return {
     ok: localRes.ok,
     text: localRes.text,
     source: "local_vedic",
-    actionPayload: localRes.actionPayload,
+    actionPayload: localRes.actionPayload || defaultAction,
   };
 }
 
@@ -754,7 +985,6 @@ function chartAnswer(kundali: KundaliData, query: string, panchang?: VedicPancha
 
 /**
  * Attempts to construct a temporary Kundali on-the-fly if the user typed their birth date/time in chat
- * while offline and without a saved activeKundali.
  */
 function tryParseKundaliFromQuery(query: string): KundaliData | null {
   const dmyMatch = query.match(/\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})\b/);
@@ -816,11 +1046,16 @@ export async function generateUma({
       q === "प्रणाम";
 
     if (isPureGreeting) {
+      const savedK = kundali || (typeof window !== "undefined" ? getSavedKundaliProfiles()[0] || null : null);
       return {
         ok: true,
         source: "local_vedic",
-        text: `॥ ॐ श्री गणेशाय नमः ॥\nप्रणाम यजमान! मैं **उमा** हूँ — आपकी वैदिक ज्योतिष एवं अंक-शास्त्र आचार्य। ५० वर्षों के अखंड पराशारी, जैमिनी, नाड़ी सिद्धांत और कीरो/लो-शू अंक ज्योतिष अनुभव से मैं आपकी जन्मपत्रिका व अंक-चक्र का सूक्ष्म विश्लेषण करने के लिए उपस्थित हूँ (ऑनलाइन व ऑफ़लाइन दोनों स्थितियों में १००% सटीक गणना)।\n\nआप मुझसे पूछ सकते हैं:\n• **🔢 अंक ज्योतिष:** मूलांक, भाग्यांक, नाम स्पेलिंग सुधार, लो-शू राजयोग, मोबाइल व वाहन नंबर जांच\n• **📜 जन्म कुण्डली:** D-1, D-9 नवमांश, D-10 दशमांश, विंशोत्तरी दशा, करियर, विवाह, धन व कर्ज मुक्ति\n• **📅 पंचांग व मुहूर्त:** आज का चौघड़िया, राहुकाल, अभिजित मुहूर्त, यात्रा दिशाशूल, वास्तु व रत्न परामर्श`,
-        actionPayload: kundali
+        text: `॥ ॐ श्री गणेशाय नमः ॥\nप्रणाम यजमान${savedK ? ` **${savedK.name}** जी` : ""}! मैं **उमा** हूँ — आपकी सूक्ष्म वैदिक ज्योतिष (पराशरी, जैमिनी, कृष्णमूर्ति KP, षोडशवर्ग D1-D60, अष्टकवर्ग, तात्कालिक प्रश्न-कुण्डली) एवं अंक-शास्त्र आचार्य।\n\n${
+          savedK
+            ? `✓ **आपकी पत्रिका सक्रिय है:** लग्न **${savedK.lagnaRashi}**, चंद्र **${savedK.moonRashi} (${savedK.nakshatra})**, दशा: **${savedK.mahadasha}–${savedK.antardasha}–${savedK.pratyantardasha}**।\n\n`
+            : ""
+        }आप मुझसे सूक्ष्म गणितीय गणना के साथ पूछ सकते हैं:\n• **📜 सूक्ष्म कुण्डली व KP निर्णय:** अंश-कला-विकला, KP उपनक्षत्र (Sub-Lord), D-9 नवमांश, D-10 दशमांश, D-60 षष्ट्यंश, सर्वाष्टकवर्ग बिंदु, प्रत्यंतर व सूक्ष्म दशा तारीखें\n• **🔢 सूक्ष्म अंक ज्योतिष:** कॉल्डियन/पाइथागोरियन अक्षर-गणित, संयुक्त अंक (19, 23, 24), लो-शू ८-तल प्रतिशत, ४ जीवन शिखर (Pinnacles) व मोबाइल/वाहन अंक-युग्म स्कैन\n• **🔮 तात्कालिक प्रश्न-कुण्डली व मुहूर्त:** प्रश्न लग्न स्पष्ट, सक्रिय होरा, चौघड़िया, राहुकाल, तारा बल, चंद्र बल, वास्तु व रत्न निर्णय`,
+        actionPayload: savedK
           ? { type: "open_kundali", label: "कुंडली विश्लेषण देखें" }
           : { type: "open_panchang", label: "आज का पंचांग देखें" },
       };
@@ -839,7 +1074,7 @@ export async function generateUma({
       return {
         ok: true,
         source: "local_vedic",
-        text: `॥ ॐ वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ। निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा॥\n\n**यजमान! आइए, मैं आपको वैदिक ब्राह्मण की तरह श्री गणेश स्थापना और पूजन करवाती हूँ। अपने आसन पर पूर्व या उत्तर की ओर मुख करके बैठ जाइए:**\n\n**चरण १: आचमन व पवित्रीकरण**\nहाथ में जल लेकर बोलें: *'ॐ अपवित्रः पवित्रो वा सर्वावस्थां गतोपि वा। यः स्मरेत्पुण्डरीकाक्षं स बाह्याभ्यन्तरः शुचिः॥'* (तीन बार जल आचमन करें)\n\n**चरण २: संकल्प (हाथ में अक्षत, पुष्प और जल लेकर)**\nबोलें: *'ममोपात्त-समस्त-दुर्व्ययक्षयपूर्वकं श्रीगणपति प्रीत्यर्थं मम सपरिवारस्य क्षेमारोग्यैश्वर्यवृद्धये श्रीगणेश पूजनमहं करिष्ये।'* (जल को जमीन पर छोड़ दें)\n\n**चरण ३: भगवान गणेश का आह्वान (प्रतिमा या सुपारी पर)**\n*'ॐ भूर्भुवः स्वः श्रीगणेशाय नमः। इहागच्छ इह तिष्ठ, सुप्रतिष्ठितो वरदो भव।'*\n\n**चरण ४: षोडशोपचार पूजन व दूर्वा अर्पण**\nगणेश जी को सिंदूर लगाएं और २१ दूर्वा चढ़ाते हुए बोलें: \n*'दूर्वाङ्कुरान् समर्पयामि ॐ गं गणपतये नमः। इदं दुर्वादलं समर्पयामि॥'* \n\nअब मोदक का भोग लगाएं और मेरी सिखाई गई गणेश आरती गाएं! बोलिए गणपति बाप्पा मोरया!`,
+        text: `॥ ॐ वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ। निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा॥\n\n**यजमान! आइए, मैं आपको वैदिक ब्राह्मण की तरह श्री गणेश स्थापना और षोडशोपचार पूजन करवाती हूँ। अपने आसन पर पूर्व या उत्तर की ओर मुख करके बैठ जाइए:**\n\n**चरण १: आचमन व पवित्रीकरण**\nहाथ में जल लेकर बोलें: *'ॐ अपवित्रः पवित्रो वा सर्वावस्थां गतोपि वा। यः स्मरेत्पुण्डरीकाक्षं स बाह्याभ्यन्तरः शुचिः॥'* (तीन बार जल आचमन करें)\n\n**चरण २: संकल्प (हाथ में अक्षत, पुष्प और जल लेकर)**\nबोलें: *'ममोपात्त-समस्त-दुर्व्ययक्षयपूर्वकं श्रीगणपति प्रीत्यर्थं मम सपरिवारस्य क्षेमारोग्यैश्वर्यवृद्धये श्रीगणेश पूजनमहं करिष्ये।'* (जल को जमीन पर छोड़ दें)\n\n**चरण ३: भगवान गणेश का आह्वान (प्रतिमा या सुपारी पर)**\n*'ॐ भूर्भुवः स्वः श्रीगणेशाय नमः। इहागच्छ इह तिष्ठ, सुप्रतिष्ठितो वरदो भव।'*\n\n**चरण ४: षोडशोपचार पूजन व दूर्वा अर्पण**\nगणेश जी को सिंदूर लगाएं और २१ दूर्वा चढ़ाते हुए बोलें: \n*'दूर्वाङ्कुरान् समर्पयामि ॐ गं गणपतये नमः। इदं दुर्वादलं समर्पयामि॥'* \n\nअब मोदक का भोग लगाएं और गणेश आरती गाएं! बोलिए गणपति बाप्पा मोरया!`,
         actionPayload: { type: "open_panchang", label: "व्रत कथा व विधि देखें" },
       };
     }
@@ -920,20 +1155,24 @@ export async function generateUma({
     }
 
     // 8. SPECIALIZED SHASTRA MODULES (VASTU, PALMISTRY, GEMOLOGY/RUDRAKSHA)
-    const specialized = synthesizeSpecializedShastraVerdict(query, kundali);
+    const effectiveKundali =
+      kundali ||
+      tryParseKundaliFromQuery(query) ||
+      (typeof window !== "undefined" ? getSavedKundaliProfiles()[0] || null : null);
+
+    const specialized = synthesizeSpecializedShastraVerdict(query, effectiveKundali);
     if (specialized) {
       return specialized;
     }
 
     // 9. PANCHANG / CHOGHADIYA / RAHUKAL / MUHURAT / DISHASHOOL INQUIRIES
     const asksToday = /आज|तिथि|पंचांग|मुहूर्त|चौघड़िया|राहुकाल|राहु काल|दिशाशूल|अभिजित|यमगण्ड|गुलिक|सूर्योदय|सूर्यास्त/.test(q);
-    const asksChart = /नौकरी|शादी|विवाह|दशा|कुंडली|लग्न|सेहत|पैसा|धन|महादशा|साढ़ेसाती|मांगलिक|कर्ज|व्यापार/.test(q);
+    const asksChart = /नौकरी|शादी|विवाह|दशा|कुंडली|लग्न|सेहत|पैसा|धन|महादशा|साढ़ेसाती|मांगलिक|कर्ज|व्यापार|ऐप|app|career|job|marriage|loan|debt/.test(q);
     if (asksToday && !asksChart) {
       return synthesizeLiveMuhuratPanchangVerdict(query, panchang);
     }
 
     // 10. KUNDALI / ASTROLOGY INQUIRIES (With saved Kundali OR parsed DOB from query)
-    const effectiveKundali = kundali || tryParseKundaliFromQuery(query);
     if (effectiveKundali) {
       return {
         ok: true,
@@ -943,7 +1182,7 @@ export async function generateUma({
       };
     }
 
-    // 11. Dynamic Vedic Guidance without Kundali (Uses live Panchang & Gochar math)
+    // 11. Real-Time Tatkalik Prashna Kundali (तात्कालिक प्रश्न-कुण्डली एवं होरा सूक्ष्म निर्णय)
     return {
       ok: true,
       source: "local_vedic",
@@ -955,7 +1194,7 @@ export async function generateUma({
     return {
       ok: true,
       source: "local_vedic",
-      text: `॥ ॐ नमः शिवाय ॥\nप्रणाम यजमान! भगवान शिव और श्रीगणेश जी की कृपा से आपका हर कार्य मंगलमय हो। कृपया अपना प्रश्न साझा करें, मैं प्रामाणिक वैदिक एवं अंक-ज्योतिष मार्गदर्शन प्रस्तुत करूँगी।`,
+      text: `॥ ॐ नमः शिवाय ॥\nप्रणाम यजमान! भगवान शिव और श्रीगणेश जी की कृपा से आपका हर कार्य मंगलमय हो। कृपया अपना प्रश्न साझा करें, मैं प्रामाणिक सूक्ष्म वैदिक एवं अंक-ज्योतिष मार्गदर्शन प्रस्तुत करूँगी।`,
       actionPayload: { type: "open_panchang", label: "पंचांग देखें" },
     };
   }
