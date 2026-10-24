@@ -322,60 +322,81 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
 
   return (
     <div className="w-full h-full min-h-0 flex flex-col bg-[#FAF6EE] text-[#3E2714] overflow-hidden">
-      {/* Top Header Controls */}
-      <div className="shrink-0 p-3 bg-white border-b border-amber-200 shadow-xs flex flex-col gap-2">
+      {/* Top Header Controls (Compact on mobile to maximize prediction area) */}
+      <div className="shrink-0 px-2.5 py-2 bg-white border-b border-amber-200 shadow-xs flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🔢</span>
-            <div>
-              <h1 className="text-base font-black text-[#5C3A21] font-granth leading-tight">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-lg sm:text-xl shrink-0">🔢</span>
+            <div className="min-w-0">
+              <h1 className="text-xs sm:text-base font-black text-[#5C3A21] font-granth leading-tight truncate">
                 वैदिक अंक ज्योतिष एवं लो-शू चक्र
               </h1>
-              <p className="text-[11px] text-[#8C6239] font-medium">
-                मूलांक • भाग्यांक • नामांक • लो-शू राजयोग • उमा अंक परामर्श (ऑफ़लाइन)
+              <p className="text-[10px] text-[#8C6239] font-medium truncate">
+                {inputName} ({inputDay}/{inputMonth}/{inputYear}) • मूलांक {mulankNum} • भाग्यांक {bhagyankNum}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab('uma_ank')}
-              className="px-2.5 py-1 rounded-lg bg-[#7A1D1D] text-[#FFD88A] text-xs font-bold flex items-center gap-1 shadow-xs hover:bg-[#5C1414] transition cursor-pointer"
+              className="px-2 py-1 rounded-lg bg-[#7A1D1D] text-[#FFD88A] text-[11px] font-bold flex items-center gap-1 shadow-xs hover:bg-[#5C1414] transition cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <Sparkles className="w-3 h-3 text-amber-300" />
               <span>उमा अंक निर्णय</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('stories')}
-              className="px-2.5 py-1 rounded-lg bg-amber-500 text-white text-xs font-bold flex items-center gap-1 shadow-xs hover:bg-amber-600 transition cursor-pointer"
+              className="px-2 py-1 rounded-lg bg-amber-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs hover:bg-amber-600 transition cursor-pointer"
             >
-              <BookOpen className="w-3.5 h-3.5" />
+              <BookOpen className="w-3 h-3" />
               <span className="hidden sm:inline">स्टोरी व्यू</span>
             </button>
           </div>
         </div>
 
-        {/* Input Bar for Quick Date/Name */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 bg-amber-50/80 p-2 rounded-xl border border-amber-200/80 text-xs">
-          <div className="sm:col-span-1">
-            <label className="block text-[10px] font-bold text-[#8C6239] mb-0.5">नाम (Name):</label>
+        {/* Compact Input Bar for Quick Date/Name (2 compact rows on mobile, 1 row on desktop) */}
+        <div className="grid grid-cols-12 gap-1.5 bg-amber-50/80 px-2 py-1.5 rounded-xl border border-amber-200/80 text-xs items-end">
+          <div className="col-span-7 sm:col-span-4">
+            <label className="block text-[9px] font-bold text-[#8C6239] leading-none mb-0.5">नाम (Name):</label>
             <input
               type="text"
               value={inputName}
               onChange={(e) => setInputName(e.target.value)}
-              className="w-full p-1.5 rounded-lg border border-amber-300 bg-white font-bold text-[#5C3A21] uppercase focus:outline-none text-xs"
+              className="w-full px-2 py-1 rounded-lg border border-amber-300 bg-white font-bold text-[#5C3A21] uppercase focus:outline-none text-[11px]"
             />
           </div>
 
-          <div className="sm:col-span-2 flex items-center gap-1.5">
-            <div className="flex-1">
-              <label className="block text-[10px] font-bold text-[#8C6239] mb-0.5">दिन:</label>
+          <div className="col-span-5 sm:col-span-2 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setGender('male')}
+              className={`flex-1 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
+                gender === 'male' ? 'bg-[#5C3A21] text-amber-200 border-[#5C3A21]' : 'bg-white text-stone-600 border-amber-200'
+              }`}
+            >
+              पुरुष
+            </button>
+            <button
+              type="button"
+              onClick={() => setGender('female')}
+              className={`flex-1 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
+                gender === 'female' ? 'bg-[#5C3A21] text-amber-200 border-[#5C3A21]' : 'bg-white text-stone-600 border-amber-200'
+              }`}
+            >
+              स्त्री
+            </button>
+          </div>
+
+          <div className="col-span-12 sm:col-span-6 grid grid-cols-3 gap-1.5">
+            <div>
+              <label className="block text-[9px] font-bold text-[#8C6239] leading-none mb-0.5">दिन:</label>
               <select
                 value={inputDay}
                 onChange={(e) => setInputDay(parseInt(e.target.value, 10))}
-                className="w-full p-1.5 rounded-lg border border-amber-300 bg-white font-bold text-[#5C3A21] focus:outline-none text-xs"
+                className="w-full px-1.5 py-1 rounded-lg border border-amber-300 bg-white font-bold text-[#5C3A21] focus:outline-none text-[11px]"
               >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                   <option key={d} value={d}>
@@ -385,12 +406,12 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
               </select>
             </div>
 
-            <div className="flex-1">
-              <label className="block text-[10px] font-bold text-[#8C6239] mb-0.5">माह:</label>
+            <div>
+              <label className="block text-[9px] font-bold text-[#8C6239] leading-none mb-0.5">माह:</label>
               <select
                 value={inputMonth}
                 onChange={(e) => setInputMonth(parseInt(e.target.value, 10))}
-                className="w-full p-1.5 rounded-lg border border-amber-300 bg-white font-bold text-[#5C3A21] focus:outline-none text-xs"
+                className="w-full px-1.5 py-1 rounded-lg border border-amber-300 bg-white font-bold text-[#5C3A21] focus:outline-none text-[11px]"
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                   <option key={m} value={m}>
@@ -400,36 +421,15 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
               </select>
             </div>
 
-            <div className="flex-1">
-              <label className="block text-[10px] font-bold text-[#8C6239] mb-0.5">वर्ष:</label>
+            <div>
+              <label className="block text-[9px] font-bold text-[#8C6239] leading-none mb-0.5">वर्ष:</label>
               <input
                 type="number"
                 value={inputYear}
                 onChange={(e) => setInputYear(parseInt(e.target.value, 10) || 1995)}
-                className="w-full p-1.5 rounded-lg border border-amber-300 bg-white font-bold text-[#5C3A21] focus:outline-none text-xs"
+                className="w-full px-1.5 py-1 rounded-lg border border-amber-300 bg-white font-bold text-[#5C3A21] focus:outline-none text-[11px]"
               />
             </div>
-          </div>
-
-          <div className="sm:col-span-1 flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setGender('male')}
-              className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
-                gender === 'male' ? 'bg-[#5C3A21] text-amber-200 border-[#5C3A21]' : 'bg-white text-stone-600 border-amber-200'
-              }`}
-            >
-              पुरुष
-            </button>
-            <button
-              type="button"
-              onClick={() => setGender('female')}
-              className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
-                gender === 'female' ? 'bg-[#5C3A21] text-amber-200 border-[#5C3A21]' : 'bg-white text-stone-600 border-amber-200'
-              }`}
-            >
-              स्त्री
-            </button>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { VedicPanchangData, KundaliData } from '../types';
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
@@ -262,17 +263,28 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान **${currentKundali.name}** जी! मैं उमा हूँ — ५० वर्षों के अखंड पराशारी, जैमिनी, कृष्णमूर्ति (KP), षोडशवर्ग (D1–D60) व अंक-शास्त्र साधना से युक्त आपकी वैदिक आचार्य।\n\nमैंने आपकी जन्मपत्रिका का **सूक्ष्म गणित (Sookshma Ganit)** स्थापित कर लिया है:\n• **लग्न स्पष्ट:** ${liveMicroProfile.lagnaRashi} (${liveMicroProfile.lagnaDMS}) | **चंद्र स्पष्ट:** ${liveMicroProfile.moonRashi} (${liveMicroProfile.moonDMS}, नक्षत्र: ${liveMicroProfile.moonNakshatra} चरण ${liveMicroProfile.moonPada})\n• **विंशोत्तरी ४-स्तरीय सूक्ष्म दशा:** महादशा **${liveMicroProfile.mahadasha}** • अंतर्दशा **${liveMicroProfile.antardasha}** • प्रत्यंतर **${liveMicroProfile.pratyantardasha}** • सूक्ष्म दशा **${liveMicroProfile.sookshmadasha}**\n• **जैमिनी आत्मकारक (AK):** ${liveMicroProfile.jaiminiSummary.atmakaraka.split(' ')[0]} | **सर्वाष्टकवर्ग कुल बिंदु:** ${liveMicroProfile.ashtakvargaSummary.totalSav}\n\nआप करियर, धन, विवाह, कर्ज मुक्ति, स्वास्थ्य या अंक ज्योतिष का कोई भी प्रश्न पूछें — आपको अंश-कला-विकला व सूक्ष्म दशा सहित १००% सटीक उत्तर मिलेगा।`
     : `॥ ॐ श्री गणेशाय नमः ॥\n॥ ॐ नमः शिवाय ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैं उमा हूँ — ५० वर्षों की कठिन वैदिक ज्योतिष (पराशरी, KP उपनक्षत्र, षोडशवर्ग, अष्टकवर्ग, तात्कालिक प्रश्न-कुण्डली) एवं अंक-शास्त्र साधना से युक्त आपकी आचार्य।\n\nआप मुझसे **अंक ज्योतिष (कॉल्डियन अक्षर-गणित, संयुक्त अंक, लो-शू ८-तल प्रतिशत, ४ जीवन शिखर, मोबाइल/वाहन अंक-युग्म)**, **कुण्डली फलादेश** अथवा **तात्कालिक प्रश्न-कुण्डली** से कोई भी प्रश्न सीधे पूछ सकते हैं (ऑनलाइन व ऑफ़लाइन १००% सटीक सूक्ष्म गणित सक्रिय है)।`;
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'init_1',
-      sender: 'uma',
-      text: initialGreeting,
-      timestamp: new Date(),
-    },
-  ]);
+  // When an initialPrompt (like Ank Shastra) is passed, start with an empty message list so the prediction is right at the top
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    initialPrompt && initialPrompt.trim()
+      ? []
+      : [
+          {
+            id: 'init_1',
+            sender: 'uma',
+            text: initialGreeting,
+            timestamp: new Date(),
+          },
+        ]
+  );
   const [inputQuery, setInputQuery] = useState(initialPrompt || '');
   const [activeCategory, setActiveCategory] = useState(
     initialPrompt && isNumerologyQuery(initialPrompt) ? 'numerology' : 'all'
+  );
+  const [numerologyContext, setNumerologyContext] = useState<string>(() =>
+    initialPrompt && isNumerologyQuery(initialPrompt) ? initialPrompt : ''
+  );
+  const [showSuggestionsBar, setShowSuggestionsBar] = useState<boolean>(
+    !initialPrompt || !initialPrompt.trim()
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -307,6 +319,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   }, [isOpen]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const latestUmaMsgRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
   // Update client bot name if activeKundali changes
@@ -336,8 +349,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       unlockUmaSpeech();
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      if (autoSpeak && messages.length === 1 && messages[0].id === 'init_1') {
+      // Only auto-speak init_1 if NO initialPrompt was passed
+      if (autoSpeak && (!initialPrompt || !initialPrompt.trim()) && messages.length === 1 && messages[0].id === 'init_1') {
         const timer = setTimeout(() => {
           speakHindi(messages[0].text, messages[0].id);
         }, 500);
@@ -345,6 +358,20 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       }
     }
   }, [isOpen]);
+
+  // Smoothly scroll to the top of the latest Uma prediction whenever messages update
+  useEffect(() => {
+    if (messages.length > 0) {
+      const timer = setTimeout(() => {
+        if (latestUmaMsgRef.current) {
+          latestUmaMsgRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length]);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
@@ -670,9 +697,16 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     if (!text || isLoading) return;
     setInputQuery('');
     setVoiceTranscript('');
+    setShowSuggestionsBar(false);
     if (isListening && recognitionRef.current) {
       recognitionRef.current.stop();
       setIsListening(false);
+    }
+
+    const isAnkQuery = isNumerologyQuery(text) || activeCategory === 'numerology';
+    if (isNumerologyQuery(text) && (text.includes('जन्म') || text.includes('मूलांक') || text.includes('नाम'))) {
+      setNumerologyContext(text);
+      setActiveCategory('numerology');
     }
 
     const userMsg: ChatMessage = {
@@ -682,7 +716,11 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    // Remove init_1 Kundali greeting if the user is asking an Ank Shastra question so there's zero confusion
+    setMessages((prev) => {
+      const filtered = isAnkQuery ? prev.filter((m) => m.id !== 'init_1') : prev;
+      return [...filtered, userMsg];
+    });
     setIsLoading(true);
 
     try {
@@ -699,6 +737,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         query: text,
         panchangContext: panchangCtx,
         kundaliContext: kundaliCtx,
+        numerologyContext: isAnkQuery ? (numerologyContext || (isNumerologyQuery(text) ? text : undefined)) : undefined,
+        forceNumerology: isAnkQuery,
         chatHistory,
         panchang,
         activeKundali: targetKundali,
@@ -738,14 +778,16 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   useEffect(() => {
     if (isOpen && initialPrompt && initialPrompt.trim()) {
       setIsBirthFormOpen(false);
+      setShowSuggestionsBar(false);
       if (isNumerologyQuery(initialPrompt)) {
         setActiveCategory('numerology');
+        setNumerologyContext(initialPrompt);
       }
       if (autoSubmittedPromptRef.current !== initialPrompt) {
         autoSubmittedPromptRef.current = initialPrompt;
         const timer = setTimeout(() => {
           void handleSubmit(initialPrompt);
-        }, 120);
+        }, 80);
         return () => clearTimeout(timer);
       }
     }
@@ -753,78 +795,123 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
   const suggestions = SUGGESTIONS_MAP[activeCategory] || SUGGESTIONS_MAP.all;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200">
+  // Extract concise Ank Shastra summary for the top context bar when in numerology mode
+  const ankSummaryText = (() => {
+    const src = numerologyContext || (initialPrompt && isNumerologyQuery(initialPrompt) ? initialPrompt : '');
+    if (!src) return 'मूलांक • भाग्यांक • नामांक • लो-शू राजयोग फलादेश सक्रिय';
+    const nameM = src.match(/(?:मेरा\s+)?नाम[:\s-]+([A-Za-z\u0900-\u097F\s]{2,28}?)(?:,|है|जन्म|\.|;|$)/i);
+    const dobM = src.match(/\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})\b/);
+    const mulM = src.match(/मूलांक\s*([1-9१-९])/);
+    const bhagM = src.match(/भाग्यांक\s*([1-9१-९])/);
+    const parts: string[] = [];
+    if (nameM?.[1]) parts.push(nameM[1].trim());
+    if (dobM?.[1]) parts.push(`जन्म: ${dobM[1]}`);
+    if (mulM?.[1]) parts.push(`मूलांक ${mulM[1]}`);
+    if (bhagM?.[1]) parts.push(`भाग्यांक ${bhagM[1]}`);
+    return parts.length > 0 ? parts.join(' • ') : 'मूलांक • भाग्यांक • नामांक • लो-शू राजयोग सक्रिय';
+  })();
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center p-1 sm:p-3 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
+      data-swipe-ignore="true"
+    >
       <div
         className={`bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full shadow-2xl flex flex-col transition-all duration-300 ${
-          isExpanded ? 'h-[98vh] max-w-[96vw]' : 'h-[92vh] max-h-[740px] max-w-4xl'
+          isExpanded ? 'h-[98dvh] max-w-[98vw]' : 'h-[95dvh] sm:h-[92dvh] max-h-[96dvh] max-w-4xl'
         } overflow-hidden`}
       >
-        {/* Header - Alexa Vedic Assistant Styling */}
-        <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] p-3 sm:p-4 flex items-center justify-between border-b-2 border-[#B58738] shadow-md">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#B58738] to-[#734A1B] border-2 border-[#FAF2E4] flex items-center justify-center text-[#FAF2E4] font-bold text-lg shadow-inner">
+        {/* Compact Single-Row Header — saves 180px+ vertical height on mobile */}
+        <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] px-2.5 py-2 sm:px-4 sm:py-2.5 flex items-center justify-between gap-2 border-b-2 border-[#B58738] shadow-sm shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="relative shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-[#B58738] to-[#734A1B] border border-[#FAF2E4] flex items-center justify-center text-[#FAF2E4] font-bold text-sm sm:text-base shadow-inner">
                 ॐ
               </div>
-              {/* Alexa-like audio indicator pulse */}
               {isListening && (
-                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500 border border-white"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border border-white"></span>
                 </span>
               )}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg sm:text-xl font-bold font-granth tracking-wide text-[#FFD88A]">
-                  विदुषी उमा जी (ज्योतिषाचार्य)
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm sm:text-lg font-bold font-granth tracking-wide text-[#FFD88A] truncate">
+                  विदुषी उमा जी
                 </span>
-                <span className="text-[10px] bg-[#B58738] px-2 py-0.5 rounded text-[#2C0A0A] font-black uppercase tracking-wider shadow-xs flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5" />
-                  काशी-उज्जैन परंपरा
-                </span>
+                <button
+                  type="button"
+                  onClick={() => void refreshUmaLink()}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/25 text-[10px] text-[#E6C687] shrink-0 cursor-pointer"
+                  title="संपर्क स्थिति रिफ्रेश करें"
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      umaLink === 'online' || umaLink === 'nokey' ? 'bg-emerald-400' : 'bg-amber-400'
+                    }`}
+                  />
+                  <span>{umaLink === 'online' || umaLink === 'nokey' ? 'ऑनलाइन' : 'सूक्ष्म गणित'}</span>
+                </button>
               </div>
-              <p className="text-xs text-[#E6C687] hidden sm:block font-serif">
-                ४०-वर्षीय विदुषी दैवज्ञ • कुण्डली फलादेश, ग्रह गणना, सटीक भविष्यवाणी एवं शास्त्रीय सात्विक उपाय
+              <p className="text-[10px] text-[#E6C687] truncate">
+                {activeCategory === 'numerology'
+                  ? '🔢 वैदिक एवं कॉल्डियन अंक-शास्त्र फलादेश'
+                  : 'काशी-उज्जैन परंपरा • सूक्ष्म वैदिक ज्योतिषाचार्य'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap justify-end">
-            {/* Traditional 6-Point Upay Parchi (Prescription Pad) Trigger */}
+          <div className="flex items-center gap-1 shrink-0">
+            {playingVoiceId && (
+              <button
+                type="button"
+                onClick={() => {
+                  stopUmaSpeech();
+                  setPlayingVoiceId(null);
+                }}
+                className="px-2 py-1 rounded-lg bg-amber-300 text-[#4A1010] text-[11px] font-black flex items-center gap-1 cursor-pointer animate-pulse"
+                title="वाणी रोकें"
+              >
+                <VolumeX className="w-3.5 h-3.5" />
+                <span>रोकें</span>
+              </button>
+            )}
+
+            {/* Traditional 6-Point Upay Parchi Trigger */}
             <button
               onClick={() => setIsUpayParchiOpen(true)}
-              className="px-2.5 py-1.5 rounded-lg bg-[#FAF2E4] hover:bg-white text-[#7A1D1D] text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#B58738]"
-              title="पारंपरिक ज्योतिषीय लेटरहेड पर ६-सूत्रीय उपाय पर्ची (रत्न, उपवास, पाठ, दान, दोष शान्ति) देखें व डाउनलोड करें"
+              className="px-2 py-1 rounded-lg bg-[#FAF2E4] hover:bg-white text-[#7A1D1D] text-[11px] font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#B58738]"
+              title="६-सूत्रीय उपाय पर्ची"
             >
-              <FileText className="w-3.5 h-3.5 text-[#7A1D1D]" />
-              <span className="inline">📋 उपाय पर्ची</span>
+              <FileText className="w-3 h-3 text-[#7A1D1D]" />
+              <span>पर्ची</span>
             </button>
 
             {/* WhatsApp Client Bot Trigger */}
             <button
               onClick={() => setIsWhatsAppBotOpen(true)}
-              className="px-2.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-emerald-500/50"
-              title="यजमानों के प्रश्नों के सीधे व्हाट्सएप पर स्वचालित उत्तर"
+              className="px-2 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-emerald-500/50"
+              title="यजमान व्हाट्सएप बॉट"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-200" />
-              <span className="inline">💬 यजमान बॉट</span>
+              <MessageSquare className="w-3 h-3 text-emerald-200" />
+              <span className="hidden sm:inline">यजमान</span>
+              <span>बॉट</span>
             </button>
 
             {/* Full Session PDF Export */}
             <button
               onClick={handleExportFullSessionPdf}
               disabled={isGeneratingPdf}
-              className="px-2.5 py-1.5 rounded-lg bg-[#B58738] hover:bg-[#9B7028] text-[#2C0A0A] text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#FAF2E4]/40 disabled:opacity-50"
-              title="सम्पूर्ण संवाद की औपचारिक ज्योतिषीय परामर्श PDF डाउनलोड करें"
+              className="p-1.5 rounded-lg bg-[#B58738] hover:bg-[#9B7028] text-[#2C0A0A] text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#FAF2E4]/40 disabled:opacity-50"
+              title="सम्पूर्ण संवाद की PDF डाउनलोड करें"
             >
               {isGeneratingPdf ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <FileText className="w-3.5 h-3.5" />
               )}
-              <span className="hidden md:inline">सम्पूर्ण PDF</span>
+              <span className="hidden md:inline text-[11px]">PDF</span>
             </button>
 
             {/* Auto-Speak Toggle */}
@@ -841,169 +928,121 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               }`}
               title={autoSpeak ? 'ऑटो वॉइस चालू है' : 'ऑटो वॉइस बंद है'}
             >
-              {autoSpeak ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              <span className="hidden lg:inline text-[11px]">{autoSpeak ? 'वाणी चालू' : 'वाणी बंद'}</span>
-            </button>
-
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="px-2 py-1 text-xs text-[#E6C687] hover:text-white border border-[#B58738]/50 rounded-lg hidden sm:block cursor-pointer"
-            >
-              {isExpanded ? 'सामान्य' : 'विस्तार'}
+              {autoSpeak ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             </button>
 
             <button
               onClick={onClose}
-              className="p-1.5 text-[#E6C687] hover:text-white rounded-lg cursor-pointer transition hover:bg-black/20"
+              className="p-1.5 text-[#FFD88A] hover:text-white rounded-lg cursor-pointer transition hover:bg-black/20"
+              aria-label="बंद करें"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => void refreshUmaLink()}
-          className={`w-full px-3 py-1.5 text-left text-[11px] sm:text-xs font-bold border-b flex items-center justify-between gap-2 ${
-            umaLink === 'online' || umaLink === 'nokey'
-              ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
-              : 'bg-amber-50/80 text-amber-950 border-amber-200'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${umaLink === 'online' || umaLink === 'nokey' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-            <span>
-              {umaLink === 'checking' && 'उमा संपर्क स्थिति जांची जा रही है...'}
-              {(umaLink === 'online' || umaLink === 'nokey') && 'उमा ऑनलाइन'}
-              {umaLink === 'local' && 'उमा ऑफ़लाइन (लोकल सूक्ष्म वैदिक गणित सक्रिय)'}
-            </span>
-          </div>
-          <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${umaLink === 'checking' ? 'animate-spin' : ''}`} />
-        </button>
-
-        {/* Live Speaking / Listening Waveform Notice */}
-        {playingVoiceId && (
-          <div className="bg-amber-100/95 border-b border-amber-300 px-4 py-2 flex items-center justify-between text-amber-900 text-xs font-bold animate-in fade-in">
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center gap-0.5">
-                <span className="w-1 h-3 bg-[#7A1D1D] rounded-full animate-bounce [animation-delay:0ms]"></span>
-                <span className="w-1 h-5 bg-[#7A1D1D] rounded-full animate-bounce [animation-delay:150ms]"></span>
-                <span className="w-1 h-4 bg-[#7A1D1D] rounded-full animate-bounce [animation-delay:300ms]"></span>
-                <span className="w-1 h-2 bg-[#7A1D1D] rounded-full animate-bounce [animation-delay:450ms]"></span>
+        {/* Compact 1-Line Context Bar: Numerology Mode vs Kundali Mode */}
+        <div className="bg-[#F4E8D1] py-1.5 px-2.5 sm:px-4 border-b border-[#8C6239]/30 flex items-center justify-between gap-2 shrink-0">
+          {activeCategory === 'numerology' ? (
+            <>
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#5C3A21] min-w-0 truncate">
+                <span className="bg-[#7A1D1D] text-[#FFD88A] px-2 py-0.5 rounded text-[10px] font-bold shrink-0">
+                  🔢 अंक-शास्त्र
+                </span>
+                <span className="font-bold text-[#3E2714] truncate">{ankSummaryText}</span>
               </div>
-              <span className="font-serif">॥ उमा संस्कृत श्लोक व फलादेश का मधुर वाचन कर रही हैं... ॥</span>
-            </div>
-            <button
-              onClick={() => {
-                stopUmaSpeech();
-                setPlayingVoiceId(null);
-              }}
-              className="px-2.5 py-1 bg-[#7A1D1D] hover:bg-[#5C1414] text-white rounded text-[11px] cursor-pointer shadow-xs transition"
-            >
-              वाणी रोकें
-            </button>
-          </div>
-        )}
-
-        {isListening && (
-          <div className="bg-rose-100/95 border-b border-rose-300 px-4 py-2 flex items-center justify-between text-rose-900 text-xs font-bold animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
-              </span>
-              <span className="font-serif">॥ उमा सुन रही हैं... कृपया स्पष्ट हिन्दी में अपना प्रश्न पूछें ॥</span>
-            </div>
-            <button
-              onClick={() => {
-                recognitionRef.current?.stop();
-                setIsListening(false);
-              }}
-              className="px-2 py-0.5 bg-rose-700 text-white rounded text-[11px] cursor-pointer"
-            >
-              समाप्त करें
-            </button>
-          </div>
-        )}
-
-        {/* Active Kundali & Sookshma Ganit Telemetry Banner */}
-        <div className="bg-[#F4E8D1] py-2 px-3 sm:px-4 border-b border-[#8C6239]/30 flex flex-wrap items-center justify-between gap-2 shadow-xs">
-          {currentKundali && liveMicroProfile ? (
-            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#5C3A21] flex-wrap">
-              <span className="bg-[#7A1D1D] text-white px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1">
-                <UserCheck className="w-3 h-3 text-[#FFD88A]" />
-                {currentKundali.name}
-              </span>
-              {savedProfilesList.length > 1 && (
-                <select
-                  value={`${currentKundali.name}_${currentKundali.birthTime}`}
-                  onChange={(e) => {
-                    const found = savedProfilesList.find(
-                      (p) => `${p.name}_${p.birthTime}` === e.target.value
-                    );
-                    if (found) {
-                      setCurrentKundali(found);
-                      if (onSelectKundali) onSelectKundali(found);
-                    }
-                  }}
-                  className="bg-white border border-[#8C6239]/40 rounded px-1.5 py-0.5 text-[11px] font-bold text-[#7A1D1D]"
-                  title="अन्य सहेजी गई कुण्डली चुनें"
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSubmit(
+                      numerologyContext ||
+                        'मेरे मूलांक, भाग्यांक, नामांक स्पेलिंग सुधार व लो-शू चक्र राजयोग का सम्पूर्ण फलादेश और उपाय बताएं'
+                    )
+                  }
+                  className="px-2 py-0.5 bg-[#7A1D1D] text-[#FFD88A] rounded text-[10px] font-bold cursor-pointer hover:bg-[#5C1414]"
                 >
-                  {savedProfilesList.map((p, idx) => (
-                    <option key={`${p.name}_${p.birthTime}_${idx}`} value={`${p.name}_${p.birthTime}`}>
-                      {p.name} ({p.lagnaRashi})
-                    </option>
-                  ))}
-                </select>
-              )}
-              <span className="font-semibold">
-                लग्न: <strong className="text-[#7A1D1D]">{liveMicroProfile.lagnaRashi} ({liveMicroProfile.lagnaDMS})</strong> | चंद्र:{' '}
-                <strong className="text-[#7A1D1D]">{liveMicroProfile.moonRashi}</strong> ({liveMicroProfile.moonNakshatra}-{liveMicroProfile.moonPada}) | सूक्ष्म दशा:{' '}
-                <strong className="text-[#7A1D1D]">
-                  {liveMicroProfile.mahadasha}•{liveMicroProfile.antardasha}•{liveMicroProfile.pratyantardasha}•{liveMicroProfile.sookshmadasha}
-                </strong>{' '}
-                | AK: <strong className="text-[#7A1D1D]">{liveMicroProfile.jaiminiSummary.atmakaraka.split(' ')[0]}</strong>
-              </span>
-            </div>
+                  ✨ अंक फलादेश
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveCategory('kundali')}
+                  className="px-2 py-0.5 bg-white text-[#5C3A21] border border-[#8C6239]/40 rounded text-[10px] font-bold cursor-pointer hover:bg-[#FAF2E4]"
+                >
+                  कुण्डली मोड
+                </button>
+              </div>
+            </>
+          ) : currentKundali && liveMicroProfile ? (
+            <>
+              <div className="flex items-center gap-1.5 text-[11px] text-[#5C3A21] min-w-0 truncate">
+                {savedProfilesList.length > 1 ? (
+                  <select
+                    value={`${currentKundali.name}_${currentKundali.birthTime}`}
+                    onChange={(e) => {
+                      const found = savedProfilesList.find(
+                        (p) => `${p.name}_${p.birthTime}` === e.target.value
+                      );
+                      if (found) {
+                        setCurrentKundali(found);
+                        if (onSelectKundali) onSelectKundali(found);
+                      }
+                    }}
+                    className="bg-[#7A1D1D] text-[#FFD88A] rounded px-1.5 py-0.5 text-[11px] font-bold max-w-[140px] truncate cursor-pointer"
+                    title="अन्य सहेजी गई कुण्डली चुनें"
+                  >
+                    {savedProfilesList.map((p, idx) => (
+                      <option key={`${p.name}_${p.birthTime}_${idx}`} value={`${p.name}_${p.birthTime}`} className="bg-white text-[#3E2714]">
+                        {p.name} ({p.lagnaRashi})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="bg-[#7A1D1D] text-white px-2 py-0.5 rounded text-[10px] font-bold shrink-0">
+                    {currentKundali.name}
+                  </span>
+                )}
+                <span className="truncate font-semibold text-[11px]">
+                  लग्न: <strong className="text-[#7A1D1D]">{liveMicroProfile.lagnaRashi}</strong> • चंद्र:{' '}
+                  <strong className="text-[#7A1D1D]">{liveMicroProfile.moonRashi}</strong> • दशा:{' '}
+                  <strong className="text-[#7A1D1D]">{liveMicroProfile.mahadasha}-{liveMicroProfile.antardasha}</strong>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() =>
+                    handleSubmit(
+                      'मेरी सम्पूर्ण जन्म कुंडली का गहन विश्लेषण करें: प्रमुख राजयोग, ग्रह स्थिति, वर्तमान महादशा का फल और कष्ट निवारण हेतु सटीक सात्विक उपाय बताएं।'
+                    )
+                  }
+                  className="px-2 py-0.5 bg-gradient-to-r from-[#B56A00] to-[#8C6239] text-white rounded text-[10px] font-bold shadow-2xs cursor-pointer shrink-0"
+                >
+                  ✨ फलादेश
+                </button>
+                <button
+                  onClick={() => setIsBirthFormOpen((prev) => !prev)}
+                  className="px-2 py-0.5 bg-white text-[#7A1D1D] border border-[#8C6239]/40 rounded text-[10px] font-bold cursor-pointer shrink-0 flex items-center gap-0.5"
+                >
+                  <UserPlus className="w-3 h-3" />
+                  <span>{isBirthFormOpen ? 'बंद करें' : 'जातक बदलें'}</span>
+                </button>
+              </div>
+            </>
           ) : (
-            <div className="flex items-center gap-2 text-xs text-[#7A1D1D]">
-              <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span className="font-serif font-semibold">
-                🔮 तात्कालिक प्रश्न-कुण्डली एवं होरा सूक्ष्म गणित सक्रिय (जन्म कुण्डली जोड़ने हेतु दाएं बटन दबाएं)
+            <div className="flex items-center justify-between w-full gap-2">
+              <span className="text-[11px] font-serif font-semibold text-[#7A1D1D] truncate">
+                🔮 तात्कालिक प्रश्न-कुण्डली एवं अंक-ज्योतिष सूक्ष्म गणित सक्रिय
               </span>
+              <button
+                onClick={() => setIsBirthFormOpen((prev) => !prev)}
+                className="px-2 py-0.5 bg-[#7A1D1D] text-white rounded text-[10px] font-bold cursor-pointer shrink-0 flex items-center gap-1"
+              >
+                <UserPlus className="w-3 h-3" />
+                <span>{isBirthFormOpen ? 'बंद करें' : '➕ जन्म विवरण'}</span>
+              </button>
             </div>
           )}
-
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {currentKundali && (
-              <button
-                onClick={() =>
-                  handleSubmit(
-                    'मेरी सम्पूर्ण जन्म कुंडली का गहन विश्लेषण करें: प्रमुख राजयोग, ग्रह स्थिति, वर्तमान महादशा का फल और कष्ट निवारण हेतु सटीक सात्विक उपाय बताएं।'
-                  )
-                }
-                className="px-2.5 py-1 bg-gradient-to-r from-[#B56A00] to-[#8C6239] text-white rounded-lg text-xs font-bold shadow-xs hover:from-[#8C6239] hover:to-[#5C3A21] transition flex items-center gap-1 cursor-pointer shrink-0"
-              >
-                <Sparkles className="w-3 h-3 text-amber-200" />
-                <span>✨ सम्पूर्ण फलादेश</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => setIsBirthFormOpen((prev) => !prev)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1 cursor-pointer shrink-0 ${
-                isBirthFormOpen
-                  ? 'bg-[#5C3A21] text-amber-100'
-                  : currentKundali
-                  ? 'bg-[#FAF2E4] text-[#7A1D1D] hover:bg-[#EBDCC0] border border-[#8C6239]/40'
-                  : 'bg-[#7A1D1D] text-white hover:bg-[#5C1414] animate-pulse'
-              }`}
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>{isBirthFormOpen ? 'विवरण बंद करें' : currentKundali ? '🔄 विवरण बदलें / नया जातक' : '➕ जन्म विवरण भरें'}</span>
-              {isBirthFormOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-          </div>
         </div>
 
         {/* Collapsible Smart Birth Details Input Card */}
@@ -1203,60 +1242,55 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         )}
 
         {/* Category Tabs */}
-        <div className="bg-[#EBDCC0] px-3 py-1.5 overflow-x-auto flex items-center gap-1.5 border-b border-[#8C6239]/30">
+        <div className="bg-[#EBDCC0] px-2.5 py-1 overflow-x-auto no-scrollbar flex items-center gap-1 border-b border-[#8C6239]/30 shrink-0">
           {CATEGORY_TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveCategory(tab.id)}
-              className={`px-3 py-1 rounded-full text-xs font-serif whitespace-nowrap transition cursor-pointer ${
+              onClick={() => {
+                setActiveCategory(tab.id);
+                setShowSuggestionsBar(true);
+              }}
+              className={`px-2.5 py-1 rounded-full text-[11px] font-serif whitespace-nowrap transition cursor-pointer ${
                 activeCategory === tab.id
-                  ? 'bg-[#7A1D1D] text-[#FAF2E4] font-bold shadow-xs'
+                  ? 'bg-[#7A1D1D] text-[#FAF2E4] font-bold shadow-2xs'
                   : 'bg-[#FAF2E4] text-[#5C3A21] hover:bg-[#F4E8D1] border border-[#8C6239]/30'
               }`}
             >
               {tab.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setShowSuggestionsBar((prev) => !prev)}
+            className="px-2 py-1 rounded-full text-[10px] font-bold bg-[#FAF2E4] text-[#7A1D1D] border border-[#8C6239]/30 whitespace-nowrap cursor-pointer ml-auto shrink-0"
+          >
+            {showSuggestionsBar ? 'सुझाव छुपाएं ▲' : '💡 प्रश्न सुझाव ▼'}
+          </button>
         </div>
 
-        {/* Suggested Question Chips */}
-        <div className="bg-[#FAF2E4] p-2 overflow-x-auto flex items-center gap-1.5 border-b border-[#8C6239]/20">
-          {suggestions.map((sug, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleSubmit(sug)}
-              className="px-2.5 py-1 bg-[#F4E8D1] hover:bg-[#EBDCC0] border border-[#8C6239]/30 rounded-lg text-xs font-serif text-[#5C3A21] whitespace-nowrap transition flex items-center gap-1 group cursor-pointer"
-            >
-              <Sparkles className="w-3 h-3 text-[#B56A00] group-hover:scale-110 transition shrink-0" />
-              <span className="truncate max-w-[280px]">{sug}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Messages List Container */}
-        <div className="flex-1 sm:p-5 p-3 bg-[#FAF2E4] overflow-y-auto min-h-0 space-y-4">
-          {/* Active Kundali Banner Chip */}
-          {currentKundali && (
-            <div className="bg-gradient-to-r from-[#FFFDF8] via-[#F4E8D1] to-[#FFFDF8] border border-[#B58738]/50 rounded-xl p-2.5 text-xs text-[#5C3A21] flex items-center justify-between gap-2 shadow-xs">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
-                <span className="font-serif font-bold text-[#7A1D1D] truncate">
-                  सक्रिय जन्मपत्री: {currentKundali.name} ({currentKundali.lagnaRashi} लग्न • {currentKundali.moonRashi} राशि • {currentKundali.mahadasha} महादशा)
-                </span>
-              </div>
+        {/* Suggested Question Chips (Auto-collapsed during active predictions to maximize prediction screen height) */}
+        {(showSuggestionsBar || messages.length <= 1) && (
+          <div className="bg-[#FAF2E4] px-2.5 py-1.5 overflow-x-auto no-scrollbar flex items-center gap-1.5 border-b border-[#8C6239]/20 shrink-0">
+            {suggestions.map((sug, idx) => (
               <button
-                type="button"
-                onClick={() => setIsBirthFormOpen(true)}
-                className="text-[11px] text-[#8F2121] font-bold hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer bg-[#FAF2E4] px-2 py-1 rounded border border-[#8C6239]/30"
+                key={idx}
+                onClick={() => handleSubmit(sug)}
+                className="px-2 py-1 bg-[#F4E8D1] hover:bg-[#EBDCC0] border border-[#8C6239]/30 rounded-lg text-[11px] font-serif text-[#5C3A21] whitespace-nowrap transition flex items-center gap-1 group cursor-pointer"
               >
-                <span>बदलें</span>
-                <UserPlus className="w-3 h-3" />
+                <Sparkles className="w-3 h-3 text-[#B56A00] group-hover:scale-110 transition shrink-0" />
+                <span className="truncate max-w-[260px]">{sug}</span>
               </button>
-            </div>
-          )}
+            ))}
+          </div>
+        )}
 
-          {messages.map((msg) => {
+        {/* Messages List Container — Maximized Prediction Screen */}
+        <div className="flex-1 sm:p-4 p-2.5 bg-[#FAF2E4] overflow-y-auto overscroll-contain min-h-0 space-y-3">
+          {messages.map((msg, msgIndex) => {
             const isUma = msg.sender === 'uma';
+            const isLatestUma =
+              isUma &&
+              msgIndex === messages.map((m) => m.sender).lastIndexOf('uma');
 
             // Extract follow-up question chips if present
             let mainText = msg.text;
@@ -1277,18 +1311,19 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             return (
               <div
                 key={msg.id}
-                className={`flex gap-3 ${isUma ? 'justify-start' : 'justify-end'} animate-in fade-in duration-200`}
+                ref={isLatestUma ? latestUmaMsgRef : undefined}
+                className={`flex gap-2 sm:gap-3 ${isUma ? 'justify-start' : 'justify-end'} animate-in fade-in duration-200`}
               >
                 {isUma && (
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#7A1D1D] to-[#4A1010] text-[#FAF2E4] border-2 border-[#B58738] flex items-center justify-center shrink-0 text-sm font-bold shadow-md mt-1">
+                  <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-[#7A1D1D] to-[#4A1010] text-[#FAF2E4] border border-[#B58738] flex items-center justify-center shrink-0 text-xs sm:text-sm font-bold shadow-sm mt-1">
                     ॐ
                   </div>
                 )}
                 <div
-                  className={`max-w-[94%] sm:max-w-[85%] rounded-xl p-3.5 sm:p-5 relative ${
+                  className={`max-w-[95%] sm:max-w-[88%] rounded-xl p-3 sm:p-4 relative ${
                     isUma
                       ? 'bg-[#FFFDF8] border-2 border-[#8C6239]/30 text-[#3E2714] shadow-md'
-                      : 'bg-gradient-to-r from-[#7A1D1D] to-[#8F2121] text-[#FAF2E4] border border-[#B58738] shadow-md font-serif ml-6'
+                      : 'bg-gradient-to-r from-[#7A1D1D] to-[#8F2121] text-[#FAF2E4] border border-[#B58738] shadow-sm font-serif text-xs sm:text-sm py-2 px-3 ml-6'
                   }`}
                 >
                   {isUma && (
@@ -1523,17 +1558,19 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               placeholder={
-                currentKundali
+                activeCategory === 'numerology'
+                  ? 'अंक ज्योतिष, नाम स्पेलिंग, मूलांक, लकी नंबर या उपाय पूछें...'
+                  : currentKundali
                   ? `उमा से ${currentKundali.name} जी की कुंडली, करियर, विवाह, दशा या उपाय पूछें...`
                   : 'उमा से कोई भी ज्योतिषीय प्रश्न, करियर, विवाह, व्यापार या उपाय पूछें...'
               }
-              className="flex-1 bg-[#FFFDF8] border-2 border-[#8C6239]/40 focus:border-[#7A1D1D] rounded-xl px-3.5 py-2 sm:py-2.5 text-xs sm:text-base font-serif text-[#3E2714] placeholder:text-[#8C6239]/70 outline-none shadow-inner"
+              className="flex-1 bg-[#FFFDF8] border-2 border-[#8C6239]/40 focus:border-[#7A1D1D] rounded-xl px-3 py-2 text-xs sm:text-base font-serif text-[#3E2714] placeholder:text-[#8C6239]/70 outline-none shadow-inner"
             />
 
             <button
               type="submit"
               disabled={!inputQuery.trim() || isLoading}
-              className="px-4 py-2 sm:py-2.5 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] disabled:opacity-40 hover:from-[#5C1414] hover:to-[#4A1010] text-[#FAF2E4] font-bold rounded-xl transition shadow-md flex items-center gap-1.5 text-xs sm:text-sm font-serif cursor-pointer"
+              className="px-3.5 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] disabled:opacity-40 hover:from-[#5C1414] hover:to-[#4A1010] text-[#FAF2E4] font-bold rounded-xl transition shadow-md flex items-center gap-1.5 text-xs sm:text-sm font-serif cursor-pointer shrink-0"
             >
               <span>पूछें</span>
               <Send className="w-4 h-4" />
@@ -1717,6 +1754,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           panchang={panchang}
         />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

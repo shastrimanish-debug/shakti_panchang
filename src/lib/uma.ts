@@ -54,6 +54,7 @@ export interface AskUmaParams {
   panchangContext?: string;
   kundaliContext?: string;
   numerologyContext?: string;
+  forceNumerology?: boolean;
   chatHistory?: Array<{ sender: "user" | "uma"; text: string }>;
   panchang?: VedicPanchangData | null;
   activeKundali?: KundaliData | null;
@@ -350,12 +351,18 @@ export function synthesizeNumerologyVerdict(
   // 1. Extract Name from query or effectiveKundali
   let personName = effectiveKundali?.name || "YAJAMAN";
   const nameMatch =
-    q.match(/नाम[:\s-]+([A-Za-z\u0900-\u097F\s]{2,30}?)(?:,|है|जन्म|तिथि|मूलांक|\.|;|$)/i) ||
-    q.match(/name[:\s-]+([A-Za-z\s]{2,30}?)(?:,|is|dob|birth|\.|;|$)/i) ||
+    q.match(/(?:मेरा\s+)?नाम[:\s-]+([A-Za-z\u0900-\u097F\s]{2,35}?)(?:,|है|जन्म|तिथि|मूलांक|\.|;|$)/i) ||
+    q.match(/name[:\s-]+([A-Za-z\s]{2,35}?)(?:,|is|dob|birth|\.|;|$)/i) ||
+    q.match(/\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/) ||
     q.match(/\b([A-Z]{3,}(?:\s+[A-Z]{2,})?)\b/);
   if (nameMatch && nameMatch[1]) {
-    const candidate = nameMatch[1].trim();
-    if (!/^(AM|PM|DOB|DL|MH|UP|MP|RJ|GJ|HR|UK|BIHAR|INDIA)$/.test(candidate)) {
+    const candidate = nameMatch[1]
+      .replace(/^(?:मेरा\s+|आपका\s+|जातक\s+|का\s+|नाम\s+)+/i, "")
+      .trim();
+    if (
+      candidate.length >= 2 &&
+      !/^(AM|PM|DOB|DL|MH|UP|MP|RJ|GJ|HR|UK|BIHAR|INDIA|JUPITER|MARS|SUN|MOON|VENUS|SATURN|MERCURY)$/i.test(candidate)
+    ) {
       personName = candidate;
     }
   }
@@ -609,13 +616,23 @@ ${planePercentLines}
 • **सर्वोत्तम करियर/व्यापार क्षेत्र:** ${Array.from(new Set([...mulank.careers, ...bhagyank.careers])).slice(0, 8).join(", ")}।
 • **शुभ मित्र अंक:** **${mulank.friendlyNumbers.join(", ")}** | **शुभ तिथियां:** **${mulank.luckyDates.join(", ")}** | **शुभ वार:** ${mulank.luckyDays.join(", ")} | **शुभ रंग:** ${mulank.luckyColors.join(", ")}
 
-**५. नाम स्पेलिंग सुधार एवं अचूक अंक-ज्योतिष उपाय**
+**५. नाम स्पेलिंग सुधार, ६-सूत्रीय अंक-पर्ची एवं अचूक उपाय**
 • **नामांक स्पेलिंग परीक्षण:**
 ${spellingAdvice}
 • **भाग्य रत्न व रुद्राक्ष:** मुख्य रत्न: **${mulank.luckyGem}** (भाग्यांक सहायक रत्न: ${bhagyank.luckyGem}) | रुद्राक्ष: **${mulank.rudraksha}**
 • **सूर्य-जल रंग चिकित्सा:** ${mulank.waterBottleColor} में पेयजल भरकर धूप में चार्ज कर नित्य पिएं।
 • **सिद्ध अंक मंत्र जप:** *${mulank.mantra}* (नित्य ${mulank.japaCount})
-${missingRemediesList ? `• **अनुपस्थित अंकों (${loshu.missingNumbers.slice(0, 5).join(", ")}) को जागृत करने के उपाय:**\n${missingRemediesList}` : ""}
+${missingRemediesList ? `• **अनुपस्थित अंकों (${loshu.missingNumbers.slice(0, 5).join(", ")}) को जागृत करने के उपाय:**\n${missingRemediesList}\n` : ""}
+📋 **पारंपरिक अंक-ज्योतिष उपाय पर्ची (६-सूत्रीय विधान):**
+॥ श्री ॥
+श्री **${personName}** जी (मूलांक ${mulankNum} • भाग्यांक ${bhagyankNum} • नामांक ${chaldean.single})
+① **${mulank.luckyGem.split("(")[0].trim()}** + **${bhagyank.luckyGem.split("(")[0].trim()}** रत्न अथवा **${mulank.rudraksha}** धारण करें।
+② **${mulank.luckyDays[0] || "गुरुवार"}** का सात्विक उपवास एवं शुभ रंग (**${mulank.luckyColors.slice(0, 2).join(", ")}**) का प्रयोग करें।
+③ प्रतिदिन **${mulank.mantra}** का **${mulank.japaCount}** जप करें।
+④ बाएं हाथ की कलाई पर प्रतिदिन हरे/नीले पेन से अपना **कुआं एंजेल अंक (${kuaNum})** लिखें।
+⑤ गाय और कुत्ते को रोटी खिलावें तथा ${mulank.waterBottleColor} का सूर्य-चार्ज जल पिएं।
+⑥ लो-शू अनुपस्थित अंक (**${loshu.missingNumbers.slice(0, 3).join(", ") || "5"}**) संतुलन एवं नामांक स्पेलिंग (**संयुक्त अंक ${chaldean.compound}**) सिद्ध करें।
+                                          ॥ शुभम् ॥
 
 ---
 [अगले प्रश्न]:
@@ -872,9 +889,30 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
     panchangContext,
     kundaliContext,
     numerologyContext,
+    forceNumerology,
     chatHistory,
     systemPrompt,
   } = params;
+
+  const isNumQuery = Boolean(forceNumerology) || isNumerologyQuery(query);
+
+  // For Numerology queries (or when user is in the Ank Jyotish tab), ALWAYS run the deterministic
+  // Micro-Numerology Engine using the query + numerologyContext and NEVER jump to someone else's Kundali!
+  if (isNumQuery) {
+    const combinedNumQuery = numerologyContext
+      ? `${numerologyContext}\nप्रश्न: ${query}`
+      : query;
+    const numRes = synthesizeNumerologyVerdict(combinedNumQuery, activeKundali, panchang);
+    return {
+      ok: true,
+      text: numRes.text,
+      source: "local_vedic",
+      actionPayload: {
+        type: "open_numerology",
+        label: "अंक ज्योतिष व लो-शू चक्र देखें",
+      },
+    };
+  }
 
   // Automatically pick up saved Kundali if activeKundali prop was not passed
   const effectiveKundali =
@@ -882,24 +920,8 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
     tryParseKundaliFromQuery(query) ||
     (typeof window !== "undefined" ? getSavedKundaliProfiles()[0] || null : null);
 
-  const isNumQuery = isNumerologyQuery(query);
-
   // 1. ALWAYS compute our 100% deterministic Sookshma Ganit (Micro-Calculation) response first!
   const localRes = await generateUma({ query, kundali: effectiveKundali, panchang });
-
-  // For Numerology queries, the deterministic Micro-Numerology Engine has 100% exact Chaldean/Pythagorean
-  // letter-by-letter math, compound vibrations, 8 Lo Shu planes %, 4 Pinnacles, and digit-pair scans.
-  if (isNumQuery) {
-    return {
-      ok: true,
-      text: localRes.text,
-      source: "local_vedic",
-      actionPayload: localRes.actionPayload || {
-        type: "open_numerology",
-        label: "अंक ज्योतिष व लो-शू चक्र देखें",
-      },
-    };
-  }
 
   // Build automatic numerology + micro-astrology context for online Gemini AI
   let autoNumerologyCtx = numerologyContext || "";
