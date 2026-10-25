@@ -23,6 +23,9 @@ import {
   Sparkles,
   FileText,
   Award,
+  Loader2,
+  Eye,
+  AlertCircle,
 } from 'lucide-react';
 
 interface UpayParchiModalProps {
@@ -108,6 +111,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [blobFile, setBlobFile] = useState<File | null>(null);
+  const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -188,7 +195,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
    */
   const renderParchiCanvas = async (): Promise<HTMLCanvasElement> => {
     if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
+      try {
+        await Promise.race([
+          document.fonts.ready,
+          new Promise((resolve) => setTimeout(resolve, 350)),
+        ]);
+      } catch {}
     }
 
     const width = 1080;
@@ -357,17 +369,59 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const handleDownloadImage = async () => {
     try {
       setIsDownloading(true);
+      setDownloadStatus('HD पर्ची तैयार हो रही है...');
       const canvas = await renderParchiCanvas();
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      const cleanName = (salutation || 'Yajaman').replace(/\s+/g, '_');
-      link.download = `Upay_Parchi_${cleanName}.png`;
-      link.href = dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+
+      // Convert canvas to Blob (proper binary data, avoids huge data URL limits on mobile browsers)
+      const blob: Blob | null = await new Promise((resolve) => {
+        try {
+          canvas.toBlob((b) => resolve(b), 'image/png');
+        } catch {
+          resolve(null);
+        }
+      });
+
+      let downloadUrl = '';
+      const safeSalutation = (salutation || 'Yajaman')
+        .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+        .substring(0, 25);
+      const fileName = `Upay_Parchi_${safeSalutation}.png`;
+
+      if (blob) {
+        downloadUrl = URL.createObjectURL(blob);
+        try {
+          const file = new File([blob], fileName, { type: 'image/png' });
+          setBlobFile(file);
+        } catch {}
+      } else {
+        downloadUrl = canvas.toDataURL('image/png');
+      }
+
+      setGeneratedImageUrl(downloadUrl);
+
+      // Attempt standard browser download
+      try {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = downloadUrl;
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          try {
+            document.body.removeChild(link);
+          } catch {}
+        }, 1500);
+      } catch (clickErr) {
+        console.warn('Auto-click download error:', clickErr);
+      }
+
+      // Always open HD Preview Modal so mobile users can view/save/long-press without fail
+      setPreviewModalOpen(true);
+      setDownloadStatus(null);
     } catch (err) {
       console.error('Failed to download Upay Parchi PNG:', err);
+      setDownloadStatus('डाउनलोड में समस्या आई। पुनः प्रयास करें।');
     } finally {
       setIsDownloading(false);
     }
@@ -406,7 +460,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[140] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-3xl max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden">
         {/* Top Modal Bar */}
         <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] px-4 py-3 flex items-center justify-between border-b-2 border-[#B58738]">
@@ -780,8 +834,17 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               disabled={isDownloading}
               className="px-4 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:from-[#5C1414] hover:to-[#3E0A0A] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50"
             >
-              <Download className="w-4 h-4" />
-              <span>📥 HD पर्ची डाउनलोड (PNG)</span>
+              {isDownloading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
+                  <span>पर्ची बन रही है...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  <span>📥 HD पर्ची डाउनलोड (PNG)</span>
+                </>
+              )}
             </button>
 
             <button
@@ -796,6 +859,98 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* HD PNG Download & Save Preview Modal (100% Reliable for Android & Mobile WebViews) */}
+      {previewModalOpen && generatedImageUrl && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-3 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-lg max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#6A1717] to-[#4A0E0E] text-[#FFF4DE] px-4 py-3 flex items-center justify-between border-b border-[#8C6239]">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎉</span>
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base text-[#FFD88A]">
+                    आपकी HD उपाय पर्ची तैयार है!
+                  </h3>
+                  <p className="text-[11px] text-[#F3E2C4]/80">
+                    पारंपरिक लेटरहेड प्रारूप (1080×1360 HD PNG)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-amber-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mobile Helpful Hint & Image View */}
+            <div className="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col items-center">
+              <div className="w-full bg-amber-50/90 border border-amber-300 rounded-xl p-2.5 mb-3 text-xs text-[#5C3A21] flex items-start gap-2 shadow-xs">
+                <span className="text-base shrink-0">📱</span>
+                <div>
+                  <strong className="text-[#7A1D1D] font-bold block mb-0.5">
+                    मोबाइल उपयोगकर्ताओं के लिए सुझाव:
+                  </strong>
+                  यदि फाइल अपने आप डाउनलोड न हुई हो, तो नीचे दिख रही पर्ची पर अपनी उंगली <strong>२ सेकंड दबाकर रखें (Long-press)</strong> और <strong>'Download image' (छवि सहेजें)</strong> चुनें।
+                </div>
+              </div>
+
+              <div className="relative border-2 border-[#8C6239]/50 rounded-xl overflow-hidden shadow-lg max-h-[52vh] flex items-center justify-center bg-[#FAF6EE]">
+                <img
+                  src={generatedImageUrl}
+                  alt="ज्योतिषीय उपाय पर्ची"
+                  className="w-auto h-auto max-h-[52vh] max-w-full object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="bg-[#F4E8D1] px-4 py-3 border-t border-[#8C6239]/30 flex items-center justify-between gap-2 flex-wrap">
+              <a
+                href={generatedImageUrl}
+                download={`Upay_Parchi_${(salutation || 'Yajaman').replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')}.png`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 min-w-[130px] py-2.5 px-3 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:from-[#5C1414] hover:to-[#3E0A0A] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition text-center"
+              >
+                <Download className="w-4 h-4" />
+                <span>सीधे डाउनलोड करें</span>
+              </a>
+
+              {blobFile && navigator.share && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      if (blobFile) {
+                        await navigator.share({
+                          title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
+                          files: [blobFile],
+                        });
+                      }
+                    } catch {}
+                  }}
+                  className="py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>गैलरी / शेयर</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setPreviewModalOpen(false)}
+                className="py-2.5 px-4 bg-[#E6D7BC] hover:bg-[#D9C6A5] text-[#5C3A21] rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition"
+              >
+                पूर्ण / बंद करें
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>,
     document.body
   );
