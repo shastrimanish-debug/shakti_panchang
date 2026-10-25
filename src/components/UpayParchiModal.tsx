@@ -26,6 +26,7 @@ import {
   Loader2,
   Eye,
   AlertCircle,
+  ExternalLink,
 } from 'lucide-react';
 
 interface UpayParchiModalProps {
@@ -115,6 +116,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [blobFile, setBlobFile] = useState<File | null>(null);
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -366,57 +368,188 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     return canvas;
   };
 
+  // Multi-strategy download helper that reliably works on Android Chrome, WebViews, iOS, and PC
+  const triggerNativeDownload = (dataUrl: string, name: string) => {
+    setDownloadSuccess(true);
+    setTimeout(() => setDownloadSuccess(false), 3000);
+
+    // Strategy 1: Server-side attachment endpoint (Android native Download Manager captures Content-Disposition)
+    try {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/api/parchi/download';
+      form.style.display = 'none';
+
+      const imgInput = document.createElement('input');
+      imgInput.type = 'hidden';
+      imgInput.name = 'imageBase64';
+      imgInput.value = dataUrl;
+      form.appendChild(imgInput);
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'hidden';
+      nameInput.name = 'fileName';
+      nameInput.value = name;
+      form.appendChild(nameInput);
+
+      document.body.appendChild(form);
+      form.submit();
+      setTimeout(() => {
+        try {
+          document.body.removeChild(form);
+        } catch {}
+      }, 2000);
+    } catch (e) {
+      console.warn('Server download form failed:', e);
+    }
+
+    // Strategy 2: Client-side anchor click without target="_blank"
+    try {
+      const link = document.createElement('a');
+      link.download = name;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        try {
+          document.body.removeChild(link);
+        } catch {}
+      }, 1500);
+    } catch (clickErr) {
+      console.warn('Direct link click failed:', clickErr);
+    }
+  };
+
+  const handleOpenImageNewTab = (dataUrl: string, name: string) => {
+    try {
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${name}</title>
+  <style>
+    body {
+      margin: 0;
+      background: #1e1e1e;
+      color: #ffd88a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      box-sizing: border-box;
+      min-height: 100vh;
+    }
+    .tip {
+      background: #3b2014;
+      border: 1px solid #99622d;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      max-width: 520px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="tip">
+    📱 <strong>मोबाइल पर छवि सहेजने के लिए:</strong><br>
+    नीचे दिख रही पर्ची पर अपनी उंगली २ सेकंड दबाकर रखें (Long-press) और <strong>'Download image' (छवि डाउनलोड करें)</strong> चुनें।
+  </div>
+  <img src="${dataUrl}" alt="उमा ज्योतिषीय उपाय पर्ची" />
+</body>
+</html>`);
+        w.document.close();
+      }
+    } catch (e) {
+      console.warn('Failed to open window:', e);
+    }
+  };
+
+  const handleShareOrSaveToGallery = async (dataUrl: string, name: string) => {
+    try {
+      let fileToShare = blobFile;
+      if (!fileToShare) {
+        const res = await fetch(dataUrl);
+        const b = await res.blob();
+        fileToShare = new File([b], name, { type: 'image/png' });
+        setBlobFile(fileToShare);
+      }
+
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.share &&
+        fileToShare &&
+        navigator.canShare &&
+        navigator.canShare({ files: [fileToShare] })
+      ) {
+        await navigator.share({
+          title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
+          text: `॥ श्री ॥ उमा ज्योतिषीय उपाय पर्ची (${salutation})`,
+          files: [fileToShare],
+        });
+        return;
+      }
+
+      // If navigator.share without file is supported
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
+          text: buildPlainTextSlip(),
+        });
+        return;
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.warn('Share error:', err);
+      } else {
+        return;
+      }
+    }
+
+    // Fallback: WhatsApp share
+    openWhatsAppShare(buildPlainTextSlip());
+  };
+
   const handleDownloadImage = async () => {
     try {
       setIsDownloading(true);
       setDownloadStatus('HD पर्ची तैयार हो रही है...');
       const canvas = await renderParchiCanvas();
 
-      // Convert canvas to Blob (proper binary data, avoids huge data URL limits on mobile browsers)
-      const blob: Blob | null = await new Promise((resolve) => {
-        try {
-          canvas.toBlob((b) => resolve(b), 'image/png');
-        } catch {
-          resolve(null);
-        }
-      });
-
-      let downloadUrl = '';
+      // Convert to Base64 DataURL (for reliable long-press & inline rendering) and Blob File
+      const dataUrl = canvas.toDataURL('image/png');
       const safeSalutation = (salutation || 'Yajaman')
         .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
         .substring(0, 25);
       const fileName = `Upay_Parchi_${safeSalutation}.png`;
 
-      if (blob) {
-        downloadUrl = URL.createObjectURL(blob);
-        try {
-          const file = new File([blob], fileName, { type: 'image/png' });
-          setBlobFile(file);
-        } catch {}
-      } else {
-        downloadUrl = canvas.toDataURL('image/png');
-      }
-
-      setGeneratedImageUrl(downloadUrl);
-
-      // Attempt standard browser download
-      try {
-        const link = document.createElement('a');
-        link.download = fileName;
-        link.href = downloadUrl;
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
+      canvas.toBlob((blob) => {
+        if (blob) {
           try {
-            document.body.removeChild(link);
+            const file = new File([blob], fileName, { type: 'image/png' });
+            setBlobFile(file);
           } catch {}
-        }, 1500);
-      } catch (clickErr) {
-        console.warn('Auto-click download error:', clickErr);
-      }
+        }
+      }, 'image/png');
 
-      // Always open HD Preview Modal so mobile users can view/save/long-press without fail
+      setGeneratedImageUrl(dataUrl);
+
+      // Attempt automatic download (Server attachment + link click)
+      triggerNativeDownload(dataUrl, fileName);
+
+      // Always open HD Preview Modal so mobile users can view/save/share without fail
       setPreviewModalOpen(true);
       setDownloadStatus(null);
     } catch (err) {
@@ -435,15 +568,20 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
         canvas.toBlob((b) => resolve(b), 'image/png')
       );
 
+      const safeSalutation = (salutation || 'Yajaman')
+        .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+        .substring(0, 25);
+      const fileName = `Upay_Parchi_${safeSalutation}.png`;
+
       if (
         blob &&
         navigator.share &&
         navigator.canShare &&
         navigator.canShare({
-          files: [new File([blob], 'Upay_Parchi.png', { type: 'image/png' })],
+          files: [new File([blob], fileName, { type: 'image/png' })],
         })
       ) {
-        const file = new File([blob], 'Upay_Parchi.png', { type: 'image/png' });
+        const file = new File([blob], fileName, { type: 'image/png' });
         await navigator.share({
           title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
           text: buildPlainTextSlip(),
@@ -860,10 +998,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
         </div>
       </div>
 
-      {/* HD PNG Download & Save Preview Modal (100% Reliable for Android & Mobile WebViews) */}
+      {/* HD PNG Download & Save Preview Modal (100% Reliable for Android, Mobile WebViews, iOS & PC) */}
       {previewModalOpen && generatedImageUrl && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center p-3 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-lg max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-lg max-h-[95dvh] flex flex-col shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-[#6A1717] to-[#4A0E0E] text-[#FFF4DE] px-4 py-3 flex items-center justify-between border-b border-[#8C6239]">
               <div className="flex items-center gap-2">
@@ -887,65 +1025,120 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
             </div>
 
             {/* Mobile Helpful Hint & Image View */}
-            <div className="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col items-center">
-              <div className="w-full bg-amber-50/90 border border-amber-300 rounded-xl p-2.5 mb-3 text-xs text-[#5C3A21] flex items-start gap-2 shadow-xs">
-                <span className="text-base shrink-0">📱</span>
-                <div>
-                  <strong className="text-[#7A1D1D] font-bold block mb-0.5">
-                    मोबाइल उपयोगकर्ताओं के लिए सुझाव:
-                  </strong>
-                  यदि फाइल अपने आप डाउनलोड न हुई हो, तो नीचे दिख रही पर्ची पर अपनी उंगली <strong>२ सेकंड दबाकर रखें (Long-press)</strong> और <strong>'Download image' (छवि सहेजें)</strong> चुनें।
+            <div className="p-3 sm:p-4 overflow-y-auto flex-1 flex flex-col items-center select-auto">
+              {/* Status or instruction banner */}
+              {downloadSuccess ? (
+                <div className="w-full bg-emerald-50 border border-emerald-400 rounded-xl p-2.5 mb-3 text-xs text-emerald-900 flex items-center gap-2 shadow-xs animate-in fade-in">
+                  <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <div>
+                    <strong>डाउनलोड प्रारंभ हो गया है!</strong> अपने फोन के 'Downloads' फोल्डर या नोटिफिकेशन बार में देखें।
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="w-full bg-amber-50/95 border border-amber-300 rounded-xl p-2.5 mb-3 text-xs text-[#5C3A21] space-y-1 shadow-xs">
+                  <div className="flex items-center gap-1.5 font-bold text-[#7A1D1D]">
+                    <span>📱</span>
+                    <span>मोबाइल में सहेजने के आसान विकल्प:</span>
+                  </div>
+                  <ul className="text-[11px] space-y-0.5 pl-5 list-disc text-[#4A2610]">
+                    <li><strong>विकल्प १:</strong> नीचे '📥 फोन में सेव करें' बटन दबाएं।</li>
+                    <li><strong>विकल्प २:</strong> '📲 गैलरी / शेयर' दबाकर सीधे WhatsApp या Photos में सहेजें।</li>
+                    <li><strong>विकल्प ३:</strong> नीचे दिख रही पर्ची पर <strong>२ सेकंड उंगली दबाकर रखें (Long-press)</strong> और <strong>'Download image' (छवि डाउनलोड करें)</strong> चुनें।</li>
+                  </ul>
+                </div>
+              )}
 
-              <div className="relative border-2 border-[#8C6239]/50 rounded-xl overflow-hidden shadow-lg max-h-[52vh] flex items-center justify-center bg-[#FAF6EE]">
+              {/* HD Image Preview with Full Touch & Long-press Support */}
+              <div
+                className="relative border-2 border-[#8C6239]/50 rounded-xl overflow-hidden shadow-lg max-h-[50vh] flex items-center justify-center bg-[#FAF6EE] select-auto"
+                style={{ WebkitTouchCallout: 'default', userSelect: 'auto' }}
+              >
                 <img
                   src={generatedImageUrl}
                   alt="ज्योतिषीय उपाय पर्ची"
-                  className="w-auto h-auto max-h-[52vh] max-w-full object-contain"
+                  draggable={true}
+                  className="w-auto h-auto max-h-[50vh] max-w-full object-contain cursor-pointer select-auto"
+                  style={{
+                    WebkitTouchCallout: 'default',
+                    WebkitUserSelect: 'auto',
+                    userSelect: 'auto',
+                    touchAction: 'auto',
+                    pointerEvents: 'auto',
+                  }}
+                  title="लंबा दबाकर (Long-press) छवि सहेजें"
                 />
               </div>
+
+              <p className="text-[10px] text-[#7A1D1D]/75 mt-2 text-center">
+                💡 पर्ची पर लंबा दबाकर (Long-press) सीधे अपने फोन में सेव कर सकते हैं।
+              </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="bg-[#F4E8D1] px-4 py-3 border-t border-[#8C6239]/30 flex items-center justify-between gap-2 flex-wrap">
-              <a
-                href={generatedImageUrl}
-                download={`Upay_Parchi_${(salutation || 'Yajaman').replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')}.png`}
-                target="_blank"
-                rel="noopener noreferrer"
+            <div className="bg-[#F4E8D1] px-3 sm:px-4 py-3 border-t border-[#8C6239]/30 flex items-center justify-between gap-2 flex-wrap">
+              {/* Button 1: Native Phone Download */}
+              <button
+                type="button"
+                onClick={() => {
+                  const safeSal = (salutation || 'Yajaman')
+                    .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+                    .substring(0, 25);
+                  triggerNativeDownload(generatedImageUrl, `Upay_Parchi_${safeSal}.png`);
+                }}
                 className="flex-1 min-w-[130px] py-2.5 px-3 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:from-[#5C1414] hover:to-[#3E0A0A] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition text-center"
               >
-                <Download className="w-4 h-4" />
-                <span>सीधे डाउनलोड करें</span>
-              </a>
+                {downloadSuccess ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>सेव हो रहा है...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>📥 फोन में सेव करें</span>
+                  </>
+                )}
+              </button>
 
-              {blobFile && navigator.share && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      if (blobFile) {
-                        await navigator.share({
-                          title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
-                          files: [blobFile],
-                        });
-                      }
-                    } catch {}
-                  }}
-                  className="py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span>गैलरी / शेयर</span>
-                </button>
-              )}
+              {/* Button 2: Native Share & Save to Gallery / WhatsApp */}
+              <button
+                type="button"
+                onClick={() => {
+                  const safeSal = (salutation || 'Yajaman')
+                    .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+                    .substring(0, 25);
+                  handleShareOrSaveToGallery(generatedImageUrl, `Upay_Parchi_${safeSal}.png`);
+                }}
+                className="py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition"
+                title="फोन की गैलरी या WhatsApp पर भेजें"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>📲 गैलरी / शेयर</span>
+              </button>
 
+              {/* Button 3: Open in Clean Tab (for foolproof browser save) */}
+              <button
+                type="button"
+                onClick={() => {
+                  const safeSal = (salutation || 'Yajaman')
+                    .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+                    .substring(0, 25);
+                  handleOpenImageNewTab(generatedImageUrl, `Upay_Parchi_${safeSal}.png`);
+                }}
+                className="py-2.5 px-2.5 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1 cursor-pointer transition"
+                title="ब्राउज़र के अलग टैब में छवि खोलें"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">छवि खोलें</span>
+              </button>
+
+              {/* Button 4: Close Modal */}
               <button
                 type="button"
                 onClick={() => setPreviewModalOpen(false)}
-                className="py-2.5 px-4 bg-[#E6D7BC] hover:bg-[#D9C6A5] text-[#5C3A21] rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition"
+                className="py-2.5 px-3 bg-[#E6D7BC] hover:bg-[#D9C6A5] text-[#5C3A21] rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition"
               >
-                पूर्ण / बंद करें
+                पूर्ण / बंद
               </button>
             </div>
           </div>

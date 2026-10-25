@@ -1,13 +1,24 @@
 import express, { Request, Response } from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const portArgIdx = process.argv.indexOf("--port");
+  const cliPort = portArgIdx !== -1 && process.argv[portArgIdx + 1] ? Number(process.argv[portArgIdx + 1]) : null;
+  // The app dev server must always listen on port 3000 (DEFAULT_APP_PORT), not Nginx's external port 8080
+  const PORT = (cliPort && !isNaN(cliPort))
+    ? cliPort
+    : (Number(process.env.DEFAULT_APP_PORT || process.env.APP_PORT) || 3000);
 
-  app.use(express.json({ limit: "10mb" }));
+  const hostArgIdx = process.argv.indexOf("--host");
+  const cliHost = hostArgIdx !== -1 && process.argv[hostArgIdx + 1] ? process.argv[hostArgIdx + 1] : null;
+  const HOST = process.env.HOST || (cliHost ? cliHost : "0.0.0.0");
+
+  app.use(express.json({ limit: "20mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
   // Shared Gemini client utility on the server
   let aiClient: GoogleGenAI | null = null;
@@ -34,6 +45,29 @@ async function startServer() {
       hasGeminiKey: Boolean(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY),
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // Upay Parchi Direct Server-Side Download (100% reliable for Android WebView, iOS Safari, PWA)
+  app.post("/api/parchi/download", (req: Request, res: Response) => {
+    try {
+      const { imageBase64, fileName } = req.body;
+      if (!imageBase64 || typeof imageBase64 !== "string") {
+        return res.status(400).send("No image data provided");
+      }
+      const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(cleanBase64, "base64");
+      const rawName = (fileName || "Upay_Parchi.png").toString();
+      const safeName = rawName.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Content-Disposition", `attachment; filename="${safeName}"`);
+      res.setHeader("Content-Length", buffer.length.toString());
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      return res.end(buffer);
+    } catch (err: any) {
+      console.error("Error in /api/parchi/download:", err);
+      return res.status(500).send("Download error");
+    }
   });
 
   // UMA AI Vedic Astrologer Chat Endpoint
@@ -693,6 +727,23 @@ Return ONLY a valid JSON object with the following structure:
       appType: "spa",
     });
     app.use(vite.middlewares);
+
+    // Fallback SPA routing in dev mode (Express 5 compatible)
+    app.use(async (req, res, next) => {
+      const url = req.originalUrl;
+      if (url.startsWith("/api/")) {
+        return next();
+      }
+      try {
+        const templatePath = path.resolve(process.cwd(), "index.html");
+        let template = fs.readFileSync(templatePath, "utf-8");
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(template);
+      } catch (e: any) {
+        if (vite) vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
@@ -701,8 +752,8 @@ Return ONLY a valid JSON object with the following structure:
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Shakti Panchang server running on http://0.0.0.0:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`Shakti Panchang server running on http://${HOST}:${PORT}`);
   });
 }
 
