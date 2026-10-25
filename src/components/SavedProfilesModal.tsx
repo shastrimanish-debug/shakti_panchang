@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { KundaliData } from '../types';
-import { getSavedKundaliProfiles, deleteSavedKundaliProfile } from '../services/storage';
+import { getSavedKundaliProfiles, deleteSavedKundaliProfile, clearAllSavedKundaliProfiles } from '../services/storage';
 import { BookMarked, X, Trash2 } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { trRashi, trVedic } from '../i18n/vedicTranslate';
@@ -38,6 +38,13 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
     loadList();
   };
 
+  const handleClearAll = () => {
+    if (window.confirm('क्या आप सभी साफ़ करके एकदम नई शुरुआत करना चाहते हैं?')) {
+      clearAllSavedKundaliProfiles();
+      loadList();
+    }
+  };
+
   const formatDate = (d: Date) =>
     d.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'hi-IN', {
       day: 'numeric',
@@ -54,12 +61,23 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
             <BookMarked className="w-5 h-5 text-[#E69A33]" />
             <h3 className="font-bold text-base font-granth">{t('savedProfiles.title', 'સાચવેલી જન્મ કુંડળીઓ')}</h3>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 text-[#E5D2B8] hover:text-white rounded-lg cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {profiles.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="text-[11px] px-2 py-0.5 rounded bg-rose-900/60 hover:bg-rose-900 text-rose-100 border border-rose-400/40 cursor-pointer font-medium"
+                title="सभी प्रोफाइल हटाएं"
+              >
+                सभी साफ़ करें
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1 text-[#E5D2B8] hover:text-white rounded-lg cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* List */}

@@ -260,9 +260,13 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [isCreatingKundali, setIsCreatingKundali] = useState(false);
   const autoSubmittedPromptRef = useRef<string | null>(null);
 
+  const yajamanDisplayName = currentKundali?.name && !/manish|मनीष/i.test(currentKundali.name)
+    ? `**${currentKundali.name}** जी`
+    : 'प्रिय यजमान';
+
   const initialGreeting = currentKundali && liveMicroProfile
-    ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान **${currentKundali.name}** जी! मैं उमा हूँ — ५० वर्षों के अखंड पराशारी, जैमिनी, कृष्णमूर्ति (KP), षोडशवर्ग (D1–D60) व अंक-शास्त्र साधना से युक्त आपकी वैदिक आचार्य।\n\nमैंने आपकी जन्मपत्रिका का **सूक्ष्म गणित (Sookshma Ganit)** स्थापित कर लिया है:\n• **लग्न स्पष्ट:** ${liveMicroProfile.lagnaRashi} (${liveMicroProfile.lagnaDMS}) | **चंद्र स्पष्ट:** ${liveMicroProfile.moonRashi} (${liveMicroProfile.moonDMS}, नक्षत्र: ${liveMicroProfile.moonNakshatra} चरण ${liveMicroProfile.moonPada})\n• **विंशोत्तरी ४-स्तरीय सूक्ष्म दशा:** महादशा **${liveMicroProfile.mahadasha}** • अंतर्दशा **${liveMicroProfile.antardasha}** • प्रत्यंतर **${liveMicroProfile.pratyantardasha}** • सूक्ष्म दशा **${liveMicroProfile.sookshmadasha}**\n• **जैमिनी आत्मकारक (AK):** ${liveMicroProfile.jaiminiSummary.atmakaraka.split(' ')[0]} | **सर्वाष्टकवर्ग कुल बिंदु:** ${liveMicroProfile.ashtakvargaSummary.totalSav}\n\nआप करियर, धन, विवाह, कर्ज मुक्ति, स्वास्थ्य या अंक ज्योतिष का कोई भी प्रश्न पूछें — आपको अंश-कला-विकला व सूक्ष्म दशा सहित १००% सटीक उत्तर मिलेगा।`
-    : `॥ ॐ श्री गणेशाय नमः ॥\n॥ ॐ नमः शिवाय ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैं उमा हूँ — ५० वर्षों की कठिन वैदिक ज्योतिष (पराशरी, KP उपनक्षत्र, षोडशवर्ग, अष्टकवर्ग, तात्कालिक प्रश्न-कुण्डली) एवं अंक-शास्त्र साधना से युक्त आपकी आचार्य।\n\nआप मुझसे **अंक ज्योतिष (कॉल्डियन अक्षर-गणित, संयुक्त अंक, लो-शू ८-तल प्रतिशत, ४ जीवन शिखर, मोबाइल/वाहन अंक-युग्म)**, **कुण्डली फलादेश** अथवा **तात्कालिक प्रश्न-कुण्डली** से कोई भी प्रश्न सीधे पूछ सकते हैं (ऑनलाइन व ऑफ़लाइन १००% सटीक सूक्ष्म गणित सक्रिय है)।`;
+    ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${yajamanDisplayName}! मैंने आपकी जन्मपत्रिका का सूक्ष्म अवलोकन किया है।\n\nआपकी पत्रिका में आपका लग्न **${liveMicroProfile.lagnaRashi}** है और आपकी राशि **${liveMicroProfile.moonRashi}** (नक्षत्र: **${liveMicroProfile.moonNakshatra}**) है। वर्तमान समय में आपकी पत्रिका में **${liveMicroProfile.mahadasha}** की महादशा में **${liveMicroProfile.antardasha}** की अंतर्दशा और **${liveMicroProfile.pratyantardasha}** का विशेष प्रभाव सक्रिय है।\n\nविगत २-३ वर्षों के उतार-चढ़ाव, वर्तमान स्थिति और आने वाले समय की सटीक माह-दर-माह समय-सारणी के आधार पर आप करियर, धन, व्यापार, विवाह, परिवार अथवा स्वास्थ्य से जुड़ा कोई भी प्रश्न पूछें — मैं आपके साथ एक मार्गदर्शक की तरह हर पहलू पर विस्तार से बात करूँगी।`
+    : `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैंने आपकी जन्मपत्रिका का सूक्ष्म अवलोकन किया है।\n\nआप अपने जीवन, करियर, आर्थिक स्थिति, विवाह, परिवार अथवा स्वास्थ्य से जुड़ा कोई भी प्रश्न पूछें — मैं आपकी पत्रिका के आधार पर अतीत की स्थिति और आने वाले महीनों की सटीक समय-सारणी के साथ मार्गदर्शन करूँगी।`;
 
   // When an initialPrompt (like Ank Shastra) is passed, start with an empty message list so the prediction is right at the top
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
@@ -364,10 +368,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       tone: selectedTone,
       voiceStyle: "uma",
       onStart: () => setPlayingVoiceId(id),
-      onEnd: () => setPlayingVoiceId(null),
+      onEnd: () => setPlayingVoiceId((prev) => (prev === id ? null : prev)),
       onError: (err) => {
         console.warn('Uma voice playback error:', err);
-        setPlayingVoiceId(null);
+        setPlayingVoiceId((prev) => (prev === id ? null : prev));
       },
     });
   };

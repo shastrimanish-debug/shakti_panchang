@@ -114,7 +114,7 @@ export const AstrologerBrandingModal: React.FC<AstrologerBrandingModalProps> = (
                   type="text"
                   value={branding.name}
                   onChange={(e) => setBranding({ ...branding, name: e.target.value })}
-                  placeholder="उदा. ज्योतिषाचार्य मनीष शास्त्री"
+                  placeholder="उदा. आचार्य / ज्योतिषी का नाम"
                   className="w-full pl-9 pr-3 py-2 text-xs font-bold bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg text-[#3E2714] focus:outline-hidden focus:border-[#B56A00]"
                 />
               </div>
@@ -220,7 +220,7 @@ export const AstrologerBrandingModal: React.FC<AstrologerBrandingModalProps> = (
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-[#5C3A21] flex items-center gap-1.5 flex-wrap">
-                    <span>{branding.name || 'ज्योतिषाचार्य मनीष शास्त्री'}</span>
+                    <span>{branding.name || 'विद्वान ज्योतिषाचार्य'}</span>
                     <span className="text-[10px] bg-[#B56A00] text-white px-1.5 py-0.2 rounded font-medium">
                       {branding.title || 'वैदिक ज्योतिषी'}
                     </span>

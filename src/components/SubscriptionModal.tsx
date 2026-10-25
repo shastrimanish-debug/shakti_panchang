@@ -209,9 +209,11 @@ export function SubscriptionModal({ isOpen, onClose, reason, locked }: Subscript
                 <div className="pt-1 flex items-center justify-between text-[10px] text-[#8C6239] border-t border-[#8C6239]/20">
                   <a
                     className="flex items-center gap-1 underline"
-                    href="https://shastrimanish-debug.github.io/shakti_panchang/privacy.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#privacy"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alert('सनातन शक्ति पंचांग आपकी पूर्ण गोपनीयता व डेटा सुरक्षा सुनिश्चित करता है।');
+                    }}
                   >
                     <ShieldCheck className="w-3.5 h-3.5 text-[#B56A00]" />
                     गोपनीयता नीति

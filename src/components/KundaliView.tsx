@@ -235,10 +235,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [pdfSuccessInfo, setPdfSuccessInfo] = useState<PdfSuccessInfo | null>(null);
 
   // Ashtakoot Milan Boy & Girl Form
-  const [boyName, setBoyName] = useState('वर (श्री राम)');
+  const [boyName, setBoyName] = useState('');
   const [boyDob, setBoyDob] = useState('');
   const [boyTob, setBoyTob] = useState('');
-  const [girlName, setGirlName] = useState('कन्या (सीता)');
+  const [girlName, setGirlName] = useState('');
   const [girlDob, setGirlDob] = useState('');
   const [girlTob, setGirlTob] = useState('');
   const [isDownloadingMilanPdf, setIsDownloadingMilanPdf] = useState(false);

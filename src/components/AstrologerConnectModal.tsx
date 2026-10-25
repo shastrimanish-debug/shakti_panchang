@@ -27,10 +27,14 @@ export const AstrologerConnectModal: React.FC<AstrologerConnectModalProps> = ({
       return;
     }
     setSubmitted(true);
-    // Open WhatsApp with prefilled message to Pandit Manish Shastri
-    const phone = "919876543210"; // Placeholder for Acharya Manish Shastri
+    // Open WhatsApp with prefilled message to Astrologer
+    const phone = ""; // Astrologer phone placeholder
     const text = encodeURIComponent(`प्रणाम आचार्य जी! शक्ति पंचांग ऐप से परामर्श हेतु:\n\n${userQuery || 'मेरी जन्मपत्रिका व जीवन के संबंध में मार्गदर्शन प्रदान करें।'}`);
-    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+    if (phone) {
+      window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+    } else {
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
   };
 
   return (
@@ -52,7 +56,7 @@ export const AstrologerConnectModal: React.FC<AstrologerConnectModalProps> = ({
               आचार्य परामर्श केंद्र
             </h2>
             <p className="text-xs text-amber-800 dark:text-amber-300 font-bold">
-              सीधे आचार्य मनीष शास्त्री जी से जुड़ें
+              सीधे विद्वान ज्योतिषाचार्य जी से जुड़ें
             </p>
           </div>
         </div>

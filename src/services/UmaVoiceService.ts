@@ -390,8 +390,8 @@ class UmaVoiceService {
       return;
     }
 
-    // Step 1: Interrupt any previous active speech smoothly
-    this.stop();
+    // Step 1: Interrupt any previous active speech smoothly without firing idle notification
+    this.stop(false);
     const token = ++this.activeToken;
     this.unlockAudio();
 
@@ -697,7 +697,7 @@ class UmaVoiceService {
   /**
    * Stops all active speech across cloud audio, native Capacitor, and browser engine immediately.
    */
-  public stop(): void {
+  public stop(notify: boolean = true): void {
     this.activeToken++;
     this.clearKeepAlive();
 
@@ -731,12 +731,14 @@ class UmaVoiceService {
     }
 
     this.currentUtterance = null;
-    this.updateState({
-      isSpeaking: false,
-      isPaused: false,
-      currentText: null,
-      provider: 'idle',
-    });
+    if (notify) {
+      this.updateState({
+        isSpeaking: false,
+        isPaused: false,
+        currentText: null,
+        provider: 'idle',
+      });
+    }
   }
 
   /**

@@ -87,7 +87,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
   const handleShare = async () => {
     triggerHapticSelection();
     const shareTitle = `🕉️ ${loc.title} — ${shloka.source}`;
-    const shareText = `🕉️ *${loc.title}*\n\n🪔 *संस्कृत श्लोक:* \n"${shloka.sanskrit}"\n\n📖 *${loc.meaningLabel}*\n${loc.meaning}\n\n📚 *${chrome.source}* ${shloka.source}\n\n✨ *सनातन शक्ति पंचांग* से प्रतिदिन प्राप्त करें पावन सुभाषितम् व श्लोक:\nhttps://shastrimanish-debug.github.io/shakti_panchang/`;
+    const shareText = `🕉️ *${loc.title}*\n\n🪔 *संस्कृत श्लोक:* \n"${shloka.sanskrit}"\n\n📖 *${loc.meaningLabel}*\n${loc.meaning}\n\n📚 *${chrome.source}* ${shloka.source}\n\n✨ *सनातन शक्ति पंचांग* से प्रतिदिन प्राप्त करें पावन सुभाषितम् व श्लोक`;
 
     if (navigator.share) {
       try {

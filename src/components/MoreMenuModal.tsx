@@ -455,9 +455,11 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </span>
         </div>
         <a
-          href="https://shastrimanish-debug.github.io/shakti_panchang/privacy.html"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="#privacy"
+          onClick={(e) => {
+            e.preventDefault();
+            alert('सनातन शक्ति पंचांग आपकी गोपनीयता का पूर्ण सम्मान करता है। आपकी जन्म कुंडली व व्यक्तिगत विवरण केवल आपके उपकरण (लोकल स्टोरेज) में सुरक्षित रहते हैं।');
+          }}
           className="block text-center text-[11px] font-bold text-[#8C6239] underline pt-2"
         >
           {t('more.privacyPolicy', 'गोपनीयता नीति')}

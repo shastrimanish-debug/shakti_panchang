@@ -56,7 +56,7 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
 
   // Custom User Input States
-  const [inputName, setInputName] = useState<string>(activeKundali?.name || 'MANISH SHARMA');
+  const [inputName, setInputName] = useState<string>(activeKundali?.name || '');
   const [inputDay, setInputDay] = useState<number>(() => {
     if (activeKundali?.birthDate) {
       const d = new Date(activeKundali.birthDate);
@@ -81,7 +81,7 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
   const [gender, setGender] = useState<'male' | 'female'>('male');
 
   // Name Calc state
-  const [calcName, setCalcName] = useState<string>(activeKundali?.name || 'SHIV SHAKTI');
+  const [calcName, setCalcName] = useState<string>(activeKundali?.name || '');
   const [calcSystem, setCalcSystem] = useState<'chaldean' | 'pythagorean'>('chaldean');
 
   // Mobile / Vehicle Calc state

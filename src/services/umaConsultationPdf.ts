@@ -423,7 +423,7 @@ function drawPageFooter(
   ctx.font = 'bold 17px "Tiro Devanagari Hindi", serif';
   ctx.textAlign = 'left';
 
-  const astName = branding.enabled && branding.name ? branding.name : 'ज्योतिषाचार्य मनीष शास्त्री';
+  const astName = branding.enabled && branding.name ? branding.name : 'वैदिक ज्योतिषाचार्य';
   const astTitle =
     branding.enabled && branding.title ? branding.title : 'वैदिक ज्योतिषी एवं कर्मकांड मर्मज्ञ';
   const astSansthan =
@@ -473,7 +473,7 @@ export function formatWhatsAppConsultationMessage(params: {
     .replace(/#{1,6}\s?/g, '')
     .trim();
 
-  const astName = branding.enabled && branding.name ? branding.name : 'ज्योतिषाचार्य मनीष शास्त्री';
+  const astName = branding.enabled && branding.name ? branding.name : 'वैदिक ज्योतिषाचार्य';
   const astTitle = branding.enabled && branding.title ? branding.title : 'वैदिक ज्योतिषाचार्य';
   const astPhone = branding.enabled && branding.phone ? branding.phone : '';
   const astSansthan =

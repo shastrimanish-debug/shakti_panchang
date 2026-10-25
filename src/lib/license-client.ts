@@ -29,7 +29,7 @@ const STORAGE_KEYS = {
   TAMPER_FLAG: "sp_tamper_detected_v1",
 };
 
-const SECRET_SALT = "ShaktiPanchang@VedicAstrology2026!ManishShastri";
+const SECRET_SALT = "ShaktiPanchang@VedicAstrology2026!MasterKey";
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 Full Days (168 Hours)
 
 type NativeLicense = {

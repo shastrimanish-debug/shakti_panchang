@@ -967,18 +967,7 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
         const data = await resp.json();
         if (data?.ok && typeof data.text === "string" && data.text.trim()) {
           const aiText = data.text.trim();
-          // Verify that the AI response contains micro-calculations; if it omitted the micro-table,
-          // append the exact Sookshma Ganit Section 2 from localRes so the user NEVER loses micro-precision!
-          const hasMicroDegrees = /°|उपनक्षत्र|Sub-Lord|सर्वाष्टकवर्ग|प्रत्यंतर|सूक्ष्म दशा/.test(aiText);
           let finalText = aiText;
-          if (!hasMicroDegrees && localRes.text.includes("**२.")) {
-            const sec2Match = localRes.text.match(/\*\*२\.[\s\S]*?(?=\n\*\*३\.|\n---|$)/);
-            if (sec2Match) {
-              finalText = `${aiText.split("---")[0].trim()}\n\n---\n📜 **सूक्ष्म गणितीय प्रमाण पत्रिका (Sookshma Ganit Verification):**\n${sec2Match[0].trim()}\n\n---${
-                aiText.includes("[अगले प्रश्न]") ? "\n" + aiText.slice(aiText.indexOf("[अगले प्रश्न]")) : ""
-              }`;
-            }
-          }
 
           if (!finalText.includes("①")) {
             const parchi = generateTraditionalUpayParchi(effectiveKundali, panchang);

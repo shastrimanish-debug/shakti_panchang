@@ -43,29 +43,42 @@ export function getSavedKundaliProfiles(): KundaliData[] {
     const raw = localStorage.getItem(STORAGE_KEY_PROFILES);
     if (raw) {
       const arr = JSON.parse(raw);
-      return arr.map((p: any) => ({
-        ...p,
-        birthDate: new Date(p.birthDate),
-        calculatedAt: new Date(p.calculatedAt || Date.now()),
-        dashaPeriods: (p.dashaPeriods || []).map((d: any) => ({
-          ...d,
-          startDate: new Date(d.startDate),
-          endDate: new Date(d.endDate),
-        })),
-        antarPeriods: (p.antarPeriods || []).map((a: any) => ({
-          ...a,
-          startDate: new Date(a.startDate),
-          endDate: new Date(a.endDate),
-        })),
-        pratyantarPeriods: (p.pratyantarPeriods || []).map((pr: any) => ({
-          ...pr,
-          startDate: new Date(pr.startDate),
-          endDate: new Date(pr.endDate),
-        })),
-      }));
+      return arr
+        .filter((p: any) => {
+          if (!p || typeof p.name !== 'string') return false;
+          // Clean out any legacy developer/test profile names
+          const n = p.name.trim().toLowerCase();
+          return !n.includes('manish') && !n.includes('मनीष');
+        })
+        .map((p: any) => ({
+          ...p,
+          birthDate: new Date(p.birthDate),
+          calculatedAt: new Date(p.calculatedAt || Date.now()),
+          dashaPeriods: (p.dashaPeriods || []).map((d: any) => ({
+            ...d,
+            startDate: new Date(d.startDate),
+            endDate: new Date(d.endDate),
+          })),
+          antarPeriods: (p.antarPeriods || []).map((a: any) => ({
+            ...a,
+            startDate: new Date(a.startDate),
+            endDate: new Date(a.endDate),
+          })),
+          pratyantarPeriods: (p.pratyantarPeriods || []).map((pr: any) => ({
+            ...pr,
+            startDate: new Date(pr.startDate),
+            endDate: new Date(pr.endDate),
+          })),
+        }));
     }
   } catch {}
   return [];
+}
+
+export function clearAllSavedKundaliProfiles(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY_PROFILES);
+  } catch {}
 }
 
 export function saveKundaliProfile(profile: KundaliData): void {
@@ -405,11 +418,11 @@ export function getAstrologerBranding(): AstrologerBranding {
   } catch {}
   return {
     enabled: false,
-    name: 'ज्योतिषाचार्य मनीष शास्त्री',
-    title: 'वैदिक ज्योतिषी एवं कर्मकांड मर्मज्ञ',
+    name: '',
+    title: 'वैदिक ज्योतिषी',
     phone: '',
-    city: 'वडोदरा (गुजरात)',
-    sansthan: 'श्री शक्ति ज्योतिष एवं कर्मकांड संस्थान',
+    city: '',
+    sansthan: '',
     specialization: 'जन्म पत्रिका, विवाह मेलापक, वास्तु एवं अनुष्ठान',
   };
 }

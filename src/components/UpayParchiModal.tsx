@@ -83,11 +83,11 @@ function loadParchiHeader(): ParchiHeaderConfig {
     }
   } catch {}
   return {
-    astrologerName: branding.name || 'पं. मनीष शास्त्री (उमा पीठ)',
+    astrologerName: branding.name || 'वैदिक ज्योतिषी (उमा पीठ)',
     qualification: 'M.A., Ph.D (संस्कृत)',
     designation: branding.title || 'ज्योतिषी, याज्ञिक एवं वास्तुविद',
     mobile: branding.phone || '',
-    address: branding.city || 'राजपुरा, बुरहानपुर (म.प्र.)',
+    address: branding.city || 'काशी / उज्जैन वैदिक परम्परा',
   };
 }
 
@@ -147,7 +147,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   };
 
   const handleLoadExampleTemplate = () => {
-    setSalutation(activeKundali?.name ? `श्री ${activeKundali.name} भाई` : 'श्री मनीष भाई');
+    setSalutation(activeKundali?.name ? `श्री ${activeKundali.name} जी` : 'श्री यजमान जी');
     setPoints([
       'मोती + माणिक रत्न धारण करें।',
       'रविवार का उपवास करें।',
@@ -571,7 +571,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     type="text"
                     value={salutation}
                     onChange={(e) => setSalutation(e.target.value)}
-                    placeholder="उदा. श्री मनीष भाई"
+                    placeholder="उदा. श्री यजमान जी"
                     className="w-full sm:w-80 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-sm font-bold text-[#162C6A]"
                   />
                 </div>

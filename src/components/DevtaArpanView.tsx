@@ -125,7 +125,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
   };
 
   const handleShareWhatsApp = (deityName: string, item: DevtaOfferingItem) => {
-    const text = `🪔 *${deityName} — देवता अर्पण फल* 🪔\n\n📌 *सामग्री:* ${item.action_text}\n✨ *प्राप्त फल:* ${item.highlighted_benefit}\n${item.mantra ? `ॐ *मंत्र:* ${item.mantra}\n` : ''}${item.best_time ? `⏰ *श्रेष्ठ काल:* ${item.best_time}\n` : ''}\n🔗 *सनातन शक्ति पंचांग* — https://shastrimanish-debug.github.io/shakti_panchang/`;
+    const text = `🪔 *${deityName} — देवता अर्पण फल* 🪔\n\n📌 *सामग्री:* ${item.action_text}\n✨ *प्राप्त फल:* ${item.highlighted_benefit}\n${item.mantra ? `ॐ *मंत्र:* ${item.mantra}\n` : ''}${item.best_time ? `⏰ *श्रेष्ठ काल:* ${item.best_time}\n` : ''}\n✨ *सनातन शक्ति पंचांग*`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };

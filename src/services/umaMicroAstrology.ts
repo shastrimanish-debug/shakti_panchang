@@ -584,13 +584,13 @@ export function buildMicroAstrologyProfile(
     moonDMS: moonDetail?.formattedDMS || '15° 00\' 00"',
     moonNakshatra: k.nakshatra,
     moonPada: k.charan || '1',
-    mahadasha: activeMahaObj?.planet || k.mahadasha,
+    mahadasha: activeMahaObj?.planet || k.mahadasha || 'गुरु',
     mahaStart: fmtDateHindi(activeMahaObj?.startDate),
     mahaEnd: fmtDateHindi(activeMahaObj?.endDate),
-    antardasha: activeAntarObj?.antar || k.antardasha,
+    antardasha: activeAntarObj?.antar || k.antardasha || 'शनि',
     antarStart: fmtDateHindi(activeAntarObj?.startDate),
     antarEnd: fmtDateHindi(activeAntarObj?.endDate),
-    pratyantardasha: activePratyantarObj?.pratyantar || k.pratyantardasha,
+    pratyantardasha: activePratyantarObj?.pratyantar || k.pratyantardasha || 'बुध',
     pratyantarStart: fmtDateHindi(activePratyantarObj?.startDate),
     pratyantarEnd: fmtDateHindi(activePratyantarObj?.endDate),
     sookshmadasha: sookshmaName,
@@ -603,15 +603,15 @@ export function buildMicroAstrologyProfile(
     keyAfflictions: Array.from(new Set(keyAfflictions)),
     keyStrengths: Array.from(new Set(keyStrengths)),
     jaiminiSummary: {
-      atmakaraka: `${jaiminiData.atmakaraka.planet} (${jaiminiData.atmakaraka.rashi} ${formatExactDMS(jaiminiData.atmakaraka.degreeInRashi)}, भाव ${jaiminiData.atmakaraka.house})`,
-      amatyakaraka: `${jaiminiData.amatyakaraka.planet} (${jaiminiData.amatyakaraka.rashi} ${formatExactDMS(jaiminiData.amatyakaraka.degreeInRashi)}, भाव ${jaiminiData.amatyakaraka.house})`,
+      atmakaraka: jaiminiData.atmakaraka ? `${jaiminiData.atmakaraka.planet} (${jaiminiData.atmakaraka.rashi} ${formatExactDMS(jaiminiData.atmakaraka.degreeInRashi)}, भाव ${jaiminiData.atmakaraka.house})` : 'सूर्य (लग्न)',
+      amatyakaraka: jaiminiData.amatyakaraka ? `${jaiminiData.amatyakaraka.planet} (${jaiminiData.amatyakaraka.rashi} ${formatExactDMS(jaiminiData.amatyakaraka.degreeInRashi)}, भाव ${jaiminiData.amatyakaraka.house})` : 'गुरु (कर्म)',
       darakaraka: dkKaraka ? `${dkKaraka.planet} (${dkKaraka.rashi} ${formatExactDMS(dkKaraka.degreeInRashi)}, भाव ${dkKaraka.house})` : 'शुक्र',
       gnatikaraka: gkKaraka ? `${gkKaraka.planet} (${gkKaraka.rashi}, भाव ${gkKaraka.house})` : 'मंगल',
-      karakamshaRashi: jaiminiData.karakamshaRashi,
-      arudhaLagna: `${jaiminiData.arudhaLagnaRashi} (भाव ${jaiminiData.arudhaLagnaHouse})`,
-      upapadaLagna: `${jaiminiData.upapadaLagnaRashi} (भाव ${jaiminiData.upapadaLagnaHouse})`,
-      charaMaha: `${jaiminiData.currentCharaMaha.rashi} (${fmtDateHindi(jaiminiData.currentCharaMaha.startDate)} – ${fmtDateHindi(jaiminiData.currentCharaMaha.endDate)})`,
-      charaAntar: `${jaiminiData.currentCharaAntar.rashi} (${fmtDateHindi(jaiminiData.currentCharaAntar.startDate)} – ${fmtDateHindi(jaiminiData.currentCharaAntar.endDate)})`,
+      karakamshaRashi: jaiminiData.karakamshaRashi || k.lagnaRashi || 'मेष',
+      arudhaLagna: `${jaiminiData.arudhaLagnaRashi || k.lagnaRashi || 'मेष'} (भाव ${jaiminiData.arudhaLagnaHouse || 1})`,
+      upapadaLagna: `${jaiminiData.upapadaLagnaRashi || 'तुला'} (भाव ${jaiminiData.upapadaLagnaHouse || 7})`,
+      charaMaha: jaiminiData.currentCharaMaha ? `${jaiminiData.currentCharaMaha.rashi} (${fmtDateHindi(jaiminiData.currentCharaMaha.startDate)} – ${fmtDateHindi(jaiminiData.currentCharaMaha.endDate)})` : 'मेष',
+      charaAntar: jaiminiData.currentCharaAntar ? `${jaiminiData.currentCharaAntar.rashi} (${fmtDateHindi(jaiminiData.currentCharaAntar.startDate)} – ${fmtDateHindi(jaiminiData.currentCharaAntar.endDate)})` : 'सिंह',
     },
     ashtakvargaSummary: {
       totalSav: ashtakData.totalPoints,
@@ -1122,6 +1122,129 @@ export function detectConsultationTopic(query: string): TopicInsight {
 }
 
 /**
+ * Computes an authentic astrological evaluation of the native's past 2-3 years experience
+ * based on actual past Dasha/Antardasha lord, house placement, dignity, and Ashtakavarga SAV points.
+ * Ensures that if past periods were auspicious (Kendra/Trikona, exalted/own sign, SAV >= 28),
+ * golden growth / promotions / auspicious events are reported instead of assuming struggle.
+ */
+export function calculatePastYearsExperience(
+  k: KundaliData,
+  profile: MicroAstrologyProfile,
+  pastSpan: string,
+  baseDate: Date = new Date()
+): {
+  category: 'auspicious' | 'mixed' | 'challenging';
+  pastMaha: string;
+  pastAntar: string;
+  houseNum: number;
+  dignity: string;
+  favorableScore: number;
+  pastSummaryText: string;
+} {
+  const currentYear = baseDate.getFullYear();
+  const pastTargetDate = new Date(baseDate);
+  pastTargetDate.setFullYear(currentYear - 2); // 2 years ago reference target
+
+  // 1. Locate active Mahadasha & Antardasha during past 2-3 years
+  let pastMaha = profile.mahadasha;
+  if (k.dashaPeriods && k.dashaPeriods.length > 0) {
+    const foundMaha = k.dashaPeriods.find(
+      (d) => pastTargetDate >= new Date(d.startDate) && pastTargetDate < new Date(d.endDate)
+    );
+    if (foundMaha) pastMaha = foundMaha.planet;
+  }
+
+  let pastAntar = profile.antardasha;
+  if (k.antarPeriods && k.antarPeriods.length > 0) {
+    const foundAntar = k.antarPeriods.find(
+      (a) => pastTargetDate >= new Date(a.startDate) && pastTargetDate < new Date(a.endDate)
+    );
+    if (foundAntar) {
+      pastAntar = foundAntar.antar;
+      pastMaha = foundAntar.maha || pastMaha;
+    }
+  }
+
+  // 2. Evaluate the active planetary lord's placement, dignity and SAV points
+  const activeLordName = pastAntar || pastMaha || 'गुरु';
+  const planetDetail = profile.planets[activeLordName] || profile.planets['गुरु'];
+  const houseNum = planetDetail ? planetDetail.house : 1;
+  const houseInfo = profile.houseLords.find((h) => h.house === houseNum) || profile.houseLords[0];
+  const savPoints = houseInfo?.savBindus ?? (profile.ashtakvargaSummary.houseSav[houseNum] || 28);
+  const dignity = planetDetail?.dignity || 'सामान्य';
+
+  // Dignity & Placement factors
+  const isNaturalBenefic = ['गुरु', 'शुक्र', 'बुध', 'चंद्र'].includes(activeLordName);
+  const isKendraOrTrikona = [1, 4, 5, 7, 9, 10].includes(houseNum);
+  const isDhanaOrLabha = [2, 11].includes(houseNum);
+  const isDusthana = [6, 8, 12].includes(houseNum);
+  const isExaltedOrOwn = dignity === 'उच्च' || dignity === 'स्वक्षेत्र';
+  const isDebilitated = dignity === 'नीच';
+  const isCombust = Boolean(planetDetail?.isCombust);
+  const isVargottama = Boolean(planetDetail?.isVargottama);
+
+  // Check Sade Sati during that period
+  const isSadeSatiActive =
+    profile.sadeSatiSummary.includes('शिखर चरण') ||
+    profile.sadeSatiSummary.includes('मध्य चरण') ||
+    profile.sadeSatiSummary.includes('प्रभावी');
+
+  // 3. Compute objective astrological strength score (0 to 100)
+  let favorableScore = 50;
+  if (isExaltedOrOwn) favorableScore += 22;
+  if (isVargottama) favorableScore += 8;
+  if (isNaturalBenefic) favorableScore += 8;
+  if (isKendraOrTrikona) favorableScore += 16;
+  if (isDhanaOrLabha) favorableScore += 14;
+
+  if (savPoints >= 30) favorableScore += 14;
+  else if (savPoints >= 28) favorableScore += 8;
+  else if (savPoints < 25) favorableScore -= 14;
+
+  if (isDusthana && houseNum !== 6) favorableScore -= 20; // 6th can give victory over competition
+  else if (houseNum === 6) favorableScore -= 6;
+  if (isDebilitated) favorableScore -= 24;
+  if (isCombust) favorableScore -= 12;
+  if (isSadeSatiActive) favorableScore -= 10;
+
+  let category: 'auspicious' | 'mixed' | 'challenging';
+  let pastSummaryText = '';
+
+  if (favorableScore >= 62) {
+    category = 'auspicious';
+    pastSummaryText =
+      `आपकी जन्मपत्रिका की सूक्ष्म गणना के अनुसार विगत २-३ वर्षों (विशेष रूप से ${pastSpan}) का समय आपके लिए काफी सकारात्मक, प्रगतिशील और भाग्योदयकारी सिद्ध हुआ है। ` +
+      `उस अवधि में आपकी कुण्डली में सक्रिय **${pastMaha}–${pastAntar}** की शुभ स्थिति (${houseNum}वें भाव, ${dignity === 'उच्च' ? 'उच्च राशिगत' : dignity === 'स्वक्षेत्र' ? 'स्वक्षेत्री बली' : 'शुभ भावगत'} एवं अष्टकवर्ग में ${savPoints} बिंदुओं का सुदृढ़ बल) के कारण ` +
+      `आपको कार्यक्षेत्र में मान-सम्मान, पदोन्नति अथवा नए आर्थिक स्रोत बनने के शुभ योग प्राप्त हुए। ` +
+      `परिवार में किसी शुभ/मांगलिक प्रसंग या सुखद आयोजन का वातावरण बना अथवा कोई महत्वपूर्ण कार्य सफलतापूर्वक आगे बढ़ा। ` +
+      `उस समय लिए गए आपके विवेकपूर्ण निर्णयों ने आपके भविष्य की एक सुदृढ़ नींव तैयार की।`;
+  } else if (favorableScore <= 40) {
+    category = 'challenging';
+    pastSummaryText =
+      `आपकी जन्मपत्रिका की सूक्ष्म गणना के अनुसार विगत २-३ वर्षों (विशेष रूप से ${pastSpan}) का समय ग्रहों के संक्रमण एवं **${pastMaha}–${pastAntar}** के प्रभाव से थोड़ा संघर्षपूर्ण और मानसिक कशमकश से भरा रहा है। ` +
+      `इस कालखंड में आपने जितनी निष्ठा और अथक परिश्रम से प्रयास किए, परिस्थितियों और गोचरीय अवरोधों के कारण उनका तुरंत वैसा प्रतिफल नहीं मिल पाया जैसा आप चाहते थे। ` +
+      `कार्यक्षेत्र में बार-बार बाधाएं, किसी अपने से वैचारिक मतभेद, या अंतिम चरण में काम अटकने जैसी स्थितियां सामने आईं। ` +
+      `किंतु आपके लग्न बल और आत्म-धैर्य ने आपको हर संकट में संभाले रखा और आप हर चुनौती से और अधिक दृढ़ होकर निकले।`;
+  } else {
+    category = 'mixed';
+    pastSummaryText =
+      `आपकी जन्मपत्रिका की वास्तविक गणना के अनुसार विगत २-३ वर्षों (विशेष रूप से ${pastSpan}) का समय मिला-जुला और नए उत्तरदायित्वों से परिपूर्ण रहा है। ` +
+      `उस समय आपकी पत्रिका में **${pastMaha}–${pastAntar}** के प्रभाव से यह समय विश्राम का नहीं, बल्कि निरंतर पुरुषार्थ, कार्य या स्थान में परिवर्तन और बड़े उत्तरदायित्व निभाने का रहा। ` +
+      `यद्यपि कार्यभार अधिक रहने से भागदौड़ और मानसिक व्यस्तता बनी रही, किंतु आपके धैर्य और सूझबूझ ने किसी प्रकार का बड़ा नुकसान नहीं होने दिया और आपकी स्थिति में निरंतर परिपक्वता व स्थिरता बनी रही।`;
+  }
+
+  return {
+    category,
+    pastMaha,
+    pastAntar,
+    houseNum,
+    dignity,
+    favorableScore,
+    pastSummaryText,
+  };
+}
+
+/**
  * Answers queries dynamically using DEEP micro-level astronomical calculations:
  * - Exact DMS (अंश° कला' विकला") of Lagna & Planets
  * - 4-Level Vimshottari Mahadasha -> Antardasha -> Pratyantardasha -> Sookshma Dasha with exact dates
@@ -1217,100 +1340,65 @@ export function synthesizeDynamicMicroVerdict(
   if ([6, 8, 12].includes(houseInfo.lordPlacementHouse) && targetHouseNum !== 6 && targetHouseNum !== 12) strengthScore -= 3;
   strengthScore = Math.min(97, Math.max(76, strengthScore));
 
-  // 1. EXECUTIVE TAKEAWAY (त्वरित सूक्ष्म गणितीय फलादेश)
-  const executiveSummary =
-    `कल्याणमस्तु यजमान **${yajaman}** जी! आपकी **${profile.lagnaRashi} लग्न (${profile.lagnaDMS})** एवं **${profile.moonRashi} राशि (${profile.moonNakshatra} नक्षत्र, चरण ${profile.moonPada})** की सूक्ष्म गणना के अनुसार आपके प्रश्न *«${topic.title}»* का मुख्य विचार **भाव ${targetHouseNum} (${houseInfo.sign})** से होता है। ` +
-    `इस भाव के स्वामी **${houseInfo.lord}** ${houseLordPlanet ? `${houseLordPlanet.rashi} राशि (${houseLordPlanet.formattedDMS}) में ${houseInfo.lordPlacementHouse}वें भाव में` : `भाव ${houseInfo.lordPlacementHouse} में`} स्थित हैं, **KP कस्प उपनक्षत्र स्वामी (Sub-Lord) ${houseInfo.kpCuspSubLord}** हैं तथा इस भाव में **सर्वाष्टकवर्ग के ${targetSav} बिंदु** हैं। ` +
-    `वर्तमान **${profile.mahadasha}–${profile.antardasha}–${profile.pratyantardasha}–${profile.sookshmadasha}** सूक्ष्म दशा एवं **${topic.vargaKey}** वर्ग बल से यह कार्य **${strengthScore}% गणितीय अनुकूलता** के साथ आगामी **${windows.nearTimeline}** (शिखर काल: **${windows.peakMonth}**) में सिद्ध होगा।`;
+  // Human-like living astrologer synthesis
+  const hasCustomName = Boolean(k.name && k.name.trim() && !/manish|मनीष/i.test(k.name));
+  const salutation = hasCustomName ? `**${k.name.trim()}** जी` : 'प्रिय यजमान';
 
-  // 2. DEEP MICRO GRAH-DASHA, KP, SHODASHVARGA, ASHTAKAVARGA & JAIMINI ANALYSIS
-  let dashaSection = `• **१. लग्न, चंद्र व नक्षत्र स्पष्ट (अंश-कला-विकला):**\n`;
-  dashaSection += `  - **लग्न स्पष्ट:** ${profile.lagnaRashi} राशि **${profile.lagnaDMS}** | लग्नेश **${profile.lagnaLord}** भाव ${profile.lagnaLordHouse} में (${lagnaLordPlanet?.rashi || ''} ${lagnaLordPlanet?.formattedDMS || ''}, ${lagnaLordPlanet?.avastha || 'युवा अवस्था'}${lagnaLordPlanet?.isVargottama ? ', **वर्गोत्तम**' : ''})।\n`;
-  dashaSection += `  - **चंद्र स्पष्ट:** ${profile.moonRashi} राशि **${profile.moonDMS}** | नक्षत्र: **${profile.moonNakshatra} (चरण ${profile.moonPada}, नक्षत्र स्वामी: ${ profile.planets['चंद्र']?.nakshatraLord || 'गुरु'})**।\n\n`;
+  // 1. Warm Greeting & Basic Identification
+  const greetingBlock =
+    `॥ ॐ श्री गणेशाय नमः ॥\n\n` +
+    `सदा कल्याण हो, ${salutation}! मैंने आपकी जन्मपत्रिका का सूक्ष्म अवलोकन किया है।\n\n` +
+    `आपकी पत्रिका में आपका लग्न **${profile.lagnaRashi}** है और आपकी चंद्र राशि **${profile.moonRashi}** (नक्षत्र: **${profile.moonNakshatra}**) है। ` +
+    `इस समय आपकी पत्रिका में **${profile.mahadasha}** की महादशा चल रही है, जिसके अंतर्गत **${profile.antardasha}** की अंतर्दशा और **${profile.pratyantardasha}** का विशेष प्रभाव सक्रिय है।`;
 
-  dashaSection += `• **२. विंशोत्तरी ४-स्तरीय सूक्ष्म दशा काल-चक्र (Exact Dasha Timelines):**\n`;
-  dashaSection += `  - **महादशा (MD):** **${profile.mahadasha}** (${profile.mahaStart} से ${profile.mahaEnd}) — भाव ${mahaLordPlanet?.house || 1} में (${mahaLordPlanet?.rashi || ''} ${mahaLordPlanet?.formattedDMS || ''}, KP Sub-Lord: **${mahaLordPlanet?.kpSubLord || profile.mahadasha}**)\n`;
-  dashaSection += `  - **अंतर्दशा (AD):** **${profile.antardasha}** (${profile.antarStart} से ${profile.antarEnd}) — भाव ${antarLordPlanet?.house || 1} में (${antarLordPlanet?.rashi || ''} ${antarLordPlanet?.formattedDMS || ''}, नक्षत्र: ${antarLordPlanet?.nakshatra || ''} चरण ${antarLordPlanet?.pada || 1})\n`;
-  dashaSection += `  - **प्रत्यंतर दशा (PD):** **${profile.pratyantardasha}** (${profile.pratyantarStart} से ${profile.pratyantarEnd}) — भाव ${pratyantarLordPlanet?.house || 1} में (${pratyantarLordPlanet?.rashi || ''} ${pratyantarLordPlanet?.formattedDMS || ''})\n`;
-  dashaSection += `  - **सूक्ष्म दशा (SD - Sookshma):** **${profile.sookshmadasha}** (${profile.sookshmaStart} से ${profile.sookshmaEnd}) — भाव ${sookshmaLordPlanet?.house || 1} से तात्कालिक फल सक्रिय।\n\n`;
+  // 2. Past 2-3 Years Experience (अतीत के २-३ वर्षों का यथार्थ — जन्मकुंडली के वास्तविक गणित व दशा के आधार पर)
+  const pastEval = calculatePastYearsExperience(k, profile, windows.pastSpan, baseDate);
+  const pastBlock = pastEval.pastSummaryText;
 
-  dashaSection += `• **३. प्रश्न सम्बद्ध भाव (${houseInfo.houseName}) एवं KP उपनक्षत्र (Sub-Lord) गणित:**\n`;
-  dashaSection += `  - **भावेश (House Lord):** ${targetHouseNum}वें भाव में **${houseInfo.sign}** राशि है जिसके स्वामी **${houseInfo.lord}** जन्म कुण्डली के **${houseInfo.lordPlacementHouse}वें भाव** में **${houseLordPlanet?.formattedDMS || '15°'}** अंश पर (**${houseInfo.lordDignity}** अवस्था${houseLordPlanet?.isRetrograde ? ', वक्री' : ''}${houseLordPlanet?.isCombust ? ', सूर्य से अस्त' : ''}) स्थित हैं।\n`;
-  dashaSection += `  - **कृष्णमूर्ति (KP) कस्प निर्णय:** भाव ${targetHouseNum} का **नक्षत्र स्वामी (Star-Lord) ${houseInfo.kpCuspStarLord}** तथा **उपनक्षत्र स्वामी (Sub-Lord) ${houseInfo.kpCuspSubLord}** है। भावेश ${houseInfo.lord} स्वयं **${houseLordPlanet?.kpSubLord || houseInfo.lord}** के उपनक्षत्र और **${houseLordPlanet?.kpSubSubLord || houseInfo.lord}** के उप-उपनक्षत्र (Sub-Sub-Lord) में स्थित होकर कार्य सिद्धि का प्रबल कारक (Significator) बन रहा है।\n`;
-  if (karakaPlanet) {
-    dashaSection += `  - **नैसर्गिक कारक (${topic.karaka}):** कारक ग्रह **${topic.karaka}** भाव ${karakaPlanet.house} (${karakaPlanet.rashi} ${karakaPlanet.formattedDMS}, नक्षत्र: ${karakaPlanet.nakshatra} चरण ${karakaPlanet.pada}) में विराजमान है।\n\n`;
-  }
+  // 3. Present Situation (वर्तमान परिस्थिति का सूक्ष्म विश्लेषण)
+  const presentBlock =
+    `वर्तमान में आपके प्रश्न *«${topic.title}»* के संबंध में स्थिति यह दर्शाती है कि आपकी ऊर्जा अब एक नए मोड़ पर पहुँच रही है। ` +
+    `इस समय **${profile.mahadasha}–${profile.antardasha}** के संयुक्त प्रभाव से मन में भविष्य को लेकर थोड़ी चिंता व असमंजस बना हुआ है, ` +
+    `लेकिन अनुकूल ग्रह गोचर यह बता रहे हैं कि अब रुकावटों का चक्र धीरे-धीरे समाप्त होने की ओर अग्रसर है।`;
 
-  dashaSection += `• **४. षोडशवर्ग (${topic.vargaLabel} व D-60 षष्ट्यंश) सूक्ष्म परीक्षण:**\n`;
-  dashaSection += `  - **${topic.vargaKey} वर्ग स्थिति:** भावेश **${houseInfo.lord}** ${topic.vargaKey} चक्र में **${lordVargaRashi}** राशि में, महादशानाथ **${profile.mahadasha}** **${mahaVargaRashi}** राशि में तथा अंतर्दशानाथ **${profile.antardasha}** **${antarVargaRashi}** राशि में स्थित है।\n`;
-  dashaSection += `  - **D-9 नवमांश एवं D-60 षष्ट्यंश (पूर्वजन्म कर्म वर्ग):** भावेश ${houseInfo.lord} का D-9 नवमांश **${houseLordPlanet?.navamshaRashi || houseInfo.sign}**${houseLordPlanet?.isVargottama ? ' (**वर्गोत्तम महाबली**)' : ''} तथा सूक्ष्मतम D-60 षष्ट्यंश **${houseLordPlanet?.shashtiamshaRashi || houseInfo.sign}** राशि में है, जो आंतरिक वर्ग-बल को पुष्ट करता है।\n\n`;
+  // 4. Future Month-by-Month Trajectory (आगामी समय की सटीक माह-दर-माह समय-सारणी)
+  const futureBlock =
+    `आने वाले समय के लिए आपकी पत्रिका में स्पष्ट समय-सीमा इस प्रकार बन रही है:\n\n` +
+    `• **वर्तमान माह से प्राथमिक शुरुआत (${windows.nearTimeline}):**\n` +
+    `  इस अवधि में अटकी हुई बातचीत, योजना अथवा किसी महत्वपूर्ण कार्य में सकारात्मक हलचल दिखाई देगी। जो रास्ते अब तक बंद लग रहे थे, उनमें नया विकल्प सामने आएगा।\n\n` +
+    `• **शिखर व सर्वाधिक अनुकूल काल (${windows.peakMonth}):**\n` +
+    `  यह समय आपके लिए सर्वाधिक फलदायी व भाग्योदयकारी रहेगा। इस दौरान आपके रुके हुए मुख्य कार्य संपन्न होंगे, आर्थिक लाभ के योग बनेंगे और परिवार व समाज में आपके निर्णय का सम्मान होगा।\n\n` +
+    `• **दीर्घकालिक स्थिरता एवं विस्तार (${windows.mediumTimeline}):**\n` +
+    `  इस कालखंड में आपको स्थायी संतोष, नए दायित्व और कार्यक्षेत्र में विस्तार प्राप्त होगा। जो भी कदम आप इस दौरान उठाएंगे, वे लंबे समय तक शुभ फल देंगे।`;
 
-  dashaSection += `• **५. सर्वाष्टकवर्ग (SAV) एवं भिन्नाष्टकवर्ग (BAV) बिंदु गणित:**\n`;
-  dashaSection += `  - **प्रश्न भाव (${targetHouseNum}वां भाव) बिंदु:** **${targetSav} बिंदु** (${targetSav >= 28 ? '२८+ औसत से अधिक — प्रबल फलदायी ✓' : 'औसत बिंदु — उपाय से बल वृद्धि'}) | भावेश ${houseInfo.lord} का स्व-भिन्नाष्टकवर्ग (BAV) बिंदु बल: **${houseLordPlanet?.bavBindusInOwnSign ?? 4}/8 बिंदु**।\n`;
-  dashaSection += `  - **धन-कर्म-लाभ-व्यय बिंदु समीकरण:** लग्न (१) = **${lagnaSav}**, धन (२) = **${dhanSav}**, कर्म (१०) = **${karmaSav}**, लाभ (११) = **${labhSav}**, व्यय (१२) = **${vyayaSav}** बिंदु। (${labhSav >= vyayaSav ? `लाभ भाव (${labhSav}) > व्यय भाव (${vyayaSav}) होने से अखंड धन संचय व सफलता निश्चित है ✓` : `व्यय भाव (${vyayaSav}) अधिक होने से नियोजित निवेश आवश्यक है`})\n\n`;
-
-  dashaSection += `• **६. जैमिनी सूत्र (Chara Karakas, Arudha & Chara Dasha):**\n`;
-  dashaSection += `  - **आत्मकारक (AK):** ${profile.jaiminiSummary.atmakaraka} | **कारकांश लग्न:** ${profile.jaiminiSummary.karakamshaRashi}\n`;
-  dashaSection += `  - **अमात्यकारक (AmK - आजीविका):** ${profile.jaiminiSummary.amatyakaraka} | **दाराकारक (DK - दांपत्य/साझेदारी):** ${profile.jaiminiSummary.darakaraka}\n`;
-  dashaSection += `  - **आरूढ़ लग्न (AL):** ${profile.jaiminiSummary.arudhaLagna} | **उपपद लग्न (UL):** ${profile.jaiminiSummary.upapadaLagna}\n`;
-  dashaSection += `  - **सक्रिय जैमिनी चर दशा:** महादशा **${profile.jaiminiSummary.charaMaha}** में **${profile.jaiminiSummary.charaAntar}** की चर अंतर्दशा।\n\n`;
-
-  dashaSection += `• **७. तात्कालिक गोचर (Live Transit), तारा बल एवं चंद्र बल:**\n`;
-  dashaSection += `  • ${transitDetailedLines}\n`;
-  dashaSection += `  • **तारा बल:** ${profile.taraBala.verdict}\n`;
-  dashaSection += `  • **चंद्र बल:** ${profile.chandraBala.verdict}`;
-
-  // 3. PAST INSIGHTS (अतीत के दृढ गणितीय संकेत)
-  let pastSection = `आपकी जन्मपत्रिका के विगत विंशोत्तरी दशा संधि, अष्टकवर्ग कक्ष्या एवं शनि-राहु के गोचरीय भ्रमण से अतीत के ये सटीक प्रमाण मिलते हैं:\n`;
-  pastSection += `१. **${windows.pastSpan} का संक्रमण काल:** जब गोचर में शनि/राहु का आपके लग्न व चंद्र अक्ष से वेध हुआ तथा विगत अंतर्दशा का परिवर्तन हुआ, तब कार्यक्षेत्र, स्थान अथवा आर्थिक निर्णयों में अचानक बड़ा मोड़ व मानसिक संघर्ष रहा।\n`;
-  pastSection += `२. **प्रत्यंतर दशा (${profile.antarStart} से अब तक) का अनुभव:** आपने पूर्ण निष्ठा से परिश्रम किया, किंतु भावेश **${houseInfo.lord}** के ${houseInfo.lordPlacementHouse}वें भाव एवं नक्षत्र स्वामी **${houseLordPlanet?.nakshatraLord || 'शनि'}** के प्रभाव से अंतिम क्षणों में विलंब या रुक-रुक कर कार्य बनने की स्थिति रही।\n`;
-  pastSection += `३. **आत्मकारक रक्षा कवच:** आपके जैमिनी आत्मकारक **${profile.jaiminiSummary.atmakaraka.split(' ')[0]}** एवं लग्नेश **${profile.lagnaLord}** के बल ने हर संकट में आपकी प्रतिष्ठा व आत्मबल को सुरक्षित रखा।`;
-
-  // 4. FUTURE TRAJECTORY (भविष्य की सटीक कालावधि — प्रत्यंतर व सूक्ष्म दशा आधारित)
-  let futureSection = `विंशोत्तरी प्रत्यंतर दशा (**${profile.pratyantardasha}**: ${profile.pratyantarStart} – ${profile.pratyantarEnd}), सूक्ष्म दशा (**${profile.sookshmadasha}**: ${profile.sookshmaStart} – ${profile.sookshmaEnd}) एवं गोचरीय बृहस्पति-शनि के अंशों के आधार पर सटीक भावी काल-चक्र:\n\n`;
-  futureSection += `• **तात्कालिक सूक्ष्म दशा खिड़की (${profile.sookshmaStart} से ${profile.sookshmaEnd}):** सूक्ष्म दशानाथ **${profile.sookshmadasha}** के प्रभाव से अटकी हुई वार्ता, फाइल या योजना में प्राथमिक हलचल व सकारात्मक संकेत प्रारंभ होंगे।\n`;
-  futureSection += `• **प्रथम गतिशीलता काल (${windows.nearTimeline}):** प्रत्यंतर दशानाथ **${profile.pratyantardasha}** और KP उपनक्षत्र **${houseInfo.kpCuspSubLord}** के सक्रिय होने से आपके कार्य के मुख्य अवरोध समाप्त होंगे।\n`;
-  futureSection += `• **स्वर्णिम सिद्धि काल (Golden Peak — ${windows.peakMonth}):** जब गोचरीय ग्रह आपके ${targetHouseNum}वें भाव (**${targetSav} SAV बिंदु**) और एकादश भाव (**${labhSav} SAV बिंदु**) के त्रिकोण से गुजरेंगे, तब **${strengthScore}% सफलता स्तर** के साथ आपको अभीष्ट परिणाम, धन लाभ व प्रतिष्ठा की प्राप्ति होगी।\n`;
-  futureSection += `• **स्थायित्व एवं विस्तार (${windows.mediumTimeline}):** जैमिनी चर अंतर्दशा (**${profile.jaiminiSummary.charaAntar.split(' ')[0]}**) तथा अंतर्दशानाथ **${profile.antardasha}** के पूर्ण फल से दीर्घकालिक स्थिरता स्थापित होगी।`;
-
-  // 5. VEDIC UPAY (सात्विक वैदिक उपाय — भावेश, दशानाथ व नक्षत्र आधारित)
+  // 5. Practical Vedic Remedies
   const mainRemedyPlanet = houseInfo.lord || profile.mahadasha || 'गुरु';
-  const dashaRemedyPlanet = profile.antardasha || profile.mahadasha || 'सूर्य';
   const remMain = PLANET_REMEDY[mainRemedyPlanet] || PLANET_REMEDY['गुरु'];
-  const remDasha = PLANET_REMEDY[dashaRemedyPlanet] || PLANET_REMEDY['सूर्य'];
-
-  let upaySection = `${topic.shloka}\n*शास्त्रीय भावार्थ:* ${topic.shlokaMeaning}\n\n`;
-  upaySection += `आपकी पत्रिका के **${targetHouseNum}वें भावेश (${mainRemedyPlanet})**, **अंतर्दशानाथ (${dashaRemedyPlanet})** एवं **KP उपनक्षत्र (${houseInfo.kpCuspSubLord})** के बल संवर्धन हेतु अचूक सात्विक विधान:\n\n`;
-  upaySection += `१. **भावेश (${mainRemedyPlanet}) सिद्ध बीज मंत्र:**\n   *${remMain.mantra}* — **${remMain.japaCount}**।\n`;
-  if (dashaRemedyPlanet !== mainRemedyPlanet) {
-    upaySection += `२. **सक्रिय दशानाथ (${dashaRemedyPlanet}) मंत्र जप:**\n   *${remDasha.mantra}* — प्रतिदिन कम से कम २७ या १०८ बार जपें।\n`;
-  } else {
-    upaySection += `२. **नक्षत्र एवं इष्ट कवच:** जन्म नक्षत्र **${profile.moonNakshatra}** के बल हेतु प्रत्येक मास के जन्म नक्षत्र दिवस पर शिव/विष्णु अभिषेक करें।\n`;
-  }
-  upaySection += `३. **शास्त्रीय दान विधान:** ${remMain.daan}\n`;
-  upaySection += `४. **दैनिक आचार व आरूढ़ लग्न (${profile.jaiminiSummary.arudhaLagna.split(' ')[0]}) जागृति:** ${remMain.habit}\n\n`;
 
   const parchi = generateTraditionalUpayParchi(k, panchang);
-  upaySection += `📋 **पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक — संक्षिप्त ६-सूत्रीय विधान):**\n`;
-  upaySection += `${parchi.formattedTextBlock}\n`;
-  upaySection += `*(💡 नीचे दिए **'📋 उपाय पर्ची'** बटन पर क्लिक करके आप इस पारंपरिक लेटरहेड पर्ची को देख, संपादित व डाउनलोड/शेयर कर सकते हैं।)*`;
+  const upayBlock =
+    `आपके ग्रह बल को बढ़ाने और कार्य को निर्विघ्न संपन्न कराने के लिए ये सरल व सात्विक उपाय करें:\n\n` +
+    `१. **इष्ट देव व दैनिक उपासना:** प्रतिदिन प्रातः स्नान के उपरांत सूर्य देव को तांबे के लोटे से जल अर्पित करें और अपने कुलदेवता अथवा शिव-विष्णु का स्मरण करें।\n` +
+    `२. **मंत्र जप विधान:** *${remMain.mantra}* — श्रद्धापूर्वक प्रतिदिन २७ या १०८ बार जपें।\n` +
+    `३. **सात्विक दान व सेवा:** ${remMain.daan}\n` +
+    `४. **सकारात्मक दिनचर्या:** ${remMain.habit}\n\n` +
+    `📋 **पारंपरिक ज्योतिषीय उपाय पर्ची (संक्षिप्त ६-सूत्रीय विधान):**\n` +
+    `${parchi.formattedTextBlock}\n` +
+    `*(💡 नीचे दिए **'📋 उपाय पर्ची'** बटन पर क्लिक करके आप अपनी व्यक्तिगत उपाय पर्ची देख, संपादित व सुरक्षित कर सकते हैं।)*`;
 
-  return `॥ ॐ श्री गणेशाय नमः • सूक्ष्म वैदिक गणना एवं षोडशवर्ग निर्णय ॥
+  return `${greetingBlock}
 
-**१. त्वरित फलादेश (Executive Micro-Takeaway)**
-${executiveSummary}
+**१. पिछले २-३ वर्षों का यथार्थ (विगत काल का अनुभव):**
+${pastBlock}
 
-**२. सूक्ष्म ग्रह-दशा, KP, षोडशवर्ग, अष्टकवर्ग एवं जैमिनी विश्लेषण**
-${dashaSection}
+**२. वर्तमान स्थिति एवं आपके प्रश्न का विचार:**
+${presentBlock}
 
-**३. अतीत के दृढ संकेत (Past Mathematical Insights)**
-${pastSection}
+**३. आगे की सटीक जानकारी (माह-दर-माह समय-सारणी):**
+${futureBlock}
 
-**४. भविष्य की सटीक कालावधि (Pinpoint Future Trajectory)**
-${futureSection}
-
-**५. सात्विक वैदिक उपाय (Targeted Vedic Upay)**
-${upaySection}
+**४. सरल एवं अचूक वैदिक उपाय:**
+${upayBlock}
 
 ---
 [अगले प्रश्न]:
