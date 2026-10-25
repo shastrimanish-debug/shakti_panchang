@@ -260,8 +260,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [isCreatingKundali, setIsCreatingKundali] = useState(false);
   const autoSubmittedPromptRef = useRef<string | null>(null);
 
-  const yajamanDisplayName = currentKundali?.name && !/manish|मनीष/i.test(currentKundali.name)
-    ? `**${currentKundali.name}** जी`
+  const yajamanDisplayName = currentKundali?.name?.trim()
+    ? `**${currentKundali.name.trim()}** जी`
     : 'प्रिय यजमान';
 
   const initialGreeting = currentKundali && liveMicroProfile

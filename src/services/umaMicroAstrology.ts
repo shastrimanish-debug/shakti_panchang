@@ -1341,7 +1341,7 @@ export function synthesizeDynamicMicroVerdict(
   strengthScore = Math.min(97, Math.max(76, strengthScore));
 
   // Human-like living astrologer synthesis
-  const hasCustomName = Boolean(k.name && k.name.trim() && !/manish|मनीष/i.test(k.name));
+  const hasCustomName = Boolean(k.name && k.name.trim());
   const salutation = hasCustomName ? `**${k.name.trim()}** जी` : 'प्रिय यजमान';
 
   // 1. Warm Greeting & Basic Identification

@@ -27,7 +27,10 @@ import {
   Eye,
   AlertCircle,
   ExternalLink,
+  ZoomIn,
 } from 'lucide-react';
+import { saveImageNative } from '../lib/device';
+import { shareImageFile } from '../lib/shareHelper';
 
 interface UpayParchiModalProps {
   isOpen: boolean;
@@ -117,6 +120,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const [blobFile, setBlobFile] = useState<File | null>(null);
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -368,158 +372,53 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     return canvas;
   };
 
-  // Multi-strategy download helper that reliably works on Android Chrome, WebViews, iOS, and PC
-  const triggerNativeDownload = (dataUrl: string, name: string) => {
+  // 100% SPA-Safe, non-navigating download helper
+  const triggerNativeDownload = async (dataUrl: string, name: string) => {
     setDownloadSuccess(true);
     setTimeout(() => setDownloadSuccess(false), 3000);
 
-    // Strategy 1: Server-side attachment endpoint (Android native Download Manager captures Content-Disposition)
+    // 1. If running inside native Android / Capacitor app, save directly to device gallery/storage
     try {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '/api/parchi/download';
-      form.style.display = 'none';
-
-      const imgInput = document.createElement('input');
-      imgInput.type = 'hidden';
-      imgInput.name = 'imageBase64';
-      imgInput.value = dataUrl;
-      form.appendChild(imgInput);
-
-      const nameInput = document.createElement('input');
-      nameInput.type = 'hidden';
-      nameInput.name = 'fileName';
-      nameInput.value = name;
-      form.appendChild(nameInput);
-
-      document.body.appendChild(form);
-      form.submit();
-      setTimeout(() => {
-        try {
-          document.body.removeChild(form);
-        } catch {}
-      }, 2000);
+      const saved = await saveImageNative(dataUrl, name);
+      if (saved) return;
     } catch (e) {
-      console.warn('Server download form failed:', e);
+      console.warn('Native save failed, falling back to blob download:', e);
     }
 
-    // Strategy 2: Client-side anchor click without target="_blank"
+    // 2. Client-side blob link download (NEVER reloads or navigates the SPA)
     try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
+      link.style.display = 'none';
       link.download = name;
-      link.href = dataUrl;
+      link.href = blobUrl;
       document.body.appendChild(link);
       link.click();
       setTimeout(() => {
-        try {
+        if (document.body.contains(link)) {
           document.body.removeChild(link);
-        } catch {}
-      }, 1500);
+        }
+        URL.revokeObjectURL(blobUrl);
+      }, 2000);
     } catch (clickErr) {
-      console.warn('Direct link click failed:', clickErr);
-    }
-  };
-
-  const handleOpenImageNewTab = (dataUrl: string, name: string) => {
-    try {
-      const w = window.open('', '_blank');
-      if (w) {
-        w.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${name}</title>
-  <style>
-    body {
-      margin: 0;
-      background: #1e1e1e;
-      color: #ffd88a;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px;
-      box-sizing: border-box;
-      min-height: 100vh;
-    }
-    .tip {
-      background: #3b2014;
-      border: 1px solid #99622d;
-      padding: 10px 14px;
-      border-radius: 10px;
-      margin-bottom: 14px;
-      font-size: 13px;
-      max-width: 520px;
-      text-align: center;
-      line-height: 1.4;
-    }
-    img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-  </style>
-</head>
-<body>
-  <div class="tip">
-    📱 <strong>मोबाइल पर छवि सहेजने के लिए:</strong><br>
-    नीचे दिख रही पर्ची पर अपनी उंगली २ सेकंड दबाकर रखें (Long-press) और <strong>'Download image' (छवि डाउनलोड करें)</strong> चुनें।
-  </div>
-  <img src="${dataUrl}" alt="उमा ज्योतिषीय उपाय पर्ची" />
-</body>
-</html>`);
-        w.document.close();
-      }
-    } catch (e) {
-      console.warn('Failed to open window:', e);
+      console.warn('Direct blob link download failed:', clickErr);
     }
   };
 
   const handleShareOrSaveToGallery = async (dataUrl: string, name: string) => {
     try {
-      let fileToShare = blobFile;
-      if (!fileToShare) {
-        const res = await fetch(dataUrl);
-        const b = await res.blob();
-        fileToShare = new File([b], name, { type: 'image/png' });
-        setBlobFile(fileToShare);
-      }
-
-      if (
-        typeof navigator !== 'undefined' &&
-        navigator.share &&
-        fileToShare &&
-        navigator.canShare &&
-        navigator.canShare({ files: [fileToShare] })
-      ) {
-        await navigator.share({
-          title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
-          text: `॥ श्री ॥ उमा ज्योतिषीय उपाय पर्ची (${salutation})`,
-          files: [fileToShare],
-        });
-        return;
-      }
-
-      // If navigator.share without file is supported
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({
-          title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
-          text: buildPlainTextSlip(),
-        });
-        return;
-      }
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        console.warn('Share error:', err);
-      } else {
-        return;
-      }
+      await shareImageFile({
+        imageUri: dataUrl,
+        fileName: name,
+        title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
+        text: `॥ श्री ॥ उमा ज्योतिषीय उपाय पर्ची (${salutation})\n\n${buildPlainTextSlip()}`,
+      });
+    } catch (err) {
+      console.warn('Share image error:', err);
+      openWhatsAppShare(buildPlainTextSlip());
     }
-
-    // Fallback: WhatsApp share
-    openWhatsAppShare(buildPlainTextSlip());
   };
 
   const handleDownloadImage = async () => {
@@ -546,10 +445,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
       setGeneratedImageUrl(dataUrl);
 
-      // Attempt automatic download (Server attachment + link click)
+      // Trigger safe download without navigation
       triggerNativeDownload(dataUrl, fileName);
 
-      // Always open HD Preview Modal so mobile users can view/save/share without fail
+      // Open HD Preview Modal so mobile users can view/save/share without fail
       setPreviewModalOpen(true);
       setDownloadStatus(null);
     } catch (err) {
@@ -1116,20 +1015,15 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 <span>📲 गैलरी / शेयर</span>
               </button>
 
-              {/* Button 3: Open in Clean Tab (for foolproof browser save) */}
+              {/* Button 3: In-app Fullscreen Lightbox Zoom */}
               <button
                 type="button"
-                onClick={() => {
-                  const safeSal = (salutation || 'Yajaman')
-                    .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
-                    .substring(0, 25);
-                  handleOpenImageNewTab(generatedImageUrl, `Upay_Parchi_${safeSal}.png`);
-                }}
+                onClick={() => setIsZoomed(true)}
                 className="py-2.5 px-2.5 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1 cursor-pointer transition"
-                title="ब्राउज़र के अलग टैब में छवि खोलें"
+                title="पूरी स्क्रीन पर बड़ी छवि देखें"
               >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">छवि खोलें</span>
+                <ZoomIn className="w-4 h-4" />
+                <span className="hidden xs:inline">बड़ी देखें</span>
               </button>
 
               {/* Button 4: Close Modal */}
@@ -1141,6 +1035,70 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 पूर्ण / बंद
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Lightbox View (100% In-app, zero navigation) */}
+      {isZoomed && generatedImageUrl && (
+        <div
+          className="fixed inset-0 z-[180] bg-black/95 flex flex-col items-center justify-between p-3 select-auto animate-in fade-in duration-150"
+          onClick={() => setIsZoomed(false)}
+        >
+          <div className="w-full max-w-lg flex items-center justify-between text-white p-2">
+            <span className="text-xs text-amber-200">
+              📱 छवि पर २ सेकंड दबाकर रखें (Long-press) और 'Download image' चुनें
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsZoomed(false)}
+              className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-white cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div
+            className="flex-1 flex items-center justify-center w-full max-h-[82vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={generatedImageUrl}
+              alt="ज्योतिषीय उपाय पर्ची"
+              draggable={true}
+              className="max-w-full max-h-[82vh] object-contain rounded-lg shadow-2xl select-auto"
+              style={{
+                WebkitTouchCallout: 'default',
+                WebkitUserSelect: 'auto',
+                userSelect: 'auto',
+                touchAction: 'auto',
+                pointerEvents: 'auto',
+              }}
+            />
+          </div>
+
+          <div className="p-2 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const safeSal = (salutation || 'Yajaman')
+                  .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+                  .substring(0, 25);
+                triggerNativeDownload(generatedImageUrl, `Upay_Parchi_${safeSal}.png`);
+              }}
+              className="px-4 py-2 bg-[#8C6239] hover:bg-[#6A4825] text-amber-100 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>डाउनलोड करें</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsZoomed(false)}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-semibold cursor-pointer"
+            >
+              वापस जाएं
+            </button>
           </div>
         </div>
       )}

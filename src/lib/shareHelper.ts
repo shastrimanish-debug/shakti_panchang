@@ -38,8 +38,16 @@ export async function shareTextContent(options: {
       return 'whatsapp';
     }
     
-    // If popup was blocked by browser/iframe, redirect directly
-    window.location.href = waUrl;
+    // If popup was blocked by browser/iframe, use a hidden anchor link click instead of window.location.href
+    const a = document.createElement('a');
+    a.href = waUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (document.body.contains(a)) document.body.removeChild(a);
+    }, 1000);
     return 'whatsapp';
   } catch {
     // 3. Fallback to Clipboard Copy

@@ -46,9 +46,7 @@ export function getSavedKundaliProfiles(): KundaliData[] {
       return arr
         .filter((p: any) => {
           if (!p || typeof p.name !== 'string') return false;
-          // Clean out any legacy developer/test profile names
-          const n = p.name.trim().toLowerCase();
-          return !n.includes('manish') && !n.includes('मनीष');
+          return p.name.trim().length > 0;
         })
         .map((p: any) => ({
           ...p,
