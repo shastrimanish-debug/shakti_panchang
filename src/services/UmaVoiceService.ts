@@ -13,12 +13,72 @@
 import { Capacitor } from '@capacitor/core';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
 
+export type UmaVoiceTone = 'calm' | 'enthusiastic' | 'formal';
+
+export interface ToneConfig {
+  id: UmaVoiceTone;
+  label: string;
+  labelHindi: string;
+  badge: string;
+  description: string;
+  rate: number;
+  pitch: number;
+  pitchSemis: number;
+  emphasis: 'reduced' | 'moderate' | 'strong';
+  stylePrompt: string;
+  samplePhrase: string;
+}
+
+export const UMA_TONES: Record<UmaVoiceTone, ToneConfig> = {
+  calm: {
+    id: 'calm',
+    label: 'Calm',
+    labelHindi: 'शांत व सौम्य',
+    badge: '🧘',
+    description: 'कोमल, ध्यानमयी व मातृत्व भाव से परिपूर्ण शांत स्वर',
+    rate: 0.88,
+    pitch: 0.98,
+    pitchSemis: -1.2,
+    emphasis: 'reduced',
+    stylePrompt: 'Calm, gentle, soothing, maternal, peaceful Vedic female mentor speaking in serene meditative cadence with warm, relaxed tones and compassionate reassurance',
+    samplePhrase: '॥ ॐ नमः शिवाय ॥ शांत व ध्यानमयी वाणी सक्रिय है। मन को एकाग्र कर ज्योतिषीय मार्गदर्शन सुनें।',
+  },
+  enthusiastic: {
+    id: 'enthusiastic',
+    label: 'Enthusiastic',
+    labelHindi: 'उत्साही व ओजस्वी',
+    badge: '✨',
+    description: 'ऊर्जावान, आनंदमय, प्रेरणादायी व भाग्योदय सूचक स्वर',
+    rate: 0.98,
+    pitch: 1.12,
+    pitchSemis: 2.2,
+    emphasis: 'strong',
+    stylePrompt: 'Bright, energetic, uplifting, enthusiastic Hindi female voice celebrating auspicious moments with high vocal presence, joyful confidence, and radiant warmth',
+    samplePhrase: '॥ जय श्री राधे ॥ उत्साही व ओजस्वी वाणी सक्रिय है! आपके जीवन में शुभ योगों का संचार हो!',
+  },
+  formal: {
+    id: 'formal',
+    label: 'Formal',
+    labelHindi: 'शास्त्रीय व गंभीर',
+    badge: '📜',
+    description: 'गंभीर, प्रमाणिक, ५० वर्षीय प्रकांड ज्योतिषाचार्य का गरिमामय स्वर',
+    rate: 0.93,
+    pitch: 1.04,
+    pitchSemis: 0.5,
+    emphasis: 'moderate',
+    stylePrompt: 'Dignified, articulate, authoritative 50-year experienced Vedic Jyotish Acharya speaking with classical precision, clear consonants, solemn respect, and stately cadence',
+    samplePhrase: '॥ ॐ श्री गणेशाय नमः ॥ शास्त्रीय व गंभीर ज्योतिषाचार्य वाणी स्थापित। सूक्ष्म गणित आधारित प्रामाणिक निर्णय।',
+  },
+};
+
 export interface UmaVoiceOptions {
   /** Voice identifier (default: "hi-IN-Neural2-A") */
   voice?: string;
-  /** Speaking speed: 0.7 to 1.3 (default: 0.94 for calm, respectful Acharya cadence) */
+  /** Emotional tone of voice: 'calm' | 'enthusiastic' | 'formal' */
+  tone?: UmaVoiceTone;
+  /** Speaking speed: 0.7 to 1.3 */
   rate?: number;
-  /** Pitch: 0.8 to 1.3 (default: 1.04 for warm female timbre) */
+  /** Pitch: 0.8 to 1.3 */
   pitch?: number;
   /** Volume: 0.0 to 1.0 (default: 1.0) */
   volume?: number;
@@ -42,6 +102,7 @@ export interface UmaVoiceState {
   currentText: string | null;
   provider: 'neural-api' | 'capacitor-native' | 'web-neural' | 'idle';
   activeVoiceName: string;
+  activeTone: UmaVoiceTone;
 }
 
 export type UmaVoiceListener = (state: UmaVoiceState) => void;
@@ -56,6 +117,7 @@ class UmaVoiceService {
   private keepAliveTimer: any = null;
   private listeners: Set<UmaVoiceListener> = new Set();
   private isUnlocked: boolean = false;
+  private currentTone: UmaVoiceTone = 'calm';
 
   // LRU audio blob cache (client-side) to eliminate network latency for common phrases
   private audioBlobCache: Map<string, string> = new Map();
@@ -69,9 +131,21 @@ class UmaVoiceService {
     currentText: null,
     provider: 'idle',
     activeVoiceName: 'hi-IN-Neural2-A (उमा स्वर)',
+    activeTone: 'calm',
   };
 
   private constructor() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('shakti_uma_voice_tone') as UmaVoiceTone;
+        if (saved && UMA_TONES[saved]) {
+          this.currentTone = saved;
+          this.state.activeTone = saved;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
     this.initBrowserVoices();
   }
 
@@ -158,6 +232,35 @@ class UmaVoiceService {
 
   public getState(): UmaVoiceState {
     return { ...this.state };
+  }
+
+  /**
+   * Sets the emotional tone of Uma's voice ('calm' | 'enthusiastic' | 'formal')
+   * and persists it to localStorage.
+   */
+  public setTone(tone: UmaVoiceTone): void {
+    if (!UMA_TONES[tone]) return;
+    this.currentTone = tone;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('shakti_uma_voice_tone', tone);
+      }
+    } catch {
+      /* ignore */
+    }
+    this.updateState({ activeTone: tone });
+  }
+
+  public getTone(): UmaVoiceTone {
+    return this.currentTone;
+  }
+
+  public getToneConfig(tone?: UmaVoiceTone): ToneConfig {
+    return UMA_TONES[tone || this.currentTone] || UMA_TONES.calm;
+  }
+
+  public getToneConfigs(): ToneConfig[] {
+    return Object.values(UMA_TONES);
   }
 
   public isSpeaking(): boolean {
@@ -270,8 +373,10 @@ class UmaVoiceService {
     }
 
     const fullSpokenText = chunks.join(' । ');
-    const rate = options?.rate ?? 0.94;
-    const pitch = options?.pitch ?? 1.04;
+    const tone = options?.tone || this.currentTone;
+    const toneCfg = UMA_TONES[tone] || UMA_TONES.calm;
+    const rate = options?.rate ?? toneCfg.rate;
+    const pitch = options?.pitch ?? toneCfg.pitch;
     const volume = options?.volume ?? 1.0;
     const voiceName = options?.voice ?? 'hi-IN-Neural2-A';
     const voiceStyle = options?.voiceStyle ?? 'uma';
@@ -280,6 +385,7 @@ class UmaVoiceService {
       isSpeaking: true,
       isPaused: false,
       currentText: fullSpokenText,
+      activeTone: toneCfg.id,
     });
 
     options?.onStart?.();
@@ -289,7 +395,7 @@ class UmaVoiceService {
     // -------------------------------------------------------------
     const tryCloudNeural = async (): Promise<boolean> => {
       try {
-        const cacheKey = `${voiceName}:${rate}:${fullSpokenText.slice(0, 300)}`;
+        const cacheKey = `${voiceName}:${toneCfg.id}:${rate}:${pitch}:${fullSpokenText.slice(0, 300)}`;
         let audioSrc = this.audioBlobCache.get(cacheKey);
 
         if (!audioSrc) {
@@ -299,8 +405,12 @@ class UmaVoiceService {
             body: JSON.stringify({
               text: fullSpokenText.slice(0, 2500),
               voice: voiceName,
+              tone: toneCfg.id,
               rate,
-              pitch: 0.0,
+              pitch,
+              pitchSemis: toneCfg.pitchSemis,
+              emphasis: toneCfg.emphasis,
+              stylePrompt: toneCfg.stylePrompt,
               persona: voiceStyle,
             }),
             signal: AbortSignal.timeout(8500),
@@ -332,7 +442,8 @@ class UmaVoiceService {
               if (token !== this.activeToken) return;
               this.updateState({
                 provider: 'neural-api',
-                activeVoiceName: `Google Neural2 / Journey (${voiceName})`,
+                activeVoiceName: `Google Neural2 (${toneCfg.labelHindi})`,
+                activeTone: toneCfg.id,
               });
             };
 
@@ -369,7 +480,8 @@ class UmaVoiceService {
       try {
         this.updateState({
           provider: 'capacitor-native',
-          activeVoiceName: 'Capacitor Android Neural (hi-IN)',
+          activeVoiceName: `Capacitor Android Neural (${toneCfg.labelHindi})`,
+          activeTone: toneCfg.id,
         });
 
         // Use native Capacitor TextToSpeech plugin
@@ -397,7 +509,7 @@ class UmaVoiceService {
     // -------------------------------------------------------------
     // Tier 3: Browser Neural Voice Engine (Prosody-Tuned)
     // -------------------------------------------------------------
-    this.speakViaBrowserEngine(chunks, token, rate, pitch, volume, options);
+    this.speakViaBrowserEngine(chunks, token, rate, pitch, volume, toneCfg, options);
   }
 
   /**
@@ -411,6 +523,7 @@ class UmaVoiceService {
     rate: number,
     pitch: number,
     volume: number,
+    toneCfg: ToneConfig,
     options?: UmaVoiceOptions
   ): void {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -435,7 +548,8 @@ class UmaVoiceService {
 
     this.updateState({
       provider: 'web-neural',
-      activeVoiceName: voiceDisplayName,
+      activeVoiceName: `${voiceDisplayName} (${toneCfg.labelHindi})`,
+      activeTone: toneCfg.id,
     });
 
     let chunkIndex = 0;
@@ -644,3 +758,6 @@ export const stopUmaVoice = () => umaVoice.stop();
 export const isUmaVoiceSpeaking = () => umaVoice.isSpeaking();
 export const pauseUmaVoice = () => umaVoice.pause();
 export const resumeUmaVoice = () => umaVoice.resume();
+export const setUmaVoiceTone = (tone: UmaVoiceTone) => umaVoice.setTone(tone);
+export const getUmaVoiceTone = () => umaVoice.getTone();
+export const getUmaVoiceTones = () => umaVoice.getToneConfigs();

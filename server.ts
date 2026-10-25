@@ -270,8 +270,12 @@ Return ONLY a valid JSON object with the following structure:
       const {
         text,
         voice = "hi-IN-Neural2-A",
+        tone = "calm",
         rate = 0.94,
         pitch = 0.0,
+        pitchSemis = 0.0,
+        emphasis = "moderate",
+        stylePrompt,
         persona = "uma"
       } = req.body || {};
 
@@ -280,7 +284,7 @@ Return ONLY a valid JSON object with the following structure:
       }
 
       const cleanText = text.trim().slice(0, 3000);
-      const cacheKey = `uma:${voice}:${rate}:${pitch}:${cleanText}`;
+      const cacheKey = `uma:${voice}:${tone}:${rate}:${pitchSemis}:${emphasis}:${cleanText}`;
       const cached = ttsAudioCache.get(cacheKey);
       if (cached) {
         return res.status(200).json({
@@ -289,19 +293,44 @@ Return ONLY a valid JSON object with the following structure:
           mimeType: cached.mimeType,
           cached: true,
           provider: "cache",
+          tone,
         });
       }
 
-      // 1. Google Cloud Text-to-Speech API (Neural2 / Journey)
+      // Map tone selection to SSML emphasis & pitch parameters
+      const validEmphasis = ["reduced", "moderate", "strong", "none"].includes(emphasis)
+        ? emphasis
+        : tone === "enthusiastic"
+          ? "strong"
+          : tone === "calm"
+            ? "reduced"
+            : "moderate";
+
+      const effectivePitchSemis = typeof pitchSemis === "number" && pitchSemis !== 0
+        ? pitchSemis
+        : (tone === "enthusiastic" ? 2.2 : tone === "calm" ? -1.2 : 0.5);
+
+      // 1. Google Cloud Text-to-Speech API (Neural2 / Journey with SSML emphasis & pitch)
       const googleTtsKey = process.env.GOOGLE_TTS_API_KEY || process.env.GOOGLE_CLOUD_API_KEY;
       if (googleTtsKey) {
         try {
           const gttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleTtsKey}`;
+
+          // Escape XML for SSML
+          const escapedText = cleanText
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&apos;");
+
+          const ssmlText = `<speak><prosody pitch="${effectivePitchSemis >= 0 ? `+${effectivePitchSemis.toFixed(1)}` : effectivePitchSemis.toFixed(1)}st" rate="${Math.round(rate * 100)}%"><emphasis level="${validEmphasis}">${escapedText}</emphasis></prosody></speak>`;
+
           const gttsResp = await fetch(gttsUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              input: { text: cleanText },
+              input: { ssml: ssmlText },
               voice: {
                 languageCode: "hi-IN",
                 name: voice.startsWith("hi-IN") ? voice : "hi-IN-Neural2-A",
@@ -310,7 +339,7 @@ Return ONLY a valid JSON object with the following structure:
               audioConfig: {
                 audioEncoding: "MP3",
                 speakingRate: Math.max(0.7, Math.min(1.3, rate)),
-                pitch: Math.max(-5.0, Math.min(5.0, pitch)),
+                pitch: Math.max(-10.0, Math.min(10.0, effectivePitchSemis)),
                 effectsProfileId: ["handset-class-device", "headphone-class-device"],
               },
             }),
@@ -333,6 +362,7 @@ Return ONLY a valid JSON object with the following structure:
                 ok: true,
                 ...payload,
                 provider: "google-neural2",
+                tone,
               });
             }
           }
@@ -341,10 +371,18 @@ Return ONLY a valid JSON object with the following structure:
         }
       }
 
-      // 2. Gemini 3.8 Flash Lite TTS with Indian Vedic Female Acharya Persona
+      // 2. Gemini 3.8 Flash Lite TTS with Tone Persona Prompting
       const ai = getGeminiClient();
       if (ai) {
         try {
+          const toneStylePrompt = stylePrompt || (
+            tone === "enthusiastic"
+              ? "Bright, energetic, uplifting, enthusiastic Hindi female voice celebrating auspicious moments with high vocal presence, joyful confidence, and radiant warmth"
+              : tone === "formal"
+                ? "Dignified, articulate, authoritative 50-year experienced Vedic Jyotish Acharya speaking with classical precision, clear consonants, solemn respect, and stately cadence"
+                : "Calm, gentle, soothing, maternal, peaceful Vedic female mentor speaking in serene meditative cadence with warm, relaxed tones and compassionate reassurance"
+          );
+
           const response = await ai.models.generateContent({
             model: "gemini-3.8-flash-lite-tts",
             contents: [
@@ -354,10 +392,7 @@ Return ONLY a valid JSON object with the following structure:
                   {
                     text: cleanText,
                     speechMetadata: {
-                      style:
-                        persona === "uma"
-                          ? "Warm, maternal, highly articulate, calm, respectful Hindi female Vedic astrologer speaking to a dear devotee (Yajaman) with gentle, clear pronunciation and natural human breathing cadence"
-                          : "Traditional Indian Vedic Pandit recitation with serene cadence",
+                      style: toneStylePrompt,
                     },
                   } as any,
                 ],
@@ -388,6 +423,7 @@ Return ONLY a valid JSON object with the following structure:
               ok: true,
               ...payload,
               provider: "gemini-flash-lite-tts",
+              tone,
             });
           }
         } catch (geminiErr: any) {

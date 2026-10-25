@@ -5,7 +5,7 @@ import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from '../services/disha';
 import { getDayChoghadiya, getCurrentChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from '../services/choghadiya';
 import { askUma, AskUmaResponse, pingUmaServer, UmaActionType, isNumerologyQuery } from '@/lib/uma';
 import { UmaVoice } from '@/lib/umaSpeech';
-import { umaVoice } from '../services/UmaVoiceService';
+import { umaVoice, UmaVoiceTone, UMA_TONES, ToneConfig } from '../services/UmaVoiceService';
 import { Capacitor } from '@capacitor/core';
 import { analyzeKundali, SIGN_LORDS } from '../services/predictions';
 import { buildMicroAstrologyContextPrompt, buildMicroAstrologyProfile } from '../services/umaMicroAstrology';
@@ -330,6 +330,28 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     }
   }, [activeKundali]);
 
+  const [selectedTone, setSelectedTone] = useState<UmaVoiceTone>(() => umaVoice.getTone());
+  const [isToneMenuOpen, setIsToneMenuOpen] = useState(false);
+
+  const handleSelectTone = (tone: UmaVoiceTone, playPreview: boolean = true) => {
+    umaVoice.setTone(tone);
+    setSelectedTone(tone);
+    setIsToneMenuOpen(false);
+    if (playPreview) {
+      const cfg = UMA_TONES[tone];
+      if (cfg?.samplePhrase) {
+        setPlayingVoiceId('tone_preview');
+        void umaVoice.speak(cfg.samplePhrase, {
+          tone,
+          voiceStyle: 'uma',
+          onStart: () => setPlayingVoiceId('tone_preview'),
+          onEnd: () => setPlayingVoiceId(null),
+          onError: () => setPlayingVoiceId(null),
+        });
+      }
+    }
+  };
+
   const speakHindi = (text: string, id: string) => {
     if (playingVoiceId === id) {
       umaVoice.stop();
@@ -338,9 +360,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     }
     setPlayingVoiceId(id);
     void umaVoice.speak(text, {
+      tone: selectedTone,
       voiceStyle: "uma",
-      rate: 0.94,
-      pitch: 1.04,
       onStart: () => setPlayingVoiceId(id),
       onEnd: () => setPlayingVoiceId(null),
       onError: () => setPlayingVoiceId(null),
@@ -924,6 +945,54 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               {autoSpeak ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             </button>
 
+            {/* Tone Selector Button with Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsToneMenuOpen((prev) => !prev)}
+                className="px-2 py-1 rounded-lg bg-[#5C1414] hover:bg-[#6D1B1B] text-[#FFD88A] border border-[#B58738]/60 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-xs"
+                title="वाणी शैली (Tone) बदलें"
+              >
+                <span>{UMA_TONES[selectedTone]?.badge || '🧘'}</span>
+                <span className="hidden sm:inline">{UMA_TONES[selectedTone]?.labelHindi.split(' ')[0] || 'शांत'}</span>
+                <ChevronDown className="w-3 h-3 text-[#FFD88A]/80" />
+              </button>
+
+              {isToneMenuOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-64 bg-[#FFFDF9] border border-[#8C6239]/40 rounded-xl shadow-2xl z-50 p-2 space-y-1 animate-in fade-in zoom-in-95">
+                  <div className="px-2 py-1 border-b border-[#E2D2BE]/60 text-[10.5px] font-bold text-[#5C3A21] flex items-center justify-between">
+                    <span>उमा वाणी शैली (Voice Tone)</span>
+                    <span className="text-[9.5px] text-[#B58738]">Neural2 • SSML</span>
+                  </div>
+                  {(Object.values(UMA_TONES) as ToneConfig[]).map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => handleSelectTone(t.id, true)}
+                      className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs transition flex items-start gap-2 cursor-pointer ${
+                        selectedTone === t.id
+                          ? 'bg-[#7A1D1D] text-white font-bold'
+                          : 'hover:bg-[#FAF2E4] text-[#3E2714]'
+                      }`}
+                    >
+                      <span className="text-sm shrink-0">{t.badge}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11.5px]">{t.labelHindi}</span>
+                          <span className={`text-[9.5px] ${selectedTone === t.id ? 'text-[#FFD88A]' : 'text-stone-500'}`}>
+                            {t.label}
+                          </span>
+                        </div>
+                        <p className={`text-[10px] leading-tight line-clamp-1 ${selectedTone === t.id ? 'text-[#FFEEC9]' : 'text-[#7D5A3C]'}`}>
+                          {t.description}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={onClose}
               className="p-1.5 text-[#FFD88A] hover:text-white rounded-lg cursor-pointer transition hover:bg-black/20"
@@ -931,6 +1000,32 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             >
               <X className="w-5 h-5" />
             </button>
+          </div>
+        </div>
+
+        {/* Quick Tone Selection Bar */}
+        <div className="bg-[#FAF2E4] px-3 py-1 border-b border-[#E2D2BE] flex items-center justify-between gap-1 text-xs shrink-0">
+          <div className="flex items-center gap-1.5 text-[11px] text-[#5C3A21] font-semibold shrink-0">
+            <Volume2 className="w-3.5 h-3.5 text-[#B58738]" />
+            <span className="hidden xs:inline">उमा वाणी शैली:</span>
+          </div>
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+            {(Object.values(UMA_TONES) as ToneConfig[]).map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => handleSelectTone(t.id, true)}
+                className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-bold transition flex items-center gap-1 cursor-pointer shrink-0 ${
+                  selectedTone === t.id
+                    ? 'bg-[#7A1D1D] text-[#FFD88A] shadow-xs ring-1 ring-amber-400 font-black'
+                    : 'bg-white/80 hover:bg-white text-[#5C3A21] border border-[#B58738]/30'
+                }`}
+                title={`${t.label}: ${t.description}`}
+              >
+                <span>{t.badge}</span>
+                <span>{t.labelHindi}</span>
+              </button>
+            ))}
           </div>
         </div>
 
