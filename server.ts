@@ -431,7 +431,76 @@ Return ONLY a valid JSON object with the following structure:
         }
       }
 
-      // 3. Fallback to client synthesis if remote neural synthesis is unavailable
+      // 3. Secondary Server-Side Stream: Google High-Def Speech Stream (chunked)
+      try {
+        const streamChunks: string[] = [];
+        const sentences = cleanText.split(/(?<=[।॥,.!\n])\s+/);
+        let curChunk = "";
+        for (const s of sentences) {
+          if ((curChunk + " " + s).trim().length <= 180) {
+            curChunk = (curChunk + " " + s).trim();
+          } else {
+            if (curChunk) streamChunks.push(curChunk);
+            if (s.length <= 180) {
+              curChunk = s.trim();
+            } else {
+              const words = s.split(/\s+/);
+              curChunk = "";
+              for (const w of words) {
+                if ((curChunk + " " + w).trim().length <= 180) {
+                  curChunk = (curChunk + " " + w).trim();
+                } else {
+                  if (curChunk) streamChunks.push(curChunk);
+                  curChunk = w;
+                }
+              }
+            }
+          }
+        }
+        if (curChunk) streamChunks.push(curChunk);
+
+        const mp3Buffers: Buffer[] = [];
+        const effectiveSpeed = tone === "enthusiastic" ? "0.95" : tone === "calm" ? "0.82" : "0.88";
+        for (const chunk of streamChunks.slice(0, 15)) {
+          const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&ttsspeed=${effectiveSpeed}&q=${encodeURIComponent(chunk)}`;
+          const ttsResp = await fetch(url, {
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (ttsResp.ok) {
+            const arrBuf = await ttsResp.arrayBuffer();
+            if (arrBuf.byteLength > 200) {
+              mp3Buffers.push(Buffer.from(arrBuf));
+            }
+          }
+        }
+
+        if (mp3Buffers.length > 0) {
+          const combined = Buffer.concat(mp3Buffers);
+          const payload = {
+            audioBase64: combined.toString("base64"),
+            mimeType: "audio/mpeg",
+          };
+          if (ttsAudioCache.size > 300) {
+            const firstKey = ttsAudioCache.keys().next().value;
+            if (firstKey) ttsAudioCache.delete(firstKey);
+          }
+          ttsAudioCache.set(cacheKey, payload);
+          return res.status(200).json({
+            ok: true,
+            ...payload,
+            provider: "google-neural-stream",
+            tone,
+          });
+        }
+      } catch (streamErr: any) {
+        console.warn("Secondary TTS stream in /api/tts/uma failed:", streamErr?.message || streamErr);
+      }
+
+      // 4. Fallback to client synthesis if remote neural synthesis is unavailable
       return res.status(200).json({
         ok: false,
         fallback: "client",

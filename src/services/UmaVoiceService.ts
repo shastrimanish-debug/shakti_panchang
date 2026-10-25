@@ -10,8 +10,21 @@
  * 3. Tier 3: Browser Neural Voice Engine (Microsoft Swara Online / Google हिन्दी with prosody smoothing)
  */
 
-import { Capacitor } from '@capacitor/core';
-import { TextToSpeech } from '@capacitor-community/text-to-speech';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+export interface UmaVoiceNativePlugin {
+  speak(options: {
+    text?: string;
+    music?: boolean;
+    raga?: string;
+    parts?: { text: string; rate: number; pitch: number }[];
+  }): Promise<void>;
+  stopSpeaking(): Promise<void>;
+  listen(): Promise<{ text: string }>;
+  stop(): Promise<void>;
+}
+
+export const UmaVoiceNative = registerPlugin<UmaVoiceNativePlugin>('UmaVoice');
 
 export type UmaVoiceTone = 'calm' | 'enthusiastic' | 'formal';
 
@@ -188,6 +201,18 @@ class UmaVoiceService {
     if (this.isUnlocked) return;
     this.isUnlocked = true;
 
+    if (typeof window !== 'undefined' && 'AudioContext' in window) {
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          void ctx.resume();
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.getVoices();
@@ -280,6 +305,10 @@ class UmaVoiceService {
     if (!rawText || !rawText.trim()) return [];
 
     let text = rawText
+      // Strip follow-up question suggestions and trailing disclaimer sections
+      .replace(/---+[\s\S]*?\[?अगले\s*प्रश्न\]?[\s\S]*$/gi, '')
+      .replace(/\[अगले\s*(सम्भावित\s*)?प्रश्न\]:?[\s\S]*$/gi, '')
+      .replace(/अगले\s*सम्भावित\s*प्रश्न:?[\s\S]*$/gi, '')
       // Remove markdown bold, italic, headings
       .replace(/\*\*(.*?)\*\*/g, '$1')
       .replace(/\*(.*?)\*/g, '$1')
@@ -391,7 +420,44 @@ class UmaVoiceService {
     options?.onStart?.();
 
     // -------------------------------------------------------------
-    // Tier 1: Cloud Neural Synthesizer (/api/tts/uma)
+    // Tier 1 (Native Platform): Capacitor Native Uma Voice Plugin
+    // Uses Edge TTS SwaraNeural + Google Neural + Scholar Voice directly on device
+    // -------------------------------------------------------------
+    if (Capacitor.isNativePlatform()) {
+      try {
+        this.updateState({
+          provider: 'capacitor-native',
+          activeVoiceName: `उमा स्वर (${toneCfg.labelHindi})`,
+          activeTone: toneCfg.id,
+        });
+
+        const parts = chunks.map((c) => ({
+          text: c,
+          rate: Math.max(0.7, Math.min(1.15, rate)),
+          pitch: Math.max(0.85, Math.min(1.15, pitch)),
+        }));
+
+        await UmaVoiceNative.speak({
+          parts,
+          text: fullSpokenText,
+          music: options?.voiceStyle === 'pandit' || options?.sanskritOnly === true,
+          raga: 'bhairav',
+        });
+
+        if (token === this.activeToken) {
+          this.updateState({ isSpeaking: false, provider: 'idle', currentText: null });
+          options?.onEnd?.();
+          return;
+        }
+      } catch (nativeErr) {
+        console.warn('Native UmaVoice plugin speak failed, falling back:', nativeErr);
+      }
+    }
+
+    if (token !== this.activeToken) return;
+
+    // -------------------------------------------------------------
+    // Tier 2 (Web/Cloud): Cloud Neural Synthesizer (/api/tts/uma)
     // -------------------------------------------------------------
     const tryCloudNeural = async (): Promise<boolean> => {
       try {
@@ -472,39 +538,6 @@ class UmaVoiceService {
 
     const cloudSucceeded = await tryCloudNeural();
     if (cloudSucceeded || token !== this.activeToken) return;
-
-    // -------------------------------------------------------------
-    // Tier 2: Capacitor Native Android High-Definition TTS
-    // -------------------------------------------------------------
-    if (Capacitor.isNativePlatform()) {
-      try {
-        this.updateState({
-          provider: 'capacitor-native',
-          activeVoiceName: `Capacitor Android Neural (${toneCfg.labelHindi})`,
-          activeTone: toneCfg.id,
-        });
-
-        // Use native Capacitor TextToSpeech plugin
-        await TextToSpeech.speak({
-          text: fullSpokenText,
-          lang: 'hi-IN',
-          rate: Math.max(0.7, Math.min(1.2, rate)),
-          pitch: Math.max(0.8, Math.min(1.3, pitch)),
-          volume,
-          category: 'ambient',
-        });
-
-        if (token === this.activeToken) {
-          this.updateState({ isSpeaking: false, provider: 'idle', currentText: null });
-          options?.onEnd?.();
-          return;
-        }
-      } catch {
-        /* Native speak failed or rejected - fallback to Tier 3 Web Speech */
-      }
-    }
-
-    if (token !== this.activeToken) return;
 
     // -------------------------------------------------------------
     // Tier 3: Browser Neural Voice Engine (Prosody-Tuned)
@@ -679,10 +712,10 @@ class UmaVoiceService {
       this.currentAudioElement = null;
     }
 
-    // 2. Stop Capacitor Native TTS
+    // 2. Stop Capacitor Native Uma Voice Plugin
     if (Capacitor.isNativePlatform()) {
       try {
-        void TextToSpeech.stop().catch(() => {});
+        void UmaVoiceNative.stopSpeaking().catch(() => {});
       } catch {
         /* ignore */
       }

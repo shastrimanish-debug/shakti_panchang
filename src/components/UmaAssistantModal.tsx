@@ -353,6 +353,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   };
 
   const speakHindi = (text: string, id: string) => {
+    umaVoice.unlockAudio();
     if (playingVoiceId === id) {
       umaVoice.stop();
       setPlayingVoiceId(null);
@@ -364,9 +365,22 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       voiceStyle: "uma",
       onStart: () => setPlayingVoiceId(id),
       onEnd: () => setPlayingVoiceId(null),
-      onError: () => setPlayingVoiceId(null),
+      onError: (err) => {
+        console.warn('Uma voice playback error:', err);
+        setPlayingVoiceId(null);
+      },
     });
   };
+
+  // Synchronize playing state with global UmaVoiceService
+  useEffect(() => {
+    const unsubscribe = umaVoice.subscribe((voiceState) => {
+      if (!voiceState.isSpeaking && playingVoiceId) {
+        setPlayingVoiceId(null);
+      }
+    });
+    return unsubscribe;
+  }, [playingVoiceId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -1501,17 +1515,22 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                         {/* 1. Voice Play/Stop */}
                         <button
                           onClick={() => speakHindi(msg.text, msg.id)}
-                          className={`px-2.5 py-1 rounded-md border flex items-center gap-1 transition cursor-pointer font-medium ${
+                          className={`px-2.5 py-1 rounded-md border flex items-center gap-1.5 transition cursor-pointer font-medium ${
                             playingVoiceId === msg.id
-                              ? 'bg-[#7A1D1D] text-white border-[#7A1D1D]'
+                              ? 'bg-[#7A1D1D] text-white border-[#7A1D1D] shadow-sm'
                               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDCC0] border-[#8C6239]/40'
                           }`}
                           title="हिन्दी व संस्कृत श्लोक में सुनें"
                         >
                           {playingVoiceId === msg.id ? (
                             <>
-                              <VolumeX className="w-3.5 h-3.5" />
+                              <VolumeX className="w-3.5 h-3.5 text-amber-200" />
                               <span>वाणी बंद</span>
+                              <span className="flex items-center gap-0.5 ml-0.5" aria-hidden="true">
+                                <span className="w-1 h-2 bg-amber-200 rounded-full animate-bounce" />
+                                <span className="w-1 h-3 bg-amber-200 rounded-full animate-bounce [animation-delay:150ms]" />
+                                <span className="w-1 h-1.5 bg-amber-200 rounded-full animate-bounce [animation-delay:300ms]" />
+                              </span>
                             </>
                           ) : (
                             <>
