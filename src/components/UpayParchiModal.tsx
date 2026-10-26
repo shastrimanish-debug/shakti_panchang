@@ -159,7 +159,9 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const [fontSize, setFontSize] = useState<AppFontSize>(() => getStoredFontSize());
   const [isChromeVisible, setIsChromeVisible] = useState(true);
   const [isZenMode, setIsZenMode] = useState(false);
+  const [isAutoHideEnabled, setIsAutoHideEnabled] = useState(true);
   const lastScrollTopRef = useRef(0);
+  const cooldownUntilRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleUpdateFontSize = (newSize: AppFontSize) => {
@@ -173,19 +175,42 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   };
 
   const handleContentScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    // While user is actively typing in edit fields, do not hide chrome
-    if (isEditing) return;
-    const currentScrollTop = e.currentTarget.scrollTop;
+    // If auto-hide is disabled, or editing form inputs, or in Zen mode, do nothing
+    if (!isAutoHideEnabled || isEditing || isZenMode) return;
+
+    // Strict cooldown lock: prevents layout-shift recursion and continuous blinking
+    const now = Date.now();
+    if (now < cooldownUntilRef.current) return;
+
+    const el = e.currentTarget;
+    const currentScrollTop = el.scrollTop;
+    const scrollHeight = el.scrollHeight;
+    const clientHeight = el.clientHeight;
+
+    // If content does not have substantial scrollable overflow, do not toggle to avoid bounce
+    if (scrollHeight - clientHeight < 160) return;
+
     const delta = currentScrollTop - lastScrollTopRef.current;
 
-    // Scrolling down: hide header and footer to free up screen real estate for reading
-    if (delta > 20 && currentScrollTop > 45) {
-      if (isChromeVisible) setIsChromeVisible(false);
-    } else if (delta < -15 || currentScrollTop < 25) {
-      // Scrolling up or at top: reveal header and footer
-      if (!isChromeVisible) setIsChromeVisible(true);
+    // Scrolling down: significant movement past 120px threshold
+    if (delta > 45 && currentScrollTop > 120) {
+      if (isChromeVisible) {
+        setIsChromeVisible(false);
+        cooldownUntilRef.current = now + 500;
+        lastScrollTopRef.current = currentScrollTop;
+      }
+    } else if (delta < -35 || currentScrollTop < 20) {
+      // Scrolling up or at very top: reveal chrome
+      if (!isChromeVisible) {
+        setIsChromeVisible(true);
+        cooldownUntilRef.current = now + 500;
+        lastScrollTopRef.current = currentScrollTop;
+      }
     }
-    lastScrollTopRef.current = currentScrollTop;
+
+    if (Math.abs(delta) > 15) {
+      lastScrollTopRef.current = Math.max(0, currentScrollTop);
+    }
   };
 
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -686,16 +711,9 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
             : 'w-full max-w-3xl max-h-[92dvh] rounded-2xl border-2'
         }`}
       >
-        {/* Top Collapsible Header Stack (Auto-collapses on scroll down to give maximum reading area) */}
-        <div
-          className={`shrink-0 transition-all duration-300 ease-in-out overflow-hidden ${
-            !isChromeVisible || isZenMode
-              ? 'max-h-0 opacity-0 pointer-events-none'
-              : 'max-h-[350px] opacity-100'
-          }`}
-        >
-          {/* Top Modal Bar */}
-          <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b-2 border-[#B58738]">
+        {/* Top Modal Bar (Always anchored at top for easy closing, font scaling & Zen toggle) */}
+        {!isZenMode && (
+          <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between border-b-2 border-[#B58738] shrink-0 z-20">
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#B58738] text-[#2C0A0A] flex items-center justify-center font-bold text-base sm:text-lg shadow-inner shrink-0">
                 卐
@@ -744,7 +762,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               {/* Fullscreen / Zen Reading Mode Toggle */}
               <button
                 type="button"
-                onClick={() => setIsZenMode(!isZenMode)}
+                onClick={() => {
+                  setIsZenMode(!isZenMode);
+                  cooldownUntilRef.current = Date.now() + 500;
+                }}
                 className={`p-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
                   isZenMode
                     ? 'bg-[#FFD88A] text-[#5C1414] border-white'
@@ -782,6 +803,16 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               </button>
             </div>
           </div>
+        )}
+
+        {/* Sub-Header Tabs & Quick Presets (Collapses smoothly on downward scroll) */}
+        <div
+          className={`shrink-0 transition-all duration-300 ease-in-out overflow-hidden z-10 ${
+            !isChromeVisible || isZenMode
+              ? 'max-h-0 opacity-0 pointer-events-none'
+              : 'max-h-[160px] opacity-100'
+          }`}
+        >
 
           {/* View Switcher Tabs: 📜 पारंपरिक पर्ची vs 📖 यजमान विस्तृत मार्गदर्शन */}
           <div className="bg-[#FAF2E4] px-3 sm:px-6 pt-2 pb-1.5 border-b border-[#8C6239]/25 flex items-center justify-between gap-2 flex-wrap">
@@ -1656,6 +1687,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               onClick={() => {
                 setIsChromeVisible(true);
                 setIsZenMode(false);
+                cooldownUntilRef.current = Date.now() + 600;
               }}
               className="flex items-center gap-1.5 text-xs font-bold text-[#FFD88A] hover:text-white px-2 py-0.5 rounded-full hover:bg-white/10 transition cursor-pointer"
               title="मेनू, डाउनलोड व हेडर फिर से दिखाएं"
