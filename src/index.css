@@ -51,6 +51,50 @@
   }
 }
 
+/* 🌟 Elder & Senior Citizen Accessibility Font Scaling (वृद्धजन सुपाठ्यता) */
+[data-font-size="large"] {
+  --app-font-multiplier: 1.15;
+}
+[data-font-size="large"] p,
+[data-font-size="large"] span,
+[data-font-size="large"] div:not([class*="w-"]):not([class*="h-"]),
+[data-font-size="large"] button,
+[data-font-size="large"] strong {
+  font-size-adjust: 0.58;
+}
+[data-font-size="large"] .text-xs {
+  font-size: 0.85rem !important;
+  line-height: 1.35rem !important;
+}
+[data-font-size="large"] .text-sm {
+  font-size: 0.98rem !important;
+  line-height: 1.48rem !important;
+}
+[data-font-size="large"] .text-base {
+  font-size: 1.15rem !important;
+  line-height: 1.65rem !important;
+}
+
+[data-font-size="xlarge"] {
+  --app-font-multiplier: 1.32;
+}
+[data-font-size="xlarge"] .text-xs {
+  font-size: 0.96rem !important;
+  line-height: 1.45rem !important;
+}
+[data-font-size="xlarge"] .text-sm {
+  font-size: 1.12rem !important;
+  line-height: 1.62rem !important;
+}
+[data-font-size="xlarge"] .text-base {
+  font-size: 1.28rem !important;
+  line-height: 1.82rem !important;
+}
+[data-font-size="xlarge"] .text-lg {
+  font-size: 1.42rem !important;
+  line-height: 2rem !important;
+}
+
 /* 🌟 Ancient Manuscript High-Readability Theme (वार्म आईवरी/क्रीम & गहरा भूरा) */
 .instagram-story-wrapper {
   width: 100% !important;

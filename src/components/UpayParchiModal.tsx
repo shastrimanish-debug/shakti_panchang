@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { KundaliData, VedicPanchangData } from '../types';
@@ -13,6 +13,9 @@ import {
 import {
   getAstrologerBranding,
   saveAstrologerBranding,
+  getStoredFontSize,
+  setStoredFontSize,
+  AppFontSize,
 } from '../services/storage';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import {
@@ -41,6 +44,9 @@ import {
   Volume2,
   VolumeX,
   Flame,
+  Maximize2,
+  Minimize2,
+  Type,
 } from 'lucide-react';
 import { saveImageNative } from '../lib/device';
 import { shareImageFile } from '../lib/shareHelper';
@@ -149,6 +155,39 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const [copiedGuide, setCopiedGuide] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
+  // Elder accessibility & Reading view controls (वृद्धजन सुपाठ्यता एवं स्क्रीन विस्तार)
+  const [fontSize, setFontSize] = useState<AppFontSize>(() => getStoredFontSize());
+  const [isChromeVisible, setIsChromeVisible] = useState(true);
+  const [isZenMode, setIsZenMode] = useState(false);
+  const lastScrollTopRef = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleUpdateFontSize = (newSize: AppFontSize) => {
+    setFontSize(newSize);
+    setStoredFontSize(newSize);
+    try {
+      document.documentElement.setAttribute('data-font-size', newSize);
+      const rootEl = document.getElementById('root');
+      if (rootEl) rootEl.setAttribute('data-font-size', newSize);
+    } catch {}
+  };
+
+  const handleContentScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    // While user is actively typing in edit fields, do not hide chrome
+    if (isEditing) return;
+    const currentScrollTop = e.currentTarget.scrollTop;
+    const delta = currentScrollTop - lastScrollTopRef.current;
+
+    // Scrolling down: hide header and footer to free up screen real estate for reading
+    if (delta > 20 && currentScrollTop > 45) {
+      if (isChromeVisible) setIsChromeVisible(false);
+    } else if (delta < -15 || currentScrollTop < 25) {
+      // Scrolling up or at top: reveal header and footer
+      if (!isChromeVisible) setIsChromeVisible(true);
+    }
+    lastScrollTopRef.current = currentScrollTop;
+  };
+
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [blobFile, setBlobFile] = useState<File | null>(null);
@@ -167,6 +206,9 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       setHeader(loadParchiHeader());
       setActiveTab('parchi');
       setHighlightedItemIndex(null);
+      setIsChromeVisible(true);
+      setIsZenMode(false);
+      setFontSize(getStoredFontSize());
     }
   }, [isOpen, activeKundali]);
 
@@ -631,173 +673,246 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[140] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl w-full max-w-3xl max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden">
-        {/* Top Modal Bar */}
-        <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] px-4 py-3 flex items-center justify-between border-b-2 border-[#B58738]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-[#B58738] text-[#2C0A0A] flex items-center justify-center font-bold text-lg shadow-inner">
-              卐
+    <div
+      className={`fixed inset-0 z-[140] flex items-center justify-center transition-all duration-200 ${
+        isZenMode ? 'p-0 bg-black/85' : 'p-2 sm:p-4 bg-black/75 backdrop-blur-xs'
+      } animate-in fade-in duration-200`}
+    >
+      <div
+        data-font-size={fontSize}
+        className={`bg-[#FAF2E4] border-[#8C6239] flex flex-col shadow-2xl overflow-hidden transition-all duration-300 relative ${
+          isZenMode
+            ? 'w-full h-full max-h-[100dvh] max-w-none rounded-none border-0'
+            : 'w-full max-w-3xl max-h-[92dvh] rounded-2xl border-2'
+        }`}
+      >
+        {/* Top Collapsible Header Stack (Auto-collapses on scroll down to give maximum reading area) */}
+        <div
+          className={`shrink-0 transition-all duration-300 ease-in-out overflow-hidden ${
+            !isChromeVisible || isZenMode
+              ? 'max-h-0 opacity-0 pointer-events-none'
+              : 'max-h-[350px] opacity-100'
+          }`}
+        >
+          {/* Top Modal Bar */}
+          <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FAF2E4] px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b-2 border-[#B58738]">
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#B58738] text-[#2C0A0A] flex items-center justify-center font-bold text-base sm:text-lg shadow-inner shrink-0">
+                卐
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm sm:text-lg font-granth text-[#FFD88A] truncate flex items-center gap-1.5">
+                  <span>📋 उमा ज्योतिषीय उपाय पर्ची</span>
+                </h3>
+                <p className="text-[10px] sm:text-[11px] text-[#E6C687] truncate">
+                  {activeKundali
+                    ? `${activeKundali.name} • ${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि`
+                    : 'पारंपरिक लेटरहेड पर्ची एवं शास्त्रीय मार्गदर्शन'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-base sm:text-lg font-granth text-[#FFD88A] flex items-center gap-2">
-                <span>📋 उमा ज्योतिषीय उपाय पर्ची एवं विस्तृत मार्गदर्शन</span>
-              </h3>
-              <p className="text-[11px] text-[#E6C687]">
-                {activeKundali
-                  ? `${activeKundali.name} • ${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि • दोष: ${parchiData.detectedDoshaYoga}`
-                  : 'पारंपरिक लेटरहेड पर्ची एवं प्रत्येक उपाय का शास्त्रीय कारण, लाभ व विधि'}
-              </p>
+
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              {/* Senior & Elder Friendly Font Sizing (अ / अ+ / अ++) */}
+              <div
+                className="flex items-center bg-[#460E0E] rounded-lg p-0.5 border border-[#B58738]/50"
+                title="अक्षर आकार (बुजुर्गों एवं वृद्धजनों हेतु सुगम फॉन्ट)"
+              >
+                {(['normal', 'large', 'xlarge'] as AppFontSize[]).map((sz) => (
+                  <button
+                    key={sz}
+                    type="button"
+                    onClick={() => handleUpdateFontSize(sz)}
+                    className={`px-1.5 sm:px-2 py-0.5 rounded text-[11px] sm:text-xs font-bold transition cursor-pointer ${
+                      fontSize === sz
+                        ? 'bg-[#FFD88A] text-[#5C1414] shadow-xs'
+                        : 'text-[#E6C687] hover:text-white'
+                    }`}
+                    title={
+                      sz === 'normal'
+                        ? 'सामान्य आकार'
+                        : sz === 'large'
+                        ? 'बड़ा अक्षर (सुगम पाठ)'
+                        : 'अति बड़ा अक्षर (वृद्धजनों हेतु - बिना चश्मे के)'
+                    }
+                  >
+                    {sz === 'normal' ? 'अ' : sz === 'large' ? 'अ+' : 'अ++'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Fullscreen / Zen Reading Mode Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsZenMode(!isZenMode)}
+                className={`p-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
+                  isZenMode
+                    ? 'bg-[#FFD88A] text-[#5C1414] border-white'
+                    : 'bg-[#5C1414] text-[#E6C687] border-[#B58738]/60 hover:text-white'
+                }`}
+                title={isZenMode ? 'सामान्य दृश्य पर लौटें' : 'पूर्ण स्क्रीन स्वाध्याय (पढ़ने हेतु अधिक स्थान)'}
+              >
+                {isZenMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                <span className="hidden md:inline">{isZenMode ? 'छोटा' : 'पूर्ण स्क्रीन'}</span>
+              </button>
+
+              {activeTab === 'parchi' && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(!isEditing)}
+                  className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer border ${
+                    isEditing
+                      ? 'bg-[#FFD88A] text-[#5C1414] border-white'
+                      : 'bg-[#5C1414] text-[#FFD88A] border-[#B58738]/60 hover:bg-[#4A1010]'
+                  }`}
+                >
+                  {isEditing ? <Check className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
+                  <span className="hidden sm:inline">{isEditing ? 'पूर्वावलोकन' : '✏️ पर्ची संपादन'}</span>
+                  <span className="sm:hidden">{isEditing ? 'देखें' : 'संपादित'}</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="p-1 sm:p-1.5 rounded-lg text-[#E6C687] hover:text-white hover:bg-black/20 cursor-pointer"
+                title="पर्ची बंद करें"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {activeTab === 'parchi' && (
-              <button
+          {/* View Switcher Tabs: 📜 पारंपरिक पर्ची vs 📖 यजमान विस्तृत मार्गदर्शन */}
+          <div className="bg-[#FAF2E4] px-3 sm:px-6 pt-2 pb-1.5 border-b border-[#8C6239]/25 flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <motion.button
                 type="button"
-                onClick={() => setIsEditing(!isEditing)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer border ${
-                  isEditing
-                    ? 'bg-[#FFD88A] text-[#5C1414] border-white'
-                    : 'bg-[#5C1414] text-[#FFD88A] border-[#B58738]/60 hover:bg-[#4A1010]'
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                onClick={() => {
+                  setActiveTab('parchi');
+                  setIsChromeVisible(true);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                  activeTab === 'parchi'
+                    ? 'bg-[#7A1D1D] text-[#FFD88A] shadow-sm'
+                    : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDCC0]'
                 }`}
               >
-                {isEditing ? <Check className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
-                <span>{isEditing ? 'पूर्वावलोकन' : '✏️ पर्ची संपादन'}</span>
-              </button>
-            )}
+                <FileText className="w-3.5 h-3.5" />
+                <span>📜 पारंपरिक उपाय पर्ची (Slip)</span>
+              </motion.button>
 
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="p-1.5 rounded-lg text-[#E6C687] hover:text-white hover:bg-black/20 cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* View Switcher Tabs: 📜 पारंपरिक पर्ची vs 📖 यजमान विस्तृत मार्गदर्शन */}
-        <div className="bg-[#FAF2E4] px-3 sm:px-6 pt-2.5 pb-2 border-b border-[#8C6239]/25 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 450, damping: 25 }}
-              onClick={() => setActiveTab('parchi')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                activeTab === 'parchi'
-                  ? 'bg-[#7A1D1D] text-[#FFD88A] shadow-sm'
-                  : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDCC0]'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>📜 पारंपरिक उपाय पर्ची (Slip)</span>
-            </motion.button>
-
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 450, damping: 25 }}
-              onClick={() => {
-                setActiveTab('guide');
-                setHighlightedItemIndex(null);
-              }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer relative ${
-                activeTab === 'guide'
-                  ? 'bg-[#7A1D1D] text-[#FFD88A] shadow-sm'
-                  : 'bg-[#FFFDF8] text-[#7A1D1D] border border-[#8C6239]/40 hover:bg-[#F4E8D1]'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span>📖 यजमान विस्तृत मार्गदर्शन (क्यों व क्या लाभ?)</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="विस्तृत कारण व लाभ उपलब्ध" />
-            </motion.button>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs">
-            {activeTab === 'guide' && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleToggleUmaAudio}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition border ${
-                    isPlayingAudio
-                      ? 'bg-rose-700 text-white border-rose-800 animate-pulse'
-                      : 'bg-[#FFFDF8] text-[#5C3A21] border-[#8C6239]/40 hover:bg-[#F4E8D1]'
-                  }`}
-                  title="उमा जी की आवाज में उपाय सुनें"
-                >
-                  {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-[#7A1D1D]" />}
-                  <span>{isPlayingAudio ? 'ऑडियो रोकें' : '🎙️ उमा जी से सुनें'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleShareWhatsAppGuide}
-                  className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
-                  title="WhatsApp पर विस्तृत विवरण भेजें"
-                >
-                  <Share2 className="w-3 h-3" />
-                  <span>📲 WhatsApp</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCopyDetailedGuide}
-                  className="px-2 py-1 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-md text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition"
-                >
-                  {copiedGuide ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedGuide ? 'कॉपी हुआ!' : 'कॉपी'}</span>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Mode Bar (For template presets & astrologer branding) */}
-        {activeTab === 'parchi' && (
-          <div className="bg-[#F4E8D1] px-4 py-2 border-b border-[#8C6239]/30 flex items-center justify-between flex-wrap gap-2 text-xs">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <button
+              <motion.button
                 type="button"
-                onClick={() => setIsEditAstrologerModalOpen(true)}
-                className="px-2.5 py-1 bg-[#FFFDF8] text-[#7A1D1D] border border-[#8C6239]/40 rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition shadow-2xs"
-                title="लेटरहेड पर अपना नाम या विवरण लिखें"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                onClick={() => {
+                  setActiveTab('guide');
+                  setHighlightedItemIndex(null);
+                  setIsChromeVisible(true);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer relative ${
+                  activeTab === 'guide'
+                    ? 'bg-[#7A1D1D] text-[#FFD88A] shadow-sm'
+                    : 'bg-[#FFFDF8] text-[#7A1D1D] border border-[#8C6239]/40 hover:bg-[#F4E8D1]'
+                }`}
               >
-                <Edit3 className="w-3 h-3 text-[#B56A00]" />
-                <span>{header.astrologerName?.trim() ? `नाम: ${header.astrologerName}` : '✏️ अपना / ज्योतिषी का नाम लिखें'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleResetFromKundali}
-                className="px-2.5 py-1 bg-[#7A1D1D] text-white rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#5C1414] transition shadow-2xs"
-              >
-                <RefreshCw className="w-3 h-3" />
-                <span>कुण्डली अनुसार स्वतः उपाय</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleLoadExampleTemplate}
-                className="px-2.5 py-1 bg-[#FFFDF8] text-[#5C3A21] border border-[#8C6239]/40 rounded-md font-semibold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition"
-              >
-                <Sparkles className="w-3 h-3 text-[#B56A00]" />
-                <span>आदर्श उदाहरण पर्ची (मोती+माणिक / ग्रहण योग)</span>
-              </button>
+                <BookOpen className="w-3.5 h-3.5 text-[#B56A00]" />
+                <span>📖 यजमान विस्तृत मार्गदर्शन (क्यों व क्या लाभ?)</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="विस्तृत कारण व लाभ उपलब्ध" />
+              </motion.button>
             </div>
 
-            <span className="text-[11px] text-[#7A1D1D] font-semibold">
-              {isEditing ? 'आप किसी भी पंक्ति या नाम को बदल सकते हैं' : 'पारंपरिक ज्योतिषाचार्य लेटरहेड प्रारूप'}
-            </span>
+            <div className="flex items-center gap-1.5 text-xs">
+              {activeTab === 'guide' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleToggleUmaAudio}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition border ${
+                      isPlayingAudio
+                        ? 'bg-rose-700 text-white border-rose-800 animate-pulse'
+                        : 'bg-[#FFFDF8] text-[#5C3A21] border-[#8C6239]/40 hover:bg-[#F4E8D1]'
+                    }`}
+                    title="उमा जी की आवाज में उपाय सुनें"
+                  >
+                    {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-[#7A1D1D]" />}
+                    <span>{isPlayingAudio ? 'ऑडियो रोकें' : '🎙️ उमा जी से सुनें'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleShareWhatsAppGuide}
+                    className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                    title="WhatsApp पर विस्तृत विवरण भेजें"
+                  >
+                    <Share2 className="w-3 h-3" />
+                    <span>📲 WhatsApp</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyDetailedGuide}
+                    className="px-2 py-1 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-md text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition"
+                  >
+                    {copiedGuide ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedGuide ? 'कॉपी हुआ!' : 'कॉपी'}</span>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Quick Mode Bar (For template presets & astrologer branding) */}
+          {activeTab === 'parchi' && (
+            <div className="bg-[#F4E8D1] px-4 py-2 border-b border-[#8C6239]/30 flex items-center justify-between flex-wrap gap-2 text-xs">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setIsEditAstrologerModalOpen(true)}
+                  className="px-2.5 py-1 bg-[#FFFDF8] text-[#7A1D1D] border border-[#8C6239]/40 rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition shadow-2xs"
+                  title="लेटरहेड पर अपना नाम या विवरण लिखें"
+                >
+                  <Edit3 className="w-3 h-3 text-[#B56A00]" />
+                  <span>{header.astrologerName?.trim() ? `नाम: ${header.astrologerName}` : '✏️ अपना / ज्योतिषी का नाम लिखें'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResetFromKundali}
+                  className="px-2.5 py-1 bg-[#7A1D1D] text-white rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#5C1414] transition shadow-2xs"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>कुण्डली अनुसार स्वतः उपाय</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLoadExampleTemplate}
+                  className="px-2.5 py-1 bg-[#FFFDF8] text-[#5C3A21] border border-[#8C6239]/40 rounded-md font-semibold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition"
+                >
+                  <Sparkles className="w-3 h-3 text-[#B56A00]" />
+                  <span>आदर्श उदाहरण पर्ची (मोती+माणिक / ग्रहण योग)</span>
+                </button>
+              </div>
+
+              <span className="text-[11px] text-[#7A1D1D] font-semibold">
+                {isEditing ? 'आप किसी भी पंक्ति या नाम को बदल सकते हैं' : 'पारंपरिक ज्योतिषाचार्य लेटरहेड प्रारूप'}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 bg-[#EBDCC0]/60">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleContentScroll}
+          className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 bg-[#EBDCC0]/60 relative"
+        >
           {/* TAB 1: PARCHI VIEW */}
           {activeTab === 'parchi' && (
             <>
@@ -1456,74 +1571,137 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
           )}
         </div>
 
-        {/* Modal Footer Controls */}
-        <div className="bg-[#F4E8D1] px-4 py-3 border-t-2 border-[#8C6239]/40 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCopySlip}
-              className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-700" />
-                  <span className="text-emerald-800">कॉपी हो गया!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4 text-[#7A1D1D]" />
-                  <span>पर्ची टेक्स्ट कॉपी</span>
-                </>
-              )}
-            </button>
+        {/* Modal Footer Controls (Auto-collapsible on Scroll to give full reading space) */}
+        <div
+          className={`shrink-0 transition-all duration-300 ease-in-out overflow-hidden ${
+            !isChromeVisible || isZenMode
+              ? 'max-h-0 opacity-0 py-0 border-t-0 pointer-events-none'
+              : 'max-h-40 opacity-100'
+          }`}
+        >
+          <div className="bg-[#F4E8D1] px-4 py-3 border-t-2 border-[#8C6239]/40 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopySlip}
+                className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-700" />
+                    <span className="text-emerald-800">कॉपी हो गया!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 text-[#7A1D1D]" />
+                    <span>पर्ची टेक्स्ट कॉपी</span>
+                  </>
+                )}
+              </button>
 
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeTab === 'parchi') {
+                    setActiveTab('guide');
+                  } else {
+                    setActiveTab('parchi');
+                  }
+                }}
+                className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+              >
+                <BookOpen className="w-4 h-4 text-[#B56A00]" />
+                <span>{activeTab === 'parchi' ? '📖 यजमान विस्तृत मार्गदर्शन' : '📜 पारंपरिक पर्ची'}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadImage}
+                disabled={isDownloading}
+                className="px-4 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:from-[#5C1414] hover:to-[#3E0A0A] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50"
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
+                    <span>पर्ची बन रही है...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>📥 HD पर्ची डाउनलोड (PNG)</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShareWhatsApp}
+                disabled={isDownloading}
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>📲 WhatsApp पर्ची</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Floating Bottom Reveal Pill (Shown when Header & Footer are auto-hidden) */}
+        {(!isChromeVisible || isZenMode) && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 sm:gap-2 bg-[#5C1414]/95 text-[#FFD88A] border-2 border-[#B58738] rounded-full px-3 py-1.5 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-2 duration-200">
             <button
               type="button"
               onClick={() => {
-                if (activeTab === 'parchi') {
-                  setActiveTab('guide');
-                } else {
-                  setActiveTab('parchi');
-                }
+                setIsChromeVisible(true);
+                setIsZenMode(false);
               }}
-              className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+              className="flex items-center gap-1.5 text-xs font-bold text-[#FFD88A] hover:text-white px-2 py-0.5 rounded-full hover:bg-white/10 transition cursor-pointer"
+              title="मेनू, डाउनलोड व हेडर फिर से दिखाएं"
             >
-              <BookOpen className="w-4 h-4 text-[#B56A00]" />
-              <span>{activeTab === 'parchi' ? '📖 यजमान विस्तृत मार्गदर्शन' : '📜 पारंपरिक पर्ची'}</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleDownloadImage}
-              disabled={isDownloading}
-              className="px-4 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:from-[#5C1414] hover:to-[#3E0A0A] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50"
-            >
-              {isDownloading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
-                  <span>पर्ची बन रही है...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  <span>📥 HD पर्ची डाउनलोड (PNG)</span>
-                </>
-              )}
+              <Eye className="w-3.5 h-3.5 text-[#E6C687]" />
+              <span>मेनू व डाउनलोड दिखाएं</span>
             </button>
 
+            <div className="h-4 w-px bg-[#B58738]/50" />
+
+            <div className="flex items-center gap-0.5" title="अक्षर का आकार (सुगम फॉन्ट)">
+              {(['normal', 'large', 'xlarge'] as AppFontSize[]).map((sz) => (
+                <button
+                  key={sz}
+                  type="button"
+                  onClick={() => handleUpdateFontSize(sz)}
+                  className={`px-1.5 py-0.5 rounded text-[11px] font-bold cursor-pointer transition ${
+                    fontSize === sz
+                      ? 'bg-[#FFD88A] text-[#5C1414] font-extrabold'
+                      : 'text-[#E6C687] hover:bg-white/10'
+                  }`}
+                  title={
+                    sz === 'normal'
+                      ? 'सामान्य आकार'
+                      : sz === 'large'
+                      ? 'बड़ा आकार'
+                      : 'अति बड़ा आकार (वृद्धजनों हेतु)'
+                  }
+                >
+                  {sz === 'normal' ? 'अ' : sz === 'large' ? 'अ+' : 'अ++'}
+                </button>
+              ))}
+            </div>
+
+            <div className="h-4 w-px bg-[#B58738]/50" />
+
             <button
               type="button"
-              onClick={handleShareWhatsApp}
-              disabled={isDownloading}
-              className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50"
+              onClick={handleCloseModal}
+              className="p-1 rounded-full text-[#E6C687] hover:text-white hover:bg-white/10 cursor-pointer"
+              title="पर्ची बंद करें"
             >
-              <Share2 className="w-4 h-4" />
-              <span>📲 WhatsApp पर्ची</span>
+              <X className="w-4 h-4" />
             </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* HD PNG Download & Save Preview Modal (100% Reliable for Android, Mobile WebViews, iOS & PC) */}

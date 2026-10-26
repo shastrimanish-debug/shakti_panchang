@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Sparkles } from 'lucide-react';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES } from './services/storage';
+import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES, getStoredFontSize, setStoredFontSize, AppFontSize } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
 import { scheduleMorningBriefs } from './services/morningBrief';
 import { SavedLocation, KundaliData } from './types';
@@ -126,7 +126,15 @@ export function App() {
   const [entered, setEntered] = useState(false);
   const [isMoreModalOpen, setIsMoreModalOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
-  const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState<boolean>(false);
+  const [appFontSize, setAppFontSize] = useState<AppFontSize>(() => getStoredFontSize());
+  const handleCycleFontSize = useCallback(() => {
+    triggerHapticSelection();
+    setAppFontSize((prev) => {
+      const next: AppFontSize = prev === 'normal' ? 'large' : prev === 'large' ? 'xlarge' : 'normal';
+      setStoredFontSize(next);
+      return next;
+    });
+  }, []);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerHost, setDrawerHost] = useState<HTMLElement | null>(null);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
@@ -179,6 +187,7 @@ export function App() {
   const [isBrandingModalOpen, setIsBrandingModalOpen] = useState<boolean>(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState<boolean>(false);
+  const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState<boolean>(false);
   const [subscriptionReason, setSubscriptionReason] = useState<string>('');
   const { t } = useTranslation();
   const { language: currentLang, setLanguage } = useLanguage();
@@ -431,7 +440,7 @@ export function App() {
   return (
     <DrawerHostContext.Provider value={drawerApi}>
     <TabMenuContext.Provider value={tabMenu}>
-    <div key={`app-root-${currentLang}`} className="board bx-bento h-dvh w-screen overflow-hidden relative flex flex-col font-sans">
+    <div key={`app-root-${currentLang}`} data-font-size={appFontSize} className="board bx-bento h-dvh w-screen overflow-hidden relative flex flex-col font-sans">
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       <div className="bx-rail shrink-0">
@@ -462,7 +471,7 @@ export function App() {
           )}
         </div>
 
-        {/* Right: Persistent City Selector ("शहर चुनें") & Uma AI Button */}
+        {/* Right: Persistent City Selector ("शहर चुनें"), Font Scale & Uma AI Button */}
         <div className="flex items-center gap-1.5 min-w-0 ml-auto">
           <motion.button
             type="button"
@@ -488,6 +497,29 @@ export function App() {
               className="text-[10px] px-1.5 py-0.2 rounded-full font-black shrink-0"
             >
               शहर चुनें ▾
+            </span>
+          </motion.button>
+
+          {/* Senior Citizen / Elder Friendly Font Size Scaler */}
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.94 }}
+            transition={{ type: "spring", stiffness: 450, damping: 26 }}
+            className="bx-tabmenu cursor-pointer"
+            style={{
+              backgroundColor: appFontSize !== 'normal' ? '#8B1E1E' : '#FAF2E4',
+              color: appFontSize !== 'normal' ? '#FFD88A' : '#5C3A21',
+              borderColor: appFontSize !== 'normal' ? '#FFD88A' : '#8C6239',
+            }}
+            onClick={handleCycleFontSize}
+            title={`अक्षर का आकार बदलें (वर्तमान: ${appFontSize === 'xlarge' ? 'अति-विशाल (वृद्धजन)' : appFontSize === 'large' ? 'बड़ा' : 'सामान्य'})`}
+          >
+            <span className="font-bold text-xs">
+              {appFontSize === 'xlarge' ? 'अ++' : appFontSize === 'large' ? 'अ+' : 'अ'}
+            </span>
+            <span className="hidden sm:inline text-[11px] font-semibold">
+              {appFontSize === 'xlarge' ? 'अति-विशाल' : appFontSize === 'large' ? 'बड़ा' : 'अक्षर'}
             </span>
           </motion.button>
 

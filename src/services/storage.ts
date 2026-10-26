@@ -431,4 +431,24 @@ export function saveAstrologerBranding(branding: AstrologerBranding): void {
   } catch {}
 }
 
+// -------------------------------------------------------------
+// App & Reading Font Size Scaling (Senior / Elder Accessible)
+// -------------------------------------------------------------
+export type AppFontSize = 'normal' | 'large' | 'xlarge';
+const STORAGE_KEY_FONT_SIZE = 'shakti_app_font_size_v1';
+
+export function getStoredFontSize(): AppFontSize {
+  try {
+    const val = localStorage.getItem(STORAGE_KEY_FONT_SIZE);
+    if (val === 'normal' || val === 'large' || val === 'xlarge') return val;
+  } catch {}
+  return 'normal';
+}
+
+export function setStoredFontSize(size: AppFontSize): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_FONT_SIZE, size);
+  } catch {}
+}
+
 
