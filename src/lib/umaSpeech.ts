@@ -164,21 +164,7 @@ export function prepareUmaUtterance(text: string): string {
 }
 
 export function pickHindiVoice(): SpeechSynthesisVoice | null {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices || voices.length === 0) return null;
-  const female = /female|hia|hfc|hfd|neural|wavenet-a|wavenet-d|woman|swara/i;
-  const male = /male|hid|hie|wavenet-b|wavenet-c|madhur/i;
-  return (
-    // 1. Prefer dedicated Sanskrit (sa-IN) voice if installed on device
-    voices.find((v) => v.lang.toLowerCase().startsWith("sa")) ||
-    // 2. High-quality Neural Hindi voice
-    voices.find((v) => v.lang.toLowerCase().startsWith("hi") && female.test(v.name) && !male.test(v.name)) ||
-    voices.find((v) => v.lang.toLowerCase() === "hi-in" && !male.test(v.name)) ||
-    voices.find((v) => v.lang.toLowerCase().startsWith("hi")) ||
-    voices.find((v) => /sanskrit|संस्कृत|hindi|हिन्दी/i.test(v.name)) ||
-    null
-  );
+  return umaVoice.pickBestBrowserHindiVoice();
 }
 
 export function unlockUmaSpeech() {
@@ -198,17 +184,16 @@ export interface SpeakOptions {
 }
 
 export async function speakUma(text: string, options?: SpeakOptions): Promise<void> {
-  const pandit = options?.voiceStyle === "pandit" || options?.sanskritOnly === true;
-  if (pandit) {
-    startPathBed();
-  }
+  // Always provide serene devotional music bed for stotram & remedy recitation
+  startPathBed();
 
   isCurrentlySpeaking = true;
   return umaVoice.speak(text, {
-    rate: options?.rate ?? (pandit ? 0.88 : 0.94),
-    pitch: options?.pitch ?? (pandit ? 1.0 : 1.04),
-    voiceStyle: options?.voiceStyle ?? (pandit ? "pandit" : "uma"),
+    rate: options?.rate ?? 0.84,
+    pitch: options?.pitch ?? 1.25,
+    voiceStyle: "uma",
     sanskritOnly: options?.sanskritOnly,
+    tone: "calm",
     onStart: () => {
       isCurrentlySpeaking = true;
       options?.onStart?.();

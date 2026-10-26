@@ -51,12 +51,14 @@ import {
 import { saveImageNative } from '../lib/device';
 import { shareImageFile } from '../lib/shareHelper';
 import { umaVoice } from '../services/UmaVoiceService';
+import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 
 interface UpayParchiModalProps {
   isOpen: boolean;
   onClose: () => void;
   activeKundali?: KundaliData | null;
   panchang?: VedicPanchangData | null;
+  onOpenVishnuSahasranama?: () => void;
 }
 
 const CIRCLED_NUMS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
@@ -133,6 +135,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   onClose,
   activeKundali,
   panchang,
+  onOpenVishnuSahasranama,
 }) => {
   const [header, setHeader] = useState<ParchiHeaderConfig>(() => loadParchiHeader());
   const [isEditAstrologerModalOpen, setIsEditAstrologerModalOpen] = useState(false);
@@ -240,7 +243,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   useEffect(() => {
     return () => {
       if (isPlayingAudio) {
-        umaVoice.stop();
+        stopUmaSpeech();
       }
     };
   }, [isPlayingAudio]);
@@ -268,7 +271,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
   const handleCloseModal = () => {
     if (isPlayingAudio) {
-      umaVoice.stop();
+      stopUmaSpeech();
       setIsPlayingAudio(false);
     }
     onClose();
@@ -349,21 +352,30 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
   const handleToggleUmaAudio = async () => {
     if (isPlayingAudio) {
-      umaVoice.stop();
+      stopUmaSpeech();
       setIsPlayingAudio(false);
       return;
     }
     try {
       setIsPlayingAudio(true);
-      const spokenSummary = `सदा कल्याण हो ${salutation}! आपकी जन्मपत्रिका के अनुसार जो मुख्य उपाय बताए गए हैं, वे आपके ग्रह दोषों को शांत कर भाग्योदय कराने वाले हैं। ${
+      const pointsSpeech = points
+        .map((pt, idx) => `उपाय क्रमांक ${idx + 1}, ${pt.replace(/[\(\)\[\]\{\}]/g, '')}`)
+        .join('। ');
+
+      const spokenSummary = `॥ ॐ श्री गणेशाय नमः ॥ ॥ ॐ नमो भगवते वासुदेवाय ॥ सदा कल्याण हो ${salutation}! आपकी जन्मपत्रिका के ग्रह दोषों की शांति और भाग्योदय हेतु, यह प्रामाणिक वैदिक उपाय पर्ची श्रवण करें। ${pointsSpeech}। ${
         currentGrahanDeep
-          ? `आपकी पत्रिका में ${currentGrahanDeep.grahanTypeLabel} है, जो ${currentGrahanDeep.houseName} में स्थित है। इसके निवारण हेतु संकल्प, नवग्रह पूजन, एकादशवार रुद्राभिषेक, वैदिक मंत्र जप, दशांश हवन एवं छाया दान की छह चरणीय शांति अवश्य कराएं।`
+          ? `आपकी पत्रिका में ${currentGrahanDeep.grahanTypeLabel} के निवारण हेतु संकल्प, नवग्रह पूजन, एकादशवार रुद्राभिषेक एवं वैदिक जप की छह चरणीय शांति अवश्य कराएं। `
           : ''
-      } पर्ची में बताए गए रत्नों, उपवास, पाठ और दान का विस्तृत कारण व लाभ नीचे दिया गया है। श्रद्धापूर्वक इनका पालन करें। भगवान आपका मंगल करें।`;
-      await umaVoice.speak(spokenSummary, { tone: 'calm' });
+      } श्रद्धा और विश्वास के साथ इन उपायों का नित्य पालन करें। भगवान श्री हरि विष्णु एवं देवाधिदेव महादेव आपके सर्व मनोरथ पूर्ण करें। ॥ ॐ शान्तिः शान्तिः शान्तिः ॥`;
+
+      await speakUma(spokenSummary, {
+        rate: 0.82,
+        pitch: 1.26,
+        voiceStyle: 'uma',
+        onEnd: () => setIsPlayingAudio(false),
+        onError: () => setIsPlayingAudio(false),
+      });
     } catch {
-      // ignore
-    } finally {
       setIsPlayingAudio(false);
     }
   };
@@ -859,22 +871,48 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
             </div>
 
             <div className="flex items-center gap-1.5 text-xs">
+              <button
+                type="button"
+                onClick={handleToggleUmaAudio}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs border ${
+                  isPlayingAudio
+                    ? 'bg-rose-700 text-white border-rose-800 animate-pulse'
+                    : 'bg-gradient-to-r from-amber-50 to-orange-50 text-[#7A1D1D] border-amber-400 hover:bg-amber-100'
+                }`}
+                title="विदुषी उमा जी के मधुर स्वर में लयबद्ध मंगलाचरण व उपाय पाठ सुनें"
+              >
+                {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-[#7A1D1D]" />}
+                <span>{isPlayingAudio ? 'स्वर पाठ रोकें' : '🎙️ सुरीला स्वर पाठ'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (isPlayingAudio) {
+                    stopUmaSpeech();
+                    setIsPlayingAudio(false);
+                  }
+                  onClose();
+                  if (onOpenVishnuSahasranama) {
+                    onOpenVishnuSahasranama();
+                  } else {
+                    window.dispatchEvent(
+                      new CustomEvent('navigate-to-tab', {
+                        detail: { tab: 'vishnu_sahasranama' },
+                      })
+                    );
+                  }
+                }}
+                className="px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-amber-100 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                title="श्री विष्णु सहस्रनाम सम्पूर्ण पाठ खोलें"
+              >
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                <span className="hidden xs:inline">श्रीविष्णुसहस्रनाम</span>
+                <span className="xs:hidden">सहस्रनाम</span>
+              </button>
+
               {activeTab === 'guide' && (
                 <>
-                  <button
-                    type="button"
-                    onClick={handleToggleUmaAudio}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition border ${
-                      isPlayingAudio
-                        ? 'bg-rose-700 text-white border-rose-800 animate-pulse'
-                        : 'bg-[#FFFDF8] text-[#5C3A21] border-[#8C6239]/40 hover:bg-[#F4E8D1]'
-                    }`}
-                    title="उमा जी की आवाज में उपाय सुनें"
-                  >
-                    {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-[#7A1D1D]" />}
-                    <span>{isPlayingAudio ? 'ऑडियो रोकें' : '🎙️ उमा जी से सुनें'}</span>
-                  </button>
-
                   <button
                     type="button"
                     onClick={handleShareWhatsAppGuide}
@@ -882,13 +920,14 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     title="WhatsApp पर विस्तृत विवरण भेजें"
                   >
                     <Share2 className="w-3 h-3" />
-                    <span>📲 WhatsApp</span>
+                    <span className="hidden sm:inline">WhatsApp</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleCopyDetailedGuide}
                     className="px-2 py-1 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-md text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition"
+                    title="मार्गदर्शन कॉपी करें"
                   >
                     {copiedGuide ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedGuide ? 'कॉपी हुआ!' : 'कॉपी'}</span>
@@ -1239,31 +1278,62 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
                   {/* Numbered Remedies List */}
                   <div className="space-y-3.5 sm:space-y-4 pl-2 sm:pl-4">
-                    {points.map((pt, index) => (
-                      <div
-                        key={index}
-                        className="space-y-1 border-b border-amber-900/10 pb-2"
-                      >
-                        <div className="flex items-start gap-2.5 sm:gap-3.5 text-base sm:text-xl font-bold text-[#162C6A] leading-snug">
-                          <span className="text-lg sm:text-2xl text-[#162C6A] shrink-0 select-none">
-                            {CIRCLED_NUMS[index] || `(${index + 1})`}
-                          </span>
-                          <span className="flex-1">{pt}</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setHighlightedItemIndex(index);
-                              setActiveTab('guide');
-                            }}
-                            className="text-[11px] font-sans font-semibold text-[#8B1E1E] bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8B1E1E]/30 rounded px-2 py-0.5 flex items-center gap-1 cursor-pointer transition shrink-0"
-                            title="इस उपाय का कारण और लाभ जानें"
-                          >
-                            <Info className="w-3 h-3 text-[#B56A00]" />
-                            <span className="hidden sm:inline">कारण व लाभ</span>
-                          </button>
+                    {points.map((pt, index) => {
+                      const isVishnuRemedy = /विष्णु|सहस्रनाम/i.test(pt);
+                      return (
+                        <div
+                          key={index}
+                          className="space-y-1.5 border-b border-amber-900/10 pb-2.5"
+                        >
+                          <div className="flex items-start gap-2.5 sm:gap-3.5 text-base sm:text-xl font-bold text-[#162C6A] leading-snug">
+                            <span className="text-lg sm:text-2xl text-[#162C6A] shrink-0 select-none">
+                              {CIRCLED_NUMS[index] || `(${index + 1})`}
+                            </span>
+                            <span className="flex-1">{pt}</span>
+                            <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                              {isVishnuRemedy && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (isPlayingAudio) {
+                                      stopUmaSpeech();
+                                      setIsPlayingAudio(false);
+                                    }
+                                    onClose();
+                                    if (onOpenVishnuSahasranama) {
+                                      onOpenVishnuSahasranama();
+                                    } else {
+                                      window.dispatchEvent(
+                                        new CustomEvent('navigate-to-tab', {
+                                          detail: { tab: 'vishnu_sahasranama' },
+                                        })
+                                      );
+                                    }
+                                  }}
+                                  className="text-[11px] font-sans font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-400 rounded-md px-2 py-0.5 flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-2xs"
+                                  title="श्रीविष्णुसहस्रनाम सम्पूर्ण पाठ खोलें"
+                                >
+                                  <Sparkles className="w-3 h-3 text-amber-700" />
+                                  <span>पाठ खोलें</span>
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setHighlightedItemIndex(index);
+                                  setActiveTab('guide');
+                                }}
+                                className="text-[11px] font-sans font-semibold text-[#8B1E1E] bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8B1E1E]/30 rounded px-2 py-0.5 flex items-center gap-1 cursor-pointer transition shrink-0"
+                                title="इस उपाय का कारण और लाभ जानें"
+                              >
+                                <Info className="w-3 h-3 text-[#B56A00]" />
+                                <span className="hidden sm:inline">कारण व लाभ</span>
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Bottom Right Sign-off: || शुभम् || */}
@@ -1287,14 +1357,38 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               </div>
 
               {/* Bottom Quick Switcher Card */}
-              <div className="text-center pt-2">
+              <div className="text-center pt-2 flex items-center justify-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setActiveTab('guide')}
-                  className="px-5 py-2.5 bg-[#FFFDF8] hover:bg-[#FAF2E4] text-[#7A1D1D] border-2 border-[#8C6239]/50 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer transition shadow-sm"
+                  className="px-4 py-2 bg-[#FFFDF8] hover:bg-[#FAF2E4] text-[#7A1D1D] border-2 border-[#8C6239]/50 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer transition shadow-sm"
                 >
                   <BookOpen className="w-4 h-4 text-[#B56A00]" />
-                  <span>📖 सम्पूर्ण पर्ची का यजमान विस्तृत मार्गदर्शन (Why & Benefits Guide) देखें</span>
+                  <span>📖 सम्पूर्ण पर्ची का यजमान विस्तृत मार्गदर्शन देखें</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isPlayingAudio) {
+                      stopUmaSpeech();
+                      setIsPlayingAudio(false);
+                    }
+                    onClose();
+                    if (onOpenVishnuSahasranama) {
+                      onOpenVishnuSahasranama();
+                    } else {
+                      window.dispatchEvent(
+                        new CustomEvent('navigate-to-tab', {
+                          detail: { tab: 'vishnu_sahasranama' },
+                        })
+                      );
+                    }
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-[#FFF9E6] border-2 border-amber-500/60 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer transition shadow-sm active:scale-95"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>🙏 श्रीविष्णुसहस्रनाम सम्पूर्ण पाठ खोलें</span>
                 </button>
               </div>
             </>
@@ -1559,6 +1653,38 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                               <p className="text-[11px] text-amber-900 bg-amber-100/60 p-1.5 rounded mt-1 border border-amber-200">
                                 <strong>⚠️ विशेष सावधानी:</strong> {item.precautions}
                               </p>
+                            )}
+
+                            {/विष्णु|सहस्रनाम/i.test(`${item.title} ${item.vidhi} ${item.whyReason}`) && (
+                              <div className="mt-3 p-3 bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 rounded-xl border border-amber-300 flex items-center justify-between gap-2.5 flex-wrap shadow-2xs">
+                                <div className="flex items-center gap-2 text-xs text-[#7A1D1D] font-bold">
+                                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                                  <span>श्रीविष्णुसहस्रनाम स्तोत्रम् (पूर्वपीठिका, ध्यानम्, १०८ मूल श्लोक, १००० दिव्य नाम व फलश्रुति)</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (isPlayingAudio) {
+                                      stopUmaSpeech();
+                                      setIsPlayingAudio(false);
+                                    }
+                                    onClose();
+                                    if (onOpenVishnuSahasranama) {
+                                      onOpenVishnuSahasranama();
+                                    } else {
+                                      window.dispatchEvent(
+                                        new CustomEvent('navigate-to-tab', {
+                                          detail: { tab: 'vishnu_sahasranama' },
+                                        })
+                                      );
+                                    }
+                                  }}
+                                  className="px-3.5 py-1.5 bg-[#7A1D1D] hover:bg-[#5C1414] text-[#FFD88A] rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shadow-xs active:scale-95"
+                                >
+                                  <BookOpen className="w-3.5 h-3.5" />
+                                  <span>📖 संपूर्ण पाठ व श्रवण खोलें</span>
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>

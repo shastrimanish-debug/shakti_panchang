@@ -116,6 +116,16 @@ export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
     screenTitle: '📖 संपूर्ण सुंदरकांड',
   },
   {
+    id: 'vishnu_sahasranama',
+    title: 'श्री विष्णु सहस्रनाम स्तोत्रम् सम्पूर्ण',
+    label: 'विष्णु सहस्रनाम',
+    pageNumber: 33,
+    chapter: '',
+    desc: 'महाभारत अनुशासन पर्व अंतर्गत संपूर्ण १०८ श्लोक, १००० दिव्य नाम व फलश्रुति',
+    icon: Sparkles,
+    screenTitle: '🙏 श्री विष्णु सहस्रनाम स्तोत्रम्',
+  },
+  {
     id: 'lal_kitab',
     title: 'लाल किताब से प्रेरित 501 उपाय',
     label: 'लाल किताब (501 उपाय)',
@@ -379,6 +389,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     screenTitle: '📖 संपूर्ण सुंदरकांड',
   },
   {
+    id: 'vishnu_sahasranama',
+    title: 'श्री विष्णु सहस्रनाम स्तोत्रम् सम्पूर्ण पाठ',
+    label: 'विष्णु सहस्रनाम',
+    pageNumber: 33,
+    chapter: 'त्रयोविंशति अध्याय',
+    desc: 'महाभारत अनुशासन पर्व अंतर्गत भीष्म-युधिष्ठिर संवाद, पूर्वपीठिका, ध्यानम्, १०८ मूल श्लोक, १००० दिव्य नाम व फलश्रुति',
+    icon: Sparkles,
+    screenTitle: '🙏 श्री विष्णु सहस्रनाम स्तोत्रम्',
+  },
+  {
     id: 'lal_kitab',
     title: 'लाल किताब से प्रेरित 501 उपाय',
     label: 'लाल किताब (501 उपाय)',
@@ -611,6 +631,12 @@ export const BOOK_PAGES: BookPageItem[] = [
 ];
 
 const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
+  vishnu_sahasranama: {
+    title: 'Sri Vishnu Sahasranama Stotram (Complete)',
+    label: 'Vishnu Sahasranama',
+    desc: 'Bhishma-Yudhishthira dialogue, Purva Pithika, Dhyanam, 108 shlokas, 1000 holy names & Phalashruti',
+    screenTitle: '🙏 Sri Vishnu Sahasranama',
+  },
   granth_puran: {
     title: 'Ancient Scriptures: Bhagavad Gita, Upanishads & Mahapuranas',
     label: 'Granth & Upanishads',
@@ -931,6 +957,12 @@ const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string;
     label: 'ગ્રંથ અને ઉપનિષદ',
     desc: 'શ્રીમદ્ ભગવદ્ ગીતા, પ્રમુખ ઉપનિષદો, ભાગવત-શિવ-વિષ્ણુ મહાપુરાણ અને વૈદિક સૂક્તો',
     screenTitle: '📚 પ્રાચીન ગ્રંથ અને ઉપનિષદ સ્વાધ્યાય',
+  },
+  vishnu_sahasranama: {
+    title: 'શ્રી વિષ્ણુ સહસ્રનામ સ્તોત્રમ્ સંપૂર્ણ',
+    label: 'વિષ્ણુ સહસ્રનામ',
+    desc: 'મહાભારત અનુશાસન પર્વ અંતર્ગત ભીષ્મ-યુધિષ્ઠિર સંવાદ, ૧૦૮ શ્લોક, ૧૦૦૦ દિવ્ય નામ અને ફલશ્રુતિ',
+    screenTitle: '🙏 શ્રી વિષ્ણુ સહસ્રનામ સ્તોત્રમ્',
   },
 };
 

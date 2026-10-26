@@ -75,6 +75,21 @@ const SundarkandPathView = React.lazy(async () => {
   };
 });
 
+const VishnuSahasranamaPathView = React.lazy(async () => {
+  const [{ ScripturePathView }, { VISHNU_SAHASRANAMA_VERSES }] = await Promise.all([
+    import('./components/ScripturePathView'),
+    import('./data/vishnuSahasranama'),
+  ]);
+  return {
+    default: () => (
+      <ScripturePathView
+        title="श्री विष्णु सहस्रनाम स्तोत्रम् सम्पूर्ण पाठ"
+        verses={VISHNU_SAHASRANAMA_VERSES}
+      />
+    ),
+  };
+});
+
 /**
  * Play a gentle tactile paper flip sound when turning the Granth book page
  */
@@ -312,6 +327,7 @@ export function App() {
           vastu: 'वैदिक वास्तु शास्त्र',
           rashifal: 'दैनिक राशिफल',
           gita: 'श्रीमद्भगवद्गीता श्लोक',
+          vishnu_sahasranama: 'श्री विष्णु सहस्रनाम स्तोत्रम्',
           granth_puran: 'प्राचीन ग्रन्थ, उपनिषद् एवं महापुराण स्वाध्याय',
           hanuman: 'श्री हनुमान चालीसा',
           sundarkand: 'संपूर्ण सुंदरकांड पाठ',
@@ -350,6 +366,18 @@ export function App() {
     },
     [currentIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal]
   );
+
+  // Global tab navigation event listener for deep links & modals
+  useEffect(() => {
+    const handleTabNav = (e: Event) => {
+      const custom = e as CustomEvent<{ tab: string }>;
+      if (custom.detail?.tab) {
+        handleSelectTab(custom.detail.tab);
+      }
+    };
+    window.addEventListener('navigate-to-tab', handleTabNav);
+    return () => window.removeEventListener('navigate-to-tab', handleTabNav);
+  }, [handleSelectTab]);
 
   // Keyboard navigation (Arrow keys)
   useEffect(() => {
@@ -682,6 +710,7 @@ export function App() {
                   onOpenSavedModal={() => setIsSavedProfilesModalOpen(true)}
                   onOpenUmaModal={() => setIsUmaModalOpen(true)}
                   onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
+                  onNavigateTab={handleSelectTab}
                 />
                 </div>
               </div>
@@ -791,6 +820,8 @@ export function App() {
             {activeTab === 'hanuman' && <HanumanChalisaPathView />}
 
             {activeTab === 'sundarkand' && <SundarkandPathView />}
+
+            {activeTab === 'vishnu_sahasranama' && <VishnuSahasranamaPathView />}
 
             {activeTab === 'sabar' && <SabarMantraView />}
 

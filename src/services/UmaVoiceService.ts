@@ -577,11 +577,17 @@ class UmaVoiceService {
     }
 
     const matchedVoice = this.pickBestBrowserHindiVoice();
-    const voiceDisplayName = matchedVoice ? matchedVoice.name : 'Browser Default Hindi';
+    const isExplicitFemale = matchedVoice ? /female|swara|kalpana|kavita|lekha|ananya|shruti|priya|geeta|sangeeta|hia|hic|hie|hfc|hfe|woman/i.test(matchedVoice.name) : false;
+    const voiceDisplayName = matchedVoice ? matchedVoice.name : 'उमा दिव्य स्वर (महिला)';
+
+    // Calibrate pitch & rate for sweet, maternal, devotional cadence (लयबद्ध शास्त्रीय पाठ)
+    // Ensures pitch is always in sweet female soprano/alto register (~240Hz)
+    const effectivePitch = isExplicitFemale ? Math.max(1.16, pitch * 1.08) : 1.28;
+    const effectiveRate = Math.min(0.88, Math.max(0.80, rate * 0.92));
 
     this.updateState({
       provider: 'web-neural',
-      activeVoiceName: `${voiceDisplayName} (${toneCfg.labelHindi})`,
+      activeVoiceName: `${voiceDisplayName} (${toneCfg.labelHindi} - महिला स्वर)`,
       activeTone: toneCfg.id,
     });
 
@@ -609,16 +615,16 @@ class UmaVoiceService {
       this.currentUtterance = utterance;
 
       utterance.lang = matchedVoice?.lang || 'hi-IN';
-      utterance.rate = rate;
-      utterance.pitch = pitch;
+      utterance.rate = effectiveRate;
+      utterance.pitch = effectivePitch;
       utterance.volume = volume;
       if (matchedVoice) utterance.voice = matchedVoice;
 
       utterance.onend = () => {
         if (token !== this.activeToken) return;
         chunkIndex++;
-        // Natural human breath pause between sentences (60ms)
-        setTimeout(playNextChunk, 60);
+        // Natural devotional breath cadence between shlokas / remedy points (120ms)
+        setTimeout(playNextChunk, 120);
       };
 
       utterance.onerror = (e) => {
@@ -649,7 +655,8 @@ class UmaVoiceService {
   }
 
   /**
-   * Scans browser voices and ranks them to pick the most natural, human-sounding Hindi female voice.
+   * Scans browser voices and strictly selects the most natural, human-sounding Hindi FEMALE voice.
+   * Completely filters out any male engines (Madhur, Hemant, hid, hib, hif, etc.)
    */
   public pickBestBrowserHindiVoice(): SpeechSynthesisVoice | null {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
@@ -657,39 +664,45 @@ class UmaVoiceService {
     const voices = this.browserVoices.length > 0 ? this.browserVoices : window.speechSynthesis.getVoices();
     if (!voices || voices.length === 0) return null;
 
-    const femaleKeywords = /female|swara|natural|online|wavenet-a|wavenet-d|neural|woman|kavita|kalpana/i;
-    const maleKeywords = /male|madhur|wavenet-b|wavenet-c|man|boy/i;
+    const femaleKeywords = /female|swara|kalpana|kavita|lekha|ananya|shruti|priya|geeta|sangeeta|hia|hic|hie|hfc|hfe|neural|woman|girl/i;
+    const maleKeywords = /male|madhur|hemant|hib|hid|hif|man|boy|puck|charon/i;
 
-    // 1. Gold standard: Microsoft Swara Natural (Hindi)
-    const swaraVoice = voices.find((v) => /swara/i.test(v.name) && v.lang.toLowerCase().startsWith('hi'));
+    // Filter strictly to non-male voices
+    const nonMaleVoices = voices.filter((v) => !maleKeywords.test(v.name));
+
+    // 1. Gold standard: Microsoft Swara Natural (Hindi Female)
+    const swaraVoice = nonMaleVoices.find((v) => /swara/i.test(v.name) && v.lang.toLowerCase().startsWith('hi'));
     if (swaraVoice) return swaraVoice;
 
-    // 2. High-Quality Online Natural / Neural Hindi Female voices
-    const neuralFemale = voices.find(
+    // 2. Microsoft Kalpana Online (Hindi Female)
+    const kalpanaVoice = nonMaleVoices.find((v) => /kalpana/i.test(v.name) && v.lang.toLowerCase().startsWith('hi'));
+    if (kalpanaVoice) return kalpanaVoice;
+
+    // 3. Apple Siri Hindi Female (Lekha)
+    const lekhaVoice = nonMaleVoices.find((v) => /lekha/i.test(v.name));
+    if (lekhaVoice) return lekhaVoice;
+
+    // 4. Android Google High-Definition Female Voices (hie, hia, hic, hfc)
+    const googleFemale = nonMaleVoices.find(
       (v) =>
         v.lang.toLowerCase().startsWith('hi') &&
-        femaleKeywords.test(v.name) &&
-        !maleKeywords.test(v.name)
+        /(hia|hic|hie|hfc|hfe|female)/i.test(v.name)
     );
-    if (neuralFemale) return neuralFemale;
+    if (googleFemale) return googleFemale;
 
-    // 3. Google हिन्दी (Chrome's online high-def Hindi voice)
-    const googleHindi = voices.find((v) => /google.*(हिन्दी|hindi)/i.test(v.name));
-    if (googleHindi) return googleHindi;
-
-    // 4. Any Hindi-India voice that is not explicitly marked male
-    const hiInNeutral = voices.find(
-      (v) => v.lang.toLowerCase() === 'hi-in' && !maleKeywords.test(v.name)
+    // 5. Any other confirmed Female Hindi voice
+    const anyFemaleHindi = nonMaleVoices.find(
+      (v) => v.lang.toLowerCase().startsWith('hi') && femaleKeywords.test(v.name)
     );
-    if (hiInNeutral) return hiInNeutral;
+    if (anyFemaleHindi) return anyFemaleHindi;
 
-    // 5. Any generic Hindi voice
-    const anyHindi = voices.find((v) => v.lang.toLowerCase().startsWith('hi'));
-    if (anyHindi) return anyHindi;
-
-    // 6. Sanskrit voice if installed (great for shlokas)
-    const sanskritVoice = voices.find((v) => v.lang.toLowerCase().startsWith('sa'));
+    // 6. Sanskrit voice if installed (great for stotrams)
+    const sanskritVoice = nonMaleVoices.find((v) => v.lang.toLowerCase().startsWith('sa'));
     if (sanskritVoice) return sanskritVoice;
+
+    // 7. General non-male Hindi voice
+    const anyNonMaleHindi = nonMaleVoices.find((v) => v.lang.toLowerCase().startsWith('hi'));
+    if (anyNonMaleHindi) return anyNonMaleHindi;
 
     return null;
   }

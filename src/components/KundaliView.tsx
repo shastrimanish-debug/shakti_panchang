@@ -142,6 +142,7 @@ interface KundaliViewProps {
   onOpenSavedModal: () => void;
   onOpenUmaModal?: () => void;
   onOpenBrandingModal?: () => void;
+  onNavigateTab?: (tab: string) => void;
   initialSubTab?: 'chart' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati';
 }
 
@@ -152,6 +153,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   onOpenSavedModal,
   onOpenUmaModal,
   onOpenBrandingModal,
+  onNavigateTab,
   initialSubTab,
 }) => {
   const { t, i18n } = useTranslation();
@@ -2751,6 +2753,15 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         isOpen={isUpayParchiOpen}
         onClose={() => setIsUpayParchiOpen(false)}
         activeKundali={k}
+        onOpenVishnuSahasranama={() => {
+          if (onNavigateTab) {
+            onNavigateTab('vishnu_sahasranama');
+          } else {
+            window.dispatchEvent(
+              new CustomEvent('navigate-to-tab', { detail: { tab: 'vishnu_sahasranama' } })
+            );
+          }
+        }}
       />
     </div>
   );

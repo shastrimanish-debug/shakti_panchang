@@ -1866,6 +1866,17 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           onClose={() => setIsUpayParchiOpen(false)}
           activeKundali={currentKundali}
           panchang={panchang}
+          onOpenVishnuSahasranama={() => {
+            setIsUpayParchiOpen(false);
+            onClose();
+            if (onNavigateTab) {
+              onNavigateTab('vishnu_sahasranama');
+            } else {
+              window.dispatchEvent(
+                new CustomEvent('navigate-to-tab', { detail: { tab: 'vishnu_sahasranama' } })
+              );
+            }
+          }}
         />
       </div>
     </div>,

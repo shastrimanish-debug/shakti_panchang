@@ -420,7 +420,7 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   },
   {
     title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },
-    ids: ["granth_puran", "devta_arpan", "durga", "audio_player", "hanuman", "sundarkand", "gita", "vratkatha", "vastu", "reminders"],
+    ids: ["vishnu_sahasranama", "granth_puran", "devta_arpan", "durga", "audio_player", "hanuman", "sundarkand", "gita", "vratkatha", "vastu", "reminders"],
   },
   {
     title: { hi: "दर्शन", en: "Reading", gu: "દર્શન" },
