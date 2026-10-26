@@ -335,8 +335,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               className="px-2.5 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0"
               title="पंचांग पर वापस जाएं"
             >
-              <ArrowLeft className="w-4 h-4" style={{ color: '#7C2D12' }} />
-              <span className="hidden sm:inline">
+              <ArrowLeft className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
+              <span className="text-xs font-bold">
                 {langKey === 'en' ? 'Panchang' : langKey === 'gu' ? 'પંચાંગ' : 'पंचांग'}
               </span>
             </button>
@@ -356,8 +356,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
             className="px-2.5 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1.5 shrink-0"
             title="ग्रन्थ अनुक्रमणिका"
           >
-            <Menu className="w-4 h-4" style={{ color: '#7C2D12' }} />
-            <span className="text-xs font-bold hidden sm:inline">
+            <Menu className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
+            <span className="text-xs font-bold">
               {langKey === 'en' ? 'Index' : langKey === 'gu' ? 'અનુક્રમણિકા' : 'अनुक्रमणिका'}
             </span>
           </button>
@@ -410,7 +410,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
             ) : (
               <Volume2 className="w-3.5 h-3.5" style={{ color: '#9A3412' }} />
             )}
-            <span className="hidden xs:inline">
+            <span className="text-xs font-bold">
               {isSpeaking
                 ? langKey === 'en'
                   ? 'Stop'
@@ -436,14 +436,14 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
             title="पठन मोड बदलें"
           >
             <LayoutList className="w-3.5 h-3.5" style={{ color: '#9A3412' }} />
-            <span className="hidden sm:inline">
+            <span className="text-xs font-bold">
               {viewMode === 'reader'
                 ? langKey === 'en'
-                  ? 'All Verses'
-                  : 'सूची मोड'
+                  ? 'All'
+                  : 'सूची'
                 : langKey === 'en'
                   ? 'Reader'
-                  : 'पठन मोड'}
+                  : 'पठन'}
             </span>
           </button>
 

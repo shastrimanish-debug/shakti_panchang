@@ -930,15 +930,14 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               title="यजमान व्हाट्सएप बॉट"
             >
               <MessageSquare className="w-3 h-3 text-emerald-200" />
-              <span className="hidden sm:inline">यजमान</span>
-              <span>बॉट</span>
+              <span className="text-[11px] font-bold">यजमान बॉट</span>
             </button>
 
             {/* Full Session PDF Export */}
             <button
               onClick={handleExportFullSessionPdf}
               disabled={isGeneratingPdf}
-              className="p-1.5 rounded-lg bg-[#B58738] hover:bg-[#9B7028] text-[#2C0A0A] text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#FAF2E4]/40 disabled:opacity-50"
+              className="px-2 py-1 rounded-lg bg-[#B58738] hover:bg-[#9B7028] text-[#2C0A0A] text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#FAF2E4]/40 disabled:opacity-50"
               title="सम्पूर्ण संवाद की PDF डाउनलोड करें"
             >
               {isGeneratingPdf ? (
@@ -946,7 +945,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               ) : (
                 <FileText className="w-3.5 h-3.5" />
               )}
-              <span className="hidden md:inline text-[11px]">PDF</span>
+              <span className="text-[11px] font-bold">PDF</span>
             </button>
 
             {/* Auto-Speak Toggle */}
@@ -956,7 +955,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 setAutoSpeak(next);
                 if (!next) umaVoice.stop();
               }}
-              className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition cursor-pointer ${
+              className={`px-2 py-1 rounded-lg border text-xs flex items-center gap-1 transition cursor-pointer ${
                 autoSpeak
                   ? 'bg-[#FAF2E4] text-[#7A1D1D] border-[#FAF2E4] font-bold'
                   : 'bg-[#5C1414] text-[#E6C687] border-[#B58738]/50'
@@ -964,6 +963,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               title={autoSpeak ? 'ऑटो वॉइस चालू है' : 'ऑटो वॉइस बंद है'}
             >
               {autoSpeak ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+              <span className="text-[11px] font-semibold">{autoSpeak ? 'स्वर चालू' : 'स्वर'}</span>
             </button>
 
             {/* Tone Selector Button with Dropdown */}
@@ -975,7 +975,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 title="वाणी शैली (Tone) बदलें"
               >
                 <span>{UMA_TONES[selectedTone]?.badge || '🧘'}</span>
-                <span className="hidden sm:inline">{UMA_TONES[selectedTone]?.labelHindi.split(' ')[0] || 'शांत'}</span>
+                <span className="text-[11px] font-semibold">{UMA_TONES[selectedTone]?.labelHindi.split(' ')[0] || 'शांत'}</span>
                 <ChevronDown className="w-3 h-3 text-[#FFD88A]/80" />
               </button>
 
@@ -1028,7 +1028,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         <div className="bg-[#FAF2E4] px-3 py-1 border-b border-[#E2D2BE] flex items-center justify-between gap-1 text-xs shrink-0">
           <div className="flex items-center gap-1.5 text-[11px] text-[#5C3A21] font-semibold shrink-0">
             <Volume2 className="w-3.5 h-3.5 text-[#B58738]" />
-            <span className="hidden xs:inline">उमा वाणी शैली:</span>
+            <span className="text-[11px] font-bold">वाणी शैली:</span>
           </div>
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
             {(Object.values(UMA_TONES) as ToneConfig[]).map((t) => (

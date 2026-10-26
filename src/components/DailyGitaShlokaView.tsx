@@ -151,8 +151,8 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
               className="px-2 py-1 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0"
               title="पंचांग पर वापस जाएं"
             >
-              <ArrowLeft className="w-4 h-4" style={{ color: '#7C2D12' }} />
-              <span className="hidden sm:inline">पंचांग</span>
+              <ArrowLeft className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
+              <span className="text-xs font-bold">पंचांग</span>
             </button>
           )}
 
@@ -161,11 +161,11 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
             type="button"
             onClick={() => setIsTocOpen(!isTocOpen)}
             style={{ backgroundColor: '#FFF2DC', color: '#4A1805', borderColor: '#C89656' }}
-            className="p-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1"
+            className="px-2 py-1 rounded-xl border transition cursor-pointer flex items-center gap-1 shrink-0"
             title="गीता श्लोक अनुक्रमणिका"
           >
-            <Menu className="w-4 h-4" style={{ color: '#7C2D12' }} />
-            <span className="text-[10px] font-bold hidden sm:inline">श्लोक सूचकांक</span>
+            <Menu className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
+            <span className="text-[11px] font-bold">सूचकांक</span>
           </button>
 
           <div>

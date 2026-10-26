@@ -331,8 +331,10 @@ export function BoardHeader({
         }}
         className="bx-head-btn shrink-0"
         aria-label="थीम"
+        title="थीम बदलें"
       >
-        <Palette className="w-4 h-4" />
+        <Palette className="w-3.5 h-3.5" />
+        <span className="text-[11px] font-semibold">थीम</span>
       </button>
       <button
         type="button"
@@ -342,8 +344,10 @@ export function BoardHeader({
         }}
         className="bx-head-btn shrink-0"
         aria-label={t("common.language", "भाषा")}
+        title="भाषा बदलें"
       >
-        <Languages className="w-4 h-4" />
+        <Languages className="w-3.5 h-3.5" />
+        <span className="text-[11px] font-semibold">{t("common.language", "भाषा")}</span>
       </button>
     </header>
   );

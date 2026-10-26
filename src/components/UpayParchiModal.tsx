@@ -907,8 +907,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 title="श्री विष्णु सहस्रनाम सम्पूर्ण पाठ खोलें"
               >
                 <Sparkles className="w-3 h-3 text-amber-300" />
-                <span className="hidden xs:inline">श्रीविष्णुसहस्रनाम</span>
-                <span className="xs:hidden">सहस्रनाम</span>
+                <span>सहस्रनाम पाठ</span>
               </button>
 
               {activeTab === 'guide' && (
@@ -920,7 +919,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     title="WhatsApp पर विस्तृत विवरण भेजें"
                   >
                     <Share2 className="w-3 h-3" />
-                    <span className="hidden sm:inline">WhatsApp</span>
+                    <span>WhatsApp</span>
                   </button>
 
                   <button
@@ -1327,7 +1326,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                                 title="इस उपाय का कारण और लाभ जानें"
                               >
                                 <Info className="w-3 h-3 text-[#B56A00]" />
-                                <span className="hidden sm:inline">कारण व लाभ</span>
+                                <span className="text-[10px] font-semibold">कारण व लाभ</span>
                               </button>
                             </div>
                           </div>
@@ -1595,7 +1594,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-[#7A1D1D] font-semibold hidden xs:inline">
+                          <span className="text-[11px] text-[#7A1D1D] font-semibold">
                             {isExpanded ? 'संक्षिप्त करें' : 'विस्तार देखें'}
                           </span>
                           {isExpanded ? (
@@ -1988,7 +1987,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 title="पूरी स्क्रीन पर बड़ी छवि देखें"
               >
                 <ZoomIn className="w-4 h-4" />
-                <span className="hidden xs:inline">बड़ी देखें</span>
+                <span className="text-xs font-semibold">बड़ा रूप</span>
               </button>
 
               {/* Button 4: Close Modal */}

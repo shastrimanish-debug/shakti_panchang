@@ -546,7 +546,7 @@ export function App() {
             <span className="font-bold text-xs">
               {appFontSize === 'xlarge' ? 'अ++' : appFontSize === 'large' ? 'अ+' : 'अ'}
             </span>
-            <span className="hidden sm:inline text-[11px] font-semibold">
+            <span className="text-[11px] font-semibold">
               {appFontSize === 'xlarge' ? 'अति-विशाल' : appFontSize === 'large' ? 'बड़ा' : 'अक्षर'}
             </span>
           </motion.button>
@@ -569,7 +569,7 @@ export function App() {
             title="उमा वैदिक दैवज्ञ"
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#B56A00' }} />
-            <span className="hidden xs:inline">उमा</span>
+            <span className="text-xs font-bold">उमा</span>
           </motion.button>
         </div>
       </div>

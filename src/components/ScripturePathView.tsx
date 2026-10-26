@@ -235,7 +235,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
               title="पठन मोड बदलें"
             >
               <Layers className="w-3.5 h-3.5 text-amber-700" />
-              <span className="hidden xs:inline">{viewMode === "continuous" ? "निरंतर" : "पृष्ठ वार"}</span>
+              <span className="text-[11px] font-bold">{viewMode === "continuous" ? "निरंतर" : "पृष्ठ वार"}</span>
             </button>
 
             {/* Font Size Adjuster */}

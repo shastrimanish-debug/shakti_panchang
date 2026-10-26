@@ -359,7 +359,7 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
               className="px-2 py-1 rounded-lg bg-amber-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs hover:bg-amber-600 transition cursor-pointer"
             >
               <BookOpen className="w-3 h-3" />
-              <span className="hidden sm:inline">स्टोरी व्यू</span>
+              <span className="text-[11px] font-bold">स्टोरी व्यू</span>
             </button>
           </div>
         </div>

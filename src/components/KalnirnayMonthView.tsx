@@ -233,11 +233,11 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer active:scale-95"
+              className="px-2 py-1.5 sm:px-2.5 sm:py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer active:scale-95"
               title={language === 'gu' ? 'પાછલો માસ' : language === 'en' ? 'Previous Month' : 'पिछला माह'}
             >
-              <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">{language === 'gu' ? 'પાછલો માસ' : language === 'en' ? 'Prev' : 'पिछला माह'}</span>
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span className="text-xs font-semibold">{language === 'gu' ? 'પાછલો' : language === 'en' ? 'Prev' : 'पिछला'}</span>
             </button>
 
             <button
@@ -251,11 +251,11 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer active:scale-95"
+              className="px-2 py-1.5 sm:px-2.5 sm:py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer active:scale-95"
               title={language === 'gu' ? 'આગલો માસ' : language === 'en' ? 'Next Month' : 'अगला माह'}
             >
-              <span className="hidden sm:inline">{language === 'gu' ? 'આગલો માસ' : language === 'en' ? 'Next' : 'अगला माह'}</span>
-              <ChevronRight className="w-4 h-4" />
+              <span className="text-xs font-semibold">{language === 'gu' ? 'આગલો' : language === 'en' ? 'Next' : 'अगला'}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

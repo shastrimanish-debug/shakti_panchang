@@ -19,6 +19,147 @@
   font-family: "Yantramanav", "Noto Sans Devanagari", system-ui, sans-serif;
 }
 
+/* 10 Devotional Themes Uniform CSS Overrides */
+.board.kesariya-theme, .kesariya-theme .board {
+  --bx-bg: #fff7ed;
+  --bx-panel: #ffffff;
+  --bx-ink: #431407;
+  --bx-mute: #9a3412;
+  --bx-line: #fed7aa;
+  --bx-mark: #ea580c;
+  --bx-mark-soft: #ffedd5;
+  --bx-gold: #f97316;
+  --bx-header: #9a3412;
+  --bx-header-2: #c2410c;
+  --bx-cream: #fff7ed;
+}
+
+.board.chandan-theme, .chandan-theme .board {
+  --bx-bg: #faf5ec;
+  --bx-panel: #ffffff;
+  --bx-ink: #2c180c;
+  --bx-mute: #78350f;
+  --bx-line: #dfcbb5;
+  --bx-mark: #8c4a00;
+  --bx-mark-soft: #fff2db;
+  --bx-gold: #b56a00;
+  --bx-header: #78350f;
+  --bx-header-2: #9a3412;
+  --bx-cream: #fff9ee;
+}
+
+.board.peetambari-theme, .peetambari-theme .board {
+  --bx-bg: #fefce8;
+  --bx-panel: #ffffff;
+  --bx-ink: #3b2005;
+  --bx-mute: #854d0e;
+  --bx-line: #fde047;
+  --bx-mark: #ca8a04;
+  --bx-mark-soft: #fef9c3;
+  --bx-gold: #eab308;
+  --bx-header: #854d0e;
+  --bx-header-2: #a16207;
+  --bx-cream: #fefce8;
+}
+
+.board.gangajal-theme, .gangajal-theme .board {
+  --bx-bg: #f0fdfa;
+  --bx-panel: #ffffff;
+  --bx-ink: #042f2c;
+  --bx-mute: #115e59;
+  --bx-line: #99f6e4;
+  --bx-mark: #0f766e;
+  --bx-mark-soft: #ccfbf1;
+  --bx-gold: #14b8a6;
+  --bx-header: #134e4a;
+  --bx-header-2: #0f766e;
+  --bx-cream: #f0fdfa;
+}
+
+.board.tulsi-theme, .tulsi-theme .board {
+  --bx-bg: #f4fbf4;
+  --bx-panel: #ffffff;
+  --bx-ink: #052e16;
+  --bx-mute: #14532d;
+  --bx-line: #bbf7d0;
+  --bx-mark: #16a34a;
+  --bx-mark-soft: #dcfce7;
+  --bx-gold: #22c55e;
+  --bx-header: #14532d;
+  --bx-header-2: #15803d;
+  --bx-cream: #f4fbf4;
+}
+
+.board.sindoor-theme, .sindoor-theme .board {
+  --bx-bg: #fff5f5;
+  --bx-panel: #ffffff;
+  --bx-ink: #4c0519;
+  --bx-mute: #9f1239;
+  --bx-line: #fecdd3;
+  --bx-mark: #e11d48;
+  --bx-mark-soft: #ffe4e6;
+  --bx-gold: #f43f5e;
+  --bx-header: #881337;
+  --bx-header-2: #be123c;
+  --bx-cream: #fff5f5;
+}
+
+.board.swarna-theme, .swarna-theme .board {
+  --bx-bg: #fffbeb;
+  --bx-panel: #ffffff;
+  --bx-ink: #451a03;
+  --bx-mute: #92400e;
+  --bx-line: #fde68a;
+  --bx-mark: #d97706;
+  --bx-mark-soft: #fef3c7;
+  --bx-gold: #f59e0b;
+  --bx-header: #78350f;
+  --bx-header-2: #b45309;
+  --bx-cream: #fffbeb;
+}
+
+.board.shvet-theme, .shvet-theme .board {
+  --bx-bg: #f8fafc;
+  --bx-panel: #ffffff;
+  --bx-ink: #0f172a;
+  --bx-mute: #334155;
+  --bx-line: #cbd5e1;
+  --bx-mark: #c2410c;
+  --bx-mark-soft: #f1f5f9;
+  --bx-gold: #64748b;
+  --bx-header: #1e293b;
+  --bx-header-2: #334155;
+  --bx-cream: #ffffff;
+}
+
+.board.bhojpatra-theme, .bhojpatra-theme .board {
+  --bx-bg: #faf2de;
+  --bx-panel: #fffdf9;
+  --bx-ink: #2c1810;
+  --bx-mute: #5c3a21;
+  --bx-line: #dfcbb5;
+  --bx-mark: #8c4a00;
+  --bx-mark-soft: #f4e8d1;
+  --bx-gold: #b56a00;
+  --bx-header: #5c3a21;
+  --bx-header-2: #8c4a00;
+  --bx-cream: #fffdf9;
+}
+
+.board.tamra-theme, .tamra-theme .board {
+  --bx-bg: #17110e;
+  --bx-panel: #241913;
+  --bx-ink: #f7ebd0;
+  --bx-mute: #d8b688;
+  --bx-line: rgba(184, 122, 60, 0.35);
+  --bx-mark: #e0a04a;
+  --bx-mark-soft: #2e2018;
+  --bx-gold: #e0a04a;
+  --bx-header: #24140c;
+  --bx-header-2: #3b2014;
+  --bx-cream: #faeedb;
+}
+
 .board .font-granth,
 .board h1,
 .board h2,
@@ -1069,10 +1210,11 @@
 }
 
 .board.bx-bento main div[class*="border-b"][class*="bg-white"] {
-  background: rgba(255, 250, 243, 0.78) !important;
+  background: color-mix(in srgb, var(--bx-panel) 92%, transparent) !important;
   backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(224, 177, 90, 0.4) !important;
+  border-bottom: 1px solid var(--bx-line) !important;
   box-shadow: none !important;
+  color: var(--bx-ink) !important;
 }
 
 .board.bx-bento main .bx-verse,
@@ -1084,13 +1226,13 @@
 .board.bx-bento main section[class*="rounded-"][class*="bg-[#F"],
 .board.bx-bento main article[class*="rounded-"],
 .board.bx-bento main button.bx-verse {
-  background: linear-gradient(180deg, rgba(255, 252, 247, 0.94), rgba(255, 244, 228, 0.78)) !important;
-  border: 1px solid rgba(224, 177, 90, 0.5) !important;
-  border-radius: 22px !important;
+  background: linear-gradient(180deg, var(--bx-panel), color-mix(in srgb, var(--bx-panel) 88%, var(--bx-bg))) !important;
+  border: 1px solid var(--bx-line) !important;
+  border-radius: 20px !important;
   box-shadow:
-    0 12px 26px rgba(58, 29, 16, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  color: #3a2414;
+    0 8px 22px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  color: var(--bx-ink) !important;
 }
 
 .bx-chart-stage {

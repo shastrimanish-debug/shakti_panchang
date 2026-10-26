@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <h1 className="text-sm sm:text-base font-black font-granth tracking-wide text-[#2C180C] leading-tight truncate">
               {t('common.appName', 'शक्ति पंचांग')}
             </h1>
-            <p className="text-[9px] text-[#8C4A00] font-semibold tracking-wider leading-none hidden xs:block truncate">
+            <p className="text-[9px] text-[#8C4A00] font-semibold tracking-wider leading-none truncate">
               {t('common.appSubtitle', 'वैदिक ज्योतिष व मुहूर्त')}
             </p>
           </div>
