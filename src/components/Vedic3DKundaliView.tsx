@@ -431,17 +431,6 @@ export const Vedic3DKundaliView: React.FC<{
             <Sparkles className="w-3.5 h-3.5" />
             <span>UMA ज्योतिष सिंक {isUmaOpen ? 'सक्रिय' : 'खोलें'}</span>
           </button>
-
-          {/* View Complete Android Jetpack Compose Code */}
-          <button
-            type="button"
-            onClick={() => setShowComposeCodeModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-[#D97706]/60 transition cursor-pointer"
-            style={{ backgroundColor: '#4A200A', color: '#FFE8A3' }}
-          >
-            <Code2 className="w-3.5 h-3.5" />
-            <span>Kotlin 3D Code</span>
-          </button>
         </div>
       </div>
 
@@ -1121,53 +1110,6 @@ export const Vedic3DKundaliView: React.FC<{
           </div>
         )}
       </div>
-
-      {/* Modal: Complete Untruncated Android Jetpack Compose 3D Implementation */}
-      {showComposeCodeModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div
-            className="border-2 border-[#D97706] rounded-2xl max-w-4xl w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl"
-            style={{ backgroundColor: '#2A1205', color: '#FFF3C4' }}
-          >
-            <div
-              className="flex items-center justify-between px-5 py-3.5 border-b border-[#D97706]/40"
-              style={{ backgroundColor: '#3E1F0D' }}
-            >
-              <div className="flex items-center gap-2">
-                <Code2 className="w-5 h-5 text-[#F59E0B]" />
-                <h3 className="font-bold text-sm sm:text-base text-[#FFF3C4]">
-                  Shakti Panchang — Android Jetpack Compose 3D Kundali & SavedStateHandle Architecture
-                </h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopyKotlinCode}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
-                  style={{ backgroundColor: '#F59E0B', color: '#2A1205' }}
-                >
-                  {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedCode ? 'Copied!' : 'Copy Full Kotlin Code'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowComposeCodeModal(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer border border-[#D97706]"
-                  style={{ backgroundColor: '#5C2D0C', color: '#FFF3C4' }}
-                >
-                  बंद करें ✕
-                </button>
-              </div>
-            </div>
-            <pre
-              className="p-4 text-xs font-mono overflow-auto leading-relaxed"
-              style={{ color: '#FFF6D6' }}
-            >
-              {ANDROID_COMPOSE_COMPLETE_CODE}
-            </pre>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

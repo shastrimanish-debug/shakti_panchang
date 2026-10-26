@@ -1422,12 +1422,12 @@ export function generateTraditionalUpayParchi(
 
   if (!k) {
     const defaultPoints = [
-      'मोती + माणिक रत्न धारण करें।',
-      'रविवार का उपवास करें।',
+      'पुखराज अथवा माणिक रत्न (कुण्डली परामर्श अनुसार) धारण करें।',
+      'गुरुवार अथवा इष्ट वार का सात्विक उपवास करें।',
       'श्रीविष्णुसहस्रनाम का पाठ करें।',
       'पीला कपड़ा, चने की दाल, गुड़, हल्दी, दक्षिणा (गुरुवार - 1 बार)',
       'गाय और कुत्ते को रोटी खिलावें।',
-      'ग्रहण योग शान्ति करावें।',
+      'नवग्रह शान्ति एवं रुद्राभिषेक करावें।',
     ];
     const circled = ['①', '②', '③', '④', '⑤', '⑥'];
     const formattedTextBlock = [
@@ -1453,7 +1453,7 @@ export function generateTraditionalUpayParchi(
       serialNo: '108',
       dateStr,
       lagnaInfo: 'तात्कालिक प्रश्न लग्न',
-      detectedDoshaYoga: 'ग्रहण योग (सूर्य/चंद्र छाया दोष)',
+      detectedDoshaYoga: 'नवग्रह एवं महादशा शान्ति',
       points: defaultPoints,
       formattedTextBlock,
       detailedItems,
@@ -1494,23 +1494,41 @@ export function generateTraditionalUpayParchi(
   // Point 5: Gau & Shwan Seva
   const point5 = 'गाय और कुत्ते को रोटी खिलावें।';
 
-  // Point 6: Detect actual Yoga / Dosha from planetary houses in Kundali
-  const getHouse = (pName: string) => k.planets?.find((p) => p.planet === pName)?.house ?? -1;
-  const sunH = getHouse('सूर्य');
-  const moonH = getHouse('चंद्र');
+  // Point 6: Detect actual Yoga / Dosha from planetary houses & conjunction degrees in Kundali
+  const getPlanet = (pName: string) => k.planets?.find((p) => p.planet === pName);
+  const getHouse = (pName: string) => getPlanet(pName)?.house ?? -1;
+  const sunP = getPlanet('सूर्य');
+  const moonP = getPlanet('चंद्र');
+  const rahuP = getPlanet('राहु');
+  const ketuP = getPlanet('केतु');
+
+  const sunH = sunP?.house ?? -1;
+  const moonH = moonP?.house ?? -1;
   const marsH = getHouse('मंगल');
   const jupH = getHouse('गुरु');
   const satH = getHouse('शनि');
-  const rahuH = getHouse('राहु');
-  const ketuH = getHouse('केतु');
+  const rahuH = rahuP?.house ?? -1;
+  const ketuH = ketuP?.house ?? -1;
+
+  // Check genuine Grahan Yog conjunction (same house/rashi AND within 15° effective orb)
+  const isConjunctWithinOrb = (p1?: { house?: number; degreeInRashi?: number }, p2?: { house?: number; degreeInRashi?: number }) => {
+    if (!p1 || !p2 || !p1.house || !p2.house || p1.house <= 0 || p1.house !== p2.house) return false;
+    if (typeof p1.degreeInRashi === 'number' && typeof p2.degreeInRashi === 'number') {
+      return Math.abs(p1.degreeInRashi - p2.degreeInRashi) <= 15;
+    }
+    return true;
+  };
+
+  const hasGenuineGrahanYog =
+    isConjunctWithinOrb(sunP, rahuP) ||
+    isConjunctWithinOrb(sunP, ketuP) ||
+    isConjunctWithinOrb(moonP, rahuP) ||
+    isConjunctWithinOrb(moonP, ketuP);
 
   let point6 = `${maha} महादशा एवं नवग्रह शान्ति करावें।`;
-  let detectedDoshaYoga = `${maha} महादशा शान्ति`;
+  let detectedDoshaYoga = `${maha} महादशा एवं नवग्रह शान्ति`;
 
-  if (
-    (sunH > 0 && (sunH === rahuH || sunH === ketuH)) ||
-    (moonH > 0 && (moonH === rahuH || moonH === ketuH))
-  ) {
+  if (hasGenuineGrahanYog) {
     point6 = 'ग्रहण योग शान्ति करावें।';
     detectedDoshaYoga = 'ग्रहण योग (सूर्य/चंद्र-राहु/केतु युति)';
   } else if (jupH > 0 && (jupH === rahuH || jupH === ketuH)) {
@@ -1752,23 +1770,44 @@ export function detectConsultationTopic(query: string): TopicInsight {
     };
   }
 
-  // 9. Grahan Yog / Dosha Shanti / Upay Parchi / Rahu-Ketu Shanti / Gemstones
-  if (/ग्रहण|grahan|शान्ति|shanti|उपाय पर्ची|पर्ची|दोष|दोष निवारण|कालसर्प|चाण्डाल|अंगारक|रुद्राभिषेक|हवन|जाप|पन्ना|ओपल|माणिक|रत्न|दान/.test(q)) {
+  // 9A. Specific Grahan Yog query (only when user explicitly asks about Grahan Yog)
+  if (/ग्रहण|grahan/.test(q)) {
     return {
       house: 9,
       secondaryHouses: [1, 5, 8, 12],
       vargaKey: 'D9',
       vargaLabel: 'D-9 नवमांश एवं छाया ग्रह शांति निर्णय वर्ग',
-      title: 'ग्रहण योग, ग्रह दोष शान्ति, रत्न धारण एवं अचूक सात्विक उपाय सूक्ष्म निर्णय',
+      title: 'ग्रहण योग परीक्षण एवं छाया ग्रह शान्ति सूक्ष्म निर्णय',
       karaka: 'सूर्य',
       jaiminiKarakaCode: 'AK',
       category: 'spiritual',
       shloka: '॥ ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥',
-      shlokaMeaning: 'भगवान आशुतोष शिव की कृपा, एकादशवार रुद्राभिषेक एवं वैदिक मंत्र जप से समस्त ग्रहण योग, कालसर्प एवं ग्रह जनित दोषों का समूल शमन होकर सुख-शांति प्राप्त होती है।',
+      shlokaMeaning: 'भगवान आशुतोष शिव की कृपा, एकादशवार रुद्राभिषेक एवं वैदिक मंत्र जप से समस्त ग्रह जनित दोषों का समूल शमन होकर सुख-शांति प्राप्त होती है।',
       followUps: [
-        'मेरी कुण्डली में ग्रहण योग (सूर्य/चंद्र-राहु/केतु) की तीव्रता कितनी है और शान्ति की ६-चरणीय विधि क्या है?',
-        'पन्ना या ओपल रत्न किस धातु, उंगली, दिन और मंत्र के साथ धारण करना सर्वोत्तम रहेगा?',
-        'ग्रहण योग शान्ति में कलियुग चतुर्गुण विधान के अनुसार कुल कितने मंत्र जप और कौन सा दान करना चाहिए?'
+        'मेरी कुण्डली में कौन-कौन से मुख्य राजयोग अथवा दोष बन रहे हैं?',
+        'मेरे लग्न व महादशा के अनुसार कौन सा रत्न धारण करना सर्वोत्तम रहेगा?',
+        'वर्तमान महादशा में भाग्योदय एवं सुख-शांति हेतु कौन सा वैदिक दान व पाठ करें?'
+      ]
+    };
+  }
+
+  // 9B. General Dosha Shanti / Upay Parchi / Gemstones / Daan / Rudrabhishek
+  if (/शान्ति|shanti|उपाय पर्ची|पर्ची|दोष|दोष निवारण|कालसर्प|चाण्डाल|अंगारक|रुद्राभिषेक|हवन|जाप|पन्ना|ओपल|माणिक|रत्न|दान/.test(q)) {
+    return {
+      house: 9,
+      secondaryHouses: [1, 5, 8, 12],
+      vargaKey: 'D9',
+      vargaLabel: 'D-9 नवमांश एवं ग्रह बल-शांति निर्णय वर्ग',
+      title: 'वैदिक ग्रह शान्ति, रत्न धारण एवं अचूक सात्विक उपाय सूक्ष्म निर्णय',
+      karaka: 'गुरु',
+      jaiminiKarakaCode: 'AK',
+      category: 'spiritual',
+      shloka: '॥ ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥',
+      shlokaMeaning: 'भगवान आशुतोष शिव की कृपा, रुद्राभिषेक, सात्विक दान एवं वैदिक मंत्र जप से प्रतिकूल ग्रह शांत होकर शुभ फल प्रदान करते हैं।',
+      followUps: [
+        'मेरे लग्न और त्रिकोण के अनुसार कौन सा जीवन-रत्न और भाग्य-रत्न किस धातु व उंगली में धारण करें?',
+        'वर्तमान महादशा एवं अंतर्दशा को बली करने हेतु कौन सा स्तोत्र पाठ और दान सर्वश्रेष्ठ है?',
+        'मेरी कुण्डली में इष्टदेव कौन हैं और दैनिक पूजा की सरल सात्विक विधि क्या है?'
       ]
     };
   }

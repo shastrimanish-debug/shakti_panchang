@@ -146,9 +146,9 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                     borderColor: '#C88A2B',
                   }
             }
-            title="Three.js 3D WebGL या 3D उभरा यंत्र चुनें"
+            title="3D स्वर्ण यंत्र या 3D उभरा यंत्र चुनें"
           >
-            {renderMode === 'three3d' ? '✦ Three.js 3D: चालू' : '✦ Three.js 3D में देखें'}
+            {renderMode === 'three3d' ? '✦ 3D स्वर्ण यंत्र: चालू' : '✦ 3D स्वर्ण यंत्र में देखें'}
           </button>
 
           {allowToggleStyle && (

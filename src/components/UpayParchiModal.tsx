@@ -15,6 +15,7 @@ import {
   saveAstrologerBranding,
   getStoredFontSize,
   setStoredFontSize,
+  getSavedKundaliProfiles,
   AppFontSize,
 } from '../services/storage';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
@@ -137,10 +138,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   panchang,
   onOpenVishnuSahasranama,
 }) => {
+  const effectiveKundali =
+    activeKundali || (typeof window !== 'undefined' ? getSavedKundaliProfiles()[0] || null : null);
+
   const [header, setHeader] = useState<ParchiHeaderConfig>(() => loadParchiHeader());
   const [isEditAstrologerModalOpen, setIsEditAstrologerModalOpen] = useState(false);
   const [parchiData, setParchiData] = useState<TraditionalUpayParchiData>(() =>
-    generateTraditionalUpayParchi(activeKundali, panchang)
+    generateTraditionalUpayParchi(effectiveKundali, panchang)
   );
   const [salutation, setSalutation] = useState(parchiData.salutation);
   const [serialNo, setSerialNo] = useState(parchiData.serialNo);
@@ -225,7 +229,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      const fresh = generateTraditionalUpayParchi(activeKundali, panchang);
+      const fresh = generateTraditionalUpayParchi(effectiveKundali, panchang);
       setParchiData(fresh);
       setSalutation(fresh.salutation);
       setSerialNo(fresh.serialNo);
@@ -252,18 +256,17 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
   // Real-time recomputed detailed items based on active points
   const currentDetailedItems: UpayParchiDetailedItem[] = points.map((pt, idx) =>
-    getRemedyDeepDetail(pt, idx, activeKundali)
+    getRemedyDeepDetail(pt, idx, effectiveKundali)
   );
   const currentGrahanDeep: GrahanShantiDeepDive | undefined =
-    currentDetailedItems.find((it) => it.shantiDeepDive)?.shantiDeepDive ||
-    parchiData.grahanSpecialAnalysis;
+    currentDetailedItems.find((it) => it.shantiDeepDive)?.shantiDeepDive;
 
   const currentGuideText = buildDetailedParchiGuideText(
     salutation,
     serialNo,
     dateStr,
-    activeKundali
-      ? `${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि • ${activeKundali.mahadasha} महादशा`
+    effectiveKundali
+      ? `${effectiveKundali.lagnaRashi} लग्न • ${effectiveKundali.moonRashi} राशि • ${effectiveKundali.mahadasha} महादशा`
       : 'तात्कालिक प्रश्न लग्न',
     currentDetailedItems,
     currentGrahanDeep
@@ -293,23 +296,11 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   };
 
   const handleResetFromKundali = () => {
-    const fresh = generateTraditionalUpayParchi(activeKundali, panchang);
+    const fresh = generateTraditionalUpayParchi(effectiveKundali, panchang);
     setParchiData(fresh);
     setSalutation(fresh.salutation);
     setDateStr(fresh.dateStr);
     setPoints(fresh.points);
-  };
-
-  const handleLoadExampleTemplate = () => {
-    setSalutation(activeKundali?.name ? `श्री ${activeKundali.name} जी` : 'श्री यजमान जी');
-    setPoints([
-      'मोती + माणिक रत्न धारण करें।',
-      'रविवार का उपवास करें।',
-      'श्रीविष्णुसहस्रनाम का पाठ करें।',
-      'पीला कपड़ा, चने की दाल, गुड़, हल्दी, दक्षिणा (गुरुवार - 1 बार)',
-      'गाय और कुत्ते को रोटी खिलावें।',
-      'ग्रहण योग शान्ति करावें।',
-    ]);
   };
 
   const buildPlainTextSlip = () => {
@@ -956,16 +947,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   className="px-2.5 py-1 bg-[#7A1D1D] text-white rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#5C1414] transition shadow-2xs"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  <span>कुण्डली अनुसार स्वतः उपाय</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleLoadExampleTemplate}
-                  className="px-2.5 py-1 bg-[#FFFDF8] text-[#5C3A21] border border-[#8C6239]/40 rounded-md font-semibold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition"
-                >
-                  <Sparkles className="w-3 h-3 text-[#B56A00]" />
-                  <span>आदर्श उदाहरण पर्ची (मोती+माणिक / ग्रहण योग)</span>
+                  <span>कुण्डली अनुसार स्वतः उपाय रीसेट करें</span>
                 </button>
               </div>
 
@@ -1164,7 +1146,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                       यजमान को समझाने हेतु: प्रत्येक उपाय क्यों करना है और क्या लाभ होगा?
                     </h5>
                     <p className="text-[11px] text-[#5C3A21]">
-                      पन्ना/ओपल धारण, दान सामग्री का प्रभाव व ग्रहण योग शान्ति की संपूर्ण ६-चरणीय विधि देखने के लिए यहाँ क्लिक करें।
+                      {points[0] || 'रत्न धारण'}, दान सामग्री का प्रभाव व {parchiData.detectedDoshaYoga || 'ग्रह शान्ति'} की संपूर्ण शास्त्रीय विधि देखने के लिए यहाँ क्लिक करें।
                     </p>
                   </div>
                 </div>

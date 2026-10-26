@@ -968,9 +968,14 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
         if (data?.ok && typeof data.text === "string" && data.text.trim()) {
           const aiText = data.text.trim();
           let finalText = aiText;
+          const parchi = generateTraditionalUpayParchi(effectiveKundali, panchang);
+
+          // If the chart does NOT have Grahan Yog, ensure AI never outputs "⑥ ग्रहण योग शान्ति करावें।"
+          if (!parchi.detectedDoshaYoga.includes("ग्रहण")) {
+            finalText = finalText.replace(/⑥\s*[^\n]*ग्रहण[^\n]*/g, `⑥ ${parchi.points[5]}`);
+          }
 
           if (!finalText.includes("①")) {
-            const parchi = generateTraditionalUpayParchi(effectiveKundali, panchang);
             const parchiBlock = `\n\n📋 **पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक — संक्षिप्त ६-सूत्रीय विधान):**\n${parchi.formattedTextBlock}\n*(💡 नीचे दिए **'📋 उपाय पर्ची'** बटन पर क्लिक करके आप इस पारंपरिक लेटरहेड पर्ची को देख, संपादित व डाउनलोड/शेयर कर सकते हैं।)*`;
             if (finalText.includes("[अगले प्रश्न]")) {
               const idx = finalText.indexOf("[अगले प्रश्न]");

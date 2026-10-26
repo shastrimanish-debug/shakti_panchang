@@ -799,7 +799,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         className="absolute top-2.5 left-2.5 pointer-events-none px-2.5 py-1 rounded-lg border border-[#F59E0B]/60 text-[10px] font-bold tracking-wide"
         style={{ backgroundColor: 'rgba(62, 31, 13, 0.92)', color: '#FFF3C4' }}
       >
-        Three.js 3D स्वर्ण यंत्र • घुमाएँ व ज़ूम करें
+        ✦ 3D स्वर्ण यंत्र • घुमाएँ व ज़ूम करें
       </div>
 
       {/* Collapsible Unified Bottom Control Dock */}
