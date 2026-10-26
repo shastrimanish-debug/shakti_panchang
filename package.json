@@ -28,6 +28,7 @@
     "d3": "^7.9.0",
     "esbuild": "^0.28.2",
     "express": "^5.2.1",
+    "framer-motion": "^14.6.0",
     "i18next": "^26.4.2",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.16.0",

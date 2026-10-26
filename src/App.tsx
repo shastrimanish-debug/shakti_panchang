@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Sparkles } from 'lucide-react';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES } from './services/storage';
@@ -443,24 +444,32 @@ export function App() {
             }}
           />
           {activeTab !== "services" && activeTab !== "index" && (
-            <button
+            <motion.button
               type="button"
-              className="bx-tabmenu"
+              initial={{ opacity: 0, x: -8, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ type: "spring", stiffness: 450, damping: 28 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
+              className="bx-tabmenu cursor-pointer"
               onClick={() => {
                 triggerHapticSelection();
                 tabMenu.go();
               }}
             >
               मुख्य मेनू
-            </button>
+            </motion.button>
           )}
         </div>
 
         {/* Right: Persistent City Selector ("शहर चुनें") & Uma AI Button */}
         <div className="flex items-center gap-1.5 min-w-0 ml-auto">
-          <button
+          <motion.button
             type="button"
-            className="bx-tabmenu max-w-[190px] sm:max-w-[260px]"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 450, damping: 26 }}
+            className="bx-tabmenu max-w-[190px] sm:max-w-[260px] cursor-pointer"
             style={{
               backgroundColor: '#5C3A21',
               color: '#FAF2E4',
@@ -480,11 +489,14 @@ export function App() {
             >
               शहर चुनें ▾
             </span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
-            className="bx-tabmenu"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 450, damping: 26 }}
+            className="bx-tabmenu cursor-pointer"
             style={{
               backgroundColor: '#FFF7E6',
               color: '#7A1D1D',
@@ -498,7 +510,7 @@ export function App() {
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#B56A00' }} />
             <span className="hidden xs:inline">उमा</span>
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -513,14 +525,34 @@ export function App() {
         </div>
       )}
 
-      {/* Main Responsive View Container with Smooth Vertical Scrolling */}
+      {/* Main Responsive View Container with Spring-Based Tactile Board Navigation */}
       <main className="flex-1 min-h-0 w-full relative flex flex-col overflow-hidden">
-        <div
-          key={`${activeTab}-${currentLang}`}
-          className={`flex-1 min-h-0 w-full flex flex-col overflow-hidden ${
-            turnDirection === 'backward' ? 'fading-slide-backward' : 'fading-slide-forward'
-          }`}
-        >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={`${activeTab}-${currentLang}`}
+            initial={{
+              opacity: 0,
+              y: turnDirection === 'forward' ? 10 : -10,
+              scale: 0.992,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+            }}
+            exit={{
+              opacity: 0,
+              y: turnDirection === 'forward' ? -8 : 8,
+              scale: 0.992,
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 420,
+              damping: 32,
+              mass: 0.7,
+            }}
+            className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
+          >
           <Suspense
             fallback={
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-2">
@@ -834,7 +866,8 @@ export function App() {
               />
             )}
           </Suspense>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {drawerOpen && (

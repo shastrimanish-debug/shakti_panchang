@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
   LayoutGrid,
@@ -64,10 +65,13 @@ export function BoardMenuButton({
 }) {
   const { t } = useLanguage();
   return (
-    <button
+    <motion.button
       type="button"
-      className="bx-menu-btn"
+      className="bx-menu-btn cursor-pointer"
       data-open={open ? "true" : "false"}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.92 }}
+      transition={{ type: "spring", stiffness: 450, damping: 25 }}
       onClick={() => {
         triggerHapticSelection();
         onClick();
@@ -80,7 +84,7 @@ export function BoardMenuButton({
         <span />
         <span />
       </span>
-    </button>
+    </motion.button>
   );
 }
 
@@ -130,7 +134,11 @@ export function BoardDrawer({
   ];
   return (
     <div className="bx-drawer-back" onClick={onClose}>
-      <aside
+      <motion.aside
+        initial={{ x: "-100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "-100%" }}
+        transition={{ type: "spring", stiffness: 380, damping: 32 }}
         className="bx-drawer"
         role="dialog"
         aria-modal="true"
@@ -142,9 +150,11 @@ export function BoardDrawer({
             <div className="text-[15px] font-semibold leading-none">{brand}</div>
             <div className="bx-kicker mt-1 truncate">{title}</div>
           </div>
-          <button
+          <motion.button
             type="button"
-            className="bx-iconbtn"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="bx-iconbtn cursor-pointer"
             onClick={() => {
               triggerHapticSelection();
               onClose();
@@ -152,12 +162,17 @@ export function BoardDrawer({
             aria-label={t("common.close", "बंद करें")}
           >
             <X className="w-4 h-4" />
-          </button>
+          </motion.button>
         </div>
         {showBack && (
-          <button
+          <motion.button
             type="button"
-            className="bx-navbtn w-full mt-3"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ type: "spring", stiffness: 420, damping: 28 }}
+            whileHover={{ x: -2 }}
+            whileTap={{ scale: 0.97 }}
+            className="bx-navbtn w-full mt-3 cursor-pointer"
             onClick={() => {
               triggerHapticSelection();
               onBack();
@@ -165,11 +180,16 @@ export function BoardDrawer({
           >
             <ChevronLeft className="w-4 h-4" />
             {t("nav.allServices", "सभी सेवाएँ")}
-          </button>
+          </motion.button>
         )}
-        <button
+        <motion.button
           type="button"
-          className="bx-navbtn w-full mt-2"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 420, damping: 28, delay: 0.04 }}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.97 }}
+          className="bx-navbtn w-full mt-2 cursor-pointer"
           onClick={() => {
             triggerHapticSelection();
             onPlace();
@@ -177,35 +197,48 @@ export function BoardDrawer({
         >
           <MapPin className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">{place}</span>
-        </button>
+        </motion.button>
         {trialText && <div className="bx-kicker mt-2 px-1">{trialText}</div>}
         <nav className="grid grid-cols-5 gap-1 mt-3" aria-label={t("nav.services", "मुख्य")}>
-          {items.map((item) => {
+          {items.map((item, idx) => {
             const on = item.id === "uma" ? false : active === item.id || (item.id === "kundali" && active === "milan");
             const Icon = item.icon;
             return (
-              <button
+              <motion.button
                 key={item.id}
                 type="button"
                 data-on={on ? "true" : "false"}
+                initial={{ opacity: 0, y: 10, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 420,
+                  damping: 26,
+                  delay: idx * 0.035,
+                }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={() => {
                   triggerHapticSelection();
                   item.onClick();
                 }}
-                className="bx-drawer-nav"
+                className="bx-drawer-nav cursor-pointer"
               >
                 <span className="bx-tile-icon w-7 h-7">
                   <Icon className="w-3.5 h-3.5" />
                 </span>
                 {item.label}
-              </button>
+              </motion.button>
             );
           })}
         </nav>
         <div className="grid grid-cols-2 gap-2 mt-3">
-          <button
+          <motion.button
             type="button"
-            className="bx-navbtn"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 450, damping: 25 }}
+            className="bx-navbtn cursor-pointer"
             onClick={() => {
               triggerHapticSelection();
               onTheme();
@@ -213,10 +246,13 @@ export function BoardDrawer({
           >
             <Palette className="w-4 h-4" />
             {t("common.theme", "थीम")}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
-            className="bx-navbtn"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 450, damping: 25 }}
+            className="bx-navbtn cursor-pointer"
             onClick={() => {
               triggerHapticSelection();
               onLanguage();
@@ -224,10 +260,10 @@ export function BoardDrawer({
           >
             <Languages className="w-4 h-4" />
             {t("common.language", "भाषा")}
-          </button>
+          </motion.button>
         </div>
         <div ref={onHost} className="mt-3 empty:hidden" />
-      </aside>
+      </motion.aside>
     </div>
   );
 }
@@ -338,25 +374,35 @@ export function BoardDock({
   ];
   return (
     <nav className="bx-dock shrink-0 z-40 grid grid-cols-5" aria-label={t("nav.services", "मुख्य")}>
-      {items.map((item) => {
+      {items.map((item, idx) => {
         const on = item.id === "uma" ? false : active === item.id || (item.id === "kundali" && active === "milan");
         const Icon = item.icon;
         return (
-          <button
+          <motion.button
             key={item.id}
             type="button"
             data-on={on ? "true" : "false"}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 420,
+              damping: 26,
+              delay: idx * 0.025,
+            }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.92 }}
             onClick={() => {
               triggerHapticSelection();
               item.onClick();
             }}
-            className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium min-w-0 px-0.5"
+            className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium min-w-0 px-0.5 cursor-pointer"
           >
             <span className="bx-tile-icon w-7 h-7">
               <Icon className="w-3.5 h-3.5" />
             </span>
             {item.label}
-          </button>
+          </motion.button>
         );
       })}
     </nav>
@@ -446,13 +492,23 @@ export function ModuleBoard({
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-stretch items-start content-start">
             {sections.flatMap((section) =>
-              section.pages.map((page) => {
+              section.pages.map((page, idx) => {
                 const Icon = page.icon;
                 return (
-                  <button
+                  <motion.button
                     key={page.id}
                     type="button"
-                    className="bx-tile bx-glass"
+                    initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 380,
+                      damping: 26,
+                      delay: Math.min(idx * 0.018, 0.25),
+                    }}
+                    whileHover={{ y: -3, scale: 1.015 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bx-tile bx-glass cursor-pointer"
                     onClick={() => {
                       triggerHapticSelection();
                       onOpen(page.id);
@@ -465,7 +521,7 @@ export function ModuleBoard({
                       <strong>{page.label}</strong>
                       <p>{page.desc}</p>
                     </span>
-                  </button>
+                  </motion.button>
                 );
               }),
             )}
@@ -603,16 +659,24 @@ export function TodayBoard({
   return (
     <div className="flex-1 min-h-0 w-full bx-home overflow-y-auto overscroll-contain p-3 space-y-3.5 pb-24">
       {/* 0. Top Location (शहर चुनें) & Date Control Bar */}
-      <section className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-2.5 sm:p-3 shadow-xs flex flex-wrap items-center justify-between gap-2">
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 28, delay: 0.02 }}
+        className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-2.5 sm:p-3 shadow-xs flex flex-wrap items-center justify-between gap-2"
+      >
         <div className="flex items-center gap-1.5 flex-wrap">
-          <button
+          <motion.button
             type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 450, damping: 26 }}
             onClick={() => {
               triggerHapticSelection();
               onPlace?.();
             }}
             style={{ backgroundColor: "#5C3A21", color: "#FAF2E4", borderColor: "#B56A00" }}
-            className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+            className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
             title="शहर / स्थान बदलें"
           >
             <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "#FFD88A" }} />
@@ -623,32 +687,36 @@ export function TodayBoard({
             >
               शहर बदलें ▾
             </span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 450, damping: 26 }}
             onClick={() => {
               triggerHapticSelection();
               onOpen("kalnirnay");
             }}
-            className="px-2.5 py-1.5 rounded-xl bg-[#F4E8D1] hover:bg-[#E8D5B5] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold flex items-center gap-1 transition cursor-pointer active:scale-95"
+            className="px-2.5 py-1.5 rounded-xl bg-[#F4E8D1] hover:bg-[#E8D5B5] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold flex items-center gap-1 transition cursor-pointer"
           >
             <Calendar className="w-3.5 h-3.5 text-[#8B1E1E]" />
             <span>मासिक कैलेंडर</span>
-          </button>
+          </motion.button>
         </div>
 
         {onDateChange && (
           <div className="flex items-center gap-1 bg-[#F4E8D1] px-1.5 py-1 rounded-xl border border-[#8C6239]/35">
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.9 }}
               onClick={handlePrevDay}
               className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
               title="पिछला दिन"
               aria-label="पिछला दिन"
             >
               <ChevronLeft className="w-4 h-4" />
-            </button>
+            </motion.button>
 
             <label className="relative flex items-center px-1.5 cursor-pointer">
               <span className="text-xs font-bold text-[#5C3A21] whitespace-nowrap">
@@ -664,8 +732,10 @@ export function TodayBoard({
               />
             </label>
 
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.92 }}
               onClick={handleTodayReset}
               style={{ backgroundColor: "#8B1E1E", color: "#FFFFFF" }}
               className="px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer"
@@ -673,30 +743,42 @@ export function TodayBoard({
             >
               <RotateCcw className="w-3 h-3" />
               <span>आज</span>
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.9 }}
               onClick={handleNextDay}
               className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
               title="अगला दिन"
               aria-label="अगला दिन"
             >
               <ChevronRight className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
         )}
-      </section>
+      </motion.section>
 
       {/* 1. First on Screen: Moon Phase & Tithi Orbit with Built-in Share & HD Save */}
-      <MoonPhaseChart
-        panchang={panchang}
-        placeName={place.name}
-        onWhatsApp={onWhatsApp}
-      />
+      <motion.div
+        initial={{ opacity: 0, y: 12, scale: 0.99 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.06 }}
+      >
+        <MoonPhaseChart
+          panchang={panchang}
+          placeName={place.name}
+          onWhatsApp={onWhatsApp}
+        />
+      </motion.div>
 
       {/* 2. Directly Below Moon Phase: Complete Panchang Details + Share & HD Save Options */}
-      <section className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.1 }}
+        className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3"
+      >
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/25 pb-2.5">
           <div>
             <div className="bx-kicker inline-flex items-center gap-1">
@@ -709,11 +791,13 @@ export function TodayBoard({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleShareHd}
               disabled={isSharingHd}
-              className="px-3 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+              className="px-3 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
             >
               {isSharingHd ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFD88A]" />
@@ -721,13 +805,15 @@ export function TodayBoard({
                 <Share2 className="w-3.5 h-3.5 text-[#FFD88A]" />
               )}
               <span>शेयर करें</span>
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleSaveHd}
               disabled={isSavingHd}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
             >
               {isSavingHd ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-200" />
@@ -735,7 +821,7 @@ export function TodayBoard({
                 <Download className="w-3.5 h-3.5 text-amber-200" />
               )}
               <span>HD में सेव करें</span>
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -749,9 +835,11 @@ export function TodayBoard({
         <div className="grid grid-cols-2 gap-2">
           {facts.map(([k, v]) =>
             k === placeLabelKey && onPlace ? (
-              <button
+              <motion.button
                 key={k}
                 type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   triggerHapticSelection();
                   onPlace();
@@ -767,7 +855,7 @@ export function TodayBoard({
                   <MapPin className="w-3.5 h-3.5 text-[#B56A00] shrink-0" />
                   <span className="truncate">{v}</span>
                 </b>
-              </button>
+              </motion.button>
             ) : (
               <div key={k} className="bx-fact bx-glass">
                 <div className="bx-kicker">{k}</div>
@@ -776,10 +864,16 @@ export function TodayBoard({
             )
           )}
         </div>
-      </section>
+      </motion.section>
 
       {/* 3. 3D Mini Kundali Glimpse Card */}
-      <section className="bx-kundali" aria-label="आज की कुंडली">
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.14 }}
+        className="bx-kundali"
+        aria-label="आज की कुंडली"
+      >
         <div className="bx-kundali-stage">
           <svg viewBox="0 0 100 100" className="bx-kundali-plate" aria-hidden="true">
             <rect x="3" y="3" width="94" height="94" rx="2" />
@@ -798,19 +892,32 @@ export function TodayBoard({
           <span>{t("panchang.sunSign", "सूर्य")} · {trVedic(panchang.solarRashi)}</span>
           <span>{t("panchang.moonSign", "चंद्र")} · {trVedic(panchang.lunarRashi)}</span>
         </div>
-      </section>
+      </motion.section>
 
       {/* 4. Daily Rotating Sanskrit Shloka with Hindi Translation & Share Button */}
-      <DailyShlokaCard
-        date={panchang.solar.sunrise || new Date()}
-        onExploreMore={() => onOpen("granth_puran")}
-      />
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.18 }}
+      >
+        <DailyShlokaCard
+          date={panchang.solar.sunrise || new Date()}
+          onExploreMore={() => onOpen("granth_puran")}
+        />
+      </motion.div>
 
       {/* 5. Quick Action Tiles */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.22 }}
+        className="grid grid-cols-2 gap-2"
+      >
+        <motion.button
           type="button"
-          className="bx-tile bx-glass h-auto min-h-16"
+          whileHover={{ y: -2, scale: 1.01 }}
+          whileTap={{ scale: 0.96 }}
+          className="bx-tile bx-glass h-auto min-h-16 cursor-pointer"
           onClick={() => {
             triggerHapticSelection();
             onWhatsApp();
@@ -818,10 +925,12 @@ export function TodayBoard({
         >
           <strong>{t("common.share", "व्हाट्सएप कार्ड")}</strong>
           <p>{t("nav.panchang", "पंचांग साझा व HD सेव")}</p>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
-          className="bx-tile bx-glass h-auto min-h-16"
+          whileHover={{ y: -2, scale: 1.01 }}
+          whileTap={{ scale: 0.96 }}
+          className="bx-tile bx-glass h-auto min-h-16 cursor-pointer"
           onClick={() => {
             triggerHapticSelection();
             onOpen("choghadiya");
@@ -829,10 +938,12 @@ export function TodayBoard({
         >
           <strong>{t("nav.choghadiya", "चौघड़िया")}</strong>
           <p>{t("panchang.auspiciousTimings", "शुभ समय")}</p>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
-          className="bx-tile bx-glass h-auto min-h-16"
+          whileHover={{ y: -2, scale: 1.01 }}
+          whileTap={{ scale: 0.96 }}
+          className="bx-tile bx-glass h-auto min-h-16 cursor-pointer"
           onClick={() => {
             triggerHapticSelection();
             onOpen("muhurat");
@@ -840,10 +951,12 @@ export function TodayBoard({
         >
           <strong>{t("nav.muhurat", "मुहूर्त")}</strong>
           <p>{t("panchang.auspiciousTimings", "काम के अनुसार समय")}</p>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
-          className="bx-tile bx-glass h-auto min-h-16"
+          whileHover={{ y: -2, scale: 1.01 }}
+          whileTap={{ scale: 0.96 }}
+          className="bx-tile bx-glass h-auto min-h-16 cursor-pointer"
           onClick={() => {
             triggerHapticSelection();
             onOpen("rashifal");
@@ -851,10 +964,12 @@ export function TodayBoard({
         >
           <strong>{t("nav.rashifal", "राशिफल")}</strong>
           <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
-          className="bx-tile bx-glass h-auto min-h-16 col-span-2"
+          whileHover={{ y: -2, scale: 1.008 }}
+          whileTap={{ scale: 0.97 }}
+          className="bx-tile bx-glass h-auto min-h-16 col-span-2 cursor-pointer"
           onClick={() => {
             triggerHapticSelection();
             onOpen("granth_puran");
@@ -862,8 +977,8 @@ export function TodayBoard({
         >
           <strong>{t("nav.granthPuran", "प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय")}</strong>
           <p>{t("nav.granthPuranDesc", "श्रीमद्भगवद्गीता, १० प्रमुख उपनिषद्, अष्टादश महापुराण व वैदिक सूक्त सार")}</p>
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </div>
   );
 }

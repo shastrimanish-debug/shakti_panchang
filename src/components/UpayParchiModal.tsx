@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { KundaliData, VedicPanchangData } from '../types';
 import {
@@ -679,8 +680,11 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
         {/* View Switcher Tabs: 📜 पारंपरिक पर्ची vs 📖 यजमान विस्तृत मार्गदर्शन */}
         <div className="bg-[#FAF2E4] px-3 sm:px-6 pt-2.5 pb-2 border-b border-[#8C6239]/25 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 450, damping: 25 }}
               onClick={() => setActiveTab('parchi')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
                 activeTab === 'parchi'
@@ -690,10 +694,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
             >
               <FileText className="w-3.5 h-3.5" />
               <span>📜 पारंपरिक उपाय पर्ची (Slip)</span>
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 450, damping: 25 }}
               onClick={() => {
                 setActiveTab('guide');
                 setHighlightedItemIndex(null);
@@ -707,7 +714,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               <BookOpen className="w-3.5 h-3.5 text-[#B56A00]" />
               <span>📖 यजमान विस्तृत मार्गदर्शन (क्यों व क्या लाभ?)</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="विस्तृत कारण व लाभ उपलब्ध" />
-            </button>
+            </motion.button>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs">

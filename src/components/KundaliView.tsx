@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { KundaliData, SavedLocation, DashaPratyantarPeriod } from '../types';
 import { KundaliChart } from './KundaliChart';
 import { LocationModal } from './LocationModal';
@@ -943,22 +944,32 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           { id: 'kp_ashtakvarga', label: 'केपी व अष्टकवर्ग', icon: Zap },
           { id: 'prashna', label: 'प्रश्न कुंडली', icon: HelpCircle },
           { id: 'remedies', label: 'वैदिक उपाय व रत्न', icon: Shield },
-        ].map((tab) => {
+        ].map((tab, idx) => {
           const Icon = tab.icon;
           const isSel = kundaliTab === tab.id;
           return (
-            <button
+            <motion.button
               key={tab.id}
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{
+                type: "spring",
+                stiffness: 420,
+                damping: 26,
+                delay: idx * 0.02,
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setKundaliTab(tab.id as any)}
-              className={`flex items-center gap-2 min-w-0 overflow-hidden px-3 py-3 text-left text-xs font-bold rounded-2xl border ${
+              className={`flex items-center gap-2 min-w-0 overflow-hidden px-3 py-3 text-left text-xs font-bold rounded-2xl border cursor-pointer transition-colors ${
                 isSel
-                  ? 'bg-[#5C3A21] text-[#FAF2E4] border-[#5C3A21]'
-                  : 'bg-[#FAF2E4] text-[#5C3A21] border-[#8C6239]/35'
+                  ? 'bg-[#5C3A21] text-[#FAF2E4] border-[#5C3A21] shadow-xs'
+                  : 'bg-[#FAF2E4] text-[#5C3A21] border-[#8C6239]/35 hover:border-[#8C6239]'
               }`}
             >
               <Icon className={`w-4 h-4 shrink-0 ${isSel ? 'text-[#FFD88A]' : 'text-[#B56A00]'}`} />
               <span className="min-w-0 truncate">{tab.label}</span>
-            </button>
+            </motion.button>
           );
         })}
       </div>
