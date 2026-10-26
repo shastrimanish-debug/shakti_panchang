@@ -93,21 +93,31 @@ function loadParchiHeader(): ParchiHeaderConfig {
     const raw = localStorage.getItem(STORAGE_KEY_PARCHI_HEADER);
     if (raw) {
       const parsed = JSON.parse(raw);
+      // Cleanse legacy dummy data from previous sessions if present in browser localStorage
+      const rawName = (parsed.astrologerName || '').trim();
+      const scrubbedName = rawName === 'डॉ. आशीष शुक्ल' ? '' : rawName;
+
+      const rawAddress = (parsed.address || '').trim();
+      const scrubbedAddress = rawAddress === 'राजपुरा, बुरहानपुर (म.प्र.)' ? '' : rawAddress;
+
+      const rawQual = (parsed.qualification || '').trim();
+      const scrubbedQual = rawQual.includes('M.A., Ph.D (संस्कृत') ? '' : rawQual;
+
       return {
-        astrologerName: parsed.astrologerName || branding.name || 'डॉ. आशीष शुक्ल',
-        qualification: parsed.qualification || 'M.A., Ph.D (संस्कृत एवं ज्योतिष)',
-        designation: parsed.designation || branding.title || 'ज्योतिषी, याज्ञिक एवं वास्तुविद',
+        astrologerName: scrubbedName || branding.name || '',
+        qualification: scrubbedQual || '',
+        designation: parsed.designation || branding.title || 'ज्योतिषाचार्य एवं वास्तुविद',
         mobile: parsed.mobile ?? branding.phone ?? '',
-        address: parsed.address || branding.city || 'राजपुरा, बुरहानपुर (म.प्र.)',
+        address: scrubbedAddress || branding.city || '',
       };
     }
   } catch {}
   return {
-    astrologerName: branding.name || 'डॉ. आशीष शुक्ल',
-    qualification: 'M.A., Ph.D (संस्कृत)',
-    designation: branding.title || 'ज्योतिषी, याज्ञिक एवं वास्तुविद',
+    astrologerName: branding.name || '',
+    qualification: '',
+    designation: branding.title || 'ज्योतिषाचार्य एवं वास्तुविद',
     mobile: branding.phone || '',
-    address: branding.city || 'राजपुरा, बुरहानपुर (म.प्र.)',
+    address: branding.city || '',
   };
 }
 
@@ -118,6 +128,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   panchang,
 }) => {
   const [header, setHeader] = useState<ParchiHeaderConfig>(() => loadParchiHeader());
+  const [isEditAstrologerModalOpen, setIsEditAstrologerModalOpen] = useState(false);
   const [parchiData, setParchiData] = useState<TraditionalUpayParchiData>(() =>
     generateTraditionalUpayParchi(activeKundali, panchang)
   );
@@ -231,10 +242,14 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   };
 
   const buildPlainTextSlip = () => {
+    const astroName = header.astrologerName?.trim();
+    const subTitle = [header.qualification?.trim(), header.designation?.trim()].filter(Boolean).join(' • ');
+    const contactLine = [header.address ? `स्थान: ${header.address}` : '', header.mobile ? `Mo. ${header.mobile}` : ''].filter(Boolean).join(' | ');
+
     const lines = [
-      `卐  *${header.astrologerName}*  卐`,
-      `${header.qualification} • ${header.designation}`,
-      header.address ? `स्थान: ${header.address}${header.mobile ? ` | Mo. ${header.mobile}` : ''}` : '',
+      astroName ? `卐  *${astroName}*  卐` : `卐  *वैदिक ज्योतिष परामर्श एवं उपाय पर्ची*  卐`,
+      subTitle || undefined,
+      contactLine || undefined,
       `────────────────────────`,
       `               *॥ श्री ॥*`,
       `क्र.: ${serialNo}                  दिनांक: ${dateStr}`,
@@ -244,7 +259,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       ...points.map((pt, idx) => `${CIRCLED_NUMS[idx] || `(${idx + 1})`} ${pt}`),
       ``,
       `                                        *॥ शुभम् ॥*`,
-    ].filter((l) => l !== undefined);
+    ].filter((l): l is string => typeof l === 'string' && l.length > 0);
     return lines.join('\n');
   };
 
@@ -347,15 +362,22 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     ctx.textAlign = 'left';
     ctx.fillStyle = '#8B1E1E';
     ctx.font = 'bold 44px "Tiro Devanagari Hindi", "Noto Serif Devanagari", serif';
-    ctx.fillText(header.astrologerName || 'डॉ. आशीष शुक्ल', padX, 100);
+    const displayAstroName = header.astrologerName?.trim() || 'पं. ..................................';
+    ctx.fillText(displayAstroName, padX, 100);
 
-    ctx.fillStyle = '#6E2020';
-    ctx.font = 'bold 25px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(header.qualification || 'M.A., Ph.D (संस्कृत)', padX, 145);
+    let nextLeftY = 145;
+    if (header.qualification?.trim()) {
+      ctx.fillStyle = '#6E2020';
+      ctx.font = 'bold 25px "Tiro Devanagari Hindi", serif';
+      ctx.fillText(header.qualification.trim(), padX, nextLeftY);
+      nextLeftY += 43;
+    }
 
-    ctx.fillStyle = '#7A1C1C';
-    ctx.font = 'bold 27px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(header.designation || 'ज्योतिषी, याज्ञिक एवं वास्तुविद', padX, 188);
+    if (header.designation?.trim()) {
+      ctx.fillStyle = '#7A1C1C';
+      ctx.font = 'bold 27px "Tiro Devanagari Hindi", serif';
+      ctx.fillText(header.designation.trim(), padX, nextLeftY);
+    }
 
     // 3. Top Center: Red Swastika (卐)
     ctx.textAlign = 'center';
@@ -367,12 +389,14 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     ctx.textAlign = 'right';
     ctx.fillStyle = '#7A1C1C';
     ctx.font = 'bold 26px "Tiro Devanagari Hindi", serif';
-    const moLine = header.mobile ? `Mo. ${header.mobile}` : 'Mo. ..............................';
+    const moLine = header.mobile?.trim() ? `Mo. ${header.mobile.trim()}` : 'Mo. ..............................';
     ctx.fillText(moLine, width - padX, 138);
 
-    ctx.fillStyle = '#6E2020';
-    ctx.font = 'bold 28px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(header.address || 'राजपुरा, बुरहानपुर (म.प्र.)', width - padX, 188);
+    if (header.address?.trim()) {
+      ctx.fillStyle = '#6E2020';
+      ctx.font = 'bold 28px "Tiro Devanagari Hindi", serif';
+      ctx.fillText(header.address.trim(), width - padX, 188);
+    }
 
     // 5. Horizontal Maroon Divider Line
     const dividerY = 222;
@@ -726,10 +750,20 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
           </div>
         </div>
 
-        {/* Quick Mode Bar (For template presets) */}
+        {/* Quick Mode Bar (For template presets & astrologer branding) */}
         {activeTab === 'parchi' && (
           <div className="bg-[#F4E8D1] px-4 py-2 border-b border-[#8C6239]/30 flex items-center justify-between flex-wrap gap-2 text-xs">
             <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsEditAstrologerModalOpen(true)}
+                className="px-2.5 py-1 bg-[#FFFDF8] text-[#7A1D1D] border border-[#8C6239]/40 rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition shadow-2xs"
+                title="लेटरहेड पर अपना नाम या विवरण लिखें"
+              >
+                <Edit3 className="w-3 h-3 text-[#B56A00]" />
+                <span>{header.astrologerName?.trim() ? `नाम: ${header.astrologerName}` : '✏️ अपना / ज्योतिषी का नाम लिखें'}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleResetFromKundali}
@@ -777,7 +811,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                         type="text"
                         value={header.astrologerName}
                         onChange={(e) => saveHeaderChanges({ ...header, astrologerName: e.target.value })}
-                        placeholder="उदा. डॉ. आशीष शुक्ल"
+                        placeholder="उदा. पं. शास्त्री जी / आपका शुभ नाम"
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A] font-bold"
                       />
                     </div>
@@ -787,7 +821,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                         type="text"
                         value={header.qualification}
                         onChange={(e) => saveHeaderChanges({ ...header, qualification: e.target.value })}
-                        placeholder="उदा. M.A., Ph.D (संस्कृत)"
+                        placeholder="उदा. M.A. (संस्कृत), ज्योतिषाचार्य"
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
                       />
                     </div>
@@ -807,7 +841,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                         type="text"
                         value={header.mobile}
                         onChange={(e) => saveHeaderChanges({ ...header, mobile: e.target.value })}
-                        placeholder="उदा. 9876543210"
+                        placeholder="उदा. 98XXXXXXXX"
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
                       />
                     </div>
@@ -817,7 +851,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                         type="text"
                         value={header.address}
                         onChange={(e) => saveHeaderChanges({ ...header, address: e.target.value })}
-                        placeholder="उदा. राजपुरा, बुरहानपुर (म.प्र.)"
+                        placeholder="उदा. काशी / उज्जैन / आपका नगर"
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
                       />
                     </div>
@@ -958,15 +992,43 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 <div className="grid grid-cols-3 items-start gap-2 pb-3 border-b-[3px] border-[#8B1E1E]">
                   {/* Top Left: Name, Degree, Title */}
                   <div className="text-left space-y-0.5">
-                    <h2 className="text-lg sm:text-2xl font-bold text-[#8B1E1E] font-serif leading-tight">
-                      {header.astrologerName || 'डॉ. आशीष शुक्ल'}
-                    </h2>
-                    <p className="text-xs sm:text-sm font-bold text-[#6E2020] font-serif">
-                      {header.qualification || 'M.A., Ph.D (संस्कृत)'}
-                    </p>
-                    <p className="text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif">
-                      {header.designation || 'ज्योतिषी, याज्ञिक एवं वास्तुविद'}
-                    </p>
+                    {header.astrologerName?.trim() ? (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h2 className="text-lg sm:text-2xl font-bold text-[#8B1E1E] font-serif leading-tight">
+                          {header.astrologerName}
+                        </h2>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditAstrologerModalOpen(true)}
+                          className="px-1.5 py-0.5 text-[10px] sm:text-xs font-sans font-semibold bg-[#8B1E1E]/10 hover:bg-[#8B1E1E]/20 text-[#8B1E1E] rounded cursor-pointer transition inline-flex items-center gap-1"
+                          title="नाम व पदवी बदलें"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>बदलें</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditAstrologerModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#8B1E1E]/10 hover:bg-[#8B1E1E]/20 text-[#8B1E1E] border border-dashed border-[#8B1E1E]/50 rounded-lg text-xs sm:text-sm font-bold cursor-pointer transition group"
+                        title="यहाँ क्लिक कर अपना / ज्योतिषी का नाम लिखें"
+                      >
+                        <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition" />
+                        <span>+ ज्योतिषी का नाम लिखें</span>
+                      </button>
+                    )}
+
+                    {header.qualification?.trim() && (
+                      <p className="text-xs sm:text-sm font-bold text-[#6E2020] font-serif">
+                        {header.qualification}
+                      </p>
+                    )}
+                    {header.designation?.trim() && (
+                      <p className="text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif">
+                        {header.designation}
+                      </p>
+                    )}
                   </div>
 
                   {/* Top Center: Red Swastika */}
@@ -979,11 +1041,21 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   {/* Top Right: Mobile & Address */}
                   <div className="text-right space-y-1 pt-1">
                     <p className="text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif">
-                      Mo. {header.mobile || '..............................'}
+                      Mo. {header.mobile?.trim() || '..............................'}
                     </p>
-                    <p className="text-xs sm:text-base font-bold text-[#6E2020] font-serif">
-                      {header.address || 'राजपुरा, बुरहानपुर (म.प्र.)'}
-                    </p>
+                    {header.address?.trim() ? (
+                      <p className="text-xs sm:text-base font-bold text-[#6E2020] font-serif">
+                        {header.address}
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditAstrologerModalOpen(true)}
+                        className="text-[11px] text-[#8C6239] hover:underline cursor-pointer"
+                      >
+                        + स्थान/शहर जोड़ें
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1086,11 +1158,22 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                       卐
                     </span>
                     <div>
-                      <h4 className="font-bold text-sm sm:text-base text-[#7A1D1D]">
-                        {header.astrologerName} — उपाय पर्ची विस्तृत मार्गदर्शन
-                      </h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-bold text-sm sm:text-base text-[#7A1D1D]">
+                          {header.astrologerName?.trim() || 'वैदिक ज्योतिष परामर्श'} — उपाय पर्ची विस्तृत मार्गदर्शन
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditAstrologerModalOpen(true)}
+                          className="px-2 py-0.5 bg-[#FAF2E4] hover:bg-[#EBDCC0] border border-[#8C6239]/40 rounded text-[11px] text-[#7A1D1D] font-bold cursor-pointer inline-flex items-center gap-1"
+                          title="ज्योतिषी का नाम व पदवी बदलें"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>नाम बदलें</span>
+                        </button>
+                      </div>
                       <p className="text-[11px] text-[#7A1C1C]">
-                        {header.qualification} • {header.designation} {header.address ? `• ${header.address}` : ''}
+                        {[header.qualification?.trim(), header.designation?.trim(), header.address?.trim()].filter(Boolean).join(' • ') || 'शास्त्रीय मार्गदर्शन एवं उपाय विवरण'}
                       </p>
                     </div>
                   </div>
@@ -1572,6 +1655,141 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 className="py-2.5 px-3 bg-[#E6D7BC] hover:bg-[#D9C6A5] text-[#5C3A21] rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition"
               >
                 पूर्ण / बंद
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated Astrologer / Shastri Details Edit Modal */}
+      {isEditAstrologerModalOpen && (
+        <div
+          className="fixed inset-0 z-[190] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 select-none animate-in fade-in duration-150"
+          onClick={() => setIsEditAstrologerModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-[#FFFDF8] border-2 border-[#8C6239] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#7A1D1D] to-[#9C2828] text-[#FFD88A] px-4 py-3 flex items-center justify-between border-b border-[#B58738]/40">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">卐</span>
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base text-white">
+                    ज्योतिषी / आचार्य लेटरहेड विवरण
+                  </h3>
+                  <p className="text-[11px] text-[#F3E2C4]/80">
+                    यहाँ अपना नाम व परिचय लिखें, यह पर्ची में सहेजा जाएगा
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditAstrologerModalOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form Fields */}
+            <div className="p-4 space-y-3.5 text-xs overflow-y-auto max-h-[70vh]">
+              <div>
+                <label className="block font-bold text-[#5C3A21] mb-1">
+                  ज्योतिषी / आचार्य का नाम:
+                </label>
+                <input
+                  type="text"
+                  value={header.astrologerName}
+                  onChange={(e) => saveHeaderChanges({ ...header, astrologerName: e.target.value })}
+                  placeholder="उदा. पं. शास्त्री जी / आपका शुभ नाम"
+                  className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] font-bold text-sm focus:outline-[#8B1E1E]"
+                  autoFocus
+                />
+                <p className="text-[10px] text-[#8C6239] mt-1">
+                  यदि नाम खाली रखेंगे तो पर्ची पर खाली डॉटेड लाइन (पं. ............................) रहेगी।
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#5C3A21] mb-1">
+                  उपाधि / पदवी (Designation):
+                </label>
+                <input
+                  type="text"
+                  value={header.designation}
+                  onChange={(e) => saveHeaderChanges({ ...header, designation: e.target.value })}
+                  placeholder="उदा. ज्योतिषाचार्य, वास्तुविद एवं याज्ञिक"
+                  className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] focus:outline-[#8B1E1E]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#5C3A21] mb-1">
+                  शैक्षणिक योग्यता (Degree / Qualification):
+                </label>
+                <input
+                  type="text"
+                  value={header.qualification}
+                  onChange={(e) => saveHeaderChanges({ ...header, qualification: e.target.value })}
+                  placeholder="उदा. M.A. (संस्कृत), ज्योतिष अलंकार"
+                  className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] focus:outline-[#8B1E1E]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block font-bold text-[#5C3A21] mb-1">
+                    मोबाइल नंबर (Mo.):
+                  </label>
+                  <input
+                    type="text"
+                    value={header.mobile}
+                    onChange={(e) => saveHeaderChanges({ ...header, mobile: e.target.value })}
+                    placeholder="उदा. 98XXXXXXXX"
+                    className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] focus:outline-[#8B1E1E]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#5C3A21] mb-1">
+                    स्थान / नगर (Address):
+                  </label>
+                  <input
+                    type="text"
+                    value={header.address}
+                    onChange={(e) => saveHeaderChanges({ ...header, address: e.target.value })}
+                    placeholder="उदा. काशी / उज्जैन / आपका नगर"
+                    className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] focus:outline-[#8B1E1E]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="bg-[#FAF2E4] px-4 py-3 border-t border-[#8C6239]/30 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  saveHeaderChanges({
+                    ...header,
+                    astrologerName: '',
+                    qualification: '',
+                    address: '',
+                  });
+                }}
+                className="text-[11px] text-[#7A1D1D] hover:underline font-semibold cursor-pointer"
+              >
+                नाम खाली करें
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsEditAstrologerModalOpen(false)}
+                className="px-4 py-2 bg-[#7A1D1D] hover:bg-[#5C1414] text-[#FFD88A] font-bold rounded-xl text-xs flex items-center gap-1.5 shadow cursor-pointer transition"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>विवरण सहेजें व लागू करें</span>
               </button>
             </div>
           </div>
