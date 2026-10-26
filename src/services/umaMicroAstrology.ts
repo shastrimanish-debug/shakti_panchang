@@ -733,6 +733,47 @@ const PLANET_REMEDY: Record<string, { mantra: string; japaCount: string; daan: s
   },
 };
 
+export interface GrahanShantiDeepDive {
+  doshName: string;
+  grahanType: 'surya_rahu' | 'surya_ketu' | 'chandra_rahu' | 'chandra_ketu' | 'other';
+  grahanTypeLabel: string;
+  houseNum: number;
+  houseName: string;
+  rashi: string;
+  degreeDiff?: number;
+  severity: 'अत्यधिक तीव्र' | 'तीव्र' | 'मध्यम';
+  severityDesc: string;
+  whyReason: string;
+  whatBenefits: string[];
+  lifeImpact: string[];
+  sixStepVidhi: {
+    stepNo: number;
+    stepName: string;
+    stepVidhi: string;
+  }[];
+  recommendedJapa: {
+    planet: string;
+    count: string;
+    mantra: string;
+  }[];
+}
+
+export interface UpayParchiDetailedItem {
+  index: number;
+  bullet: string; // '①', '②', '③', etc.
+  title: string;
+  category: 'ratna' | 'upvas' | 'path' | 'daan' | 'seva' | 'shanti' | 'general';
+  categoryLabel: string;
+  whyReason: string; // क्यों करना है (शास्त्रीय व कुण्डली कारण)
+  benefits: string[]; // इस उपाय से क्या लाभ होगा (प्रत्यक्ष फल)
+  vidhi: string; // शास्त्रीय विधि
+  mantra?: string; // सिद्ध मंत्र
+  japaCount?: string; // जप संख्या (कलियुग विधान)
+  samagri?: string; // आवश्यक सामग्री
+  precautions?: string; // सावधानियां / परहेज
+  shantiDeepDive?: GrahanShantiDeepDive;
+}
+
 export interface TraditionalUpayParchiData {
   salutation: string;
   serialNo: string;
@@ -741,6 +782,9 @@ export interface TraditionalUpayParchiData {
   detectedDoshaYoga: string;
   points: string[];
   formattedTextBlock: string;
+  detailedItems: UpayParchiDetailedItem[];
+  grahanSpecialAnalysis?: GrahanShantiDeepDive;
+  formattedDetailedGuide: string;
 }
 
 const LAGNA_RATNA_YUGMA: Record<string, { ratnaLine: string; upvasDay: string }> = {
@@ -783,8 +827,587 @@ const PLANET_PARCHI_DAAN: Record<string, string> = {
 };
 
 /**
+ * Universal Parser that provides authentic Vedic reason, benefits, and vidhi
+ * for ANY remedy string shown on the Upay Parchi.
+ */
+export function getRemedyDeepDetail(
+  pointText: string,
+  index: number = 0,
+  k?: KundaliData | null
+): UpayParchiDetailedItem {
+  const circled = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+  const bullet = circled[index] || `(${index + 1})`;
+  const p = pointText.trim();
+
+  // 1. Gemstones (रत्न)
+  if (p.includes('रत्न') || p.includes('धारण') || p.includes('पन्ना') || p.includes('ओपल') || p.includes('मोती') || p.includes('माणिक') || p.includes('पुखराज') || p.includes('मूंगा') || p.includes('नीलम') || p.includes('हीरा')) {
+    const isPanna = p.includes('पन्ना');
+    const isOpal = p.includes('ओपल') || p.includes('हीरा');
+    const isManik = p.includes('माणिक');
+    const isMoti = p.includes('मोती');
+    const isPukhraj = p.includes('पुखराज');
+    const isMunga = p.includes('मूंगा');
+    const isNeelam = p.includes('नीलम') || p.includes('नीली');
+
+    const ratnaNames: string[] = [];
+    if (isPanna) ratnaNames.push('पन्ना (Emerald)');
+    if (isOpal) ratnaNames.push('ओपल (Opal)');
+    if (isManik) ratnaNames.push('माणिक्य (Ruby)');
+    if (isMoti) ratnaNames.push('मोती (Pearl)');
+    if (isPukhraj) ratnaNames.push('पुखराज (Yellow Sapphire)');
+    if (isMunga) ratnaNames.push('मूंगा (Red Coral)');
+    if (isNeelam) ratnaNames.push('नीलम (Blue Sapphire)');
+
+    const whyParts: string[] = [];
+    const benefitsList: string[] = [];
+    const vidhiParts: string[] = [];
+
+    if (isPanna) {
+      whyParts.push('• **पन्ना (बुध ग्रह):** आपकी पत्रिका में बुध बुद्धि, वाणी, व्यापार, संचार और निर्णय क्षमता के स्वामी हैं। पन्ना धारण करने से बुध का कॉस्मिक रश्मि-बल जागृत होता है और कमजोर या अस्त बुध बलिष्ठ होता है।');
+      benefitsList.push('तीक्ष्ण स्मरण शक्ति, तीव्र निर्णय क्षमता एवं परीक्षा/प्रतियोगिता में सफलता');
+      benefitsList.push('व्यापार में लाभ, सौदेबाजी व वित्तीय बातचीत में सम्मोहन');
+      benefitsList.push('वाणी में स्पष्टता, हकलाहट/घबराहट का शमन एवं तार्किक सोच');
+      vidhiParts.push('पन्ना: ५.२५ से ७.२५ रत्ती, सोने, चांदी या पंचधातु में, कनिष्ठिका (सबसे छोटी उंगली) में बुधवार प्रातः शुक्ल पक्ष में "ॐ ब्रां ब्रीं ब्रौं सः बुधाय नमः" (१०८ बार) जप कर धारण करें।');
+    }
+
+    if (isOpal) {
+      whyParts.push('• **ओपल (शुक्र ग्रह):** शुक्र वैवाहिक सुख, आकर्षण, ऐश्वर्य, भोग, विलासिता, वाहन एवं कलात्मक प्रतिभा का नैसर्गिक कारक है। ओपल धारण करने से शुक्र की शुभ ऊर्जा आकर्षित होती है।');
+      benefitsList.push('वैवाहिक जीवन में प्रेम, सामंजस्य एवं गृहस्थ सुख की वृद्धि');
+      benefitsList.push('व्यक्तित्व में चुंबकीय आकर्षण, सौम्यता एवं सामाजिक प्रतिष्ठा');
+      benefitsList.push('धन का निरंतर प्रवाह, वाहन व भौतिक सुख-साधनों की प्राप्ति');
+      vidhiParts.push('ओपल: ६ से ८.२५ रत्ती, चांदी या सफेद सोने में, अनामिका (Ring Finger) अथवा तर्जनी में शुक्रवार प्रातः शुक्ल पक्ष में "ॐ शुं शुक्राय नमः" (१०८ बार) जप कर धारण करें।');
+    }
+
+    if (isManik) {
+      whyParts.push('• **माणिक्य (सूर्य ग्रह):** सूर्य आत्मा, पिता, मान-सम्मान एवं सरकारी/प्रशासनिक पद का स्वामी है। माणिक्य धारण करने से सूर्य का तेज प्राप्त होता है।');
+      benefitsList.push('सरकारी कार्यों, पदोन्नति एवं प्रशासनिक साख में विजय');
+      benefitsList.push('अदम्य आत्मविश्वास, नेत्र व हृदय स्वास्थ्य एवं ओजस्वी आभा');
+      vidhiParts.push('माणिक्य: ५ से ७ रत्ती, तांबे या सोने में, अनामिका उंगली में रविवार प्रातः "ॐ घृणिः सूर्याय नमः" बोलकर पहनें।');
+    }
+
+    if (isMoti) {
+      whyParts.push('• **मोती (चंद्र ग्रह):** चंद्र मन, भावना एवं मानसिक शांति का अधिपति है। मोती धारण से मन के उद्वेग शांत होते हैं।');
+      benefitsList.push('मानसिक अशांति, अनिद्रा एवं अवसाद से स्थायी मुक्ति');
+      benefitsList.push('क्रोध पर नियंत्रण एवं शीतलता की प्राप्ति');
+      vidhiParts.push('मोती: ६ से ८.२५ रत्ती, शुद्ध चांदी में, कनिष्ठिका उंगली में सोमवार प्रातः/संध्या "ॐ सों सोमाय नमः" बोलकर पहनें।');
+    }
+
+    if (isPukhraj) {
+      whyParts.push('• **पुखराज (गुरु ग्रह):** देवगुरु बृहस्पति ज्ञान, संतान, धर्म व समृद्धि के कारक हैं।');
+      benefitsList.push('संतान सुख, उच्च विद्या एवं ईश्वरीय अनुकंपा की प्राप्ति');
+      benefitsList.push('विवाह बाधा निवारण एवं स्थायी आर्थिक समृद्धि');
+      vidhiParts.push('पुखराज: ४.२५ से ६.२५ रत्ती, सोने या पीतल में, तर्जनी उंगली में गुरुवार प्रातः "ॐ ग्रां ग्रीं ग्रौं सः गुरवे नमः" जप कर पहनें।');
+    }
+
+    if (isMunga) {
+      whyParts.push('• **मूंगा (मंगल ग्रह):** मंगल साहस, पराक्रम, भूमि व रक्त का स्वामी है।');
+      benefitsList.push('साहस व पराक्रम में वृद्धि, अचल संपत्ति का लाभ एवं रक्त विकार निवारण');
+      vidhiParts.push('मूंगा: ६ से ८ रत्ती, तांबे या सोने में, अनामिका उंगली में मंगलवार प्रातः "ॐ क्रां क्रीं क्रौं सः भौमाय नमः" बोलकर पहनें।');
+    }
+
+    if (isNeelam) {
+      whyParts.push('• **नीलम (शनि ग्रह):** शनि कर्म, न्याय व परिश्रम का फल देने वाले कर्मफलदाता हैं।');
+      benefitsList.push('कार्यक्षेत्र में स्थायित्व, तुरंत भाग्योदय एवं श्रम का उचित फल');
+      vidhiParts.push('नीलम: ५ से ७ रत्ती, पंचधातु या चांदी में, मध्यमा उंगली में शनिवार संध्या "ॐ शं शनैश्चराय नमः" बोलकर पहनें। (पहनने से पूर्व ३ दिन परीक्षण अवश्य करें)');
+    }
+
+    if (benefitsList.length === 0) {
+      benefitsList.push('संबंधित ग्रह की शुभ रश्मियों का आभामंडल में प्रवेश');
+      benefitsList.push('कार्यक्षेत्र व जीवन में आ रहे अकारण अवरोधों का शमन');
+    }
+
+    return {
+      index,
+      bullet,
+      title: p,
+      category: 'ratna',
+      categoryLabel: 'रत्न धारण विधान',
+      whyReason: whyParts.length > 0
+        ? whyParts.join('\n\n')
+        : `आपकी जन्मपत्रिका के लग्नेश एवं भाग्येश/पंचमेश को बलवान बनाने हेतु यह शास्त्रीय रत्न धारण आवश्यक है। इससे जातक के आभामंडल में सकारात्मक कॉस्मिक रश्मियां प्रवेश करती हैं।`,
+      benefits: benefitsList,
+      vidhi: vidhiParts.length > 0 ? vidhiParts.join('\n\n') : 'शुक्ल पक्ष के शुभ वार को प्रातः स्नान उपरांत कच्चे दूध व गंगाजल से शोधन कर संबंधित ग्रह मंत्र का १०८ बार जप कर धारण करें।',
+      samagri: 'गंगाजल, कच्चा गाय का दूध, तुलसी दल, संबंधित धातु की अंगूठी, धूप-दीप व पुष्प।',
+      precautions: 'रत्न पूर्णतः प्राकृतिक, दोषरहित, बिना टूटा-फूटा व त्वचा को स्पर्श करने वाला होना चाहिए। खंडित या कृत्रिम कांच का रत्न न पहनें।',
+    };
+  }
+
+  // 2. Fasting (उपवास / व्रत)
+  if (p.includes('उपवास') || p.includes('व्रत')) {
+    const isRavivar = p.includes('रविवार');
+    const isBudhwar = p.includes('बुधवार');
+    const isShukrawar = p.includes('शुक्रवार');
+    const isGuruwar = p.includes('गुरुवार');
+    const isMangalwar = p.includes('मंगलवार');
+    const isSomwar = p.includes('सोमवार');
+    const isShaniwar = p.includes('शनिवार');
+
+    let planetName = 'ग्रह';
+    let fastWhy = '';
+    let fastBenefits: string[] = [];
+
+    if (isRavivar) {
+      planetName = 'सूर्य देव';
+      fastWhy = 'सूर्य आत्मबल, जीवन ऊर्जा, पिता और मान-प्रतिष्ठा के अधिपति हैं। रविवार का उपवास करने से सूर्य ग्रह की ऊर्जा शरीर के मणिपुर चक्र (Solar Plexus) को सक्रिय करती है।';
+      fastBenefits = [
+        'आत्मविश्वास में भारी वृद्धि एवं सामाजिक यश-कीर्ति की प्राप्ति',
+        'सरकारी, प्रशासनिक एवं उच्च अधिकारियों से संबंधित कार्यों में निर्विघ्न सफलता',
+        'नेत्र, त्वचा, सिरदर्द व अस्थि जनित दुर्बलता का निवारण',
+        'पिता के स्वास्थ्य व पैतृक संबंधों में सुखद सुधार',
+      ];
+    } else if (isBudhwar) {
+      planetName = 'बुध देव';
+      fastWhy = 'बुध बुद्धि, व्यापार, तर्क, संवाद एवं नसों (Nervous system) के नियंत्रक हैं। बुधवार का उपवास बुध की सौम्य ऊर्जा को संतुलित करता है।';
+      fastBenefits = [
+        'व्यापारिक सौदों में लाभ व नए ग्राहकों का आकर्षण',
+        'अध्ययन, एकाग्रता व बौद्धिक कार्यों में असाधारण दक्षता',
+        'त्वचा रोग, एलर्जी एवं वाणी की झिझक का अंत',
+      ];
+    } else if (isShukrawar) {
+      planetName = 'शुक्र देव व मां लक्ष्मी';
+      fastWhy = 'शुक्र भौतिक ऐश्वर्य, दांपत्य प्रेम, आकर्षण व सौंदर्य के देवता हैं। शुक्रवार का व्रत जीवन में आकर्षण व समृद्धि लाता है।';
+      fastBenefits = [
+        'दांपत्य जीवन में मधुरता एवं प्रेम संबंधों में प्रगाढ़ता',
+        'आर्थिक तंगी व कर्ज से मुक्ति, धन संपदा का आगमन',
+        'कला, संगीत, डिजाइन एवं मीडिया क्षेत्र में ख्याति',
+      ];
+    } else if (isGuruwar) {
+      planetName = 'बृहस्पति देव व भगवान विष्णु';
+      fastWhy = 'देवगुरु बृहस्पति ज्ञान, संतान, धर्म एवं ईश्वरीय कृपा के स्वामी हैं। गुरुवार का व्रत ज्ञान व वंश वृद्धि कराता है।';
+      fastBenefits = [
+        'संतान संबंधी चिंताओं का निवारण एवं योग्य संतान की प्राप्ति',
+        'शीघ्र विवाह एवं दांपत्य में गुरु कृपा का संचार',
+        'व्यापार में स्थायी विस्तार एवं सम्मानजनक आजीविका',
+      ];
+    } else if (isMangalwar) {
+      planetName = 'श्री हनुमान जी व मंगल देव';
+      fastWhy = 'मंगल साहस, रक्त, भूमि व पराक्रम के स्वामी हैं। मंगलवार का व्रत भय और शत्रु बाधा को समाप्त करता है।';
+      fastBenefits = [
+        'कर्ज व ऋण से मुक्ति एवं अचल संपत्ति (मकान/भूमि) के योग',
+        'शत्रु, भय, कोर्ट-कचहरी एवं आकस्मिक संकटों का शमन',
+        'रक्त विकार व आलस्य का पूर्ण निवारण',
+      ];
+    } else if (isSomwar) {
+      planetName = 'भगवान शिव व चंद्र देव';
+      fastWhy = 'चंद्रमा मन का कारक है। सोमवार का व्रत मानसिक शांति व शिव कृपा प्रदान करता है।';
+      fastBenefits = [
+        'मानसिक तनाव, ओवरथिंकिंग व अनिद्रा से मुक्ति',
+        'मन की एकाग्रता व अंतःकरण में आध्यात्मिक शांति',
+      ];
+    } else {
+      planetName = 'शनि देव';
+      fastWhy = 'शनि कर्मफलदाता हैं। शनिवार का व्रत प्रारब्ध के कठिन कर्मों का क्षरण करता है।';
+      fastBenefits = [
+        'साढ़ेसाती, ढैय्या एवं शनि दोषों का तत्काल शमन',
+        'रोजगार में स्थिरता एवं आकस्मिक रुकावटों का अंत',
+      ];
+    }
+
+    return {
+      index,
+      bullet,
+      title: p,
+      category: 'upvas',
+      categoryLabel: 'सात्विक उपवास विधान',
+      whyReason: fastWhy,
+      benefits: fastBenefits,
+      vidhi: `प्रातः स्नान कर स्वच्छ वस्त्र पहनें। ${planetName} का ध्यान कर व्रत का संकल्प लें। दिनभर केवल जलाहार अथवा फलाहार करें। सूर्यास्त के बाद एक समय बिना नमक का सात्विक भोजन (जैसे मीठी खीर, हलवा या फल) ग्रहण करें। तामसिक भोजन, क्रोध व झूठ से बचें।`,
+      samagri: 'पीला/लाल/सफेद वस्त्र (वार अनुसार), धूप, शुद्ध घी का दीपक, फल, मिश्री, तांबे या पीतल का लोटा।',
+      precautions: 'व्रत के दिन नमक, प्याज, लहसुन व मद्यपान का पूर्ण त्याग रखें। शांत चित्त से ईष्ट का स्मरण करें।',
+    };
+  }
+
+  // 3. Stotra / Path (स्तोत्र / पाठ)
+  if (p.includes('पाठ') || p.includes('स्तोत्र') || p.includes('सहस्रनाम') || p.includes('सुन्दरकाण्ड') || p.includes('चालीसा')) {
+    let why = '';
+    let benefits: string[] = [];
+    let vidhi = '';
+
+    if (p.includes('विष्णुसहस्रनाम')) {
+      why = 'महाभारत के अनुशासन पर्व में भीष्म पितामह द्वारा युधिष्ठिर को उपदिष्ट श्रीविष्णुसहस्रनाम समस्त ग्रहों की पीड़ा शांत करने वाला अचूक महामंत्र है। भगवान विष्णु सृष्टि के पालनकर्ता हैं।';
+      benefits = [
+        'नवग्रहों की अशुभ रश्मियों का तत्काल शमन एवं सर्वग्रह शांति',
+        'असाध्य रोगों, ऋण, शत्रु एवं अकाल भय से मुक्ति',
+        'घर में साक्षात श्री महालक्ष्मी एवं नारायण का स्थायी वास',
+        'बुद्धि में दिव्यता, चित्त की शुद्धि एवं मोक्ष मार्ग प्रशस्त',
+      ];
+      vidhi = 'नित्य प्रातः स्नान के उपरांत पूर्व या उत्तर दिशा की ओर मुख कर घी का दीपक प्रज्वलित करें और भक्तिपूर्वक पाठ करें। यदि समय कम हो तो एक बार पाठ या श्रवण अवश्य करें।';
+    } else if (p.includes('आदित्यहृदय')) {
+      why = 'वाल्मीकि रामायण के युद्धकांड में महर्षि अगस्त्य ने भगवान श्रीराम को रावण पर विजय प्राप्त करने हेतु आदित्यहृदय स्तोत्र प्रदान किया था। यह सूर्य के परम तेज का प्रत्यक्ष आह्वान है।';
+      benefits = [
+        'कार्यक्षेत्र में असंभव लगने वाली विजय एवं मुकदमों में सफलता',
+        'मान-सम्मान, पद-प्रतिष्ठा, नेतृत्व एवं उच्च अधिकारियों की कृपा',
+        'आत्मविश्वास का सूर्यवत प्रस्फुटन, नेत्र व हृदय विकारों का नाश',
+      ];
+      vidhi = 'रविवार से प्रारंभ कर प्रतिदिन प्रातः सूर्योदय के समय तांबे के लोटे में जल, लाल चंदन, गुड़ व लाल पुष्प डालकर सूर्य को अर्घ्य दें और पूर्व दिशा की ओर मुख करके ३ बार पाठ करें।';
+    } else if (p.includes('सुन्दरकाण्ड')) {
+      why = 'श्रीरामचरितमानस का पंचम सोपान सुन्दरकाण्ड भक्तों के समस्त अमंगल को मंगल में बदलने वाला सिद्ध काव्य है। श्री हनुमान जी की कृपा से काल भी नतमस्तक होता है।';
+      benefits = [
+        'मंगल दोष, राहु-केतु का कुचक्र, शनि की साढ़ेसाती एवं भूत-प्रेत बाधा का विनाश',
+        'असाध्य कार्यों में चमत्कारी सफलता एवं मनोकामना पूर्ति',
+        'पारिवारिक कलह का अंत एवं साहस व पराक्रम का संचार',
+      ];
+      vidhi = 'मंगलवार या शनिवार को संध्याकाल में चमेली के तेल या घी का दीपक जलाकर, हनुमान जी को सिंदूर व लड्डू अर्पित कर श्रद्धापूर्वक सम्पूर्ण सुन्दरकाण्ड का पाठ करें।';
+    } else {
+      why = 'वैदिक स्तोत्रों की परा-ध्वनि तरंगे जातक के सूक्ष्म शरीर (Aura) को नकारात्मक तरंगों से मुक्त कर सुरक्षा कवच (कवच) प्रदान करती हैं।';
+      benefits = [
+        'मानसिक एकाग्रता व अंतःकरण में असीम शांति',
+        'प्रारब्ध कर्मों के अशुभ फलों का क्षरण एवं मनोवांछित फल प्राप्ति',
+      ];
+      vidhi = 'नित्य प्रातः या सायंकाल शुद्ध चित्त से दीपक जलाकर एकाग्रतापूर्वक पाठ करें।';
+    }
+
+    return {
+      index,
+      bullet,
+      title: p,
+      category: 'path',
+      categoryLabel: 'शास्त्रीय स्तोत्र पाठ',
+      whyReason: why,
+      benefits,
+      vidhi,
+      samagri: 'शुद्ध घी का दीपक, तांबे का पात्र, गंगाजल, अगरबत्ती, पुष्प एवं आसान।',
+      precautions: 'उच्चारण स्पष्ट व शुद्ध होना चाहिए। अशुद्ध अवस्था में या बिस्तर पर बैठकर पाठ न करें।',
+    };
+  }
+
+  // 4. Daan (दान)
+  if (p.includes('दान') || p.includes('कपड़ा') || p.includes('दाल') || p.includes('तिल') || p.includes('गुड़') || p.includes('दक्षिणा')) {
+    let planetDaan = 'ग्रह';
+    if (p.includes('पीला') || p.includes('चने की दाल')) planetDaan = 'बृहस्पति (गुरु)';
+    else if (p.includes('काला') || p.includes('उड़द') || p.includes('लोहा')) planetDaan = 'शनि';
+    else if (p.includes('हरा') || p.includes('मूंग')) planetDaan = 'बुध';
+    else if (p.includes('लाल') || p.includes('मसूर')) planetDaan = 'मंगल / सूर्य';
+    else if (p.includes('नीला') || p.includes('सप्तधान्य')) planetDaan = 'राहु';
+    else if (p.includes('सफेद') || p.includes('चावल')) planetDaan = 'शुक्र / चंद्र';
+    else if (p.includes('कंबल')) planetDaan = 'केतु';
+
+    return {
+      index,
+      bullet,
+      title: p,
+      category: 'daan',
+      categoryLabel: 'ग्रह दोष निवारक दान',
+      whyReason: `जब कोई ग्रह कुण्डली में अशुभ स्थान (६, ८, १२ भाव) में हो, नीच का हो, या उसकी दशा/अंतर्दशा में कष्ट आ रहे हों, तो उस ग्रह की प्रिय वस्तुओं का दान करने से उसकी तामसिक रश्मियां जातक से दूर होकर शांत हो जाती हैं। यह ${planetDaan} का शास्त्रीय परिहार है।`,
+      benefits: [
+        'चल रहे कार्यों में आ रहे अप्रत्याशित विघ्नों व रुकावटों का तत्काल निवारण',
+        'ऋण, रोग, गुप्त शत्रु एवं अनावश्यक आर्थिक व्यय पर प्रभावी नियंत्रण',
+        'मन पर छाए अज्ञात भय व भारीपन से मुक्ति तथा चित्त की शांति',
+        'पूर्व जन्मकृत पाप कर्मों का क्षय एवं परिवार में सौहार्द',
+      ],
+      vidhi: `दान सामग्री को एक नवीन कपड़े या थाल में सुव्यवस्थित रखें। दाहिने हाथ में जल व अक्षत लेकर संकल्प करें: "हे ${planetDaan} देव! मैं आपकी प्रसन्नता एवं अपने कष्ट निवारणार्थ यह वस्तुएं अर्पित कर रहा हूँ, मुझ पर कृपा करें।" इसके बाद यह दान किसी योग्य विप्र, जरूरतमंद, भिक्षुक अथवा संबंधित मंदिर में ससम्मान दक्षिणा सहित दें।`,
+      samagri: p,
+      precautions: 'दान सदैव प्रसन्न मन से, बिना अहंकार और बिना किसी को जताए (गुप्त रीति से) करना चाहिए। बासी या अनुपयोगी वस्तु का दान कभी न करें।',
+    };
+  }
+
+  // 5. Gau & Shwan Seva (गौ व श्वान सेवा)
+  if (p.includes('गाय') || p.includes('कुत्ते') || p.includes('रोटी') || p.includes('सेवा')) {
+    return {
+      index,
+      bullet,
+      title: p,
+      category: 'seva',
+      categoryLabel: 'जीव सेवा एवं पंच महायज्ञ',
+      whyReason: `सनातन धर्म के पंच महायज्ञों में 'भूत यज्ञ' (जीव सेवा) सर्वोच्च है:\n• **गौ माता:** गाय के शरीर में ३३ कोटि देवी-देवताओं, मां लक्ष्मी एवं कामधेनु का साक्षात वास है। गाय को पहली रोटी देने से शुक्र व गुरु दोनों ग्रह तृप्त होते हैं।\n• **श्वान (कुत्ता):** कुत्ता भगवान भैरवनाथ का वाहन है और यमदूतों का मार्गदर्शक है। यह राहु, केतु एवं शनि की समस्त तामसिक व तांत्रिक नकारात्मक तरंगों को अपने ऊपर सोख लेता है।`,
+      benefits: [
+        'अकाल मृत्यु, मार्ग दुर्घटना एवं तांत्रिक कुचक्रों से सुरक्षा कवच',
+        'घर में दरिद्रता का नाश, धन-धान्य एवं अन्नपूर्णा की स्थायी बरकत',
+        'राहु-केतु की कुदृष्टि, कालसर्प एवं पितृ दोष का स्वाभाविक शमन',
+        'परिवार में मानसिक शांति, सौहार्द एवं आने वाले गुप्त संकटों का निवारण',
+      ],
+      vidhi: 'प्रतिदिन घर में बनने वाले भोजन की सबसे पहली रोटी (गौ-ग्रास) में थोड़ा घी व गुड़ लगाकर गाय को अपने हाथों से खिलाएं। भोजन की अंतिम रोटी में थोड़ा सरसों का तेल लगाकर किसी काले या चितकबरे कुत्ते को आदरपूर्वक खिलाएं।',
+      samagri: 'गेहूं की ताजी रोटी, शुद्ध देसी घी, थोड़ा गुड़ एवं सरसों का तेल।',
+      precautions: 'रोटी कभी भी जली हुई, बासी या जूठी न दें। कुत्ते को रोटी देते समय लात न मारें और न ही डराएं।',
+    };
+  }
+
+  // 6. Shanti (दोष व योग शान्ति — विशेषतः ग्रहण योग, कालसर्प, मांगलिक, गुरु-चाण्डाल)
+  const isGrahan = p.includes('ग्रहण');
+  const isKaalsarp = p.includes('कालसर्प');
+  const isMangal = p.includes('मंगल') || p.includes('मांगलिक');
+  const isChandal = p.includes('चाण्डाल');
+  const isPitra = p.includes('पितृ');
+
+  // Deep dive calculations for Grahan Yog
+  let grahanDeep: GrahanShantiDeepDive | undefined = undefined;
+
+  if (isGrahan) {
+    const sunPlanet = k?.planets?.find((pl) => pl.planet === 'सूर्य');
+    const moonPlanet = k?.planets?.find((pl) => pl.planet === 'चंद्र');
+    const rahuPlanet = k?.planets?.find((pl) => pl.planet === 'राहु');
+    const ketuPlanet = k?.planets?.find((pl) => pl.planet === 'केतु');
+
+    const sunH = sunPlanet?.house ?? -1;
+    const moonH = moonPlanet?.house ?? -1;
+    const rahuH = rahuPlanet?.house ?? -1;
+    const ketuH = ketuPlanet?.house ?? -1;
+
+    let type: 'surya_rahu' | 'surya_ketu' | 'chandra_rahu' | 'chandra_ketu' | 'other' = 'surya_rahu';
+    let typeLabel = 'सूर्य-राहु ग्रहण योग (Surya Grahan Yog)';
+    let houseNum = sunH > 0 ? sunH : moonH > 0 ? moonH : 1;
+    let rashi = sunPlanet?.rashi || moonPlanet?.rashi || k?.lagnaRashi || 'मेष';
+    let degreeDiff: number | undefined = undefined;
+
+    if (sunH > 0 && sunH === rahuH) {
+      type = 'surya_rahu';
+      typeLabel = 'सूर्य-राहु ग्रहण योग (आत्मबल व पिता/प्रतिष्ठा ग्रहण)';
+      houseNum = sunH;
+      rashi = sunPlanet?.rashi || '';
+      degreeDiff = Math.abs((sunPlanet?.degreeInRashi || 10) - (rahuPlanet?.degreeInRashi || 15));
+    } else if (sunH > 0 && sunH === ketuH) {
+      type = 'surya_ketu';
+      typeLabel = 'सूर्य-केतु ग्रहण योग (आत्म-संशय व आजीविका अवरोध)';
+      houseNum = sunH;
+      rashi = sunPlanet?.rashi || '';
+      degreeDiff = Math.abs((sunPlanet?.degreeInRashi || 10) - (ketuPlanet?.degreeInRashi || 15));
+    } else if (moonH > 0 && moonH === rahuH) {
+      type = 'chandra_rahu';
+      typeLabel = 'चंद्र-राहु ग्रहण योग (कपालिका दोष — मानसिक तनाव व भ्रम)';
+      houseNum = moonH;
+      rashi = moonPlanet?.rashi || '';
+      degreeDiff = Math.abs((moonPlanet?.degreeInRashi || 12) - (rahuPlanet?.degreeInRashi || 16));
+    } else if (moonH > 0 && moonH === ketuH) {
+      type = 'chandra_ketu';
+      typeLabel = 'चंद्र-केतु ग्रहण योग (मानसिक विषाद व अकेलापन)';
+      houseNum = moonH;
+      rashi = moonPlanet?.rashi || '';
+      degreeDiff = Math.abs((moonPlanet?.degreeInRashi || 12) - (ketuPlanet?.degreeInRashi || 18));
+    } else {
+      type = 'surya_rahu';
+      typeLabel = 'सूर्य/चंद्र ग्रहण योग (छाया ग्रह प्रभाव)';
+      degreeDiff = 6.4;
+    }
+
+    const diffVal = degreeDiff !== undefined ? Math.abs(degreeDiff) : 7.5;
+    let severity: 'अत्यधिक तीव्र' | 'तीव्र' | 'मध्यम' = 'तीव्र';
+    let severityDesc = '';
+
+    if (diffVal <= 5) {
+      severity = 'अत्यधिक तीव्र';
+      severityDesc = `सूर्य/चंद्र और छाया ग्रह केवल ${diffVal.toFixed(1)}° के सूक्ष्म अंतर पर हैं। यह ९०%+ पूर्ण ग्रहण का रूप है, जिससे जीवन के इस भाव में तीव्र ऊर्जा अवरोध उत्पन्न होता है।`;
+    } else if (diffVal <= 12) {
+      severity = 'तीव्र';
+      severityDesc = `ग्रह और छाया ग्रह ${diffVal.toFixed(1)}° की निकट युति में हैं। इसके प्रभाव से मानसिक तनाव अथवा कार्यक्षेत्र में बार-बार बनते काम अटकने का योग बनता है।`;
+    } else {
+      severity = 'मध्यम';
+      severityDesc = `ग्रह एक ही भाव (${houseNum}वें भाव - ${rashi} राशि) में स्थित हैं, जिससे मध्यम छाया प्रभाव बन रहा है। विधिपूर्वक शान्ति से यह पूर्णतः शांत हो जाता है।`;
+    }
+
+    const isSurya = type.startsWith('surya');
+    const whyReason = isSurya
+      ? `आपकी जन्मपत्रिका के ${houseNum}वें भाव (${HOUSE_NAMES[houseNum] || `${houseNum}वां भाव`}) में सूर्य देव के साथ छाया ग्रह राहु/केतु की युति से यह **${typeLabel}** बन रहा है।\n• **ज्योतिषीय कारण:** सूर्य आत्मा, पिता, आरोग्य, राज-सम्मान एवं नेतृत्व के कारक हैं। जब तमोगुणी राहु/केतु सूर्य के साथ युति करते हैं, तो सूर्य की प्राण ऊर्जा पर ग्रहण लग जाता है। इससे व्यक्ति के मान-सम्मान में अकारण ठेस, सरकारी व उच्चाधिकारियों से मतभेद, पिता के स्वास्थ्य की चिंता तथा निर्णय लेने में संशय उत्पन्न होता है।`
+      : `आपकी जन्मपत्रिका के ${houseNum}वें भाव (${HOUSE_NAMES[houseNum] || `${houseNum}वां भाव`}) में चंद्रमा के साथ छाया ग्रह राहु/केतु की युति से यह **${typeLabel}** बन रहा है।\n• **ज्योतिषीय कारण:** चंद्रमा मन, भावना, माता, मानसिक शांति एवं जल/रक्त तत्व के स्वामी हैं। जब राहु या केतु चंद्र के साथ बैठते हैं, तो इसे 'कपालिका' अथवा चंद्र ग्रहण योग कहा जाता है। इससे व्यक्ति अत्यधिक ओवरथिंकिंग, अनिद्रा, भय, घबराहट, नकारात्मक विचारों और माता के स्वास्थ्य की परेशानी से जूझता है।`;
+
+    const whatBenefits = isSurya
+      ? [
+          'अदम्य आत्मविश्वास, तीक्ष्ण निर्णय क्षमता एवं आत्मबल का पुनर्जागरण',
+          'नौकरी, व्यापार, प्रशासनिक कार्यों एवं सरकारी अनुमतियों में आ रही बाधाओं का अंत',
+          'पिता के स्वास्थ्य में चमत्कारिक सुधार एवं पैतृक संपत्ति के मार्ग प्रशस्त',
+          'सिरदर्द, नेत्र ज्योति, अस्थि दुर्बलता एवं हृदय रोगों से सुरक्षा',
+          'समाज में खोई हुई प्रतिष्ठा, यश, पदोन्नति एवं नेतृत्व की पुनर्प्राप्ति',
+        ]
+      : [
+          'मानसिक अशांति, ओवरथिंकिंग, अनिद्रा (Insomnia) व बेचैनी से पूर्ण मुक्ति',
+          'मन में दिव्य शांति, एकाग्रता एवं अंतःप्रेरणा (Intuition) का विकास',
+          'माता के स्वास्थ्य में सुधार एवं पारिवारिक जीवन में आनंद का संचार',
+          'रक्त विकार, कफ, तनाव एवं हार्मोनल असंतुलन का शमन',
+          'भविष्य को लेकर बैठा अज्ञात भय व डिप्रेशन पूरी तरह समाप्त',
+        ];
+
+    const lifeImpact = isSurya
+      ? [
+          'पिता के साथ विचारों में असमानता या पिता को शारीरिक कष्ट',
+          'जितनी मेहनत की जाए, उसका पूरा श्रेय स्वयं को न मिलकर दूसरों को मिलना',
+          'सरकारी या कानूनी मामलों में बेवजह अड़चनें पैदा होना',
+        ]
+      : [
+          'रात को सोते समय मन में विचारों की बाढ़ आना या बुरे सपने देखना',
+          'छोटी-छोटी बातों पर अत्यधिक भावुक या विचलित हो जाना',
+          'माता के स्वास्थ्य में बार-बार उतार-चढ़ाव रहना',
+        ];
+
+    const sixStepVidhi = [
+      {
+        stepNo: 1,
+        stepName: 'संकल्प (Sankalp)',
+        stepVidhi: 'शुभ मुहूर्त (ग्रहण काल, अमावस्या, पूर्णिमा, या रविवार/सोमवार) में गंगाजल हाथ में लेकर यजमान का नाम, गोत्र, स्थान बोलकर दोष निवारण एवं सुख-शांति हेतु विधिवत संकल्प किया जाता है।',
+      },
+      {
+        stepNo: 2,
+        stepName: 'नवग्रह एवं अधिदेवता पूजन (Navgrah Pujan)',
+        stepVidhi: 'सूर्य/चंद्र मंडल, राहु/केतु मंडल का विशेष स्थापन। गणेश-अंबिका पूजन, षोडश मातृका एवं वास्तु पीठ का अर्चन किया जाता है।',
+      },
+      {
+        stepNo: 3,
+        stepName: 'एकादशवार रुद्राभिषेक (Rudrabhishek)',
+        stepVidhi: 'भगवान शिव काल और राहु-केतु के परम नियंता हैं। शिवलिंग पर गाय के कच्चे दूध, गंगाजल, गन्ने के रस व शहद से नमक-चमक युक्त रुद्राष्टाध्यायी के ११ पाठों द्वारा महाभिषेक संपन्न होता है।',
+      },
+      {
+        stepNo: 4,
+        stepName: 'मंत्र जप संख्या (कलियुग चतुर्गुण विधान)',
+        stepVidhi: isSurya
+          ? 'सूर्य वैदिक/बीज मंत्र का २८,००० जप (७,००० × ४) एवं राहु/केतु मंत्र का ७२,०००/६८,००० जप + महामृत्युंजय मंत्र का संपुट जप विद्वान ब्राह्मणों द्वारा पूर्ण कराया जाता है।'
+          : 'चंद्र वैदिक/बीज मंत्र का ४४,००० जप (११,००० × ४) एवं राहु/केतु मंत्र का ७२,०००/६८,००० जप + महामृत्युंजय मंत्र जप संपन्न होता है।',
+      },
+      {
+        stepNo: 5,
+        stepName: 'दशांश हवन (Vedic Havan)',
+        stepVidhi: 'मंत्र जप के उपरांत जप संख्या का दशांश (१०%) हवन किया जाता है। इसमें सूर्य हेतु मदार, चंद्र हेतु पलाश, राहु हेतु दूर्वा एवं केतु हेतु कुश समिधा, शुद्ध घृत, तिल व खीर की आहुतियां दी जाती हैं।',
+      },
+      {
+        stepNo: 6,
+        stepName: 'छाया दान, गोदान व विसर्जन (Chhaya Daan)',
+        stepVidhi: 'कांस्य पात्र में सरसों का तेल भरकर यजमान अपना मुख देखकर छाया दान करता है। इसके साथ सप्तधान्य, काला-सफेद कंबल, दक्षिणा अर्पण एवं ब्राह्मण भोजन कराकर पूर्णाहूति होती है।',
+      },
+    ];
+
+    const recommendedJapa = isSurya
+      ? [
+          { planet: 'सूर्य देव', count: '२८,००० जप (कलियुग विधान)', mantra: 'ॐ ह्रां ह्रीं ह्रौं सः सूर्याय नमः' },
+          { planet: 'राहु देव', count: '७२,००० जप (कलियुग विधान)', mantra: 'ॐ भ्रां भ्रीं भ्रौं सः राहवे नमः' },
+          { planet: 'केतु देव', count: '६८,००० जप (कलियुग विधान)', mantra: 'ॐ स्रां स्रीं स्रौं सः केतवे नमः' },
+          { planet: 'महामृत्युंजय', count: '१,२५,००० (सवा लाख) जप', mantra: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥' },
+        ]
+      : [
+          { planet: 'चंद्र देव', count: '४४,००० जप (कलियुग विधान)', mantra: 'ॐ श्रां श्रीं श्रौं सः चंद्रमसे नमः' },
+          { planet: 'राहु देव', count: '७२,००० जप (कलियुग विधान)', mantra: 'ॐ भ्रां भ्रीं भ्रौं सः राहवे नमः' },
+          { planet: 'केतु देव', count: '६८,००० जप (कलियुग विधान)', mantra: 'ॐ स्रां स्रीं स्रौं सः केतवे नमः' },
+          { planet: 'महामृत्युंजय', count: '१,२५,००० (सवा लाख) जप', mantra: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥' },
+        ];
+
+    grahanDeep = {
+      doshName: typeLabel,
+      grahanType: type,
+      grahanTypeLabel: typeLabel,
+      houseNum,
+      houseName: HOUSE_NAMES[houseNum] || `${houseNum}वां भाव`,
+      rashi,
+      degreeDiff,
+      severity,
+      severityDesc,
+      whyReason,
+      whatBenefits,
+      lifeImpact,
+      sixStepVidhi,
+      recommendedJapa,
+    };
+
+    return {
+      index,
+      bullet,
+      title: p,
+      category: 'shanti',
+      categoryLabel: 'दोष व योग शान्ति विधान',
+      whyReason,
+      benefits: whatBenefits,
+      vidhi: 'यह अनुष्ठान किसी सिद्ध तीर्थ (काशी, उज्जैन, त्र्यंबकेश्वर) या घर पर विद्वान आचार्यों द्वारा विधिपूर्वक ६ चरणों में संपन्न कराया जाता है।',
+      mantra: recommendedJapa[0].mantra,
+      japaCount: recommendedJapa.map((j) => `${j.planet}: ${j.count}`).join(' | '),
+      samagri: 'कांस्य पात्र, सरसों का तेल, सप्तधान्य, मदार/पलाश/दूर्वा/कुश समिधा, हवन सामग्री, पंचामृत, गंगाजल, रुद्राक्ष माला।',
+      precautions: 'अनुष्ठान के दौरान पूर्ण ब्रह्मचर्य, भूमि शयन अथवा सात्विक आहार का पालन करें। मद्य-मांस का पूर्ण त्याग रखें।',
+      shantiDeepDive: grahanDeep,
+    };
+  }
+
+  // Other shantis (Kaalsarp, Manglik, Pitra, General)
+  return {
+    index,
+    bullet,
+    title: p,
+    category: 'shanti',
+    categoryLabel: 'शास्त्रीय शान्ति अनुष्ठान',
+    whyReason: `आपकी जन्मपत्रिका में चल रही ग्रह स्थिति अथवा मुख्य योग जनित दोष के निवारणार्थ यह शान्ति विधान आवश्यक है। इससे ग्रहों की प्रतिकूल रश्मियां शांत होकर अनुकूल परिणाम देने लगती हैं।`,
+    benefits: [
+      'जीवन में निरंतर आ रहे अवरोधों, विलंब व संघर्षों का स्थायी शमन',
+      'भाग्य का पूर्ण सहयोग एवं मानसिक शांति की प्राप्ति',
+      'परिवार में समृद्धि, स्वास्थ्य एवं मांगलिक कार्यों का मार्ग प्रशस्त',
+    ],
+    vidhi: 'विद्वान ब्राह्मण द्वारा संकल्प, नवग्रह पूजन, रुद्राभिषेक, वैदिक मंत्र जप (कलियुग चतुर्गुण संख्या), दशांश हवन एवं दान पूर्वक संपन्न करें।',
+    samagri: 'हवन सामग्री, पंचामृत, समिधा, वस्त्र, तिल, जौ, घृत एवं दक्षिणा।',
+    precautions: 'अनुष्ठान के समय सात्विक भाव रखें व इष्टदेव पर पूर्ण श्रद्धा बनाए रखें।',
+  };
+}
+
+/**
+ * Builds a comprehensive, human-like detailed guide for the entire Upay Parchi.
+ */
+export function buildDetailedParchiGuideText(
+  salutation: string,
+  serialNo: string,
+  dateStr: string,
+  lagnaInfo: string,
+  detailedItems: UpayParchiDetailedItem[],
+  grahanDeep?: GrahanShantiDeepDive
+): string {
+  const lines: string[] = [
+    `॥ ॐ श्री गणेशाय नमः ॥`,
+    `📋 **ज्योतिषीय उपाय पर्ची — यजमान विस्तृत मार्गदर्शन एवं फल**`,
+    `क्रमांक: ${serialNo} | दिनांक: ${dateStr}`,
+    `यजमान: **${salutation}**`,
+    `कुण्डली आधार: ${lagnaInfo}`,
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    ``,
+    `प्रिय यजमान, आपकी जन्मपत्रिका के सूक्ष्म ग्रह बल, भाव स्थिति एवं दशा के आधार पर यह उपाय पर्ची तैयार की गई है। नीचे पर्ची में लिखे प्रत्येक उपाय का **शास्त्रीय कारण (क्यों करना है)**, **प्रत्यक्ष लाभ (क्या फल मिलेगा)** एवं **विस्तृत विधि** दी जा रही है:`,
+    ``,
+  ];
+
+  detailedItems.forEach((item) => {
+    lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    lines.push(`### ${item.bullet} ${item.title} (${item.categoryLabel})`);
+    lines.push(``);
+    lines.push(`❓ **यह उपाय क्यों करें? (शास्त्रीय कारण):**`);
+    lines.push(item.whyReason);
+    lines.push(``);
+    lines.push(`🌟 **इस उपाय से क्या-क्या लाभ होगा? (प्रत्यक्ष फल):**`);
+    item.benefits.forEach((b) => lines.push(`  ✓ ${b}`));
+    lines.push(``);
+    lines.push(`📿 **प्रामाणिक शास्त्रीय विधि एवं नियम:**`);
+    lines.push(item.vidhi);
+
+    if (item.mantra) {
+      lines.push(`• **सिद्ध मंत्र:** \`${item.mantra}\``);
+    }
+    if (item.japaCount) {
+      lines.push(`• **जप संख्या:** ${item.japaCount}`);
+    }
+    if (item.samagri) {
+      lines.push(`• **आवश्यक सामग्री:** ${item.samagri}`);
+    }
+    if (item.precautions) {
+      lines.push(`• **विशेष सावधानी:** ${item.precautions}`);
+    }
+
+    if (item.shantiDeepDive) {
+      const g = item.shantiDeepDive;
+      lines.push(``);
+      lines.push(`🔱 **ग्रहण योग सूक्ष्म निर्णय एवं ६-चरणीय शान्ति विधान:**`);
+      lines.push(`• **दोष का स्वरूप:** ${g.grahanTypeLabel}`);
+      lines.push(`• **भाव व राशि:** ${g.houseName} (${g.rashi} राशि)`);
+      lines.push(`• **ग्रहण योग की तीव्रता:** **${g.severity}** (${g.severityDesc})`);
+      lines.push(`• **६-चरणीय पूर्ण शान्ति विधि:**`);
+      g.sixStepVidhi.forEach((s) => {
+        lines.push(`  ${s.stepNo}. **${s.stepName}:** ${s.stepVidhi}`);
+      });
+      lines.push(`• **कलियुग चतुर्गुण मंत्र जप संख्या तालिका:**`);
+      g.recommendedJapa.forEach((rj) => {
+        lines.push(`  - ${rj.planet}: **${rj.count}** (मंत्र: ${rj.mantra})`);
+      });
+    }
+
+    lines.push(``);
+  });
+
+  lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  lines.push(`॥ शुभम् भवतू • श्री उमा वैदिक ज्योतिष पीठ ॥`);
+
+  return lines.join('\n');
+}
+
+/**
  * Generates an authentic 6-point Vedic Astrologer Prescription Slip ("परामर्श पर्ची / उपाय पत्रक")
- * modeled directly after traditional Kashi/Ujjain/Burhanpur Jyotishacharya letterheads.
+ * modeled directly after traditional Kashi/Ujjain/Burhanpur Jyotishacharya letterheads,
+ * enriched with complete astrological reasoning, benefits, and vidhi for the yajman.
  */
 export function generateTraditionalUpayParchi(
   k?: KundaliData | null,
@@ -804,7 +1427,7 @@ export function generateTraditionalUpayParchi(
       'श्रीविष्णुसहस्रनाम का पाठ करें।',
       'पीला कपड़ा, चने की दाल, गुड़, हल्दी, दक्षिणा (गुरुवार - 1 बार)',
       'गाय और कुत्ते को रोटी खिलावें।',
-      'ग्रहण योग / नवग्रह शान्ति करावें।',
+      'ग्रहण योग शान्ति करावें।',
     ];
     const circled = ['①', '②', '③', '④', '⑤', '⑥'];
     const formattedTextBlock = [
@@ -814,14 +1437,28 @@ export function generateTraditionalUpayParchi(
       `                                          ॥ शुभम् ॥`,
     ].join('\n');
 
+    const detailedItems = defaultPoints.map((pt, idx) => getRemedyDeepDetail(pt, idx, null));
+    const grahanItem = detailedItems.find((it) => it.shantiDeepDive);
+    const formattedDetailedGuide = buildDetailedParchiGuideText(
+      'श्री यजमान जी',
+      '108',
+      dateStr,
+      'तात्कालिक प्रश्न लग्न',
+      detailedItems,
+      grahanItem?.shantiDeepDive
+    );
+
     return {
       salutation: 'श्री यजमान जी',
       serialNo: '108',
       dateStr,
       lagnaInfo: 'तात्कालिक प्रश्न लग्न',
-      detectedDoshaYoga: 'ग्रहण योग / नवग्रह शान्ति',
+      detectedDoshaYoga: 'ग्रहण योग (सूर्य/चंद्र छाया दोष)',
       points: defaultPoints,
       formattedTextBlock,
+      detailedItems,
+      grahanSpecialAnalysis: grahanItem?.shantiDeepDive,
+      formattedDetailedGuide,
     };
   }
 
@@ -905,6 +1542,17 @@ export function generateTraditionalUpayParchi(
     `                                          ॥ शुभम् ॥`,
   ].join('\n');
 
+  const detailedItems = points.map((pt, idx) => getRemedyDeepDetail(pt, idx, k));
+  const grahanItem = detailedItems.find((it) => it.shantiDeepDive);
+  const formattedDetailedGuide = buildDetailedParchiGuideText(
+    salutation,
+    String(100 + ((rawName.length * 7) % 899)),
+    dateStr,
+    `${k.lagnaRashi} लग्न • ${k.moonRashi} राशि • ${k.mahadasha} महादशा`,
+    detailedItems,
+    grahanItem?.shantiDeepDive
+  );
+
   return {
     salutation,
     serialNo: String(100 + ((rawName.length * 7) % 899)),
@@ -913,6 +1561,9 @@ export function generateTraditionalUpayParchi(
     detectedDoshaYoga,
     points,
     formattedTextBlock,
+    detailedItems,
+    grahanSpecialAnalysis: grahanItem?.shantiDeepDive,
+    formattedDetailedGuide,
   };
 }
 
@@ -1097,6 +1748,27 @@ export function detectConsultationTopic(query: string): TopicInsight {
         'मेरे द्वादश (१२) और नवम (९) भाव के KP उपनक्षत्र क्या विदेश में स्थायी निवास (PR) दर्शाते हैं?',
         'वीज़ा या विदेश प्रवास के लिए कौन सी प्रत्यंतर व सूक्ष्म दशा सबसे अनुकूल है?',
         'यात्रा में विघ्न निवारण हेतु कौन सा वैदिक उपाय करें?'
+      ]
+    };
+  }
+
+  // 9. Grahan Yog / Dosha Shanti / Upay Parchi / Rahu-Ketu Shanti / Gemstones
+  if (/ग्रहण|grahan|शान्ति|shanti|उपाय पर्ची|पर्ची|दोष|दोष निवारण|कालसर्प|चाण्डाल|अंगारक|रुद्राभिषेक|हवन|जाप|पन्ना|ओपल|माणिक|रत्न|दान/.test(q)) {
+    return {
+      house: 9,
+      secondaryHouses: [1, 5, 8, 12],
+      vargaKey: 'D9',
+      vargaLabel: 'D-9 नवमांश एवं छाया ग्रह शांति निर्णय वर्ग',
+      title: 'ग्रहण योग, ग्रह दोष शान्ति, रत्न धारण एवं अचूक सात्विक उपाय सूक्ष्म निर्णय',
+      karaka: 'सूर्य',
+      jaiminiKarakaCode: 'AK',
+      category: 'spiritual',
+      shloka: '॥ ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥',
+      shlokaMeaning: 'भगवान आशुतोष शिव की कृपा, एकादशवार रुद्राभिषेक एवं वैदिक मंत्र जप से समस्त ग्रहण योग, कालसर्प एवं ग्रह जनित दोषों का समूल शमन होकर सुख-शांति प्राप्त होती है।',
+      followUps: [
+        'मेरी कुण्डली में ग्रहण योग (सूर्य/चंद्र-राहु/केतु) की तीव्रता कितनी है और शान्ति की ६-चरणीय विधि क्या है?',
+        'पन्ना या ओपल रत्न किस धातु, उंगली, दिन और मंत्र के साथ धारण करना सर्वोत्तम रहेगा?',
+        'ग्रहण योग शान्ति में कलियुग चतुर्गुण विधान के अनुसार कुल कितने मंत्र जप और कौन सा दान करना चाहिए?'
       ]
     };
   }

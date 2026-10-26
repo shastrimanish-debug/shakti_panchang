@@ -4,6 +4,10 @@ import { KundaliData, VedicPanchangData } from '../types';
 import {
   generateTraditionalUpayParchi,
   TraditionalUpayParchiData,
+  getRemedyDeepDetail,
+  buildDetailedParchiGuideText,
+  UpayParchiDetailedItem,
+  GrahanShantiDeepDive,
 } from '../services/umaMicroAstrology';
 import {
   getAstrologerBranding,
@@ -28,9 +32,18 @@ import {
   AlertCircle,
   ExternalLink,
   ZoomIn,
+  BookOpen,
+  Info,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Volume2,
+  VolumeX,
+  Flame,
 } from 'lucide-react';
 import { saveImageNative } from '../lib/device';
 import { shareImageFile } from '../lib/shareHelper';
+import { umaVoice } from '../services/UmaVoiceService';
 
 interface UpayParchiModalProps {
   isOpen: boolean;
@@ -81,20 +94,20 @@ function loadParchiHeader(): ParchiHeaderConfig {
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        astrologerName: parsed.astrologerName || branding.name || 'उमा वैदिक ज्योतिष पीठ',
+        astrologerName: parsed.astrologerName || branding.name || 'डॉ. आशीष शुक्ल',
         qualification: parsed.qualification || 'M.A., Ph.D (संस्कृत एवं ज्योतिष)',
         designation: parsed.designation || branding.title || 'ज्योतिषी, याज्ञिक एवं वास्तुविद',
         mobile: parsed.mobile ?? branding.phone ?? '',
-        address: parsed.address || branding.city || 'काशी / उज्जैन वैदिक परम्परा',
+        address: parsed.address || branding.city || 'राजपुरा, बुरहानपुर (म.प्र.)',
       };
     }
   } catch {}
   return {
-    astrologerName: branding.name || 'वैदिक ज्योतिषी (उमा पीठ)',
+    astrologerName: branding.name || 'डॉ. आशीष शुक्ल',
     qualification: 'M.A., Ph.D (संस्कृत)',
     designation: branding.title || 'ज्योतिषी, याज्ञिक एवं वास्तुविद',
     mobile: branding.phone || '',
-    address: branding.city || 'काशी / उज्जैन वैदिक परम्परा',
+    address: branding.city || 'राजपुरा, बुरहानपुर (म.प्र.)',
   };
 }
 
@@ -112,9 +125,18 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const [serialNo, setSerialNo] = useState(parchiData.serialNo);
   const [dateStr, setDateStr] = useState(parchiData.dateStr);
   const [points, setPoints] = useState<string[]>(parchiData.points);
+
+  // Tab switcher: 'parchi' (Letterhead pad) vs 'guide' (Why & Benefits detailed guide)
+  const [activeTab, setActiveTab] = useState<'parchi' | 'guide'>('parchi');
+  const [highlightedItemIndex, setHighlightedItemIndex] = useState<number | null>(null);
+  const [expandedCardIndices, setExpandedCardIndices] = useState<number[]>([0, 1, 2, 3, 4, 5]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedGuide, setCopiedGuide] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [blobFile, setBlobFile] = useState<File | null>(null);
@@ -131,10 +153,47 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       setDateStr(fresh.dateStr);
       setPoints(fresh.points);
       setHeader(loadParchiHeader());
+      setActiveTab('parchi');
+      setHighlightedItemIndex(null);
     }
   }, [isOpen, activeKundali]);
 
+  useEffect(() => {
+    return () => {
+      if (isPlayingAudio) {
+        umaVoice.stop();
+      }
+    };
+  }, [isPlayingAudio]);
+
   if (!isOpen) return null;
+
+  // Real-time recomputed detailed items based on active points
+  const currentDetailedItems: UpayParchiDetailedItem[] = points.map((pt, idx) =>
+    getRemedyDeepDetail(pt, idx, activeKundali)
+  );
+  const currentGrahanDeep: GrahanShantiDeepDive | undefined =
+    currentDetailedItems.find((it) => it.shantiDeepDive)?.shantiDeepDive ||
+    parchiData.grahanSpecialAnalysis;
+
+  const currentGuideText = buildDetailedParchiGuideText(
+    salutation,
+    serialNo,
+    dateStr,
+    activeKundali
+      ? `${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि • ${activeKundali.mahadasha} महादशा`
+      : 'तात्कालिक प्रश्न लग्न',
+    currentDetailedItems,
+    currentGrahanDeep
+  );
+
+  const handleCloseModal = () => {
+    if (isPlayingAudio) {
+      umaVoice.stop();
+      setIsPlayingAudio(false);
+    }
+    onClose();
+  };
 
   const saveHeaderChanges = (nextHeader: ParchiHeaderConfig) => {
     setHeader(nextHeader);
@@ -193,6 +252,45 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     navigator.clipboard.writeText(buildPlainTextSlip());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyDetailedGuide = () => {
+    navigator.clipboard.writeText(currentGuideText);
+    setCopiedGuide(true);
+    setTimeout(() => setCopiedGuide(false), 2500);
+  };
+
+  const handleShareWhatsAppGuide = () => {
+    openWhatsAppShare(currentGuideText);
+  };
+
+  const handleToggleUmaAudio = async () => {
+    if (isPlayingAudio) {
+      umaVoice.stop();
+      setIsPlayingAudio(false);
+      return;
+    }
+    try {
+      setIsPlayingAudio(true);
+      const spokenSummary = `सदा कल्याण हो ${salutation}! आपकी जन्मपत्रिका के अनुसार जो मुख्य उपाय बताए गए हैं, वे आपके ग्रह दोषों को शांत कर भाग्योदय कराने वाले हैं। ${
+        currentGrahanDeep
+          ? `आपकी पत्रिका में ${currentGrahanDeep.grahanTypeLabel} है, जो ${currentGrahanDeep.houseName} में स्थित है। इसके निवारण हेतु संकल्प, नवग्रह पूजन, एकादशवार रुद्राभिषेक, वैदिक मंत्र जप, दशांश हवन एवं छाया दान की छह चरणीय शांति अवश्य कराएं।`
+          : ''
+      } पर्ची में बताए गए रत्नों, उपवास, पाठ और दान का विस्तृत कारण व लाभ नीचे दिया गया है। श्रद्धापूर्वक इनका पालन करें। भगवान आपका मंगल करें।`;
+      await umaVoice.speak(spokenSummary, { tone: 'calm' });
+    } catch {
+      // ignore
+    } finally {
+      setIsPlayingAudio(false);
+    }
+  };
+
+  const toggleCardExpansion = (idx: number) => {
+    if (expandedCardIndices.includes(idx)) {
+      setExpandedCardIndices(expandedCardIndices.filter((i) => i !== idx));
+    } else {
+      setExpandedCardIndices([...expandedCardIndices, idx]);
+    }
   };
 
   /**
@@ -299,42 +397,32 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     ctx.textAlign = 'right';
     ctx.fillText(`दिनांक  ${dateStr}`, width - padX, dividerY + 92);
 
-    // Dotted underline under date
-    ctx.strokeStyle = '#8B1E1E';
-    ctx.setLineDash([4, 4]);
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(width - padX - 175, dividerY + 100);
-    ctx.lineTo(width - padX, dividerY + 100);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 7. Client Salutation (Royal Blue Ink)
-    let cursorY = dividerY + 175;
+    // 7. Client Salutation in handwritten deep blue ink
+    const salutationY = dividerY + 168;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#162C6A';
-    ctx.font = 'bold 40px "Tiro Devanagari Hindi", "Noto Serif Devanagari", serif';
-    ctx.fillText(salutation || 'श्री यजमान जी', padX + 16, cursorY);
+    ctx.font = 'bold 42px "Tiro Devanagari Hindi", serif';
+    ctx.fillText(salutation, padX, salutationY);
 
-    cursorY += 85;
+    // 8. Numbered Remedies List in classic Indian Fountain-Pen Blue
+    let cursorY = salutationY + 82;
+    ctx.fillStyle = '#162C6A';
+    ctx.font = 'bold 34px "Tiro Devanagari Hindi", serif';
 
-    // 8. Numbered Remedies (① to ⑥+) in Royal Blue Ink with Word Wrapping
-    const maxTextWidth = width - padX * 2 - 90;
-    ctx.font = 'bold 36px "Tiro Devanagari Hindi", "Noto Serif Devanagari", serif';
+    points.forEach((pointText, index) => {
+      const circ = CIRCLED_NUMS[index] || `(${index + 1})`;
+      ctx.textAlign = 'left';
+      ctx.fillText(circ, padX, cursorY);
 
-    points.forEach((pt, idx) => {
-      const badge = CIRCLED_NUMS[idx] || `(${idx + 1})`;
-      ctx.fillStyle = '#162C6A';
-      ctx.fillText(badge, padX + 20, cursorY);
-
-      // Wrap text if long
-      const words = pt.split(' ');
+      const maxLineWidth = width - padX * 2 - 86;
+      const words = pointText.split(' ');
       let currentLine = '';
       const lines: string[] = [];
 
       for (const w of words) {
         const testLine = currentLine ? `${currentLine} ${w}` : w;
-        if (ctx.measureText(testLine).width > maxTextWidth && currentLine) {
+        const testWidth = ctx.measureText(testLine).width;
+        if (testWidth > maxLineWidth && currentLine) {
           lines.push(currentLine);
           currentLine = w;
         } else {
@@ -372,7 +460,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     return canvas;
   };
 
-  // 100% SPA-Safe, non-navigating download helper
+  // 100% SPA-Safe, non-navigating, non-freezing download helper
   const triggerNativeDownload = async (dataUrl: string, name: string) => {
     setDownloadSuccess(true);
     setTimeout(() => setDownloadSuccess(false), 3000);
@@ -382,28 +470,49 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       const saved = await saveImageNative(dataUrl, name);
       if (saved) return;
     } catch (e) {
-      console.warn('Native save failed, falling back to blob download:', e);
+      console.warn('Native save failed, falling back:', e);
     }
 
-    // 2. Client-side blob link download (NEVER reloads or navigates the SPA)
+    // 2. Direct simple link download (Instant, zero memory spike)
     try {
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.style.display = 'none';
       link.download = name;
-      link.href = blobUrl;
+      link.href = dataUrl;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       setTimeout(() => {
         if (document.body.contains(link)) {
           document.body.removeChild(link);
         }
-        URL.revokeObjectURL(blobUrl);
-      }, 2000);
-    } catch (clickErr) {
-      console.warn('Direct blob link download failed:', clickErr);
+      }, 1000);
+      return;
+    } catch (e) {
+      console.warn('Direct link download failed:', e);
+    }
+
+    // 3. Fallback to server-side attachment stream
+    try {
+      const res = await fetch('/api/parchi/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: dataUrl, fileName: name }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (document.body.contains(a)) document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 1500);
+      }
+    } catch (err) {
+      console.warn('Server download stream failed:', err);
     }
   };
 
@@ -427,7 +536,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       setDownloadStatus('HD पर्ची तैयार हो रही है...');
       const canvas = await renderParchiCanvas();
 
-      // Convert to Base64 DataURL (for reliable long-press & inline rendering) and Blob File
+      // Convert to Base64 DataURL and Blob File
       const dataUrl = canvas.toDataURL('image/png');
       const safeSalutation = (salutation || 'Yajaman')
         .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
@@ -507,33 +616,35 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-base sm:text-lg font-granth text-[#FFD88A] flex items-center gap-2">
-                <span>📋 उमा ज्योतिषीय उपाय पर्ची (Prescription Pad)</span>
+                <span>📋 उमा ज्योतिषीय उपाय पर्ची एवं विस्तृत मार्गदर्शन</span>
               </h3>
               <p className="text-[11px] text-[#E6C687]">
                 {activeKundali
                   ? `${activeKundali.name} • ${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि • दोष: ${parchiData.detectedDoshaYoga}`
-                  : 'पारंपरिक लेटरहेड पर संक्षिप्त ६-सूत्रीय रत्न, उपवास, पाठ, दान व दोष शान्ति पर्ची'}
+                  : 'पारंपरिक लेटरहेड पर्ची एवं प्रत्येक उपाय का शास्त्रीय कारण, लाभ व विधि'}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setIsEditing(!isEditing)}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer border ${
-                isEditing
-                  ? 'bg-[#FFD88A] text-[#5C1414] border-white'
-                  : 'bg-[#5C1414] text-[#FFD88A] border-[#B58738]/60 hover:bg-[#4A1010]'
-              }`}
-            >
-              {isEditing ? <Check className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
-              <span>{isEditing ? 'पूर्वावलोकन (Preview)' : '✏️ पर्ची संपादित करें'}</span>
-            </button>
+            {activeTab === 'parchi' && (
+              <button
+                type="button"
+                onClick={() => setIsEditing(!isEditing)}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer border ${
+                  isEditing
+                    ? 'bg-[#FFD88A] text-[#5C1414] border-white'
+                    : 'bg-[#5C1414] text-[#FFD88A] border-[#B58738]/60 hover:bg-[#4A1010]'
+                }`}
+              >
+                {isEditing ? <Check className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
+                <span>{isEditing ? 'पूर्वावलोकन' : '✏️ पर्ची संपादन'}</span>
+              </button>
+            )}
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCloseModal}
               className="p-1.5 rounded-lg text-[#E6C687] hover:text-white hover:bg-black/20 cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -541,296 +652,718 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
           </div>
         </div>
 
-        {/* Quick Mode Bar */}
-        <div className="bg-[#F4E8D1] px-4 py-2 border-b border-[#8C6239]/30 flex items-center justify-between flex-wrap gap-2 text-xs">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        {/* View Switcher Tabs: 📜 पारंपरिक पर्ची vs 📖 यजमान विस्तृत मार्गदर्शन */}
+        <div className="bg-[#FAF2E4] px-3 sm:px-6 pt-2.5 pb-2 border-b border-[#8C6239]/25 flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleResetFromKundali}
-              className="px-2.5 py-1 bg-[#7A1D1D] text-white rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#5C1414] transition shadow-2xs"
+              onClick={() => setActiveTab('parchi')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                activeTab === 'parchi'
+                  ? 'bg-[#7A1D1D] text-[#FFD88A] shadow-sm'
+                  : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDCC0]'
+              }`}
             >
-              <RefreshCw className="w-3 h-3" />
-              <span>कुण्डली अनुसार स्वतः उपाय</span>
+              <FileText className="w-3.5 h-3.5" />
+              <span>📜 पारंपरिक उपाय पर्ची (Slip)</span>
             </button>
 
             <button
               type="button"
-              onClick={handleLoadExampleTemplate}
-              className="px-2.5 py-1 bg-[#FFFDF8] text-[#5C3A21] border border-[#8C6239]/40 rounded-md font-semibold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition"
+              onClick={() => {
+                setActiveTab('guide');
+                setHighlightedItemIndex(null);
+              }}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer relative ${
+                activeTab === 'guide'
+                  ? 'bg-[#7A1D1D] text-[#FFD88A] shadow-sm'
+                  : 'bg-[#FFFDF8] text-[#7A1D1D] border border-[#8C6239]/40 hover:bg-[#F4E8D1]'
+              }`}
             >
-              <Sparkles className="w-3 h-3 text-[#B56A00]" />
-              <span>आदर्श उदाहरण पर्ची (मोती+माणिक / ग्रहण योग)</span>
+              <BookOpen className="w-3.5 h-3.5 text-[#B56A00]" />
+              <span>📖 यजमान विस्तृत मार्गदर्शन (क्यों व क्या लाभ?)</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="विस्तृत कारण व लाभ उपलब्ध" />
             </button>
           </div>
 
-          <span className="text-[11px] text-[#7A1D1D] font-semibold">
-            {isEditing ? 'आप किसी भी पंक्ति या नाम को बदल सकते हैं' : 'हूबहू पारंपरिक ज्योतिषाचार्य लेटरहेड प्रारूप'}
-          </span>
+          <div className="flex items-center gap-1.5 text-xs">
+            {activeTab === 'guide' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleToggleUmaAudio}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition border ${
+                    isPlayingAudio
+                      ? 'bg-rose-700 text-white border-rose-800 animate-pulse'
+                      : 'bg-[#FFFDF8] text-[#5C3A21] border-[#8C6239]/40 hover:bg-[#F4E8D1]'
+                  }`}
+                  title="उमा जी की आवाज में उपाय सुनें"
+                >
+                  {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-[#7A1D1D]" />}
+                  <span>{isPlayingAudio ? 'ऑडियो रोकें' : '🎙️ उमा जी से सुनें'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleShareWhatsAppGuide}
+                  className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                  title="WhatsApp पर विस्तृत विवरण भेजें"
+                >
+                  <Share2 className="w-3 h-3" />
+                  <span>📲 WhatsApp</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopyDetailedGuide}
+                  className="px-2 py-1 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-md text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition"
+                >
+                  {copiedGuide ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedGuide ? 'कॉपी हुआ!' : 'कॉपी'}</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Quick Mode Bar (For template presets) */}
+        {activeTab === 'parchi' && (
+          <div className="bg-[#F4E8D1] px-4 py-2 border-b border-[#8C6239]/30 flex items-center justify-between flex-wrap gap-2 text-xs">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={handleResetFromKundali}
+                className="px-2.5 py-1 bg-[#7A1D1D] text-white rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#5C1414] transition shadow-2xs"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>कुण्डली अनुसार स्वतः उपाय</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLoadExampleTemplate}
+                className="px-2.5 py-1 bg-[#FFFDF8] text-[#5C3A21] border border-[#8C6239]/40 rounded-md font-semibold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition"
+              >
+                <Sparkles className="w-3 h-3 text-[#B56A00]" />
+                <span>आदर्श उदाहरण पर्ची (मोती+माणिक / ग्रहण योग)</span>
+              </button>
+            </div>
+
+            <span className="text-[11px] text-[#7A1D1D] font-semibold">
+              {isEditing ? 'आप किसी भी पंक्ति या नाम को बदल सकते हैं' : 'पारंपरिक ज्योतिषाचार्य लेटरहेड प्रारूप'}
+            </span>
+          </div>
+        )}
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 bg-[#EBDCC0]/60">
-          {/* Edit Form Panel (when isEditing is true) */}
-          {isEditing && (
-            <div className="bg-[#FFFDF8] border-2 border-[#B58738] rounded-xl p-4 space-y-4 shadow-md">
-              <div className="flex items-center justify-between border-b border-[#8C6239]/25 pb-2">
-                <h4 className="text-xs sm:text-sm font-bold text-[#7A1D1D] flex items-center gap-1.5">
-                  <Award className="w-4 h-4 text-[#B56A00]" />
-                  <span>१. ज्योतिषाचार्य लेटरहेड (शीर्षक) विवरण संपादित करें:</span>
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                <div>
-                  <label className="block font-bold text-[#5C3A21] mb-1">ज्योतिषी / आचार्य का नाम:</label>
-                  <input
-                    type="text"
-                    value={header.astrologerName}
-                    onChange={(e) => saveHeaderChanges({ ...header, astrologerName: e.target.value })}
-                    placeholder="उदा. डॉ. आशीष शुक्ल"
-                    className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A] font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-[#5C3A21] mb-1">शैक्षणिक योग्यता (Degree):</label>
-                  <input
-                    type="text"
-                    value={header.qualification}
-                    onChange={(e) => saveHeaderChanges({ ...header, qualification: e.target.value })}
-                    placeholder="उदा. M.A., Ph.D (संस्कृत)"
-                    className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-[#5C3A21] mb-1">पदवी (Designation):</label>
-                  <input
-                    type="text"
-                    value={header.designation}
-                    onChange={(e) => saveHeaderChanges({ ...header, designation: e.target.value })}
-                    placeholder="उदा. ज्योतिषी, याज्ञिक एवं वास्तुविद"
-                    className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-[#5C3A21] mb-1">मोबाइल नंबर (Mo.):</label>
-                  <input
-                    type="text"
-                    value={header.mobile}
-                    onChange={(e) => saveHeaderChanges({ ...header, mobile: e.target.value })}
-                    placeholder="उदा. 9876543210"
-                    className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-[#5C3A21] mb-1">पता / नगर (Address):</label>
-                  <input
-                    type="text"
-                    value={header.address}
-                    onChange={(e) => saveHeaderChanges({ ...header, address: e.target.value })}
-                    placeholder="उदा. राजपुरा, बुरहानपुर (म.प्र.)"
-                    className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block font-bold text-[#5C3A21] mb-1">क्रमांक (क्र.):</label>
-                    <input
-                      type="text"
-                      value={serialNo}
-                      onChange={(e) => setSerialNo(e.target.value)}
-                      className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
-                    />
+          {/* TAB 1: PARCHI VIEW */}
+          {activeTab === 'parchi' && (
+            <>
+              {/* Edit Form Panel (when isEditing is true) */}
+              {isEditing && (
+                <div className="bg-[#FFFDF8] border-2 border-[#B58738] rounded-xl p-4 space-y-4 shadow-md">
+                  <div className="flex items-center justify-between border-b border-[#8C6239]/25 pb-2">
+                    <h4 className="text-xs sm:text-sm font-bold text-[#7A1D1D] flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-[#B56A00]" />
+                      <span>१. ज्योतिषाचार्य लेटरहेड (शीर्षक) विवरण संपादित करें:</span>
+                    </h4>
                   </div>
-                  <div>
-                    <label className="block font-bold text-[#5C3A21] mb-1">दिनांक:</label>
-                    <input
-                      type="text"
-                      value={dateStr}
-                      onChange={(e) => setDateStr(e.target.value)}
-                      className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div className="border-t border-[#8C6239]/25 pt-3 space-y-2.5 text-xs">
-                <div>
-                  <label className="block font-bold text-[#7A1D1D] mb-1">
-                    २. यजमान / जातक का संबोधन (Salutation):
-                  </label>
-                  <input
-                    type="text"
-                    value={salutation}
-                    onChange={(e) => setSalutation(e.target.value)}
-                    placeholder="उदा. श्री यजमान जी"
-                    className="w-full sm:w-80 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-sm font-bold text-[#162C6A]"
-                  />
-                </div>
-
-                <label className="block font-bold text-[#7A1D1D]">
-                  ३. उपाय बिंदु (① से ⑥) संपादित करें या नया जोड़ें:
-                </label>
-                <div className="space-y-2">
-                  {points.map((pt, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="text-base font-bold text-[#162C6A] w-6 shrink-0">
-                        {CIRCLED_NUMS[i] || `${i + 1}.`}
-                      </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div>
+                      <label className="block font-bold text-[#5C3A21] mb-1">ज्योतिषी / आचार्य का नाम:</label>
                       <input
                         type="text"
-                        value={pt}
-                        onChange={(e) => {
-                          const next = [...points];
-                          next[i] = e.target.value;
-                          setPoints(next);
-                        }}
-                        className="flex-1 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#162C6A]"
+                        value={header.astrologerName}
+                        onChange={(e) => saveHeaderChanges({ ...header, astrologerName: e.target.value })}
+                        placeholder="उदा. डॉ. आशीष शुक्ल"
+                        className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A] font-bold"
                       />
-                      {points.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setPoints(points.filter((_, idx) => idx !== i))}
-                          className="p-1.5 text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer"
-                          title="हटाएं"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
                     </div>
-                  ))}
+                    <div>
+                      <label className="block font-bold text-[#5C3A21] mb-1">शैक्षणिक योग्यता (Degree):</label>
+                      <input
+                        type="text"
+                        value={header.qualification}
+                        onChange={(e) => saveHeaderChanges({ ...header, qualification: e.target.value })}
+                        placeholder="उदा. M.A., Ph.D (संस्कृत)"
+                        className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-[#5C3A21] mb-1">पदवी (Designation):</label>
+                      <input
+                        type="text"
+                        value={header.designation}
+                        onChange={(e) => saveHeaderChanges({ ...header, designation: e.target.value })}
+                        placeholder="उदा. ज्योतिषी, याज्ञिक एवं वास्तुविद"
+                        className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-[#5C3A21] mb-1">मोबाइल नंबर (Mo.):</label>
+                      <input
+                        type="text"
+                        value={header.mobile}
+                        onChange={(e) => saveHeaderChanges({ ...header, mobile: e.target.value })}
+                        placeholder="उदा. 9876543210"
+                        className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-[#5C3A21] mb-1">पता / नगर (Address):</label>
+                      <input
+                        type="text"
+                        value={header.address}
+                        onChange={(e) => saveHeaderChanges({ ...header, address: e.target.value })}
+                        placeholder="उदा. राजपुरा, बुरहानपुर (म.प्र.)"
+                        className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block font-bold text-[#5C3A21] mb-1">क्रमांक (क्र.):</label>
+                        <input
+                          type="text"
+                          value={serialNo}
+                          onChange={(e) => setSerialNo(e.target.value)}
+                          className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-[#5C3A21] mb-1">दिनांक:</label>
+                        <input
+                          type="text"
+                          value={dateStr}
+                          onChange={(e) => setDateStr(e.target.value)}
+                          className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-[#8C6239]/25 pt-3 space-y-2.5 text-xs">
+                    <div>
+                      <label className="block font-bold text-[#7A1D1D] mb-1">
+                        २. यजमान / जातक का संबोधन (Salutation):
+                      </label>
+                      <input
+                        type="text"
+                        value={salutation}
+                        onChange={(e) => setSalutation(e.target.value)}
+                        placeholder="उदा. श्री यजमान जी"
+                        className="w-full sm:w-80 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-sm font-bold text-[#162C6A]"
+                      />
+                    </div>
+
+                    <label className="block font-bold text-[#7A1D1D]">
+                      ३. उपाय बिंदु (① से ⑥) संपादित करें या नया जोड़ें:
+                    </label>
+                    <div className="space-y-2">
+                      {points.map((pt, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-base font-bold text-[#162C6A] w-6 shrink-0">
+                            {CIRCLED_NUMS[i] || `${i + 1}.`}
+                          </span>
+                          <input
+                            type="text"
+                            value={pt}
+                            onChange={(e) => {
+                              const next = [...points];
+                              next[i] = e.target.value;
+                              setPoints(next);
+                            }}
+                            className="flex-1 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#162C6A]"
+                          />
+                          {points.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setPoints(points.filter((_, idx) => idx !== i))}
+                              className="p-1.5 text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer"
+                              title="हटाएं"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setPoints([...points, 'नया सात्विक उपाय यहाँ लिखें।'])}
+                        className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>+ नया बिंदु जोड़ें</span>
+                      </button>
+                    </div>
+
+                    {/* Quick Add Presets */}
+                    <div className="pt-2">
+                      <p className="text-[11px] font-bold text-[#5C3A21] mb-1.5">
+                        त्वरित शास्त्रीय उपाय जोड़ें (क्लिक करते ही पर्ची में जुड़ेगा):
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {QUICK_REMEDY_PRESETS.map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (!points.includes(preset)) {
+                                setPoints([...points, preset]);
+                              }
+                            }}
+                            className="px-2 py-1 bg-[#FAF2E4] hover:bg-[#EBDCC0] border border-[#8C6239]/30 rounded text-[11px] text-[#3E2714] cursor-pointer transition"
+                          >
+                            + {preset}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Informative Guidance Banner */}
+              <div
+                onClick={() => setActiveTab('guide')}
+                className="mx-auto max-w-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-xl p-3 flex items-center justify-between text-xs text-[#5C3A21] cursor-pointer hover:bg-amber-100/80 transition shadow-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🌟</span>
+                  <div>
+                    <h5 className="font-bold text-[#7A1D1D] text-xs sm:text-sm">
+                      यजमान को समझाने हेतु: प्रत्येक उपाय क्यों करना है और क्या लाभ होगा?
+                    </h5>
+                    <p className="text-[11px] text-[#5C3A21]">
+                      पन्ना/ओपल धारण, दान सामग्री का प्रभाव व ग्रहण योग शान्ति की संपूर्ण ६-चरणीय विधि देखने के लिए यहाँ क्लिक करें।
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="px-2.5 py-1 bg-[#7A1D1D] text-[#FFD88A] rounded-lg text-xs font-bold shrink-0 flex items-center gap-1"
+                >
+                  <span>विस्तृत देखें</span>
+                  <BookOpen className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* LIVE REALISTIC PRESCRIPTION PAD PREVIEW (Matches Classic Letterhead) */}
+              <div className="mx-auto max-w-2xl bg-[#FFFDF9] border-2 border-[#8B1E1E] rounded-md shadow-xl p-4 sm:p-8 text-[#162C6A] relative overflow-hidden">
+                {/* Top Letterhead Header */}
+                <div className="grid grid-cols-3 items-start gap-2 pb-3 border-b-[3px] border-[#8B1E1E]">
+                  {/* Top Left: Name, Degree, Title */}
+                  <div className="text-left space-y-0.5">
+                    <h2 className="text-lg sm:text-2xl font-bold text-[#8B1E1E] font-serif leading-tight">
+                      {header.astrologerName || 'डॉ. आशीष शुक्ल'}
+                    </h2>
+                    <p className="text-xs sm:text-sm font-bold text-[#6E2020] font-serif">
+                      {header.qualification || 'M.A., Ph.D (संस्कृत)'}
+                    </p>
+                    <p className="text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif">
+                      {header.designation || 'ज्योतिषी, याज्ञिक एवं वास्तुविद'}
+                    </p>
+                  </div>
+
+                  {/* Top Center: Red Swastika */}
+                  <div className="flex flex-col items-center justify-center pt-1">
+                    <span className="text-3xl sm:text-4xl font-bold text-[#B81D1D] leading-none select-none">
+                      卐
+                    </span>
+                  </div>
+
+                  {/* Top Right: Mobile & Address */}
+                  <div className="text-right space-y-1 pt-1">
+                    <p className="text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif">
+                      Mo. {header.mobile || '..............................'}
+                    </p>
+                    <p className="text-xs sm:text-base font-bold text-[#6E2020] font-serif">
+                      {header.address || 'राजपुरा, बुरहानपुर (म.प्र.)'}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+                {/* Sub-header: || श्री ||, क्र., दिनांक */}
+                <div className="pt-2 pb-4">
+                  <div className="text-center">
+                    <span className="text-base sm:text-xl font-bold text-[#8B1E1E] font-serif">
+                      || श्री ||
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif mt-1">
+                    <span>क्र. {serialNo}</span>
+                    <span>
+                      दिनांक{' '}
+                      <span className="border-b border-dotted border-[#8B1E1E] px-2 pb-0.5">
+                        {dateStr}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Handwritten-style Blue Ink Body */}
+                <div className="pt-3 pb-6 space-y-4 sm:space-y-5 font-serif">
+                  {/* Client Salutation */}
+                  <div className="text-lg sm:text-2xl font-bold text-[#162C6A] pl-1">
+                    {salutation}
+                  </div>
+
+                  {/* Numbered Remedies List */}
+                  <div className="space-y-3.5 sm:space-y-4 pl-2 sm:pl-4">
+                    {points.map((pt, index) => (
+                      <div
+                        key={index}
+                        className="space-y-1 border-b border-amber-900/10 pb-2"
+                      >
+                        <div className="flex items-start gap-2.5 sm:gap-3.5 text-base sm:text-xl font-bold text-[#162C6A] leading-snug">
+                          <span className="text-lg sm:text-2xl text-[#162C6A] shrink-0 select-none">
+                            {CIRCLED_NUMS[index] || `(${index + 1})`}
+                          </span>
+                          <span className="flex-1">{pt}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setHighlightedItemIndex(index);
+                              setActiveTab('guide');
+                            }}
+                            className="text-[11px] font-sans font-semibold text-[#8B1E1E] bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8B1E1E]/30 rounded px-2 py-0.5 flex items-center gap-1 cursor-pointer transition shrink-0"
+                            title="इस उपाय का कारण और लाभ जानें"
+                          >
+                            <Info className="w-3 h-3 text-[#B56A00]" />
+                            <span className="hidden sm:inline">कारण व लाभ</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bottom Right Sign-off: || शुभम् || */}
+                  <div className="pt-6 pr-4 text-right">
+                    <span className="text-lg sm:text-2xl font-bold text-[#162C6A] font-serif">
+                      || शुभम् ||
+                    </span>
+                  </div>
+                </div>
+
+                {/* Subtle Footer Tag */}
+                {activeKundali && (
+                  <div className="pt-2 border-t border-[#8B1E1E]/20 flex items-center justify-between text-[11px] text-[#7A1C1C]/80 font-serif">
+                    <span>
+                      कुण्डली आधार: {activeKundali.lagnaRashi} लग्न • {activeKundali.moonRashi} राशि •{' '}
+                      {activeKundali.nakshatra} नक्षत्र
+                    </span>
+                    <span>दशा: {activeKundali.mahadasha}–{activeKundali.antardasha}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Quick Switcher Card */}
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('guide')}
+                  className="px-5 py-2.5 bg-[#FFFDF8] hover:bg-[#FAF2E4] text-[#7A1D1D] border-2 border-[#8C6239]/50 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer transition shadow-sm"
+                >
+                  <BookOpen className="w-4 h-4 text-[#B56A00]" />
+                  <span>📖 सम्पूर्ण पर्ची का यजमान विस्तृत मार्गदर्शन (Why & Benefits Guide) देखें</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* TAB 2: DETAILED WHY & BENEFITS GUIDE FOR YAJMAN */}
+          {activeTab === 'guide' && (
+            <div className="space-y-4 max-w-3xl mx-auto">
+              {/* Identity Banner */}
+              <div className="bg-[#FFFDF8] border-2 border-[#B58738] rounded-xl p-4 shadow-sm space-y-2 text-[#3E2714]">
+                <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-full bg-[#7A1D1D] text-[#FFD88A] flex items-center justify-center font-bold text-sm">
+                      卐
+                    </span>
+                    <div>
+                      <h4 className="font-bold text-sm sm:text-base text-[#7A1D1D]">
+                        {header.astrologerName} — उपाय पर्ची विस्तृत मार्गदर्शन
+                      </h4>
+                      <p className="text-[11px] text-[#7A1C1C]">
+                        {header.qualification} • {header.designation} {header.address ? `• ${header.address}` : ''}
+                      </p>
+                    </div>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setPoints([...points, 'नया सात्विक उपाय यहाँ लिखें।'])}
-                    className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    onClick={() => setActiveTab('parchi')}
+                    className="px-2.5 py-1 text-xs bg-[#FAF2E4] hover:bg-[#EBDCC0] border border-[#8C6239]/40 rounded-lg text-[#7A1D1D] font-bold cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ नया बिंदु जोड़ें</span>
+                    📜 पर्ची देखें
                   </button>
                 </div>
 
-                {/* Quick Add Presets */}
-                <div className="pt-2">
-                  <p className="text-[11px] font-bold text-[#5C3A21] mb-1.5">
-                    त्वरित शास्त्रीय उपाय जोड़ें (क्लिक करते ही पर्ची में जुड़ेगा):
+                <div className="text-xs space-y-1">
+                  <p>
+                    <strong>यजमान:</strong> <span className="text-[#162C6A] font-bold">{salutation}</span> | <strong>क्र.:</strong> {serialNo} | <strong>दिनांक:</strong> {dateStr}
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {QUICK_REMEDY_PRESETS.map((preset, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          if (!points.includes(preset)) {
-                            setPoints([...points, preset]);
-                          }
-                        }}
-                        className="px-2 py-1 bg-[#FAF2E4] hover:bg-[#EBDCC0] border border-[#8C6239]/30 rounded text-[11px] text-[#3E2714] cursor-pointer transition"
-                      >
-                        + {preset}
-                      </button>
-                    ))}
+                  <p className="text-[#5C3A21]">
+                    <strong>कुण्डली आधार:</strong> {activeKundali ? `${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि • ${activeKundali.nakshatra} नक्षत्र • ${activeKundali.mahadasha} महादशा` : 'तात्कालिक प्रश्न लग्न आधार'}
+                  </p>
+                  <p className="text-[11px] text-amber-900 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                    💡 <strong>यजमान के लिए शास्त्रीय निर्देश:</strong> नीचे आपकी पर्ची में लिखे प्रत्येक उपाय का वास्तविक ज्योतिषीय कारण (यह उपाय क्यों करना है), मिलने वाले प्रत्यक्ष लाभ, एवं धारण/दान/पूजा की प्रामाणिक शास्त्रीय विधि दी गई है।
+                  </p>
+                </div>
+              </div>
+
+              {/* SPECIAL HIGHLIGHT CARD: GRAHAN YOG DEEP DIVE (If Grahan Yog is active or in slip) */}
+              {currentGrahanDeep && (
+                <div className="bg-gradient-to-br from-[#FFF9F0] via-[#FFF3E0] to-[#FFE8CC] border-2 border-amber-600 rounded-2xl p-4 sm:p-5 shadow-md space-y-3.5">
+                  <div className="flex items-start justify-between gap-2 border-b border-amber-400/40 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">🔱</span>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-base sm:text-lg text-[#7A1D1D]">
+                            {currentGrahanDeep.grahanTypeLabel}
+                          </h4>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                              currentGrahanDeep.severity === 'अत्यधिक तीव्र'
+                                ? 'bg-rose-700 text-white animate-pulse'
+                                : currentGrahanDeep.severity === 'तीव्र'
+                                ? 'bg-amber-700 text-white'
+                                : 'bg-emerald-700 text-white'
+                            }`}
+                          >
+                            तीव्रता: {currentGrahanDeep.severity}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#5C3A21] font-semibold">
+                          स्थिति: {currentGrahanDeep.houseName} ({currentGrahanDeep.rashi} राशि) • {currentGrahanDeep.severityDesc}
+                        </p>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Why this Shanti is needed */}
+                  <div className="bg-white/80 rounded-xl p-3 border border-amber-300 text-xs sm:text-sm text-[#3E2714] space-y-1.5 shadow-2xs">
+                    <h5 className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs sm:text-sm">
+                      <span>❓ यह ग्रहण योग शान्ति क्यों आवश्यक है? (ज्योतिषीय कारण):</span>
+                    </h5>
+                    <p className="leading-relaxed whitespace-pre-line text-[#4A2610]">
+                      {currentGrahanDeep.whyReason}
+                    </p>
+                  </div>
+
+                  {/* What Benefits will occur */}
+                  <div className="bg-white/80 rounded-xl p-3 border border-amber-300 text-xs sm:text-sm text-[#3E2714] space-y-2 shadow-2xs">
+                    <h5 className="font-bold text-emerald-900 flex items-center gap-1.5 text-xs sm:text-sm">
+                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                      <span>🌟 इस शान्ति अनुष्ठान से क्या-क्या प्रत्यक्ष लाभ होंगे?</span>
+                    </h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      {currentGrahanDeep.whatBenefits.map((b, bIdx) => (
+                        <div key={bIdx} className="flex items-start gap-1.5 bg-emerald-50/70 p-2 rounded-lg border border-emerald-200">
+                          <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                          <span className="text-[#2C0A0A] font-semibold">{b}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 6-Step Vedic Shanti Vidhi */}
+                  <div className="bg-white/90 rounded-xl p-3 sm:p-4 border-2 border-amber-500/60 text-xs space-y-2.5 shadow-2xs">
+                    <h5 className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs sm:text-sm border-b border-amber-200 pb-1">
+                      <Flame className="w-4 h-4 text-orange-600" />
+                      <span>📿 प्रामाणिक ६-चरणीय वैदिक शान्ति विधान:</span>
+                    </h5>
+                    <div className="space-y-2">
+                      {currentGrahanDeep.sixStepVidhi.map((step) => (
+                        <div key={step.stepNo} className="bg-amber-50/70 p-2.5 rounded-lg border border-amber-200 flex items-start gap-2.5">
+                          <span className="w-6 h-6 rounded-full bg-[#7A1D1D] text-[#FFD88A] flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                            {step.stepNo}
+                          </span>
+                          <div className="space-y-0.5">
+                            <strong className="text-[#7A1D1D] text-xs sm:text-sm">{step.stepName}</strong>
+                            <p className="text-[11px] sm:text-xs text-[#4A2610] leading-relaxed">
+                              {step.stepVidhi}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Kaliyuga Mantra Counts Table */}
+                  <div className="bg-white/90 rounded-xl p-3 border border-amber-300 text-xs space-y-2 shadow-2xs">
+                    <h5 className="font-bold text-[#7A1D1D] text-xs flex items-center gap-1">
+                      <span>📜 कलियुग चतुर्गुण शास्त्रीय जप संख्या तालिका (निर्णयसिंधु अनुसार):</span>
+                    </h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      {currentGrahanDeep.recommendedJapa.map((rj, rjIdx) => (
+                        <div key={rjIdx} className="bg-[#FAF2E4] p-2 rounded-lg border border-[#8C6239]/30">
+                          <div className="flex items-center justify-between font-bold text-[#7A1D1D]">
+                            <span>{rj.planet}</span>
+                            <span className="text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">
+                              {rj.count}
+                            </span>
+                          </div>
+                          <p className="text-[11px] font-mono text-[#162C6A] mt-1 break-all">
+                            {rj.mantra}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Numbered Detailed Cards for Each Remedy Point on the Slip */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <h4 className="text-xs sm:text-sm font-bold text-[#7A1D1D] flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#B56A00]" />
+                    <span>पर्ची के प्रत्येक उपाय का पृथक विश्लेषण एवं लाभ:</span>
+                  </h4>
+                  <span className="text-[11px] text-[#5C3A21]">कुल {currentDetailedItems.length} उपाय</span>
+                </div>
+
+                {currentDetailedItems.map((item, idx) => {
+                  const isExpanded = expandedCardIndices.includes(idx);
+                  const isHighlighted = highlightedItemIndex === idx;
+
+                  return (
+                    <div
+                      key={idx}
+                      id={`guide-item-${idx}`}
+                      className={`bg-[#FFFDF8] rounded-xl border-2 transition-all shadow-xs overflow-hidden ${
+                        isHighlighted
+                          ? 'border-[#7A1D1D] ring-2 ring-[#7A1D1D]/30 shadow-md'
+                          : 'border-[#8C6239]/35 hover:border-[#8C6239]/60'
+                      }`}
+                    >
+                      {/* Card Header Accordion */}
+                      <div
+                        onClick={() => toggleCardExpansion(idx)}
+                        className="p-3 sm:p-3.5 bg-gradient-to-r from-[#FAF2E4] to-[#F4E8D1] flex items-center justify-between cursor-pointer select-none border-b border-[#8C6239]/20"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-base sm:text-lg font-bold text-[#7A1D1D] w-6 shrink-0">
+                            {item.bullet}
+                          </span>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h5 className="font-bold text-xs sm:text-sm text-[#162C6A]">
+                                {item.title}
+                              </h5>
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-[#FFFDF8] text-[#7A1D1D] border border-[#8C6239]/30 rounded-full">
+                                {item.categoryLabel}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-[#7A1D1D] font-semibold hidden xs:inline">
+                            {isExpanded ? 'संक्षिप्त करें' : 'विस्तार देखें'}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4 text-[#7A1D1D]" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-[#7A1D1D]" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      {isExpanded && (
+                        <div className="p-3 sm:p-4 space-y-3 text-xs sm:text-sm text-[#3E2714] bg-[#FFFDF8]">
+                          {/* 1. Why Reason */}
+                          <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 space-y-1">
+                            <h6 className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs">
+                              <span>❓ यह उपाय क्यों करें? (शास्त्रीय व कुण्डली कारण):</span>
+                            </h6>
+                            <p className="text-xs sm:text-sm text-[#4A2610] leading-relaxed whitespace-pre-line">
+                              {item.whyReason}
+                            </p>
+                          </div>
+
+                          {/* 2. What Benefits */}
+                          <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 space-y-1.5">
+                            <h6 className="font-bold text-emerald-900 flex items-center gap-1.5 text-xs">
+                              <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                              <span>🌟 इस उपाय से क्या-क्या प्रत्यक्ष लाभ होंगे?</span>
+                            </h6>
+                            <div className="space-y-1 pl-1">
+                              {item.benefits.map((b, bIdx) => (
+                                <div key={bIdx} className="flex items-start gap-1.5 text-xs">
+                                  <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                                  <span className="text-[#2C0A0A] font-semibold">{b}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* 3. Authentic Vidhi */}
+                          <div className="bg-[#FAF2E4]/80 border border-[#8C6239]/30 rounded-xl p-3 space-y-1 text-xs">
+                            <h6 className="font-bold text-[#7A1D1D] flex items-center gap-1.5">
+                              <span>📿 प्रामाणिक शास्त्रीय विधि एवं नियम:</span>
+                            </h6>
+                            <p className="text-xs text-[#3E2714] leading-relaxed whitespace-pre-line">
+                              {item.vidhi}
+                            </p>
+
+                            {item.samagri && (
+                              <p className="pt-1.5 text-[11px] text-[#5C3A21]">
+                                <strong>सामग्री:</strong> {item.samagri}
+                              </p>
+                            )}
+                            {item.precautions && (
+                              <p className="text-[11px] text-amber-900 bg-amber-100/60 p-1.5 rounded mt-1 border border-amber-200">
+                                <strong>⚠️ विशेष सावधानी:</strong> {item.precautions}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Action Buttons in Guide */}
+              <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/40 flex items-center justify-between gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleShareWhatsAppGuide}
+                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>📲 यजमान को WhatsApp पर विस्तृत विवरण भेजें</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyDetailedGuide}
+                    className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition"
+                  >
+                    {copiedGuide ? <Check className="w-4 h-4 text-emerald-700" /> : <Copy className="w-4 h-4" />}
+                    <span>{copiedGuide ? 'कॉपी हुआ!' : 'कॉपी करें'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('parchi')}
+                    className="px-3.5 py-2 bg-[#7A1D1D] hover:bg-[#5C1414] text-[#FFD88A] rounded-xl text-xs font-bold cursor-pointer transition shadow-2xs"
+                  >
+                    📜 वापस पर्ची देखें
+                  </button>
                 </div>
               </div>
             </div>
           )}
-
-          {/* LIVE REALISTIC PRESCRIPTION PAD PREVIEW (Matches Uploaded Image 100%) */}
-          <div className="mx-auto max-w-2xl bg-[#FFFDF9] border-2 border-[#8B1E1E] rounded-md shadow-xl p-4 sm:p-8 text-[#162C6A] relative overflow-hidden">
-            {/* Top Letterhead Header */}
-            <div className="grid grid-cols-3 items-start gap-2 pb-3 border-b-[3px] border-[#8B1E1E]">
-              {/* Top Left: Name, Degree, Title */}
-              <div className="text-left space-y-0.5">
-                <h2 className="text-lg sm:text-2xl font-bold text-[#8B1E1E] font-serif leading-tight">
-                  {header.astrologerName || 'डॉ. आशीष शुक्ल'}
-                </h2>
-                <p className="text-xs sm:text-sm font-bold text-[#6E2020] font-serif">
-                  {header.qualification || 'M.A., Ph.D (संस्कृत)'}
-                </p>
-                <p className="text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif">
-                  {header.designation || 'ज्योतिषी, याज्ञिक एवं वास्तुविद'}
-                </p>
-              </div>
-
-              {/* Top Center: Red Swastika */}
-              <div className="flex flex-col items-center justify-center pt-1">
-                <span className="text-3xl sm:text-4xl font-bold text-[#B81D1D] leading-none select-none">
-                  卐
-                </span>
-              </div>
-
-              {/* Top Right: Mobile & Address */}
-              <div className="text-right space-y-1 pt-1">
-                <p className="text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif">
-                  Mo. {header.mobile || '..............................'}
-                </p>
-                <p className="text-xs sm:text-base font-bold text-[#6E2020] font-serif">
-                  {header.address || 'राजपुरा, बुरहानपुर (म.प्र.)'}
-                </p>
-              </div>
-            </div>
-
-            {/* Sub-header: || श्री ||, क्र., दिनांक */}
-            <div className="pt-2 pb-4">
-              <div className="text-center">
-                <span className="text-base sm:text-xl font-bold text-[#8B1E1E] font-serif">
-                  || श्री ||
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif mt-1">
-                <span>क्र. {serialNo}</span>
-                <span>
-                  दिनांक{' '}
-                  <span className="border-b border-dotted border-[#8B1E1E] px-2 pb-0.5">
-                    {dateStr}
-                  </span>
-                </span>
-              </div>
-            </div>
-
-            {/* Handwritten-style Blue Ink Body */}
-            <div className="pt-3 pb-6 space-y-4 sm:space-y-5 font-serif">
-              {/* Client Salutation */}
-              <div className="text-lg sm:text-2xl font-bold text-[#162C6A] pl-1">
-                {salutation}
-              </div>
-
-              {/* Numbered Remedies List */}
-              <div className="space-y-3.5 sm:space-y-4 pl-2 sm:pl-4">
-                {points.map((pt, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-2.5 sm:gap-3.5 text-base sm:text-xl font-bold text-[#162C6A] leading-snug border-b border-amber-900/10 pb-2"
-                  >
-                    <span className="text-lg sm:text-2xl text-[#162C6A] shrink-0 select-none">
-                      {CIRCLED_NUMS[index] || `(${index + 1})`}
-                    </span>
-                    <span className="flex-1">{pt}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom Right Sign-off: || शुभम् || */}
-              <div className="pt-6 pr-4 text-right">
-                <span className="text-lg sm:text-2xl font-bold text-[#162C6A] font-serif">
-                  || शुभम् ||
-                </span>
-              </div>
-            </div>
-
-            {/* Subtle Footer Tag */}
-            {activeKundali && (
-              <div className="pt-2 border-t border-[#8B1E1E]/20 flex items-center justify-between text-[11px] text-[#7A1C1C]/80 font-serif">
-                <span>
-                  कुण्डली आधार: {activeKundali.lagnaRashi} लग्न • {activeKundali.moonRashi} राशि •{' '}
-                  {activeKundali.nakshatra} नक्षत्र
-                </span>
-                <span>दशा: {activeKundali.mahadasha}–{activeKundali.antardasha}</span>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Modal Footer Controls */}
@@ -849,18 +1382,24 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               ) : (
                 <>
                   <Copy className="w-4 h-4 text-[#7A1D1D]" />
-                  <span>टेक्स्ट कॉपी करें</span>
+                  <span>पर्ची टेक्स्ट कॉपी</span>
                 </>
               )}
             </button>
 
             <button
               type="button"
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                if (activeTab === 'parchi') {
+                  setActiveTab('guide');
+                } else {
+                  setActiveTab('parchi');
+                }
+              }}
               className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
             >
-              <Edit3 className="w-4 h-4" />
-              <span>{isEditing ? 'संपादन पूर्ण' : 'नाम/उपाय बदलें'}</span>
+              <BookOpen className="w-4 h-4 text-[#B56A00]" />
+              <span>{activeTab === 'parchi' ? '📖 यजमान विस्तृत मार्गदर्शन' : '📜 पारंपरिक पर्ची'}</span>
             </button>
           </div>
 
@@ -891,7 +1430,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50"
             >
               <Share2 className="w-4 h-4" />
-              <span>📲 WhatsApp पर भेजें</span>
+              <span>📲 WhatsApp पर्ची</span>
             </button>
           </div>
         </div>

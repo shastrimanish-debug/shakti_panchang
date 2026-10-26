@@ -186,8 +186,11 @@ State 2-3 significant past life events or transitions of the Yajaman with absolu
 **४. भविष्य की सटीक कालावधि (Future Trajectory)**
 Pinpoint, time-bound future predictions with month-by-month timelines and clear probability/confidence levels (e.g. "अक्टूबर उत्तरार्ध से फरवरी के बीच (९०% अनुकूलता काल)").
 
-**५. सात्विक वैदिक उपाय एवं ६-सूत्रीय उपाय पर्ची (Vedic Upay & Prescription Slip)**
-Authentic, practical remedies: exact Mantra, specific Japa count (e.g. 108 बार), Daan (charity) items, and non-structural Vastu/lifestyle habits.
+**५. सात्विक वैदिक उपाय एवं विस्तृत उपाय पर्ची (Vedic Upay & Detailed Prescription Slip)**
+Authentic, practical remedies. Always explain:
+- **यह उपाय क्यों करना है?** (शास्त्रीय कारण — जैसे पन्ना/ओपल क्यों पहनना है, किस ग्रह का बल बढ़ेगा)।
+- **इस उपाय से क्या लाभ होगा?** (मानसिक शांति, व्यापार, दांपत्य, स्वास्थ्य या संकट निवारण)।
+- **दोष / ग्रहण योग शान्ति विधान:** यदि कुंडली में ग्रहण योग (सूर्य-राहु/केतु या चंद्र-राहु/केतु) हो, तो स्पष्ट बताएं कि यह ग्रहण योग किस भाव में बन रहा है, इसकी तीव्रता कितनी है, और इसकी ६-चरणीय शांति (संकल्प, नवग्रह पूजन, एकादशवार रुद्राभिषेक, कलियुग चतुर्गुण मंत्र जप संख्या, दशांश हवन एवं छाया दान) क्यों और कैसे करनी है।
 Additionally, ALWAYS include a concise 6-point Traditional Astrologer Prescription Slip ("📋 पारंपरिक ज्योतिषीय उपाय पर्ची") in this exact numbered format:
 ॥ श्री ॥
 श्री [जातक का नाम] जी
