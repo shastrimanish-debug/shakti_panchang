@@ -9,6 +9,11 @@ import {
   generatePrashnaKundali,
   getVedicRemedies,
   calculatePratyantarPeriods,
+  toTimeInput24h,
+  formatTime12h,
+  parseTimeString,
+  extractCalendarYMD,
+  resolveBirthCoordinates,
 } from '../services/kundali';
 import { COMMON_INDIAN_CITIES } from '../services/disha';
 import {
@@ -212,19 +217,44 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   useEffect(() => {
     if (activeKundali) {
       setName(activeKundali.name);
-      const d = new Date(activeKundali.birthDate);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      setDob(`${y}-${m}-${day}`);
-      setTob(activeKundali.birthTime);
+      const { y, m, d } = extractCalendarYMD(activeKundali.birthDate);
+      const mm = String(m + 1).padStart(2, '0');
+      const dd = String(d).padStart(2, '0');
+      setDob(`${y}-${mm}-${dd}`);
+      const normTob = toTimeInput24h(activeKundali.birthTime) || activeKundali.birthTime;
+      setTob(normTob);
+      const coords = resolveBirthCoordinates(
+        activeKundali.birthPlace,
+        activeKundali.latitude,
+        activeKundali.longitude,
+        activeKundali.timezoneHours
+      );
       setSelectedCity({
         name: activeKundali.birthPlace,
-        latitude: activeKundali.latitude,
-        longitude: activeKundali.longitude,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        timezoneHours: coords.timezoneHours,
         state: selectedCity.state || 'भारत',
         country: 'भारत',
       });
+
+      // Auto-heal if activeKundali has stale Lagna from older calculation
+      const freshCheck = calculateKundali(
+        activeKundali.name,
+        new Date(y, m, d, 12, 0, 0),
+        normTob,
+        activeKundali.birthPlace,
+        coords.latitude,
+        coords.longitude,
+        coords.timezoneHours
+      );
+      if (
+        activeKundali.lagnaRashiNumber !== freshCheck.lagnaRashiNumber ||
+        Math.abs((activeKundali.lagnaDegree || 0) - freshCheck.lagnaDegree) > 0.1
+      ) {
+        setActiveKundali(freshCheck);
+        saveKundaliProfile(freshCheck);
+      }
     }
   }, [activeKundali]);
 
@@ -326,7 +356,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       setFormError('जन्म तिथि सही प्रारूप में लिखें।');
       return;
     }
-    const dateObj = new Date(y, m - 1, d);
+    const dateObj = new Date(y, m - 1, d, 12, 0, 0);
     if (Number.isNaN(dateObj.getTime()) || y < 1800 || y > 2100) {
       setFormError('जन्म तिथि 1800–2100 के बीच होनी चाहिए।');
       return;
@@ -337,7 +367,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       tob,
       selectedCity.name,
       selectedCity.latitude,
-      selectedCity.longitude
+      selectedCity.longitude,
+      selectedCity.timezoneHours ?? 5.5
     );
     setFormError(null);
     setActiveKundali(k);
@@ -381,13 +412,29 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const boyKundali = milanReady
     ? milanInputMode === 'rashi'
       ? createQuickKundaliFromRashiNakshatra(boyName.trim() || 'वर', boyRashiIdx, boyNakIdx, boyIsManglik, boyCharan)
-      : calculateKundali(boyName.trim(), new Date(boyDob), boyTob, boyCity.name, boyCity.latitude, boyCity.longitude)
+      : calculateKundali(
+          boyName.trim(),
+          new Date(boyDob),
+          boyTob,
+          boyCity.name,
+          boyCity.latitude,
+          boyCity.longitude,
+          boyCity.timezoneHours ?? 5.5
+        )
     : null;
 
   const girlKundali = milanReady
     ? milanInputMode === 'rashi'
       ? createQuickKundaliFromRashiNakshatra(girlName.trim() || 'कन्या', girlRashiIdx, girlNakIdx, girlIsManglik, girlCharan)
-      : calculateKundali(girlName.trim(), new Date(girlDob), girlTob, girlCity.name, girlCity.latitude, girlCity.longitude)
+      : calculateKundali(
+          girlName.trim(),
+          new Date(girlDob),
+          girlTob,
+          girlCity.name,
+          girlCity.latitude,
+          girlCity.longitude,
+          girlCity.timezoneHours ?? 5.5
+        )
     : null;
 
   const milanResult = boyKundali && girlKundali ? calculateAshtakootMilan(boyKundali, girlKundali) : null;
@@ -613,15 +660,20 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 {name.trim() ? name.trim().charAt(0) : 'ॐ'}
               </div>
               <div>
-                <div className="font-bold text-xs sm:text-sm text-[#5C3A21] flex items-center gap-2">
+                <div className="font-bold text-xs sm:text-sm text-[#5C3A21] flex flex-wrap items-center gap-2">
                   <span>{name}</span>
-                  <span className="text-[10px] text-[#8C6239] font-normal">
-                    ({dob} • {tob})
+                  <span className="text-[10px] text-[#8C6239] font-semibold">
+                    ({dob} • {formatTime12h(tob) || tob})
                   </span>
+                  {k && (
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-[#5C3A21] text-[#FFD88A] font-bold">
+                      लग्न {k.lagnaRashiNumber} • {k.lagnaRashi}
+                    </span>
+                  )}
                 </div>
                 <div className="text-[11px] text-[#735133] flex items-center gap-1">
                   <MapPin className="w-3 h-3 text-[#B56A00]" />
-                  <span>{selectedCity.name}</span>
+                  <span>{selectedCity.name} ({selectedCity.latitude.toFixed(2)}°N, {selectedCity.longitude.toFixed(2)}°E)</span>
                 </div>
               </div>
             </div>
@@ -841,13 +893,56 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#8C6239] mb-1">{t('kundali.time', 'जन्म समय (Time)')}</label>
-              <input
-                type="time"
-                value={tob}
-                onChange={(e) => setTob(e.target.value)}
-                className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
-              />
+              <label className="block text-xs font-bold text-[#8C6239] mb-1 flex items-center justify-between gap-1">
+                <span>{t('kundali.time', 'जन्म समय (Time)')}</span>
+                {tob && (
+                  <span className="text-[10px] font-bold text-[#B56A00]">
+                    {formatTime12h(tob)}
+                  </span>
+                )}
+              </label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="time"
+                  value={toTimeInput24h(tob) || tob}
+                  onChange={(e) => setTob(e.target.value)}
+                  className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
+                />
+                {tob && (() => {
+                  const { hours, minutes } = parseTimeString(tob);
+                  const isPmNow = hours >= 12;
+                  return (
+                    <div className="flex rounded-lg border border-[#8C6239]/40 overflow-hidden shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextH = hours >= 12 ? hours - 12 : hours;
+                          setTob(`${String(nextH).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+                        }}
+                        className={`px-2 py-2 text-[10px] font-black transition cursor-pointer ${
+                          !isPmNow ? 'bg-[#5C3A21] text-[#FFD88A]' : 'bg-[#F4E8D1] text-[#5C3A21]'
+                        }`}
+                        title="प्रातः (AM)"
+                      >
+                        AM
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextH = hours < 12 ? hours + 12 : hours;
+                          setTob(`${String(nextH).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+                        }}
+                        className={`px-2 py-2 text-[10px] font-black transition cursor-pointer ${
+                          isPmNow ? 'bg-[#5C3A21] text-[#FFD88A]' : 'bg-[#F4E8D1] text-[#5C3A21]'
+                        }`}
+                        title="दोपहर / सायं / रात्रि (PM)"
+                      >
+                        PM
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
 
             <div>

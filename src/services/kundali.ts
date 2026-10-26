@@ -12,6 +12,7 @@ import {
   calculatePlanetPositions,
   calculateLagnaDegree,
 } from './astronomy';
+import { searchGlobalCities } from './globalCities';
 
 export const DASHA_ORDER = [
   'केतु', 'शुक्र', 'सूर्य', 'चंद्र', 'मंगल', 'राहु', 'गुरु', 'शनि', 'बुध'
@@ -59,12 +60,14 @@ export function getVarna(rashiIdx: number): string {
   return 'शूद्र';
 }
 
-function parseTimeString(timeStr: string): { hours: number; minutes: number; seconds: number } {
-  let s = timeStr.trim().toUpperCase().replace(/\s+/g, '');
-  const isPM = s.endsWith('PM');
-  const isAM = s.endsWith('AM');
-  if (isPM || isAM) s = s.slice(0, -2);
-  s = s.replace('.', ':');
+export function parseTimeString(timeStr: string): { hours: number; minutes: number; seconds: number } {
+  if (!timeStr || typeof timeStr !== 'string') {
+    return { hours: 12, minutes: 0, seconds: 0 };
+  }
+  let s = timeStr.trim().toUpperCase();
+  const isPM = s.includes('PM') || s.includes('पीएम') || s.includes('सायं') || s.includes('दोपहर') || s.includes('रात्रि');
+  const isAM = s.includes('AM') || s.includes('एएम') || s.includes('प्रातः') || s.includes('सुबह');
+  s = s.replace(/[^0-9:.]/g, '').replace('.', ':');
   const parts = s.split(':').map((p) => parseInt(p, 10) || 0);
   let h = parts[0] ?? 12;
   const m = parts[1] ?? 0;
@@ -75,6 +78,95 @@ function parseTimeString(timeStr: string): { hours: number; minutes: number; sec
     hours: Math.min(23, Math.max(0, h)),
     minutes: Math.min(59, Math.max(0, m)),
     seconds: Math.min(59, Math.max(0, sec)),
+  };
+}
+
+export function toTimeInput24h(timeStr: string): string {
+  if (!timeStr || !timeStr.trim()) return '';
+  const { hours, minutes } = parseTimeString(timeStr);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+export function formatTime12h(timeStr: string): string {
+  if (!timeStr || !timeStr.trim()) return '';
+  const { hours, minutes } = parseTimeString(timeStr);
+  const periodEn = hours >= 12 ? 'PM' : 'AM';
+  const periodHi = hours < 4 ? 'रात्रि' : hours < 12 ? 'प्रातः' : hours < 16 ? 'दोपहर' : hours < 20 ? 'सायं' : 'रात्रि';
+  const h12 = hours % 12 || 12;
+  return `${String(h12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${periodEn} (${periodHi})`;
+}
+
+export function extractCalendarYMD(input: Date | string): { y: number; m: number; d: number } {
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    const ymdMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (ymdMatch) {
+      return {
+        y: parseInt(ymdMatch[1], 10),
+        m: parseInt(ymdMatch[2], 10) - 1,
+        d: parseInt(ymdMatch[3], 10),
+      };
+    }
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) {
+      const istAdjusted = new Date(parsed.getTime() + 5.5 * 3600000);
+      return {
+        y: istAdjusted.getUTCFullYear(),
+        m: istAdjusted.getUTCMonth(),
+        d: istAdjusted.getUTCDate(),
+      };
+    }
+  }
+  const dateObj = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(dateObj.getTime())) {
+    const now = new Date();
+    return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
+  }
+  return {
+    y: dateObj.getFullYear(),
+    m: dateObj.getMonth(),
+    d: dateObj.getDate(),
+  };
+}
+
+export function resolveBirthCoordinates(
+  birthPlace: string,
+  latitude?: number,
+  longitude?: number,
+  timezoneHours?: number
+): { latitude: number; longitude: number; timezoneHours: number } {
+  const hasValidCoords =
+    typeof latitude === 'number' &&
+    typeof longitude === 'number' &&
+    !Number.isNaN(latitude) &&
+    !Number.isNaN(longitude) &&
+    !(Math.abs(latitude) < 0.01 && Math.abs(longitude) < 0.01);
+
+  if (hasValidCoords) {
+    return {
+      latitude: latitude!,
+      longitude: longitude!,
+      timezoneHours:
+        typeof timezoneHours === 'number' && !Number.isNaN(timezoneHours) ? timezoneHours : 5.5,
+    };
+  }
+
+  if (birthPlace && birthPlace.trim()) {
+    const q = birthPlace.trim().replace(/^[^\p{L}\p{N}]+/u, '').split('(')[0].trim();
+    const matches = searchGlobalCities(q, 1);
+    if (matches.length > 0) {
+      return {
+        latitude: matches[0].latitude,
+        longitude: matches[0].longitude,
+        timezoneHours: matches[0].timezoneHours ?? 5.5,
+      };
+    }
+  }
+
+  return {
+    latitude: 23.1765,
+    longitude: 75.7885,
+    timezoneHours: 5.5,
   };
 }
 
@@ -119,17 +211,22 @@ export function calculateKundali(
   longitude: number = 75.7885,
   timezoneHours: number = 5.5
 ): KundaliData {
+  const resolved = resolveBirthCoordinates(birthPlace, latitude, longitude, timezoneHours);
+  const safeLat = resolved.latitude;
+  const safeLon = resolved.longitude;
+  const safeTz = resolved.timezoneHours;
+
   const { hours, minutes, seconds } = parseTimeString(birthTime);
-  const y = birthDate.getFullYear();
-  const m = birthDate.getMonth();
-  const d = birthDate.getDate();
+  const { y, m, d } = extractCalendarYMD(birthDate);
+  const normalizedBirthDate = new Date(y, m, d, 12, 0, 0);
+  const normalizedBirthTime = toTimeInput24h(birthTime) || birthTime;
 
   // UTC moment of birth
-  const utcMs = Date.UTC(y, m, d, hours, minutes, seconds) - timezoneHours * 3600000;
+  const utcMs = Date.UTC(y, m, d, hours, minutes, seconds) - safeTz * 3600000;
   const birthMoment = new Date(utcMs);
 
-  const planets = calculatePlanetPositions(birthMoment, latitude, longitude, timezoneHours);
-  const lagnaDegree = calculateLagnaDegree(birthMoment, latitude, longitude, timezoneHours);
+  const planets = calculatePlanetPositions(birthMoment, safeLat, safeLon, safeTz);
+  const lagnaDegree = calculateLagnaDegree(birthMoment, safeLat, safeLon, safeTz);
   const lagnaRashiIdx = Math.floor(lagnaDegree / 30) % 12;
 
   const moon = planets.find((p) => p.planet === 'चंद्र') || planets[1];
@@ -213,12 +310,12 @@ export function calculateKundali(
 
   return {
     name,
-    birthDate,
-    birthTime,
+    birthDate: normalizedBirthDate,
+    birthTime: normalizedBirthTime,
     birthPlace,
-    latitude,
-    longitude,
-    timezoneHours,
+    latitude: safeLat,
+    longitude: safeLon,
+    timezoneHours: safeTz,
     lagnaDegree,
     lagnaRashi: RASHIS[lagnaRashiIdx],
     lagnaRashiNumber: lagnaRashiIdx + 1,

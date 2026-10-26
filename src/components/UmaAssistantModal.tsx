@@ -647,7 +647,8 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       }
 
       const timeStr = `${birthHour}:${birthMinute} ${birthAmPm}`;
-      const d = new Date(birthDate);
+      const [by, bm, bd] = birthDate.split('-').map(Number);
+      const d = by && bm && bd ? new Date(by, bm - 1, bd, 12, 0, 0) : new Date(birthDate);
 
       const newKundali = calculateKundali(
         nameTrimmed,
