@@ -12,6 +12,7 @@ import {
   calculatePlanetPositions,
   calculateLagnaDegree,
 } from './astronomy';
+import { timezoneHoursFor } from './engine/time';
 import { searchGlobalCities } from './globalCities';
 
 export const DASHA_ORDER = [
@@ -99,21 +100,33 @@ export function formatTime12h(timeStr: string): string {
 export function extractCalendarYMD(input: Date | string): { y: number; m: number; d: number } {
   if (typeof input === 'string') {
     const trimmed = input.trim();
-    const ymdMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (ymdMatch) {
+    // 1. Direct YYYY-MM-DD or ISO midnight/noon UTC (e.g. from <input type="date"> or new Date("YYYY-MM-DD"))
+    const ymdPrefix = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T00:00:00|T12:00:00)/);
+    if (ymdPrefix) {
       return {
-        y: parseInt(ymdMatch[1], 10),
-        m: parseInt(ymdMatch[2], 10) - 1,
-        d: parseInt(ymdMatch[3], 10),
+        y: parseInt(ymdPrefix[1], 10),
+        m: parseInt(ymdPrefix[2], 10) - 1,
+        d: parseInt(ymdPrefix[3], 10),
       };
+    }
+    // 2. Specifically handle legacy IST midnight serialized to UTC (T18:30:00.000Z)
+    if (/T18:30:00(?:\.000)?Z$/.test(trimmed)) {
+      const parsed = new Date(trimmed);
+      if (!Number.isNaN(parsed.getTime())) {
+        const istAdjusted = new Date(parsed.getTime() + 5.5 * 3600000);
+        return {
+          y: istAdjusted.getUTCFullYear(),
+          m: istAdjusted.getUTCMonth(),
+          d: istAdjusted.getUTCDate(),
+        };
+      }
     }
     const parsed = new Date(trimmed);
     if (!Number.isNaN(parsed.getTime())) {
-      const istAdjusted = new Date(parsed.getTime() + 5.5 * 3600000);
       return {
-        y: istAdjusted.getUTCFullYear(),
-        m: istAdjusted.getUTCMonth(),
-        d: istAdjusted.getUTCDate(),
+        y: parsed.getFullYear(),
+        m: parsed.getMonth(),
+        d: parsed.getDate(),
       };
     }
   }
@@ -122,6 +135,20 @@ export function extractCalendarYMD(input: Date | string): { y: number; m: number
     const now = new Date();
     return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
   }
+  // If Date was created from new Date("YYYY-MM-DD"), its UTC time is exactly 00:00:00.000Z.
+  // In Western Hemisphere browsers (USA/Canada), .getDate() would be the previous day!
+  if (
+    dateObj.getUTCHours() === 0 &&
+    dateObj.getUTCMinutes() === 0 &&
+    dateObj.getUTCSeconds() === 0 &&
+    dateObj.getUTCMilliseconds() === 0
+  ) {
+    return {
+      y: dateObj.getUTCFullYear(),
+      m: dateObj.getUTCMonth(),
+      d: dateObj.getUTCDate(),
+    };
+  }
   return {
     y: dateObj.getFullYear(),
     m: dateObj.getMonth(),
@@ -129,11 +156,120 @@ export function extractCalendarYMD(input: Date | string): { y: number; m: number
   };
 }
 
+function inferIanaTimezone(lat: number, lon: number, explicitIana?: string): string | null {
+  if (explicitIana && explicitIana.includes('/')) return explicitIana;
+  // Nepal
+  if (lon >= 80 && lon <= 88.5 && lat >= 26.3 && lat <= 30.5) return 'Asia/Kathmandu';
+  // India & Sri Lanka
+  if (lon >= 67 && lon <= 97.6 && lat >= 5.5 && lat <= 37.6) return 'Asia/Kolkata';
+  // USA & Canada
+  if (lat >= 24 && lat <= 65 && lon >= -160 && lon <= -52) {
+    // Arizona (no DST)
+    if (lat >= 31.3 && lat <= 37 && lon >= -114.8 && lon <= -109.05) return 'America/Phoenix';
+    if (lon < -114) return 'America/Los_Angeles';
+    if (lon < -102) return 'America/Denver';
+    if (lon < -85) return 'America/Chicago';
+    return 'America/New_York';
+  }
+  // UK & Ireland
+  if (lat >= 50 && lat <= 60 && lon >= -10.5 && lon <= 2) return 'Europe/London';
+  // Western & Central Europe
+  if (lat >= 35 && lat <= 65 && lon > 2 && lon <= 25) return 'Europe/Berlin';
+  // UAE & Oman
+  if (lat >= 15 && lat <= 30 && lon >= 51.5 && lon <= 60) return 'Asia/Dubai';
+  // Saudi Arabia, Qatar, Kuwait, Bahrain
+  if (lat >= 15 && lat <= 33 && lon >= 34 && lon < 51.5) return 'Asia/Riyadh';
+  // Singapore & Malaysia
+  if (lat >= -10 && lat <= 7 && lon >= 99 && lon <= 120) return 'Asia/Singapore';
+  // Japan
+  if (lat >= 30 && lat <= 46 && lon >= 128 && lon <= 146) return 'Asia/Tokyo';
+  // Australia
+  if (lat >= -45 && lat <= -10 && lon >= 110 && lon <= 160) {
+    if (lon < 129) return 'Australia/Perth';
+    if (lon < 140) return 'Australia/Adelaide';
+    if (lat > -29 && lon >= 138) return 'Australia/Brisbane';
+    return 'Australia/Sydney';
+  }
+  // New Zealand
+  if (lat >= -50 && lat <= -30 && lon >= 165 && lon <= 180) return 'Pacific/Auckland';
+  return null;
+}
+
+function getIanaOffsetHours(
+  ianaZone: string,
+  y: number,
+  m: number,
+  d: number,
+  hours: number,
+  minutes: number
+): number | null {
+  try {
+    const approxUtc = Date.UTC(y, m, d, hours, minutes, 0);
+    const dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone: ianaZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    let guessUtc = approxUtc;
+    for (let pass = 0; pass < 2; pass++) {
+      const parts = dtf.formatToParts(new Date(guessUtc));
+      const map: Record<string, number> = {};
+      for (const p of parts) {
+        if (p.type !== 'literal') map[p.type] = parseInt(p.value, 10);
+      }
+      const hr = map.hour === 24 ? 0 : map.hour;
+      const zonedAsUtc = Date.UTC(
+        map.year,
+        (map.month || 1) - 1,
+        map.day || 1,
+        hr || 0,
+        map.minute || 0,
+        map.second || 0
+      );
+      const offsetMs = zonedAsUtc - guessUtc;
+      guessUtc = approxUtc - offsetMs;
+    }
+    return Math.round(((approxUtc - guessUtc) / 3600000) * 4) / 4;
+  } catch {
+    return null;
+  }
+}
+
+export function formatUtcOffsetLabel(tzHours: number): string {
+  const sign = tzHours >= 0 ? '+' : '-';
+  const abs = Math.abs(tzHours);
+  const hh = Math.floor(abs);
+  const mm = Math.round((abs - hh) * 60);
+  const base = `UTC${sign}${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  if (tzHours === 5.5) return `${base} (IST)`;
+  if (tzHours === 5.75) return `${base} (NPT)`;
+  if (tzHours === -4) return `${base} (EDT)`;
+  if (tzHours === -5) return `${base} (EST/CDT)`;
+  if (tzHours === -6) return `${base} (CST/MDT)`;
+  if (tzHours === -7) return `${base} (MST/PDT)`;
+  if (tzHours === -8) return `${base} (PST)`;
+  if (tzHours === 0) return `${base} (GMT)`;
+  if (tzHours === 1) return `${base} (BST/CET)`;
+  return base;
+}
+
+export function formatCoordLabel(lat: number, lon: number): string {
+  const latDir = lat >= 0 ? 'N' : 'S';
+  const lonDir = lon >= 0 ? 'E' : 'W';
+  return `${Math.abs(lat).toFixed(2)}°${latDir}, ${Math.abs(lon).toFixed(2)}°${lonDir}`;
+}
+
 export function resolveBirthCoordinates(
   birthPlace: string,
   latitude?: number,
   longitude?: number,
-  timezoneHours?: number
+  timezoneHours?: number,
+  birthMomentHint?: { y: number; m: number; d: number; hours: number; minutes: number }
 ): { latitude: number; longitude: number; timezoneHours: number } {
   const hasValidCoords =
     typeof latitude === 'number' &&
@@ -142,31 +278,56 @@ export function resolveBirthCoordinates(
     !Number.isNaN(longitude) &&
     !(Math.abs(latitude) < 0.01 && Math.abs(longitude) < 0.01);
 
-  if (hasValidCoords) {
-    return {
-      latitude: latitude!,
-      longitude: longitude!,
-      timezoneHours:
-        typeof timezoneHours === 'number' && !Number.isNaN(timezoneHours) ? timezoneHours : 5.5,
-    };
-  }
+  let matchedIana: string | undefined;
+  let resolvedLat = 23.1765;
+  let resolvedLon = 75.7885;
+  let baseTz: number | undefined =
+    typeof timezoneHours === 'number' && !Number.isNaN(timezoneHours) ? timezoneHours : undefined;
 
   if (birthPlace && birthPlace.trim()) {
     const q = birthPlace.trim().replace(/^[^\p{L}\p{N}]+/u, '').split('(')[0].trim();
     const matches = searchGlobalCities(q, 1);
     if (matches.length > 0) {
-      return {
-        latitude: matches[0].latitude,
-        longitude: matches[0].longitude,
-        timezoneHours: matches[0].timezoneHours ?? 5.5,
-      };
+      matchedIana = matches[0].timezone;
+      if (!hasValidCoords) {
+        resolvedLat = matches[0].latitude;
+        resolvedLon = matches[0].longitude;
+        baseTz = matches[0].timezoneHours;
+      }
+    }
+  }
+
+  if (hasValidCoords) {
+    resolvedLat = latitude!;
+    resolvedLon = longitude!;
+  }
+
+  // If coordinates are outside India/Sri Lanka (67°E..98°E) but baseTz was defaulted to 5.5, recompute!
+  const isOutsideIstBelt = resolvedLon < 65 || resolvedLon > 98 || resolvedLat < 5 || resolvedLat > 38;
+  if (baseTz === undefined || (isOutsideIstBelt && baseTz === 5.5)) {
+    baseTz = timezoneHoursFor(resolvedLat, resolvedLon);
+  }
+
+  // Apply exact historical/DST offset for the birth date & time if IANA timezone is known/inferred
+  const iana = inferIanaTimezone(resolvedLat, resolvedLon, matchedIana);
+  if (iana && birthMomentHint) {
+    const dstAwareTz = getIanaOffsetHours(
+      iana,
+      birthMomentHint.y,
+      birthMomentHint.m,
+      birthMomentHint.d,
+      birthMomentHint.hours,
+      birthMomentHint.minutes
+    );
+    if (dstAwareTz !== null) {
+      baseTz = dstAwareTz;
     }
   }
 
   return {
-    latitude: 23.1765,
-    longitude: 75.7885,
-    timezoneHours: 5.5,
+    latitude: resolvedLat,
+    longitude: resolvedLon,
+    timezoneHours: baseTz ?? 5.5,
   };
 }
 
@@ -209,15 +370,21 @@ export function calculateKundali(
   birthPlace: string = 'उज्जैन',
   latitude: number = 23.1765,
   longitude: number = 75.7885,
-  timezoneHours: number = 5.5
+  timezoneHours?: number
 ): KundaliData {
-  const resolved = resolveBirthCoordinates(birthPlace, latitude, longitude, timezoneHours);
+  const { hours, minutes, seconds } = parseTimeString(birthTime);
+  const { y, m, d } = extractCalendarYMD(birthDate);
+  const resolved = resolveBirthCoordinates(birthPlace, latitude, longitude, timezoneHours, {
+    y,
+    m,
+    d,
+    hours,
+    minutes,
+  });
   const safeLat = resolved.latitude;
   const safeLon = resolved.longitude;
   const safeTz = resolved.timezoneHours;
 
-  const { hours, minutes, seconds } = parseTimeString(birthTime);
-  const { y, m, d } = extractCalendarYMD(birthDate);
   const normalizedBirthDate = new Date(y, m, d, 12, 0, 0);
   const normalizedBirthTime = toTimeInput24h(birthTime) || birthTime;
 

@@ -14,6 +14,8 @@ import {
   parseTimeString,
   extractCalendarYMD,
   resolveBirthCoordinates,
+  formatUtcOffsetLabel,
+  formatCoordLabel,
 } from '../services/kundali';
 import { COMMON_INDIAN_CITIES } from '../services/disha';
 import {
@@ -368,7 +370,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       selectedCity.name,
       selectedCity.latitude,
       selectedCity.longitude,
-      selectedCity.timezoneHours ?? 5.5
+      selectedCity.timezoneHours
     );
     setFormError(null);
     setActiveKundali(k);
@@ -379,16 +381,26 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
   const liveTransitKundali = useMemo(() => {
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    return calculateKundali(
-      'तत्काल लग्न कुण्डली (Live)',
-      now,
-      `${hh}:${mm}`,
+    const resolvedLoc = resolveBirthCoordinates(
       currentLocation.name,
       currentLocation.latitude,
       currentLocation.longitude,
       currentLocation.timezoneHours
+    );
+    const locShifted = new Date(now.getTime() + resolvedLoc.timezoneHours * 3600000);
+    const y = locShifted.getUTCFullYear();
+    const m = locShifted.getUTCMonth();
+    const d = locShifted.getUTCDate();
+    const hh = String(locShifted.getUTCHours()).padStart(2, '0');
+    const mm = String(locShifted.getUTCMinutes()).padStart(2, '0');
+    return calculateKundali(
+      'तत्काल लग्न कुण्डली (Live)',
+      new Date(y, m, d, 12, 0, 0),
+      `${hh}:${mm}`,
+      currentLocation.name,
+      resolvedLoc.latitude,
+      resolvedLoc.longitude,
+      resolvedLoc.timezoneHours
     );
   }, [currentLocation]);
 
@@ -412,29 +424,35 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const boyKundali = milanReady
     ? milanInputMode === 'rashi'
       ? createQuickKundaliFromRashiNakshatra(boyName.trim() || 'वर', boyRashiIdx, boyNakIdx, boyIsManglik, boyCharan)
-      : calculateKundali(
-          boyName.trim(),
-          new Date(boyDob),
-          boyTob,
-          boyCity.name,
-          boyCity.latitude,
-          boyCity.longitude,
-          boyCity.timezoneHours ?? 5.5
-        )
+      : (() => {
+          const { y, m, d } = extractCalendarYMD(boyDob);
+          return calculateKundali(
+            boyName.trim(),
+            new Date(y, m, d, 12, 0, 0),
+            boyTob,
+            boyCity.name,
+            boyCity.latitude,
+            boyCity.longitude,
+            boyCity.timezoneHours
+          );
+        })()
     : null;
 
   const girlKundali = milanReady
     ? milanInputMode === 'rashi'
       ? createQuickKundaliFromRashiNakshatra(girlName.trim() || 'कन्या', girlRashiIdx, girlNakIdx, girlIsManglik, girlCharan)
-      : calculateKundali(
-          girlName.trim(),
-          new Date(girlDob),
-          girlTob,
-          girlCity.name,
-          girlCity.latitude,
-          girlCity.longitude,
-          girlCity.timezoneHours ?? 5.5
-        )
+      : (() => {
+          const { y, m, d } = extractCalendarYMD(girlDob);
+          return calculateKundali(
+            girlName.trim(),
+            new Date(y, m, d, 12, 0, 0),
+            girlTob,
+            girlCity.name,
+            girlCity.latitude,
+            girlCity.longitude,
+            girlCity.timezoneHours
+          );
+        })()
     : null;
 
   const milanResult = boyKundali && girlKundali ? calculateAshtakootMilan(boyKundali, girlKundali) : null;
@@ -671,9 +689,12 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     </span>
                   )}
                 </div>
-                <div className="text-[11px] text-[#735133] flex items-center gap-1">
+                <div className="text-[11px] text-[#735133] flex flex-wrap items-center gap-1.5">
                   <MapPin className="w-3 h-3 text-[#B56A00]" />
-                  <span>{selectedCity.name} ({selectedCity.latitude.toFixed(2)}°N, {selectedCity.longitude.toFixed(2)}°E)</span>
+                  <span>
+                    {selectedCity.name} ({formatCoordLabel(selectedCity.latitude, selectedCity.longitude)} •{' '}
+                    {formatUtcOffsetLabel(k?.timezoneHours ?? selectedCity.timezoneHours ?? 5.5)})
+                  </span>
                 </div>
               </div>
             </div>
@@ -967,9 +988,24 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             </div>
 
             <div className="sm:col-span-2 md:col-span-4 flex flex-wrap items-center justify-between gap-2 mt-2">
-              <div className="text-xs text-[#735133] flex items-center gap-1.5">
+              <div className="text-xs text-[#735133] flex flex-wrap items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-[#B56A00]" />
-                <span><strong>{selectedCity.name}</strong> ({selectedCity.latitude.toFixed(2)}°N, {selectedCity.longitude.toFixed(2)}°E)</span>
+                <span>
+                  <strong>{selectedCity.name}</strong> ({formatCoordLabel(selectedCity.latitude, selectedCity.longitude)} •{' '}
+                  {(() => {
+                    const { y, m, d } = extractCalendarYMD(dob || new Date());
+                    const { hours, minutes } = parseTimeString(tob || '12:00');
+                    const resolved = resolveBirthCoordinates(
+                      selectedCity.name,
+                      selectedCity.latitude,
+                      selectedCity.longitude,
+                      selectedCity.timezoneHours,
+                      { y, m, d, hours, minutes }
+                    );
+                    return formatUtcOffsetLabel(resolved.timezoneHours);
+                  })()}
+                  )
+                </span>
               </div>
 
               <div className="flex items-center gap-2 w-full">
