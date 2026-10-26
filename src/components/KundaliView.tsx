@@ -24,6 +24,7 @@ import {
   getAstrologerBranding,
 } from '../services/storage';
 import { useLicense } from '@/lib/license-client';
+import { useUserDateTime } from '../hooks/useUserDateTime';
 import { calculateVedicPanchang, RASHIS, NAKSHATRAS } from '../services/astronomy';
 import { createQuickKundaliFromRashiNakshatra } from '../services/milan';
 import { downloadMilanBhojpatraPdf, downloadBhojpatraPdf } from '../services/bhojpatraPdf';
@@ -344,9 +345,14 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     }
   };
 
+  const { now: syncedNow, locationNow, ensureServerSyncedDate } = useUserDateTime({
+    location: currentLocation,
+  });
+
   // Handle Calculate or Recalculate
   const handleCalculate = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    void ensureServerSyncedDate(false);
     const trimmed = name.trim();
     if (!trimmed || !dob || !tob) {
       setFormError('कृपया जातक का नाम, सही जन्म तिथि और जन्म समय भरें। कोई भी पूर्व-भरी कुंडली नहीं चलेगी।');
@@ -380,29 +386,16 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   };
 
   const liveTransitKundali = useMemo(() => {
-    const now = new Date();
-    const resolvedLoc = resolveBirthCoordinates(
+    return calculateKundali(
+      'तत्काल लग्न कुण्डली (Live)',
+      locationNow.localNoonDate,
+      locationNow.timeStr,
       currentLocation.name,
       currentLocation.latitude,
       currentLocation.longitude,
-      currentLocation.timezoneHours
+      locationNow.timezoneHours
     );
-    const locShifted = new Date(now.getTime() + resolvedLoc.timezoneHours * 3600000);
-    const y = locShifted.getUTCFullYear();
-    const m = locShifted.getUTCMonth();
-    const d = locShifted.getUTCDate();
-    const hh = String(locShifted.getUTCHours()).padStart(2, '0');
-    const mm = String(locShifted.getUTCMinutes()).padStart(2, '0');
-    return calculateKundali(
-      'तत्काल लग्न कुण्डली (Live)',
-      new Date(y, m, d, 12, 0, 0),
-      `${hh}:${mm}`,
-      currentLocation.name,
-      resolvedLoc.latitude,
-      resolvedLoc.longitude,
-      resolvedLoc.timezoneHours
-    );
-  }, [currentLocation]);
+  }, [currentLocation, locationNow.dateStr, locationNow.timeStr, locationNow.timezoneHours]);
 
   const k = activeKundali || liveTransitKundali;
   const analysis = useMemo(() => (k ? analyzeKundali(k) : null), [k]);
@@ -463,7 +456,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const fmtDate = (d: Date) =>
     d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
-  const now = new Date();
+  const now = syncedNow;
   const currentActiveMahaPeriod =
     k?.dashaPeriods.find((d) => now >= d.startDate && now < d.endDate) || k?.dashaPeriods[0];
   const currentActiveAntarPeriod =
@@ -993,7 +986,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <span>
                   <strong>{selectedCity.name}</strong> ({formatCoordLabel(selectedCity.latitude, selectedCity.longitude)} •{' '}
                   {(() => {
-                    const { y, m, d } = extractCalendarYMD(dob || new Date());
+                    const { y, m, d } = extractCalendarYMD(dob || syncedNow);
                     const { hours, minutes } = parseTimeString(tob || '12:00');
                     const resolved = resolveBirthCoordinates(
                       selectedCity.name,
@@ -1942,8 +1935,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </div>
               <div className="divide-y divide-[#8C6239]/20">
                 {k.dashaPeriods.map((dp, idx) => {
-                  const now = new Date();
-                  const isCur = now >= dp.startDate && now < dp.endDate;
+                  const isCur = syncedNow >= dp.startDate && syncedNow < dp.endDate;
                   const isSelected = inspectedMaha === dp.planet;
                   return (
                     <div
@@ -1996,8 +1988,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </div>
               <div className="divide-y divide-[#8C6239]/20">
                 {antarsOfCurrentMaha.map((ap, idx) => {
-                  const now = new Date();
-                  const isCur = now >= ap.startDate && now < ap.endDate;
+                  const isCur = syncedNow >= ap.startDate && syncedNow < ap.endDate;
                   const isSelected = inspectedAntar === ap.antar;
                   return (
                     <div
@@ -2050,8 +2041,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </div>
               <div className="divide-y divide-[#8C6239]/20">
                 {inspectedPratyantars.map((pp, idx) => {
-                  const now = new Date();
-                  const isCur = now >= pp.startDate && now < pp.endDate;
+                  const isCur = syncedNow >= pp.startDate && syncedNow < pp.endDate;
                   return (
                     <div
                       key={idx}

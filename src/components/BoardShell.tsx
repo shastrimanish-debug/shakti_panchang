@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
+import { getSyncedNow } from "../hooks/useUserDateTime";
 import { ZeroScrollPager } from "./ZeroScrollPager";
 import { MoonPhaseChart, generateHdMoonPanchangDataUrl } from "./MoonPhaseChart";
 import { saveImageNative } from "../lib/device";
@@ -561,7 +562,7 @@ export function TodayBoard({
     return <div className="p-4 text-sm">{t("common.loading", "पंचांग गणना हो रही है।")}</div>;
   }
 
-  const activeDate = currentDate || panchang.date || new Date();
+  const activeDate = currentDate || panchang.date || getSyncedNow();
   const dateLocale = language === "en" ? "en-US" : language === "gu" ? "gu-IN" : "hi-IN";
   const formattedDate = activeDate.toLocaleDateString(dateLocale, {
     weekday: "short",
@@ -589,7 +590,7 @@ export function TodayBoard({
   const handleTodayReset = () => {
     triggerHapticSelection();
     if (!onDateChange) return;
-    onDateChange(new Date());
+    onDateChange(getSyncedNow());
   };
 
   const placeLabelKey = t("kundali.place", "स्थान");

@@ -13,6 +13,8 @@ import { FrontPage } from './components/FrontPage';
 import { useLicense } from './lib/license-client';
 import { useTranslation, useLanguage } from './i18n';
 import { triggerHapticSelection } from './utils/haptics';
+import { useUserDateTime } from './hooks/useUserDateTime';
+import { resolveBirthCoordinates } from './services/kundali';
 
 const KalnirnayMonthView = React.lazy(() => import('./components/KalnirnayMonthView').then((m) => ({ default: m.KalnirnayMonthView })));
 const DevotionalAudioPlayerView = React.lazy(() => import('./components/DevotionalAudioPlayerView').then((m) => ({ default: m.DevotionalAudioPlayerView })));
@@ -130,7 +132,9 @@ function playTactilePageTurnSound() {
 
 export function App() {
   const [currentLocation, setCurrentLocation] = useState<SavedLocation>(() => getStoredLocation());
-  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
+  const { selectedDate: currentDate, setSelectedDate: setCurrentDate } = useUserDateTime({
+    location: currentLocation,
+  });
   const [activeTab, setActiveTab] = useState<string>('panchang');
   const [turnDirection, setTurnDirection] = useState<'forward' | 'backward'>('forward');
   const [pageTurnNotice, setPageTurnNotice] = useState<string | null>(null);
@@ -238,13 +242,20 @@ export function App() {
     return saved.length > 0 ? saved[0] : null;
   });
 
-  // Calculate high-precision Vedic Panchang based on current Date and Geo-coordinates
+  // Calculate high-precision Vedic Panchang based on server-synced Date and Geo-coordinates
   const panchang = useMemo(() => {
-    return calculateVedicPanchang(
-      currentDate,
+    const resolvedLoc = resolveBirthCoordinates(
+      currentLocation.name,
       currentLocation.latitude,
       currentLocation.longitude,
-      currentLocation.timezoneHours
+      currentLocation.timezoneHours,
+      currentDate
+    );
+    return calculateVedicPanchang(
+      currentDate,
+      resolvedLoc.latitude,
+      resolvedLoc.longitude,
+      resolvedLoc.timezoneHours
     );
   }, [currentDate, currentLocation]);
 

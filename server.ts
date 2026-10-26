@@ -47,6 +47,19 @@ async function startServer() {
     });
   });
 
+  // Authoritative Server Time Sync endpoint for Panchang & Kundali calculations
+  app.get("/api/time", (_req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    const serverTimeMs = Date.now();
+    res.json({
+      ok: true,
+      serverTimeMs,
+      iso: new Date(serverTimeMs).toISOString(),
+    });
+  });
+
   // Upay Parchi Direct Server-Side Download (100% reliable for Android WebView, iOS Safari, PWA)
   app.post("/api/parchi/download", (req: Request, res: Response) => {
     try {

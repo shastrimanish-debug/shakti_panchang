@@ -14,6 +14,7 @@ import {
 } from './astronomy';
 import { timezoneHoursFor } from './engine/time';
 import { searchGlobalCities } from './globalCities';
+import { getSyncedNow, getSyncedLocationDateTime } from '../hooks/useUserDateTime';
 
 export const DASHA_ORDER = [
   'केतु', 'शुक्र', 'सूर्य', 'चंद्र', 'मंगल', 'राहु', 'गुरु', 'शनि', 'बुध'
@@ -132,7 +133,7 @@ export function extractCalendarYMD(input: Date | string): { y: number; m: number
   }
   const dateObj = input instanceof Date ? input : new Date(input);
   if (Number.isNaN(dateObj.getTime())) {
-    const now = new Date();
+    const now = getSyncedNow();
     return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
   }
   // If Date was created from new Date("YYYY-MM-DD"), its UTC time is exactly 00:00:00.000Z.
@@ -269,8 +270,8 @@ export function resolveBirthCoordinates(
   latitude?: number,
   longitude?: number,
   timezoneHours?: number,
-  birthMomentHint?: { y: number; m: number; d: number; hours: number; minutes: number }
-): { latitude: number; longitude: number; timezoneHours: number } {
+  birthMomentHint?: { y: number; m: number; d: number; hours: number; minutes: number } | Date
+): { latitude: number; longitude: number; timezoneHours: number; ianaTimeZone?: string } {
   const hasValidCoords =
     typeof latitude === 'number' &&
     typeof longitude === 'number' &&
@@ -311,13 +312,23 @@ export function resolveBirthCoordinates(
   // Apply exact historical/DST offset for the birth date & time if IANA timezone is known/inferred
   const iana = inferIanaTimezone(resolvedLat, resolvedLon, matchedIana);
   if (iana && birthMomentHint) {
+    const hintObj =
+      birthMomentHint instanceof Date
+        ? {
+            y: birthMomentHint.getUTCFullYear(),
+            m: birthMomentHint.getUTCMonth(),
+            d: birthMomentHint.getUTCDate(),
+            hours: birthMomentHint.getUTCHours(),
+            minutes: birthMomentHint.getUTCMinutes(),
+          }
+        : birthMomentHint;
     const dstAwareTz = getIanaOffsetHours(
       iana,
-      birthMomentHint.y,
-      birthMomentHint.m,
-      birthMomentHint.d,
-      birthMomentHint.hours,
-      birthMomentHint.minutes
+      hintObj.y,
+      hintObj.m,
+      hintObj.d,
+      hintObj.hours,
+      hintObj.minutes
     );
     if (dstAwareTz !== null) {
       baseTz = dstAwareTz;
@@ -328,6 +339,7 @@ export function resolveBirthCoordinates(
     latitude: resolvedLat,
     longitude: resolvedLon,
     timezoneHours: baseTz ?? 5.5,
+    ianaTimeZone: iana ?? undefined,
   };
 }
 
@@ -420,7 +432,7 @@ export function calculateKundali(
 
   const dashaPeriods: DashaPeriod[] = [];
   let dashaPointer = new Date(birthMoment);
-  const now = new Date();
+  const now = getSyncedNow();
 
   for (let i = 0; i < 9; i++) {
     const planet = DASHA_ORDER[(dashaIndex + i) % 9];
@@ -502,7 +514,7 @@ export function calculateKundali(
     dashaPeriods,
     antarPeriods,
     pratyantarPeriods: pratyantars,
-    calculatedAt: new Date(),
+    calculatedAt: getSyncedNow(),
   };
 }
 
@@ -544,10 +556,21 @@ export function generatePrashnaKundali(
   latitude: number = 23.1765,
   longitude: number = 75.7885
 ): KundaliData {
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+  const locNow = getSyncedLocationDateTime({
+    name: 'तात्कालिक स्थान',
+    latitude,
+    longitude,
+  });
   const title = question ? `प्रश्न: ${question}` : 'प्रश्न चक्र';
-  return calculateKundali(title, now, timeStr, 'तात्कालिक स्थान', latitude, longitude, 5.5);
+  return calculateKundali(
+    title,
+    locNow.localNoonDate,
+    locNow.timeStr,
+    'तात्कालिक स्थान',
+    latitude,
+    longitude,
+    locNow.timezoneHours
+  );
 }
 
 export const VEDIC_REMEDIES_BY_RASHI: Record<

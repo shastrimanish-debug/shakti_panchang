@@ -20,6 +20,7 @@ import {
 import { useLanguage } from '../i18n';
 import { trVedic, trPlanet, trWeekday, trChoghadiyaMeaning } from '../i18n/vedicTranslate';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
+import { useUserDateTime } from '../hooks/useUserDateTime';
 
 interface ChoghadiyaViewProps {
   panchang: VedicPanchangData;
@@ -35,12 +36,7 @@ export const ChoghadiyaView: React.FC<ChoghadiyaViewProps> = ({
   onNextChapter,
 }) => {
   const { t, language } = useLanguage();
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
-    return () => clearInterval(timer);
-  }, []);
+  const { now: currentTime } = useUserDateTime({ liveTickIntervalMs: 30000 });
 
   const weekday = panchang.date.getDay();
   const dayChoghadiyas = getDayChoghadiya(panchang.solar, weekday);
