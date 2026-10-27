@@ -1453,7 +1453,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   )}
 
                   <div className="font-serif text-sm sm:text-base leading-relaxed tracking-wide whitespace-pre-line select-text">
-                    {mainText}
+                    {mainText.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*\n]+)\*/g, '$1')}
                   </div>
 
                   {/* Interactive Single-Tap Follow-Up Question Chips */}

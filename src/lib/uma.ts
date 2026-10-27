@@ -975,8 +975,9 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
             finalText = finalText.replace(/⑥\s*[^\n]*ग्रहण[^\n]*/g, `⑥ ${parchi.points[5]}`);
           }
 
-          if (!finalText.includes("①")) {
-            const parchiBlock = `\n\n📋 **पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक — संक्षिप्त ६-सूत्रीय विधान):**\n${parchi.formattedTextBlock}\n*(💡 नीचे दिए **'📋 उपाय पर्ची'** बटन पर क्लिक करके आप इस पारंपरिक लेटरहेड पर्ची को देख, संपादित व डाउनलोड/शेयर कर सकते हैं।)*`;
+          const wantsParchi = /उपाय पर्ची|पर्ची|पूरी कुंडली|संपूर्ण कुंडली|संपूर्ण फलादेश|upay parchi/i.test(query);
+          if (wantsParchi && !finalText.includes("①")) {
+            const parchiBlock = `\n\n📋 पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक — संक्षिप्त ६-सूत्रीय विधान):\n${parchi.formattedTextBlock}\n(💡 नीचे दिए '📋 उपाय पर्ची' बटन पर क्लिक करके आप इस पारंपरिक लेटरहेड पर्ची को देख, संपादित व डाउनलोड/शेयर कर सकते हैं।)`;
             if (finalText.includes("[अगले प्रश्न]")) {
               const idx = finalText.indexOf("[अगले प्रश्न]");
               finalText = `${finalText.slice(0, idx).trim()}${parchiBlock}\n\n---\n${finalText.slice(idx)}`;
