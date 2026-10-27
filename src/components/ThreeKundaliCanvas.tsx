@@ -32,18 +32,18 @@ interface House3DCoord {
 
 // 3D board spans from -5.0 to +5.0 in X and Z (total width = 10 units)
 const NORTH_3D_HOUSES: House3DCoord[] = [
-  { house: 1, x: 0, z: -2.35, rashiX: 0, rashiZ: -4.15 },
-  { house: 2, x: -2.45, z: -3.65, rashiX: -3.95, rashiZ: -4.35 },
-  { house: 3, x: -3.65, z: -2.45, rashiX: -4.35, rashiZ: -1.35 },
-  { house: 4, x: -2.35, z: 0, rashiX: -4.15, rashiZ: 0 },
-  { house: 5, x: -3.65, z: 2.45, rashiX: -4.35, rashiZ: 1.35 },
-  { house: 6, x: -2.45, z: 3.65, rashiX: -3.95, rashiZ: 4.35 },
-  { house: 7, x: 0, z: 2.35, rashiX: 0, rashiZ: 4.15 },
-  { house: 8, x: 2.45, z: 3.65, rashiX: 3.95, rashiZ: 4.35 },
-  { house: 9, x: 3.65, z: 2.45, rashiX: 4.35, rashiZ: 1.35 },
-  { house: 10, x: 2.35, z: 0, rashiX: 4.15, rashiZ: 0 },
-  { house: 11, x: 3.65, z: -2.45, rashiX: 4.35, rashiZ: -1.35 },
-  { house: 12, x: 2.45, z: -3.65, rashiX: 3.95, rashiZ: -4.35 },
+  { house: 1, x: 0, z: -2.25, rashiX: 0, rashiZ: -4.1 },
+  { house: 2, x: -2.4, z: -3.95, rashiX: -2.4, rashiZ: -2.85 },
+  { house: 3, x: -3.75, z: -2.4, rashiX: -2.85, rashiZ: -2.4 },
+  { house: 4, x: -2.25, z: 0, rashiX: -4.1, rashiZ: 0 },
+  { house: 5, x: -3.75, z: 2.4, rashiX: -2.85, rashiZ: 2.4 },
+  { house: 6, x: -2.4, z: 3.95, rashiX: -2.4, rashiZ: 2.85 },
+  { house: 7, x: 0, z: 2.25, rashiX: 0, rashiZ: 4.1 },
+  { house: 8, x: 2.4, z: 3.95, rashiX: 2.4, rashiZ: 2.85 },
+  { house: 9, x: 3.75, z: 2.4, rashiX: 2.85, rashiZ: 2.4 },
+  { house: 10, x: 2.25, z: 0, rashiX: 4.1, rashiZ: 0 },
+  { house: 11, x: 3.75, z: -2.4, rashiX: 2.85, rashiZ: -2.4 },
+  { house: 12, x: 2.4, z: -3.95, rashiX: 2.4, rashiZ: -2.85 },
 ];
 
 const SOUTH_3D_CELLS = [
@@ -85,10 +85,11 @@ function createPlanetClusterBadgeTexture(
   planets: ThreeFormattedPlanet[],
   showDegrees: boolean,
   fontScale: 'large' | 'xlarge',
-  maxAnisotropy: number
+  maxAnisotropy: number,
+  stackVertically = false
 ): { texture: THREE.CanvasTexture; aspect: number } {
   const canvas = document.createElement('canvas');
-  const cols = planets.length > 2 ? 2 : 1;
+  const cols = stackVertically ? 1 : planets.length > 2 ? 2 : 1;
   const rows = Math.ceil(planets.length / cols);
 
   const cellW = fontScale === 'xlarge' ? 380 : 340;
@@ -523,7 +524,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         isLagna: boolean,
         px: number,
         pz: number,
-        pList: ThreeFormattedPlanet[]
+        pList: ThreeFormattedPlanet[],
+        stackVertically = false
       ) => {
         // 3D Rashi Medallion Pedestal
         const medGeo = new THREE.CylinderGeometry(0.42, 0.48, 0.16, 20);
@@ -597,7 +599,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
           pList,
           degOn,
           fScale,
-          maxAnisotropy
+          maxAnisotropy,
+          stackVertically
         );
         disposableTextures.push(badgeTex);
 
@@ -609,9 +612,14 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         disposableMaterials.push(badgeMat);
 
         const badgeSprite = new THREE.Sprite(badgeMat);
-        const rows = Math.ceil(pList.length / (pList.length > 2 ? 2 : 1));
-        const baseHeight = (fScale === 'xlarge' ? 0.72 : 0.62) * (0.76 + rows * 0.42);
-        badgeSprite.scale.set(baseHeight * aspect, baseHeight, 1);
+        const cols = stackVertically ? 1 : pList.length > 2 ? 2 : 1;
+        const rows = Math.ceil(pList.length / cols);
+        const baseHeight = (fScale === 'xlarge' ? 0.64 : 0.56) * (0.72 + rows * 0.36);
+        const maxWidth = stackVertically ? 1.75 : 2.35;
+        const rawWidth = baseHeight * aspect;
+        const clampedWidth = Math.min(maxWidth, rawWidth);
+        const finalHeight = rawWidth > maxWidth ? clampedWidth / aspect : baseHeight;
+        badgeSprite.scale.set(clampedWidth, finalHeight, 1);
         badgeSprite.position.set(px, 0.94 + (rows > 1 ? 0.12 : 0), pz);
         badgeSprite.renderOrder = 15;
         chartRootGroup.add(badgeSprite);
@@ -638,7 +646,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
           const signNum = signIdx + 1;
           const rashiName = RASHIS[signIdx] || '';
           const pList = hPlanets[house] || [];
-          populateChamber(rashiX, rashiZ, signNum, rashiName, house === 1, x, z, pList);
+          const isVerticalSide = house === 3 || house === 5 || house === 9 || house === 11;
+          populateChamber(rashiX, rashiZ, signNum, rashiName, house === 1, x, z, pList, isVerticalSide);
         });
       } else {
         // South Indian 4x4 3D Temple Grid Walls

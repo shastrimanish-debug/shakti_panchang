@@ -19,22 +19,23 @@ interface HouseCoord {
   cy: number;
   numX: number;
   numY: number;
-  shapeType: string;
+  shapeType: 'center-diamond' | 'side-diamond' | 'top-triangle' | 'bottom-triangle' | 'left-triangle' | 'right-triangle';
+  clipPoints: string;
 }
 
 const NORTH_HOUSE_COORDS: HouseCoord[] = [
-  { house: 1, cx: 180, cy: 78, numX: 180, numY: 27, shapeType: 'center-diamond' },
-  { house: 2, cx: 96, cy: 46, numX: 34, numY: 22, shapeType: 'top-triangle' },
-  { house: 3, cx: 48, cy: 96, numX: 22, numY: 74, shapeType: 'corner-triangle' },
-  { house: 4, cx: 84, cy: 180, numX: 27, numY: 180, shapeType: 'side-triangle' },
-  { house: 5, cx: 48, cy: 264, numX: 22, numY: 286, shapeType: 'corner-triangle' },
-  { house: 6, cx: 96, cy: 314, numX: 34, numY: 338, shapeType: 'bottom-triangle' },
-  { house: 7, cx: 180, cy: 282, numX: 180, numY: 333, shapeType: 'center-diamond' },
-  { house: 8, cx: 264, cy: 314, numX: 326, numY: 338, shapeType: 'bottom-triangle' },
-  { house: 9, cx: 312, cy: 264, numX: 338, numY: 286, shapeType: 'corner-triangle' },
-  { house: 10, cx: 276, cy: 180, numX: 333, numY: 180, shapeType: 'side-triangle' },
-  { house: 11, cx: 312, cy: 96, numX: 338, numY: 74, shapeType: 'corner-triangle' },
-  { house: 12, cx: 264, cy: 46, numX: 326, numY: 22, shapeType: 'top-triangle' },
+  { house: 1, cx: 180, cy: 105, numX: 180, numY: 29, shapeType: 'center-diamond', clipPoints: '180,15 261,96 180,177 99,96' },
+  { house: 2, cx: 96, cy: 34, numX: 96, numY: 77, shapeType: 'top-triangle', clipPoints: '16,14 176,14 96,93' },
+  { house: 3, cx: 17, cy: 96, numX: 77, numY: 96, shapeType: 'left-triangle', clipPoints: '14,16 93,96 14,176' },
+  { house: 4, cx: 104, cy: 180, numX: 29, numY: 180, shapeType: 'side-diamond', clipPoints: '96,99 177,180 96,261 15,180' },
+  { house: 5, cx: 17, cy: 264, numX: 77, numY: 264, shapeType: 'left-triangle', clipPoints: '14,184 93,264 14,344' },
+  { house: 6, cx: 96, cy: 326, numX: 96, numY: 283, shapeType: 'bottom-triangle', clipPoints: '16,346 96,267 176,346' },
+  { house: 7, cx: 180, cy: 255, numX: 180, numY: 331, shapeType: 'center-diamond', clipPoints: '180,183 261,264 180,345 99,264' },
+  { house: 8, cx: 264, cy: 326, numX: 264, numY: 283, shapeType: 'bottom-triangle', clipPoints: '184,346 264,267 344,346' },
+  { house: 9, cx: 343, cy: 264, numX: 283, numY: 264, shapeType: 'right-triangle', clipPoints: '346,184 346,344 267,264' },
+  { house: 10, cx: 256, cy: 180, numX: 331, numY: 180, shapeType: 'side-diamond', clipPoints: '264,99 345,180 264,261 183,180' },
+  { house: 11, cx: 343, cy: 96, numX: 283, numY: 96, shapeType: 'right-triangle', clipPoints: '346,16 346,176 267,96' },
+  { house: 12, cx: 264, cy: 34, numX: 264, numY: 77, shapeType: 'top-triangle', clipPoints: '184,14 344,14 264,93' },
 ];
 
 const SOUTH_SIGNS = [
@@ -249,6 +250,11 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                     <stop offset="55%" stopColor="#F5C869" />
                     <stop offset="100%" stopColor="#B87314" />
                   </radialGradient>
+                  {NORTH_HOUSE_COORDS.map(({ house, clipPoints }) => (
+                    <clipPath key={`clip-${house}`} id={`hclip-${uid}-${house}`}>
+                      <polygon points={clipPoints} />
+                    </clipPath>
+                  ))}
                 </defs>
 
                 {/* 3D Stepped Temple Outer Frame */}
@@ -340,47 +346,53 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                   strokeWidth="1.8"
                 />
 
-                {NORTH_HOUSE_COORDS.map(({ house, cx, cy, numX, numY }) => {
+                {NORTH_HOUSE_COORDS.map(({ house, cx, cy, numX, numY, shapeType }) => {
                   const signNum = ((ascSignIdx + house - 1) % 12) + 1;
                   const pList = housePlanets[house] || [];
                   const isLagna = house === 1;
+                  const isOuterTriangle =
+                    shapeType === 'top-triangle' ||
+                    shapeType === 'bottom-triangle' ||
+                    shapeType === 'left-triangle' ||
+                    shapeType === 'right-triangle';
+                  const medRadius = isOuterTriangle ? 10 : 11.5;
 
                   return (
                     <g key={house}>
                       {isLagna && (
                         <text
                           x={cx}
-                          y={49}
+                          y={50}
                           textAnchor="middle"
                           fill="#9A3412"
-                          fontSize="12.5"
+                          fontSize="11.5"
                           fontWeight="900"
                           fontFamily="'Tiro Devanagari Hindi', system-ui, sans-serif"
                           style={{
                             paintOrder: 'stroke fill',
                             stroke: '#FFFDF8',
-                            strokeWidth: '3.2px',
+                            strokeWidth: '3px',
                           }}
                         >
                           ॥ लग्न ॥
                         </text>
                       )}
 
-                      {/* 3D Rashi Number Gold Medallion */}
+                      {/* 3D Rashi Number Gold Medallion at Inner Apex */}
                       <g>
                         <circle
                           cx={numX}
-                          cy={numY + 1.5}
-                          r="12.5"
-                          fill="rgba(74, 33, 9, 0.28)"
+                          cy={numY + 1.2}
+                          r={medRadius}
+                          fill="rgba(74, 33, 9, 0.25)"
                         />
                         <circle
                           cx={numX}
                           cy={numY}
-                          r="12.5"
+                          r={medRadius}
                           fill={isLagna ? '#9A3412' : `url(#medallion-${uid})`}
                           stroke={isLagna ? '#FDE68A' : '#4A2109'}
-                          strokeWidth="1.8"
+                          strokeWidth="1.6"
                         />
                         <text
                           x={numX}
@@ -388,7 +400,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill={isLagna ? '#FFF3C4' : '#2A1205'}
-                          fontSize="13.5"
+                          fontSize={isOuterTriangle ? '11.5' : '12.5'}
                           fontWeight="900"
                           fontFamily="serif"
                         >
@@ -396,33 +408,115 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                         </text>
                       </g>
 
-                      {/* Large High-Contrast Planets inside House */}
+                      {/* Strictly Contained High-Contrast Planets inside House */}
                       {pList.length > 0 && (
-                        <g transform={`translate(${cx}, ${cy})`}>
+                        <g clipPath={`url(#hclip-${uid}-${house})`}>
                           {pList.map((p, idx) => {
                             const n = pList.length;
-                            const cols = n > 2 ? 2 : 1;
-                            const rows = Math.ceil(n / cols);
-                            const col = idx % cols;
-                            const row = Math.floor(idx / cols);
-                            const rowH = n > 4 ? 17 : n > 2 ? 19.5 : 22;
-                            const colW = showDegrees ? 54 : 45;
-                            const offsetX = (col - (cols - 1) / 2) * colW;
-                            const offsetY = (row - (rows - 1) / 2) * rowH;
+                            let targetX = cx;
+                            let targetY = cy;
+                            let anchor: 'start' | 'middle' | 'end' = 'middle';
+                            let size = 14.5;
+                            let degSize = 11;
+
+                            if (shapeType === 'left-triangle' || shapeType === 'right-triangle') {
+                              // Vertical side triangles (Houses 3, 5, 9, 11):
+                              // Align neatly along the straight outer vertical wall and stack in 1 column
+                              anchor = shapeType === 'left-triangle' ? 'start' : 'end';
+                              targetX = cx;
+                              const rowH = n >= 5 ? 11.5 : n === 4 ? 13 : n === 3 ? 15 : 17;
+                              targetY = cy + (idx - (n - 1) / 2) * rowH;
+                              size = n >= 5 ? 10.5 : n === 4 ? 11.5 : n === 3 ? 12.5 : n === 2 ? 13.5 : 14.5;
+                              degSize = n >= 5 ? 8.5 : n === 4 ? 9.2 : n === 3 ? 10 : 10.8;
+                            } else if (shapeType === 'top-triangle') {
+                              // Top horizontal triangles (Houses 2, 12): widest near top border (y=24..28), narrower below (y=43..45)
+                              if (n === 1) {
+                                targetX = cx;
+                                targetY = 34;
+                                size = 15;
+                                degSize = 11.5;
+                              } else if (n === 2) {
+                                targetX = cx + (idx === 0 ? -26 : 26);
+                                targetY = 31;
+                                size = 13.5;
+                                degSize = 10.2;
+                              } else if (n === 3) {
+                                if (idx < 2) {
+                                  targetX = cx + (idx === 0 ? -27 : 27);
+                                  targetY = 27;
+                                } else {
+                                  targetX = cx;
+                                  targetY = 44;
+                                }
+                                size = 12.8;
+                                degSize = 10;
+                              } else {
+                                const col = idx % 2;
+                                const row = Math.floor(idx / 2);
+                                const spread = row === 0 ? 27 : 20;
+                                targetX = cx + (col === 0 ? -spread : spread);
+                                targetY = 25 + row * 15;
+                                size = n > 4 ? 11 : 12;
+                                degSize = n > 4 ? 9 : 9.6;
+                              }
+                            } else if (shapeType === 'bottom-triangle') {
+                              // Bottom horizontal triangles (Houses 6, 8): widest near bottom border (y=332..335), narrower above (y=315..317)
+                              if (n === 1) {
+                                targetX = cx;
+                                targetY = 326;
+                                size = 15;
+                                degSize = 11.5;
+                              } else if (n === 2) {
+                                targetX = cx + (idx === 0 ? -26 : 26);
+                                targetY = 329;
+                                size = 13.5;
+                                degSize = 10.2;
+                              } else if (n === 3) {
+                                if (idx < 2) {
+                                  targetX = cx + (idx === 0 ? -27 : 27);
+                                  targetY = 333;
+                                } else {
+                                  targetX = cx;
+                                  targetY = 316;
+                                }
+                                size = 12.8;
+                                degSize = 10;
+                              } else {
+                                const col = idx % 2;
+                                const row = Math.floor(idx / 2);
+                                const spread = row === 0 ? 27 : 20;
+                                targetX = cx + (col === 0 ? -spread : spread);
+                                targetY = 335 - row * 15;
+                                size = n > 4 ? 11 : 12;
+                                degSize = n > 4 ? 9 : 9.6;
+                              }
+                            } else {
+                              // Large Kendra Diamonds (Houses 1, 4, 7, 10)
+                              const cols = n > 2 ? 2 : 1;
+                              const rows = Math.ceil(n / cols);
+                              const col = idx % cols;
+                              const row = Math.floor(idx / cols);
+                              const rowH = n > 4 ? 15.5 : n > 2 ? 18 : 20;
+                              const colW = showDegrees ? 48 : 40;
+                              const isLastOdd = cols === 2 && n % 2 === 1 && idx === n - 1;
+                              targetX = cx + (isLastOdd ? 0 : (col - (cols - 1) / 2) * colW);
+                              targetY = cy + (row - (rows - 1) / 2) * rowH;
+                              size = n > 4 ? 12.5 : n > 2 ? 14 : n === 2 ? 15.5 : 17;
+                              degSize = n > 4 ? 10 : n > 2 ? 11 : 12;
+                            }
+
                             const color = p.isRetro
                               ? '#B91C1C'
                               : p.isBenefic
                               ? '#065F46'
                               : '#2A1205';
-                            const size = n > 4 ? 14 : n > 2 ? 15.5 : n === 2 ? 17 : 19;
-                            const degSize = n > 4 ? 11 : n > 2 ? 12 : 13.5;
 
                             return (
                               <text
                                 key={idx}
-                                x={offsetX}
-                                y={offsetY}
-                                textAnchor="middle"
+                                x={targetX}
+                                y={targetY}
+                                textAnchor={anchor}
                                 dominantBaseline="central"
                                 fill={color}
                                 fontSize={size}
@@ -431,7 +525,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                                 style={{
                                   paintOrder: 'stroke fill',
                                   stroke: '#FFFFFF',
-                                  strokeWidth: '3.8px',
+                                  strokeWidth: '3.2px',
                                   strokeLinejoin: 'round',
                                 }}
                               >
@@ -582,22 +676,29 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                         </>
                       )}
                       {pList.length > 0 && (
-                        <g transform={`translate(${centerX}, ${centerY})`}>
+                        <g transform={`translate(${centerX}, ${top + 52})`}>
                           {pList.map((p, idx) => {
                             const n = pList.length;
-                            const rowH = n > 3 ? 15 : 18;
-                            const offsetY = (idx - (n - 1) / 2) * rowH;
+                            const cols = n >= 4 ? 2 : 1;
+                            const rows = Math.ceil(n / cols);
+                            const col = idx % cols;
+                            const row = Math.floor(idx / cols);
+                            const rowH = n >= 4 ? 14 : n === 3 ? 14.5 : 17;
+                            const colW = 38;
+                            const isLastOdd = cols === 2 && n % 2 === 1 && idx === n - 1;
+                            const offsetX = isLastOdd ? 0 : (col - (cols - 1) / 2) * colW;
+                            const offsetY = (row - (rows - 1) / 2) * rowH;
                             const color = p.isRetro
                               ? '#B91C1C'
                               : p.isBenefic
                               ? '#065F46'
                               : '#2A1205';
-                            const size = n > 3 ? 14 : n > 2 ? 15.5 : 17.5;
+                            const size = n >= 4 ? 11.2 : n === 3 ? 12.8 : n === 2 ? 14.5 : 16;
 
                             return (
                               <text
                                 key={idx}
-                                x="0"
+                                x={offsetX}
                                 y={offsetY}
                                 textAnchor="middle"
                                 dominantBaseline="central"
@@ -608,7 +709,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                                 style={{
                                   paintOrder: 'stroke fill',
                                   stroke: '#FFFFFF',
-                                  strokeWidth: '3.5px',
+                                  strokeWidth: '3px',
                                   strokeLinejoin: 'round',
                                 }}
                               >
@@ -617,7 +718,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                                 {showDegrees && (
                                   <tspan
                                     fill="#7C2D12"
-                                    fontSize={n > 3 ? 11.5 : 13}
+                                    fontSize={n >= 4 ? 9.2 : n === 3 ? 10.2 : 11.5}
                                     fontWeight="900"
                                   >
                                     {' '}
@@ -648,14 +749,15 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
           return (
             <div
               key={houseNum}
-              className="rounded-xl overflow-hidden border shadow-2xs text-left"
+              data-zsp-atomic="1"
+              className="rounded-xl border shadow-2xs text-left flex flex-col"
               style={{
                 backgroundColor: '#FFFDF8',
                 borderColor: isLagnaHouse ? '#B45309' : '#D6B377',
               }}
             >
               <div
-                className="px-2.5 py-1 flex items-center justify-between text-[11px] font-bold"
+                className="px-2.5 py-1 rounded-t-[11px] flex items-center justify-between text-[11px] font-bold"
                 style={{
                   background: isLagnaHouse
                     ? 'linear-gradient(90deg, #7C2D12 0%, #9A3412 100%)'
@@ -668,12 +770,12 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                   {signIdx + 1}. {RASHIS[signIdx]}
                 </span>
               </div>
-              <div className="px-2.5 py-1.5 flex flex-wrap items-center gap-1.5">
+              <div className="px-2.5 py-2 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                 {pList.length > 0 ? (
                   pList.map((p, i) => (
                     <span
                       key={i}
-                      className="text-xs sm:text-sm font-black leading-snug"
+                      className="text-xs sm:text-sm font-black leading-normal"
                       style={{
                         color: p.isRetro ? '#B91C1C' : p.isBenefic ? '#065F46' : '#2A1205',
                       }}
@@ -692,7 +794,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                     </span>
                   ))
                 ) : (
-                  <span className="text-xs font-bold text-[#78350F]">लग्न भाव (शांत)</span>
+                  <span className="text-xs font-bold text-[#78350F] leading-normal">लग्न भाव (शांत)</span>
                 )}
               </div>
             </div>
