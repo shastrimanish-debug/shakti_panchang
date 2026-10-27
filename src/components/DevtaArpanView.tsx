@@ -115,8 +115,8 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
     setSpeakingId(id);
     void umaVoice.speak(text, {
       rate: 0.88,
-      pitch: 1.02,
-      voiceStyle: 'pandit',
+      pitch: 1.08,
+      voiceStyle: 'uma',
       sanskritOnly: true,
       onStart: () => setSpeakingId(id),
       onEnd: () => setSpeakingId(null),

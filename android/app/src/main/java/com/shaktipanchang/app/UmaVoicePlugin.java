@@ -448,8 +448,7 @@ public class UmaVoicePlugin extends Plugin {
             return;
         }
         tts.setLanguage(new Locale("hi", "IN"));
-        Voice chosen = sitarWanted ? pickMaleHindiVoice(tts.getVoices()) : pickFemaleHindiVoice(tts.getVoices());
-        if (chosen == null) chosen = pickFemaleHindiVoice(tts.getVoices());
+        Voice chosen = pickFemaleHindiVoice(tts.getVoices());
         if (chosen != null) {
             tts.setVoice(chosen);
         } else {
@@ -458,8 +457,8 @@ public class UmaVoicePlugin extends Plugin {
                 tts.setLanguage(Locale.getDefault());
             }
         }
-        tts.setSpeechRate(sitarWanted ? 0.82f : 0.9f);
-        tts.setPitch(sitarWanted ? 0.82f : 1.0f);
+        tts.setSpeechRate(sitarWanted ? 0.88f : 0.92f);
+        tts.setPitch(1.06f);
         if (sitarWanted) startSitar();
         AudioManager audio = (AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
         if (audio != null) {

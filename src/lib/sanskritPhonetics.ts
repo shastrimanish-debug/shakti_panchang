@@ -1,22 +1,24 @@
 /**
- * Vedic Shiksha & Sanskrit Phonetic Engine (संस्कृत शुद्ध उच्चारण एवं पदच्छेद इंजन)
+ * Vedic Shiksha & Sanskrit Phonetic Engine (संस्कृत शुद्ध उच्चारण एवं पदच्छेद इंजन — NTTS Edition)
  *
- * Solves why standard Hindi TTS (hi-IN) mispronounces Sanskrit Stotrams & Shlokas:
+ * Solves why standard Hindi TTS / NTTS (hi-IN) mispronounces Sanskrit Stotrams & Shlokas:
  * 1. Normalizes Panchama-Varna conjuncts (ङ्ग -> ंग, ङ्क -> ंक, ञ्च -> ंच, ञ्ज -> ंज)
- *    which Hindi TTS otherwise misreads as "ड-ग" / "ड-क" or skips.
- * 2. Applies authentic Paniniya Shiksha Visarga (ः) rules:
+ *    which Hindi models otherwise misread as "ड-ग" / "ड-क" or "इया-च".
+ * 2. Applies authentic Paniniya Shiksha Visarga (ः) rules strictly at word/pada boundaries:
  *    - िः / ीः -> िहि / ीहि (शान्तिः -> शान्तिहि, हरिः -> हरिहि)
- *    - ुः / ूः -> ुहु / ूहु (गुरुः -> गुरुहु, मृत्युः -> मृत्युहु)
+ *    - ुः / ूः -> ुहु / ूहु (गुरुः -> गुरुहु, मृत्युः -> मृत्युहु, इन्दुः -> इन्दुहु)
  *    - ैः -> ैहि (देवैः -> देवैहि)
  *    - ोः -> ोहो (मनसयोः -> मनसयोहो, गुरोः -> गुरोहो)
  *    - ाः -> ाहा (लोकाः -> लोकाहा, देवाः -> देवाहा)
- *    - Inherent अ + ः -> ह् (नमः -> नमह्, शिवः -> शिवह्, भुवः -> भुवह्) with virama
- *      so Hindi TTS cannot delete the preceding vowel (preventing "नम्ह" / "देव्ह").
+ *    - Word-final inherent अ + ः -> ह (नमः -> नमह, शिवः -> शिवह, भुवः -> भुवह)
+ *      without trailing virama so Neural TTS articulates the full preceding 'a' vowel + soft aspirate 'h'
+ *      while preserving medial visargas like दुःख, अन्तःकरण, निःशेष naturally.
  * 3. Converts word-final Anusvara (ं) in Sanskrit verses to labial Makara (म्)
  *    (वरेण्यं -> वरेण्यम्, सुगन्धिं -> सुगंधिम्, सर्वं -> सर्वम्, नित्यं -> नित्यम्).
- * 4. Performs Samasa & Sandhi Padaccheda (पदच्छेद) on long compound Stotram words
- *    (Shiva Tandava, Shiva Mahimna, Panchakshara, Durga Saptashati, Gita) so TTS
- *    articulates every pada with proper Vedic rhythm and caesura (यति).
+ * 4. Performs Samasa & Sandhi Padaccheda (पदच्छेद) on compound Stotram words
+ *    (Shiva Tandava, Shiva Mahimna, Panchakshara, Durga Saptashati, Devi Kavacham, Argala,
+ *    Kunjika, Lingashtakam, Bilvashtakam, Kalabhairava Ashtakam, Gita, Sahasranama)
+ *    so Neural Female TTS articulates every pada with pure Vedic clarity and caesura (यति).
  */
 
 /** Curated Padaccheda (Sandhi & Samasa split) dictionary for famous Stotrams & Shlokas */
@@ -44,8 +46,8 @@ const SAMASA_PADACCHEDA_MAP: Array<[RegExp, string]> = [
   [/सहस्रलोचनप्रभृत्यशेषलेखशेखर-?/g, 'सहस्र-लोचन प्रभृति अशेष-लेख शेखर '],
   [/प्रसूनधूलिधोरणीविधूसराङ्घ्रिपीठभूः/g, 'प्रसून-धूलि धोरणी विधूसर अंघ्रि-पीठ-भूहु'],
   [/भुजङ्गराजमालया/g, 'भुजंग-राज मालया'],
-  [/निबद्धजाटजूटकः/g, 'निबद्ध जाट-जूटकह्'],
-  [/चकोरबन्धुशेखरः/g, 'चकोर-बन्धु शेखरह्'],
+  [/निबद्धजाटजूटकः/g, 'निबद्ध जाट-जूटकह'],
+  [/चकोरबन्धुशेखरः/g, 'चकोर-बन्धु शेखरह'],
 
   // --- Sri Shiva Panchakshara Stotram ---
   [/नागेन्द्रहाराय/g, 'नागेन्द्र हाराय'],
@@ -77,10 +79,10 @@ const SAMASA_PADACCHEDA_MAP: Array<[RegExp, string]> = [
   [/वाङ्मनसयोः/g, 'वांग-मनसयोहो'],
   [/चकितमभिधत्ते/g, 'चकितम् अभिधत्ते'],
   [/श्रुतिरपि/g, 'श्रुतिर् अपि'],
-  [/कतिविधगुणः/g, 'कति-विध गुणह्'],
+  [/कतिविधगुणः/g, 'कति-विध गुणह'],
   [/त्वर्वाचीने/g, 'तु अर्वाचीने'],
   [/परमममृतं/g, 'परमम् अमृतम्'],
-  [/निर्मितवतः/g, 'निर्मितवतह्'],
+  [/निर्मितवतः/g, 'निर्मितवतह'],
   [/सुरगुरोर्विस्मयपदम्/g, 'सुर-गुरोर् विस्मय-पदम्'],
   [/गुणकथनपुण्येन/g, 'गुण-कथन पुण्येन'],
   [/पुनामीत्यर्थेऽस्मिन/g, 'पुनामि इति अर्थे अस्मिन्'],
@@ -95,15 +97,15 @@ const SAMASA_PADACCHEDA_MAP: Array<[RegExp, string]> = [
   [/मनोमोहकमहीम्/g, 'मनो-मोहक महीम्'],
   [/किमुपायस्त्रिभुवनम्/g, 'किम् उपायस् त्रिभुवनम्'],
   [/अतर्क्यैश्वर्ये/g, 'अतर्क्य ऐश्वर्ये'],
-  [/त्वय्यनवसरदुःस्थो/g, 'त्वयि अनवसर दुःस्थो'],
+  [/त्वय्यनवसरदुःस्थो/g, 'त्वयि अनवसर दुःख-स्थो'],
   [/कुतर्कोऽयं/g, 'कुतर्को अयम्'],
   [/किमवयववन्तोऽपि/g, 'किम् अवयववन्तो अपि'],
   [/भवविधिरनादृत्य/g, 'भव-विधिर् अनादृत्य'],
   [/भुवनजनने/g, 'भुवन-जनने'],
-  [/मन्दैस्त्वय्यमर्चितकुधियः/g, 'मन्दैस् त्वयि अमर्चित कुधियह्'],
+  [/मन्दैस्त्वय्यमर्चितकुधियः/g, 'मन्दैस् त्वयि अमर्चित कुधियह'],
   [/पशुपतिमतं/g, 'पशुपति मतम्'],
   [/वैष्णवमिति/g, 'वैष्णवम् इति'],
-  [/परमिदमदः/g, 'परम् इदम् अदह्'],
+  [/परमिदमदः/g, 'परम् इदम् अदह'],
   [/पथ्यमिति/g, 'पथ्यम् इति'],
   [/वैचित्र्यादृजुकुटिल/g, 'वैचित्र्याद् ऋजु-कुटिल'],
   [/नानापथजुषाम्/g, 'नाना-पथ जुषाम्'],
@@ -117,12 +119,12 @@ const SAMASA_PADACCHEDA_MAP: Array<[RegExp, string]> = [
   [/स्मरविषयभूतामभिमुखाः/g, 'स्मर-विषय भूताम् अभिमुखाहा'],
   [/सकलमपरस्त्वध्रुवमिदम्/g, 'सकलम् अपरस् तु अध्रुवम् इदम्'],
   [/समस्तमप्येतद्/g, 'समस्तम् अपि एतद्'],
-  [/विरिञ्चिर्हरिरधः/g, 'विरिंचिर् हरिर् अधह्'],
-  [/यातावनलमनलस्कन्धवपुषः/g, 'यातौ अनलम् अनल-स्कन्ध वपुषह्'],
+  [/विरिञ्चिर्हरिरधः/g, 'विरिंचिर् हरिर् अधह'],
+  [/यातावनलमनलस्कन्धवपुषः/g, 'यातौ अनलम् अनल-स्कन्ध वपुषह'],
   [/भक्तिश्रद्धाभरगुरुगृणद्भ्यां/g, 'भक्ति-श्रद्धा भर-गुरु गृणद्भ्याम्'],
   [/किमनुवृत्तिर्न/g, 'किम् अनुवृत्तिर् न'],
 
-  // --- Sri Shiva Kavacham & Karpuragauram & Mahamrityunjaya ---
+  // --- Sri Shiva Kavacham, Lingashtakam, Bilvashtakam, Daridrya Dahana, Kalabhairava ---
   [/श्रीशिवकवचस्तोत्रमहामन्त्रस्य/g, 'श्री शिव-कवच स्तोत्र महा-मन्त्रस्य'],
   [/सकलपापक्षयार्थे/g, 'सकल पाप क्षयार्थे'],
   [/शिवकवचपाठे/g, 'शिव-कवच पाठे'],
@@ -138,10 +140,65 @@ const SAMASA_PADACCHEDA_MAP: Array<[RegExp, string]> = [
   [/महामणिमुकुटधारणाय/g, 'महा-मणि मुकुट धारणाय'],
   [/माणिक्यभूषणाय/g, 'माणिक्य भूषणाय'],
   [/सृष्टिस्थितिप्रलयकालरौद्रावताराय/g, 'सृष्टि स्थिति प्रलय-काल रौद्र अवताराय'],
-  [/संसारसृष्टighटनापरिवर्तनाय/g, 'संसार सृष्टि घटना परिवर्तनाय'],
-  [/रक्षःपिशाचगणसिद्धसमाकुलाय/g, 'रक्षह् पिशाच गण सिद्ध समाकुलाय'],
+  [/संसारसृष्टिघटनापरिवर्तनाय/g, 'संसार सृष्टि घटना परिवर्तनाय'],
+  [/रक्षःपिशाचगणसिद्धसमाकुलाय/g, 'रक्ष पिशाच गण सिद्ध समाकुलाय'],
   [/सिद्धोरगग्रहगणेन्द्रनिषेविताय/g, 'सिद्ध उरग ग्रह गणेन्द्र निषेविताय'],
   [/शार्दूलचर्मवसनाय/g, 'शार्दूल चर्म वसनाय'],
+  [/ब्रह्ममुरारिसुरार्चितलिङ्गं/g, 'ब्रह्म मुरारि सुरार्चित लिंगम्'],
+  [/निर्मलभासितशोभितलिङ्गम्/g, 'निर्मल भासित शोभित लिंगम्'],
+  [/जन्मजदुःखविनाशकलिङ्गं/g, 'जन्मज दुःख विनाशक लिंगम्'],
+  [/तत्प्रणमामि/g, 'तत् प्रणमामि'],
+  [/सदाशिवलिङ्गम्/g, 'सदा-शिव लिंगम्'],
+  [/देवमुनिप्रवरार्चितलिङ्गं/g, 'देव मुनि प्रवरार्चित लिंगम्'],
+  [/कामदहं/g, 'काम-दहम्'],
+  [/करुणाकरलिङ्गम्/g, 'करुणाकर लिंगम्'],
+  [/रावणदर्पविनाशनलिङ्गं/g, 'रावण दर्प विनाशन लिंगम्'],
+  [/सर्वसुगन्धिसुलेपितलिङ्गं/g, 'सर्व सुगन्धि सुलेपित लिंगम्'],
+  [/बुद्धिविवर्धनकारणलिङ्गम्/g, 'बुद्धि विवर्धन कारण लिंगम्'],
+  [/सिद्धसुरासुरवन्दितलिङ्गं/g, 'सिद्ध सुरासुर वन्दित लिंगम्'],
+  [/कनकमहामणिभूषितलिङ्गं/g, 'कनक महा-मणि भूषित लिंगम्'],
+  [/फणिपतिवेष्टितशोभितलिङ्गम्/g, 'फणि-पति वेष्टित शोभित लिंगम्'],
+  [/दक्षसुयज्ञविनाशनलिङ्गं/g, 'दक्ष सुयज्ञ विनाशन लिंगम्'],
+  [/कुङ्कुमचन्दनलेपितलिङ्गं/g, 'कुंकुम चन्दन लेपित लिंगम्'],
+  [/पङ्कजहारसुशोभितलिङ्गम्/g, 'पंकज हार सुशोभित लिंगम्'],
+  [/सञ्चितपापविनाशनलिङ्गं/g, 'संचित पाप विनाशन लिंगम्'],
+  [/देवगणार्चितसेवितलिङ्गं/g, 'देव-गणार्चित सेवित लिंगम्'],
+  [/भावैर्भक्तिभिरेव/g, 'भावैर् भक्तिभिर् एव'],
+  [/दिनकरकोटिप्रभाकरलिङ्गं/g, 'दिनकर कोटि प्रभाकर लिंगम्'],
+  [/अष्टदलोपरिवेष्टितलिङ्गं/g, 'अष्ट-दलोपरि वेष्टित लिंगम्'],
+  [/सर्वसमुद्भवकारणलिङ्गम्/g, 'सर्व समुद्भव कारण लिंगम्'],
+  [/अष्टदरिद्रविनाशितलिङ्गं/g, 'अष्ट दरिद्र विनाशित लिंगम्'],
+  [/सुरगुरुसुरवरपूजितलिङ्गं/g, 'सुर-गुरु सुर-वर पूजित लिंगम्'],
+  [/सुरवनपुष्पसदार्चितलिङ्गम्/g, 'सुर-वन पुष्प सदार्चित लिंगम्'],
+  [/परात्परं/g, 'परात् परम्'],
+  [/परमात्मकलिङ्गं/g, 'परमात्मक लिंगम्'],
+  [/विश्वेश्वराय/g, 'विश्वेश्वराय'],
+  [/नरकार्णवतारणाय/g, 'नरकार्णव तारणाय'],
+  [/कर्णामृताय/g, 'कर्णामृताय'],
+  [/शशिशेखरधारणाय/g, 'शशि-शेखर धारणाय'],
+  [/कर्पूरकान्तिधवलाय/g, 'कर्पूर कान्ति धवलाय'],
+  [/दारिद्र्यदुःखदहनाय/g, 'दारिद्र्य दुःख दहनाय'],
+  [/गौरीप्रियाय/g, 'गौरी-प्रियाय'],
+  [/रजनीशकलाधराय/g, 'रजनीश कला-धराय'],
+  [/कालान्तकाय/g, 'कालान्तकाय'],
+  [/भुजगाधिपकङ्कणाय/g, 'भुजगाधिप कंकणाय'],
+  [/गङ्गाधराय/g, 'गंगा-धराय'],
+  [/गजराजविमर्दनाय/g, 'गज-राज विमर्दनाय'],
+  [/भक्तिप्रियाय/g, 'भक्ति-प्रियाय'],
+  [/भवपङ्कनिमग्नमुक्तये/g, 'भव-पंक निमग्न मुक्तये'],
+  [/भवभञ्जनकारणाय/g, 'भव-भंजन कारणाय'],
+  [/देवराजसेव्यमानपावनाङ्घ्रिपङ्कजं/g, 'देव-राज सेव्यमान पावनांघ्रि पंकजम्'],
+  [/व्यालयज्ञसूत्रमिन्दुशेखरं/g, 'व्याल यज्ञ-सूत्रम् इन्दु-शेखरम्'],
+  [/नारदादियोगिवृन्दवन्दितं/g, 'नारदादि योगि-वृन्द वन्दितम्'],
+  [/काशिकापुराधिनाथकालभैरवं/g, 'काशिका पुराधिनाथ काल-भैरवम्'],
+  [/भानुकोटिभास्वरं/g, 'भानु-कोटि भास्वरम्'],
+  [/भवाब्धितारकं/g, 'भवाब्धि तारकम्'],
+  [/नीलकण्ठमीप्सितार्थदायकं/g, 'नील-कण्ठम् ईप्सितार्थ दायकम्'],
+  [/त्रिलोचनम्/g, 'त्रिलोचनम्'],
+  [/कालकालमम्बुजाक्षमक्षशूलमक्षरं/g, 'काल-कालम् अम्बुजाक्षम् अक्ष-शूलम् अक्षरम्'],
+  [/त्रिजन्मपापसंहारं/g, 'त्रि-जन्म पाप संहारम्'],
+
+  // --- Karpuragauram & Mahamrityunjaya & Gayatri ---
   [/कर्पूरगौरं/g, 'कर्पूर-गौरम्'],
   [/करुणावतारं/g, 'करुणा-अवतारम्'],
   [/संसारसारं/g, 'संसार-सारम्'],
@@ -150,18 +207,32 @@ const SAMASA_PADACCHEDA_MAP: Array<[RegExp, string]> = [
   [/हृदयारविन्दे/g, 'हृदयारविन्दे'],
   [/भवानीसहितं/g, 'भवानी-सहितम्'],
   [/तत्सवितुर्वरेण्यं/g, 'तत् सवितुर् वरेण्यम्'],
+  [/भर्गो देवस्य धीमहि/g, 'भर्गो देवस्य धीमहि'],
+  [/धियो यो नः प्रचोदयात्/g, 'धियो यो नह प्रचोदयात्'],
+  [/त्र्यम्बकं/g, 'त्र्यम्बकम्'],
+  [/सुगन्धिं/g, 'सुगन्धिम्'],
   [/पुष्टिवर्धनम्/g, 'पुष्टि-वर्धनम्'],
   [/उर्वारुकमिव/g, 'उर्वारुकम् इव'],
+  [/बन्धनान्/g, 'बन्धनात्'],
   [/मृत्योर्मुक्षीय/g, 'मृत्योर् मुक्षीय'],
   [/माऽमृतात्/g, 'मा अमृतात्'],
   [/मामृतात्/g, 'मा अमृतात्'],
 
-  // --- Sri Durga Saptashati & Bhagavad Gita ---
+  // --- Sri Durga Saptashati, Kavach, Argala, Keelak, Kunjika & Bhagavad Gita ---
   [/सर्वमङ्गलमाङ्गल्ये/g, 'सर्व-मंगल मांगल्ये'],
   [/सर्वार्थसाधिके/g, 'सर्वार्थ साधिके'],
   [/नमोऽस्तु/g, 'नमो अस्तु'],
+  [/नमस्तेऽस्तु/g, 'नमस्ते अस्तु'],
   [/शरणागतदीनार्तपरित्राणपरायणे/g, 'शरणागत दीनार्त परित्राण परायणे'],
   [/सर्वस्यार्तिहरे/g, 'सर्वस्य आर्ति-हरे'],
+  [/सौभाग्यमारोग्यं/g, 'सौभाग्यम् आरोग्यम्'],
+  [/परमं सुखम्/g, 'परमम् सुखम्'],
+  [/रूपं देहि जयं देहि/g, 'रूपम् देहि जयम् देहि'],
+  [/यशो देहि द्विषो जहि/g, 'यशो देहि द्विषो जहि'],
+  [/विधेहि द्विषतां नाशं/g, 'विधेहि द्विषताम् नाशम्'],
+  [/बलमुच्चकैः/g, 'बलम् उच्चकैहि'],
+  [/चामुण्डायै विच्चे/g, 'चामुण्डायै विच्चे'],
+  [/कुञ्जिकास्तोत्रमुत्तमम्/g, 'कुंजिका स्तोत्रम् उत्तमम्'],
   [/कर्मण्येवाधिकारस्ते/g, 'कर्मणि एव अधिकारस् ते'],
   [/मा फलेषु कदाचन/g, 'मा फलेषु कदाचन'],
   [/कर्मफलहेतुर्भूर्मा/g, 'कर्म-फल हेतुर् भूर् मा'],
@@ -170,16 +241,41 @@ const SAMASA_PADACCHEDA_MAP: Array<[RegExp, string]> = [
   [/कुरुक्षेत्रे/g, 'कुरु-क्षेत्रे'],
   [/पाण्डवाश्चैव/g, 'पांडवाश् च एव'],
   [/किमकुर्वत/g, 'किम् अकुर्वत'],
+  [/यदा यदा हि धर्मस्य/g, 'यदा यदा हि धर्मस्य'],
+  [/ग्लानिर्भवति भारत/g, 'ग्लानिर् भवति भारत'],
+  [/अभ्युत्थानमधर्मस्य/g, 'अभ्युत्थानम् अधर्मस्य'],
+  [/तदात्मानं सृजाम्यहम्/g, 'तदा आत्मानम् सृजामि अहम्'],
+  [/परित्राणाय साधूनां/g, 'परित्राणाय साधूनाम्'],
+  [/विनाशाय च दुष्कृताम्/g, 'विनाशाय च दुष्कृताम्'],
+  [/धर्मसंस्थापनार्थाय/g, 'धर्म संस्थापनार्थाय'],
+  [/सम्भवामि युगे युगे/g, 'संभवामि युगे युगे'],
+
+  // --- Ganesh, Vishnu & Lakshmi Stotrams ---
+  [/स्मरेन्नित्यमायुःकामार्थसिद्धये/g, 'स्मरेत् नित्यम् आयुह कामार्थ सिद्धये'],
+  [/प्रणम्य शिरसा देवं/g, 'प्रणम्य शिरसा देवम्'],
+  [/गौरीपुत्रं विनायकम्/g, 'गौरी-पुत्रम् विनायकम्'],
+  [/भक्तावासं/g, 'भक्तावासम्'],
+  [/शान्ताकारं भुजगशयनं/g, 'शान्ताकारम् भुजग-शयनम्'],
+  [/पद्मनाभं सुरेशं/g, 'पद्म-नाभम् सुरेशम्'],
+  [/विश्वाधारं गगनसदृशं/g, 'विश्वाधारम् गगन-सदृशम्'],
+  [/मेघवर्णं शुभाङ्गम्/g, 'मेघ-वर्णम् शुभांगम्'],
+  [/लक्ष्मीकान्तं कमलनयनं/g, 'लक्ष्मी-कान्तम् कमल-नयनम्'],
+  [/योगिभिर्ध्यानगम्यम्/g, 'योगिभिर् ध्यान-गम्यम्'],
+  [/वन्दे विष्णुं भवभयहरं/g, 'वन्दे विष्णुम् भव-भय-हरम्'],
+  [/सर्वलोकैकनाथम्/g, 'सर्व-लोकैक-नाथम्'],
 ];
 
 /**
  * Splits any remaining ultra-long Devanagari compound words (> 15 chars)
- * at natural Sanskrit stem boundaries so TTS never chokes on giant tokens.
+ * at natural Sanskrit stem boundaries so NTTS never chokes on giant tokens.
  */
 function splitLongSanskritCompounds(text: string): string {
-  return text.replace(/[\u0900-\u097F]{16,}/g, (word) => {
+  return text.replace(/[\u0900-\u097F]{15,}/g, (word) => {
     return word
-      .replace(/(सर्व|महा|परम|सकल|संसार|त्रैलोक्य|चरण|कमल|मण्डल|प्रवाह|विलास|सुपूजित|नाशक|लोचन|शेखर|भूषण|स्वरूप|मन्दिर|भक्त|कल्याण)(?=[\u0915-\u0939])/g, '$1 ')
+      .replace(
+        /(सर्व|महा|परम|सकल|संसार|त्रैलोक्य|चरण|कमल|मण्डल|प्रवाह|विलास|सुपूजित|नाशक|लोचन|शेखर|भूषण|स्वरूप|मन्दिर|भक्त|कल्याण|विनाश|कारण|शोभित|वन्दित|सेवित|पूजित|लेपित|धारण|अवतार)(?=[\u0915-\u0939])/g,
+        '$1 '
+      )
       .trim();
   });
 }
@@ -202,16 +298,19 @@ export function extractPureSanskritVerse(raw: string): string {
 export function formatPadacchedaGuide(raw: string): string {
   let text = extractPureSanskritVerse(raw);
   text = text
-    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "॥")
-    .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, "");
-  text = text.replace(/ऽ/g, " अ");
+    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, '॥')
+    .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, '');
+  text = text.replace(/ऽ/g, ' अ');
+  for (const [pattern, replacement] of SAMASA_PADACCHEDA_MAP) {
+    text = text.replace(pattern, replacement);
+  }
   text = splitLongSanskritCompounds(text);
-  return text.replace(/[ \t]+/g, " ").trim();
+  return text.replace(/[ \t]+/g, ' ').trim();
 }
 
 /**
  * Converts a Sanskrit or Hindi devotional text into 100% Phonetic Devanagari
- * tuned for crystal-clear Vedic pronunciation by TTS engines.
+ * tuned for crystal-clear Vedic pronunciation by Neural Female TTS (NTTS) engines.
  */
 export function toVedicPhoneticSpeech(
   rawText: string,
@@ -220,14 +319,16 @@ export function toVedicPhoneticSpeech(
   const baseText = options?.sanskritOnly ? extractPureSanskritVerse(rawText) : rawText;
 
   let text = baseText
-    // Strip markdown & numbering
+    // Strip markdown & verse numbering so numbers are never spoken in the middle of a stotra
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1')
     .replace(/#{1,6}\s?/g, '')
     .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
-    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, '। ')
+    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, ' । ')
+    .replace(/।\s*[\u0966-\u096F\d]+\s*।/g, ' । ')
     .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, '')
-    .replace(/^(श्लोक|चौपाई|दोहा|सोरठा|पद|छन्द|अध्याय)\s*#?\s*[\u0966-\u096F\d]+[\:\-\s]*/gim, '');
+    .replace(/^(श्लोक|चौपाई|दोहा|सोरठा|पद|छन्द|अध्याय|मन्त्र)\s*#?\s*[\u0966-\u096F\d]+[\:\-\s]*/gim, '')
+    .replace(/\b(श्लोक|चौपाई|दोहा|सोरठा|पद|छन्द)\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, '');
 
   // 1. Apply Curated Samasa Padaccheda
   for (const [pattern, replacement] of SAMASA_PADACCHEDA_MAP) {
@@ -238,18 +339,18 @@ export function toVedicPhoneticSpeech(
   text = splitLongSanskritCompounds(text);
 
   // 3. Fix Panchama-Varna Conjuncts (ङ्ग -> ंग, ङ्क -> ंक, ञ्च -> ंच, ञ्ज -> ंज)
-  // Prevents Google/Android Hindi TTS from reading ङ्ग as "ड-ग" or ञ्च as "इया-च"
+  // Prevents Hindi TTS models from reading ङ्ग as "ड-ग" or ञ्च as "इया-च"
   text = text
     .replace(/[ङञ]्(?=[कखगघचछजझ])/g, 'ं')
     .replace(/वाङ्मनस/g, 'वांग-मनस')
+    .replace(/वाङ्मय/g, 'वांग-मय')
     .replace(/दिङ्मण्डल/g, 'दिंग-मण्डल')
     .replace(/षड्दर्शन/g, 'षड्-दर्शन');
 
   // 4. Sacred Bija Mantras & Pranava (ॐ)
   text = text
-    .replace(/ॐ/g, ' ओऽम् ')
+    .replace(/ॐ/g, ' ओम् ')
     .replace(/ॠ/g, 'री')
-    .replace(/ऋ/g, 'रि')
     .replace(/ह्रीं/g, 'ह्रीम्')
     .replace(/क्लीं/g, 'क्लीम्')
     .replace(/श्रीं/g, 'श्रीम्')
@@ -257,42 +358,49 @@ export function toVedicPhoneticSpeech(
     .replace(/क्रों/g, 'क्रोम्')
     .replace(/दूं/g, 'दूम्')
     .replace(/हौं/g, 'हौम्')
-    .replace(/जूं/g, 'जूम्');
+    .replace(/जूं/g, 'जूम्')
+    .replace(/ग्लौं/g, 'ग्लौम्');
 
-  // 5. Authentic Paniniya Shiksha Visarga (ः) Transformation:
-  // Echo vowel for non-a matras; halant ह् for inherent 'a' so preceding vowel is NEVER deleted!
+  // 5. Authentic Paniniya Shiksha Visarga (ः) Transformation AT WORD BOUNDARIES ONLY:
+  // Preserves medial visarga words like दुःख, अन्तःकरण, निःशेष without corrupting them,
+  // while articulating word-final visargas with pure Vedic echo resonance.
+  const wordEnd = '(?=\\s|[।॥,.\\-!?\n]|$)';
   text = text
-    .replace(/िः/g, 'िहि')
-    .replace(/ीः/g, 'ीहि')
-    .replace(/ुः/g, 'ुहु')
-    .replace(/ूः/g, 'ूहु')
-    .replace(/ृः/g, 'ृहि')
-    .replace(/ेः/g, 'ेहे')
-    .replace(/ैः/g, 'ैहि')
-    .replace(/ोः/g, 'ोहो')
-    .replace(/ौः/g, 'ौहौ')
-    .replace(/ाः(?=\s|[।॥,.\-]|$)/g, 'ाहा')
-    .replace(/ः/g, 'ह्');
+    .replace(new RegExp(`िः${wordEnd}`, 'g'), 'िहि')
+    .replace(new RegExp(`ीः${wordEnd}`, 'g'), 'ीहि')
+    .replace(new RegExp(`ुः${wordEnd}`, 'g'), 'ुहु')
+    .replace(new RegExp(`ूः${wordEnd}`, 'g'), 'ूहु')
+    .replace(new RegExp(`ृः${wordEnd}`, 'g'), 'ृहि')
+    .replace(new RegExp(`ेः${wordEnd}`, 'g'), 'ेहे')
+    .replace(new RegExp(`ैः${wordEnd}`, 'g'), 'ैहि')
+    .replace(new RegExp(`ोः${wordEnd}`, 'g'), 'ोहो')
+    .replace(new RegExp(`ौः${wordEnd}`, 'g'), 'ौहौ')
+    .replace(new RegExp(`ाः${wordEnd}`, 'g'), 'ाहा')
+    // Word-final inherent 'a' + visarga (e.g. नमः -> नमह, शिवः -> शिवह, शेखरः -> शेखरह)
+    .replace(new RegExp(`ः${wordEnd}`, 'g'), 'ह');
 
   // 6. Word-Final Anusvara (ं) -> Labial Makara (म्) in Sanskrit words
-  // (Except common Hindi prose words like में, हैं, मैं, नहीं, करूँ, सिंदूर)
+  // (Except common Hindi prose words like में, हैं, मैं, नहीं, करूँ, सिंदूर, क्यों, जहाँ, वहाँ, यहाँ)
   text = text.replace(
-    /([\u0905-\u0939][\u093E-\u094C]?)ं(?=\s|[।॥,.\-]|$)/g,
+    /([\u0905-\u0939][\u093E-\u094C]?)ं(?=\s|[।॥,.\-!?\n]|$)/g,
     (match, stem) => {
-      if (/^(मे|है|मै|नही|क्यो|जहा|वहा|कहा|यह|वह|तुम|हम|उन्हो|इन्हो)$/.test(stem)) {
+      if (/^(मे|है|मै|नही|क्यो|जहा|वहा|कहा|यह|वह|तुम|हम|उन्हो|इन्हो|किन्हो|जिन्हो|को|मा|बा)$/.test(stem)) {
         return match;
       }
       return `${stem}म्`;
     }
   );
 
-  // 7. Avagraha (ऽ) handling — slight vowel sustain instead of hard stop
-  text = text.replace(/ऽ/g, '');
+  // 7. Avagraha (ऽ) handling — expand sandhi elision into natural vowel sustain
+  text = text
+    .replace(/ोऽ/g, 'ो अ')
+    .replace(/ेऽ/g, 'े अ')
+    .replace(/ऽ/g, '');
 
   // 8. Punctuation & Caesura (यति) Pauses for rhythmic chanting
   text = text
-    .replace(/॥+/g, '। ')
-    .replace(/।/g, ', ')
+    .replace(/॥+/g, ' । ')
+    .replace(/।+/g, ' । ')
     .replace(/-/g, ' ')
     .replace(/[ \t]+/g, ' ')
     .trim();

@@ -201,8 +201,8 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
 
     const textToSpeak = `${item.sanskrit}।\n${item.meaning[langKey] || item.meaning.hi}`;
     void speakUma(textToSpeak, {
-      rate: 0.86,
-      voiceStyle: 'pandit',
+      rate: 0.88,
+      voiceStyle: 'uma',
       sanskritOnly: false,
       raga: item.raga || 'bhairavi',
       onStart: () => {

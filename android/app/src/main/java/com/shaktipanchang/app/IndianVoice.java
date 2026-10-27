@@ -20,10 +20,10 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
-/** Path uses a male Hindi voice. Uma's answers stay on the woman's voice. */
+/** Both Stotra Path and Uma consultations use the melodious Female Neural Voice (hi-IN-SwaraNeural). */
 public final class IndianVoice {
     private static final String TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
-    private static final String PATH_VOICE = "hi-IN-MadhurNeural";
+    private static final String PATH_VOICE = "hi-IN-SwaraNeural";
     private static final String UMA_VOICE = "hi-IN-SwaraNeural";
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
         .connectTimeout(12, TimeUnit.SECONDS)
@@ -35,8 +35,8 @@ public final class IndianVoice {
     public static File synthesize(Context context, String text, boolean pandit, String raga) throws Exception {
         String spoken = text == null ? "" : text.trim();
         if (spoken.isEmpty()) throw new IllegalArgumentException("empty");
-        String name = pandit ? "pathv-" + (raga == null || raga.isEmpty() ? "bhairav" : raga) : "swara";
-        File cached = new File(context.getFilesDir(), "uma-" + name + "-" + cacheKey(spoken) + ".mp3");
+        String name = "swara-ntts-f";
+        File cached = new File(context.getFilesDir(), "uma-ntts-f-" + name + "-" + cacheKey(spoken) + ".mp3");
         if (cached.exists() && cached.length() > 400) return cached;
         byte[] mp3 = request(spoken, pandit, name);
         if (mp3.length < 400) throw new IllegalStateException("no audio");
@@ -67,41 +67,17 @@ public final class IndianVoice {
     private static String yamanSpeak(String text, boolean pandit, String raga) {
         String[] words = text.trim().split("\\s+");
         StringBuilder body = new StringBuilder();
-        if (!pandit) {
-            for (String word : words) {
-                if (!word.isEmpty()) body.append(escape(word)).append(' ');
-            }
-        } else {
-            int[] scale = phraseFor(raga);
-            int group = 0;
-            boolean open = false;
-            int inGroup = 0;
-            for (String word : words) {
-                if (word.isEmpty()) continue;
-                if (inGroup == 0) {
-                    if (open) body.append("</prosody> ");
-                    int step = scale[group % scale.length];
-                    if (step > 2) step = 2;
-                    if (step < -1) step = -1;
-                    group++;
-                    String pitch = (step >= 0 ? "+" : "") + step + "st";
-                    body.append("<prosody pitch='").append(pitch).append("'>");
-                    open = true;
-                } else {
-                    body.append(' ');
-                }
-                body.append(escape(word));
-                inGroup = (inGroup + 1) % 5;
-            }
-            if (open) body.append("</prosody>");
+        for (String word : words) {
+            if (!word.isEmpty()) body.append(escape(word)).append(' ');
         }
-        String voice = pandit ? PATH_VOICE : UMA_VOICE;
-        String lang = pandit ? "hi-IN" : "hi-IN";
-        String rate = pandit ? "-12%" : "-6%";
+        String voice = UMA_VOICE;
+        String lang = "hi-IN";
+        String rate = pandit ? "-10%" : "-6%";
+        String pitch = "+1st";
         return "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='" + lang + "'>"
             + "<voice name='" + voice + "'>"
-            + "<prosody rate='" + rate + "'>"
-            + body
+            + "<prosody rate='" + rate + "' pitch='" + pitch + "'>"
+            + body.toString().trim()
             + "</prosody></voice></speak>";
     }
 
@@ -185,10 +161,8 @@ public final class IndianVoice {
         if (audio.size() >= 400) {
             return audio.toByteArray();
         }
-        if (!pandit) {
-            byte[] fallbackMp3 = requestGoogleNeuralFallback(text);
-            if (fallbackMp3.length >= 400) return fallbackMp3;
-        }
+        byte[] fallbackMp3 = requestGoogleNeuralFallback(text);
+        if (fallbackMp3.length >= 400) return fallbackMp3;
         if (failure.get() != null) throw failure.get();
         throw new Exception("voice synthesis empty");
     }

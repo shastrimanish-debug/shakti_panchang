@@ -15,7 +15,12 @@ import {
   SkipForward,
 } from 'lucide-react';
 import { devotionalAudioEngine } from '../services/devotionalAudioEngine';
-import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
+import {
+  prefetchUmaSpeech,
+  speakUma,
+  stopUmaSpeech,
+  unlockUmaSpeech,
+} from '../lib/umaSpeech';
 import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
 
 /**
@@ -39,7 +44,7 @@ export const DevotionalAudioPlayerView: React.FC<{
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('stream');
+  const [audioSource, setAudioSource] = useState<'stream' | 'speech'>('speech');
   const [sanskritOnly, setSanskritOnly] = useState<boolean>(true);
   const [showPadaccheda, setShowPadaccheda] = useState<boolean>(true);
   const [playError, setPlayError] = useState<string | null>(null);
@@ -115,7 +120,7 @@ export const DevotionalAudioPlayerView: React.FC<{
     };
   }, [stopAllPlayback]);
 
-  // Sequential Verse-by-Verse Speech Reciter (100% Copyright-Free & Pure Vedic Phonetics)
+  // Sequential Verse-by-Verse Neural Female Speech Reciter (NTTS + Pure Vedic Phonetics)
   const speakVerseAtIndex = useCallback(
     (index: number) => {
       if (!isPlayingRef.current || index >= verses.length) {
@@ -133,11 +138,24 @@ export const DevotionalAudioPlayerView: React.FC<{
         }
       }, 80);
 
+      const effectiveRate = Math.max(0.82, playbackRate * 0.90);
       const rawVerse = verses[index] || '';
+
+      // Pre-fetch the next verse's Female Neural TTS audio in the background for instant transition
+      if (index + 1 < verses.length && verses[index + 1]) {
+        void prefetchUmaSpeech(verses[index + 1], {
+          rate: effectiveRate,
+          pitch: 1.08,
+          sanskritOnly,
+          voiceStyle: 'uma',
+        });
+      }
+
       void speakUma(rawVerse, {
-        rate: Math.max(0.76, playbackRate * 0.88),
+        rate: effectiveRate,
+        pitch: 1.08,
         sanskritOnly,
-        voiceStyle: 'pandit',
+        voiceStyle: 'uma',
         raga: ragaForTrack(currentTrack.id),
         onStart: () => {
           if (playGen.current !== generation) return;
@@ -149,7 +167,7 @@ export const DevotionalAudioPlayerView: React.FC<{
             if (playGen.current === generation && isPlayingRef.current) {
               speakVerseAtIndex(index + 1);
             }
-          }, 320);
+          }, 260);
         },
         onError: () => {
           if (playGen.current !== generation) return;
@@ -163,6 +181,7 @@ export const DevotionalAudioPlayerView: React.FC<{
   // Start Speech Recitation with Soft Tanpura Drone
   const startSpeechRecitation = useCallback(
     (startIndex = 0) => {
+      unlockUmaSpeech();
       if (audioRef.current) {
         audioRef.current.pause();
       }
@@ -176,8 +195,9 @@ export const DevotionalAudioPlayerView: React.FC<{
     [speakVerseAtIndex]
   );
 
-  // Play Stream or Fallback Automatically to In-App Vedic Reciter
+  // Play Stream or In-App Female Neural (NTTS) Vedic Reciter
   const handleTogglePlay = () => {
+    unlockUmaSpeech();
     if (isPlaying) {
       stopAllPlayback();
       return;
@@ -187,10 +207,11 @@ export const DevotionalAudioPlayerView: React.FC<{
 
   // Play Specific Verse when user clicks a Shloka card
   const handlePlaySpecificVerse = (idx: number) => {
+    unlockUmaSpeech();
     stopAllPlayback();
     window.setTimeout(() => {
       startSpeechRecitation(idx);
-    }, 60);
+    }, 40);
   };
 
   // Switch Track
@@ -413,9 +434,9 @@ export const DevotionalAudioPlayerView: React.FC<{
               <div className="text-[10px] text-[#D9C4A9] truncate">
                 {isPlaying
                   ? activeVerseIndex >= 0
-                    ? `🔊 श्लोक ${activeVerseIndex + 1} / ${verses.length} का पाठ चल रहा है...`
-                    : '🔊 वैदिक गायन चल रहा है...'
-                  : `${verses.length} श्लोक / छन्द • ${currentTrack.deity}`}
+                    ? `🔊 श्लोक ${activeVerseIndex + 1} / ${verses.length} • NTTS दिव्य महिला स्वर (शुद्ध संस्कृत)...`
+                    : '🔊 NTTS दिव्य महिला स्वर गायन चल रहा है...'
+                  : `${verses.length} श्लोक / छन्द • ${currentTrack.deity} • NTTS महिला स्वर`}
               </div>
             </div>
           </div>
@@ -435,7 +456,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                       ? 'bg-[#B56A00] text-white'
                       : 'text-[#D9C4A9]'
                   }`}
-                  title="पारंपरिक वैदिक पण्डित गायन (Original Chanting)"
+                  title="पारंपरिक वैदिक गायन (Original Chanting)"
                 >
                   🎵 वैदिक गायन
                 </button>
@@ -451,9 +472,9 @@ export const DevotionalAudioPlayerView: React.FC<{
                     ? 'bg-[#B56A00] text-white'
                     : 'text-[#D9C4A9]'
                 }`}
-                title="शुद्ध संस्कृत पदच्छेद उच्चारण + तानपुरा"
+                title="NTTS न्यूरल दिव्य महिला स्वर + शुद्ध संस्कृत पदच्छेद उच्चारण + तानपुरा"
               >
-                🗣 शुद्ध श्लोक उच्चारण
+                🎙️ NTTS • महिला स्वर (शुद्ध संस्कृत)
               </button>
             </div>
 

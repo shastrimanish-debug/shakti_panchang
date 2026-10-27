@@ -1,5 +1,5 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
-import { extractPureSanskritVerse } from "./sanskritPhonetics";
+import { extractPureSanskritVerse, toVedicPhoneticSpeech } from "./sanskritPhonetics";
 import { umaVoice } from "../services/UmaVoiceService";
 
 export interface UmaVoicePlugin {
@@ -27,12 +27,12 @@ function startPathBed() {
     bed.preload = "auto";
   }
   if (bedFade) clearInterval(bedFade);
-  bed.volume = 0.05;
+  bed.volume = 0.04;
   void bed.play().catch(() => {});
   bedFade = setInterval(() => {
     if (!bed) return;
-    bed.volume = Math.min(0.28, bed.volume + 0.03);
-    if (bed.volume >= 0.28 && bedFade) {
+    bed.volume = Math.min(0.22, bed.volume + 0.03);
+    if (bed.volume >= 0.22 && bedFade) {
       clearInterval(bedFade);
       bedFade = null;
     }
@@ -87,7 +87,11 @@ function stripMarkup(text: string): string {
 
 function isSanskritPath(chunk: string): boolean {
   if (/[॥ॐःऽ]/.test(chunk)) return true;
-  if (/(महिम्न|ताण्डव|स्तोत्र|शिवाय|महेश्वराय|दिगम्बराय|धीमहि|प्रचोदयात्|यजामहे|पुष्टिवर्धनम्|माङ्गल्ये|नमोऽस्तु|तस्मै|सर्वभूतेषु)/.test(chunk)) {
+  if (
+    /(महिम्न|ताण्डव|स्तोत्र|शिवाय|महेश्वराय|दिगम्बराय|धीमहि|प्रचोदयात्|यजामहे|पुष्टिवर्धनम्|माङ्गल्ये|नमोऽस्तु|तस्मै|सर्वभूतेषु)/.test(
+      chunk
+    )
+  ) {
     return true;
   }
   const hindi = /(है|हैं|था|थी|का |की |के |में |और |यह |आप |लिए |करें|बता|नहीं|होता|होती|भावार्थ)/;
@@ -95,24 +99,12 @@ function isSanskritPath(chunk: string): boolean {
   return letters > 10 && !hindi.test(chunk);
 }
 
-/** Speak the shloka as written. Rewriting visarga was making the words wrong. */
-function dakshinPath(text: string): string {
-  return text
-    .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, "। ")
-    .replace(/[ \t]+/g, " ")
-    .trim();
-}
-
-function naturalHindi(text: string): string {
-  return text.replace(/[ \t]+/g, " ").trim();
-}
-
 export function buildUmaParts(
   text: string,
   options?: { sanskritOnly?: boolean; rate?: number; pitch?: number }
 ): UmaPart[] {
   const sourceText = options?.sanskritOnly ? extractPureSanskritVerse(text) : text;
-  const clean = stripMarkup(sourceText);
+  const clean = stripMarkup(toVedicPhoneticSpeech(sourceText, { sanskritOnly: options?.sanskritOnly }));
   if (!clean) return [];
   const lines = clean
     .split(/\n+/)
@@ -120,7 +112,7 @@ export function buildUmaParts(
     .filter(Boolean);
   const parts: UmaPart[] = [];
 
-  const yaman = [0.96, 1.0, 1.06, 1.1, 1.06, 1.0, 0.96];
+  const yaman = [1.04, 1.08, 1.12, 1.14, 1.12, 1.08, 1.04];
   let swara = 0;
 
   for (const line of lines) {
@@ -132,22 +124,22 @@ export function buildUmaParts(
         .filter(Boolean);
 
       for (const pada of padas) {
-        const spoken = dakshinPath(pada).slice(0, 500);
+        const spoken = pada.slice(0, 500);
         if (!spoken) continue;
 
         parts.push({
           text: spoken,
-          rate: options?.rate ?? 0.82,
+          rate: options?.rate ?? 0.88,
           pitch: options?.pitch ?? yaman[swara++ % yaman.length],
         });
       }
     } else {
-      const spoken = naturalHindi(line).slice(0, 700);
+      const spoken = line.slice(0, 700);
       if (spoken) {
         parts.push({
           text: spoken,
-          rate: options?.rate ?? 0.9,
-          pitch: options?.pitch ?? 1.02,
+          rate: options?.rate ?? 0.92,
+          pitch: options?.pitch ?? 1.08,
         });
       }
     }
@@ -183,14 +175,24 @@ export interface SpeakOptions {
   onError?: (err?: any) => void;
 }
 
+export async function prefetchUmaSpeech(text: string, options?: SpeakOptions): Promise<void> {
+  return umaVoice.prefetch(text, {
+    rate: options?.rate ?? 0.88,
+    pitch: options?.pitch ?? 1.08,
+    voiceStyle: "uma",
+    sanskritOnly: options?.sanskritOnly,
+    tone: "calm",
+  });
+}
+
 export async function speakUma(text: string, options?: SpeakOptions): Promise<void> {
-  // Always provide serene devotional music bed for stotram & remedy recitation
+  unlockUmaSpeech();
   startPathBed();
 
   isCurrentlySpeaking = true;
   return umaVoice.speak(text, {
-    rate: options?.rate ?? 0.84,
-    pitch: options?.pitch ?? 1.25,
+    rate: options?.rate ?? 0.88,
+    pitch: options?.pitch ?? 1.08,
     voiceStyle: "uma",
     sanskritOnly: options?.sanskritOnly,
     tone: "calm",
@@ -224,4 +226,3 @@ export function stopUmaSpeech() {
 export function isUmaSpeaking(): boolean {
   return umaVoice.isSpeaking() || isCurrentlySpeaking;
 }
-

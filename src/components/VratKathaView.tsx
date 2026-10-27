@@ -75,8 +75,8 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
           ? "desh"
           : "kafi";
     void speakUma(speechContent, {
-      rate: 0.86,
-      voiceStyle: "pandit",
+      rate: 0.88,
+      voiceStyle: "uma",
       sanskritOnly: true,
       raga,
       onStart: () => setIsSpeaking(true),

@@ -64,8 +64,8 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
     setIsSpeaking(true);
     void umaVoice.speak(`${shloka.sanskrit}। ${loc.meaning}`, {
       rate: 0.88,
-      pitch: 1.02,
-      voiceStyle: 'pandit',
+      pitch: 1.08,
+      voiceStyle: 'uma',
       sanskritOnly: true,
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),

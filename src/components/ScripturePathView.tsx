@@ -17,7 +17,7 @@ import {
   Layers,
   Sparkles,
 } from "lucide-react";
-import { speakUma, stopUmaSpeech } from "../lib/umaSpeech";
+import { prefetchUmaSpeech, speakUma, stopUmaSpeech, unlockUmaSpeech } from "../lib/umaSpeech";
 import { openWhatsAppShare } from "../services/umaConsultationPdf";
 import { ShlokaPosterModal, ShlokaPosterData } from "./ShlokaPosterModal";
 
@@ -148,8 +148,18 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
           : title.includes("गीता")
             ? "bhairavi"
             : "bhairav";
+
+    // Pre-fetch next verse NTTS audio in background for seamless recitation
+    if (vIndex + 1 < filteredVerses.length && filteredVerses[vIndex + 1]) {
+      void prefetchUmaSpeech(filteredVerses[vIndex + 1].text, {
+        voiceStyle: "uma",
+        sanskritOnly: true,
+        raga,
+      });
+    }
+
     void speakUma(speechText, {
-      voiceStyle: "pandit",
+      voiceStyle: "uma",
       sanskritOnly: true,
       raga,
       onEnd: () => {
@@ -167,6 +177,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
   };
 
   const handleToggleMasterPlay = () => {
+    unlockUmaSpeech();
     if (isSpeaking) {
       stopAllSpeech();
     } else {

@@ -193,9 +193,9 @@ export const DurgaSaptashatiView: React.FC<{
     const verse = currentVerses[idx];
 
     void speakUma(verse.sanskrit, {
-      rate: 0.85,
+      rate: 0.88,
       sanskritOnly: true,
-      voiceStyle: 'pandit',
+      voiceStyle: 'uma',
       raga: 'bhairavi',
       onStart: () => {
         setIsSpeaking(true);
