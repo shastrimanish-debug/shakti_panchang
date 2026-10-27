@@ -328,15 +328,22 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
     rimLight.position.set(-7, 10, -6);
     scene.add(rimLight);
 
-    // OrbitControls
+    // OrbitControls — keep chart strictly centered during pinch-to-zoom
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
+    controls.enablePan = false;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.1;
     controls.maxPolarAngle = Math.PI / 2.15;
     controls.minPolarAngle = 0.05;
-    controls.minDistance = 7.5;
+    controls.minDistance = 6.2;
     controls.maxDistance = 20;
     controls.target.set(0, 0, 0.25);
+    controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.DOLLY_ROTATE,
+    };
 
     // Soft Warm Temple Floor Halo Plane
     const contactCanvas = document.createElement('canvas');

@@ -1,4 +1,5 @@
-import React, { useState, useId, useMemo } from 'react';
+import React, { useState, useId, useMemo, useRef, useCallback } from 'react';
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { PlanetPosition } from '../types';
 import { RASHIS, calculateVargaSign } from '../services/astronomy';
 import { triggerHapticSelection } from '../utils/haptics';
@@ -69,6 +70,102 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
     defaultRenderMode ?? (allowToggleStyle ? 'three3d' : 'relief3d')
   );
   const [depthMode, setDepthMode] = useState<'sculpted' | 'deep'>('sculpted');
+
+  // Centered Pinch-to-Zoom state (1.0x to 2.5x)
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 2.5;
+  const [zoomScale, setZoomScale] = useState<number>(1);
+  const [isPinching, setIsPinching] = useState<boolean>(false);
+  const pinchStateRef = useRef<{ startDist: number; startScale: number } | null>(null);
+  const lastTapTimeRef = useRef<number>(0);
+
+  const clampZoom = useCallback((val: number) => {
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number(val.toFixed(3))));
+  }, []);
+
+  const handleZoomIn = useCallback(() => {
+    triggerHapticSelection();
+    setZoomScale((prev) => clampZoom(prev + 0.25));
+  }, [clampZoom]);
+
+  const handleZoomOut = useCallback(() => {
+    triggerHapticSelection();
+    setZoomScale((prev) => clampZoom(prev - 0.25));
+  }, [clampZoom]);
+
+  const handleZoomReset = useCallback(() => {
+    triggerHapticSelection();
+    setZoomScale(1);
+  }, []);
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (e.touches.length === 2) {
+        e.stopPropagation();
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 8) {
+          pinchStateRef.current = {
+            startDist: dist,
+            startScale: zoomScale,
+          };
+          setIsPinching(true);
+        }
+      } else if (e.touches.length === 1) {
+        const now = Date.now();
+        if (now - lastTapTimeRef.current < 280) {
+          e.stopPropagation();
+          triggerHapticSelection();
+          setZoomScale((prev) => (prev > 1.08 ? 1 : 1.65));
+          lastTapTimeRef.current = 0;
+        } else {
+          lastTapTimeRef.current = now;
+        }
+      }
+    },
+    [zoomScale]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (e.touches.length === 2 && pinchStateRef.current) {
+        e.stopPropagation();
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        const dist = Math.hypot(dx, dy);
+        if (pinchStateRef.current.startDist > 8) {
+          const ratio = dist / pinchStateRef.current.startDist;
+          const nextScale = clampZoom(pinchStateRef.current.startScale * ratio);
+          setZoomScale(nextScale);
+        }
+      }
+    },
+    [clampZoom]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (pinchStateRef.current) {
+      pinchStateRef.current = null;
+      setIsPinching(false);
+      setZoomScale((prev) => (prev < 1.04 ? 1 : prev));
+    }
+  }, []);
+
+  const handleWheelZoom = useCallback(
+    (e: React.WheelEvent<HTMLDivElement>) => {
+      if (e.ctrlKey || e.metaKey || zoomScale > 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        const delta = e.deltaY < 0 ? 0.15 : -0.15;
+        setZoomScale((prev) => {
+          const next = clampZoom(prev + delta);
+          return next < 1.04 ? 1 : next;
+        });
+      }
+    },
+    [clampZoom, zoomScale]
+  );
 
   const ascSignIdx = useMemo(
     () => calculateVargaSign(lagnaDegree, vargaDivision),
@@ -202,6 +299,40 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
               </button>
             </>
           )}
+
+          {renderMode === 'relief3d' && (
+            <div
+              className="inline-flex items-center rounded-lg border border-[#C88A2B] bg-[#F4E8D1] overflow-hidden"
+              title="चुटकी से ज़ूम करें (Pinch-to-Zoom)"
+            >
+              <button
+                type="button"
+                onClick={handleZoomOut}
+                disabled={zoomScale <= MIN_ZOOM}
+                aria-label="ज़ूम कम करें"
+                className="px-1.5 py-1 text-[#5C2D0C] hover:bg-[#EBDCC0] disabled:opacity-40 transition cursor-pointer"
+              >
+                <ZoomOut className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={handleZoomReset}
+                className="px-1.5 py-0.5 text-[10px] font-black text-[#5C2D0C] border-x border-[#C88A2B]/50 cursor-pointer"
+                title="ज़ूम 100% पर रीसेट करें"
+              >
+                {Math.round(zoomScale * 100)}%
+              </button>
+              <button
+                type="button"
+                onClick={handleZoomIn}
+                disabled={zoomScale >= MAX_ZOOM}
+                aria-label="ज़ूम बढ़ाएँ"
+                className="px-1.5 py-1 text-[#5C2D0C] hover:bg-[#EBDCC0] disabled:opacity-40 transition cursor-pointer"
+              >
+                <ZoomIn className="w-3 h-3" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -216,12 +347,45 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
           onFallback={() => setRenderMode('relief3d')}
         />
       ) : (
-        <div className="bx-chart-stage w-full max-w-[420px]">
+        <div
+          data-zsp-atomic="1"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          onWheel={handleWheelZoom}
+          className="bx-chart-stage w-full max-w-[420px] relative flex items-center justify-center overflow-hidden rounded-2xl"
+          style={{
+            touchAction: zoomScale > 1.01 ? 'none' : 'pan-y',
+          }}
+        >
+          {zoomScale > 1.02 && (
+            <button
+              type="button"
+              onClick={handleZoomReset}
+              className="absolute top-2 right-2 z-20 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black shadow-md border border-[#F59E0B] cursor-pointer"
+              style={{ backgroundColor: 'rgba(62, 31, 13, 0.92)', color: '#FFF3C4' }}
+            >
+              <RotateCcw className="w-2.5 h-2.5" />
+              <span>{Math.round(zoomScale * 100)}% • रीसेट</span>
+            </button>
+          )}
           <div
-            className={`bx-chart-plate w-full aspect-square relative select-none ${
-              depthMode === 'deep' ? 'bx-chart-plate-deep' : ''
-            }`}
+            className="w-full flex items-center justify-center"
+            style={{
+              transform: `scale(${zoomScale})`,
+              transformOrigin: '50% 50%',
+              transition: isPinching
+                ? 'none'
+                : 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1)',
+              willChange: 'transform',
+            }}
           >
+            <div
+              className={`bx-chart-plate w-full aspect-square relative select-none ${
+                depthMode === 'deep' ? 'bx-chart-plate-deep' : ''
+              }`}
+            >
             {chartStyle === 'north' ? (
               <svg
                 viewBox="0 0 360 360"
@@ -735,6 +899,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                 })}
               </svg>
             )}
+            </div>
           </div>
         </div>
       )}
