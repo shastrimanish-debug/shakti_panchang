@@ -136,6 +136,16 @@ export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
     screenTitle: '📕 लाल किताब के 501 उपाय',
   },
   {
+    id: 'ravan_sanhita',
+    title: 'रावण संहिता के 108 सिद्ध महा-उपाय (विस्तृत विधि)',
+    label: 'रावण संहिता (108 उपाय)',
+    pageNumber: 34,
+    chapter: 'रावण संहिता',
+    desc: 'धन, व्यापार, नौकरी, कर्ज-मुक्ति, विवाह, नवग्रह शांति व स्वास्थ्य के 108 संपूर्ण उपाय',
+    icon: Flame,
+    screenTitle: '🔱 रावण संहिता (108 महा-उपाय)',
+  },
+  {
     id: 'upay',
     title: 'चमत्कारी उपाय व लाल किताब',
     label: 'ग्रह उपाय व लाल किताब',
@@ -407,6 +417,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     desc: '501 कम-खर्च, अहानिकर अभ्यास। विधि, सामग्री, समय और सावधानी',
     icon: BookOpen,
     screenTitle: '📕 लाल किताब के 501 उपाय',
+  },
+  {
+    id: 'ravan_sanhita',
+    title: 'रावण संहिता के 108 सिद्ध महा-उपाय (विस्तृत विधि)',
+    label: 'रावण संहिता (108 उपाय)',
+    pageNumber: 34,
+    chapter: 'रावण संहिता',
+    desc: 'धन, व्यापार, नौकरी, कर्ज-मुक्ति, विवाह, नवग्रह शांति व स्वास्थ्य के 108 संपूर्ण उपाय',
+    icon: Flame,
+    screenTitle: '🔱 रावण संहिता (108 महा-उपाय)',
   },
   {
     id: 'upay',
@@ -697,6 +717,12 @@ const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string;
     desc: '501 low-cost practices with method, materials, time and caution',
     screenTitle: '📕 501 Lal Kitab practices',
   },
+  ravan_sanhita: {
+    title: 'Ravan Sanhita — 108 Complete Maha-Upay',
+    label: 'Ravan Sanhita (108)',
+    desc: '108 step-by-step remedies for wealth, business, career, debt relief, marriage & health',
+    screenTitle: '🔱 Ravan Sanhita (108 Upay)',
+  },
   upay: {
     title: 'Planetary Remedies & Lal Kitab Totke',
     label: 'Remedies & Lal Kitab',
@@ -843,6 +869,12 @@ const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string;
     label: 'લાલ કિતાબ (501)',
     desc: '501 ઓછા ખર્ચના અહિંસક અભ્યાસ, વિધિ અને સાવધાની',
     screenTitle: '📕 લાલ કિતાબના 501 ઉપાય',
+  },
+  ravan_sanhita: {
+    title: 'રાવણ સંહિતાના 108 સિદ્ધ મહા-ઉપાય',
+    label: 'રાવણ સંહિતા (108)',
+    desc: 'ધન, વેપાર, નોકરી, કરજ-મુક્તિ, લગ્ન અને સ્વાસ્થ્યના 108 સંપૂર્ણ ઉપાય',
+    screenTitle: '🔱 રાવણ સંહિતા (108 મહા-ઉપાય)',
   },
   upay: {
     title: 'ગ્રહ શાંતિ અને ચમત્કારી ઉપાય',

@@ -421,7 +421,7 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   },
   {
     title: { hi: "जन्म पत्रिका व लाल किताब", en: "Birth chart & Lal Kitab", gu: "જન્મ પત્રિકા અને લાલ કિતાબ" },
-    ids: ["lal_kitab", "kundali", "milan", "prashna", "saral", "shastrokt", "sabar", "numerology", "gemology", "jain_mantras"],
+    ids: ["lal_kitab", "ravan_sanhita", "kundali", "milan", "prashna", "saral", "shastrokt", "sabar", "numerology", "gemology", "jain_mantras"],
   },
   {
     title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },

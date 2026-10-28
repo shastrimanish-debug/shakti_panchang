@@ -13,6 +13,7 @@ import { useLanguage } from '../i18n';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
 import { LalKitabUpayListView } from './LalKitabUpayListView';
 import { SaralUpayPanel } from './SaralUpayPanel';
+import { RavanSanhitaUpayView } from './RavanSanhitaUpayView';
 
 interface UpayViewProps {
   activeKundali: KundaliData | null;
@@ -31,7 +32,7 @@ export const UpayView: React.FC<UpayViewProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
-  const [upayTab, setUpayTab] = useState<'lal_kitab' | 'story_deck' | 'saral_upay'>('lal_kitab');
+  const [upayTab, setUpayTab] = useState<'lal_kitab' | 'ravan_sanhita' | 'story_deck' | 'saral_upay'>('lal_kitab');
 
   const slides: StorySlideItem[] = [
     // Slide 1: Personalized Kundali Upay
@@ -191,45 +192,60 @@ export const UpayView: React.FC<UpayViewProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Mode Switcher: 100 Lal Kitab Remedies | Navagraha Story Deck | 200 Saral Upay */}
+      {/* Uniform Mode Switcher: Lal Kitab | Ravan Sanhita | Navagraha Story Deck | Saral Upay */}
       <div className="flex flex-wrap items-center justify-center p-1 bg-[#462B17] rounded-xl text-xs font-bold border border-[#8C6239]/60 gap-1 shadow-xs">
         <button
           type="button"
           onClick={() => setUpayTab('lal_kitab')}
-          className={`flex-1 min-w-[160px] py-2 px-3 rounded-lg transition cursor-pointer ${
+          className={`flex-1 min-w-[140px] py-2 px-3 rounded-lg transition cursor-pointer ${
             upayTab === 'lal_kitab'
-              ? 'bg-[#7F1D1D] text-amber-100 shadow-xs border border-amber-400/50'
+              ? 'bg-[#6E1409] text-amber-100 shadow-xs border border-amber-400/50'
               : 'text-[#D9C4A9] hover:text-white'
           }`}
         >
-          📕 १. लाल किताब के 501 उपाय
+          📕 १. लाल किताब (501)
+        </button>
+        <button
+          type="button"
+          onClick={() => setUpayTab('ravan_sanhita')}
+          className={`flex-1 min-w-[140px] py-2 px-3 rounded-lg transition cursor-pointer ${
+            upayTab === 'ravan_sanhita'
+              ? 'bg-[#6E1409] text-amber-100 shadow-xs border border-amber-400/50'
+              : 'text-[#D9C4A9] hover:text-white'
+          }`}
+        >
+          🔱 २. रावण संहिता (108)
         </button>
         <button
           type="button"
           onClick={() => setUpayTab('story_deck')}
-          className={`flex-1 min-w-[160px] py-2 px-3 rounded-lg transition cursor-pointer ${
+          className={`flex-1 min-w-[140px] py-2 px-3 rounded-lg transition cursor-pointer ${
             upayTab === 'story_deck'
-              ? 'bg-[#B56A00] text-white shadow-xs'
+              ? 'bg-[#6E1409] text-amber-100 shadow-xs border border-amber-400/50'
               : 'text-[#D9C4A9] hover:text-white'
           }`}
         >
-          🪔 २. नवग्रह व दोष शांति कार्ड
+          🪔 ३. नवग्रह व दोष शांति
         </button>
         <button
           type="button"
           onClick={() => setUpayTab('saral_upay')}
-          className={`flex-1 min-w-[160px] py-2 px-3 rounded-lg transition cursor-pointer ${
+          className={`flex-1 min-w-[140px] py-2 px-3 rounded-lg transition cursor-pointer ${
             upayTab === 'saral_upay'
-              ? 'bg-[#B56A00] text-white shadow-xs'
+              ? 'bg-[#6E1409] text-amber-100 shadow-xs border border-amber-400/50'
               : 'text-[#D9C4A9] hover:text-white'
           }`}
         >
-          📿 ३. सरल उपाय (501)
+          📿 ४. सरल उपाय (501)
         </button>
       </div>
 
       {upayTab === 'lal_kitab' && (
         <LalKitabUpayListView onAskUma={onOpenUmaWithQuery} />
+      )}
+
+      {upayTab === 'ravan_sanhita' && (
+        <RavanSanhitaUpayView onAskUma={onOpenUmaWithQuery} />
       )}
 
       {upayTab === 'story_deck' && (

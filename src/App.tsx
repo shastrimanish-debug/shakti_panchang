@@ -31,6 +31,7 @@ const UpayView = React.lazy(() => import('./components/UpayView').then((m) => ({
 const SaralUpayPanel = React.lazy(() => import('./components/SaralUpayPanel').then((m) => ({ default: m.SaralUpayPanel })));
 const SabarMantraView = React.lazy(() => import('./components/SabarMantraView').then((m) => ({ default: m.SabarMantraView })));
 const ShastroktUpayView = React.lazy(() => import('./components/ShastroktUpayView').then((m) => ({ default: m.ShastroktUpayView })));
+const RavanSanhitaUpayView = React.lazy(() => import('./components/RavanSanhitaUpayView').then((m) => ({ default: m.RavanSanhitaUpayView })));
 const JainMantraView = React.lazy(() => import('./components/JainMantraView').then((m) => ({ default: m.JainMantraView })));
 const NumerologyView = React.lazy(() => import('./components/NumerologyView').then((m) => ({ default: m.NumerologyView })));
 const PalmistryView = React.lazy(() => import('./components/PalmistryView').then((m) => ({ default: m.PalmistryView })));
@@ -335,6 +336,7 @@ export function App() {
           audio_player: 'सुरीला भक्ति संगीत व स्वर पाठ',
           upay: 'ग्रह शांति व चमत्कारी उपाय',
           lal_kitab: 'लाल किताब के 501 उपाय',
+          ravan_sanhita: 'रावण संहिता धन प्राप्ति महा-उपाय',
           vastu: 'वैदिक वास्तु शास्त्र',
           rashifal: 'दैनिक राशिफल',
           gita: 'श्रीमद्भगवद्गीता श्लोक',
@@ -846,6 +848,15 @@ export function App() {
             )}
 
             {activeTab === 'shastrokt' && <ShastroktUpayView />}
+
+            {activeTab === 'ravan_sanhita' && (
+              <RavanSanhitaUpayView
+                onAskUma={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+              />
+            )}
 
             {(activeTab === 'upay' || activeTab === 'lal_kitab') && (
               <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-20">
