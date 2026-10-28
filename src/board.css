@@ -1339,3 +1339,193 @@
   font-weight: 700;
   backdrop-filter: blur(10px);
 }
+
+/* ============================================================================
+ * ROYAL 3D EMBOSSED FRONT PAGE & TACTILE 3D PUSH-BUTTON SYSTEM (v1.0.32)
+ * Gives Front Page tiles, Panchang cards, Verse cards, and all Buttons across
+ * the app authentic 3D depth, golden-copper rim highlights & push-down physics.
+ * ============================================================================ */
+
+/* 1. Front Page Service Tiles & Panchang Fact Cards & Verse Cards (3D Raised Plaques) */
+.board.bx-bento .bx-tile,
+.board.bx-bento .bx-fact,
+.board.bx-bento .bx-verse,
+.board.bx-bento main .bx-verse,
+.board.bx-bento main .bx-fact,
+.board.bx-bento main .bx-tile,
+.board.bx-bento main button.bx-verse,
+.board.bx-bento .bx-kundali {
+  background: linear-gradient(180deg, #fffdf9 0%, #faeedb 100%) !important;
+  border: 1.5px solid #d4a24a !important;
+  border-radius: 18px !important;
+  box-shadow:
+    0 4px 0 #b37d36,
+    0 6px 0 #6e4119,
+    0 12px 20px rgba(42, 18, 8, 0.18),
+    inset 0 2px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px rgba(180, 125, 54, 0.25) !important;
+  transition:
+    transform 0.14s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.14s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.14s ease !important;
+}
+
+/* Interactive 3D Hover Lift for clickable tiles & verse buttons */
+.board.bx-bento .bx-tile:hover,
+.board.bx-bento main button.bx-verse:hover {
+  transform: translateY(-2px);
+  border-color: #b87314 !important;
+  box-shadow:
+    0 6px 0 #b37d36,
+    0 8px 0 #6e4119,
+    0 16px 24px rgba(42, 18, 8, 0.24),
+    inset 0 2px 1px rgba(255, 255, 255, 1) !important;
+}
+
+/* Interactive 3D Tactile Push-Down on Tap/Click */
+.board.bx-bento .bx-tile:active,
+.board.bx-bento main button.bx-verse:active {
+  transform: translateY(3px) !important;
+  box-shadow:
+    0 1px 0 #6e4119,
+    0 3px 6px rgba(42, 18, 8, 0.16),
+    inset 0 1px 2px rgba(92, 52, 22, 0.2) !important;
+}
+
+/* 2. 3D Medallion Icon Box inside Service Tiles */
+.board.bx-bento .bx-tile .bx-tile-icon {
+  width: 32px !important;
+  height: 32px !important;
+  flex: 0 0 32px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #ffe8c2 0%, #f3c878 100%) !important;
+  border: 1px solid #c8892d !important;
+  color: #6e1409 !important;
+  box-shadow:
+    0 2.5px 0 #9a6018,
+    0 4px 7px rgba(58, 29, 16, 0.18),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 3. Top Header Rail & Menu/Navigation 3D Buttons */
+.board.bx-bento .bx-rail {
+  background: linear-gradient(180deg, #fffdf9 0%, #f7e6ce 100%) !important;
+  border-bottom: 2px solid #c8892d !important;
+  box-shadow:
+    0 3px 0 #8a561e,
+    0 8px 18px rgba(42, 18, 8, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.board.bx-bento .bx-menu-btn,
+.board.bx-bento .bx-tabmenu,
+.board.bx-bento .bx-iconbtn,
+.board.bx-bento .bx-navbtn,
+.board.bx-bento .bx-head-btn {
+  background: linear-gradient(180deg, #fffdf8 0%, #f3dfc1 100%) !important;
+  border: 1.5px solid #c8892d !important;
+  color: #3a2010 !important;
+  box-shadow:
+    0 3px 0 #8a561e,
+    0 6px 12px rgba(42, 18, 8, 0.16),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.92) !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+.board.bx-bento .bx-menu-btn:active,
+.board.bx-bento .bx-tabmenu:active,
+.board.bx-bento .bx-iconbtn:active,
+.board.bx-bento .bx-navbtn:active,
+.board.bx-bento .bx-head-btn:active {
+  transform: translateY(2.5px) !important;
+  box-shadow:
+    0 0.5px 0 #8a561e,
+    0 2px 4px rgba(42, 18, 8, 0.14),
+    inset 0 1px 2px rgba(58, 29, 16, 0.15) !important;
+}
+
+/* Solid / Active 3D Nav Button */
+.board.bx-bento .bx-navbtn-solid,
+.board.bx-bento .bx-iconbtn[aria-pressed="true"] {
+  background: linear-gradient(180deg, #9a2414 0%, #6e1409 100%) !important;
+  border: 1.5px solid #e0a04a !important;
+  color: #fff8ee !important;
+  box-shadow:
+    0 3px 0 #3d0803,
+    0 6px 12px rgba(58, 8, 4, 0.28),
+    inset 0 1.5px 0 rgba(255, 225, 180, 0.45) !important;
+}
+
+/* 4. All General Interactive Buttons & Chips inside Modules (3D Push-Buttons) */
+.board.bx-bento main button:not(.bx-tile):not(.bx-verse) {
+  box-shadow:
+    0 3px 0 rgba(92, 52, 22, 0.55),
+    0 6px 10px rgba(42, 18, 8, 0.14),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.45) !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+.board.bx-bento main button:not(.bx-tile):not(.bx-verse):active {
+  transform: translateY(2.5px) !important;
+  box-shadow:
+    0 0.5px 0 rgba(92, 52, 22, 0.55),
+    0 2px 4px rgba(42, 18, 8, 0.12),
+    inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 5. Bottom Navigation Dock 3D Buttons */
+.board.bx-bento .bx-dock {
+  background: linear-gradient(180deg, #fffdf9 0%, #f5e2c6 100%) !important;
+  border-top: 2px solid #c8892d !important;
+  box-shadow:
+    0 -4px 16px rgba(42, 18, 8, 0.12),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.board.bx-bento .bx-dock button {
+  border-radius: 14px;
+  padding: 4px 6px;
+  transition: transform 0.12s ease !important;
+}
+
+.board.bx-bento .bx-dock button:active {
+  transform: translateY(2px) scale(0.96) !important;
+}
+
+.board.bx-bento .bx-dock button[data-on="true"] .bx-tile-icon {
+  background: linear-gradient(180deg, #9a2414 0%, #6e1409 100%) !important;
+  color: #fff8ee !important;
+  border: 1px solid #e0a04a !important;
+  box-shadow:
+    0 2.5px 0 #3d0803,
+    0 5px 10px rgba(58, 8, 4, 0.25),
+    inset 0 1px 0 rgba(255, 225, 180, 0.5) !important;
+}
+
+/* 6. 3D Carved Search Input & Form Fields */
+.board.bx-bento .bx-search input,
+.board.bx-bento main input[type="text"],
+.board.bx-bento main input:not([type]) {
+  background: linear-gradient(180deg, #f9efe0 0%, #ffffff 100%) !important;
+  border: 1.5px solid #c89d66 !important;
+  box-shadow:
+    inset 0 2px 4px rgba(58, 29, 16, 0.12),
+    0 2px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 7. Dark Copper (Tamra) Theme 3D Adjustments */
+.tamra-theme .board.bx-bento .bx-tile,
+.tamra-theme .board.bx-bento .bx-fact,
+.tamra-theme .board.bx-bento .bx-verse,
+.tamra-theme .board.bx-bento main .bx-verse,
+.tamra-theme .board.bx-bento main button.bx-verse {
+  background: linear-gradient(180deg, #2e2017 0%, #1f150f 100%) !important;
+  border-color: #8c5d2b !important;
+  color: #faeedb !important;
+  box-shadow:
+    0 4px 0 #4a2e14,
+    0 6px 0 #120b07,
+    0 12px 22px rgba(0, 0, 0, 0.45),
+    inset 0 1.5px 0 rgba(255, 215, 160, 0.22) !important;
+}
+
