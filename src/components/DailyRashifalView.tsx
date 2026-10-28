@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sun,
   Share2,
@@ -8,15 +8,22 @@ import {
   VolumeX,
   ChevronLeft,
   ChevronRight,
-  Compass,
   ShieldCheck,
   Briefcase,
   Coins,
   Flame,
+  X,
+  Download,
+  CheckCircle2,
+  Loader2,
+  Menu,
 } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { getStoredLocation } from '../services/storage';
 import { buildDailyRashifal, RASHI_META, RashiMetaItem } from '../services/dailyRashifal';
+import { generateHdRashifalCardDataUrl } from '../services/rashifalHdCard';
+import { saveImageNative } from '../lib/device';
+import { shareImageFile } from '../lib/shareHelper';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { triggerHapticSelection } from '../utils/haptics';
 
@@ -100,7 +107,7 @@ export const RashiSvgIcon: React.FC<{
   accentColor = '#F59E0B',
   className = '',
 }) => {
-  const id = rashiId.toLowerCase();
+  const id = (rashiId || 'mesh').toLowerCase();
 
   return (
     <svg
@@ -112,7 +119,6 @@ export const RashiSvgIcon: React.FC<{
       className={className}
       aria-hidden="true"
     >
-      {/* Subtle sacred outer halo ring */}
       <circle
         cx="32"
         cy="32"
@@ -124,415 +130,123 @@ export const RashiSvgIcon: React.FC<{
       />
 
       {id === 'mesh' && (
-        /* 1. मेष (Aries) — Royal Curled Ram Horns + Agni Tilak */
         <g>
-          <path
-            d="M32 50V26"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
-          <path
-            d="M32 28C32 17 20 12 13 19C7 25 9 36 17 38C22 39 25 35 23 30C22 27 18 27 17 30"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M32 28C32 17 44 12 51 19C57 25 55 36 47 38C42 39 39 35 41 30C42 27 46 27 47 30"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M26 44L32 51L38 44"
-            stroke={accentColor}
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M32 50V26" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M32 28C32 17 20 12 13 19C7 25 9 36 17 38C22 39 25 35 23 30C22 27 18 27 17 30" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M32 28C32 17 44 12 51 19C57 25 55 36 47 38C42 39 39 35 41 30C42 27 46 27 47 30" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M26 44L32 51L38 44" stroke={accentColor} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="32" cy="14" r="3" fill={accentColor} />
         </g>
       )}
 
       {id === 'vrishabh' && (
-        /* 2. वृषभ (Taurus) — Sacred Nandi Bull Crest + Crescent Horns */
         <g>
-          <path
-            d="M14 15C14 25 22 30 32 30C42 30 50 25 50 15"
-            stroke={strokeColor}
-            strokeWidth="3.4"
-            strokeLinecap="round"
-          />
-          <path
-            d="M19 28L23 45C25 50 28 52 32 52C36 52 39 50 41 45L45 28"
-            stroke={strokeColor}
-            strokeWidth="3"
-            strokeLinejoin="round"
-          />
-          <circle
-            cx="32"
-            cy="39"
-            r="9.5"
-            stroke={accentColor}
-            strokeWidth="2.2"
-          />
+          <path d="M14 15C14 25 22 30 32 30C42 30 50 25 50 15" stroke={strokeColor} strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M19 28L23 45C25 50 28 52 32 52C36 52 39 50 41 45L45 28" stroke={strokeColor} strokeWidth="3" strokeLinejoin="round" />
+          <circle cx="32" cy="39" r="9.5" stroke={accentColor} strokeWidth="2.2" />
           <circle cx="28" cy="37" r="1.6" fill={strokeColor} />
           <circle cx="36" cy="37" r="1.6" fill={strokeColor} />
-          <path
-            d="M28 45C30 47 34 47 36 45"
-            stroke={strokeColor}
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
+          <path d="M28 45C30 47 34 47 36 45" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
           <circle cx="32" cy="20" r="2.6" fill={accentColor} />
         </g>
       )}
 
       {id === 'mithun' && (
-        /* 3. मिथुन (Gemini) — Twin Vedic Pillars + Veena/Gada Arch */
         <g>
-          <path
-            d="M16 17C24 21 40 21 48 17"
-            stroke={strokeColor}
-            strokeWidth="3.4"
-            strokeLinecap="round"
-          />
-          <path
-            d="M16 47C24 43 40 43 48 47"
-            stroke={strokeColor}
-            strokeWidth="3.4"
-            strokeLinecap="round"
-          />
-          <path
-            d="M25 20V44M39 20V44"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
+          <path d="M16 17C24 21 40 21 48 17" stroke={strokeColor} strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M16 47C24 43 40 43 48 47" stroke={strokeColor} strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M25 20V44M39 20V44" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" />
           <circle cx="25" cy="14" r="2.5" fill={accentColor} />
           <circle cx="39" cy="14" r="2.5" fill={accentColor} />
-          <path
-            d="M32 25L35 32L32 39L29 32L32 25Z"
-            fill={accentColor}
-            fillOpacity="0.85"
-          />
+          <path d="M32 25L35 32L32 39L29 32L32 25Z" fill={accentColor} fillOpacity="0.85" />
         </g>
       )}
 
       {id === 'kark' && (
-        /* 4. कर्क (Cancer) — Vedic Karkata (Crab) + Twin Lunar Spirals */
         <g>
-          <ellipse
-            cx="32"
-            cy="35"
-            rx="11"
-            ry="8.5"
-            stroke={strokeColor}
-            strokeWidth="3"
-          />
-          {/* Raised Claws */}
-          <path
-            d="M23 29C17 25 16 17 22 14C25 13 27 16 25 19"
-            stroke={strokeColor}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M41 29C47 25 48 17 42 14C39 13 37 16 39 19"
-            stroke={strokeColor}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          {/* Symmetrical Legs */}
-          <path
-            d="M21 34L13 32M21 38L13 40M23 41L16 47"
-            stroke={accentColor}
-            strokeWidth="2.4"
-            strokeLinecap="round"
-          />
-          <path
-            d="M43 34L51 32M43 38L51 40M41 41L48 47"
-            stroke={accentColor}
-            strokeWidth="2.4"
-            strokeLinecap="round"
-          />
+          <ellipse cx="32" cy="35" rx="11" ry="8.5" stroke={strokeColor} strokeWidth="3" />
+          <path d="M23 29C17 25 16 17 22 14C25 13 27 16 25 19" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" />
+          <path d="M41 29C47 25 48 17 42 14C39 13 37 16 39 19" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" />
+          <path d="M21 34L13 32M21 38L13 40M23 41L16 47" stroke={accentColor} strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M43 34L51 32M43 38L51 40M41 41L48 47" stroke={accentColor} strokeWidth="2.4" strokeLinecap="round" />
           <circle cx="29" cy="33" r="1.6" fill={strokeColor} />
           <circle cx="35" cy="33" r="1.6" fill={strokeColor} />
         </g>
       )}
 
       {id === 'simh' && (
-        /* 5. सिंह (Leo) — Kesari Lion Mane Crest + Solar Loop */
         <g>
-          {/* Outer Solar Mane */}
-          <path
-            d="M32 11L36 16L42 13L43 19L49 19L47 25L52 29L48 34L51 40L45 42L44 48L38 47L32 52L26 47L20 48L19 42L13 40L16 34L12 29L17 25L15 19L21 19L22 13L28 16L32 11Z"
-            stroke={accentColor}
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          {/* Traditional Leo Emblem inside */}
-          <circle
-            cx="26"
-            cy="35"
-            r="6.5"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-          />
-          <path
-            d="M31 31C33 21 43 21 44 31C45 39 39 44 45 47"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
+          <path d="M32 11L36 16L42 13L43 19L49 19L47 25L52 29L48 34L51 40L45 42L44 48L38 47L32 52L26 47L20 48L19 42L13 40L16 34L12 29L17 25L15 19L21 19L22 13L28 16L32 11Z" stroke={accentColor} strokeWidth="1.8" strokeLinejoin="round" />
+          <circle cx="26" cy="35" r="6.5" stroke={strokeColor} strokeWidth="3.2" />
+          <path d="M31 31C33 21 43 21 44 31C45 39 39 44 45 47" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" />
         </g>
       )}
 
       {id === 'kanya' && (
-        /* 6. कन्या (Virgo) — Sacred Lotus & Grain Sheaf (धान्य मंजरी) */
         <g>
-          {/* Central Lotus Blossom */}
-          <path
-            d="M32 16C27 23 26 32 32 40C38 32 37 23 32 16Z"
-            stroke={strokeColor}
-            strokeWidth="2.8"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M32 40C23 38 17 31 18 23C24 25 28 31 32 40Z"
-            stroke={strokeColor}
-            strokeWidth="2.6"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M32 40C41 38 47 31 46 23C40 25 36 31 32 40Z"
-            stroke={strokeColor}
-            strokeWidth="2.6"
-            strokeLinejoin="round"
-          />
-          {/* Sacred Boat / Kalash Pedestal */}
-          <path
-            d="M16 44C23 50 41 50 48 44"
-            stroke={accentColor}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
+          <path d="M32 16C27 23 26 32 32 40C38 32 37 23 32 16Z" stroke={strokeColor} strokeWidth="2.8" strokeLinejoin="round" />
+          <path d="M32 40C23 38 17 31 18 23C24 25 28 31 32 40Z" stroke={strokeColor} strokeWidth="2.6" strokeLinejoin="round" />
+          <path d="M32 40C41 38 47 31 46 23C40 25 36 31 32 40Z" stroke={strokeColor} strokeWidth="2.6" strokeLinejoin="round" />
+          <path d="M16 44C23 50 41 50 48 44" stroke={accentColor} strokeWidth="3" strokeLinecap="round" />
           <circle cx="32" cy="12" r="2.2" fill={accentColor} />
         </g>
       )}
 
       {id === 'tula' && (
-        /* 7. तुला (Libra) — Royal Dharma Tula (Balance Scales) */
         <g>
-          {/* Central Pillar & Fulcrum */}
-          <path
-            d="M32 13V49M23 49H41"
-            stroke={strokeColor}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          {/* Balance Beam */}
-          <path
-            d="M14 23H50"
-            stroke={strokeColor}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          {/* Left Scale Pan */}
-          <path
-            d="M16 23L12 35H22L18 23"
-            stroke={accentColor}
-            strokeWidth="2.2"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M11 35C11 39 23 39 23 35"
-            stroke={strokeColor}
-            strokeWidth="2.6"
-            strokeLinecap="round"
-          />
-          {/* Right Scale Pan */}
-          <path
-            d="M46 23L42 35H52L48 23"
-            stroke={accentColor}
-            strokeWidth="2.2"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M41 35C41 39 53 39 53 35"
-            stroke={strokeColor}
-            strokeWidth="2.6"
-            strokeLinecap="round"
-          />
+          <path d="M32 13V49M23 49H41" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" />
+          <path d="M14 23H50" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" />
+          <path d="M16 23L12 35H22L18 23" stroke={accentColor} strokeWidth="2.2" strokeLinejoin="round" />
+          <path d="M11 35C11 39 23 39 23 35" stroke={strokeColor} strokeWidth="2.6" strokeLinecap="round" />
+          <path d="M46 23L42 35H52L48 23" stroke={accentColor} strokeWidth="2.2" strokeLinejoin="round" />
+          <path d="M41 35C41 39 53 39 53 35" stroke={strokeColor} strokeWidth="2.6" strokeLinecap="round" />
           <circle cx="32" cy="19" r="3" fill={accentColor} />
         </g>
       )}
 
       {id === 'vrishchik' && (
-        /* 8. वृश्चिक (Scorpio) — Vedic Vrishchik Crest + Raised Arrow Stinger */
         <g>
-          <path
-            d="M15 22V39C15 43 18 45 21 45C24 45 26 43 26 39V22"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
-          <path
-            d="M26 25C26 21 29 20 32 22V39C32 43 35 45 38 45C41 45 44 43 44 38V30"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
-          {/* Raised Stinger Tail */}
-          <path
-            d="M44 38C44 45 51 44 51 35V18"
-            stroke={accentColor}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M46 23L51 16L56 23"
-            stroke={strokeColor}
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M15 22V39C15 43 18 45 21 45C24 45 26 43 26 39V22" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M26 25C26 21 29 20 32 22V39C32 43 35 45 38 45C41 45 44 43 44 38V30" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M44 38C44 45 51 44 51 35V18" stroke={accentColor} strokeWidth="3" strokeLinecap="round" />
+          <path d="M46 23L51 16L56 23" stroke={strokeColor} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
         </g>
       )}
 
       {id === 'dhanu' && (
-        /* 9. धनु (Sagittarius) — Drawn Vedic Kodanda Bow & Aimed Arrow */
         <g>
-          {/* Curved Bow */}
-          <path
-            d="M20 14C39 16 48 25 50 44"
-            stroke={strokeColor}
-            strokeWidth="3.4"
-            strokeLinecap="round"
-          />
-          {/* Bowstring */}
-          <path
-            d="M20 14L16 32L50 44"
-            stroke={accentColor}
-            strokeWidth="2"
-            strokeLinejoin="round"
-          />
-          {/* Arrow Shaft */}
-          <path
-            d="M15 49L49 15"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
-          {/* Arrowhead */}
-          <path
-            d="M39 15H49V25"
-            stroke={strokeColor}
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Feather Fletching */}
-          <path
-            d="M14 44L20 50"
-            stroke={accentColor}
-            strokeWidth="2.6"
-            strokeLinecap="round"
-          />
+          <path d="M20 14C39 16 48 25 50 44" stroke={strokeColor} strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M20 14L16 32L50 44" stroke={accentColor} strokeWidth="2" strokeLinejoin="round" />
+          <path d="M15 49L49 15" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M39 15H49V25" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M14 44L20 50" stroke={accentColor} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       )}
 
       {id === 'makar' && (
-        /* 10. मकर (Capricorn) — Sacred Makara Sea-Goat Crest + Spiraled Tail */
         <g>
-          <path
-            d="M15 20L24 44L32 25L39 42C41 47 47 49 50 44C53 39 49 33 44 35C40 37 41 44 47 47"
-            stroke={strokeColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M15 20C19 14 26 14 29 19"
-            stroke={accentColor}
-            strokeWidth="2.6"
-            strokeLinecap="round"
-          />
+          <path d="M15 20L24 44L32 25L39 42C41 47 47 49 50 44C53 39 49 33 44 35C40 37 41 44 47 47" stroke={strokeColor} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M15 20C19 14 26 14 29 19" stroke={accentColor} strokeWidth="2.6" strokeLinecap="round" />
           <circle cx="32" cy="15" r="2.5" fill={accentColor} />
         </g>
       )}
 
       {id === 'kumbh' && (
-        /* 11. कुंभ (Aquarius) — Sacred Purna Kumbha (Amrit Kalash) + Nectar Waves */
         <g>
-          {/* Kalash Rim & Neck */}
-          <path
-            d="M23 19H41M26 19L24 25H40L38 19"
-            stroke={strokeColor}
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Kalash Body */}
-          <path
-            d="M24 25C17 29 17 41 25 45H39C47 41 47 29 40 25"
-            stroke={strokeColor}
-            strokeWidth="3"
-            strokeLinejoin="round"
-          />
-          {/* Sacred Coconut & Mango Leaves on top */}
+          <path d="M23 19H41M26 19L24 25H40L38 19" stroke={strokeColor} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M24 25C17 29 17 41 25 45H39C47 41 47 29 40 25" stroke={strokeColor} strokeWidth="3" strokeLinejoin="round" />
           <circle cx="32" cy="14" r="3.2" fill={accentColor} />
-          {/* Flowing Amrit Waves below */}
-          <path
-            d="M15 51C20 48 24 54 29 51C34 48 38 54 43 51C46 49 48 50 50 51"
-            stroke={accentColor}
-            strokeWidth="2.6"
-            strokeLinecap="round"
-          />
+          <path d="M15 51C20 48 24 54 29 51C34 48 38 54 43 51C46 49 48 50 50 51" stroke={accentColor} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       )}
 
       {id === 'meen' && (
-        /* 12. मीन (Pisces) — Twin Golden Matsya (Fishes) in Sacred Mandala */
         <g>
-          {/* Left Curved Fish */}
-          <path
-            d="M22 14C13 23 13 41 22 50"
-            stroke={strokeColor}
-            strokeWidth="3.6"
-            strokeLinecap="round"
-          />
-          <path
-            d="M18 17L25 14L23 21"
-            stroke={accentColor}
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Right Curved Fish */}
-          <path
-            d="M42 14C51 23 51 41 42 50"
-            stroke={strokeColor}
-            strokeWidth="3.6"
-            strokeLinecap="round"
-          />
-          <path
-            d="M46 47L39 50L41 43"
-            stroke={accentColor}
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Sacred Cord / Bandhan */}
-          <path
-            d="M14 32H50"
-            stroke={strokeColor}
-            strokeWidth="2.8"
-            strokeLinecap="round"
-          />
+          <path d="M22 14C13 23 13 41 22 50" stroke={strokeColor} strokeWidth="3.6" strokeLinecap="round" />
+          <path d="M18 17L25 14L23 21" stroke={accentColor} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M42 14C51 23 51 41 42 50" stroke={strokeColor} strokeWidth="3.6" strokeLinecap="round" />
+          <path d="M46 47L39 50L41 43" stroke={accentColor} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M14 32H50" stroke={strokeColor} strokeWidth="2.8" strokeLinecap="round" />
           <circle cx="32" cy="32" r="3.2" fill={accentColor} />
         </g>
       )}
@@ -554,7 +268,13 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
     return idx >= 0 ? idx : 0;
   });
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [isSavingHd, setIsSavingHd] = useState<boolean>(false);
+  const [isSharingHd, setIsSharingHd] = useState<boolean>(false);
+  const [hdNotice, setHdNotice] = useState<string | null>(null);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!lagnaRashi) return;
@@ -587,16 +307,33 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
   const handleSelectRashi = (idx: number) => {
     triggerHapticSelection();
     setSelectedRashiIdx(idx);
+    setIsSidebarOpen(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handlePrevRashi = () => {
     triggerHapticSelection();
     setSelectedRashiIdx((prev) => (prev - 1 + RASHI_META.length) % RASHI_META.length);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleNextRashi = () => {
     triggerHapticSelection();
     setSelectedRashiIdx((prev) => (prev + 1) % RASHI_META.length);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Close sidebar on scroll so user has full focus on reading
+  const handleScroll = () => {
+    if (isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const handleToggleVoice = async () => {
@@ -615,7 +352,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
     }
   };
 
-  const handleShare = () => {
+  const handleTextShare = () => {
     triggerHapticSelection();
     const text =
       `🌸 *दैनिक राशिफल - ${activeMeta.name} राशि (${activeMeta.symbol})* 🌸\n` +
@@ -632,94 +369,306 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
     openWhatsAppShare(text);
   };
 
+  const handleSaveHd = async () => {
+    triggerHapticSelection();
+    if (isSavingHd) return;
+    setIsSavingHd(true);
+    setHdNotice(null);
+
+    try {
+      const dataUri = await generateHdRashifalCardDataUrl(activeMeta, live, location.name);
+      const fileName = `shakti-rashifal-${activeMeta.id}-${new Date().toISOString().slice(0, 10)}.png`;
+
+      const savedNative = await saveImageNative(dataUri, fileName);
+      if (!savedNative) {
+        // Web fallback download
+        const res = await fetch(dataUri);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (document.body.contains(a)) document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        }, 1500);
+      }
+
+      setHdNotice(`✓ ${activeMeta.name} राशि का Full HD कार्ड सेव हो गया!`);
+      setTimeout(() => setHdNotice(null), 4000);
+    } catch {
+      setHdNotice('HD कार्ड सेव करने में त्रुटि हुई, पुनः प्रयास करें।');
+    } finally {
+      setIsSavingHd(false);
+    }
+  };
+
+  const handleShareHd = async () => {
+    triggerHapticSelection();
+    if (isSharingHd) return;
+    setIsSharingHd(true);
+    setHdNotice(null);
+
+    try {
+      const dataUri = await generateHdRashifalCardDataUrl(activeMeta, live, location.name);
+      const fileName = `shakti-rashifal-${activeMeta.id}-${new Date().toISOString().slice(0, 10)}.png`;
+      const shareCaption = [
+        `🌸 *दैनिक राशिफल - ${activeMeta.name} राशि (${activeMeta.symbol})* 🌸`,
+        `📅 ${live.dateLabel} | ${live.chandraBal}`,
+        `🪐 ${live.rashiLordStatus}`,
+        `✨ *सामान्य फल:* ${live.general}`,
+        `💼 *कार्यक्षेत्र:* ${live.career}`,
+        `💰 *धन व लाभ:* ${live.wealth}`,
+        `🪔 *उपाय:* ${live.remedy}`,
+        `🎨 शुभ रंग: ${live.luckyColor} | 🔢 शुभ अंक: ${live.luckyNumber}`,
+        `📖 शक्ति सनातन पंचांग`,
+      ].join('\n\n');
+
+      await shareImageFile({
+        imageUri: dataUri,
+        fileName,
+        title: `${activeMeta.name} दैनिक राशिफल (Full HD)`,
+        text: shareCaption,
+      });
+    } catch {
+      // User dismissed share dialog
+    } finally {
+      setIsSharingHd(false);
+    }
+  };
+
   return (
-    <div className="bx-sheet flex-1 min-h-0 w-full h-full max-h-full flex flex-col overflow-y-auto overscroll-contain p-2.5 sm:p-3 space-y-2.5 pb-20">
-      {/* 1. 12-Rashi Visual Iconography Grid (दैनिक राशिफल — १२ राशियाँ) */}
-      <section
-        className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-2 sm:p-2.5 shadow-xs"
-        aria-label="१२ राशियाँ चुनें"
-      >
-        <div className="flex items-center justify-between gap-2 mb-2 px-1">
-          <div className="flex items-center gap-1.5">
-            <Compass className="w-4 h-4 text-[#8B1E1E]" />
-            <span className="text-xs font-black text-[#5C3A21] tracking-wide">
-              अपनी राशि चुनें (१२ राशियाँ)
-            </span>
-          </div>
-          <span className="text-[10.5px] font-bold text-[#8C6239]">
-            📅 {live.dateLabel}
+    <div className="bx-sheet flex-1 min-h-0 w-full h-full max-h-full flex flex-col relative overflow-hidden">
+      {/* 1. Top Compact Control & Navigation Bar */}
+      <header className="shrink-0 z-30 bg-[#FAF2E4]/95 border-b border-[#8C6239]/35 px-2.5 py-2 flex items-center justify-between gap-2 shadow-xs backdrop-blur-xs">
+        {/* Left Sidebar Toggle Button */}
+        <button
+          type="button"
+          onClick={() => {
+            triggerHapticSelection();
+            setIsSidebarOpen((p) => !p);
+          }}
+          className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#8B1E1E] to-[#6E1409] text-white text-xs font-black flex items-center gap-1.5 shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+          title="सभी १२ राशियाँ देखें"
+          aria-label="१२ राशियाँ मेनू खोलें"
+        >
+          <Menu className="w-3.5 h-3.5 text-[#FFD88A]" />
+          <span>१२ राशियाँ</span>
+          <span className="px-1.5 py-0.2 rounded-md bg-[#FFE599] text-[#5C3A21] text-[10px] font-black">
+            {activeMeta.symbol}
           </span>
-        </div>
+        </button>
 
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
-          {RASHI_META.map((r, idx) => {
-            const isSelected = idx === selectedRashiIdx;
-            const rTheme = getElementTheme(r.element);
-            return (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => handleSelectRashi(idx)}
-                aria-pressed={isSelected}
-                className={`group relative rounded-xl p-1.5 flex flex-col items-center justify-center gap-1 border transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-gradient-to-b from-[#6E1409] to-[#4A0E0E] text-[#FAF2E4] border-[#E6A145] shadow-md -translate-y-0.5'
-                    : 'bg-[#F4E8D1]/90 hover:bg-[#EAD8B8] text-[#462B17] border-[#8C6239]/35'
-                }`}
-              >
-                {/* 3D Mini Medallion with Custom SVG Rashi Icon */}
-                <span
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center border bg-gradient-to-br ${rTheme.medallionGradient} ${rTheme.medallionBorder} shadow-xs transition-transform group-hover:scale-105`}
-                >
-                  <RashiSvgIcon
-                    rashiId={r.id}
-                    size={24}
-                    strokeColor={rTheme.iconStroke}
-                    accentColor={rTheme.iconAccent}
-                  />
-                </span>
-
-                <div className="flex items-center gap-0.5 leading-none mt-0.5">
-                  <span
-                    className={`text-[11px] font-extrabold ${
-                      isSelected ? 'text-[#FFE599]' : 'text-[#462B17]'
-                    }`}
-                  >
-                    {r.name}
-                  </span>
-                </div>
-
-                <span
-                  className={`text-[9px] leading-none font-semibold ${
-                    isSelected ? 'text-amber-200/90' : 'text-[#8C6239]'
-                  }`}
-                >
-                  स्वामी: {r.lord}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 2. Selected Rashi Hero 3D Medallion Banner */}
-      <section className="bx-verse relative overflow-hidden p-3 sm:p-3.5">
-        <div className="flex items-center justify-between gap-2.5">
-          {/* Left Prev Rashi Button */}
+        {/* Center: Prev / Current Rashi / Next Switcher */}
+        <div className="flex items-center gap-1 bg-[#F4E8D1] px-1.5 py-0.5 rounded-xl border border-[#8C6239]/35">
           <button
             type="button"
             onClick={handlePrevRashi}
-            className="bx-iconbtn shrink-0 cursor-pointer"
+            className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
             title="पिछली राशि"
             aria-label="पिछली राशि"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          {/* Center Hero Medallion & Title */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticSelection();
+              setIsSidebarOpen((p) => !p);
+            }}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-[#E5D2B8] cursor-pointer"
+            title="राशि बदलने हेतु क्लिक करें"
+          >
+            <span className="text-xs font-black text-[#4A0E0E]">
+              {activeMeta.name} ({activeMeta.symbol})
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleNextRashi}
+            className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
+            title="अगली राशि"
+            aria-label="अगली राशि"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Right: HD Save, HD Share & Audio Controls */}
+        <div className="flex items-center gap-1.5">
+          {/* HD Card Save Button */}
+          <button
+            type="button"
+            onClick={handleSaveHd}
+            disabled={isSavingHd}
+            className="px-2 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-[11px] font-bold flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer"
+            title="Full HD (1080p) राशिफल कार्ड सेव करें"
+          >
+            {isSavingHd ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFD88A]" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-[#FFD88A]" />
+            )}
+            <span className="hidden sm:inline">HD सेव</span>
+          </button>
+
+          {/* HD Card Share Button */}
+          <button
+            type="button"
+            onClick={handleShareHd}
+            disabled={isSharingHd}
+            className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer"
+            title="Full HD (1080p) राशिफल कार्ड शेयर करें"
+          >
+            {isSharingHd ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-200" />
+            ) : (
+              <Share2 className="w-3.5 h-3.5 text-amber-200" />
+            )}
+            <span>HD शेयर</span>
+          </button>
+        </div>
+      </header>
+
+      {/* 2. Slide-Over Left Sidebar Drawer for All 12 Rashis */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Backdrop (tap to close) */}
+          <div
+            className="fixed inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Left Drawer Panel */}
+          <aside
+            className="relative w-[280px] sm:w-[320px] max-w-[85vw] h-full bg-[#FAF2E4] border-r-2 border-[#8C6239]/50 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200"
+            role="dialog"
+            aria-label="१२ राशियाँ सूची"
+          >
+            {/* Drawer Header */}
+            <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] flex items-center justify-between border-b border-[#8C6239]">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">♈</span>
+                <div>
+                  <h3 className="font-granth font-black text-sm text-[#FFD88A] leading-tight">
+                    द्वादश राशियाँ (१२ राशियाँ)
+                  </h3>
+                  <p className="text-[10px] text-[#E5D2B8]">अपनी राशि पर टैप करें</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSidebarOpen(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-white cursor-pointer"
+                aria-label="बंद करें"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 12 Rashis Scrollable List */}
+            <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5 overscroll-contain">
+              {RASHI_META.map((r, idx) => {
+                const isSelected = idx === selectedRashiIdx;
+                const rTheme = getElementTheme(r.element);
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => handleSelectRashi(idx)}
+                    className={`w-full p-2 rounded-xl flex items-center gap-2.5 border transition-all cursor-pointer text-left ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-[#6E1409] to-[#4A0E0E] text-[#FAF2E4] border-[#E6A145] shadow-sm translate-x-1'
+                        : 'bg-[#F4E8D1]/80 hover:bg-[#EAD8B8] text-[#462B17] border-[#8C6239]/30'
+                    }`}
+                  >
+                    <span
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 bg-gradient-to-br ${rTheme.medallionGradient} ${rTheme.medallionBorder} shadow-xs`}
+                    >
+                      <RashiSvgIcon
+                        rashiId={r.id}
+                        size={22}
+                        strokeColor={rTheme.iconStroke}
+                        accentColor={rTheme.iconAccent}
+                      />
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span
+                          className={`text-xs font-black ${
+                            isSelected ? 'text-[#FFE599]' : 'text-[#4A0E0E]'
+                          }`}
+                        >
+                          {r.name} राशि ({r.symbol})
+                        </span>
+                        <span
+                          className={`text-[9.5px] px-1.5 py-0.2 rounded font-bold ${
+                            isSelected ? 'bg-amber-400/20 text-amber-200' : 'bg-amber-200/60 text-[#5C3A21]'
+                          }`}
+                        >
+                          {r.element.replace(' तत्व', '')}
+                        </span>
+                      </div>
+                      <p
+                        className={`text-[10px] mt-0.5 truncate ${
+                          isSelected ? 'text-amber-100/80' : 'text-[#8C6239]'
+                        }`}
+                      >
+                        स्वामी: {r.lord} • {r.nature}
+                      </p>
+                    </div>
+
+                    {isSelected && (
+                      <span className="text-xs font-black text-[#FFE599] shrink-0">✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-2.5 border-t border-[#8C6239]/35 bg-[#F4E8D1]/90 text-[10.5px] text-center text-[#5C3A21] font-bold">
+              📅 {live.dateLabel}
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* 3. Main Reading Area (Full Height & Comfortable Scroll, Auto-Hides Left Sidebar) */}
+      <main
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-3 space-y-2.5 pb-24"
+      >
+        {/* HD Notice Toast */}
+        {hdNotice && (
+          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2 shadow-xs animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            <span>{hdNotice}</span>
+          </div>
+        )}
+
+        {/* 4. Selected Rashi Hero Header Card (Spacious, No Text Clipping) */}
+        <section
+          style={{
+            background: 'linear-gradient(180deg, #FFFDF9 0%, #FAEDDB 100%)',
+            border: '1.5px solid #D4A24A',
+            boxShadow: '0 4px 14px rgba(74, 14, 14, 0.08), inset 0 1px 1px #FFFFFF',
+          }}
+          className="rounded-2xl p-3 sm:p-4 space-y-3"
+        >
+          <div className="flex items-center gap-3">
+            {/* Hero 3D Rashi Medallion */}
             <div
-              style={{ boxShadow: `0 6px 16px ${elemTheme.glowColor}, inset 0 1px 1px rgba(255,255,255,0.45)` }}
+              style={{
+                boxShadow: `0 6px 16px ${elemTheme.glowColor}, inset 0 1px 1px rgba(255,255,255,0.45)`,
+              }}
               className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl shrink-0 flex items-center justify-center border-2 bg-gradient-to-br ${elemTheme.medallionGradient} ${elemTheme.medallionBorder}`}
             >
               <RashiSvgIcon
@@ -730,199 +679,235 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
               />
             </div>
 
+            {/* Rashi Title and Meta (Spacious leading-normal so NO letters ever cut off!) */}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
-                <h2 className="font-granth font-black text-base sm:text-lg text-[#4A0E0E] leading-tight">
+                <h1 className="font-granth font-black text-lg sm:text-xl text-[#4A0E0E] leading-normal py-0.5">
                   {activeMeta.name} राशिफल ({activeMeta.symbol})
-                </h2>
+                </h1>
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-md border font-extrabold ${elemTheme.badgeBg} ${elemTheme.badgeText}`}
+                  className={`text-[10.5px] px-2 py-0.5 rounded-md border font-extrabold ${elemTheme.badgeBg} ${elemTheme.badgeText}`}
                 >
                   {activeMeta.element} • {activeMeta.nature}
                 </span>
               </div>
 
-              <p className="text-[11px] font-bold text-[#6B421B] mt-0.5 truncate">
+              <p className="text-[11.5px] font-bold text-[#6B421B] mt-0.5 leading-normal">
                 🪐 {live.rashiLordStatus}
               </p>
 
-              <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-100/90 border border-amber-300 text-[#5C3A21] font-bold">
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                <span className="text-[10.5px] px-2 py-0.5 rounded-md bg-amber-100/90 border border-amber-300 text-[#5C3A21] font-bold">
                   🌙 {live.chandraBal}
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100/80 border border-emerald-300 text-emerald-950 font-bold">
+                <span className="text-[10.5px] px-2 py-0.5 rounded-md bg-emerald-100/90 border border-emerald-300 text-emerald-950 font-bold">
                   🎨 शुभ रंग: {live.luckyColor}
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-100/80 border border-purple-300 text-purple-950 font-bold">
+                <span className="text-[10.5px] px-2 py-0.5 rounded-md bg-purple-100/90 border border-purple-300 text-purple-950 font-bold">
                   🔢 शुभ अंक: {live.luckyNumber}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Right Next Rashi Button */}
-          <button
-            type="button"
-            onClick={handleNextRashi}
-            className="bx-iconbtn shrink-0 cursor-pointer"
-            title="अगली राशि"
-            aria-label="अगली राशि"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+          {/* Action Ribbon: HD Save, HD Share, Voice, Ask Uma */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#8C6239]/25">
+            <div className="text-[11px] text-[#6B421B] font-semibold">
+              चंद्र गोचर: <strong className="text-[#4A0E0E]">{live.moonTransit}</strong>
+            </div>
 
-        {/* Action Strip: Voice Readout, Ask Uma, WhatsApp Share */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-[#8C6239]/25">
-          <div className="text-[10.5px] text-[#6B421B] font-semibold">
-            चंद्र गोचर: <strong className="text-[#4A0E0E]">{live.moonTransit}</strong>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={handleToggleVoice}
-              className="px-2.5 py-1 rounded-xl bg-[#5C3A21] text-[#FAF2E4] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-            >
-              {isSpeaking ? (
-                <>
-                  <VolumeX className="w-3.5 h-3.5 text-amber-300" />
-                  <span>रोकें</span>
-                </>
-              ) : (
-                <>
-                  <Volume2 className="w-3.5 h-3.5 text-amber-300" />
-                  <span>उमा के स्वर में सुनें</span>
-                </>
-              )}
-            </button>
-
-            {onOpenUmaModal && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Voice Narration Button */}
               <button
                 type="button"
-                onClick={() => {
-                  triggerHapticSelection();
-                  onOpenUmaModal(
-                    `आज ${activeMeta.name} राशि के गोचर (${live.chandraBal}) और मेरे करियर व धन के लिए विशेष मार्गदर्शन दें।`
-                  );
-                }}
-                className="px-2.5 py-1 rounded-xl bg-[#8B1E1E] text-[#FAF2E4] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                onClick={handleToggleVoice}
+                className="px-2.5 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-[11px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-xs"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                <span>उमा से पूछें</span>
+                {isSpeaking ? (
+                  <>
+                    <VolumeX className="w-3.5 h-3.5 text-amber-300" />
+                    <span>रोकें</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5 text-amber-300" />
+                    <span>उमा के स्वर में सुनें</span>
+                  </>
+                )}
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={handleShare}
-              className="px-2.5 py-1 rounded-xl bg-emerald-800 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>शेयर</span>
-            </button>
-          </div>
-        </div>
-      </section>
+              {/* Ask Uma Modal Button */}
+              {onOpenUmaModal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticSelection();
+                    onOpenUmaModal(
+                      `आज ${activeMeta.name} राशि के गोचर (${live.chandraBal}) और मेरे करियर व धन के लिए विशेष मार्गदर्शन दें।`
+                    );
+                  }}
+                  className="px-2.5 py-1.5 rounded-xl bg-[#8B1E1E] hover:bg-[#6E1409] text-[#FAF2E4] text-[11px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-xs"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                  <span>उमा से पूछें</span>
+                </button>
+              )}
 
-      {/* 3. Detailed Gochar Predictions Grid */}
-      <section className="space-y-2">
-        {/* General Planetary Transit Forecast */}
-        <div className="bx-fact bx-glass p-3 space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 font-extrabold text-xs text-[#4A0E0E]">
-              <Sun className="w-4 h-4 text-[#B56A00] shrink-0" />
-              <span>{activeMeta.name} राशि — आज का ग्रह गोचर फलादेश</span>
-            </div>
-            <span className="text-[10px] font-bold text-[#8C6239]">
-              इष्ट: {activeMeta.ishtaDevta}
-            </span>
-          </div>
-          <p className="text-xs text-[#3A2210] leading-relaxed font-medium">
-            {live.general}
-          </p>
-        </div>
-
-        {/* Career & Wealth 2-Column Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div className="bx-fact bx-glass p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-900">
-              <Briefcase className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-              <span>कार्यक्षेत्र एवं आजीविका (Career)</span>
-            </div>
-            <p className="text-[11.5px] text-[#3A2210] leading-snug font-medium">
-              {live.career}
-            </p>
-          </div>
-
-          <div className="bx-fact bx-glass p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-amber-900">
-              <Coins className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-              <span>धन, व्यापार एवं लाभ (Wealth)</span>
-            </div>
-            <p className="text-[11.5px] text-[#3A2210] leading-snug font-medium">
-              {live.wealth}
-            </p>
-          </div>
-        </div>
-
-        {/* Family/Love & Health 2-Column Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div className="bx-fact bx-glass p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-rose-900">
-              <HeartHandshake className="w-3.5 h-3.5 text-rose-700 shrink-0" />
-              <span>परिवार, दांपत्य एवं प्रेम (Family & Love)</span>
-            </div>
-            <p className="text-[11.5px] text-[#3A2210] leading-snug font-medium">
-              {live.love}
-            </p>
-          </div>
-
-          <div className="bx-fact bx-glass p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-sky-900">
-              <ShieldCheck className="w-3.5 h-3.5 text-sky-700 shrink-0" />
-              <span>स्वास्थ्य एवं प्राण-ऊर्जा (Health)</span>
-            </div>
-            <p className="text-[11.5px] text-[#3A2210] leading-snug font-medium">
-              {live.health}
-            </p>
-          </div>
-        </div>
-
-        {/* Rashi-Specific Vedic Upay Card */}
-        <div className="bx-verse p-3 space-y-1">
-          <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#6E1409]">
-            <Flame className="w-4 h-4 text-[#B56A00] shrink-0" />
-            <span>{activeMeta.name} राशि विशेष अचूक वैदिक उपाय</span>
-          </div>
-          <p className="text-xs text-[#3A2210] leading-relaxed font-semibold">
-            {live.remedy}
-          </p>
-        </div>
-
-        {/* 9-Planet House Transit Summary Strip from Selected Rashi */}
-        <div className="bx-fact bx-glass p-2.5">
-          <div className="text-[10.5px] font-extrabold text-[#5C3A21] mb-1.5">
-            🪐 आज {activeMeta.name} राशि से नवग्रहों की भाव स्थिति (Gochar Chakra):
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-9 gap-1">
-            {live.rows.map((row) => (
-              <div
-                key={row.planet}
-                className="px-1.5 py-1 rounded-lg bg-[#F4E8D1]/90 border border-[#8C6239]/30 text-center"
+              {/* Text Share */}
+              <button
+                type="button"
+                onClick={handleTextShare}
+                className="px-2.5 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-xs"
+                title="व्हाट्सएप पर टेक्स्ट शेयर करें"
               >
-                <div className="text-[10px] font-black text-[#4A0E0E]">
-                  {row.planet} {row.retrograde ? '(व)' : ''}
-                </div>
-                <div className="text-[9.5px] font-bold text-[#6B421B]">
-                  {row.house}वाँ भाव
-                </div>
-                <div className="text-[9px] text-[#8C6239] truncate">{row.rashi}</div>
-              </div>
-            ))}
+                <Share2 className="w-3.5 h-3.5" />
+                <span>शेयर</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* 5. Detailed Gochar Predictions Bento Cards */}
+        <section className="space-y-2.5">
+          {/* General Transit Forecast Card */}
+          <div className="bx-fact bx-glass p-3.5 space-y-1.5">
+            <div className="flex items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-1.5">
+              <div className="flex items-center gap-1.5 font-extrabold text-xs text-[#4A0E0E]">
+                <Sun className="w-4 h-4 text-[#B56A00] shrink-0" />
+                <span>{activeMeta.name} राशि — आज का ग्रह गोचर फलादेश</span>
+              </div>
+              <span className="text-[10.5px] font-bold text-[#8C6239]">
+                इष्ट: {activeMeta.ishtaDevta}
+              </span>
+            </div>
+            <p className="text-xs text-[#3A2210] leading-relaxed font-medium pt-0.5">
+              {live.general}
+            </p>
+          </div>
+
+          {/* Career & Wealth 2-Column Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="bx-fact bx-glass p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-900 border-b border-emerald-200/60 pb-1">
+                <Briefcase className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span>कार्यक्षेत्र एवं आजीविका (Career)</span>
+              </div>
+              <p className="text-[11.5px] text-[#3A2210] leading-relaxed font-medium pt-0.5">
+                {live.career}
+              </p>
+            </div>
+
+            <div className="bx-fact bx-glass p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-amber-900 border-b border-amber-200/60 pb-1">
+                <Coins className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                <span>धन, व्यापार एवं लाभ (Wealth)</span>
+              </div>
+              <p className="text-[11.5px] text-[#3A2210] leading-relaxed font-medium pt-0.5">
+                {live.wealth}
+              </p>
+            </div>
+          </div>
+
+          {/* Family/Love & Health 2-Column Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="bx-fact bx-glass p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-rose-900 border-b border-rose-200/60 pb-1">
+                <HeartHandshake className="w-3.5 h-3.5 text-rose-700 shrink-0" />
+                <span>परिवार, दांपत्य एवं प्रेम (Family & Love)</span>
+              </div>
+              <p className="text-[11.5px] text-[#3A2210] leading-relaxed font-medium pt-0.5">
+                {live.love}
+              </p>
+            </div>
+
+            <div className="bx-fact bx-glass p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-sky-900 border-b border-sky-200/60 pb-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-700 shrink-0" />
+                <span>स्वास्थ्य एवं प्राण-ऊर्जा (Health)</span>
+              </div>
+              <p className="text-[11.5px] text-[#3A2210] leading-relaxed font-medium pt-0.5">
+                {live.health}
+              </p>
+            </div>
+          </div>
+
+          {/* Rashi-Specific Vedic Upay Card */}
+          <div className="bx-fact bx-glass p-3.5 space-y-1.5 border border-[#C89D66]">
+            <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#6E1409] border-b border-[#8C6239]/20 pb-1">
+              <Flame className="w-4 h-4 text-[#B56A00] shrink-0" />
+              <span>{activeMeta.name} राशि विशेष अचूक वैदिक उपाय</span>
+            </div>
+            <p className="text-xs text-[#3A2210] leading-relaxed font-semibold pt-0.5">
+              {live.remedy}
+            </p>
+          </div>
+
+          {/* Planetary Transits from Selected Rashi (Gochar Chakra) */}
+          <div className="bx-fact bx-glass p-3 space-y-2">
+            <div className="text-[11px] font-extrabold text-[#5C3A21]">
+              🪐 आज {activeMeta.name} राशि से नवग्रहों की भाव स्थिति (Gochar Chakra):
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-9 gap-1.5">
+              {live.rows.map((row) => (
+                <div
+                  key={row.planet}
+                  className="px-1.5 py-1 rounded-lg bg-[#F4E8D1]/90 border border-[#8C6239]/30 text-center"
+                >
+                  <div className="text-[10px] font-black text-[#4A0E0E]">
+                    {row.planet} {row.retrograde ? '(व)' : ''}
+                  </div>
+                  <div className="text-[9.5px] font-bold text-[#6B421B]">
+                    {row.house}वाँ भाव
+                  </div>
+                  <div className="text-[9px] text-[#8C6239] truncate">{row.rashi}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom HD Save & Share Full Banner */}
+          <div className="p-3 rounded-2xl bg-[#FAF2E4] border border-[#8C6239]/40 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+            <div>
+              <div className="text-xs font-black text-[#5C3A21]">
+                {activeMeta.name} राशि का सुंदर HD पंचांग कार्ड
+              </div>
+              <p className="text-[10px] text-[#8C6239] mt-0.5">
+                व्हाट्सएप स्टेटस, गैलरी में 1080p फोटो सेव व शेयर करें
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSaveHd}
+                disabled={isSavingHd}
+                className="px-3 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+              >
+                {isSavingHd ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFD88A]" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 text-[#FFD88A]" />
+                )}
+                <span>HD में सेव करें</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShareHd}
+                disabled={isSharingHd}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+              >
+                {isSharingHd ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-200" />
+                ) : (
+                  <Share2 className="w-3.5 h-3.5 text-amber-200" />
+                )}
+                <span>HD कार्ड शेयर</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 };
