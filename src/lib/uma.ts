@@ -26,6 +26,7 @@ import {
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from "../services/disha";
 import { calculateKundali } from "../services/kundali";
 import { getSavedKundaliProfiles } from "../services/storage";
+import { getUmaApiEndpoints } from "../services/UmaVoiceService";
 
 export type UmaActionType =
   | "open_panchang"
@@ -78,13 +79,16 @@ export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers:
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
       return { state: "local", providers: ["local_vedic"] };
     }
-    const healthResp = await fetch("/api/health", { signal: AbortSignal.timeout(2500) }).catch(() => null);
-    if (healthResp && healthResp.ok) {
-      const data = await healthResp.json().catch(() => null);
-      if (data?.hasGeminiKey) {
-        return { state: "online", providers: ["gemini", "local_vedic"] };
+    const endpoints = getUmaApiEndpoints("/api/health");
+    for (const url of endpoints) {
+      const healthResp = await fetch(url, { signal: AbortSignal.timeout(2500) }).catch(() => null);
+      if (healthResp && healthResp.ok) {
+        const data = await healthResp.json().catch(() => null);
+        if (data?.hasGeminiKey) {
+          return { state: "online", providers: ["gemini", "local_vedic"] };
+        }
+        return { state: "local", providers: ["local_vedic"] };
       }
-      return { state: "local", providers: ["local_vedic"] };
     }
     return { state: "local", providers: ["local_vedic"] };
   } catch {
@@ -957,24 +961,32 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
   if (typeof navigator === "undefined" || navigator.onLine !== false) {
     try {
       const lic = getLicenseStatus();
-      const resp = await fetch("/api/uma/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-license-token": lic.token,
-        },
-        signal: AbortSignal.timeout(15000),
-        body: JSON.stringify({
-          query,
-          panchangContext,
-          kundaliContext: combinedKundaliContext,
-          chatHistory,
-          systemPrompt,
-          licenseToken: lic.token,
-        }),
-      });
+      const endpoints = getUmaApiEndpoints("/api/uma/chat");
+      let resp: Response | null = null;
+      for (const url of endpoints) {
+        const r = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-license-token": lic.token,
+          },
+          signal: AbortSignal.timeout(15000),
+          body: JSON.stringify({
+            query,
+            panchangContext,
+            kundaliContext: combinedKundaliContext,
+            chatHistory,
+            systemPrompt,
+            licenseToken: lic.token,
+          }),
+        }).catch(() => null);
+        if (r && r.ok) {
+          resp = r;
+          break;
+        }
+      }
 
-      if (resp.ok) {
+      if (resp && resp.ok) {
         const data = await resp.json();
         if (data?.ok && typeof data.text === "string" && data.text.trim()) {
           const aiText = data.text.trim();

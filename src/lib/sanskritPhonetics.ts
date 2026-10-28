@@ -1,24 +1,13 @@
 /**
- * Vedic Shiksha & Sanskrit Phonetic Engine (संस्कृत शुद्ध उच्चारण एवं पदच्छेद इंजन — NTTS Edition)
+ * Vedic Shiksha & Natural Indian Hindi/Sanskrit Phonetic Engine (उमा स्वाभाविक भारतीय महिला उच्चारण इंजन)
  *
- * Solves why standard Hindi TTS / NTTS (hi-IN) mispronounces Sanskrit Stotrams & Shlokas:
- * 1. Normalizes Panchama-Varna conjuncts (ङ्ग -> ंग, ङ्क -> ंक, ञ्च -> ंच, ञ्ज -> ंज)
- *    which Hindi models otherwise misread as "ड-ग" / "ड-क" or "इया-च".
- * 2. Applies authentic Paniniya Shiksha Visarga (ः) rules strictly at word/pada boundaries:
- *    - िः / ीः -> िहि / ीहि (शान्तिः -> शान्तिहि, हरिः -> हरिहि)
- *    - ुः / ूः -> ुहु / ूहु (गुरुः -> गुरुहु, मृत्युः -> मृत्युहु, इन्दुः -> इन्दुहु)
- *    - ैः -> ैहि (देवैः -> देवैहि)
- *    - ोः -> ोहो (मनसयोः -> मनसयोहो, गुरोः -> गुरोहो)
- *    - ाः -> ाहा (लोकाः -> लोकाहा, देवाः -> देवाहा)
- *    - Word-final inherent अ + ः -> ह (नमः -> नमह, शिवः -> शिवह, भुवः -> भुवह)
- *      without trailing virama so Neural TTS articulates the full preceding 'a' vowel + soft aspirate 'h'
- *      while preserving medial visargas like दुःख, अन्तःकरण, निःशेष naturally.
- * 3. Converts word-final Anusvara (ं) in Sanskrit verses to labial Makara (म्)
- *    (वरेण्यं -> वरेण्यम्, सुगन्धिं -> सुगंधिम्, सर्वं -> सर्वम्, नित्यं -> नित्यम्).
- * 4. Performs Samasa & Sandhi Padaccheda (पदच्छेद) on compound Stotram words
- *    (Shiva Tandava, Shiva Mahimna, Panchakshara, Durga Saptashati, Devi Kavacham, Argala,
- *    Kunjika, Lingashtakam, Bilvashtakam, Kalabhairava Ashtakam, Gita, Sahasranama)
- *    so Neural Female TTS articulates every pada with pure Vedic clarity and caesura (यति).
+ * Designed so Vidushi Uma speaks like a real, warm, articulate Indian woman:
+ * - For normal Hindi conversation & astrological guidance: preserves 100% natural spoken Hindi
+ *   words (वर्षों, ग्रहों, भावों, उपायों, करें, सुनें, जाएं, आदि) without artificial Sanskrit suffixes,
+ *   while cleaning markdown, decorative borders (॥ ... ॥), and expanding astrological abbreviations
+ *   into smooth conversational Hindi.
+ * - For pure Sanskrit Stotrams & Shlokas (`sanskritOnly: true`): applies Samasa Padaccheda,
+ *   Panchama-Varna normalization (ङ्ग -> ंग, ञ्च -> ंच), and gentle Paniniya Visarga/Anusvara rules.
  */
 
 /** Curated Padaccheda (Sandhi & Samasa split) dictionary for famous Stotrams & Shlokas */
@@ -309,48 +298,73 @@ export function formatPadacchedaGuide(raw: string): string {
 }
 
 /**
- * Converts a Sanskrit or Hindi devotional text into 100% Phonetic Devanagari
- * tuned for crystal-clear Vedic pronunciation by Neural Female TTS (NTTS) engines.
+ * Converts Devanagari digits (०-९) to standard digits so Hindi neural models read numbers naturally
+ */
+function normalizeDevanagariDigits(text: string): string {
+  const map: Record<string, string> = {
+    '०': '0',
+    '१': '1',
+    '२': '2',
+    '३': '3',
+    '४': '4',
+    '५': '5',
+    '६': '6',
+    '७': '7',
+    '८': '8',
+    '९': '9',
+  };
+  return text.replace(/[०-९]/g, (d) => map[d] ?? d);
+}
+
+/**
+ * Converts a Sanskrit or Hindi text into natural, human-sounding Devanagari speech
+ * for Indian female neural voices.
+ *
+ * IMPORTANT:
+ * - When `options?.sanskritOnly` is FALSE/omitted (normal Hindi chat, astrology, remedies),
+ *   Hindi words (वर्षों, ग्रहों, भावों, करें, उपायों, आदि) are NEVER altered with Sanskrit `-म्` or Visarga rules.
+ * - Only when `options?.sanskritOnly` is TRUE (pure Stotram/Shloka recitation) are full Sanskrit
+ *   Padaccheda, Visarga echo, and short-vowel Makara rules applied.
  */
 export function toVedicPhoneticSpeech(
   rawText: string,
   options?: { sanskritOnly?: boolean }
 ): string {
-  const baseText = options?.sanskritOnly ? extractPureSanskritVerse(rawText) : rawText;
+  const isPureSanskrit = options?.sanskritOnly === true;
+  const baseText = isPureSanskrit ? extractPureSanskritVerse(rawText) : rawText;
 
   let text = baseText
-    // Strip markdown & verse numbering so numbers are never spoken in the middle of a stotra
+    // Strip markdown formatting & decorative symbols
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1')
     .replace(/#{1,6}\s?/g, '')
+    .replace(/[«»"“”]/g, '')
+    .replace(/[①②③④⑤⑥⑦⑧⑨⑩]/g, ', ')
     .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+    // Strip decorative header/footer banners like ॥ शुभम् भवतु ॥ or ॥ १ ॥
+    .replace(/॥\s*शुभम्(\s*भवतु)?\s*॥/g, '')
+    .replace(/॥\s*श्री\s*॥/g, '')
     .replace(/॥\s*[\u0966-\u096F\d]+\s*॥/g, ' । ')
     .replace(/।\s*[\u0966-\u096F\d]+\s*।/g, ' । ')
     .replace(/[\(\[\{]\s*[\u0966-\u096F\d]+\s*[\)\]\}]/g, '')
     .replace(/^(श्लोक|चौपाई|दोहा|सोरठा|पद|छन्द|अध्याय|मन्त्र)\s*#?\s*[\u0966-\u096F\d]+[\:\-\s]*/gim, '')
     .replace(/\b(श्लोक|चौपाई|दोहा|सोरठा|पद|छन्द)\s*[\u0966-\u096F\d]+[\:\-\s]*/gi, '');
 
-  // 1. Apply Curated Samasa Padaccheda
-  for (const [pattern, replacement] of SAMASA_PADACCHEDA_MAP) {
-    text = text.replace(pattern, replacement);
-  }
-
-  // 2. Split any remaining ultra-long compound words
-  text = splitLongSanskritCompounds(text);
-
-  // 3. Fix Panchama-Varna Conjuncts (ङ्ग -> ंग, ङ्क -> ंक, ञ्च -> ंच, ञ्ज -> ंज)
-  // Prevents Hindi TTS models from reading ङ्ग as "ड-ग" or ञ्च as "इया-च"
+  // Always fix Panchama-Varna Conjuncts (ङ्ग -> ंग, ङ्क -> ंक, ञ्च -> ंच, ञ्ज -> ंज)
+  // so Hindi TTS never misreads पञ्चाङ्ग as "पइयाचाडग"
   text = text
     .replace(/[ङञ]्(?=[कखगघचछजझ])/g, 'ं')
     .replace(/वाङ्मनस/g, 'वांग-मनस')
-    .replace(/वाङ्मय/g, 'वांग-मय')
-    .replace(/दिङ्मण्डल/g, 'दिंग-मण्डल')
-    .replace(/षड्दर्शन/g, 'षड्-दर्शन');
+    .replace(/वाङ्मय/g, 'वांग-मय');
 
-  // 4. Sacred Bija Mantras & Pranava (ॐ)
+  // Sacred Bija Mantras & Pranava (ॐ)
   text = text
     .replace(/ॐ/g, ' ओम् ')
-    .replace(/ॠ/g, 'री')
+    .replace(/नमः/g, 'नमह')
+    .replace(/शान्तिः/g, 'शान्तिहि')
+    .replace(/शांतिः/g, 'शांतिहि')
+    .replace(/भूर्भुवः/g, 'भूर्भुवह')
+    .replace(/स्वः/g, 'स्वह')
     .replace(/ह्रीं/g, 'ह्रीम्')
     .replace(/क्लीं/g, 'क्लीम्')
     .replace(/श्रीं/g, 'श्रीम्')
@@ -361,9 +375,36 @@ export function toVedicPhoneticSpeech(
     .replace(/जूं/g, 'जूम्')
     .replace(/ग्लौं/g, 'ग्लौम्');
 
-  // 5. Authentic Paniniya Shiksha Visarga (ः) Transformation AT WORD BOUNDARIES ONLY:
-  // Preserves medial visarga words like दुःख, अन्तःकरण, निःशेष without corrupting them,
-  // while articulating word-final visargas with pure Vedic echo resonance.
+  if (!isPureSanskrit) {
+    // NORMAL HINDI CONVERSATION & ASTROLOGICAL GUIDANCE MODE:
+    // Keep 100% natural spoken Indian Hindi! Do NOT apply Sanskrit -म् or Visarga rules to Hindi words.
+    text = normalizeDevanagariDigits(text)
+      // Remove decorative double-dandas around titles so she pauses naturally
+      .replace(/॥\s*([^॥]+?)\s*॥/g, '$1। ')
+      .replace(/॥+/g, '। ')
+      // Convert numbered list prefixes like "1. " or "2. " into natural pause
+      .replace(/(^|\n)\s*\d+\.\s+/g, '$1')
+      // Clean slashes between words (e.g., "पीला/सुनहरा" -> "पीला या सुनहरा", except dates like 28/10/1995)
+      .replace(/([\u0900-\u097F]+)\/([\u0900-\u097F]+)/g, '$1 या $2')
+      // Expand common Hindi abbreviations for natural pronunciation
+      .replace(/कि\.मी\./g, 'किलोमीटर')
+      .replace(/मि\./g, 'मिनट')
+      .replace(/घं\./g, 'घंटा')
+      .replace(/दि\./g, 'दिनांक')
+      .replace(/ई\./g, 'ईस्वी')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+
+    return text;
+  }
+
+  // PURE SANSKRIT STOTRAM & SHLOKA MODE (`sanskritOnly: true`):
+  for (const [pattern, replacement] of SAMASA_PADACCHEDA_MAP) {
+    text = text.replace(pattern, replacement);
+  }
+  text = splitLongSanskritCompounds(text);
+
+  // Paniniya Shiksha Visarga (ः) Transformation at word boundaries in Sanskrit verses
   const wordEnd = '(?=\\s|[।॥,.\\-!?\n]|$)';
   text = text
     .replace(new RegExp(`िः${wordEnd}`, 'g'), 'िहि')
@@ -376,28 +417,21 @@ export function toVedicPhoneticSpeech(
     .replace(new RegExp(`ोः${wordEnd}`, 'g'), 'ोहो')
     .replace(new RegExp(`ौः${wordEnd}`, 'g'), 'ौहौ')
     .replace(new RegExp(`ाः${wordEnd}`, 'g'), 'ाहा')
-    // Word-final inherent 'a' + visarga (e.g. नमः -> नमह, शिवः -> शिवह, शेखरः -> शेखरह)
     .replace(new RegExp(`ः${wordEnd}`, 'g'), 'ह');
 
-  // 6. Word-Final Anusvara (ं) -> Labial Makara (म्) in Sanskrit words
-  // (Except common Hindi prose words like में, हैं, मैं, नहीं, करूँ, सिंदूर, क्यों, जहाँ, वहाँ, यहाँ)
+  // Word-Final Anusvara (ं) -> Labial Makara (म्) ONLY on short-vowel Sanskrit endings (अं, इं, उं)
+  // Never on -ओं, -एं, -ईं, -ऊं
   text = text.replace(
-    /([\u0905-\u0939][\u093E-\u094C]?)ं(?=\s|[।॥,.\-!?\n]|$)/g,
-    (match, stem) => {
-      if (/^(मे|है|मै|नही|क्यो|जहा|वहा|कहा|यह|वह|तुम|हम|उन्हो|इन्हो|किन्हो|जिन्हो|को|मा|बा)$/.test(stem)) {
-        return match;
-      }
-      return `${stem}म्`;
-    }
+    /([\u0915-\u0939][िु]?)ं(?=\s|[।॥,.\-!?\n]|$)/g,
+    '$1म्'
   );
 
-  // 7. Avagraha (ऽ) handling — expand sandhi elision into natural vowel sustain
+  // Avagraha (ऽ) handling
   text = text
     .replace(/ोऽ/g, 'ो अ')
     .replace(/ेऽ/g, 'े अ')
     .replace(/ऽ/g, '');
 
-  // 8. Punctuation & Caesura (यति) Pauses for rhythmic chanting
   text = text
     .replace(/॥+/g, ' । ')
     .replace(/।+/g, ' । ')

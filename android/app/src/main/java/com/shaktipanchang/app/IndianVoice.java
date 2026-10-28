@@ -72,8 +72,8 @@ public final class IndianVoice {
         }
         String voice = UMA_VOICE;
         String lang = "hi-IN";
-        String rate = pandit ? "-10%" : "-6%";
-        String pitch = "+1st";
+        String rate = pandit ? "-3%" : "+0%";
+        String pitch = "+0Hz";
         return "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='" + lang + "'>"
             + "<voice name='" + voice + "'>"
             + "<prosody rate='" + rate + "' pitch='" + pitch + "'>"
@@ -181,7 +181,7 @@ public final class IndianVoice {
                 from = to;
                 if (chunk.isEmpty()) continue;
                 String encoded = java.net.URLEncoder.encode(chunk, "UTF-8");
-                String ttsUrl = "https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&ttsspeed=0.82&q=" + encoded;
+                String ttsUrl = "https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&ttsspeed=1&q=" + encoded;
                 Request req = new Request.Builder()
                     .url(ttsUrl)
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")

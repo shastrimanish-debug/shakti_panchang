@@ -1,14 +1,14 @@
 /**
- * UmaVoiceService.ts — Shakti Panchang Global Neural Female TTS (NTTS) Engine
+ * UmaVoiceService.ts — Shakti Panchang Natural Indian Woman Neural TTS (Chirp 3 HD) Engine
  *
- * Provides a 100% natural, melodious Hindi & Sanskrit female voice ("Vidushi Uma" / Devi Swara)
+ * Provides a 100% natural, warm, human-sounding Indian female voice ("Vidushi Uma")
  * across both Web and Capacitor Native (Android) environments.
  *
  * Architectural Hierarchy:
- * 1. Tier 1: Cloud Neural Female Synthesizer (/api/tts/uma - Google Cloud hi-IN-Neural2-A Female / Gemini Kore Female)
- *    with persistent unlocked HTMLAudioElement & background verse pre-fetching (zero mobile autoplay drops).
- * 2. Tier 2: Capacitor Native High-Definition Female Neural Engine (hi-IN-SwaraNeural)
- * 3. Tier 3: Browser Neural Female Voice Engine (Microsoft Swara Online / Google हिन्दी Female)
+ * 1. Tier 1: Cloud Chirp 3 HD Natural Indian Female Synthesizer (/api/tts/uma - hi-IN-Chirp3-HD-Kore / Aoede / Leda)
+ *    with progressive sentence-chunk streaming & parallel background pre-fetching (starts in ~1s, zero timeout).
+ * 2. Tier 2: Capacitor Native High-Definition Female Neural Engine (IndianVoice + Android Network Female TTS)
+ * 3. Tier 3: Browser Natural Female Voice Engine (Microsoft Swara Natural / Google हिन्दी Female at natural 1.0 pitch)
  */
 
 import { Capacitor, registerPlugin } from '@capacitor/core';
@@ -36,6 +36,7 @@ export interface ToneConfig {
   labelHindi: string;
   badge: string;
   description: string;
+  voiceName: string;
   rate: number;
   pitch: number;
   pitchSemis: number;
@@ -44,66 +45,87 @@ export interface ToneConfig {
   samplePhrase: string;
 }
 
+const CLOUD_BACKEND_ORIGINS = [
+  'https://ais-pre-yltck7of4bz54fytkvtlmd-88514486913.asia-east1.run.app',
+  'https://ais-dev-yltck7of4bz54fytkvtlmd-88514486913.asia-east1.run.app',
+];
+
+export function getUmaApiEndpoints(path: string): string[] {
+  if (typeof window === 'undefined') return [path];
+  const isCapacitorLocal =
+    Capacitor.isNativePlatform() ||
+    window.location.protocol === 'capacitor:' ||
+    (window.location.hostname === 'localhost' && !window.location.port);
+
+  if (isCapacitorLocal) {
+    return CLOUD_BACKEND_ORIGINS.map((origin) => `${origin}${path}`);
+  }
+  return [path, ...CLOUD_BACKEND_ORIGINS.map((origin) => `${origin}${path}`)];
+}
+
 export const UMA_TONES: Record<UmaVoiceTone, ToneConfig> = {
   calm: {
     id: 'calm',
     label: 'Calm',
     labelHindi: 'शांत व मधुर (महिला स्वर)',
     badge: '🧘‍♀️',
-    description: 'कोमल, ध्यानमयी व शुद्ध वैदिक उच्चारण से परिपूर्ण मधुर महिला स्वर',
-    rate: 0.90,
-    pitch: 1.08,
-    pitchSemis: 1.2,
+    description: 'स्वाभाविक, कोमल व आत्मीय भारतीय महिला स्वर (Chirp 3 HD Kore)',
+    voiceName: 'hi-IN-Chirp3-HD-Kore',
+    rate: 0.97,
+    pitch: 1.0,
+    pitchSemis: 0,
     emphasis: 'moderate',
     stylePrompt:
-      'Sweet, melodious, serene Indian female devotional voice (Devi Swara) chanting sacred Sanskrit shlokas and Hindi with 100% pure Devanagari pronunciation, clear visarga and anusvara resonance, and peaceful temple cadence',
+      'Warm, gentle, natural Indian woman speaking conversational Hindi like a caring family astrologer with smooth, human cadence',
     samplePhrase:
-      '॥ ॐ नमः शिवाय ॥ मधुर महिला वैदिक स्वर सक्रिय है। शुद्ध संस्कृत उच्चारण के साथ स्तोत्र पाठ सुनें।',
+      'नमस्कार जी! मैं उमा हूँ। अब मेरी आवाज़ बिल्कुल स्वाभाविक भारतीय महिला स्वर में सक्रिय है। आप मुझसे अपने मन का कोई भी प्रश्न पूछ सकते हैं।',
   },
   enthusiastic: {
     id: 'enthusiastic',
     label: 'Enthusiastic',
     labelHindi: 'उत्साही व ओजस्वी',
     badge: '✨',
-    description: 'ऊर्जावान, आनंदमय, प्रेरणादायी व भाग्योदय सूचक महिला स्वर',
-    rate: 0.96,
-    pitch: 1.14,
-    pitchSemis: 2.0,
+    description: 'प्रसन्न, ऊर्जावान व प्रेरणादायी भारतीय महिला स्वर (Chirp 3 HD Aoede)',
+    voiceName: 'hi-IN-Chirp3-HD-Aoede',
+    rate: 1.0,
+    pitch: 1.0,
+    pitchSemis: 0,
     emphasis: 'strong',
     stylePrompt:
-      'Bright, melodious, uplifting Indian female voice reciting sacred Sanskrit and Hindi with joyful devotion, crystal-clear Devanagari pronunciation, and warm resonance',
+      'Natural, warm, cheerful Indian woman speaking conversational Hindi with authentic Indian accent and friendly warmth',
     samplePhrase:
-      '॥ जय श्री राधे ॥ उत्साही व ओजस्वी महिला वाणी सक्रिय है! आपके जीवन में शुभ योगों का संचार हो!',
+      'जय श्री राधे! उत्साही और मधुर भारतीय महिला वाणी सक्रिय है। आपके सभी कार्य शुभ और मंगलमय हों!',
   },
   formal: {
     id: 'formal',
     label: 'Formal',
     labelHindi: 'शास्त्रीय विदुषी स्वर',
     badge: '📜',
-    description: 'स्पष्ट, प्रामाणिक, विदुषी आचार्या का गरिमामय महिला स्वर',
-    rate: 0.92,
-    pitch: 1.06,
-    pitchSemis: 1.0,
+    description: 'स्पष्ट, सौम्य व गरिमामय भारतीय विदुषी महिला स्वर (Chirp 3 HD Leda)',
+    voiceName: 'hi-IN-Chirp3-HD-Leda',
+    rate: 0.96,
+    pitch: 1.0,
+    pitchSemis: 0,
     emphasis: 'moderate',
     stylePrompt:
-      'Clear, articulate, serene Indian female Vedic scholar (Vidushi) speaking with classical Sanskrit precision (shuddha uchcharana), complete vowel articulation, and graceful cadence',
+      'Natural, composed, articulate Indian woman speaking clear Hindi and Sanskrit with graceful human intonation',
     samplePhrase:
-      '॥ ॐ श्री गणेशाय नमः ॥ शास्त्रीय विदुषी महिला वाणी स्थापित। सूक्ष्म गणित एवं शुद्ध संस्कृत उच्चारण।',
+      'प्रणाम यजमान! शास्त्रीय विदुषी महिला वाणी सक्रिय है। आइए आपकी पत्रिका और पंचांग का सहज विश्लेषण करें।',
   },
 };
 
 export interface UmaVoiceOptions {
-  /** Voice identifier (default: "hi-IN-Neural2-A") */
+  /** Voice identifier (default: Chirp3-HD female voice for active tone) */
   voice?: string;
   /** Emotional tone of voice: 'calm' | 'enthusiastic' | 'formal' */
   tone?: UmaVoiceTone;
-  /** Speaking speed: 0.75 to 1.25 */
+  /** Speaking speed: 0.90 to 1.15 */
   rate?: number;
-  /** Pitch: 0.95 to 1.3 */
+  /** Pitch: 0.95 to 1.05 */
   pitch?: number;
   /** Volume: 0.0 to 1.0 (default: 1.0) */
   volume?: number;
-  /** Voice persona style (always female NTTS) */
+  /** Voice persona style */
   voiceStyle?: 'uma' | 'pandit';
   /** Flag if text is exclusively Sanskrit shlokas/mantras */
   sanskritOnly?: boolean;
@@ -156,7 +178,7 @@ class UmaVoiceService {
     isPaused: false,
     currentText: null,
     provider: 'idle',
-    activeVoiceName: 'NTTS • उमा दिव्य महिला स्वर (शुद्ध संस्कृत)',
+    activeVoiceName: 'उमा स्वाभाविक भारतीय महिला स्वर (Chirp 3 HD)',
     activeTone: 'calm',
   };
 
@@ -196,10 +218,6 @@ class UmaVoiceService {
     window.addEventListener('click', handleFirstGesture, true);
   }
 
-  /**
-   * Returns a single persistent HTMLAudioElement so mobile browsers (Android Chrome / iOS Safari / WebView)
-   * never block sequential verse playback after async fetch calls.
-   */
   private getOrCreateSharedAudioElement(): HTMLAudioElement | null {
     if (typeof Audio === 'undefined') return null;
     if (!this.sharedAudioElement) {
@@ -209,9 +227,6 @@ class UmaVoiceService {
     return this.sharedAudioElement;
   }
 
-  /**
-   * Pre-loads browser voice list and listens for changes
-   */
   private initBrowserVoices(): void {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
@@ -234,9 +249,6 @@ class UmaVoiceService {
     }
   }
 
-  /**
-   * Unlock audio context and shared HTMLAudioElement on user interaction
-   */
   public unlockAudio(): void {
     if (typeof window !== 'undefined' && 'AudioContext' in window) {
       try {
@@ -274,9 +286,6 @@ class UmaVoiceService {
     }
   }
 
-  /**
-   * Subscribe to real-time voice state changes
-   */
   public subscribe(listener: UmaVoiceListener): () => void {
     this.listeners.add(listener);
     listener(this.state);
@@ -332,11 +341,10 @@ class UmaVoiceService {
   }
 
   /**
-   * Pure Vedic Sanskrit & Astrological text pre-processor:
-   * 1. Runs `toVedicPhoneticSpeech` (Samasa Padaccheda, Paniniya Shiksha Visarga,
-   *    Panchama-Varna conjuncts, Anusvara-to-Makara, and strips verse numbers).
-   * 2. Converts astrological degrees & abbreviations into natural spoken Hindi.
-   * 3. Segments text into natural breath pauses.
+   * Natural Conversational Hindi & Vedic Sanskrit text pre-processor:
+   * 1. Cleans markdown, decorative headers, and follow-up question blocks.
+   * 2. Preserves natural Hindi words without artificial Sanskrit suffixes.
+   * 3. Segments text into ~240-char natural conversational sentences so Chunk 0 starts playing in ~1 second.
    */
   public sanitizeAndSegmentText(
     rawText: string,
@@ -344,31 +352,31 @@ class UmaVoiceService {
   ): string[] {
     if (!rawText || !rawText.trim()) return [];
 
-    // Step 1: Apply full Vedic Shiksha & Sanskrit Padaccheda Phonetics
-    let text = toVedicPhoneticSpeech(rawText, { sanskritOnly: options?.sanskritOnly });
-
-    text = text
-      // Strip follow-up question suggestions and trailing disclaimer sections
+    // Strip follow-up questions & UI hints BEFORE phonetic processing
+    let cleanedInput = rawText
       .replace(/---+[\s\S]*?\[?अगले\s*प्रश्न\]?[\s\S]*$/gi, '')
       .replace(/\[अगले\s*(सम्भावित\s*)?प्रश्न\]:?[\s\S]*$/gi, '')
       .replace(/अगले\s*सम्भावित\s*प्रश्न:?[\s\S]*$/gi, '')
-      // Remove any remaining markdown symbols
+      .replace(/\(💡[^)]*\)/g, '');
+
+    let text = toVedicPhoneticSpeech(cleanedInput, { sanskritOnly: options?.sanskritOnly });
+
+    text = text
       .replace(/\*\*(.*?)\*\*/g, '$1')
       .replace(/\*(.*?)\*/g, '$1')
       .replace(/_{1,2}(.*?)_{1,2}/g, '$1')
       .replace(/#{1,6}\s?/g, '')
       .replace(/`{1,3}(.*?)`{1,3}/g, '$1')
-      // Clean bullet points into natural breath commas
       .replace(/^[•▪●-]\s+/gm, '')
       .replace(/[•▪●]/g, ', ')
       // Vedic astrological abbreviations into natural spoken Hindi
       .replace(/\bKP\b/g, 'कृष्णमूर्ति पद्धति')
       .replace(/\bSAV\b/g, 'सर्वाष्टकवर्ग')
       .replace(/\bBAV\b/g, 'भिन्नाष्टकवर्ग')
-      .replace(/\bD-1\b/g, 'डी वन लग्न कुण्डली')
-      .replace(/\bD-9\b/g, 'डी नाइन नवमांश कुण्डली')
-      .replace(/\bD-10\b/g, 'डी टेन दशमांश कुण्डली')
-      .replace(/\bD-60\b/g, 'डी सिक्स्टी षष्ट्यंश')
+      .replace(/\bD-1\b/g, 'लग्न कुण्डली')
+      .replace(/\bD-9\b/g, 'नवमांश कुण्डली')
+      .replace(/\bD-10\b/g, 'दशमांश कुण्डली')
+      .replace(/\bD-60\b/g, 'षष्ट्यंश')
       .replace(/\bAK\b/g, 'आत्मकारक')
       .replace(/\bAmK\b/g, 'अमात्यकारक')
       .replace(/\bDK\b/g, 'दाराकारक')
@@ -378,33 +386,35 @@ class UmaVoiceService {
       .replace(/(\d+)\s*°\s*(\d+)\s*['′]\s*(\d+)\s*["″]/g, '$1 अंश $2 कला $3 विकला')
       .replace(/(\d+)\s*°\s*(\d+)\s*['′]/g, '$1 अंश $2 कला')
       .replace(/(\d+)\s*°/g, '$1 अंश')
+      .replace(/।\s*।+/g, '।')
       .replace(/[ \t]+/g, ' ')
       .trim();
 
-    // Segment text by natural breath stops: '।', '.', '?', '!', '\n'
-    const rawChunks = text.split(/(?<=[।!?\n])\s+/);
+    // Segment text by natural sentence boundaries ('।', '.', '?', '!', '\n') into ~240 char conversational chunks
+    const MAX_CHUNK_LEN = 240;
+    const rawSentences = text.split(/(?<=[।!?\n])\s+/);
     const chunks: string[] = [];
     let currentChunk = '';
 
-    for (const piece of rawChunks) {
-      const cleanPiece = piece.trim();
-      if (!cleanPiece) continue;
+    for (const sentence of rawSentences) {
+      const cleanSentence = sentence.trim();
+      if (!cleanSentence) continue;
 
-      if ((currentChunk + ' ' + cleanPiece).trim().length <= 180) {
-        currentChunk = (currentChunk + ' ' + cleanPiece).trim();
+      if ((currentChunk + ' ' + cleanSentence).trim().length <= MAX_CHUNK_LEN) {
+        currentChunk = (currentChunk + ' ' + cleanSentence).trim();
       } else {
         if (currentChunk) chunks.push(currentChunk);
-        if (cleanPiece.length <= 180) {
-          currentChunk = cleanPiece;
+        if (cleanSentence.length <= MAX_CHUNK_LEN) {
+          currentChunk = cleanSentence;
         } else {
-          const subPieces = cleanPiece.split(/(?<=[,;])\s+/);
+          const clauses = cleanSentence.split(/(?<=[,;:])\s+/);
           currentChunk = '';
-          for (const sub of subPieces) {
-            if ((currentChunk + ' ' + sub).trim().length <= 180) {
-              currentChunk = (currentChunk + ' ' + sub).trim();
+          for (const clause of clauses) {
+            if ((currentChunk + ' ' + clause).trim().length <= MAX_CHUNK_LEN) {
+              currentChunk = (currentChunk + ' ' + clause).trim();
             } else {
               if (currentChunk) chunks.push(currentChunk);
-              currentChunk = sub.trim();
+              currentChunk = clause.trim();
             }
           }
         }
@@ -419,22 +429,22 @@ class UmaVoiceService {
     voiceName: string,
     toneId: string,
     rate: number,
-    fullSpokenText: string
+    chunkText: string
   ): string {
-    return `ntts_v3:${voiceName}:${toneId}:${rate.toFixed(2)}:${fullSpokenText.slice(0, 450)}`;
+    return `chirp3_v4:${voiceName}:${toneId}:${rate.toFixed(2)}:${chunkText}`;
   }
 
   /**
-   * Fetches or returns cached Neural Female TTS audio data URI from `/api/tts/uma`
+   * Fetches or returns cached Natural Indian Female TTS audio data URI from `/api/tts/uma`
+   * Supports both Web relative endpoint and Capacitor Android Cloud Run endpoints.
    */
   private async fetchNeuralAudioUri(
-    fullSpokenText: string,
+    chunkText: string,
     voiceName: string,
     toneCfg: ToneConfig,
-    rate: number,
-    pitch: number
+    rate: number
   ): Promise<string | null> {
-    const cacheKey = this.buildCacheKey(voiceName, toneCfg.id, rate, fullSpokenText);
+    const cacheKey = this.buildCacheKey(voiceName, toneCfg.id, rate, chunkText);
     const cached = this.audioBlobCache.get(cacheKey);
     if (cached) return cached;
 
@@ -443,38 +453,40 @@ class UmaVoiceService {
 
     const requestPromise = (async (): Promise<string | null> => {
       try {
-        const resp = await fetch('/api/tts/uma', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: fullSpokenText.slice(0, 2500),
-            voice: voiceName,
-            tone: toneCfg.id,
-            rate,
-            pitch,
-            pitchSemis: toneCfg.pitchSemis,
-            emphasis: toneCfg.emphasis,
-            stylePrompt: toneCfg.stylePrompt,
-            persona: 'uma',
-          }),
-          signal: AbortSignal.timeout(9000),
-        });
+        const endpoints = getUmaApiEndpoints('/api/tts/uma');
+        for (const endpoint of endpoints) {
+          try {
+            const resp = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: chunkText.slice(0, 1200),
+                voice: voiceName,
+                tone: toneCfg.id,
+                rate,
+                stylePrompt: toneCfg.stylePrompt,
+                persona: 'uma',
+              }),
+              signal: AbortSignal.timeout(10000),
+            });
 
-        if (resp.ok) {
-          const data = await resp.json();
-          if (data?.ok && data?.audioBase64) {
-            const mime = data.mimeType || 'audio/mp3';
-            const audioSrc = `data:${mime};base64,${data.audioBase64}`;
-            if (this.audioBlobCache.size > 180) {
-              const firstKey = this.audioBlobCache.keys().next().value;
-              if (firstKey) this.audioBlobCache.delete(firstKey);
+            if (resp.ok) {
+              const data = await resp.json().catch(() => null);
+              if (data?.ok && data?.audioBase64) {
+                const mime = data.mimeType || 'audio/mp3';
+                const audioSrc = `data:${mime};base64,${data.audioBase64}`;
+                if (this.audioBlobCache.size > 200) {
+                  const firstKey = this.audioBlobCache.keys().next().value;
+                  if (firstKey) this.audioBlobCache.delete(firstKey);
+                }
+                this.audioBlobCache.set(cacheKey, audioSrc);
+                return audioSrc;
+              }
             }
-            this.audioBlobCache.set(cacheKey, audioSrc);
-            return audioSrc;
+          } catch {
+            /* try next endpoint */
           }
         }
-      } catch {
-        /* ignore network error */
       } finally {
         this.inFlightRequests.delete(cacheKey);
       }
@@ -486,25 +498,24 @@ class UmaVoiceService {
   }
 
   /**
-   * Pre-fetches the next verse's Neural Female TTS audio in the background
-   * so sequential stotra recitation transitions instantaneously with zero delay.
+   * Pre-fetches the next verse's or paragraph's Neural Female TTS audio in the background.
    */
   public async prefetch(text: string, options?: UmaVoiceOptions): Promise<void> {
     if (!text || !text.trim()) return;
     const chunks = this.sanitizeAndSegmentText(text, { sanskritOnly: options?.sanskritOnly });
     if (chunks.length === 0) return;
-    const fullSpokenText = chunks.join(' । ');
     const tone = options?.tone || this.currentTone;
     const toneCfg = UMA_TONES[tone] || UMA_TONES.calm;
-    const rate = options?.rate ?? toneCfg.rate;
-    const pitch = options?.pitch ?? toneCfg.pitch;
-    const voiceName = options?.voice ?? 'hi-IN-Neural2-A';
-    await this.fetchNeuralAudioUri(fullSpokenText, voiceName, toneCfg, rate, pitch);
+    const rate = options?.rate && options.rate >= 0.92 ? options.rate : toneCfg.rate;
+    const voiceName = options?.voice ?? toneCfg.voiceName;
+    await Promise.all(
+      chunks.slice(0, 3).map((chunk) => this.fetchNeuralAudioUri(chunk, voiceName, toneCfg, rate))
+    );
   }
 
   /**
    * Primary Speak Method:
-   * Coordinates high-quality Female Neural TTS (NTTS) playback with automatic fallbacks.
+   * Coordinates Progressive Chirp 3 HD Natural Indian Female TTS playback with instant first-sentence start.
    */
   public async speak(text: string, options?: UmaVoiceOptions): Promise<void> {
     if (!text || !text.trim()) {
@@ -525,13 +536,13 @@ class UmaVoiceService {
       return;
     }
 
-    const fullSpokenText = chunks.join(' । ');
+    const fullSpokenText = chunks.join(' ');
     const tone = options?.tone || this.currentTone;
     const toneCfg = UMA_TONES[tone] || UMA_TONES.calm;
-    const rate = options?.rate ?? toneCfg.rate;
-    const pitch = options?.pitch ?? toneCfg.pitch;
+    const rate = options?.rate && options.rate >= 0.92 ? options.rate : toneCfg.rate;
+    const pitch = 1.0;
     const volume = options?.volume ?? 1.0;
-    const voiceName = options?.voice ?? 'hi-IN-Neural2-A';
+    const voiceName = options?.voice ?? toneCfg.voiceName;
 
     this.updateState({
       isSpeaking: true,
@@ -543,82 +554,115 @@ class UmaVoiceService {
     options?.onStart?.();
 
     // -------------------------------------------------------------
-    // Tier 1 (Cloud NTTS): Studio Female Neural Synthesizer (/api/tts/uma)
-    // Uses Google Cloud hi-IN-Neural2-A (Female) / Gemini Kore (Female)
-    // Reuses unlocked sharedAudioElement so mobile browsers never block playback
+    // Tier 1 (Cloud Chirp 3 HD): Progressive Sentence-by-Sentence Playback
+    // Synthesizes Chunk 0 in ~1s while pre-fetching subsequent chunks in parallel!
     // -------------------------------------------------------------
-    const tryCloudNeural = async (): Promise<boolean> => {
+    const tryCloudNeuralProgressive = async (): Promise<boolean> => {
       try {
-        const audioSrc = await this.fetchNeuralAudioUri(
-          fullSpokenText,
-          voiceName,
-          toneCfg,
-          rate,
-          pitch
-        );
-
-        if (token !== this.activeToken) return false;
-
         const audio = this.getOrCreateSharedAudioElement();
-        if (audioSrc && audio) {
-          return new Promise<boolean>((resolve) => {
+        if (!audio) return false;
+
+        // Kick off Chunk 0 immediately, and start prefetching Chunk 1 & 2 in parallel
+        const firstAudioPromise = this.fetchNeuralAudioUri(chunks[0], voiceName, toneCfg, rate);
+        for (let preIdx = 1; preIdx < Math.min(chunks.length, 3); preIdx++) {
+          void this.fetchNeuralAudioUri(chunks[preIdx], voiceName, toneCfg, rate);
+        }
+
+        const firstSrc = await firstAudioPromise;
+        if (!firstSrc || token !== this.activeToken) return false;
+
+        for (let i = 0; i < chunks.length; i++) {
+          if (token !== this.activeToken) return true;
+
+          // Pre-fetch 2 chunks ahead while current chunk plays
+          if (i + 2 < chunks.length) {
+            void this.fetchNeuralAudioUri(chunks[i + 2], voiceName, toneCfg, rate);
+          }
+
+          const chunkSrc =
+            i === 0
+              ? firstSrc
+              : await this.fetchNeuralAudioUri(chunks[i], voiceName, toneCfg, rate);
+
+          if (!chunkSrc || token !== this.activeToken) {
+            return i > 0;
+          }
+
+          options?.onProgress?.({
+            currentChunk: i + 1,
+            totalChunks: chunks.length,
+            chunkText: chunks[i],
+          });
+
+          const played = await new Promise<boolean>((resolve) => {
+            if (token !== this.activeToken) {
+              resolve(false);
+              return;
+            }
             this.currentAudioElement = audio;
             audio.pause();
-            audio.src = audioSrc;
+            audio.src = chunkSrc;
             audio.volume = Math.max(0, Math.min(1, volume));
-            audio.playbackRate = 1.0; // Speed is already baked into neural synthesis
+            audio.playbackRate = 1.0;
 
             audio.onplay = () => {
               if (token !== this.activeToken) return;
               this.updateState({
                 provider: 'neural-api',
-                activeVoiceName: `NTTS • उमा दिव्य महिला स्वर (शुद्ध संस्कृत)`,
+                activeVoiceName: `उमा स्वाभाविक भारतीय महिला स्वर (${toneCfg.labelHindi})`,
                 activeTone: toneCfg.id,
               });
             };
 
             audio.onended = () => {
-              if (token !== this.activeToken) return;
-              this.currentAudioElement = null;
-              this.updateState({ isSpeaking: false, provider: 'idle', currentText: null });
-              options?.onEnd?.();
+              if (token !== this.activeToken) {
+                resolve(false);
+                return;
+              }
               resolve(true);
             };
 
             audio.onerror = () => {
-              if (token !== this.activeToken) return;
-              this.currentAudioElement = null;
               resolve(false);
             };
 
             void audio.play().catch(() => resolve(false));
           });
+
+          if (!played && token === this.activeToken) {
+            return i > 0;
+          }
         }
+
+        if (token === this.activeToken) {
+          this.currentAudioElement = null;
+          this.updateState({ isSpeaking: false, provider: 'idle', currentText: null });
+          options?.onEnd?.();
+        }
+        return true;
       } catch {
-        /* Network error or offline - fallback to next tier */
+        return false;
       }
-      return false;
     };
 
-    const cloudSucceeded = await tryCloudNeural();
+    const cloudSucceeded = await tryCloudNeuralProgressive();
     if (cloudSucceeded || token !== this.activeToken) return;
 
     // -------------------------------------------------------------
     // Tier 2 (Native Platform): Capacitor Native Uma Voice Plugin
-    // Uses Microsoft Edge hi-IN-SwaraNeural (Female Neural) directly on device
     // -------------------------------------------------------------
     if (Capacitor.isNativePlatform()) {
       try {
         this.updateState({
           provider: 'capacitor-native',
-          activeVoiceName: `NTTS • उमा महिला स्वर (${toneCfg.labelHindi})`,
+          activeVoiceName: `उमा भारतीय महिला स्वर (${toneCfg.labelHindi})`,
           activeTone: toneCfg.id,
         });
 
         const parts = chunks.map((c) => ({
           text: c,
-          rate: Math.max(0.82, Math.min(1.12, rate)),
-          pitch: Math.max(1.02, Math.min(1.18, pitch)),
+          rate: 0.98,
+          pitch: 1.0,
         }));
 
         await UmaVoiceNative.speak({
@@ -641,20 +685,19 @@ class UmaVoiceService {
     if (token !== this.activeToken) return;
 
     // -------------------------------------------------------------
-    // Tier 3: Browser Neural Female Voice Engine (Prosody-Tuned)
+    // Tier 3: Browser Natural Female Voice Engine (Zero Pitch Distortion)
     // -------------------------------------------------------------
     this.speakViaBrowserEngine(chunks, token, rate, pitch, volume, toneCfg, options);
   }
 
   /**
-   * Tier 3 Engine: Browser Web Speech API
-   * Strictly selects female Hindi/Sanskrit voice with sweet female soprano/alto register.
+   * Tier 3 Engine: Browser Web Speech API at natural human 1.0 pitch and 0.97 rate
    */
   private speakViaBrowserEngine(
     chunks: string[],
     token: number,
     rate: number,
-    pitch: number,
+    _pitch: number,
     volume: number,
     toneCfg: ToneConfig,
     options?: UmaVoiceOptions
@@ -677,15 +720,11 @@ class UmaVoiceService {
     }
 
     const matchedVoice = this.pickBestBrowserHindiVoice();
-    const isExplicitFemale = matchedVoice
-      ? /female|swara|kalpana|kavita|lekha|ananya|shruti|priya|geeta|sangeeta|hia|hic|hie|hfc|hfe|woman/i.test(
-          matchedVoice.name
-        )
-      : false;
-    const voiceDisplayName = matchedVoice ? matchedVoice.name : 'उमा दिव्य स्वर (महिला)';
+    const voiceDisplayName = matchedVoice ? matchedVoice.name : 'उमा भारतीय महिला स्वर';
 
-    const effectivePitch = isExplicitFemale ? Math.max(1.12, pitch * 1.05) : 1.24;
-    const effectiveRate = Math.min(0.92, Math.max(0.84, rate * 0.95));
+    // Natural human pitch (1.0) and natural conversational speed (0.97) — never artificial pitch-shifting!
+    const effectivePitch = 1.0;
+    const effectiveRate = Math.min(1.02, Math.max(0.95, rate));
 
     this.updateState({
       provider: 'web-neural',
@@ -725,7 +764,7 @@ class UmaVoiceService {
       utterance.onend = () => {
         if (token !== this.activeToken) return;
         chunkIndex++;
-        setTimeout(playNextChunk, 110);
+        setTimeout(playNextChunk, 60);
       };
 
       utterance.onerror = (e) => {
@@ -755,8 +794,8 @@ class UmaVoiceService {
   }
 
   /**
-   * Scans browser voices and strictly selects the most natural Hindi FEMALE voice.
-   * Completely filters out any male engines (Madhur, Hemant, hid, hib, hif, etc.)
+   * Scans browser voices and strictly selects the most natural Hindi FEMALE voice (hi-IN).
+   * Never selects synthetic Sanskrit (sa-IN) or male engines for Uma's voice.
    */
   public pickBestBrowserHindiVoice(): SpeechSynthesisVoice | null {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
@@ -800,20 +839,13 @@ class UmaVoiceService {
     );
     if (anyFemaleHindi) return anyFemaleHindi;
 
-    // 6. Female Sanskrit voice if installed
-    const sanskritVoice = nonMaleVoices.find((v) => v.lang.toLowerCase().startsWith('sa'));
-    if (sanskritVoice) return sanskritVoice;
-
-    // 7. General non-male Hindi voice
+    // 6. General non-male Hindi voice
     const anyNonMaleHindi = nonMaleVoices.find((v) => v.lang.toLowerCase().startsWith('hi'));
     if (anyNonMaleHindi) return anyNonMaleHindi;
 
     return null;
   }
 
-  /**
-   * Stops all active speech across cloud audio, native Capacitor, and browser engine immediately.
-   */
   public stop(notify: boolean = true): void {
     this.activeToken++;
     this.clearKeepAlive();

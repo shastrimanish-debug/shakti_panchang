@@ -20,6 +20,17 @@ async function startServer() {
   app.use(express.json({ limit: "20mb" }));
   app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
+  // Allow Capacitor Android WebView (https://localhost) and mobile clients to call /api/*
+  app.use((req: Request, res: Response, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-license-token");
+    if (req.method === "OPTIONS") {
+      return res.status(204).end();
+    }
+    next();
+  });
+
   // Shared Gemini client utility on the server
   let aiClient: GoogleGenAI | null = null;
   function getGeminiClient(): GoogleGenAI | null {
@@ -312,17 +323,17 @@ Return ONLY a valid JSON object with the following structure:
   const ttsAudioCache = new Map<string, { audioBase64: string; mimeType: string }>();
 
   // High-Quality Global Neural TTS Endpoint for Vidushi UMA (Hindi Female Voice)
-  // Supports Google Cloud Neural2 (hi-IN-Neural2-A, hi-IN-Neural2-D, hi-IN-Journey-F)
-  // + Gemini 3.8 Flash Lite TTS (prebuilt female voice Kore with Vedic Devi persona)
-  // + Graceful fallback signal to client-side high-fidelity neural synthesizer
+  // High-Quality Global Neural TTS Endpoint for Vidushi UMA (Natural Indian Female Voice)
+  // Primary: Google Cloud Chirp 3 HD Natural Indian Female Voices (hi-IN-Chirp3-HD-Kore / Aoede / Leda)
+  // Secondary: Google Cloud Neural2 Female (hi-IN-Neural2-A / hi-IN-Neural2-D) at natural pitch (0.0)
+  // Tertiary: Gemini 3.8 Flash Lite TTS (Kore)
   app.post("/api/tts/uma", async (req: Request, res: Response) => {
     try {
       const {
         text,
-        voice = "hi-IN-Neural2-A",
+        voice = "hi-IN-Chirp3-HD-Kore",
         tone = "calm",
-        rate = 0.90,
-        pitchSemis = 1.2,
+        rate = 0.97,
         stylePrompt,
       } = req.body || {};
 
@@ -330,15 +341,29 @@ Return ONLY a valid JSON object with the following structure:
         return res.status(400).json({ ok: false, error: "TEXT_REQUIRED" });
       }
 
-      const cleanText = text.trim().slice(0, 3000);
-      // Keep pitch in a sweet, unmistakable Indian female register (+0.8 to +2.2 semitones)
-      const rawPitchSemis = typeof pitchSemis === "number" && pitchSemis > 0
-        ? pitchSemis
-        : (tone === "enthusiastic" ? 2.0 : tone === "calm" ? 1.2 : 0.8);
-      const effectivePitchSemis = Math.max(0.6, Math.min(3.5, rawPitchSemis));
-      const effectiveRate = Math.max(0.82, Math.min(1.15, typeof rate === "number" ? rate : 0.90));
+      const cleanText = text
+        .trim()
+        .replace(/।\s*।+/g, "।")
+        .replace(/\s+/g, " ")
+        .slice(0, 2500);
 
-      const cacheKey = `uma_ntts_v3:${voice}:${tone}:${effectiveRate.toFixed(2)}:${effectivePitchSemis.toFixed(1)}:${cleanText}`;
+      // Select the best natural Indian Female Chirp 3 HD voice by tone
+      const chirpVoiceMap: Record<string, { name: string; defaultRate: number }> = {
+        calm: { name: "hi-IN-Chirp3-HD-Kore", defaultRate: 0.97 },
+        enthusiastic: { name: "hi-IN-Chirp3-HD-Aoede", defaultRate: 1.0 },
+        formal: { name: "hi-IN-Chirp3-HD-Leda", defaultRate: 0.96 },
+      };
+      const tonePreset = chirpVoiceMap[tone] || chirpVoiceMap.calm;
+      const targetChirpVoice =
+        typeof voice === "string" && voice.includes("Chirp3-HD")
+          ? voice
+          : tonePreset.name;
+
+      // Natural human speaking speed (never slow-motion or robotic)
+      const rawRate = typeof rate === "number" && rate >= 0.92 ? rate : tonePreset.defaultRate;
+      const effectiveRate = Math.max(0.94, Math.min(1.08, rawRate));
+
+      const cacheKey = `uma_chirp3_v4:${targetChirpVoice}:${tone}:${effectiveRate.toFixed(2)}:${cleanText}`;
       const cached = ttsAudioCache.get(cacheKey);
       if (cached) {
         return res.status(200).json({
@@ -351,49 +376,75 @@ Return ONLY a valid JSON object with the following structure:
         });
       }
 
-      // 1. Google Cloud Text-to-Speech API (hi-IN-Neural2-A Female Neural Voice)
-      // Single-layer audioConfig pitch/rate (never double-shifted in SSML) + Vedic danda breaks
+      // 1. Primary: Google Cloud Chirp 3 HD Natural Indian Woman Voice (hi-IN-Chirp3-HD-Kore / Aoede / Leda)
+      // Uses plain text input (no SSML <break> chopping and no pitch shifting) for 100% realistic human intonation
       const googleTtsKey = process.env.GOOGLE_TTS_API_KEY || process.env.GOOGLE_CLOUD_API_KEY;
       if (googleTtsKey) {
         try {
           const gttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleTtsKey}`;
 
-          const escapedText = cleanText
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&apos;")
-            .replace(/॥/g, '<break time="320ms"/>')
-            .replace(/।/g, '<break time="220ms"/>');
-
-          const ssmlText = `<speak>${escapedText}</speak>`;
-          const selectedFemaleVoice =
-            voice.startsWith("hi-IN") && !/-[BCDEF]$/i.test(voice)
-              ? voice
-              : "hi-IN-Neural2-A";
-
-          const gttsResp = await fetch(gttsUrl, {
+          const chirpResp = await fetch(gttsUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              input: { ssml: ssmlText },
+              input: { text: cleanText },
               voice: {
                 languageCode: "hi-IN",
-                name: selectedFemaleVoice,
+                name: targetChirpVoice,
                 ssmlGender: "FEMALE",
               },
               audioConfig: {
                 audioEncoding: "MP3",
                 speakingRate: effectiveRate,
-                pitch: effectivePitchSemis,
+              },
+            }),
+            signal: AbortSignal.timeout(10000),
+          });
+
+          if (chirpResp.ok) {
+            const data: any = await chirpResp.json();
+            if (data?.audioContent) {
+              const payload = {
+                audioBase64: data.audioContent,
+                mimeType: "audio/mp3",
+              };
+              if (ttsAudioCache.size > 300) {
+                const firstKey = ttsAudioCache.keys().next().value;
+                if (firstKey) ttsAudioCache.delete(firstKey);
+              }
+              ttsAudioCache.set(cacheKey, payload);
+              return res.status(200).json({
+                ok: true,
+                ...payload,
+                provider: "google-chirp3-hd-female",
+                voice: targetChirpVoice,
+                tone,
+              });
+            }
+          }
+
+          // Fallback 1B: Google Cloud Neural2-A / Neural2-D at 0.0 pitch (no artificial pitch shift)
+          const neural2Resp = await fetch(gttsUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              input: { text: cleanText },
+              voice: {
+                languageCode: "hi-IN",
+                name: "hi-IN-Neural2-A",
+                ssmlGender: "FEMALE",
+              },
+              audioConfig: {
+                audioEncoding: "MP3",
+                speakingRate: effectiveRate,
+                pitch: 0.0,
               },
             }),
             signal: AbortSignal.timeout(8000),
           });
 
-          if (gttsResp.ok) {
-            const data: any = await gttsResp.json();
+          if (neural2Resp.ok) {
+            const data: any = await neural2Resp.json();
             if (data?.audioContent) {
               const payload = {
                 audioBase64: data.audioContent,
@@ -417,16 +468,16 @@ Return ONLY a valid JSON object with the following structure:
         }
       }
 
-      // 2. Gemini 3.8 Flash Lite TTS with Pure Vedic Female Persona (Kore)
+      // 2. Gemini 3.8 Flash Lite TTS with Natural Indian Female Persona (Kore)
       const ai = getGeminiClient();
       if (ai) {
         try {
           const toneStylePrompt = stylePrompt || (
             tone === "enthusiastic"
-              ? "Bright, melodious, uplifting Indian female voice reciting sacred Sanskrit and Hindi with joyful devotion, crystal-clear Devanagari pronunciation, and warm resonance"
+              ? "Natural, warm, cheerful Indian woman speaking conversational Hindi with authentic Indian accent and friendly warmth"
               : tone === "formal"
-                ? "Clear, articulate, serene Indian female Vedic scholar (Vidushi) speaking with classical Sanskrit precision (shuddha uchcharana), complete vowel articulation, and graceful cadence"
-                : "Sweet, melodious, serene Indian female devotional voice (Devi Swara) chanting sacred Sanskrit shlokas and Hindi with 100% pure Devanagari pronunciation, clear visarga and anusvara resonance, and peaceful temple cadence"
+                ? "Natural, composed, articulate Indian woman speaking clear Hindi and Sanskrit with graceful human intonation"
+                : "Warm, gentle, natural Indian woman speaking conversational Hindi like a caring family astrologer with smooth, human cadence"
           );
 
           const response = await ai.models.generateContent({
@@ -477,7 +528,7 @@ Return ONLY a valid JSON object with the following structure:
         }
       }
 
-      // 3. Secondary Server-Side Stream: Google High-Def Female Speech Stream (chunked)
+      // 3. Secondary Server-Side Stream at natural human speed (0.98)
       try {
         const streamChunks: string[] = [];
         const sentences = cleanText.split(/(?<=[।॥,.!\n])\s+/);
@@ -506,9 +557,8 @@ Return ONLY a valid JSON object with the following structure:
         if (curChunk) streamChunks.push(curChunk);
 
         const mp3Buffers: Buffer[] = [];
-        const effectiveSpeed = tone === "enthusiastic" ? "0.95" : tone === "calm" ? "0.86" : "0.90";
         for (const chunk of streamChunks.slice(0, 15)) {
-          const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&ttsspeed=${effectiveSpeed}&q=${encodeURIComponent(chunk)}`;
+          const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&ttsspeed=0.98&q=${encodeURIComponent(chunk)}`;
           const ttsResp = await fetch(url, {
             headers: {
               "User-Agent":
@@ -571,7 +621,7 @@ Return ONLY a valid JSON object with the following structure:
       }
 
       const cleanText = text.trim().slice(0, 1800);
-      const cacheKey = `sanskrit_ntts_female_v3:${cleanText}`;
+      const cacheKey = `sanskrit_chirp3_female_v4:${cleanText}`;
       const cached = ttsAudioCache.get(cacheKey);
       if (cached) {
         return res.status(200).json({
@@ -582,37 +632,28 @@ Return ONLY a valid JSON object with the following structure:
         });
       }
 
-      // 1. Primary: Google Cloud Neural2 Female Voice (hi-IN-Neural2-A) with Vedic Caesura
+      // 1. Primary: Google Cloud Chirp 3 HD Female Voice (hi-IN-Chirp3-HD-Kore)
       const googleTtsKey = process.env.GOOGLE_TTS_API_KEY || process.env.GOOGLE_CLOUD_API_KEY;
       if (googleTtsKey) {
         try {
           const gttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleTtsKey}`;
-          const escapedText = cleanText
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&apos;")
-            .replace(/॥/g, '<break time="320ms"/>')
-            .replace(/।/g, '<break time="220ms"/>');
 
           const gttsResp = await fetch(gttsUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              input: { ssml: `<speak>${escapedText}</speak>` },
+              input: { text: cleanText },
               voice: {
                 languageCode: "hi-IN",
-                name: "hi-IN-Neural2-A",
+                name: "hi-IN-Chirp3-HD-Kore",
                 ssmlGender: "FEMALE",
               },
               audioConfig: {
                 audioEncoding: "MP3",
-                speakingRate: 0.88,
-                pitch: 1.2,
+                speakingRate: 0.94,
               },
             }),
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(9000),
           });
 
           if (gttsResp.ok) {
@@ -630,12 +671,12 @@ Return ONLY a valid JSON object with the following structure:
               return res.status(200).json({
                 ok: true,
                 ...payload,
-                provider: "google-neural2-female",
+                provider: "google-chirp3-hd-female",
               });
             }
           }
         } catch (gErr: any) {
-          console.warn("Google Neural2 Sanskrit TTS error, trying Gemini TTS:", gErr?.message || gErr);
+          console.warn("Google Chirp3 Sanskrit TTS error, trying Gemini TTS:", gErr?.message || gErr);
         }
       }
 

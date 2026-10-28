@@ -168,6 +168,7 @@ export interface SpeakOptions {
   rate?: number;
   pitch?: number;
   sanskritOnly?: boolean;
+  mode?: string;
   voiceStyle?: "pandit" | "uma";
   raga?: string;
   onStart?: () => void;
@@ -177,25 +178,27 @@ export interface SpeakOptions {
 
 export async function prefetchUmaSpeech(text: string, options?: SpeakOptions): Promise<void> {
   return umaVoice.prefetch(text, {
-    rate: options?.rate ?? 0.88,
-    pitch: options?.pitch ?? 1.08,
+    rate: options?.rate ?? 0.97,
+    pitch: options?.pitch ?? 1.0,
     voiceStyle: "uma",
     sanskritOnly: options?.sanskritOnly,
-    tone: "calm",
+    tone: umaVoice.getTone(),
   });
 }
 
 export async function speakUma(text: string, options?: SpeakOptions): Promise<void> {
   unlockUmaSpeech();
-  startPathBed();
+  if (options?.sanskritOnly || options?.mode === "stotram") {
+    startPathBed();
+  }
 
   isCurrentlySpeaking = true;
   return umaVoice.speak(text, {
-    rate: options?.rate ?? 0.88,
-    pitch: options?.pitch ?? 1.08,
+    rate: options?.rate ?? 0.97,
+    pitch: options?.pitch ?? 1.0,
     voiceStyle: "uma",
     sanskritOnly: options?.sanskritOnly,
-    tone: "calm",
+    tone: umaVoice.getTone(),
     onStart: () => {
       isCurrentlySpeaking = true;
       options?.onStart?.();

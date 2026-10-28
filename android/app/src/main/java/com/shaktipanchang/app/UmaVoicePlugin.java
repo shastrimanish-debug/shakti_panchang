@@ -364,8 +364,8 @@ public class UmaVoicePlugin extends Plugin {
         if (chosen != null) {
             tts.setVoice(chosen);
         }
-        tts.setSpeechRate(0.94f);
-        tts.setPitch(1.04f);
+        tts.setSpeechRate(0.98f);
+        tts.setPitch(1.0f);
         if (Build.VERSION.SDK_INT >= 21) {
             tts.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -381,26 +381,27 @@ public class UmaVoicePlugin extends Plugin {
         for (Voice voice : voices) {
             if (voice == null || voice.getLocale() == null) continue;
             String lang = voice.getLocale().toLanguageTag().toLowerCase(Locale.ROOT);
-            if (!lang.startsWith("hi") && !lang.startsWith("sa")) continue;
+            if (!lang.startsWith("hi")) continue;
             Set<String> features = voice.getFeatures();
             if (features != null && features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
             String name = voice.getName() == null ? "" : voice.getName().toLowerCase(Locale.ROOT);
             if (name.contains("en-") || name.startsWith("en")) continue;
             int score = 20;
-            if (lang.startsWith("sa")) score += 65; // Prefer dedicated Sanskrit voice when installed
-            if (lang.equals("hi-in") || lang.contains("hi-in")) score += 40;
+            if (lang.equals("hi-in") || lang.contains("hi-in")) score += 60;
             if (name.contains("hia") || name.contains("hfc") || name.contains("hfd")
-                || name.contains("female") || name.contains("-a-") || name.contains("wavenet-a")) {
-                score += 90;
+                || name.contains("female") || name.contains("-a-") || name.contains("wavenet-a")
+                || name.contains("wavenet-d") || name.contains("neural2-a") || name.contains("neural2-d")
+                || name.contains("swara")) {
+                score += 95;
             }
             if (name.contains("neural") || name.contains("wavenet") || name.contains("studio") || name.contains("network")) {
-                score += 30;
+                score += 45;
             }
             if (voice.getQuality() >= Voice.QUALITY_VERY_HIGH) score += 24;
             else if (voice.getQuality() >= Voice.QUALITY_HIGH) score += 12;
             if (name.contains("male") || name.contains("-hid") || name.contains("hie")
                 || name.contains("wavenet-b") || name.contains("wavenet-c")) {
-                score -= 70;
+                score -= 90;
             }
             if (score > bestScore) {
                 bestScore = score;
@@ -417,14 +418,13 @@ public class UmaVoicePlugin extends Plugin {
         for (Voice voice : voices) {
             if (voice == null || voice.getLocale() == null) continue;
             String lang = voice.getLocale().toLanguageTag().toLowerCase(Locale.ROOT);
-            if (!lang.startsWith("hi") && !lang.startsWith("sa")) continue;
+            if (!lang.startsWith("hi")) continue;
             Set<String> features = voice.getFeatures();
             if (features != null && features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
             String name = voice.getName() == null ? "" : voice.getName().toLowerCase(Locale.ROOT);
             if (name.contains("en-") || name.startsWith("en")) continue;
             int score = 10;
-            if (lang.startsWith("sa")) score += 40;
-            if (lang.contains("hi")) score += 30;
+            if (lang.contains("hi")) score += 40;
             if (name.contains("male") || name.contains("hid") || name.contains("hie")
                 || name.contains("wavenet-b") || name.contains("wavenet-c") || name.contains("madhur")) {
                 score += 80;
@@ -457,8 +457,8 @@ public class UmaVoicePlugin extends Plugin {
                 tts.setLanguage(Locale.getDefault());
             }
         }
-        tts.setSpeechRate(sitarWanted ? 0.88f : 0.92f);
-        tts.setPitch(1.06f);
+        tts.setSpeechRate(sitarWanted ? 0.94f : 0.98f);
+        tts.setPitch(1.0f);
         if (sitarWanted) startSitar();
         AudioManager audio = (AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
         if (audio != null) {
