@@ -885,6 +885,10 @@ ${
   // D. RAVAN SANHITA UPAY MODULE
   if (/रावण संहिता|ravan sanhita|बिल्व पत्र|पीली कौड़ी|गोमती चक्र|कमलगट्टा/.test(q)) {
     const salutation = kundali?.name ? `${kundali.name} जी` : "प्रिय यजमान";
+    const lagnaRashi = kundali?.lagnaRashi || "मेष";
+    const moonRashi = kundali?.moonRashi || "वृषभ";
+    const dasha = kundali?.mahadasha || "गुरु";
+    const antar = kundali?.antardasha || "शुक्र";
     return {
       ok: true,
       source: "local_vedic",

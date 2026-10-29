@@ -12,6 +12,27 @@ export interface ReleaseNote {
 
 export const APP_RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "1.0.36",
+    versionCode: 36,
+    date: "अक्टूबर 2026",
+    title: "संस्करण ३६ (Version Code 36) - १००% गतिशील ज्योतिषीय उपाय व डी-१/डी-९ वैदिक पत्री",
+    highlights: [
+      "वर्जन कोड ३६ (versionCode 36) व ऐप वर्जन १.०.३६ (v1.0.36) पर सफल अपग्रेड।",
+      "एंड्रॉइड (Android Gradle build.gradle / build.gradle.kts) तथा वेब पैकेज (package.json) में वर्जन कोड ३६ की संपूर्ण एकरूपता व सिंक।",
+      "१००% ग्रह गणना-सम्मत गतिशील उपाय पर्ची (Dynamic Planetary Upay Engine): भाव, उच्च/नीच, अस्त स्थिति, केंद्र/त्रिकोण, योगकारक व मारक स्थिति अनुसार ६-सूत्रीय अचूक उपाय।",
+      "१-पृष्ठ वैदिक भोजपत्र पत्रिका में लग्न चक्र (D-1) एवं नवमांश कुण्डली (D-9) का प्रामाणिक स्वर्णिम अंकन।"
+    ],
+    details: [
+      {
+        category: "वर्जन कोड ३६ अपग्रेड विवरण",
+        items: [
+          "Google Play Store / Android Release दिशानिर्देशों के अनुरूप versionCode 36 व versionName 1.0.36 लागू।",
+          "पारंपरिक उपाय पर्ची एवं वैदिक पत्रिका जनरेशन में उच्च स्तरीय स्थिरता व शुद्धता।"
+        ]
+      }
+    ]
+  },
+  {
     version: "1.0.35",
     versionCode: 35,
     date: "अक्टूबर 2026",

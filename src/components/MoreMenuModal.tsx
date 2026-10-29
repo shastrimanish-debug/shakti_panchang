@@ -31,6 +31,7 @@ import { useLicense } from '../lib/license-client';
 import { useLanguage } from '../i18n';
 import { triggerHapticSelection } from '../utils/haptics';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { CURRENT_RELEASE } from '../constants/releaseNotes';
 
 interface MoreMenuModalProps {
   isOpen: boolean;
@@ -418,7 +419,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </div>
         </div>
 
-        {/* Release Notes v1.0.30 (Code 30) Trigger */}
+        {/* Release Notes v{CURRENT_RELEASE.version} (Code {CURRENT_RELEASE.versionCode}) Trigger */}
         <div className="mt-2.5">
           <button
             type="button"
@@ -433,11 +434,11 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                 <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] leading-snug flex items-center gap-1.5">
                   <span>नवीनतम रिलीज़ नोट्स (Release Notes)</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 font-black">
-                    v1.0.30 (Code 30)
+                    v{CURRENT_RELEASE.version} (Code {CURRENT_RELEASE.versionCode})
                   </span>
                 </div>
-                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
-                  उमा 5.0 सूक्ष्म गणित (KP उपनक्षत्र, षोडशवर्ग, सूक्ष्म दशा, प्रश्न-कुण्डली व अंक-युग्म)
+                <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5 truncate">
+                  {CURRENT_RELEASE.title}
                 </div>
               </div>
             </div>

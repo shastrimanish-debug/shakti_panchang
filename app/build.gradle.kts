@@ -16,8 +16,8 @@ android {
     applicationId = "com.shaktipanchang.app"
     minSdk = 24
     targetSdk = 35
-    versionCode = 30
-    versionName = "1.0.30"
+    versionCode = 36
+    versionName = "1.0.36"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
