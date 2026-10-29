@@ -785,6 +785,31 @@ export interface TraditionalUpayParchiData {
   detailedItems: UpayParchiDetailedItem[];
   grahanSpecialAnalysis?: GrahanShantiDeepDive;
   formattedDetailedGuide: string;
+  astrologicalCalculationSummary?: {
+    lagnaLord: string;
+    lagnaLordHouse: number;
+    lagnaLordDignity: string;
+    fifthLord: string;
+    fifthLordHouse: number;
+    ninthLord: string;
+    ninthLordHouse: number;
+    yogakaraka?: string;
+    beneficPlanets: string[];
+    afflictedPlanets: string[];
+    combustPlanets: string[];
+    debilitatedPlanets: string[];
+    ishtaDevta: string;
+    dashaSummary: string;
+    keyYogaOrDosha: string;
+    reasons: {
+      gemstoneReason: string;
+      upvasReason: string;
+      stotraReason: string;
+      daanReason: string;
+      sevaReason: string;
+      shantiReason: string;
+    };
+  };
 }
 
 const LAGNA_RATNA_YUGMA: Record<string, { ratnaLine: string; upvasDay: string }> = {
@@ -1466,89 +1491,419 @@ export function generateTraditionalUpayParchi(
   const hasHonorific = /^(श्री|श्रीमती|सुश्री|कु\.|डॉ\.|पं\.)/.test(rawName);
   const salutation = hasHonorific ? rawName : `श्री ${rawName} जी`;
 
-  const lagna = k.lagnaRashi || 'कर्क';
-  const lagnaPreset = LAGNA_RATNA_YUGMA[lagna] || LAGNA_RATNA_YUGMA['कर्क'];
+  // =========================================================================
+  // 100% DYNAMIC GRAHA-CALCULATION ENGINE (ग्रह स्पष्ट, बलाबल, भाव व योग विश्लेषण)
+  // =========================================================================
+  const planets = k.planets || [];
+  const pMap: Record<string, PlanetPosition> = {};
+  planets.forEach((p) => {
+    for (const g of ['सूर्य', 'चंद्र', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'राहु', 'केतु']) {
+      if (p.planet.includes(g)) {
+        pMap[g] = p;
+        break;
+      }
+    }
+  });
 
-  // Point 1: Gemstones (Lagna + Trikona)
-  const point1 = lagnaPreset.ratnaLine;
+  const getHouse = (pName: string) => pMap[pName]?.house ?? -1;
+  const getDegInRashi = (pName: string) => pMap[pName]?.degreeInRashi ?? 15;
+  const sunP = pMap['सूर्य'];
+  const moonP = pMap['चंद्र'];
+  const marsP = pMap['मंगल'];
+  const mercP = pMap['बुध'];
+  const jupP = pMap['गुरु'];
+  const venP = pMap['शुक्र'];
+  const satP = pMap['शनि'];
+  const rahuP = pMap['राहु'];
+  const ketuP = pMap['केतु'];
 
-  // Point 2: Fasting day (Upvas)
-  const point2 = lagnaPreset.upvasDay;
+  // House Signs and Lords
+  const lagnaRashiNum = k.lagnaRashiNumber || 1;
+  const lagnaSignIdx = (lagnaRashiNum - 1) % 12;
+  const lagnaSign = k.lagnaRashi || RASHIS[lagnaSignIdx];
+  const lagnaLord = SIGN_LORDS[lagnaSign] || 'सूर्य';
 
-  // Point 3: Classical Stotra / Path based on Mahadasha / Antardasha / Guru
+  const getHouseLord = (h: number) => {
+    const signIdx = ((lagnaSignIdx + h - 1) % 12);
+    const signName = RASHIS[signIdx];
+    return SIGN_LORDS[signName] || 'सूर्य';
+  };
+
+  const h5Lord = getHouseLord(5); // पंचमेश (इष्ट देव व बुद्धि)
+  const h9Lord = getHouseLord(9); // भाग्येश (धर्म व भाग्य)
+  const h10Lord = getHouseLord(10); // दशमेश (कर्म व यश)
+  const h2Lord = getHouseLord(2); // द्वितीयेश (मारक)
+  const h7Lord = getHouseLord(7); // सप्तमेश (मारक)
+  const h6Lord = getHouseLord(6); // षष्ठेश (रोग, रिपु, ऋण)
+  const h8Lord = getHouseLord(8); // अष्टमेश (आयु व आकस्मिक संकट)
+  const h12Lord = getHouseLord(12); // द्वादशेश (व्यय व हानि)
+
+  // Yogakaraka Planet
+  let yogakaraka: string | undefined = undefined;
+  if (lagnaSign === 'वृषभ') yogakaraka = 'शनि';
+  else if (lagnaSign === 'कर्क') yogakaraka = 'मंगल';
+  else if (lagnaSign === 'सिंह') yogakaraka = 'मंगल';
+  else if (lagnaSign === 'तुला') yogakaraka = 'शनि';
+  else if (lagnaSign === 'मकर') yogakaraka = 'शुक्र';
+  else if (lagnaSign === 'कुंभ') yogakaraka = 'शुक्र';
+
+  // Dignity helpers
+  const EXALT_MAP: Record<string, string> = {
+    सूर्य: 'मेष', चंद्र: 'वृषभ', मंगल: 'मकर', बुध: 'कन्या',
+    गुरु: 'कर्क', शुक्र: 'मीन', शनि: 'तुला', राहु: 'वृषभ', केतु: 'वृश्चिक',
+  };
+  const DEBIL_MAP: Record<string, string> = {
+    सूर्य: 'तुला', चंद्र: 'वृश्चिक', मंगल: 'कर्क', बुध: 'मीन',
+    गुरु: 'मकर', शुक्र: 'कन्या', शनि: 'मेष', राहु: 'वृश्चिक', केतु: 'वृषभ',
+  };
+  const OWN_MAP: Record<string, string[]> = {
+    सूर्य: ['सिंह'], चंद्र: ['कर्क'], मंगल: ['मेष', 'वृश्चिक'],
+    बुध: ['मिथुन', 'कन्या'], गुरु: ['धनु', 'मीन'],
+    शुक्र: ['वृषभ', 'तुला'], शनि: ['मकर', 'कुंभ'],
+  };
+
+  const isDebil = (pName: string) => pMap[pName]?.rashi === DEBIL_MAP[pName];
+  const isExalt = (pName: string) => pMap[pName]?.rashi === EXALT_MAP[pName];
+  const isOwn = (pName: string) => OWN_MAP[pName]?.includes(pMap[pName]?.rashi || '');
+
+  // Combustion (अस्त)
+  const isCombust = (pName: string): boolean => {
+    if (!sunP || !pMap[pName] || pName === 'सूर्य' || pName === 'राहु' || pName === 'केतु') return false;
+    let d = Math.abs(pMap[pName].degree - sunP.degree);
+    if (d > 180) d = 360 - d;
+    const isRetro = pMap[pName].isRetrograde;
+    if (pName === 'चंद्र') return d <= 12;
+    if (pName === 'मंगल') return d <= 17;
+    if (pName === 'बुध') return d <= (isRetro ? 12 : 14);
+    if (pName === 'गुरु') return d <= 11;
+    if (pName === 'शुक्र') return d <= (isRetro ? 8 : 10);
+    if (pName === 'शनि') return d <= 15;
+    return false;
+  };
+
+  const combustList: string[] = [];
+  const debilList: string[] = [];
+  const exaltList: string[] = [];
+
+  ['सूर्य', 'चंद्र', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'राहु', 'केतु'].forEach((g) => {
+    if (isCombust(g)) combustList.push(`${g} (अस्त)`);
+    if (isDebil(g)) debilList.push(`${g} (${pMap[g]?.rashi} में नीच)`);
+    if (isExalt(g)) exaltList.push(`${g} (${pMap[g]?.rashi} में उच्च)`);
+  });
+
+  // =========================================================================
+  // POINT 1: शास्त्रीय रत्न परामर्श (Calculated Benefic Strengthening)
+  // =========================================================================
+  interface GemInfo {
+    gem: string;
+    weight: string;
+    metal: string;
+    finger: string;
+    day: string;
+  }
+  const GEM_CATALOG: Record<string, GemInfo> = {
+    सूर्य: { gem: 'माणिक्य (Ruby)', weight: '५.२५ से ६.२५ रत्ती', metal: 'तांबे या सोने में', finger: 'अनामिका', day: 'रविवार' },
+    चंद्र: { gem: 'सच्चा मोती (Natural Pearl)', weight: '६.२५ से ८.२५ रत्ती', metal: 'शुद्ध चांदी में', finger: 'कनिष्ठिका', day: 'सोमवार' },
+    मंगल: { gem: 'मूँगा (Italian Red Coral)', weight: '६.२५ से ८.२५ रत्ती', metal: 'तांबे या सोने में', finger: 'अनामिका', day: 'मंगलवार' },
+    बुध: { gem: 'पन्ना (Zambian Emerald)', weight: '५.२५ से ७.२५ रत्ती', metal: 'चांदी या पंचधातु में', finger: 'कनिष्ठिका', day: 'बुधवार' },
+    गुरु: { gem: 'पीला पुखराज (Yellow Sapphire)', weight: '४.२५ से ६.२५ रत्ती', metal: 'सोने या पीतल में', finger: 'तर्जनी', day: 'गुरुवार' },
+    शुक्र: { gem: 'ओपल अथवा हीरा (Opal/Diamond)', weight: '६.२५ से ८.२५ रत्ती', metal: 'चांदी में', finger: 'अनामिका अथवा तर्जनी', day: 'शुक्रवार' },
+    शनि: { gem: 'नीलम अथवा जमुनिया (Blue Sapphire/Amethyst)', weight: '५.२५ से ७.२५ रत्ती', metal: 'पंचधातु या चांदी में', finger: 'मध्यमा', day: 'शनिवार' },
+  };
+
+  // Score candidate benefic planets (Lagna lord, 9th lord, 5th lord, Yogakaraka)
+  const scoreBenefic = (planet: string, isLagna = false, isBhagya = false, isYog = false) => {
+    const p = pMap[planet];
+    if (!p) return -100;
+    // Strict Shastra rule: never wear debilitated planet directly without caution
+    if (isDebil(planet)) return -40;
+    // Pure Maraka / Trik lord without trikona lordship
+    if (!isLagna && !isBhagya && !isYog && [h6Lord, h8Lord, h12Lord, h2Lord, h7Lord].includes(planet)) return -30;
+
+    let score = 20;
+    if (isYog) score += 25;
+    if (isLagna) score += 22;
+    if (isBhagya) score += 18;
+    if (isCombust(planet)) score += 15; // Combust benefic urgently needs light rekindling
+    if ([1, 4, 5, 7, 9, 10].includes(p.house)) score += 12; // Kendra / Trikona
+    if (p.degreeInRashi < 3.5 || p.degreeInRashi > 26.5) score += 10; // Bal / Mrita avastha needs strength
+    if ([6, 8, 12].includes(p.house)) score -= isLagna ? 6 : 16;
+    if (isExalt(planet)) score += 8;
+    if (isOwn(planet)) score += 6;
+    return score;
+  };
+
+  const candidates = [
+    { planet: lagnaLord, role: 'लग्नेश', isLagna: true, isBhagya: false, isYog: yogakaraka === lagnaLord },
+    { planet: h9Lord, role: 'भाग्येश', isLagna: false, isBhagya: true, isYog: yogakaraka === h9Lord },
+    { planet: h5Lord, role: 'पंचमेश', isLagna: false, isBhagya: false, isYog: yogakaraka === h5Lord },
+  ];
+  if (yogakaraka && !candidates.some((c) => c.planet === yogakaraka)) {
+    candidates.push({ planet: yogakaraka, role: 'योगकारक', isLagna: false, isBhagya: false, isYog: true });
+  }
+
+  // Deduplicate and score
+  const uniqueCandidates = Array.from(new Set(candidates.map((c) => c.planet))).map((pl) => {
+    const meta = candidates.find((c) => c.planet === pl)!;
+    return {
+      planet: pl,
+      role: meta.role,
+      score: scoreBenefic(pl, meta.isLagna, meta.isBhagya, meta.isYog),
+      info: GEM_CATALOG[pl],
+    };
+  }).filter((c) => c.score > 0 && !!c.info);
+
+  uniqueCandidates.sort((a, b) => b.score - a.score);
+
+  const primaryCandidate = uniqueCandidates[0] || {
+    planet: lagnaLord,
+    role: 'लग्नेश',
+    info: GEM_CATALOG[lagnaLord] || GEM_CATALOG['गुरु'],
+  };
+  const secondaryCandidate = uniqueCandidates[1];
+
+  let point1 = '';
+  let gemReason = '';
+  if (secondaryCandidate && secondaryCandidate.planet !== primaryCandidate.planet) {
+    point1 = `${primaryCandidate.info.gem} + ${secondaryCandidate.info.gem} (${primaryCandidate.info.weight}, ${primaryCandidate.info.metal}) धारण करें।`;
+    gemReason = `आपकी कुंडली में ${primaryCandidate.role} ${primaryCandidate.planet} (भाव ${getHouse(primaryCandidate.planet)}) तथा ${secondaryCandidate.role} ${secondaryCandidate.planet} (भाव ${getHouse(secondaryCandidate.planet)}) सर्वाधिक शुभ फलदायक हैं। इनके बल संवर्धन से स्वास्थ्य, आत्मविश्वास एवं भाग्योदय होता है।`;
+  } else {
+    point1 = `${primaryCandidate.info.gem} ${primaryCandidate.info.weight} (${primaryCandidate.info.metal}, ${primaryCandidate.info.finger} में) धारण करें।`;
+    gemReason = `आपकी कुंडली में ${primaryCandidate.role} ${primaryCandidate.planet} (भाव ${getHouse(primaryCandidate.planet)}) के रश्मि-बल को जाग्रत करने हेतु यह रत्न शुभ फलप्रद है।`;
+  }
+
+  // =========================================================================
+  // POINT 2 & 4: बाधक / पीड़ित ग्रह निर्धारण (Fasting & Daan Calculation)
+  // =========================================================================
+  interface AfflictionScore {
+    planet: string;
+    score: number;
+    reason: string;
+  }
+  const afflictionScores: AfflictionScore[] = [];
+
+  ['सूर्य', 'चंद्र', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'राहु', 'केतु'].forEach((g) => {
+    const p = pMap[g];
+    if (!p) return;
+    let sc = 0;
+    const reasons: string[] = [];
+
+    if (isDebil(g)) {
+      sc += 14;
+      reasons.push(`${p.rashi} राशि में नीच`);
+    }
+    if ([6, 8, 12].includes(p.house)) {
+      sc += 9;
+      reasons.push(`${p.house}वें दुःस्थान में`);
+    }
+    if (isCombust(g)) {
+      sc += 8;
+      reasons.push('सूर्य के निकट अस्त');
+    }
+    // Conjunction with Rahu / Ketu
+    if (g !== 'राहु' && g !== 'केतु') {
+      const rahuH = getHouse('राहु');
+      const ketuH = getHouse('केतु');
+      if (p.house === rahuH) {
+        sc += 11;
+        reasons.push('राहु के साथ युति');
+      } else if (p.house === ketuH) {
+        sc += 10;
+        reasons.push('केतु के साथ युति');
+      }
+    }
+    // Saturn-Moon Vish Yog
+    if (g === 'चंद्र' && getHouse('शनि') === p.house) {
+      sc += 13;
+      reasons.push('शनि-चंद्र विष योग');
+    }
+    // Manglik / Kuja
+    if (g === 'मंगल' && [1, 4, 7, 8, 12].includes(p.house)) {
+      sc += 9;
+      reasons.push(`${p.house}वें भाव में मांगलिक स्थिति`);
+    }
+    // Current Mahadasha / Antardasha impact
+    if (k.mahadasha === g) {
+      sc += 6;
+      reasons.push('वर्तमान महादशा स्वामी');
+    } else if (k.antardasha === g) {
+      sc += 4;
+      reasons.push('वर्तमान अंतर्दशा स्वामी');
+    }
+
+    if (sc > 0) {
+      afflictionScores.push({ planet: g, score: sc, reason: reasons.join(', ') });
+    }
+  });
+
+  afflictionScores.sort((a, b) => b.score - a.score);
+
+  // Top afflicted planet for Fasting (Point 2)
+  const topAfflictedForFast = afflictionScores.find((a) => a.planet !== 'राहु' && a.planet !== 'केतु') || {
+    planet: k.mahadasha || 'गुरु',
+    score: 10,
+    reason: 'महादशा स्वामी',
+  };
+
+  const FAST_WEEKDAY_MAP: Record<string, { day: string; deity: string }> = {
+    सूर्य: { day: 'रविवार', deity: 'भगवान सूर्य नारायण' },
+    चंद्र: { day: 'सोमवार', deity: 'भगवान शिव शंकर' },
+    मंगल: { day: 'मंगलवार', deity: 'श्री हनुमान जी व मंगल देव' },
+    बुध: { day: 'बुधवार', deity: 'भगवान श्री गणेश' },
+    गुरु: { day: 'गुरुवार', deity: 'देवगुरु बृहस्पति व श्री हरि विष्णु' },
+    शुक्र: { day: 'शुक्रवार', deity: 'माँ महालक्ष्मी' },
+    शनि: { day: 'शनिवार', deity: 'भगवान शनिदेव व हनुमान जी' },
+  };
+
+  const fastInfo = FAST_WEEKDAY_MAP[topAfflictedForFast.planet] || FAST_WEEKDAY_MAP['गुरु'];
+  const point2 = `${fastInfo.day} का सात्विक उपवास करें (${topAfflictedForFast.planet} शान्ति हेतु)।`;
+  const upvasReason = `आपकी जन्मपत्रिका में ${topAfflictedForFast.planet} (${topAfflictedForFast.reason}) के कारण आ रही अड़चनों एवं मानसिक/शारीरिक कष्टों के निवारण हेतु ${fastInfo.day} का उपवास श्रेष्ठ है।`;
+
+  // Top afflicted planet for Daan (Point 4)
+  const topAfflictedForDaan = afflictionScores[0] || {
+    planet: k.mahadasha || 'शनि',
+    score: 10,
+    reason: 'महादशा काल',
+  };
+
+  const daanPlanet = topAfflictedForDaan.planet;
+  const point4 = PLANET_PARCHI_DAAN[daanPlanet] || PLANET_PARCHI_DAAN['शनि'];
+  const daanReason = `शास्त्रानुसार दान अनिष्ट एवं मारक-बाधक ग्रह का किया जाता है। कुंडली में ${daanPlanet} (${topAfflictedForDaan.reason}) का दान करने से उसकी अशुभ रश्मियों का दुष्प्रभाव नष्ट होता है।`;
+
+  // =========================================================================
+  // POINT 3: नित्य स्तोत्र / मंत्र पाठ (Ishta & Dasha Harmonization)
+  // =========================================================================
+  let point3 = 'श्रीविष्णुसहस्रनाम का पाठ करें।';
+  let stotraReason = '';
+
   const maha = k.mahadasha || 'गुरु';
-  const antar = k.antardasha || 'सूर्य';
-  const point3 =
-    PLANET_STOTRA_PATH[maha] ||
-    PLANET_STOTRA_PATH[antar] ||
-    'श्रीविष्णुसहस्रनाम का पाठ करें।';
+  if (maha === 'राहु') {
+    point3 = 'श्री दुर्गा सप्तशती (अर्गला, कीलक, कवच) व सिद्ध कुंजिका स्तोत्र का पाठ करें।';
+    stotraReason = 'राहु महादशा में छाया-भ्रम व मानसिक अशांति शमन हेतु देवी कवच व दुर्गा सप्तशती अमृततुल्य है।';
+  } else if (maha === 'केतु') {
+    point3 = 'श्री गणेश संकटनाशन स्तोत्र एवं गणेश अथर्वशीर्ष का नित्य पाठ करें।';
+    stotraReason = 'केतु महादशा में विघ्नों के निवारण एवं मोक्ष-शांति हेतु भगवान गणपति की साधना सर्वोपरि है।';
+  } else if (maha === 'शनि' || getHouse('शनि') === getHouse('चंद्र')) {
+    point3 = 'दशरथ कृत शनि स्तोत्र एवं श्री हनुमान चालीसा का नित्य पाठ करें।';
+    stotraReason = 'शनि की दशा/प्रभाव में कर्म फल शुद्धि एवं कष्ट निवारण हेतु दशरथ कृत शनि स्तोत्र रामबाण है।';
+  } else if (h5Lord === 'सूर्य' || maha === 'सूर्य') {
+    point3 = 'श्री आदित्यहृदय स्तोत्र का नित्य प्रातः पाठ करें।';
+    stotraReason = 'सूर्य बल संवर्धन, पिता के स्वास्थ्य एवं राजकीय कार्यों में विजय हेतु आदित्यहृदय स्तोत्र विहित है।';
+  } else if (h5Lord === 'चंद्र' || maha === 'चंद्र') {
+    point3 = 'श्री शिव रुद्राष्टकम अथवा दारिद्र्य दहन शिव स्तोत्र का पाठ करें।';
+    stotraReason = 'चंद्र कृपा, मन की शांति एवं रोग-तनाव से मुक्ति हेतु भगवान शिव की स्तुति सर्वोत्तम है।';
+  } else if (h5Lord === 'मंगल' || maha === 'मंगल' || k.isManglik) {
+    point3 = 'ऋणमोचक मंगल स्तोत्र अथवा श्री सुन्दरकाण्ड का पाठ करें।';
+    stotraReason = 'मंगल दोष, भूमि लाभ एवं कर्ज/शत्रु बाधा निवारण हेतु सुन्दरकाण्ड व मंगल स्तोत्र अचूक है।';
+  } else if (h5Lord === 'शुक्र' || maha === 'शुक्र') {
+    point3 = 'श्रीसूक्त अथवा कनकधारा स्तोत्र का नित्य पाठ करें।';
+    stotraReason = 'शुक्र कृपा, दांपत्य सुख एवं आर्थिक समृद्धि हेतु श्रीसूक्त का पाठ श्रेष्ठ फलदायी है।';
+  } else {
+    point3 = 'श्रीविष्णुसहस्रनाम का पाठ करें।';
+    stotraReason = 'देवगुरु बृहस्पति व पंचमेश की कृपा से जीवन के समस्त संकटों के शमन हेतु विष्णुसहस्रनाम महा-उपाय है।';
+  }
 
-  // Point 4: Daan (Specific items + weekday - 1 time)
-  const daanPlanet = PLANET_PARCHI_DAAN[maha]
-    ? maha
-    : PLANET_PARCHI_DAAN[antar]
-    ? antar
-    : 'गुरु';
-  const point4 = PLANET_PARCHI_DAAN[daanPlanet] || PLANET_PARCHI_DAAN['गुरु'];
+  // =========================================================================
+  // POINT 5: जीव सेवा एवं पंच महायज्ञ (Calculated Lal Kitab & Vedic Seva)
+  // =========================================================================
+  let point5 = 'गाय और कुत्ते को रोटी खिलावें।';
+  let sevaReason = '';
 
-  // Point 5: Gau & Shwan Seva
-  const point5 = 'गाय और कुत्ते को रोटी खिलावें।';
+  if (topAfflictedForDaan.planet === 'शनि' || topAfflictedForDaan.planet === 'राहु' || topAfflictedForDaan.planet === 'केतु') {
+    point5 = 'काले श्वान (कुत्ते) को सरसों तेल चुपड़ी ताजी रोटी एवं मछलियों को आटे की गोलियां खिलावें।';
+    sevaReason = 'शनि-राहु-केतु के क्रूर प्रभाव के शमन हेतु भैरव वाहन श्वान एवं जलचर मत्स्य सेवा सर्वोत्तम वैदिक उपाय है।';
+  } else if (topAfflictedForDaan.planet === 'सूर्य' || topAfflictedForDaan.planet === 'मंगल') {
+    point5 = 'गौमाता को ताजी गुड़-रोटी एवं बंदरों को भुने चने खिलावें, पक्षियों हेतु जलपात्र रखें।';
+    sevaReason = 'सूर्य व मंगल के तेज व रक्त-दोष निवारण हेतु कामधेनु गौमाता एवं हनुमान स्वरूप वानर सेवा विहित है।';
+  } else if (topAfflictedForDaan.planet === 'चंद्र' || topAfflictedForDaan.planet === 'शुक्र') {
+    point5 = 'श्वेत गौमाता को हरा चारा/आटा पेड़ा खिलावें एवं चींटियों को सूखा आटा-शक्कर (कसार) डालें।';
+    sevaReason = 'चंद्र व शुक्र की शांति, मानसिक शीतलता एवं लक्ष्मी कृपा हेतु श्वेत गौ व चींटी सेवा चमत्कारी फल देती है।';
+  } else {
+    point5 = 'मूक पक्षियों (तोता, कबूतर) को भीगी हरी मूंग डालें एवं कन्याओं/विप्रों को भोजन करावें।';
+    sevaReason = 'बुध व गुरु के शुभ प्रभाव से बुद्धि, व्यापारिक बरकत एवं ज्ञान संवर्धन हेतु पक्षी व कन्या सेवा सर्वश्रेष्ठ है।';
+  }
 
-  // Point 6: Detect actual Yoga / Dosha from planetary houses & conjunction degrees in Kundali
-  const getPlanet = (pName: string) => k.planets?.find((p) => p.planet === pName);
-  const getHouse = (pName: string) => getPlanet(pName)?.house ?? -1;
-  const sunP = getPlanet('सूर्य');
-  const moonP = getPlanet('चंद्र');
-  const rahuP = getPlanet('राहु');
-  const ketuP = getPlanet('केतु');
-
-  const sunH = sunP?.house ?? -1;
-  const moonH = moonP?.house ?? -1;
+  // =========================================================================
+  // POINT 6: विशिष्ट ग्रह दोष / योग शान्ति (Deep Conjunction & Orb Analysis)
+  // =========================================================================
+  const sunH = getHouse('सूर्य');
+  const moonH = getHouse('चंद्र');
   const marsH = getHouse('मंगल');
   const jupH = getHouse('गुरु');
   const satH = getHouse('शनि');
-  const rahuH = rahuP?.house ?? -1;
-  const ketuH = ketuP?.house ?? -1;
+  const rahuH = getHouse('राहु');
+  const ketuH = getHouse('केतु');
 
-  // Check genuine Grahan Yog conjunction (same house/rashi AND within 15° effective orb)
-  const isConjunctWithinOrb = (p1?: { house?: number; degreeInRashi?: number }, p2?: { house?: number; degreeInRashi?: number }) => {
+  const isConjunctWithinOrb = (p1?: PlanetPosition, p2?: PlanetPosition, maxOrb = 12) => {
     if (!p1 || !p2 || !p1.house || !p2.house || p1.house <= 0 || p1.house !== p2.house) return false;
-    if (typeof p1.degreeInRashi === 'number' && typeof p2.degreeInRashi === 'number') {
-      return Math.abs(p1.degreeInRashi - p2.degreeInRashi) <= 15;
-    }
-    return true;
+    return Math.abs(p1.degreeInRashi - p2.degreeInRashi) <= maxOrb;
   };
 
-  const hasGenuineGrahanYog =
-    isConjunctWithinOrb(sunP, rahuP) ||
-    isConjunctWithinOrb(sunP, ketuP) ||
-    isConjunctWithinOrb(moonP, rahuP) ||
-    isConjunctWithinOrb(moonP, ketuP);
+  // Check Kaal Sarp Yoga
+  let isKaalSarp = false;
+  if (rahuP && ketuP) {
+    const nonNodes = planets.filter((p) => !p.planet.includes('राहु') && !p.planet.includes('केतु'));
+    const rDeg = rahuP.degree;
+    const kDeg = ketuP.degree;
+    const arc = ((kDeg - rDeg) % 360 + 360) % 360;
+    const onArc = nonNodes.map((p) => (((p.degree - rDeg) % 360 + 360) % 360) <= arc);
+    if (onArc.every(Boolean) || onArc.every((x) => !x)) {
+      isKaalSarp = true;
+    }
+  }
+
+  const hasGrahanYog =
+    isConjunctWithinOrb(sunP, rahuP, 14) ||
+    isConjunctWithinOrb(sunP, ketuP, 14) ||
+    isConjunctWithinOrb(moonP, rahuP, 14) ||
+    isConjunctWithinOrb(moonP, ketuP, 14);
 
   let point6 = `${maha} महादशा एवं नवग्रह शान्ति करावें।`;
   let detectedDoshaYoga = `${maha} महादशा एवं नवग्रह शान्ति`;
+  let shantiReason = `वर्तमान में चल रही ${maha} महादशा के अनुकूल फल प्राप्त करने हेतु नवग्रह हवन एवं रुद्राभिषेक करावें।`;
 
-  if (hasGenuineGrahanYog) {
-    point6 = 'ग्रहण योग शान्ति करावें।';
-    detectedDoshaYoga = 'ग्रहण योग (सूर्य/चंद्र-राहु/केतु युति)';
+  if (isKaalSarp) {
+    point6 = 'कालसर्प योग शान्ति एवं नागबलि / रुद्राभिषेक करावें।';
+    detectedDoshaYoga = 'कालसर्प योग (राहु-केतु अक्ष बंधन)';
+    shantiReason = 'कुंडली के समस्त ग्रह राहु और केतु के मध्य बंधे होने से भाग्योदय में रुकावट आती है, अतः नागबलि/रुद्राभिषेक आवश्यक है।';
+  } else if (hasGrahanYog) {
+    const isSurya = isConjunctWithinOrb(sunP, rahuP) || isConjunctWithinOrb(sunP, ketuP);
+    point6 = isSurya
+      ? 'सूर्य-राहु ग्रहण योग शान्ति एवं महामृत्युंजय जप करावें।'
+      : 'चंद्र-राहु ग्रहण योग (कपालिका) शान्ति करावें।';
+    detectedDoshaYoga = isSurya ? 'सूर्य-राहु ग्रहण योग' : 'चंद्र-राहु ग्रहण योग';
+    shantiReason = isSurya
+      ? 'सूर्य के साथ छाया ग्रह की निकट युति से मान-सम्मान व पिता/आरोग्य बाधा बनती है; इसका वैदिक जप-हवन अनिवार्य है।'
+      : 'चंद्रमा के साथ छाया ग्रह से अत्यधिक मानसिक तनाव, अनिद्रा व भय रहता है; इसकी शांति से पूर्ण मानसिक शांति मिलती है।';
   } else if (jupH > 0 && (jupH === rahuH || jupH === ketuH)) {
-    point6 = 'गुरु-चाण्डाल योग शान्ति करावें।';
-    detectedDoshaYoga = 'गुरु-चाण्डाल योग';
+    point6 = 'गुरु-चाण्डाल योग शान्ति एवं श्री हरि पूजन करावें।';
+    detectedDoshaYoga = 'गुरु-चाण्डाल योग (गुरु-राहु युति)';
+    shantiReason = 'बृहस्पति के साथ छाया ग्रह के प्रभाव से निर्णय भ्रम, विद्या व संतान चिंता रहती है; गुरु शांति श्रेयस्कर है।';
   } else if (marsH > 0 && (marsH === rahuH || marsH === ketuH)) {
-    point6 = 'अंगारक योग शान्ति करावें।';
+    point6 = 'अंगारक योग शान्ति एवं बटुक भैरव साधना करावें।';
     detectedDoshaYoga = 'अंगारक योग (मंगल-राहु युति)';
+    shantiReason = 'मंगल और राहु की युति से उग्रता, रक्त विकार व दुर्घटना भय रहता है; अंगारक शांति से जीवन सुरक्षित होता है।';
   } else if (satH > 0 && satH === moonH) {
-    point6 = 'विष योग शान्ति एवं रुद्राभिषेक करावें।';
+    point6 = 'विष योग शान्ति एवं एकादशवार रुद्राभिषेक करावें।';
     detectedDoshaYoga = 'विष योग (शनि-चंद्र युति)';
+    shantiReason = 'शनि-चंद्र युति से निराशावाद, अवसाद व कार्य में विलंब होता है; भगवान शिव का रुद्राभिषेक परम कल्याणकारी है।';
   } else if (satH > 0 && (satH === rahuH || satH === ketuH)) {
-    point6 = 'शापित दोष / प्रेत दोष शान्ति करावें।';
+    point6 = 'शापित दोष शान्ति एवं गया श्राद्ध / तर्पण करावें।';
     detectedDoshaYoga = 'शनि-राहु शापित योग';
+    shantiReason = 'पूर्व जन्म के पितृ ऋण व शापित योग निवारण हेतु गया जी अथवा त्र्यंबकेश्वर में तर्पण-शांति आवश्यक है।';
   } else if (sunH > 0 && sunH === satH) {
-    point6 = 'पितृ दोष शान्ति करावें।';
+    point6 = 'पितृ दोष शान्ति एवं नारायण बलि करावें।';
     detectedDoshaYoga = 'सूर्य-शनि पितृ दोष संकेत';
+    shantiReason = 'सूर्य और शनि परस्पर परम शत्रु हैं; इनकी युति से वंश वृद्धि व प्रतिष्ठा में बाधा आती है, अतः पितृ शांति करावें।';
   } else if (k.isManglik) {
-    point6 = 'मंगल भात पूजा / मांगलिक दोष शान्ति करावें।';
-    detectedDoshaYoga = 'मांगलिक दोष';
+    point6 = `मंगल भात पूजा (उज्जैन) अथवा ${marsH}वें भाव मंगल दोष शान्ति करावें।`;
+    detectedDoshaYoga = `मांगलिक दोष (${marsH}वें भाव में मंगल)`;
+    shantiReason = `कुंडली के ${marsH}वें भाव में मंगल की स्थिति से दांपत्य जीवन व रक्त-क्रोध में अवरोध रहता है; मंगल भात पूजा से दोष शांत होता है।`;
+  } else if (debilList.length > 0) {
+    const debG = debilList[0].split(' ')[0];
+    point6 = `नीच ${debG} ग्रह शान्ति एवं बीज मंत्र अनुष्ठान करावें।`;
+    detectedDoshaYoga = `नीच ${debG} ग्रह दोष`;
+    shantiReason = `कुंडली में ${debG} ग्रह नीच राशि में होकर निर्बल है; इसकी शांति से जीवन की मुख्य बाधाएं दूर होंगी।`;
   }
 
   const points = [point1, point2, point3, point4, point5, point6];
@@ -1571,6 +1926,32 @@ export function generateTraditionalUpayParchi(
     grahanItem?.shantiDeepDive
   );
 
+  const astrologicalCalculationSummary = {
+    lagnaLord: `${lagnaLord} (${lagnaSign} लग्न)`,
+    lagnaLordHouse: getHouse(lagnaLord),
+    lagnaLordDignity: isExalt(lagnaLord) ? 'उच्च' : isDebil(lagnaLord) ? 'नीच' : isOwn(lagnaLord) ? 'स्वराशि' : 'सामान्य',
+    fifthLord: `${h5Lord} (पंचम भाव स्वामी)`,
+    fifthLordHouse: getHouse(h5Lord),
+    ninthLord: `${h9Lord} (भाग्य भाव स्वामी)`,
+    ninthLordHouse: getHouse(h9Lord),
+    yogakaraka,
+    beneficPlanets: uniqueCandidates.map((c) => `${c.planet} (${c.role})`),
+    afflictedPlanets: afflictionScores.slice(0, 3).map((a) => `${a.planet} (${a.reason})`),
+    combustPlanets: combustList,
+    debilitatedPlanets: debilList,
+    ishtaDevta: `${h5Lord} (इष्ट देवता)`,
+    dashaSummary: `${k.mahadasha} महादशा ➔ ${k.antardasha} अंतर्दशा`,
+    keyYogaOrDosha: detectedDoshaYoga,
+    reasons: {
+      gemstoneReason: gemReason,
+      upvasReason,
+      stotraReason,
+      daanReason,
+      sevaReason,
+      shantiReason,
+    },
+  };
+
   return {
     salutation,
     serialNo: String(100 + ((rawName.length * 7) % 899)),
@@ -1582,6 +1963,7 @@ export function generateTraditionalUpayParchi(
     detailedItems,
     grahanSpecialAnalysis: grahanItem?.shantiDeepDive,
     formattedDetailedGuide,
+    astrologicalCalculationSummary,
   };
 }
 

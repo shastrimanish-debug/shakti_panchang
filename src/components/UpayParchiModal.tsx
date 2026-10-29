@@ -1159,6 +1159,62 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 </button>
               </div>
 
+              {/* DYNAMIC ASTROLOGICAL CALCULATION RATIONALE BOX */}
+              {parchiData.astrologicalCalculationSummary && (
+                <div className="mx-auto max-w-2xl bg-[#FFFDF8] border border-[#B58738]/50 rounded-xl p-3.5 text-xs text-[#5C3A21] shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-2 flex-wrap gap-1">
+                    <span className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs sm:text-sm">
+                      <Sparkles className="w-4 h-4 text-[#B56A00]" />
+                      <span>🔬 कुण्डली ग्रह गणना एवं ज्योतिषीय निर्णय आधार:</span>
+                    </span>
+                    <span className="text-[10.5px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      ✓ ग्रह स्पष्ट, बलाबल व भाव स्थिति से प्रत्यक्ष निष्पादित
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11.5px] pt-1">
+                    <div className="bg-[#FAF2E4]/80 p-2.5 rounded-lg border border-[#8C6239]/15">
+                      <div className="text-[10px] font-bold text-[#8B1E1E] uppercase">१. लग्नेश व शुभ कारक ग्रह (रत्न हेतु)</div>
+                      <div className="font-bold text-[#3A1F0A] mt-0.5">
+                        {parchiData.astrologicalCalculationSummary.beneficPlanets.join(' • ') || 'लग्नेश बलवान'}
+                      </div>
+                      <p className="text-[10.5px] text-[#5C3A21] mt-1 leading-snug">
+                        {parchiData.astrologicalCalculationSummary.reasons.gemstoneReason}
+                      </p>
+                    </div>
+
+                    <div className="bg-[#FAF2E4]/80 p-2.5 rounded-lg border border-[#8C6239]/15">
+                      <div className="text-[10px] font-bold text-[#8B1E1E] uppercase">२. बाधक व पीड़ित ग्रह (उपवास व दान हेतु)</div>
+                      <div className="font-bold text-[#3A1F0A] mt-0.5">
+                        {parchiData.astrologicalCalculationSummary.afflictedPlanets.join(' • ') || 'ग्रह स्थिति सामान्य'}
+                      </div>
+                      <p className="text-[10.5px] text-[#5C3A21] mt-1 leading-snug">
+                        {parchiData.astrologicalCalculationSummary.reasons.upvasReason}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-[#7A1D1D] pt-1 border-t border-[#8C6239]/15 flex-wrap gap-2">
+                    <span>
+                      <strong>दशा प्रभाव:</strong> {parchiData.astrologicalCalculationSummary.dashaSummary}
+                    </span>
+                    <span>
+                      <strong>प्रमुख योग/दोष:</strong> {parchiData.astrologicalCalculationSummary.keyYogaOrDosha}
+                    </span>
+                    {parchiData.astrologicalCalculationSummary.combustPlanets.length > 0 && (
+                      <span className="text-amber-800 font-bold">
+                        अस्त: {parchiData.astrologicalCalculationSummary.combustPlanets.join(', ')}
+                      </span>
+                    )}
+                    {parchiData.astrologicalCalculationSummary.debilitatedPlanets.length > 0 && (
+                      <span className="text-rose-800 font-bold">
+                        नीच: {parchiData.astrologicalCalculationSummary.debilitatedPlanets.join(', ')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* LIVE REALISTIC PRESCRIPTION PAD PREVIEW (Matches Classic Letterhead) */}
               <div className="mx-auto max-w-2xl bg-[#FFFDF9] border-2 border-[#8B1E1E] rounded-md shadow-xl p-4 sm:p-8 text-[#162C6A] relative overflow-hidden">
                 {/* Top Letterhead Header */}
