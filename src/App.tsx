@@ -40,6 +40,7 @@ const GemologyView = React.lazy(() => import('./components/GemologyView').then((
 const FaceReadingView = React.lazy(() => import('./components/FaceReadingView').then((m) => ({ default: m.FaceReadingView })));
 const IChingView = React.lazy(() => import('./components/IChingView').then((m) => ({ default: m.IChingView })));
 const DevtaArpanView = React.lazy(() => import('./components/DevtaArpanView').then((m) => ({ default: m.DevtaArpanView })));
+const ShivTantraView = React.lazy(() => import('./components/ShivTantraView').then((m) => ({ default: m.ShivTantraView })));
 const DailyRashifalView = React.lazy(() => import('./components/DailyRashifalView').then((m) => ({ default: m.DailyRashifalView })));
 const DailyGitaShlokaView = React.lazy(() => import('./components/DailyGitaShlokaView').then((m) => ({ default: m.DailyGitaShlokaView })));
 const GranthPuranView = React.lazy(() => import('./components/GranthPuranView').then((m) => ({ default: m.GranthPuranView })));
@@ -354,6 +355,8 @@ export function App() {
           gemology: 'वैदिक रत्न विज्ञान',
           face_reading: 'समुद्रशास्त्र मुख आकृति विज्ञान',
           iching: 'प्राचीन आई-चिंग दिव्य प्रश्न',
+          devta_arpan: 'देवता अर्पण फल व पूजन सामग्री',
+          shiv_tantra: 'शिव तंत्र विद्या (कश्मीर शैव दर्शन)',
         };
         const name = featureNames[tabId] || 'यह अध्याय';
         triggerSubscriptionModal(
@@ -948,6 +951,17 @@ export function App() {
                   setUmaInitialPrompt(prompt);
                   setIsUmaModalOpen(true);
                 }}
+              />
+            )}
+
+            {activeTab === 'shiv_tantra' && (
+              <ShivTantraView
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
               />
             )}
           </Suspense>

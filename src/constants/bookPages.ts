@@ -305,6 +305,16 @@ export const FLIP_BOOK_CHAPTERS: BookPageItem[] = [
     icon: Coins,
     screenTitle: '☯️ आई-चिंग दैवज्ञ परामर्श',
   },
+  {
+    id: 'shiv_tantra',
+    title: 'शिव तंत्र विद्या (कश्मीर शैव दर्शन)',
+    label: 'शिव तंत्र',
+    pageNumber: 35,
+    chapter: 'आगम तंत्र संहिता',
+    desc: 'कश्मीर शैव दर्शन • विज्ञान भैरव तंत्र ११२ ध्यान धारणाएं • त्रिक दर्शन व कुण्डलिनी नाड़ी विज्ञान',
+    icon: Flame,
+    screenTitle: '🔱 शिव तंत्र विद्या (आगम संहिता)',
+  },
 ];
 
 export const BOOK_PAGES: BookPageItem[] = [
@@ -648,9 +658,25 @@ export const BOOK_PAGES: BookPageItem[] = [
     icon: BookOpen,
     screenTitle: '📚 प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय',
   },
+  {
+    id: 'shiv_tantra',
+    title: 'शिव तंत्र विद्या (कश्मीर शैव दर्शन व विज्ञान भैरव तंत्र)',
+    label: 'शिव तंत्र विद्या',
+    pageNumber: 35,
+    chapter: 'त्रयोविंशति अध्याय',
+    desc: 'कश्मीर शैव दर्शन • विज्ञान भैरव तंत्र ११२ सूत्र • त्रिक दर्शन, ४ उपाय, ७ चक्र व ३ नाड़ी विज्ञान',
+    icon: Flame,
+    screenTitle: '🔱 शिव तंत्र विद्या (आगम संहिता)',
+  },
 ];
 
 const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
+  shiv_tantra: {
+    title: 'Shiv Tantra Vidya (Kashmir Shaivism & Vigyan Bhairav)',
+    label: 'Shiv Tantra',
+    desc: 'Kashmir Shaivism, Vigyan Bhairav Tantra 112 techniques, Trika philosophy, 7 Chakras & Nadis',
+    screenTitle: '🔱 Shiv Tantra Vidya',
+  },
   vishnu_sahasranama: {
     title: 'Sri Vishnu Sahasranama Stotram (Complete)',
     label: 'Vishnu Sahasranama',

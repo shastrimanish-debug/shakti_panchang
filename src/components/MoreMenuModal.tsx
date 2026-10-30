@@ -138,6 +138,33 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </button>
         </div>
 
+        {/* Shiv Tantra Vidya Dedicated Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('shiv_tantra'))}
+            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#2A0808] via-[#4A1212] to-[#2B0E05] text-[#FAF2E4] border-[#D4AF37]"
+          >
+            <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+              <div className="p-2 bg-[#1A0505] rounded-xl text-amber-300 shrink-0 text-lg border border-[#D4AF37]/40">
+                🔱
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
+                  <span>शिव तंत्र विद्या (कश्मीर शैव दर्शन)</span>
+                  <span className="text-[9px] bg-red-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-400/40">नया</span>
+                </div>
+                <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
+                  विज्ञान भैरव ११२ ध्यान सूत्र • त्रिक दर्शन, ४ उपाय व कुण्डलिनी नाड़ी विज्ञान
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] bg-[#1A0505] text-[#FFD88A] border border-[#D4AF37]/50 px-2.5 py-1 rounded-lg font-bold shrink-0">
+              खोलें →
+            </span>
+          </button>
+        </div>
+
         {/* Devta Arpan Fal Dedicated Card */}
         <div className="mt-2.5">
           <button
