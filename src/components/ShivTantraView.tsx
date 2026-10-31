@@ -207,43 +207,54 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
   };
 
   return (
-    <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-24 text-[#3E2714] dark:text-[#FAF2E4]">
+    <div className="shiv-tantra-view flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-24">
       {/* Top Breadcrumb / Title Bar */}
       <div className="max-w-4xl mx-auto space-y-3">
         {/* Sacred Header Card - Uses Active Devotional Theme Variables */}
         <div
           style={{
-            background: "linear-gradient(135deg, var(--bx-header) 0%, color-mix(in srgb, var(--bx-header-2) 75%, black) 100%)",
+            background: "linear-gradient(180deg, var(--bx-panel) 0%, color-mix(in srgb, var(--bx-panel) 88%, var(--bx-cream)) 100%)",
             borderColor: "var(--bx-gold)",
-            color: "#FFF8EE",
+            color: "var(--bx-ink)",
           }}
-          className="relative overflow-hidden rounded-3xl p-4 sm:p-5 border-2 shadow-xl"
+          className="relative overflow-hidden rounded-3xl p-4 sm:p-5 border-2 shadow-md space-y-3"
         >
-          <div className="absolute -right-6 -bottom-8 opacity-15 pointer-events-none text-9xl">
+          {/* Subtle Decorative Trident in Top-Right Corner */}
+          <div className="absolute right-2 -top-1 opacity-10 pointer-events-none text-6xl select-none">
             🔱
           </div>
+
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span
                   style={{
-                    backgroundColor: "var(--bx-gold)",
-                    color: "#FFFFFF",
+                    backgroundColor: "var(--bx-mark-soft)",
+                    color: "var(--bx-header)",
                     borderColor: "var(--bx-line)",
                   }}
                   className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-xs"
                 >
                   आगम शास्त्र v2.1 • Complete Edition
                 </span>
-                <span className="text-[11px] text-amber-200 font-bold font-granth">
+                <span
+                  style={{ color: "var(--bx-header)" }}
+                  className="text-[11px] font-bold font-granth"
+                >
                   ॥ ॐ नमः शिवाय ॥
                 </span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black font-granth text-[#FFF8EE] tracking-wide flex items-center gap-2">
+              <h1
+                style={{ color: "var(--bx-header)" }}
+                className="text-xl sm:text-2xl font-black font-granth tracking-wide flex items-center gap-2"
+              >
                 <span>शिव तंत्र विद्या</span>
-                <span className="text-base text-amber-300">🔱</span>
+                <span className="text-base">🔱</span>
               </h1>
-              <p className="text-xs sm:text-[13px] text-amber-100/90 leading-relaxed mt-1">
+              <p
+                style={{ color: "var(--bx-ink)" }}
+                className="text-xs sm:text-[13px] font-medium leading-relaxed mt-1"
+              >
                 कश्मीर शैव दर्शन • विज्ञान भैरव तंत्र ११२ ध्यान धारणाएं • त्रिक दर्शन, ४ उपाय व कुण्डलिनी नाड़ी विज्ञान
               </p>
             </div>
@@ -258,10 +269,13 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     `${overview.invocation_mantra} अर्थ: ${overview.invocation_meaning}`
                   )
                 }
-                className={`p-2.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition cursor-pointer active:scale-95 ${
-                  speakingId === 'hero_shloka'
-                    ? 'bg-amber-500 text-stone-950 border-amber-300 shadow-md animate-pulse'
-                    : 'bg-white/10 hover:bg-white/20 text-[#FFF8EE] border-white/20'
+                style={{
+                  backgroundColor: speakingId === 'hero_shloka' ? "var(--bx-gold)" : "var(--bx-cream)",
+                  color: speakingId === 'hero_shloka' ? "#FFFFFF" : "var(--bx-header)",
+                  borderColor: "var(--bx-line)",
+                }}
+                className={`p-2.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs ${
+                  speakingId === 'hero_shloka' ? 'animate-pulse' : 'hover:opacity-90'
                 }`}
                 title="मंगलाचरण सुनें"
               >
@@ -277,7 +291,12 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     `${overview.invocation_mantra}\n\nअर्थ: ${overview.invocation_meaning}\n\n${overview.core_philosophy}`
                   )
                 }
-                className="p-2.5 rounded-xl border border-emerald-400/40 bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-100 flex items-center gap-1.5 text-xs font-bold transition cursor-pointer active:scale-95"
+                style={{
+                  backgroundColor: "var(--bx-cream)",
+                  color: "var(--bx-header)",
+                  borderColor: "var(--bx-line)",
+                }}
+                className="p-2.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition cursor-pointer active:scale-95 hover:opacity-90 shadow-xs"
                 title="व्हाट्सएप पर शेयर करें"
               >
                 <Share2 className="w-4 h-4" />
@@ -294,11 +313,11 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     );
                   }}
                   style={{
-                    backgroundColor: "var(--bx-gold)",
+                    backgroundColor: "var(--bx-header)",
                     color: "#FFFFFF",
-                    borderColor: "var(--bx-line)",
+                    borderColor: "var(--bx-gold)",
                   }}
-                  className="px-3 py-2 rounded-xl font-black text-xs flex items-center gap-1.5 shadow-md border transition cursor-pointer active:scale-95"
+                  className="px-3.5 py-2 rounded-xl font-black text-xs flex items-center gap-1.5 shadow-md border transition cursor-pointer active:scale-95 hover:opacity-90"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>उमा परामर्श</span>
@@ -310,22 +329,32 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
           {/* Mangalacharan Shloka Box */}
           <div
             style={{
-              backgroundColor: "rgba(0, 0, 0, 0.25)",
-              borderColor: "color-mix(in srgb, var(--bx-gold) 35%, transparent)",
+              backgroundColor: "var(--bx-cream)",
+              borderColor: "var(--bx-line)",
             }}
-            className="mt-3.5 pt-3 border-t rounded-2xl p-3 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-2.5"
+            className="mt-2 border rounded-2xl p-3 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-2xs"
           >
-            <div className="text-xs sm:text-sm font-granth text-amber-100 leading-snug">
-              <span className="font-bold text-[#FFD88A] block mb-0.5">{overview.invocation_mantra}</span>
-              <span className="text-[11px] text-amber-50/90 font-sans italic">{overview.invocation_meaning}</span>
+            <div className="text-xs sm:text-sm font-granth leading-snug">
+              <span
+                style={{ color: "var(--bx-header)" }}
+                className="font-bold block mb-1 text-sm sm:text-base"
+              >
+                {overview.invocation_mantra}
+              </span>
+              <span
+                style={{ color: "var(--bx-ink)" }}
+                className="text-[12px] font-sans font-medium italic block"
+              >
+                {overview.invocation_meaning}
+              </span>
             </div>
             <span
               style={{
-                backgroundColor: "rgba(0, 0, 0, 0.4)",
+                backgroundColor: "var(--bx-panel)",
                 borderColor: "var(--bx-gold)",
-                color: "#FFD88A",
+                color: "var(--bx-header)",
               }}
-              className="text-[10px] font-medium border px-2 py-0.5 rounded-lg shrink-0"
+              className="text-[10px] font-bold border px-2.5 py-1 rounded-lg shrink-0 shadow-2xs"
             >
               यजुर्वेद रुद्राध्याय
             </span>

@@ -1532,3 +1532,46 @@
     inset 0 1.5px 0 rgba(255, 215, 160, 0.22) !important;
 }
 
+/* 8. Shiv Tantra Vidya Complete Devotional Theme Adaptability */
+.shiv-tantra-view {
+  color: var(--bx-ink);
+}
+.shiv-tantra-view .bg-\[\#FAF5ED\],
+.shiv-tantra-view .dark\:bg-\[\#2C1810\] {
+  background-color: var(--bx-panel) !important;
+}
+.shiv-tantra-view .bg-\[\#FFFDF9\],
+.shiv-tantra-view .dark\:bg-\[\#381F14\] {
+  background-color: var(--bx-cream) !important;
+}
+.shiv-tantra-view .border-\[\#DFCBB5\],
+.shiv-tantra-view .dark\:border-\[\#5C3A21\],
+.shiv-tantra-view .border-\[\#DFCBB5\]\/50,
+.shiv-tantra-view .border-\[\#DFCBB5\]\/60 {
+  border-color: var(--bx-line) !important;
+}
+.shiv-tantra-view .text-\[\#5C3A21\],
+.shiv-tantra-view .text-\[\#3E2714\],
+.shiv-tantra-view .dark\:text-\[\#E8DCCB\],
+.shiv-tantra-view .dark\:text-\[\#D9C4A9\],
+.shiv-tantra-view .dark\:text-\[\#FAF2E4\] {
+  color: var(--bx-ink) !important;
+}
+.shiv-tantra-view .text-\[\#7A1D1D\],
+.shiv-tantra-view .dark\:text-\[\#FFD88A\] {
+  color: var(--bx-header) !important;
+}
+.shiv-tantra-view .bg-\[\#7A1D1D\] {
+  background-color: var(--bx-header) !important;
+  color: #FFFFFF !important;
+}
+.shiv-tantra-view .text-\[\#8C6239\],
+.shiv-tantra-view .dark\:text-amber-200\/70,
+.shiv-tantra-view .dark\:text-amber-200\/90 {
+  color: var(--bx-mute) !important;
+}
+.shiv-tantra-view .bg-\[\#5C3A21\] {
+  background-color: var(--bx-header-2) !important;
+  color: #FFFFFF !important;
+}
+
