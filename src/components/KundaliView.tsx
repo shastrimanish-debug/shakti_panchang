@@ -205,6 +205,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [vargaListFilter, setVargaListFilter] = useState<'shodash' | 'all60'>('all60');
   const [dashaSystemTab, setDashaSystemTab] = useState<'vimshottari' | 'jaimini'>('vimshottari');
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
   // Kundali Input Form State — empty until the user enters a real native
   const [name, setName] = useState('');
@@ -381,6 +382,10 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
     setFormError(null);
     setActiveKundali(k);
     saveKundaliProfile(k);
+    setSaveSuccessMessage(`जातक '${trimmed}' की जन्म कुंडली सुरक्षित सहेज ली गई है!`);
+    setTimeout(() => {
+      setSaveSuccessMessage(null);
+    }, 4000);
     setIsFormExpanded(false);
     setKundaliTab('chart');
   };
@@ -1016,6 +1021,22 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           </form>
         </div>
       ))}
+
+      {saveSuccessMessage && (
+        <div className="bg-emerald-800 text-white p-3 rounded-xl shadow-md border-2 border-emerald-400 flex items-center justify-between gap-2 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
+            <span className="text-emerald-300 text-base">✅</span>
+            <span>{saveSuccessMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSaveSuccessMessage(null)}
+            className="text-white/80 hover:text-white text-xs px-2 py-0.5 rounded bg-emerald-950/40 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Non-Subscribed Banner Alert */}
       {!subStatus.entitled && (

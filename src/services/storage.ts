@@ -1,5 +1,6 @@
 import { SavedLocation, KundaliData, AppReminder } from '../types';
 import { calculateKundali, extractCalendarYMD, toTimeInput24h } from './kundali';
+import { Preferences } from '@capacitor/preferences';
 
 const STORAGE_KEY_LOCATION = 'shakti_selected_location';
 const STORAGE_KEY_PROFILES = 'shakti_saved_kundali_profiles_v1';
@@ -155,9 +156,61 @@ export function getSavedKundaliProfiles(): KundaliData[] {
   return [];
 }
 
+export async function persistProfilesToNative(profiles: KundaliData[]): Promise<void> {
+  try {
+    await Preferences.set({
+      key: STORAGE_KEY_PROFILES,
+      value: JSON.stringify(profiles.slice(0, 50)),
+    });
+  } catch {}
+}
+
+export async function syncKundaliProfilesWithNativeStorage(): Promise<KundaliData[]> {
+  try {
+    const { value } = await Preferences.get({ key: STORAGE_KEY_PROFILES });
+    let nativeList: any[] = [];
+    if (value) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) nativeList = parsed;
+      } catch {}
+    }
+
+    const localList = getSavedKundaliProfiles();
+
+    // Map by name + time to ensure no loss
+    const profileMap = new Map<string, any>();
+
+    for (const p of nativeList) {
+      if (p && typeof p.name === 'string' && p.name.trim()) {
+        const key = `${p.name.trim().toLowerCase()}_${toTimeInput24h(p.birthTime) || p.birthTime || '12:00'}`;
+        profileMap.set(key, p);
+      }
+    }
+
+    for (const p of localList) {
+      if (p && typeof p.name === 'string' && p.name.trim()) {
+        const key = `${p.name.trim().toLowerCase()}_${toTimeInput24h(p.birthTime) || p.birthTime || '12:00'}`;
+        profileMap.set(key, p);
+      }
+    }
+
+    const merged = Array.from(profileMap.values()).slice(0, 50);
+    if (merged.length > 0) {
+      localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
+      void persistProfilesToNative(merged);
+    }
+
+    return getSavedKundaliProfiles();
+  } catch {
+    return getSavedKundaliProfiles();
+  }
+}
+
 export function clearAllSavedKundaliProfiles(): void {
   try {
     localStorage.removeItem(STORAGE_KEY_PROFILES);
+    void Preferences.remove({ key: STORAGE_KEY_PROFILES });
   } catch {}
 }
 
@@ -175,7 +228,9 @@ export function saveKundaliProfile(profile: KundaliData): void {
       ...profile,
       birthTime: normProfileTime,
     });
-    localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(existing.slice(0, 30)));
+    const updated = existing.slice(0, 50);
+    localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(updated));
+    void persistProfilesToNative(updated);
   } catch {}
 }
 
@@ -190,7 +245,71 @@ export function deleteSavedKundaliProfile(name: string, birthTime: string): void
         )
     );
     localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(existing));
+    void persistProfilesToNative(existing);
   } catch {}
+}
+
+export function exportKundaliProfilesJson(): string {
+  const profiles = getSavedKundaliProfiles();
+  return JSON.stringify(
+    {
+      app: 'Shakti Panchang',
+      version: '1.0.38',
+      exportedAt: new Date().toISOString(),
+      count: profiles.length,
+      profiles,
+    },
+    null,
+    2
+  );
+}
+
+export function importKundaliProfilesJson(rawJson: string): { success: boolean; count: number; error?: string } {
+  try {
+    const parsed = JSON.parse(rawJson);
+    const candidateList = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.profiles)
+      ? parsed.profiles
+      : null;
+
+    if (!candidateList || candidateList.length === 0) {
+      return { success: false, count: 0, error: 'फ़ाइल में कोई वैध कुंडली डेटा नहीं मिला।' };
+    }
+
+    const currentProfiles = getSavedKundaliProfiles();
+    const profileMap = new Map<string, any>();
+
+    for (const p of currentProfiles) {
+      if (p && typeof p.name === 'string' && p.name.trim()) {
+        const key = `${p.name.trim().toLowerCase()}_${toTimeInput24h(p.birthTime) || p.birthTime || '12:00'}`;
+        profileMap.set(key, p);
+      }
+    }
+
+    let addedCount = 0;
+    for (const p of candidateList) {
+      if (p && typeof p.name === 'string' && p.name.trim().length > 0) {
+        const normTime = toTimeInput24h(p.birthTime) || p.birthTime || '12:00';
+        const key = `${p.name.trim().toLowerCase()}_${normTime}`;
+        if (!profileMap.has(key)) {
+          addedCount++;
+        }
+        profileMap.set(key, {
+          ...p,
+          birthTime: normTime,
+        });
+      }
+    }
+
+    const merged = Array.from(profileMap.values()).slice(0, 50);
+    localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
+    void persistProfilesToNative(merged);
+
+    return { success: true, count: addedCount || candidateList.length };
+  } catch (err: any) {
+    return { success: false, count: 0, error: err?.message || 'अमान्य JSON फ़ाइल प्रारूप।' };
+  }
 }
 
 export function getStoredReminders(): AppReminder[] {

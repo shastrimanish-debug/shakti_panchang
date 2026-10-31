@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Sparkles } from 'lucide-react';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { getStoredLocation, getSavedKundaliProfiles, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES, getStoredFontSize, setStoredFontSize, AppFontSize } from './services/storage';
+import { getStoredLocation, getSavedKundaliProfiles, syncKundaliProfilesWithNativeStorage, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES, getStoredFontSize, setStoredFontSize, AppFontSize } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
 import { scheduleMorningBriefs } from './services/morningBrief';
 import { SavedLocation, KundaliData } from './types';
@@ -243,6 +243,15 @@ export function App() {
     const saved = getSavedKundaliProfiles();
     return saved.length > 0 ? saved[0] : null;
   });
+
+  // Automatically sync Kundali profiles with Android Native SharedPreferences
+  useEffect(() => {
+    void syncKundaliProfilesWithNativeStorage().then((profiles) => {
+      if (profiles && profiles.length > 0) {
+        setActiveKundali((prev) => prev || profiles[0]);
+      }
+    });
+  }, []);
 
   // Calculate high-precision Vedic Panchang based on server-synced Date and Geo-coordinates
   const panchang = useMemo(() => {
