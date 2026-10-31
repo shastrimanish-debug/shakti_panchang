@@ -1,6 +1,8 @@
 import { calculateVedicPanchang } from "./astronomy";
 import { getInauspiciousWindows } from "./choghadiya";
 import { scheduleNativeReminder } from "../lib/device";
+import { getSyncedNow } from "../hooks/useUserDateTime";
+import { formatPlaceTime, timezoneHoursFor } from "./engine/time";
 
 const RASHI_UPAY: Record<string, string> = {
   मेष: "हनुमान जी का स्मरण व ॐ क्रां क्रीं क्रौं सः भौमाय नमः।",
@@ -58,10 +60,10 @@ const DAY_DEITY_UPAY: Record<number, { day: string; deity: string; upay: string 
   },
 };
 
-function clock(d: Date): string {
-  return d.toLocaleTimeString("hi-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-}
-
+/**
+ * Schedule 7-day Morning Brief Notifications at 5:00 AM (सुबह ५:०० बजे)
+ * Synchronized with the user's location timezone and currentDate from useUserDateTime.
+ */
 export function scheduleMorningBriefs(
   latitude: number,
   longitude: number,
@@ -69,51 +71,84 @@ export function scheduleMorningBriefs(
   placeName: string,
   personName?: string,
   lagnaRashi?: string,
+  currentDate?: Date,
 ) {
   if (typeof window === "undefined") return;
-  const stamp = `${placeName}|${personName || ""}|${lagnaRashi || ""}|${new Date().toDateString()}`;
+
+  const tz = timezoneHours ?? timezoneHoursFor(latitude, longitude) ?? 5.5;
+
+  // Authoritative base instant synchronized with useUserDateTime
+  const baseInstant =
+    currentDate instanceof Date && !Number.isNaN(currentDate.getTime())
+      ? currentDate
+      : getSyncedNow();
+
+  // Shift to the user's location civil date to avoid any host device timezone offsets
+  const locShifted = new Date(baseInstant.getTime() + tz * 3600000);
+  const baseLocYear = locShifted.getUTCFullYear();
+  const baseLocMonth = locShifted.getUTCMonth();
+  const baseLocDay = locShifted.getUTCDate();
+
+  const stamp = `${placeName}|${personName || ""}|${lagnaRashi || ""}|${baseLocYear}-${baseLocMonth + 1}-${baseLocDay}`;
   try {
-    if (localStorage.getItem("sp_morning_brief_v4") === stamp) return;
+    if (localStorage.getItem("sp_morning_brief_v5") === stamp) return;
   } catch {
-    /* still schedule */
+    /* continue scheduling */
   }
 
-  const tz = timezoneHours ?? 5.5;
   const rashiName = Object.keys(RASHI_UPAY).find((name) => lagnaRashi?.startsWith(name));
 
   window.setTimeout(() => {
     try {
-      for (let i = 0; i < 7; i++) {
-        const morning = new Date();
-        morning.setDate(morning.getDate() + i);
-        // Schedule at 7:00 AM (guaranteed post-sunrise across entire India all year)
-        morning.setHours(7, 0, 0, 0);
-        if (morning.getTime() < Date.now() + 60_000) continue;
+      const nowMs = getSyncedNow().getTime();
 
-        const panchang = calculateVedicPanchang(morning, latitude, longitude, tz);
-        const weekdayNum = morning.getDay();
-        const dayInfo = DAY_DEITY_UPAY[weekdayNum] || {
+      for (let i = 0; i < 7; i++) {
+        // Precise calendar date at the location
+        const dayAnchor = new Date(Date.UTC(baseLocYear, baseLocMonth, baseLocDay + i, 12, 0, 0));
+        const locYear = dayAnchor.getUTCFullYear();
+        const locMonth = dayAnchor.getUTCMonth();
+        const locDay = dayAnchor.getUTCDate();
+        const locWeekday = dayAnchor.getUTCDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+
+        // Subah 5:00 AM (सुबह ५:०० बजे) trigger time at the target location in UTC epoch milliseconds
+        const targetTriggerUtcMs = Date.UTC(locYear, locMonth, locDay, 5, 0, 0, 0) - tz * 3600000;
+
+        // If 5:00 AM for this calendar date has already passed, skip to tomorrow
+        if (targetTriggerUtcMs <= nowMs + 60_000) {
+          continue;
+        }
+
+        // Calculate accurate Vedic Panchang for this exact location calendar day
+        const calcDate = new Date(locYear, locMonth, locDay, 12, 0, 0);
+        const panchang = calculateVedicPanchang(calcDate, latitude, longitude, tz);
+
+        const dayInfo = DAY_DEITY_UPAY[locWeekday] || {
           day: panchang.weekday,
           deity: "इष्टदेव",
           upay: "इष्टदेव का स्मरण व नित्य प्रार्थना करें।",
         };
 
-        const rahu = getInauspiciousWindows(panchang.solar, weekdayNum).find((w) => w.title.includes("राहु"));
-        const rahuStr = rahu ? `${clock(rahu.start)} से ${clock(rahu.end)}` : "ऐप में देखें";
+        const rahu = getInauspiciousWindows(panchang.solar, locWeekday).find((w) => w.title.includes("राहु"));
+        const rahuStr = rahu
+          ? `${formatPlaceTime(rahu.start, latitude, longitude, tz)} से ${formatPlaceTime(rahu.end, latitude, longitude, tz)}`
+          : "ऐप में देखें";
+
         const who = personName ? `${personName}, ` : "";
         const rashiUpayText = rashiName
           ? `${rashiName} लग्न उपाय: ${RASHI_UPAY[rashiName]}`
           : `${panchang.lunarRashi} राशि उपाय: ${RASHI_UPAY[panchang.lunarRashi] || "इष्टदेव का स्मरण।"}`;
 
-        // Distinct title with current weekday and tithi
+        // Distinct title with the verified weekday name and tithi
         const title = `${who}आज ${dayInfo.day} • ${panchang.tithi}`;
-        const body = `आज ${dayInfo.day} (${panchang.tithi})। राहुकाल: ${rahuStr}। ${dayInfo.day} विशेष: ${dayInfo.upay} • ${rashiUpayText}`;
-        const id = `brief-v4-${morning.getFullYear()}-${morning.getMonth() + 1}-${morning.getDate()}`;
-        scheduleNativeReminder(id, title, body, morning.getTime());
+        const body = `प्रातः ५:०० बजे शुभ स्मरण • आज ${dayInfo.day} (${panchang.tithi})। राहुकाल: ${rahuStr}। ${dayInfo.day} विशेष: ${dayInfo.upay} • ${rashiUpayText}`;
+        const id = `brief-v5-${locYear}-${locMonth + 1}-${locDay}`;
+
+        scheduleNativeReminder(id, title, body, targetTriggerUtcMs);
       }
-      localStorage.setItem("sp_morning_brief_v4", stamp);
+
+      localStorage.setItem("sp_morning_brief_v5", stamp);
     } catch {
       /* ignore */
     }
-  }, 3000);
+  }, 2500);
 }

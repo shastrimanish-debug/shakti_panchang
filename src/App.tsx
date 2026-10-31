@@ -269,8 +269,9 @@ export function App() {
       currentLocation.name,
       activeKundali?.name,
       activeKundali?.lagnaRashi,
+      currentDate,
     );
-  }, [currentLocation, activeKundali?.name, activeKundali?.lagnaRashi]);
+  }, [currentLocation, activeKundali?.name, activeKundali?.lagnaRashi, currentDate]);
 
   // Current page book meta
   const currentIndex = BOOK_PAGES.findIndex((p) => p.id === activeTab);
