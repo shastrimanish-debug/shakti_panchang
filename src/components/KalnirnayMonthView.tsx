@@ -213,16 +213,16 @@ export const KalnirnayMonthView: React.FC<KalnirnayMonthViewProps> = ({
                   triggerHapticSelection();
                   onOpenLocationModal();
                 }}
-                style={{ backgroundColor: '#5C3A21', color: '#FAF2E4', borderColor: '#B56A00' }}
+                style={{ backgroundColor: 'var(--bx-header)', color: '#FFFFFF', borderColor: 'var(--bx-gold)' }}
                 className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 shadow-xs transition cursor-pointer active:scale-95"
                 title="शहर / स्थान बदलें"
               >
-                <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#FFD88A' }} />
+                <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
                 <span className="truncate max-w-[110px] sm:max-w-[150px]">
                   {currentLocation?.name || 'उज्जैन'}
                 </span>
                 <span
-                  style={{ backgroundColor: '#B56A00', color: '#FFFFFF' }}
+                  style={{ backgroundColor: 'var(--bx-gold)', color: '#FFFFFF' }}
                   className="text-[10px] px-1.5 py-0.2 rounded font-black shrink-0"
                 >
                   शहर बदलें ▾

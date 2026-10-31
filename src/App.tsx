@@ -517,13 +517,13 @@ export function App() {
         </div>
 
         {/* Right: Persistent City Selector ("शहर चुनें"), Font Scale & Uma AI Button */}
-        <div className="flex items-center gap-1.5 min-w-0 ml-auto">
+        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 ml-auto shrink-0">
           <motion.button
             type="button"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu max-w-[190px] sm:max-w-[260px] cursor-pointer"
+            className="bx-tabmenu max-w-[125px] xs:max-w-[175px] sm:max-w-[260px] px-1.5 sm:px-2.5 py-1 sm:py-1.5 cursor-pointer shrink min-w-0"
             style={{
               backgroundColor: 'var(--bx-header)',
               color: '#FFFFFF',
@@ -535,13 +535,13 @@ export function App() {
             }}
             title="शहर / स्थान बदलें (Select City)"
           >
-            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
-            <span className="truncate">{currentLocation.name}</span>
+            <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
+            <span className="truncate max-w-[55px] xs:max-w-[90px] sm:max-w-[150px] text-xs font-semibold">{currentLocation.name}</span>
             <span
               style={{ backgroundColor: 'var(--bx-gold)', color: '#FFFFFF' }}
-              className="text-[10px] px-1.5 py-0.2 rounded-full font-black shrink-0"
+              className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-black shrink-0 hidden xs:inline"
             >
-              शहर चुनें ▾
+              शहर ▾
             </span>
           </motion.button>
 
@@ -551,7 +551,7 @@ export function App() {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu cursor-pointer"
+            className="bx-tabmenu px-1.5 sm:px-2 py-1 sm:py-1.5 cursor-pointer shrink-0"
             style={{
               backgroundColor: appFontSize !== 'normal' ? 'var(--bx-header)' : 'var(--bx-panel)',
               color: appFontSize !== 'normal' ? '#FFFFFF' : 'var(--bx-ink)',
@@ -563,7 +563,7 @@ export function App() {
             <span className="font-bold text-xs">
               {appFontSize === 'xlarge' ? 'अ++' : appFontSize === 'large' ? 'अ+' : 'अ'}
             </span>
-            <span className="text-[11px] font-semibold">
+            <span className="text-[11px] font-semibold hidden sm:inline">
               {appFontSize === 'xlarge' ? 'अति-विशाल' : appFontSize === 'large' ? 'बड़ा' : 'अक्षर'}
             </span>
           </motion.button>
@@ -573,7 +573,7 @@ export function App() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu cursor-pointer"
+            className="bx-tabmenu px-2 sm:px-2.5 py-1 sm:py-1.5 cursor-pointer shrink-0"
             style={{
               backgroundColor: 'var(--bx-panel)',
               color: 'var(--bx-header)',

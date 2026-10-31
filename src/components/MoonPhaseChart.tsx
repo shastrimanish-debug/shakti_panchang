@@ -775,22 +775,39 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
   return (
     <div
       data-zsp-atomic="1"
-      className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl p-3 sm:p-4 shadow-xs space-y-3"
+      style={{
+        backgroundColor: "var(--bx-panel)",
+        borderColor: "var(--bx-line)",
+        color: "var(--bx-ink)",
+      }}
+      className="border rounded-xl p-3 sm:p-4 shadow-xs space-y-3"
     >
       {/* Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-2.5">
+      <div
+        style={{ borderColor: "var(--bx-line)" }}
+        className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5"
+      >
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-[#5C3A21] text-[#FAF2E4] rounded-lg shadow-xs">
-            <Moon className="w-4 h-4 text-[#E5A024]" />
+          <div
+            style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF" }}
+            className="p-1.5 rounded-lg shadow-xs"
+          >
+            <Moon className="w-4 h-4" style={{ color: "var(--bx-gold)" }} />
           </div>
           <div>
-            <h3 className="font-bold font-granth text-sm sm:text-base text-[#5C3A21] flex items-center gap-1.5">
+            <h3
+              style={{ color: "var(--bx-header)" }}
+              className="font-bold font-granth text-sm sm:text-base flex items-center gap-1.5"
+            >
               <span>चन्द्र कला एवं तिथि प्रगति चक्र (Moon Phase & Tithi Orbit)</span>
-              <span className="text-[10px] bg-[#B56A00] text-white px-1.5 py-0.5 rounded font-mono font-bold">
+              <span
+                style={{ backgroundColor: "var(--bx-gold)", color: "#FFFFFF" }}
+                className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold"
+              >
                 D3.js
               </span>
             </h3>
-            <p className="text-[11px] text-[#735133]">
+            <p style={{ color: "var(--bx-mute)" }} className="text-[11px]">
               दृक-सिद्ध सूर्य-चंद्र कोणीय अंतर (Elongation) आधारित वास्तविक खगोलीय चन्द्रमा
             </p>
           </div>
@@ -802,7 +819,12 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
             triggerHapticSelection();
             setShowOrbitCycle(!showOrbitCycle);
           }}
-          className="text-xs font-bold text-[#5C3A21] hover:text-[#8B1E1E] bg-[#F4E8D1] hover:bg-[#EBDDC1] border border-[#8C6239]/30 rounded-lg px-2.5 py-1 flex items-center gap-1 transition cursor-pointer"
+          style={{
+            backgroundColor: "var(--bx-cream)",
+            borderColor: "var(--bx-line)",
+            color: "var(--bx-header)",
+          }}
+          className="text-xs font-bold border rounded-lg px-2.5 py-1 flex items-center gap-1 transition cursor-pointer hover:opacity-90 shadow-2xs"
         >
           <span>{showOrbitCycle ? 'चक्र संक्षेप' : '३० तिथि महा-चक्र'}</span>
           {showOrbitCycle ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -825,72 +847,121 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
         <div className="sm:col-span-6 lg:col-span-7 space-y-2.5">
           {/* Key Stat Badges */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white border border-[#8C6239]/30 rounded-lg p-2.5 shadow-2xs">
-              <span className="text-[10px] font-bold text-[#8C6239] uppercase tracking-wider block">
+            <div
+              style={{
+                backgroundColor: "var(--bx-cream)",
+                borderColor: "var(--bx-line)",
+              }}
+              className="border rounded-lg p-2.5 shadow-2xs"
+            >
+              <span
+                style={{ color: "var(--bx-mute)" }}
+                className="text-[10px] font-bold uppercase tracking-wider block"
+              >
                 चन्द्र प्रकाश (Illumination)
               </span>
               <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl font-black font-granth text-[#5C3A21]">
+                <span
+                  style={{ color: "var(--bx-header)" }}
+                  className="text-xl font-black font-granth"
+                >
                   {illuminationPct.toFixed(1)}%
                 </span>
-                <span className="text-[11px] text-[#8C6239] font-medium">प्रकाशित</span>
+                <span style={{ color: "var(--bx-mute)" }} className="text-[11px] font-medium">प्रकाशित</span>
               </div>
-              <div className="w-full bg-[#E5D2B8] h-1.5 rounded-full overflow-hidden mt-1.5">
+              <div
+                style={{ backgroundColor: "var(--bx-line)" }}
+                className="w-full h-1.5 rounded-full overflow-hidden mt-1.5"
+              >
                 <div
-                  className="bg-[#E5A024] h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(2, illuminationPct))}%` }}
+                  style={{
+                    backgroundColor: "var(--bx-gold)",
+                    width: `${Math.min(100, Math.max(2, illuminationPct))}%`,
+                  }}
+                  className="h-full rounded-full transition-all duration-500"
                 />
               </div>
             </div>
 
-            <div className="bg-white border border-[#8C6239]/30 rounded-lg p-2.5 shadow-2xs">
-              <span className="text-[10px] font-bold text-[#8C6239] uppercase tracking-wider block">
+            <div
+              style={{
+                backgroundColor: "var(--bx-cream)",
+                borderColor: "var(--bx-line)",
+              }}
+              className="border rounded-lg p-2.5 shadow-2xs"
+            >
+              <span
+                style={{ color: "var(--bx-mute)" }}
+                className="text-[10px] font-bold uppercase tracking-wider block"
+              >
                 सूर्य-चन्द्र कोणीय अंतर
               </span>
               <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl font-black font-granth text-[#5C3A21]">
+                <span
+                  style={{ color: "var(--bx-header)" }}
+                  className="text-xl font-black font-granth"
+                >
                   {elongationDeg.toFixed(1)}°
                 </span>
-                <span className="text-[11px] text-[#8C6239] font-medium">रेखांश</span>
+                <span style={{ color: "var(--bx-mute)" }} className="text-[11px] font-medium">रेखांश</span>
               </div>
-              <span className="text-[10px] text-[#735133] block mt-1">
+              <span style={{ color: "var(--bx-ink)" }} className="text-[10px] block mt-1">
                 १ तिथि = १२° (व्यतीत: {(tithiProgress * 12).toFixed(2)}°)
               </span>
             </div>
           </div>
 
           {/* Current Tithi Progress Details */}
-          <div className="bg-[#F4E8D1]/80 border border-[#8C6239]/30 rounded-lg p-2.5 space-y-1.5 text-xs">
-            <div className="flex items-center justify-between font-bold text-[#5C3A21]">
+          <div
+            style={{
+              backgroundColor: "var(--bx-cream)",
+              borderColor: "var(--bx-line)",
+            }}
+            className="border rounded-lg p-2.5 space-y-1.5 text-xs shadow-2xs"
+          >
+            <div
+              style={{ color: "var(--bx-header)" }}
+              className="flex items-center justify-between font-bold"
+            >
               <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#B56A00]" />
+                <Clock className="w-3.5 h-3.5" style={{ color: "var(--bx-gold)" }} />
                 <span>तिथि विस्तार एवं समाप्ति</span>
               </span>
-              <span className="text-xs bg-[#B56A00] text-white px-2 py-0.5 rounded-md font-bold">
+              <span
+                style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF" }}
+                className="text-xs px-2 py-0.5 rounded-md font-bold"
+              >
                 {tithiProgressPct}% व्यतीत
               </span>
             </div>
 
-            <div className="text-[11px] text-[#735133] space-y-1">
+            <div style={{ color: "var(--bx-ink)" }} className="text-[11px] space-y-1">
               <p>
-                <strong className="text-[#5C3A21]">वर्तमान तिथि:</strong> {pakshaName} की {tithiName} (तिथि संख्या {tithiNum}/30)
+                <strong>वर्तमान तिथि:</strong> {pakshaName} की {tithiName} (तिथि संख्या {tithiNum}/30)
               </p>
               {panchang.tithiSpan && (
                 <p>
-                  <strong className="text-[#5C3A21]">समाप्ति काल:</strong>{' '}
+                  <strong>समाप्ति काल:</strong>{' '}
                   {panchang.tithiSpan.end.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })} तक
                   (तदोपरांत {panchang.tithiSpan.nextName} आरम्भ)
                 </p>
               )}
               <p>
-                <strong className="text-[#5C3A21]">चन्द्र स्थिति:</strong> {rashi} राशि • {nakshatra} नक्षत्र
+                <strong>चन्द्र स्थिति:</strong> {rashi} राशि • {nakshatra} नक्षत्र
               </p>
             </div>
           </div>
 
           {/* Astronomical Note */}
-          <div className="flex items-start gap-1.5 text-[11px] text-[#735133] bg-white/70 p-2 rounded-lg border border-[#8C6239]/20">
-            <Info className="w-3.5 h-3.5 text-[#B56A00] shrink-0 mt-0.5" />
+          <div
+            style={{
+              backgroundColor: "var(--bx-panel)",
+              borderColor: "var(--bx-line)",
+              color: "var(--bx-ink)",
+            }}
+            className="flex items-start gap-1.5 text-[11px] p-2 rounded-lg border shadow-2xs"
+          >
+            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "var(--bx-gold)" }} />
             <span className="leading-snug">
               सूर्य और चन्द्रमा के स्पष्ट देशांतर का अंतर जब १२° बढ़ता है, तब एक तिथि पूर्ण होती है। ०° पर अमावस्या तथा १८०° पर पूर्णिमा होती है।
             </span>

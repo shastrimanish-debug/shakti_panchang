@@ -668,7 +668,11 @@ export function TodayBoard({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 400, damping: 28, delay: 0.02 }}
-        className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-2.5 sm:p-3 shadow-xs flex flex-wrap items-center justify-between gap-2"
+        style={{
+          backgroundColor: "var(--bx-panel)",
+          borderColor: "var(--bx-line)",
+        }}
+        className="border rounded-2xl p-2.5 sm:p-3 shadow-xs flex flex-wrap items-center justify-between gap-2"
       >
         <div className="flex items-center gap-1.5 flex-wrap">
           <motion.button
@@ -680,14 +684,18 @@ export function TodayBoard({
               triggerHapticSelection();
               onPlace?.();
             }}
-            style={{ backgroundColor: "#5C3A21", color: "#FAF2E4", borderColor: "#B56A00" }}
+            style={{
+              backgroundColor: "var(--bx-header)",
+              color: "#FFFFFF",
+              borderColor: "var(--bx-gold)",
+            }}
             className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
             title="शहर / स्थान बदलें"
           >
-            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "#FFD88A" }} />
+            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-mark-soft)" }} />
             <span className="truncate max-w-[130px] sm:max-w-[180px]">{place.name}</span>
             <span
-              style={{ backgroundColor: "#B56A00", color: "#FFFFFF" }}
+              style={{ backgroundColor: "var(--bx-gold)", color: "#FFFFFF" }}
               className="text-[10px] px-1.5 py-0.5 rounded font-black shrink-0"
             >
               शहर बदलें ▾
@@ -703,20 +711,32 @@ export function TodayBoard({
               triggerHapticSelection();
               onOpen("kalnirnay");
             }}
-            className="px-2.5 py-1.5 rounded-xl bg-[#F4E8D1] hover:bg-[#E8D5B5] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+            style={{
+              backgroundColor: "var(--bx-cream)",
+              borderColor: "var(--bx-line)",
+              color: "var(--bx-header)",
+            }}
+            className="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition cursor-pointer hover:opacity-90"
           >
-            <Calendar className="w-3.5 h-3.5 text-[#8B1E1E]" />
+            <Calendar className="w-3.5 h-3.5" style={{ color: "var(--bx-header)" }} />
             <span>मासिक कैलेंडर</span>
           </motion.button>
         </div>
 
         {onDateChange && (
-          <div className="flex items-center gap-1 bg-[#F4E8D1] px-1.5 py-1 rounded-xl border border-[#8C6239]/35">
+          <div
+            style={{
+              backgroundColor: "var(--bx-cream)",
+              borderColor: "var(--bx-line)",
+            }}
+            className="flex items-center gap-1 px-1.5 py-1 rounded-xl border"
+          >
             <motion.button
               type="button"
               whileTap={{ scale: 0.9 }}
               onClick={handlePrevDay}
-              className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
+              style={{ color: "var(--bx-ink)" }}
+              className="p-1 rounded-lg hover:opacity-80 cursor-pointer"
               title="पिछला दिन"
               aria-label="पिछला दिन"
             >
@@ -724,7 +744,10 @@ export function TodayBoard({
             </motion.button>
 
             <label className="relative flex items-center px-1.5 cursor-pointer">
-              <span className="text-xs font-bold text-[#5C3A21] whitespace-nowrap">
+              <span
+                style={{ color: "var(--bx-ink)" }}
+                className="text-xs font-bold whitespace-nowrap"
+              >
                 📅 {formattedDate}
               </span>
               <input
@@ -742,7 +765,7 @@ export function TodayBoard({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.92 }}
               onClick={handleTodayReset}
-              style={{ backgroundColor: "#8B1E1E", color: "#FFFFFF" }}
+              style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF" }}
               className="px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer"
               title="आज की तिथि पर लौटें"
             >
@@ -754,7 +777,8 @@ export function TodayBoard({
               type="button"
               whileTap={{ scale: 0.9 }}
               onClick={handleNextDay}
-              className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
+              style={{ color: "var(--bx-ink)" }}
+              className="p-1 rounded-lg hover:opacity-80 cursor-pointer"
               title="अगला दिन"
               aria-label="अगला दिन"
             >
@@ -854,10 +878,10 @@ export function TodayBoard({
               >
                 <div className="bx-kicker flex items-center justify-between gap-1">
                   <span>{k}</span>
-                  <span className="text-[10px] font-bold underline text-[#8B1E1E]">शहर बदलें ▾</span>
+                  <span style={{ color: "var(--bx-header)" }} className="text-[10px] font-bold underline">शहर बदलें ▾</span>
                 </div>
                 <b className="text-base mt-1 flex items-center gap-1 truncate">
-                  <MapPin className="w-3.5 h-3.5 text-[#B56A00] shrink-0" />
+                  <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-gold)" }} />
                   <span className="truncate">{v}</span>
                 </b>
               </motion.button>
