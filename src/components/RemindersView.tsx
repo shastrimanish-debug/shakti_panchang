@@ -22,7 +22,7 @@ export const RemindersView: React.FC<RemindersViewProps> = ({
   const [title, setTitle] = useState('प्रातः सूर्य पूजा व पंचांग स्मरण');
   const [body, setBody] = useState('शुभ मुहूर्त में संकल्प व साधना');
   const [dateStr, setDateStr] = useState(() => new Date().toISOString().split('T')[0]);
-  const [timeStr, setTimeStr] = useState('06:00');
+  const [timeStr, setTimeStr] = useState('05:00');
   const [successMsg, setSuccessMsg] = useState('');
 
   const refreshList = () => {

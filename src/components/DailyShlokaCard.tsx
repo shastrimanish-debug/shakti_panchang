@@ -111,11 +111,6 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
 
   return (
     <div className="bg-[#FAF2E4] border border-[#8C6239]/35 rounded-2xl p-3.5 sm:p-4 shadow-sm relative overflow-hidden transition-all bx-glass">
-      {/* Subtle sacred watermark background ornament */}
-      <div className="absolute -right-4 -bottom-6 text-7xl font-granth text-[#5C3A21]/5 select-none pointer-events-none">
-        ॐ
-      </div>
-
       {/* Top Header Bar */}
       <div className="flex items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-2.5">
         <div className="flex items-center gap-1.5 min-w-0">
