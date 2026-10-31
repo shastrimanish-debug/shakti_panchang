@@ -723,7 +723,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
       .attr('font-size', '10px')
       .attr('font-weight', '700')
       .attr('letter-spacing', '0.5px')
-      .text('दशम-कला चन्द्र दर्शन (D3 Engine)');
+      .text('दशम-कला चन्द्र दर्शन (प्रत्यक्ष खगोल)');
 
     svg
       .append('text')
@@ -799,13 +799,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
               style={{ color: "var(--bx-header)" }}
               className="font-bold font-granth text-sm sm:text-base flex items-center gap-1.5"
             >
-              <span>चन्द्र कला एवं तिथि प्रगति चक्र (Moon Phase & Tithi Orbit)</span>
-              <span
-                style={{ backgroundColor: "var(--bx-gold)", color: "#FFFFFF" }}
-                className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold"
-              >
-                D3.js
-              </span>
+              <span>चन्द्र कला एवं तिथि ट्रैकर (Moon Phase Tracker)</span>
             </h3>
             <p style={{ color: "var(--bx-mute)" }} className="text-[11px]">
               दृक-सिद्ध सूर्य-चंद्र कोणीय अंतर (Elongation) आधारित वास्तविक खगोलीय चन्द्रमा
