@@ -602,33 +602,43 @@ export function App() {
         </div>
       )}
 
-      {/* Main Responsive View Container with Spring-Based Tactile Board Navigation */}
-      <main className="flex-1 min-h-0 w-full relative flex flex-col overflow-hidden">
+      {/* Main Responsive View Container with Spring-Based Tactile Board Navigation & Book Page Turning */}
+      <motion.main
+        layout
+        className="flex-1 min-h-0 w-full relative flex flex-col overflow-hidden"
+        style={{ perspective: 1400 }}
+      >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={`${activeTab}-${currentLang}`}
             initial={{
               opacity: 0,
-              y: turnDirection === 'forward' ? 10 : -10,
-              scale: 0.992,
+              rotateY: turnDirection === 'forward' ? 18 : -18,
+              x: turnDirection === 'forward' ? 36 : -36,
+              scale: 0.982,
+              transformOrigin: turnDirection === 'forward' ? 'left center' : 'right center',
             }}
             animate={{
               opacity: 1,
-              y: 0,
+              rotateY: 0,
+              x: 0,
               scale: 1,
+              transformOrigin: turnDirection === 'forward' ? 'left center' : 'right center',
             }}
             exit={{
               opacity: 0,
-              y: turnDirection === 'forward' ? -8 : 8,
-              scale: 0.992,
+              rotateY: turnDirection === 'forward' ? -18 : 18,
+              x: turnDirection === 'forward' ? -36 : 36,
+              scale: 0.982,
+              transformOrigin: turnDirection === 'forward' ? 'left center' : 'right center',
             }}
             transition={{
               type: 'spring',
-              stiffness: 420,
-              damping: 32,
-              mass: 0.7,
+              stiffness: 320,
+              damping: 28,
+              mass: 0.8,
             }}
-            className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
+            className="flex-1 min-h-0 w-full flex flex-col overflow-hidden [backface-visibility:hidden] [transform-style:preserve-3d]"
           >
           <Suspense
             fallback={
@@ -968,7 +978,7 @@ export function App() {
           </Suspense>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </motion.main>
 
       {drawerOpen && (
         <BoardDrawer
