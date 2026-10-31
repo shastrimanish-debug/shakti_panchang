@@ -484,7 +484,7 @@ export function App() {
   return (
     <DrawerHostContext.Provider value={drawerApi}>
     <TabMenuContext.Provider value={tabMenu}>
-    <div key={`app-root-${currentLang}`} data-font-size={appFontSize} className="board bx-bento h-dvh w-screen overflow-hidden relative flex flex-col font-sans">
+    <div key={`app-root-${currentLang}`} data-font-size={appFontSize} className={`board bx-bento ${theme}-theme h-dvh w-screen overflow-hidden relative flex flex-col font-sans`}>
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       <div className="bx-rail shrink-0">
@@ -524,9 +524,9 @@ export function App() {
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
             className="bx-tabmenu max-w-[190px] sm:max-w-[260px] cursor-pointer"
             style={{
-              backgroundColor: '#5C3A21',
-              color: '#FAF2E4',
-              borderColor: '#B56A00',
+              backgroundColor: 'var(--bx-header)',
+              color: '#FFFFFF',
+              borderColor: 'var(--bx-gold)',
             }}
             onClick={() => {
               triggerHapticSelection();
@@ -534,10 +534,10 @@ export function App() {
             }}
             title="शहर / स्थान बदलें (Select City)"
           >
-            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#FFD88A' }} />
+            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
             <span className="truncate">{currentLocation.name}</span>
             <span
-              style={{ backgroundColor: '#B56A00', color: '#FFFFFF' }}
+              style={{ backgroundColor: 'var(--bx-gold)', color: '#FFFFFF' }}
               className="text-[10px] px-1.5 py-0.2 rounded-full font-black shrink-0"
             >
               शहर चुनें ▾
@@ -552,9 +552,9 @@ export function App() {
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
             className="bx-tabmenu cursor-pointer"
             style={{
-              backgroundColor: appFontSize !== 'normal' ? '#8B1E1E' : '#FAF2E4',
-              color: appFontSize !== 'normal' ? '#FFD88A' : '#5C3A21',
-              borderColor: appFontSize !== 'normal' ? '#FFD88A' : '#8C6239',
+              backgroundColor: appFontSize !== 'normal' ? 'var(--bx-header)' : 'var(--bx-panel)',
+              color: appFontSize !== 'normal' ? '#FFFFFF' : 'var(--bx-ink)',
+              borderColor: appFontSize !== 'normal' ? 'var(--bx-gold)' : 'var(--bx-line)',
             }}
             onClick={handleCycleFontSize}
             title={`अक्षर का आकार बदलें (वर्तमान: ${appFontSize === 'xlarge' ? 'अति-विशाल (वृद्धजन)' : appFontSize === 'large' ? 'बड़ा' : 'सामान्य'})`}
@@ -574,9 +574,9 @@ export function App() {
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
             className="bx-tabmenu cursor-pointer"
             style={{
-              backgroundColor: '#FFF7E6',
-              color: '#7A1D1D',
-              borderColor: '#D4A048',
+              backgroundColor: 'var(--bx-panel)',
+              color: 'var(--bx-header)',
+              borderColor: 'var(--bx-gold)',
             }}
             onClick={() => {
               triggerHapticSelection();
@@ -584,7 +584,7 @@ export function App() {
             }}
             title="उमा वैदिक दैवज्ञ"
           >
-            <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#B56A00' }} />
+            <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-gold)' }} />
             <span className="text-xs font-bold">उमा</span>
           </motion.button>
         </div>

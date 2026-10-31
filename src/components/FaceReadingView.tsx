@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { umaVoice } from "../services/UmaVoiceService";
 import { openWhatsAppShare } from "../services/umaConsultationPdf";
+import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { Capacitor } from "@capacitor/core";
 
 interface FeatureDetail {
   part: string;
@@ -199,6 +201,7 @@ export const FaceReadingView: React.FC<{
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraCaptureInputRef = useRef<HTMLInputElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   // Default Analysis Data
@@ -271,21 +274,61 @@ export const FaceReadingView: React.FC<{
     setFlipH(false);
   };
 
-  // Start Live WebCam
+  // Start Camera - Native Capacitor Camera with smooth web capture fallback
   const startCamera = async () => {
-    setIsLiveCamera(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      mediaStreamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      if (Capacitor.isPluginAvailable("Camera")) {
+        const photo = await CapCamera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera,
+          promptLabelHeader: "सामुद्रिक मुख लक्षण कैमरा",
+          promptLabelPicture: "फोटो खींचें",
+        });
+
+        if (photo?.dataUrl) {
+          setOriginalImage(photo.dataUrl);
+          setAdjustedImage(photo.dataUrl);
+          resetAdjustments();
+          setIsAdjustMode(true);
+          return;
+        }
       }
-    } catch (err) {
-      console.error("Camera access denied or unavailble:", err);
-      alert("कैमरा एक्सेस प्राप्त नहीं हो सका। कृपया गैलरी से फोटो अपलोड करें।");
-      setIsLiveCamera(false);
+    } catch (nativeErr: any) {
+      console.warn("Native camera cancelled or unavailable:", nativeErr);
+      if (
+        nativeErr?.message?.includes("User cancelled") ||
+        nativeErr?.message?.includes("cancelled")
+      ) {
+        return;
+      }
+    }
+
+    // Direct camera capture on mobile browser (does not fail permissions)
+    if (cameraCaptureInputRef.current) {
+      cameraCaptureInputRef.current.click();
+      return;
+    }
+
+    // WebRTC live camera stream for desktop
+    if (navigator?.mediaDevices?.getUserMedia) {
+      setIsLiveCamera(true);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+        mediaStreamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.warn("Live video stream unavailable, triggering file picker:", err);
+        setIsLiveCamera(false);
+        fileInputRef.current?.click();
+      }
+    } else {
+      fileInputRef.current?.click();
     }
   };
 
@@ -852,6 +895,14 @@ export const FaceReadingView: React.FC<{
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  <input
+                    ref={cameraCaptureInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="user"
                     className="hidden"
                     onChange={handleFileChange}
                   />
