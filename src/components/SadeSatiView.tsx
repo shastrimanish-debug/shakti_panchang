@@ -79,7 +79,7 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
             </div>
             <div className="text-[11px] text-[#735133] mt-0.5">
               {language === 'en' ? 'Current Saturn Transit: ' : language === 'gu' ? 'વર્તમાન શનિ ગોચર: ' : 'वर्तमान शनि गोचर: '}
-              <strong className="text-[#5C3A21]">{sadeSati.shaniCurrentRashi} {language === 'en' ? 'Sign' : 'રાશિ'}</strong> ({language === 'en' ? `House ${sadeSati.shaniTransitHouse} from Moon` : `ચંદ્રથી ${sadeSati.shaniTransitHouse}મો ભાવ`})
+              <strong className="text-[#5C3A21]">{sadeSati.shaniCurrentRashi} {language === 'en' ? 'Sign' : language === 'gu' ? 'રાશિ' : 'राशि'}</strong> ({language === 'en' ? `House ${sadeSati.shaniTransitHouse} from Moon` : language === 'gu' ? `ચંદ્રથી ${sadeSati.shaniTransitHouse}મો ભાવ` : `चंद्र से ${sadeSati.shaniTransitHouse}वां भाव`})
             </div>
           </div>
         </div>
@@ -239,7 +239,7 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
                     {item.currentRashi} ({item.currentDegree.toFixed(1)}°)
                   </td>
                   <td className="py-2.5 px-3 font-bold text-[#B56A00]">
-                    {language === 'en' ? `House ${item.houseFromMoon}` : `${item.houseFromMoon}મો ભાવ`}
+                    {language === 'en' ? `House ${item.houseFromMoon}` : language === 'gu' ? `${item.houseFromMoon}મો ભાવ` : `${item.houseFromMoon}वां भाव`}
                   </td>
                   <td className="py-2.5 px-3">
                     <span
