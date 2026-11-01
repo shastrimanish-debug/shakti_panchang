@@ -319,8 +319,14 @@ function housePhalaLine(h: HouseInfo, map: Record<string, PlanetPosition>): stri
   const occ = h.occupants.length ? `स्थित ग्रह: ${h.occupants.join(", ")}` : "भाव रिक्त (भावेश से फल)";
   const lord = map[h.lord];
   const dig = lord ? dignity(lord) : "सामान्य";
+  const lordHouseNum =
+    lord && typeof lord.house === 'number' && !Number.isNaN(lord.house) && lord.house > 0
+      ? lord.house
+      : h.lordHouse > 0
+        ? h.lordHouse
+        : 1;
   const lordNote = lord
-    ? `भावेश ${h.lord} ${lord.rashi} राशि के ${lord.house} भाव में (${dig})`
+    ? `भावेश ${h.lord} ${lord.rashi} राशि के ${lordHouseNum}वें भाव में (${dig})`
     : `भावेश ${h.lord}`;
   const tone =
     kendra(h.lordHouse) || trikona(h.lordHouse)
@@ -504,11 +510,18 @@ export function analyzeKundali(k: KundaliData): ChartAnalysis {
   const { maha, antar } = currentDashaWindow(k);
   const mahaP = map[k.mahadasha];
   const antarP = map[k.antardasha];
-  const dashaNarrative = `जातक ${k.name} की वर्तमान विंशोत्तरी ${k.mahadasha} महादशा (${maha ? fmtDate(maha.startDate) : "—"} से ${maha ? fmtDate(maha.endDate) : "—"}) तथा ${k.antardasha} अंतर्दशा चल रही है। ${k.mahadasha} जन्म कुंडली में ${mahaP ? `${mahaP.rashi} राशि के ${mahaP.house} भाव` : "अज्ञात भाव"} में ${mahaP ? dignity(mahaP) : ""} है; ${k.antardasha} ${antarP ? `${antarP.rashi} / भाव ${antarP.house}` : ""} में। फल: ${HOUSE_DASHA[mahaP?.house ?? 10]}। प्रत्यंतर ${k.pratyantardasha} सूक्ष्म समय को मोड़ देता है।`;
+  const mahaHouseNum =
+    mahaP && typeof mahaP.house === 'number' && !Number.isNaN(mahaP.house) && mahaP.house > 0
+      ? `${mahaP.house}वें `
+      : '';
+  const antarHouseNum =
+    antarP && typeof antarP.house === 'number' && !Number.isNaN(antarP.house) && antarP.house > 0
+      ? `${antarP.house}वें `
+      : '';
+  const dashaNarrative = `जातक ${k.name} की वर्तमान विंशोत्तरी ${k.mahadasha} महादशा (${maha ? fmtDate(maha.startDate) : "—"} से ${maha ? fmtDate(maha.endDate) : "—"}) तथा ${k.antardasha} अंतर्दशा चल रही है। ${k.mahadasha} जन्म कुंडली में ${mahaP ? `${mahaP.rashi} राशि के ${mahaHouseNum}भाव` : "अज्ञात भाव"} में ${mahaP ? dignity(mahaP) : ""} है; ${k.antardasha} ${antarP ? `${antarP.rashi} राशि के ${antarHouseNum}भाव` : ""} में। फल: ${HOUSE_DASHA[mahaP?.house ?? 10]}। प्रत्यंतर ${k.pratyantardasha} सूक्ष्म समय को मोड़ देता है।`;
 
   const trans = transitNotes(k);
   const yearPhala = [
-    dashaNarrative,
     ...trans.slice(0, 3),
     `चंद्र राशि ${k.moonRashi}, नक्षत्र ${k.nakshatra} चरण ${k.charan} — मानस और निर्णय इसी आधार पर गढ़ें।`,
   ];

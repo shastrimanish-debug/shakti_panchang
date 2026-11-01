@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import { KundaliData } from '../types';
 import { RASHIS, calculateVargaSign } from './astronomy';
 import { DASHA_ORDER, DASHA_YEARS, getVedicRemedies } from './kundali';
+import { calculateAshtakvarga } from './kpAshtakvarga';
 import { analyzeKundali } from './predictions';
 import { waitForPdfFonts } from './pdfFonts';
 import { PDF_MM_H, PDF_MM_W, PDF_PX_H, PDF_PX_W } from './pdfPage';
@@ -632,42 +633,90 @@ export async function generateExhaustive59PageKundaliPdf(
           ascSignIndex: sunAsc,
         });
 
-        drawCardBox(90, 570, width - 180, 900, 'चंद्र-सूर्य भाव तुलना (सुदर्शन आधार)');
+        drawCardBox(90, 570, width - 180, 900, 'सुदर्शन चक्र — लग्न, चंद्र व सूर्य भाव तुलना सारणी');
         const moonOcc = occupantsFromAsc(moonAsc, 1);
         const sunOcc = occupantsFromAsc(sunAsc, 1);
         const lagnaOcc = occupantsFromAsc(calculateVargaSign(kundali.lagnaDegree, 1), 1);
 
+        const HOUSE_SHORT = [
+          '१ तनु (शरीर/व्यक्तित्व)',
+          '२ धन (कोष/वाणी)',
+          '३ सहज (पराक्रम/भाई)',
+          '४ सुख (माता/भूमि)',
+          '५ सुत (संतान/विद्या)',
+          '६ रिपु (रोग/शत्रु)',
+          '७ जाया (दांपत्य/साझेदारी)',
+          '८ मृत्यु (आयु/गूढ़)',
+          '९ धर्म (भाग्य/पिता)',
+          '१० कर्म (करियर/यश)',
+          '११ लाभ (आय/मनोरथ)',
+          '१२ व्यय (मोक्ष/विदेश)',
+        ];
+
         let hy = 612;
+        // Table Header
         ctx.fillStyle = '#5C3A21';
-        ctx.fillRect(110, hy - 16, width - 220, 30);
+        ctx.fillRect(110, hy - 16, width - 220, 32);
+        ctx.strokeStyle = '#3E2714';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(110, hy - 16, width - 220, 32);
+
         ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
         ctx.textAlign = 'left';
-        ctx.fillText('भाव', 130, hy);
-        ctx.fillText('लग्न चक्र', 230, hy);
-        ctx.fillText('चंद्र चक्र', 520, hy);
-        ctx.fillText('सूर्य चक्र', 820, hy);
+        ctx.fillText('भाव एवं कारक संज्ञा', 125, hy + 4);
+        ctx.fillText('लग्न चक्र (D1)', 360, hy + 4);
+        ctx.fillText('चंद्र चक्र (मानस)', 620, hy + 4);
+        ctx.fillText('सूर्य चक्र (आत्मा)', 880, hy + 4);
+
         hy += 34;
         for (let h = 1; h <= 12; h++) {
-          ctx.fillStyle = h % 2 === 0 ? 'rgba(245, 235, 215, 0.7)' : 'rgba(255, 250, 240, 0.7)';
-          ctx.fillRect(110, hy - 16, width - 220, 28);
-          ctx.fillStyle = '#8B1E1E';
-          ctx.font = 'bold 13px serif';
-          ctx.fillText(String(h), 140, hy);
+          const rowBg = h % 2 === 0 ? 'rgba(245, 235, 215, 0.75)' : 'rgba(255, 250, 240, 0.75)';
+          ctx.fillStyle = rowBg;
+          ctx.fillRect(110, hy - 14, width - 220, 28);
+          ctx.strokeStyle = '#D1B48C';
+          ctx.lineWidth = 0.6;
+          ctx.strokeRect(110, hy - 14, width - 220, 28);
+
+          // Vertical Column Separators
+          ctx.beginPath();
+          ctx.moveTo(345, hy - 14);
+          ctx.lineTo(345, hy + 14);
+          ctx.moveTo(605, hy - 14);
+          ctx.lineTo(605, hy + 14);
+          ctx.moveTo(865, hy - 14);
+          ctx.lineTo(865, hy + 14);
+          ctx.stroke();
+
+          // Col 1: House Label
+          ctx.fillStyle = '#7A2E00';
+          ctx.font = 'bold 12px "Tiro Devanagari Hindi", serif';
+          ctx.fillText(HOUSE_SHORT[h - 1], 120, hy + 4);
+
+          // Col 2: Lagna Occupants
           ctx.fillStyle = '#2A1502';
-          ctx.font = '13px "Tiro Devanagari Hindi", serif';
-          ctx.fillText(fitLine(formatOcc(lagnaOcc[h], false), 260), 230, hy);
-          ctx.fillText(fitLine(formatOcc(moonOcc[h], false), 260), 520, hy);
-          ctx.fillText(fitLine(formatOcc(sunOcc[h], false), 260), 820, hy);
-          hy += 30;
+          ctx.font = '12px "Tiro Devanagari Hindi", serif';
+          const lTxt = formatOcc(lagnaOcc[h], false) || '—';
+          ctx.fillText(fitLine(lTxt, 240), 360, hy + 4);
+
+          // Col 3: Moon Occupants
+          const mTxt = formatOcc(moonOcc[h], false) || '—';
+          ctx.fillText(fitLine(mTxt, 240), 620, hy + 4);
+
+          // Col 4: Sun Occupants
+          const sTxt = formatOcc(sunOcc[h], false) || '—';
+          ctx.fillText(fitLine(sTxt, 240), 880, hy + 4);
+
+          hy += 28;
         }
+
         ctx.fillStyle = '#5C3A21';
         ctx.font = '13px "Tiro Devanagari Hindi", serif';
         fillWrapped(
-          `चंद्र राशि ${kundali.moonRashi}, सूर्य राशि ${kundali.sunRashi}, लग्न ${kundali.lagnaRashi}। तीनों चक्रों में एक ही भाव पर शुभ ग्रह हों तो वह फल निश्चित माना जाता है।`,
+          `सुदर्शन चक्र सिद्धांत: चंद्र राशि ${kundali.moonRashi}, सूर्य राशि ${kundali.sunRashi}, लग्न ${kundali.lagnaRashi}। जब तीनों चक्रों में एक ही भाव पर शुभ ग्रहों का प्रभाव हो, तो वह फल शत-प्रतिशत घटित होता है।`,
           120,
-          hy + 10,
-          width - 250,
+          hy + 12,
+          width - 240,
           22
         );
         break;
@@ -1065,7 +1114,7 @@ export async function generateExhaustive59PageKundaliPdf(
 
       // ---------------- Page 12: अष्टकवर्ग सारणी (भाग 2) एवं सर्वाष्टकवर्ग ---------------- //
       case 12: {
-        drawBhojpatraBackground(page, '॥ अष्टकवर्ग सारणी (भाग 2) एवं सर्वाष्टकवर्ग ॥', 'गुरु, शुक्र, शनि भिन्नाष्टकवर्ग एवं 337 समुदाय बिंदु सारणी');
+        drawBhojpatraBackground(page, '॥ अष्टकवर्ग सारणी एवं सर्वाष्टकवर्ग (SAV) ॥', 'समस्त 7 ग्रहों का भिन्नाष्टकवर्ग एवं 337 समुदाय बिंदु सारणी');
         drawCardBox(90, 180, width - 180, 1080, 'सर्वाष्टकवर्ग (Sarvashtakavarga - कुल 337 बिंदु विभाजन)');
 
         ctx.fillStyle = '#3E2714';
@@ -1076,38 +1125,83 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.fillText('जिस राशि में 28 से अधिक बिंदु होते हैं, वह राशि अत्यंत शुभ, 28 पर सम, तथा 28 से कम बिंदु पर सावधानी अपेक्षित है।', 120, sy);
         sy += 40;
 
-        // Big Sarvashtakavarga Table
-        const colW = (width - 240) / 13;
+        const avRes = calculateAshtakvarga(kundali);
+        const RASHI_COLS = ['मेष', 'वृष', 'मिथु', 'कर्क', 'सिंह', 'कन्या', 'तुला', 'वृश्चि', 'धनु', 'मकर', 'कुंभ', 'मीन'];
+        const colW = (width - 240) / 14;
+
+        // Big Sarvashtakavarga Table Header
         ctx.fillStyle = '#5C3A21';
-        ctx.fillRect(110, sy, width - 220, 32);
+        ctx.fillRect(110, sy, width - 220, 34);
+        ctx.strokeStyle = '#3E2714';
+        ctx.strokeRect(110, sy, width - 220, 34);
+
         ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
-        ctx.fillText('राशि', 120, sy + 20);
+        ctx.fillText('ग्रह / राशि', 118, sy + 22);
         for (let i = 0; i < 12; i++) {
-          ctx.fillText(RASHIS[i].substring(0, 2), 110 + (i + 1) * colW + 8, sy + 20);
+          ctx.fillText(RASHI_COLS[i], 110 + (i + 1) * colW + 6, sy + 22);
         }
+        ctx.fillText('योग', 110 + 13 * colW + 12, sy + 22);
         sy += 36;
 
-        // Rows for remaining planets + Total
-        const remPlanets = ['गुरु (Jupiter)', 'शुक्र (Venus)', 'शनि (Saturn)', 'लग्न (Lagna)', 'कुल सर्वाष्टक (Total)'];
-        remPlanets.forEach((rp, rIdx) => {
-          ctx.fillStyle = rIdx === 4 ? '#E5D2B8' : rIdx % 2 === 0 ? 'rgba(245, 235, 215, 0.6)' : 'rgba(255, 250, 240, 0.6)';
+        // Rows for all 7 classical planets
+        const classicalPlanets = [
+          { name: 'सूर्य', key: 'सूर्य' },
+          { name: 'चन्द्र', key: 'चंद्र' },
+          { name: 'मंगल', key: 'मंगल' },
+          { name: 'बुध', key: 'बुध' },
+          { name: 'गुरु', key: 'गुरु' },
+          { name: 'शुक्र', key: 'शुक्र' },
+          { name: 'शनि', key: 'शनि' },
+        ];
+
+        classicalPlanets.forEach((pInfo, rIdx) => {
+          ctx.fillStyle = rIdx % 2 === 0 ? 'rgba(245, 235, 215, 0.6)' : 'rgba(255, 250, 240, 0.6)';
           ctx.fillRect(110, sy, width - 220, 32);
           ctx.strokeStyle = '#8C6239';
           ctx.strokeRect(110, sy, width - 220, 32);
 
-          ctx.fillStyle = rIdx === 4 ? '#8B1E1E' : '#3E2714';
-          ctx.font = rIdx === 4 ? 'bold 13px "Tiro Devanagari Hindi", serif' : '13px "Tiro Devanagari Hindi", serif';
-          ctx.fillText(rp.split(' ')[0], 120, sy + 20);
+          ctx.fillStyle = '#3E2714';
+          ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
+          ctx.fillText(pInfo.name, 120, sy + 21);
 
+          const bavRow = avRes.planetBav[pInfo.key] || [];
+          let rowSum = 0;
           for (let i = 0; i < 12; i++) {
-            const pts = rIdx === 4 ? 25 + ((i * 3 + kundali.name.length) % 10) : 3 + ((i * 2 + rIdx) % 5);
-            ctx.fillStyle = rIdx === 4 ? (pts >= 28 ? '#166534' : '#991B1B') : '#2A1502';
-            ctx.font = rIdx === 4 ? 'bold 14px sans-serif' : '13px sans-serif';
-            ctx.fillText(`${pts}`, 110 + (i + 1) * colW + 10, sy + 20);
+            const pts = typeof bavRow[i] === 'number' ? bavRow[i] : 4;
+            rowSum += pts;
+            ctx.fillStyle = pts >= 5 ? '#166534' : pts <= 3 ? '#991B1B' : '#2A1502';
+            ctx.font = '13px sans-serif';
+            ctx.fillText(`${pts}`, 110 + (i + 1) * colW + 14, sy + 21);
           }
-          sy += 36;
+          ctx.fillStyle = '#5C3A21';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.fillText(`${rowSum}`, 110 + 13 * colW + 14, sy + 21);
+          sy += 34;
         });
+
+        // Total SAV Row (Strictly 337 total)
+        ctx.fillStyle = '#E5D2B8';
+        ctx.fillRect(110, sy, width - 220, 36);
+        ctx.strokeStyle = '#5C3A21';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(110, sy, width - 220, 36);
+
+        ctx.fillStyle = '#8B1E1E';
+        ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
+        ctx.fillText('कुल योग', 118, sy + 23);
+
+        let finalSum = 0;
+        for (let i = 0; i < 12; i++) {
+          const pts = avRes.sav[i] || 28;
+          finalSum += pts;
+          ctx.fillStyle = pts >= 28 ? '#166534' : '#991B1B';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.fillText(`${pts}`, 110 + (i + 1) * colW + 12, sy + 23);
+        }
+        ctx.fillStyle = '#8B1E1E';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(`${finalSum}`, 110 + 13 * colW + 12, sy + 23);
         break;
       }
 
@@ -1188,38 +1282,62 @@ export async function generateExhaustive59PageKundaliPdf(
 
         drawCardBox(90, 180, width - 180, 1080, `${planetName} महादशा में समस्त 9 अंतर्दशाएं एवं शास्त्रीय फल`);
 
-        let ay14 = 240;
+        let ay14 = 236;
         ctx.fillStyle = '#5C3A21';
-        ctx.fillRect(110, ay14 - 18, width - 220, 34);
+        ctx.fillRect(110, ay14 - 18, width - 220, 36);
+        ctx.strokeStyle = '#3E2714';
+        ctx.strokeRect(110, ay14 - 18, width - 220, 36);
+
         ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 14px "Tiro Devanagari Hindi", serif';
-        ctx.fillText('अंतर्दशा स्वामी', 130, ay14 + 4);
-        ctx.fillText('अवधि', 300, ay14 + 4);
-        ctx.fillText('शास्त्रीय फलित एवं प्रभाव', 460, ay14 + 4);
+        ctx.fillText('अंतर्दशा स्वामी', 125, ay14 + 6);
+        ctx.fillText('कालावधि', 340, ay14 + 6);
+        ctx.fillText('शास्त्रीय फलित एवं प्रभाव', 500, ay14 + 6);
 
-        ay14 += 40;
-        DASHA_ORDER.forEach((antar, idx) => {
+        ay14 += 38;
+        const startAntarIdx = DASHA_ORDER.indexOf(planetName);
+        const rotatedAntars = startAntarIdx >= 0
+          ? [...DASHA_ORDER.slice(startAntarIdx), ...DASHA_ORDER.slice(0, startAntarIdx)]
+          : DASHA_ORDER;
+
+        rotatedAntars.forEach((antar, idx) => {
           const antarYears = (DASHA_YEARS[antar] * planetYears) / 120;
           const months = Math.floor(antarYears * 12);
-          const days = Math.floor((antarYears * 12 - months) * 30);
+          const rawDays = Math.round((antarYears * 12 - months) * 30);
+          const days = rawDays >= 30 ? 0 : rawDays;
+          const adjustedMonths = rawDays >= 30 ? months + 1 : months;
 
-          ctx.fillStyle = idx % 2 === 0 ? 'rgba(245, 235, 215, 0.6)' : 'rgba(255, 250, 240, 0.6)';
-          ctx.fillRect(110, ay14 - 16, width - 220, 48);
+          ctx.fillStyle = idx % 2 === 0 ? 'rgba(245, 235, 215, 0.75)' : 'rgba(255, 250, 240, 0.75)';
+          ctx.fillRect(110, ay14 - 14, width - 220, 68);
           ctx.strokeStyle = '#8C6239';
-          ctx.strokeRect(110, ay14 - 16, width - 220, 48);
+          ctx.lineWidth = 0.8;
+          ctx.strokeRect(110, ay14 - 14, width - 220, 68);
 
+          // Vertical Column Separators
+          ctx.beginPath();
+          ctx.moveTo(320, ay14 - 14);
+          ctx.lineTo(320, ay14 + 54);
+          ctx.moveTo(480, ay14 - 14);
+          ctx.lineTo(480, ay14 + 54);
+          ctx.stroke();
+
+          // Column 1: Antardasha Label
           ctx.fillStyle = '#8B1E1E';
           ctx.font = 'bold 15px "Tiro Devanagari Hindi", serif';
-          ctx.fillText(`${planetName} - ${antar}`, 130, ay14 + 8);
+          ctx.fillText(`${planetName} - ${antar}`, 125, ay14 + 22);
 
+          // Column 2: Exact Duration
+          ctx.fillStyle = '#4A2505';
+          ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
+          ctx.fillText(`${adjustedMonths} माह ${days} दिन`, 335, ay14 + 22);
+
+          // Column 3: Phala Description (wrapped cleanly)
           ctx.fillStyle = '#2A1502';
-          ctx.font = '13px "Tiro Devanagari Hindi", serif';
-          ctx.fillText(`${months} माह ${days} दिन`, 300, ay14 + 8);
+          ctx.font = '12px "Tiro Devanagari Hindi", serif';
+          const phala = analysis.antarPhala(planetName, antar);
+          fillWrapped(phala, 495, ay14 + 6, width - 625, 20, ay14 + 52);
 
-          const phalaText = fitLine(analysis.antarPhala(planetName, antar), width - 590);
-          ctx.fillText(phalaText, 460, ay14 + 8);
-
-          ay14 += 56;
+          ay14 += 76;
         });
         break;
       }
@@ -1293,7 +1411,7 @@ export async function generateExhaustive59PageKundaliPdf(
 
       // ---------------- Pages 39 to 44: अतिरिक्त वर्ग, विंशोपक बल व वर्ग समन्वय ---------------- //
       case 39: {
-        drawBhojpatraBackground(page, '॥ D5 पंचांश एवं D6 षष्ठांश चक्र ॥', 'आध्यात्मिक आभा, प्रतिष्ठा तथा रोग-ऋण-शत्रु विचार');
+        drawBhojpatraBackground(page, '॥ D5 पंचांश एवं D6 षष्ठांश चक्र ॥', 'आध्यात्मिक आभा, प्रतिष्ठा तथा रोग-शत्रु विचार');
         drawNorthIndianDiamondChart(340, 370, 320, 5, 'D5 पंचांश चक्र (Panchamsha)');
         drawNorthIndianDiamondChart(900, 370, 320, 6, 'D6 षष्ठांश चक्र (Shashtamsha)');
         drawCardBox(90, 570, width - 180, 900, 'D5 एवं D6 का शास्त्रीय फलित');
@@ -1301,7 +1419,7 @@ export async function generateExhaustive59PageKundaliPdf(
         ctx.font = '15px "Tiro Devanagari Hindi", serif';
         ctx.textAlign = 'left';
         ctx.fillText('• D5 पंचांश चक्र: जातक की आध्यात्मिक आभा, बुद्धि का तेज एवं प्रसिद्धि का सूक्ष्म विश्लेषण।', 120, 630);
-        ctx.fillText('• D6 षष्ठांश चक्र: जीवन में आने वाले रोग, शत्रु, ऋण तथा कानूनी विवादों की रोकथाम का विचार।', 120, 670);
+        ctx.fillText('• D6 षष्ठांश चक्र: जीवन में आने वाले रोग-शत्रु विचार, ऋण तथा कानूनी विवादों की रोकथाम का विश्लेषण।', 120, 670);
         break;
       }
       case 40: {
@@ -1639,7 +1757,9 @@ export async function generateExhaustive59PageKundaliPdf(
         fillWrapped(analysis.dashaNarrative, 120, fnY, width - 240, 24);
         fnY += 50;
         analysis.yearPhala.forEach((fn) => {
-          fnY = fillWrapped(`• ${fn}`, 120, fnY, width - 240, 24, contentBottom) + 10;
+          if (fn && fn !== analysis.dashaNarrative) {
+            fnY = fillWrapped(`• ${fn}`, 120, fnY, width - 240, 24, contentBottom) + 10;
+          }
         });
         fnY += 20;
         ctx.fillStyle = '#8B1E1E';
