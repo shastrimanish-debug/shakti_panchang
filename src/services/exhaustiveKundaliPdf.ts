@@ -179,8 +179,8 @@ export async function generateExhaustive59PageKundaliPdf(
     });
     return occ;
   };
-  const formatOcc = (list: { name: string; retro: boolean; deg: string }[], withDeg = true) => {
-    if (!list.length) return '—';
+  const formatOcc = (list?: { name: string; retro: boolean; deg: string }[], withDeg = true) => {
+    if (!list || !list.length) return '—';
     return list.map((p) => `${p.name}${p.retro ? 'व' : ''}${withDeg ? ` ${p.deg}` : ''}`).join('  ');
   };
 
