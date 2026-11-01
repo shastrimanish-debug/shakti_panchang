@@ -278,56 +278,56 @@
   color: #ca8a04 !important;
 }
 
-/* 4. 🌊 गंगाजल शिव (Gangajal Shiva - Celestial Aqua Light) */
+/* 4. 🌊 गंगाजल शिव (Gangajal Shiva - Sacred Ganga Nilakantha Blue) */
 .gangajal-theme {
-  background-color: #f0fdfa !important;
-  color: #042f2c !important;
+  background-color: #f0f7ff !important;
+  color: #082f49 !important;
 }
 .gangajal-theme .flutter-scaffold-bg {
-  background: #f0fdfa !important;
+  background: #f0f7ff !important;
 }
 .gangajal-theme .flutter-card,
 .gangajal-theme .flutter-card-elevated {
   background: #ffffff !important;
-  border-color: #99f6e4 !important;
-  box-shadow: 0 4px 16px -2px rgba(15, 118, 110, 0.08) !important;
+  border-color: #bae6fd !important;
+  box-shadow: 0 4px 16px -2px rgba(2, 132, 199, 0.08) !important;
 }
 .gangajal-theme .flutter-hero-gradient {
-  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%) !important;
-  border-color: #2dd4bf !important;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 50%, #bae6fd 100%) !important;
+  border-color: #38bdf8 !important;
 }
 .gangajal-theme .bg-\[\#FAF2E4\],
 .gangajal-theme .bg-\[\#faf2de\],
 .gangajal-theme .bg-\[\#FFFBF0\] {
-  background-color: #ccfbf1 !important;
-  color: #115e59 !important;
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
 }
 .gangajal-theme .text-\[\#5C3A21\],
 .gangajal-theme .text-\[\#2C1810\] {
-  color: #134e4a !important;
+  color: #075985 !important;
 }
 .gangajal-theme .text-\[\#8C4A00\],
 .gangajal-theme .text-\[\#B56A00\] {
-  color: #0f766e !important;
+  color: #0284c7 !important;
 }
 
 /* 5. 🌿 पावन तुलसी (Pawan Tulsi - Vrindavan Herbal Green Light) */
 .tulsi-theme {
-  background-color: #f4fbf4 !important;
+  background-color: #f2fbf4 !important;
   color: #052e16 !important;
 }
 .tulsi-theme .flutter-scaffold-bg {
-  background: #f4fbf4 !important;
+  background: #f2fbf4 !important;
 }
 .tulsi-theme .flutter-card,
 .tulsi-theme .flutter-card-elevated {
   background: #ffffff !important;
-  border-color: #bbf7d0 !important;
+  border-color: #86efac !important;
   box-shadow: 0 4px 16px -2px rgba(21, 128, 61, 0.08) !important;
 }
 .tulsi-theme .flutter-hero-gradient {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%) !important;
-  border-color: #4ade80 !important;
+  background: linear-gradient(135deg, #f2fbf4 0%, #dcfce7 50%, #86efac 100%) !important;
+  border-color: #22c55e !important;
 }
 .tulsi-theme .bg-\[\#FAF2E4\],
 .tulsi-theme .bg-\[\#faf2de\],
@@ -337,7 +337,7 @@
 }
 .tulsi-theme .text-\[\#5C3A21\],
 .tulsi-theme .text-\[\#2C1810\] {
-  color: #166534 !important;
+  color: #14532d !important;
 }
 .tulsi-theme .text-\[\#8C4A00\],
 .tulsi-theme .text-\[\#B56A00\] {
