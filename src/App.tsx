@@ -53,6 +53,9 @@ const MoreMenuModal = React.lazy(() => import('./components/MoreMenuModal').then
 const ThemeSelectorModal = React.lazy(() => import('./components/ThemeSelectorModal').then((m) => ({ default: m.ThemeSelectorModal })));
 const LanguageSelectorModal = React.lazy(() => import('./components/LanguageSelectorModal').then((m) => ({ default: m.LanguageSelectorModal })));
 const ReleaseNotesModal = React.lazy(() => import('./components/ReleaseNotesModal').then((m) => ({ default: m.ReleaseNotesModal })));
+const SadeSatiView = React.lazy(() => import('./components/SadeSatiView').then((m) => ({ default: m.SadeSatiView })));
+const DailyGocharView = React.lazy(() => import('./components/DailyGocharView').then((m) => ({ default: m.DailyGocharView })));
+const JapaMalaModal = React.lazy(() => import('./components/JapaMalaModal').then((m) => ({ default: m.JapaMalaModal })));
 
 const HanumanChalisaPathView = React.lazy(async () => {
   const [{ ScripturePathView }, { HANUMAN_CHALISA }] = await Promise.all([
@@ -209,6 +212,7 @@ export function App() {
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState<boolean>(false);
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState<boolean>(false);
+  const [isJapaMalaModalOpen, setIsJapaMalaModalOpen] = useState<boolean>(false);
   const [subscriptionReason, setSubscriptionReason] = useState<string>('');
   const { t } = useTranslation();
   const { language: currentLang, setLanguage } = useLanguage();
@@ -367,11 +371,19 @@ export function App() {
           iching: 'प्राचीन आई-चिंग दिव्य प्रश्न',
           devta_arpan: 'देवता अर्पण फल व पूजन सामग्री',
           shiv_tantra: 'शिव तंत्र विद्या (कश्मीर शैव दर्शन)',
+          sadesati: 'शनि साढ़े साती एवं ढैया विचार',
+          gochar: 'दैनिक ग्रह गोचर चक्र',
+          japamala: '१०८ रुद्राक्ष डिजिटल जप माला',
         };
         const name = featureNames[tabId] || 'यह अध्याय';
         triggerSubscriptionModal(
           `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग मुख्य पृष्ठ फ्री है। ${name} देखने के लिए आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।`
         );
+        return;
+      }
+
+      if (tabId === 'japamala') {
+        setIsJapaMalaModalOpen(true);
         return;
       }
 
@@ -969,6 +981,26 @@ export function App() {
                 onNextChapter={handleNextPage}
               />
             )}
+
+            {activeTab === 'sadesati' && (
+              <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-20">
+                <SadeSatiView
+                  activeKundali={activeKundali}
+                  currentLocation={currentLocation}
+                  onNavigateToKundali={() => handleSelectTab('kundali')}
+                />
+              </div>
+            )}
+
+            {activeTab === 'gochar' && (
+              <DailyGocharView
+                activeKundali={activeKundali}
+                currentLocation={currentLocation}
+                onNavigateToKundali={() => handleSelectTab('kundali')}
+                onPrevChapter={handlePrevPage}
+                onNextChapter={handleNextPage}
+              />
+            )}
           </Suspense>
           </motion.div>
         </AnimatePresence>
@@ -1129,6 +1161,13 @@ export function App() {
             onClose={() => setIsReleaseNotesOpen(false)}
             onNavigateTab={handleSelectTab}
             onOpenUma={() => setIsUmaModalOpen(true)}
+          />
+        )}
+
+        {isJapaMalaModalOpen && (
+          <JapaMalaModal
+            isOpen={isJapaMalaModalOpen}
+            onClose={() => setIsJapaMalaModalOpen(false)}
           />
         )}
       </Suspense>

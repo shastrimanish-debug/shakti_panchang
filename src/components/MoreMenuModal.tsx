@@ -218,6 +218,87 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </button>
         </div>
 
+        {/* 108 Rudraksha Digital Japa Mala Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('japamala'))}
+            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#2D1606] via-[#4A240A] to-[#2B1202] text-[#FAF2E4] border-amber-600/60"
+          >
+            <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+              <div className="p-2 bg-[#1C0D03] rounded-xl text-amber-300 shrink-0 text-lg border border-amber-500/30">
+                📿
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
+                  <span>१०८ रुद्राक्ष डिजिटल जप माला</span>
+                  <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/40">विशेष</span>
+                </div>
+                <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
+                  सुगंधित मनके, मेरु कंपन, गायत्री-महामृत्युंजय ८ मंत्र व पावन घंटी
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] bg-[#1C0D03] text-[#FFD88A] border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold shrink-0">
+              जपें →
+            </span>
+          </button>
+        </div>
+
+        {/* Shani Sade Sati & Dhaiya Phase Tracker Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('sadesati'))}
+            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#1E2638] via-[#2A344D] to-[#171D2D] text-[#FAF2E4] border-blue-400/40"
+          >
+            <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+              <div className="p-2 bg-[#121824] rounded-xl text-blue-300 shrink-0 text-lg border border-blue-400/30">
+                🪐
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-black text-blue-200 leading-snug flex items-center gap-1.5">
+                  <span>शनि साढ़े साती एवं ढैया विचार</span>
+                  <span className="text-[9px] bg-blue-950 text-blue-300 px-1.5 py-0.2 rounded font-bold border border-blue-400/40">सटीक</span>
+                </div>
+                <div className="text-[10px] text-[#E0E8F5]/90 leading-snug mt-0.5">
+                  तीनों चरण टाइमलाइन (चढ़ती, शिखर, उतरती) व अचूक वैदिक शांति उपाय
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] bg-[#121824] text-blue-200 border border-blue-400/40 px-2.5 py-1 rounded-lg font-bold shrink-0">
+              देखें →
+            </span>
+          </button>
+        </div>
+
+        {/* Daily Planetary Transits (Gochar) Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('gochar'))}
+            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#38260E] via-[#523814] to-[#2E1F0A] text-[#FAF2E4] border-amber-500/40"
+          >
+            <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+              <div className="p-2 bg-[#201507] rounded-xl text-amber-300 shrink-0 text-lg border border-amber-500/30">
+                🧭
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
+                  <span>दैनिक ग्रह गोचर चक्र व फल</span>
+                  <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/40">लाइव</span>
+                </div>
+                <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
+                  ९ ग्रहों की वास्तविक अंश स्थिति, वक्री/अस्त व चंद्र राशि फलक
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] bg-[#201507] text-[#FFD88A] border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold shrink-0">
+              देखें →
+            </span>
+          </button>
+        </div>
+
         {/* Subscription / VIP Status Card */}
         <div className="mt-2.5">
           <button

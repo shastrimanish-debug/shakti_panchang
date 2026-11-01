@@ -417,15 +417,15 @@ export function BoardDock({
 const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   {
     title: { hi: "आज", en: "Today", gu: "આજ" },
-    ids: ["panchang", "kalnirnay", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
+    ids: ["panchang", "kalnirnay", "gochar", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
   },
   {
     title: { hi: "जन्म पत्रिका व लाल किताब", en: "Birth chart & Lal Kitab", gu: "જન્મ પત્રિકા અને લાલ કિતાબ" },
-    ids: ["lal_kitab", "ravan_sanhita", "kundali", "milan", "prashna", "saral", "shastrokt", "sabar", "numerology", "gemology", "jain_mantras"],
+    ids: ["sadesati", "lal_kitab", "ravan_sanhita", "kundali", "milan", "prashna", "saral", "shastrokt", "sabar", "numerology", "gemology", "jain_mantras"],
   },
   {
     title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },
-    ids: ["vishnu_sahasranama", "granth_puran", "devta_arpan", "durga", "audio_player", "hanuman", "sundarkand", "gita", "vratkatha", "vastu", "reminders"],
+    ids: ["japamala", "vishnu_sahasranama", "granth_puran", "devta_arpan", "durga", "audio_player", "hanuman", "sundarkand", "gita", "vratkatha", "vastu", "reminders"],
   },
   {
     title: { hi: "दर्शन", en: "Reading", gu: "દર્શન" },

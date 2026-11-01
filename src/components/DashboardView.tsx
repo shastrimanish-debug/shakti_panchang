@@ -31,6 +31,7 @@ import { getDailyShloka, getLocalizedDailyShloka } from '../constants/shlokas';
 import { useLanguage } from '../i18n';
 import { trVedic } from '../i18n/vedicTranslate';
 import { umaVoice } from '../services/UmaVoiceService';
+import { calculateMoonriseTime, calculateEkadashiParana } from '../services/astronomy';
 
 export interface DashboardViewProps {
   panchang: VedicPanchangData | null;
@@ -96,6 +97,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const baseShloka = getDailyShloka(activeDate);
   const dailyShloka = getLocalizedDailyShloka(baseShloka, language);
+
+  const moonriseTime = React.useMemo(() => {
+    return calculateMoonriseTime(activeDate, currentLocation.latitude || 23.1765, currentLocation.longitude || 75.7885);
+  }, [activeDate, currentLocation]);
+
+  const ekadashiParana = React.useMemo(() => {
+    if (!panchang) return null;
+    return calculateEkadashiParana(tithiName, panchang.solar.sunrise, panchang.solar.sunset);
+  }, [tithiName, panchang]);
 
   // Date Navigation Handlers
   const handlePrevDay = () => {
@@ -227,14 +237,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {onOpenWhatsAppPanchang && (
             <button
               onClick={onOpenWhatsAppPanchang}
-              className="px-3 py-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1.5 shadow-sm transition"
+              className="px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:brightness-110 text-white text-xs font-black flex items-center gap-1.5 shadow-md transition border border-emerald-400/50 cursor-pointer"
+              title="आज का एचडी पंचांग व सुविचार स्टेटस कार्ड बनाएं और व्हाट्सएप पर साझा करें"
             >
-              <Share2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">सुप्रभात पंचांग</span>
+              <Share2 className="w-3.5 h-3.5 text-amber-200" />
+              <span>📸 आज का स्टेटस कार्ड</span>
             </button>
           )}
         </div>
       </div>
+
+      {/* Ekadashi Parana Muhurat Alert Banner */}
+      {ekadashiParana && (
+        <div className="bg-gradient-to-r from-[#FFF9EE] via-[#FEF3C7] to-[#FFF9EE] border-2 border-amber-500 rounded-3xl p-3.5 sm:p-4 shadow-md flex items-start gap-3 animate-in fade-in duration-200">
+          <div className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center text-xl shrink-0 shadow-xs">
+            🔱
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <h4 className="font-granth font-black text-sm sm:text-base text-[#7C2D12]">
+                {ekadashiParana.title}
+              </h4>
+              <span className="px-3 py-1 rounded-full bg-amber-700 text-white text-[11px] font-black tracking-wide shadow-xs">
+                {ekadashiParana.paranaTimeWindow}
+              </span>
+            </div>
+            <p className="text-xs text-[#5C3A21] mt-1 font-medium leading-relaxed">
+              {ekadashiParana.guidance}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================= */}
       {/* 2. MAIN BENTO BOX GRID                                   */}
@@ -356,6 +389,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </span>
                 <span className="text-xs font-black text-[#4A2612] dark:text-amber-200">{sunsetStr}</span>
               </div>
+              {moonriseTime && (
+                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-indigo-50/70 dark:bg-stone-900/70 border border-indigo-500/20">
+                  <span className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                    <Moon className="w-3.5 h-3.5 text-indigo-500" /> चंद्रोदय (अर्घ्य समय)
+                  </span>
+                  <span className="text-xs font-black text-indigo-950 dark:text-indigo-200">{moonriseTime}</span>
+                </div>
+              )}
             </div>
           </div>
 

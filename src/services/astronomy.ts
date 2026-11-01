@@ -504,3 +504,59 @@ export function calculateVargaSign(degree: number, vargaDiv: number): number {
       }
   }
 }
+
+export interface EkadashiParanaInfo {
+  isEkadashi: boolean;
+  isDwadashi: boolean;
+  title: string;
+  paranaTimeWindow: string;
+  guidance: string;
+}
+
+export function calculateMoonriseTime(date: Date, lat: number, lon: number): string | null {
+  try {
+    const observer = new Astronomy.Observer(lat, lon, 0);
+    const startOfToday = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+    const rise = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, +1, startOfToday, 1.2);
+    if (rise && rise.date) {
+      return rise.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  } catch {
+    // fallback if no rise on this boundary date
+  }
+  return null;
+}
+
+export function calculateEkadashiParana(
+  tithiName: string,
+  sunrise: Date,
+  sunset: Date
+): EkadashiParanaInfo | null {
+  const isEk = tithiName.includes('एकादशी') || tithiName.toLowerCase().includes('ekadashi');
+  const isDwa = tithiName.includes('द्वादशी') || tithiName.toLowerCase().includes('dwadashi');
+
+  if (!isEk && !isDwa) return null;
+
+  const fmt = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const paranaStart = new Date(sunrise.getTime() + 15 * 60000); // 15 mins after sunrise
+  const paranaEnd = new Date(sunrise.getTime() + 2 * 60 * 60000 + 45 * 60000); // ~2 hours 45 mins window (first quarter of day)
+
+  if (isEk) {
+    return {
+      isEkadashi: true,
+      isDwadashi: false,
+      title: '🔱 आज एकादशी महाव्रत',
+      paranaTimeWindow: `कल प्रातः ${fmt(paranaStart)} से ${fmt(paranaEnd)} तक`,
+      guidance: 'एकादशी के दिन पूर्ण उपवास रखें। व्रत का पारण कल द्वादशी तिथि में सूर्योदयोपरांत शुभ मुहूर्त में करें। हरि वासर काल में पारण वर्जित है।',
+    };
+  }
+
+  return {
+    isEkadashi: false,
+    isDwadashi: true,
+    title: '🔱 एकादशी व्रत पारण दिवस (द्वादशी)',
+    paranaTimeWindow: `प्रातः ${fmt(paranaStart)} से ${fmt(paranaEnd)} तक`,
+    guidance: 'आज द्वादशी तिथि समाप्त होने से पूर्व सात्विक अन्नाहार अथवा पंचामृत/तुलसीदल से एकादशी व्रत का शुभ पारण करें।',
+  };
+}
+
