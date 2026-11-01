@@ -80,6 +80,89 @@ public class UmaDevicePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void saveBackup(PluginCall call) {
+        String content = call.getString("content");
+        String fileName = call.getString("fileName", "Kundali_Backup.json");
+        if (content == null || content.isEmpty()) {
+            call.reject("Missing content");
+            return;
+        }
+        try {
+            byte[] bytes = content.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            String cleanName = fileName.replaceAll("[\\\\/]", "_");
+            if (!cleanName.toLowerCase().endsWith(".json")) {
+                cleanName = cleanName + ".json";
+            }
+
+            boolean savedToDownloads = false;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                try {
+                    ContentResolver resolver = getContext().getContentResolver();
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, cleanName);
+                    values.put(MediaStore.Downloads.MIME_TYPE, "application/json");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                    values.put(MediaStore.Downloads.IS_PENDING, 1);
+
+                    Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                    if (uri != null) {
+                        try (OutputStream out = resolver.openOutputStream(uri)) {
+                            if (out != null) {
+                                out.write(bytes);
+                            }
+                        }
+                        values.clear();
+                        values.put(MediaStore.Downloads.IS_PENDING, 0);
+                        resolver.update(uri, values, null, null);
+                        savedToDownloads = true;
+                    }
+                } catch (Exception ignored) {
+                    // Fallback to cache and share chooser below
+                }
+            }
+
+            File dir = new File(getContext().getCacheDir(), "backups");
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, cleanName);
+            try (FileOutputStream out = new FileOutputStream(file)) {
+                out.write(bytes);
+            }
+            Uri uri = FileProvider.getUriForFile(
+                getContext(),
+                getContext().getPackageName() + ".fileprovider",
+                file
+            );
+
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("application/json");
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.putExtra(Intent.EXTRA_SUBJECT, cleanName);
+            send.putExtra(Intent.EXTRA_TEXT, "कुंडली बैकअप: " + cleanName);
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            send.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getActivity().startActivity(Intent.createChooser(send, "कुंडली बैकअप सुरक्षित या शेयर करें"));
+
+            if (getActivity() != null) {
+                final String toastMsg = savedToDownloads
+                    ? "कुंडली बैकअप Downloads में सेव हो गया: " + cleanName
+                    : "कुंडली बैकअप तैयार: " + cleanName;
+                getActivity().runOnUiThread(() ->
+                    Toast.makeText(getContext(), toastMsg, Toast.LENGTH_LONG).show()
+                );
+            }
+
+            JSObject ret = new JSObject();
+            ret.put("ok", true);
+            ret.put("savedToDownloads", savedToDownloads);
+            ret.put("fileName", cleanName);
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Backup save failed", e);
+        }
+    }
+
+
+    @PluginMethod
     public void saveImage(PluginCall call) {
         String base64 = call.getString("base64");
         String fileName = call.getString("fileName", "Shakti-Panchang-HD.png");

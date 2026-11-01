@@ -8,10 +8,11 @@ import {
   exportKundaliProfilesJson,
   importKundaliProfilesJson,
 } from '../services/storage';
-import { BookMarked, X, Trash2, Download, Upload, CheckCircle2 } from 'lucide-react';
+import { BookMarked, X, Trash2, Download, Upload, CheckCircle2, Copy, FileText } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { trRashi, trVedic } from '../i18n/vedicTranslate';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { saveOrDeliverKundaliBackup } from '../lib/device';
 
 interface SavedProfilesModalProps {
   isOpen: boolean;
@@ -27,6 +28,8 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
   const { t, i18n } = useTranslation();
   const [profiles, setProfiles] = useState<KundaliData[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showPasteModal, setShowPasteModal] = useState<boolean>(false);
+  const [pastedJsonText, setPastedJsonText] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadList = () => {
@@ -42,13 +45,11 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
-    }, 3500);
+    }, 4500);
   };
 
   const handleDelete = (e: React.MouseEvent, profile: KundaliData) => {
@@ -66,22 +67,29 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
     }
   };
 
-  const handleExportBackup = () => {
+  const handleExportBackup = async () => {
     try {
       const jsonStr = exportKundaliProfilesJson();
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
       const dateStr = new Date().toISOString().slice(0, 10);
-      a.href = url;
-      a.download = `shakti_kundali_backup_${dateStr}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('📥 कुंडली बैकअप फ़ाइल सफलतापूर्वक डाउनलोड हो गई!');
+      const fileName = `Kundali_Backup_${dateStr}.json`;
+      const res = await saveOrDeliverKundaliBackup(jsonStr, fileName);
+      if (res.success) {
+        showToast(`✅ ${res.message}`);
+      } else {
+        showToast('बैकअप डाउनलोड करने में त्रुटि आई। कृपया "डेटा कॉपी" विकल्प का उपयोग करें।');
+      }
     } catch {
-      showToast('बैकअप डाउनलोड करने में त्रुटि आई।');
+      showToast('बैकअप सुरक्षित करने में त्रुटि आई।');
+    }
+  };
+
+  const handleCopyBackup = async () => {
+    try {
+      const jsonStr = exportKundaliProfilesJson();
+      await navigator.clipboard.writeText(jsonStr);
+      showToast('📋 कुंडली बैकअप डेटा कॉपी हो गया! इसे WhatsApp या Notes में सुरक्षित रख सकते हैं।');
+    } catch {
+      showToast('क्लिपबोर्ड में कॉपी नहीं हो सका।');
     }
   };
 
@@ -111,6 +119,22 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
     reader.readAsText(file);
   };
 
+  const handleApplyPastedJson = () => {
+    if (!pastedJsonText.trim()) {
+      showToast('कृपया पहले बैकअप टेक्स्ट पेस्ट करें।');
+      return;
+    }
+    const res = importKundaliProfilesJson(pastedJsonText.trim());
+    if (res.success) {
+      loadList();
+      setShowPasteModal(false);
+      setPastedJsonText('');
+      showToast(`✅ सफलता! ${res.count} कुण्डलियाँ सफलतापूर्वक रिस्टोर हो गईं।`);
+    } else {
+      showToast(res.error || 'अमान्य बैकअप टेक्स्ट।');
+    }
+  };
+
   const formatDate = (d: Date) => {
     const dt = d instanceof Date ? d : new Date(d);
     return dt.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'hi-IN', {
@@ -120,6 +144,11 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
     });
   };
 
+  if (!isOpen) return null;
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const currentBackupFileName = `Kundali_Backup_${dateStr}.json`;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
@@ -127,7 +156,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
           backgroundColor: 'var(--bx-panel)',
           borderColor: 'var(--bx-line)',
         }}
-        className="border-2 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col h-[85dvh] max-h-[100dvh]"
+        className="border-2 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col h-[85dvh] max-h-[100dvh] relative"
       >
         {/* Header */}
         <div
@@ -176,48 +205,133 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
             backgroundColor: 'var(--bx-cream)',
             borderColor: 'var(--bx-line)',
           }}
-          className="px-3 py-2 border-b flex items-center justify-between gap-2 text-xs"
+          className="px-3 py-2 border-b space-y-1.5 text-xs"
         >
-          <button
-            type="button"
-            onClick={handleExportBackup}
-            disabled={profiles.length === 0}
-            style={{
-              backgroundColor: 'var(--bx-panel)',
-              borderColor: 'var(--bx-line)',
-              color: 'var(--bx-header)',
-            }}
-            className="flex-1 py-1.5 px-2 rounded-lg border font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer hover:opacity-90 disabled:opacity-40"
-            title="फ़ोन मेमोरी या गूगल ड्राइव में बैकअप फ़ाइल डाउनलोड करें"
-          >
-            <Download className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
-            <span>बैकअप लें (Export)</span>
-          </button>
+          {/* Main Action Buttons */}
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={handleExportBackup}
+              disabled={profiles.length === 0}
+              style={{
+                backgroundColor: 'var(--bx-panel)',
+                borderColor: 'var(--bx-line)',
+                color: 'var(--bx-header)',
+              }}
+              className="flex-1 py-1.5 px-2 rounded-lg border font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer hover:opacity-90 disabled:opacity-40"
+              title="फोन मेमोरी (Downloads) या ड्राइव में बैकअप फ़ाइल सुरक्षित करें"
+            >
+              <Download className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
+              <span>बैकअप फ़ाइल (Export)</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleImportClick}
-            style={{
-              backgroundColor: 'var(--bx-panel)',
-              borderColor: 'var(--bx-line)',
-              color: 'var(--bx-header)',
-            }}
-            className="flex-1 py-1.5 px-2 rounded-lg border font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer hover:opacity-90"
-            title="पहले से ली गई बैकअप फ़ाइल से कुण्डलियाँ रिस्टोर करें"
-          >
-            <Upload className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
-            <span>रिस्टोर करें (Import)</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleImportClick}
+              style={{
+                backgroundColor: 'var(--bx-panel)',
+                borderColor: 'var(--bx-line)',
+                color: 'var(--bx-header)',
+              }}
+              className="flex-1 py-1.5 px-2 rounded-lg border font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer hover:opacity-90"
+              title="फ़ाइल मैनेजर से Kundali_Backup फ़ाइल चुनें"
+            >
+              <Upload className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
+              <span>फ़ाइल से रीस्टोर</span>
+            </button>
+          </div>
+
+          {/* Quick Copy & Paste Alternatives */}
+          <div className="flex items-center justify-between gap-2 text-[11px]">
+            <button
+              type="button"
+              onClick={handleCopyBackup}
+              disabled={profiles.length === 0}
+              className="flex-1 py-1 px-2 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 border border-amber-500/30 font-medium flex items-center justify-center gap-1 cursor-pointer transition disabled:opacity-40"
+              title="पूरा बैकअप टेक्स्ट क्लिपबोर्ड में कॉपी करें"
+            >
+              <Copy className="w-3 h-3 text-amber-700" />
+              <span>डेटा कॉपी करें</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPasteModal(true)}
+              className="flex-1 py-1 px-2 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 border border-amber-500/30 font-medium flex items-center justify-center gap-1 cursor-pointer transition"
+              title="कॉपी किया गया बैकअप टेक्स्ट पेस्ट करके लोड करें"
+            >
+              <FileText className="w-3 h-3 text-amber-700" />
+              <span>टेक्स्ट पेस्ट रीस्टोर</span>
+            </button>
+          </div>
+
+          {/* Search Helper Notice */}
+          <div className="text-[10px] text-stone-600 bg-amber-50/80 px-2 py-1 rounded border border-amber-200/50 flex items-center justify-between">
+            <span>🔍 सर्च करें: <strong className="text-amber-900 font-mono">Kundali_Backup</strong></span>
+            <span className="text-stone-500 font-mono text-[9px]">{currentBackupFileName}</span>
+          </div>
 
           {/* Hidden File Input for Import */}
           <input
             ref={fileInputRef}
             type="file"
-            accept=".json,application/json"
+            accept=".json,application/json,text/plain,*/*"
             onChange={handleFileChange}
             className="hidden"
           />
         </div>
+
+        {/* Text Paste Modal Dialog */}
+        {showPasteModal && (
+          <div className="absolute inset-0 z-20 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in">
+            <div
+              style={{
+                backgroundColor: 'var(--bx-panel)',
+                borderColor: 'var(--bx-line)',
+              }}
+              className="border-2 rounded-xl p-3.5 w-full max-w-sm shadow-2xl space-y-2.5"
+            >
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-sm text-stone-900 font-granth">
+                  📋 बैकअप टेक्स्ट पेस्ट करें
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setShowPasteModal(false)}
+                  className="p-1 text-stone-600 hover:text-stone-900 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-[11px] text-stone-600">
+                यदि आपने पहले बैकअप कॉपी किया था या WhatsApp/Notes में रखा है, तो उसे यहाँ पेस्ट करें:
+              </p>
+              <textarea
+                value={pastedJsonText}
+                onChange={(e) => setPastedJsonText(e.target.value)}
+                placeholder='{"app": "Shakti Panchang", "profiles": [...] }'
+                rows={6}
+                className="w-full text-xs font-mono p-2 border border-stone-300 rounded-lg bg-white/90 text-stone-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowPasteModal(false)}
+                  className="px-2.5 py-1 text-xs rounded border border-stone-300 text-stone-700 hover:bg-stone-100 cursor-pointer"
+                >
+                  रद्द करें
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyPastedJson}
+                  className="px-3 py-1 text-xs font-bold rounded bg-amber-600 hover:bg-amber-700 text-white cursor-pointer shadow-xs"
+                >
+                  रीस्टोर करें
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Toast Notification Alert */}
         {toastMessage && (
