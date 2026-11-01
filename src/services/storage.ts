@@ -265,7 +265,7 @@ export function exportKundaliProfilesJson(): string {
   return JSON.stringify(
     {
       app: 'Shakti Panchang',
-      version: '1.0.40',
+      version: '1.0.41',
       exportedAt: new Date().toISOString(),
       count: profiles.length,
       profiles,

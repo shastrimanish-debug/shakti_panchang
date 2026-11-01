@@ -332,7 +332,7 @@ export const DurgaSaptashatiView: React.FC<{
 
       {/* Slide-out Interactive TOC / Index Drawer Overlay */}
       {isTocOpen && (
-        <div className="absolute inset-0 z-50 bg-black/50 flex justify-start" onClick={() => setIsTocOpen(false)}>
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-200" onClick={() => setIsTocOpen(false)}>
           <div
             className="w-[88%] max-w-sm h-full flex flex-col border-r-2 shadow-2xl"
             style={{ background: "var(--bx-panel)", borderColor: "var(--bx-gold)", color: "var(--bx-ink)" }}

@@ -283,7 +283,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
 
         {/* Text Paste Modal Dialog */}
         {showPasteModal && (
-          <div className="absolute inset-0 z-20 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in">
+          <div className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in">
             <div
               style={{
                 backgroundColor: 'var(--bx-panel)',

@@ -31,3 +31,5 @@ server/uma/v1/config.php
 .idea/
 *.iml
 .vscode/
+public/assets/aistudio/
+android/app/src/main/assets/public/assets/aistudio/

@@ -658,7 +658,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
       {/* Table of Contents Drawer Overlay */}
       {isTocOpen && (
         <div
-          className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex justify-start"
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-200"
           onClick={() => setIsTocOpen(false)}
         >
           <aside

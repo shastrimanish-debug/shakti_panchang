@@ -223,52 +223,6 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
         </div>
       </header>
 
-      {/* TOC Drawer Overlay */}
-      {isTocOpen && (
-        <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-200">
-          <ZeroScrollPager className="w-4/5 max-w-xs h-full bg-[#FAF2E4] border-r-2 border-amber-600 shadow-2xl flex flex-col overflow-hidden min-h-0" contentClassName="p-3 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E2D2BE]">
-              <div className="flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4 text-[#8C4A00]" />
-                <h3 className="font-granth font-black text-sm text-[#462B17]">
-                  गीता श्लोक अनुक्रमणिका
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsTocOpen(false)}
-                className="p-1 rounded-lg bg-[#E2D2BE] text-[#462B17]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              {filteredShlokas.map((s, idx) => (
-                <button
-                  key={s.id || idx}
-                  type="button"
-                  onClick={() => {
-                    setSelectedShlokaIndex(idx);
-                    setIsTocOpen(false);
-                  }}
-                  className={`w-full text-left px-2.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
-                    selectedShlokaIndex === idx
-                      ? 'bg-[#5C3A21] text-[#FFF6E5]'
-                      : 'bg-white/80 text-[#3E2714] hover:bg-[#FFEEC9]'
-                  }`}
-                >
-                  <div className="truncate pr-1">
-                    <span className="text-xs font-black">अध्याय {s.chapter}, श्लोक {s.verse}</span>
-                  </div>
-                  <span className="text-[9px] opacity-75 shrink-0">गीतोपदेश</span>
-                </button>
-              ))}
-            </div>
-          </ZeroScrollPager>
-        </div>
-      )}
-
       {/* Filter / Search Bar */}
       <div className="shrink-0 bg-[#FFFDF9] border-b border-[#E8DCCB] px-2 py-2 space-y-1.5 shadow-2xs">
         <div className="flex items-center gap-2">
@@ -288,10 +242,9 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
         </div>
       </div>
 
-      {/* Main Content Body */}
-      <ZeroScrollPager className="flex-1 min-h-0 sm:p-4 overflow-hidden" contentClassName="p-2 space-y-3">
-        {/* Horizontal Selectable Carousel */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar select-none">
+      {/* Horizontal Selectable Carousel (Pinned at top for easy switching) */}
+      <div className="shrink-0 bg-[#FFFDF9] border-b border-[#E8DCCB] px-2 py-1.5 shadow-2xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar select-none">
           {filteredShlokas.map((s, idx) => (
             <button
               key={s.id || idx}
@@ -303,7 +256,7 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
                   setIsSpeaking(false);
                 }
               }}
-              className={`shrink-0 px-3 py-2 rounded-xl border text-left transition flex flex-col justify-between max-w-[180px] cursor-pointer ${
+              className={`shrink-0 px-2.5 py-1.5 rounded-xl border text-left transition flex flex-col justify-between max-w-[170px] cursor-pointer ${
                 selectedShlokaIndex === idx
                   ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white border-amber-800 shadow-sm font-black'
                   : 'bg-[#FFFDF9] text-[#5C3A21] border-[#E2D2BE] hover:bg-[#FFEEC9]'
@@ -316,7 +269,14 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
             </button>
           ))}
         </div>
+      </div>
 
+      {/* Main Content Body */}
+      <ZeroScrollPager
+        className="flex-1 min-h-0 sm:p-4 overflow-hidden"
+        contentClassName="p-2 space-y-3"
+        resetKey={`${currentShloka?.id}-${fontSize}`}
+      >
         {currentShloka ? (
           <div className="space-y-3">
             {/* Active Shloka Card */}
@@ -537,6 +497,64 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Slide-out Table of Contents / Index Drawer Overlay */}
+      {isTocOpen && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-200"
+          onClick={() => setIsTocOpen(false)}
+        >
+          <aside
+            className="w-4/5 max-w-xs h-full bg-[#FAF2E4] border-r-2 border-amber-600 shadow-2xl flex flex-col overflow-hidden min-h-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="shrink-0 p-3 flex items-center justify-between pb-2 border-b border-[#E2D2BE] bg-[#FFF8EB]">
+              <div className="flex items-center gap-1.5">
+                <BookOpen className="w-4 h-4 text-[#8C4A00]" />
+                <h3 className="font-granth font-black text-sm text-[#462B17]">
+                  गीता श्लोक अनुक्रमणिका ({filteredShlokas.length})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTocOpen(false)}
+                className="p-1 rounded-lg bg-[#E2D2BE] text-[#462B17] hover:bg-[#D5C2AB] cursor-pointer"
+                aria-label="अनुक्रमणिका बंद करें"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto p-2.5 space-y-1 overscroll-contain">
+              {filteredShlokas.map((s, idx) => (
+                <button
+                  key={s.id || idx}
+                  type="button"
+                  onClick={() => {
+                    setSelectedShlokaIndex(idx);
+                    setIsTocOpen(false);
+                    if (isSpeaking) {
+                      umaVoice.stop();
+                      setIsSpeaking(false);
+                    }
+                  }}
+                  className={`w-full text-left px-2.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
+                    selectedShlokaIndex === idx
+                      ? 'bg-[#5C3A21] text-[#FFF6E5]'
+                      : 'bg-white/80 text-[#3E2714] hover:bg-[#FFEEC9]'
+                  }`}
+                >
+                  <div className="truncate pr-1">
+                    <span className="text-xs font-black">अध्याय {s.chapter}, श्लोक {s.verse}</span>
+                  </div>
+                  <span className="text-[9px] opacity-75 shrink-0">गीतोपदेश</span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        </div>
+      )}
+
       <ShlokaPosterModal
         isOpen={posterData !== null}
         onClose={() => setPosterData(null)}

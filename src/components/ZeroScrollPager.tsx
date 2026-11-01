@@ -406,7 +406,7 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
   const atEnd = page >= pageCount - 1;
 
   return (
-    <div className={`zsp-frame flex flex-col min-h-0 min-w-0 overflow-hidden ${className}`} data-zsp-chrome="1">
+    <div className={`zsp-frame isolate flex flex-col min-h-0 min-w-0 overflow-hidden ${className}`} data-zsp-chrome="1">
       <div
         ref={stageRef}
         className="relative flex-1 min-h-0 w-full overflow-hidden"
