@@ -40,118 +40,125 @@ export function setStoredLocation(loc: SavedLocation): void {
   } catch {}
 }
 
+let _memoryCachedRawProfiles: string | null = null;
+let _memoryCachedParsedProfiles: KundaliData[] = [];
+
+export function invalidateProfilesCache(): void {
+  _memoryCachedRawProfiles = null;
+  _memoryCachedParsedProfiles = [];
+}
+
 export function getSavedKundaliProfiles(): KundaliData[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PROFILES);
-    if (raw) {
-      const arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return [];
-      let needsResave = false;
-
-      const profiles: KundaliData[] = arr
-        .filter((p: any) => {
-          if (!p || typeof p.name !== 'string') return false;
-          return p.name.trim().length > 0;
-        })
-        .map((p: any) => {
-          try {
-            const { y, m, d } = extractCalendarYMD(p.birthDate);
-            const safeDate = new Date(y, m, d, 12, 0, 0);
-            const storedLoc = getStoredLocation();
-            const placeName =
-              typeof p.birthPlace === 'string' && p.birthPlace.trim()
-                ? p.birthPlace.trim()
-                : storedLoc.name;
-
-            let timeToUse =
-              typeof p.birthTime === 'string' && p.birthTime.trim() ? p.birthTime.trim() : '12:00';
-
-            let fresh = calculateKundali(
-              p.name.trim(),
-              safeDate,
-              timeToUse,
-              placeName,
-              typeof p.latitude === 'number' && !Number.isNaN(p.latitude) ? p.latitude : storedLoc.latitude,
-              typeof p.longitude === 'number' && !Number.isNaN(p.longitude) ? p.longitude : storedLoc.longitude,
-              typeof p.timezoneHours === 'number' && !Number.isNaN(p.timezoneHours)
-                ? p.timezoneHours
-                : storedLoc.timezoneHours ?? 5.5
-            );
-
-            // If cached profile had Moon degree ~6.5° ahead (12h AM/PM mismatch), auto-correct AM -> PM
-            const savedMoon = Array.isArray(p.planets)
-              ? p.planets.find((pl: any) => pl && pl.planet === 'चंद्र')
-              : null;
-            const freshMoon = fresh.planets.find((pl) => pl.planet === 'चंद्र');
-            if (
-              savedMoon &&
-              typeof savedMoon.degree === 'number' &&
-              freshMoon &&
-              Math.abs(savedMoon.degree - freshMoon.degree) > 2.0
-            ) {
-              const norm24 = toTimeInput24h(timeToUse);
-              const [hh, mm] = norm24.split(':').map(Number);
-              if (!Number.isNaN(hh) && hh < 12) {
-                const pmTime = `${String(hh + 12).padStart(2, '0')}:${String(mm || 0).padStart(2, '0')}`;
-                const pmCheck = calculateKundali(
-                  p.name.trim(),
-                  safeDate,
-                  pmTime,
-                  placeName,
-                  fresh.latitude,
-                  fresh.longitude,
-                  fresh.timezoneHours
-                );
-                const pmMoon = pmCheck.planets.find((pl) => pl.planet === 'चंद्र');
-                if (
-                  pmMoon &&
-                  Math.abs(savedMoon.degree - pmMoon.degree) < Math.abs(savedMoon.degree - freshMoon.degree)
-                ) {
-                  fresh = pmCheck;
-                  needsResave = true;
-                }
-              }
-            }
-
-            if (
-              p.lagnaRashiNumber !== fresh.lagnaRashiNumber ||
-              Math.abs((p.lagnaDegree || 0) - fresh.lagnaDegree) > 0.1
-            ) {
-              needsResave = true;
-            }
-            return fresh;
-          } catch {
-            return {
-              ...p,
-              birthDate: new Date(p.birthDate),
-              calculatedAt: new Date(p.calculatedAt || Date.now()),
-              dashaPeriods: (p.dashaPeriods || []).map((d: any) => ({
-                ...d,
-                startDate: new Date(d.startDate),
-                endDate: new Date(d.endDate),
-              })),
-              antarPeriods: (p.antarPeriods || []).map((a: any) => ({
-                ...a,
-                startDate: new Date(a.startDate),
-                endDate: new Date(a.endDate),
-              })),
-              pratyantarPeriods: (p.pratyantarPeriods || []).map((pr: any) => ({
-                ...pr,
-                startDate: new Date(pr.startDate),
-                endDate: new Date(pr.endDate),
-              })),
-            };
-          }
-        });
-
-      if (needsResave && profiles.length > 0) {
-        try {
-          localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles.slice(0, 30)));
-        } catch {}
-      }
-
-      return profiles;
+    if (!raw) {
+      _memoryCachedRawProfiles = null;
+      _memoryCachedParsedProfiles = [];
+      return [];
     }
+
+    if (raw === _memoryCachedRawProfiles && _memoryCachedParsedProfiles.length > 0) {
+      return _memoryCachedParsedProfiles;
+    }
+
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    let needsResave = false;
+
+    const profiles: KundaliData[] = arr
+      .filter((p: any) => {
+        if (!p || typeof p.name !== 'string') return false;
+        return p.name.trim().length > 0;
+      })
+      .map((p: any) => {
+        // FAST-PATH: If profile already has calculated planets and houses, return immediately (<0.01ms)
+        if (Array.isArray(p.planets) && p.planets.length > 0 && p.lagnaRashi) {
+          return {
+            ...p,
+            birthDate: new Date(p.birthDate),
+            calculatedAt: new Date(p.calculatedAt || Date.now()),
+            dashaPeriods: (p.dashaPeriods || []).map((d: any) => ({
+              ...d,
+              startDate: new Date(d.startDate),
+              endDate: new Date(d.endDate),
+            })),
+            antarPeriods: (p.antarPeriods || []).map((a: any) => ({
+              ...a,
+              startDate: new Date(a.startDate),
+              endDate: new Date(a.endDate),
+            })),
+            pratyantarPeriods: (p.pratyantarPeriods || []).map((pr: any) => ({
+              ...pr,
+              startDate: new Date(pr.startDate),
+              endDate: new Date(pr.endDate),
+            })),
+          };
+        }
+
+        // SLOW FALLBACK ONLY for incomplete/corrupted records lacking pre-calculated planets
+        try {
+          const { y, m, d } = extractCalendarYMD(p.birthDate);
+          const safeDate = new Date(y, m, d, 12, 0, 0);
+          const storedLoc = getStoredLocation();
+          const placeName =
+            typeof p.birthPlace === 'string' && p.birthPlace.trim()
+              ? p.birthPlace.trim()
+              : storedLoc.name;
+
+          let timeToUse =
+            typeof p.birthTime === 'string' && p.birthTime.trim() ? p.birthTime.trim() : '12:00';
+
+          const fresh = calculateKundali(
+            p.name.trim(),
+            safeDate,
+            timeToUse,
+            placeName,
+            typeof p.latitude === 'number' && !Number.isNaN(p.latitude) ? p.latitude : storedLoc.latitude,
+            typeof p.longitude === 'number' && !Number.isNaN(p.longitude) ? p.longitude : storedLoc.longitude,
+            typeof p.timezoneHours === 'number' && !Number.isNaN(p.timezoneHours)
+              ? p.timezoneHours
+              : storedLoc.timezoneHours ?? 5.5
+          );
+
+          needsResave = true;
+          return fresh;
+        } catch {
+          return {
+            ...p,
+            birthDate: new Date(p.birthDate),
+            calculatedAt: new Date(p.calculatedAt || Date.now()),
+            dashaPeriods: (p.dashaPeriods || []).map((d: any) => ({
+              ...d,
+              startDate: new Date(d.startDate),
+              endDate: new Date(d.endDate),
+            })),
+            antarPeriods: (p.antarPeriods || []).map((a: any) => ({
+              ...a,
+              startDate: new Date(a.startDate),
+              endDate: new Date(a.endDate),
+            })),
+            pratyantarPeriods: (p.pratyantarPeriods || []).map((pr: any) => ({
+              ...pr,
+              startDate: new Date(pr.startDate),
+              endDate: new Date(pr.endDate),
+            })),
+          };
+        }
+      });
+
+    if (needsResave && profiles.length > 0) {
+      try {
+        const serialized = JSON.stringify(profiles.slice(0, 50));
+        localStorage.setItem(STORAGE_KEY_PROFILES, serialized);
+        _memoryCachedRawProfiles = serialized;
+        _memoryCachedParsedProfiles = profiles;
+        return profiles;
+      } catch {}
+    }
+
+    _memoryCachedRawProfiles = raw;
+    _memoryCachedParsedProfiles = profiles;
+    return profiles;
   } catch {}
   return [];
 }
@@ -197,6 +204,7 @@ export async function syncKundaliProfilesWithNativeStorage(): Promise<KundaliDat
 
     const merged = Array.from(profileMap.values()).slice(0, 50);
     if (merged.length > 0) {
+      invalidateProfilesCache();
       localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
       void persistProfilesToNative(merged);
     }
@@ -209,6 +217,7 @@ export async function syncKundaliProfilesWithNativeStorage(): Promise<KundaliDat
 
 export function clearAllSavedKundaliProfiles(): void {
   try {
+    invalidateProfilesCache();
     localStorage.removeItem(STORAGE_KEY_PROFILES);
     void Preferences.remove({ key: STORAGE_KEY_PROFILES });
   } catch {}
@@ -229,6 +238,7 @@ export function saveKundaliProfile(profile: KundaliData): void {
       birthTime: normProfileTime,
     });
     const updated = existing.slice(0, 50);
+    invalidateProfilesCache();
     localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(updated));
     void persistProfilesToNative(updated);
   } catch {}
@@ -244,6 +254,7 @@ export function deleteSavedKundaliProfile(name: string, birthTime: string): void
           (toTimeInput24h(p.birthTime) || p.birthTime) === normTargetTime
         )
     );
+    invalidateProfilesCache();
     localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(existing));
     void persistProfilesToNative(existing);
   } catch {}
@@ -303,6 +314,7 @@ export function importKundaliProfilesJson(rawJson: string): { success: boolean; 
     }
 
     const merged = Array.from(profileMap.values()).slice(0, 50);
+    invalidateProfilesCache();
     localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
     void persistProfilesToNative(merged);
 

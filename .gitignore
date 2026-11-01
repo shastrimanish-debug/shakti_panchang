@@ -6,6 +6,8 @@ build
 build/
 .build-outputs
 .build-outputs/
+.aistudio
+.aistudio/
 .output
 .output/
 .env
