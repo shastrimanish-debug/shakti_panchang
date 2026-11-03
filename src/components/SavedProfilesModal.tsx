@@ -8,7 +8,7 @@ import {
   exportKundaliProfilesJson,
   importKundaliProfilesJson,
 } from '../services/storage';
-import { BookMarked, X, Trash2, Download, Upload, CheckCircle2, Copy, FileText } from 'lucide-react';
+import { BookMarked, X, Trash2, Download, Upload, CheckCircle2, Copy, FileText, Cloud } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { trRashi, trVedic } from '../i18n/vedicTranslate';
 import { ZeroScrollPager } from './ZeroScrollPager';
@@ -52,17 +52,17 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
     }, 4500);
   };
 
-  const handleDelete = (e: React.MouseEvent, profile: KundaliData) => {
+  const handleDelete = async (e: React.MouseEvent, profile: KundaliData) => {
     e.stopPropagation();
-    deleteSavedKundaliProfile(profile.name, profile.birthTime);
-    loadList();
+    const updated = await deleteSavedKundaliProfile(profile.name, profile.birthTime);
+    setProfiles(updated);
     showToast(`"${profile.name}" की कुंडली सूची से हटा दी गई।`);
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (window.confirm('क्या आप सभी कुंडली साफ़ करके एकदम नई शुरुआत करना चाहते हैं?')) {
-      clearAllSavedKundaliProfiles();
-      loadList();
+      await clearAllSavedKundaliProfiles();
+      setProfiles([]);
       showToast('सभी सहेजी गई कुण्डलियाँ साफ़ कर दी गईं।');
     }
   };
@@ -199,7 +199,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
           </div>
         </div>
 
-        {/* Permanent Backup & Restore Action Toolbar */}
+        {/* Permanent Dual Backup & Restore Action Toolbar */}
         <div
           style={{
             backgroundColor: 'var(--bx-cream)',
@@ -207,6 +207,28 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
           }}
           className="px-3 py-2 border-b space-y-1.5 text-xs"
         >
+          {/* Cloud + Local Sync Status Banner */}
+          <div className="bg-emerald-50 text-emerald-900 border border-emerald-300/80 rounded-lg p-2 flex items-center justify-between gap-2 text-[11px] shadow-2xs">
+            <div className="flex items-center gap-1.5 font-bold min-w-0">
+              <Cloud className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div className="min-w-0">
+                <span className="block truncate text-emerald-950 font-bold">☁️ क्लाउड + लोकल बैकअप सक्रिय</span>
+                <span className="text-[9px] text-emerald-700 font-normal block leading-tight">
+                  फ़ोन बदलने या चार्जिंग पर Google Cloud स्वतः रीस्टोर करेगा
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleExportBackup}
+              disabled={profiles.length === 0}
+              className="shrink-0 text-[10px] bg-emerald-700 hover:bg-emerald-800 text-white px-2 py-1 rounded font-bold transition shadow-2xs cursor-pointer disabled:opacity-40"
+              title="Google Drive / Cloud में अभी बैकअप सहेजें"
+            >
+              ड्राइव में बैकअप
+            </button>
+          </div>
+
           {/* Main Action Buttons */}
           <div className="flex items-center justify-between gap-2">
             <button
@@ -222,7 +244,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
               title="फोन मेमोरी (Downloads) या ड्राइव में बैकअप फ़ाइल सुरक्षित करें"
             >
               <Download className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
-              <span>बैकअप फ़ाइल (Export)</span>
+              <span>लोकल फ़ाइल (Export)</span>
             </button>
 
             <button

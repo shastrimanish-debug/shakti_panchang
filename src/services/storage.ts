@@ -163,6 +163,33 @@ export function getSavedKundaliProfiles(): KundaliData[] {
   return [];
 }
 
+const STORAGE_KEY_DELETED_TOMBSTONES = 'shakti_deleted_kundali_tombstones_v1';
+const STORAGE_KEY_ALL_PROFILES_CLEARED = 'shakti_all_profiles_cleared_v1';
+
+function getDeletedTombstones(): Set<string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_DELETED_TOMBSTONES);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {}
+  return new Set();
+}
+
+function addDeletedTombstone(key: string): void {
+  try {
+    const tombstones = getDeletedTombstones();
+    tombstones.add(key);
+    const arr = Array.from(tombstones).slice(-200);
+    localStorage.setItem(STORAGE_KEY_DELETED_TOMBSTONES, JSON.stringify(arr));
+    void Preferences.set({
+      key: STORAGE_KEY_DELETED_TOMBSTONES,
+      value: JSON.stringify(arr),
+    });
+  } catch {}
+}
+
 export async function persistProfilesToNative(profiles: KundaliData[]): Promise<void> {
   try {
     await Preferences.set({
@@ -174,6 +201,35 @@ export async function persistProfilesToNative(profiles: KundaliData[]): Promise<
 
 export async function syncKundaliProfilesWithNativeStorage(): Promise<KundaliData[]> {
   try {
+    // Check if user previously cleared all profiles
+    const localCleared = localStorage.getItem(STORAGE_KEY_ALL_PROFILES_CLEARED) === 'true';
+    let nativeCleared = false;
+    try {
+      const { value } = await Preferences.get({ key: STORAGE_KEY_ALL_PROFILES_CLEARED });
+      nativeCleared = value === 'true';
+    } catch {}
+
+    const localList = getSavedKundaliProfiles();
+
+    if ((localCleared || nativeCleared) && localList.length === 0) {
+      try {
+        await Preferences.remove({ key: STORAGE_KEY_PROFILES });
+      } catch {}
+      return [];
+    }
+
+    // Load tombstones to prevent resurrecting deleted profiles
+    const tombstones = getDeletedTombstones();
+    try {
+      const { value: nativeTombstonesRaw } = await Preferences.get({ key: STORAGE_KEY_DELETED_TOMBSTONES });
+      if (nativeTombstonesRaw) {
+        const parsed = JSON.parse(nativeTombstonesRaw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((k: string) => tombstones.add(k));
+        }
+      }
+    } catch {}
+
     const { value } = await Preferences.get({ key: STORAGE_KEY_PROFILES });
     let nativeList: any[] = [];
     if (value) {
@@ -183,31 +239,34 @@ export async function syncKundaliProfilesWithNativeStorage(): Promise<KundaliDat
       } catch {}
     }
 
-    const localList = getSavedKundaliProfiles();
+    const isTombstoned = (p: any): boolean => {
+      if (!p || typeof p.name !== 'string') return true;
+      const cleanName = p.name.trim().toLowerCase();
+      const normTime = toTimeInput24h(p.birthTime) || p.birthTime || '12:00';
+      return tombstones.has(`${cleanName}_${normTime}`) || tombstones.has(cleanName);
+    };
 
-    // Map by name + time to ensure no loss
+    // Map by name + time to ensure no loss of genuinely active profiles
     const profileMap = new Map<string, any>();
 
     for (const p of nativeList) {
-      if (p && typeof p.name === 'string' && p.name.trim()) {
+      if (p && typeof p.name === 'string' && p.name.trim() && !isTombstoned(p)) {
         const key = `${p.name.trim().toLowerCase()}_${toTimeInput24h(p.birthTime) || p.birthTime || '12:00'}`;
         profileMap.set(key, p);
       }
     }
 
     for (const p of localList) {
-      if (p && typeof p.name === 'string' && p.name.trim()) {
+      if (p && typeof p.name === 'string' && p.name.trim() && !isTombstoned(p)) {
         const key = `${p.name.trim().toLowerCase()}_${toTimeInput24h(p.birthTime) || p.birthTime || '12:00'}`;
         profileMap.set(key, p);
       }
     }
 
     const merged = Array.from(profileMap.values()).slice(0, 50);
-    if (merged.length > 0) {
-      invalidateProfilesCache();
-      localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
-      void persistProfilesToNative(merged);
-    }
+    invalidateProfilesCache();
+    localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
+    void persistProfilesToNative(merged);
 
     return getSavedKundaliProfiles();
   } catch {
@@ -215,21 +274,46 @@ export async function syncKundaliProfilesWithNativeStorage(): Promise<KundaliDat
   }
 }
 
-export function clearAllSavedKundaliProfiles(): void {
+export async function clearAllSavedKundaliProfiles(): Promise<void> {
   try {
+    const current = getSavedKundaliProfiles();
+    for (const p of current) {
+      if (p?.name) {
+        const cleanName = p.name.trim().toLowerCase();
+        const normTime = toTimeInput24h(p.birthTime) || p.birthTime || '12:00';
+        addDeletedTombstone(`${cleanName}_${normTime}`);
+        addDeletedTombstone(cleanName);
+      }
+    }
     invalidateProfilesCache();
     localStorage.removeItem(STORAGE_KEY_PROFILES);
-    void Preferences.remove({ key: STORAGE_KEY_PROFILES });
+    localStorage.setItem(STORAGE_KEY_ALL_PROFILES_CLEARED, 'true');
+    try {
+      await Preferences.remove({ key: STORAGE_KEY_PROFILES });
+      await Preferences.set({ key: STORAGE_KEY_ALL_PROFILES_CLEARED, value: 'true' });
+    } catch {}
   } catch {}
 }
 
 export function saveKundaliProfile(profile: KundaliData): void {
   try {
     const normProfileTime = toTimeInput24h(profile.birthTime) || profile.birthTime;
+    const cleanName = profile.name.trim().toLowerCase();
+
+    // Revoke any tombstone if user is re-adding this profile
+    const tombstones = getDeletedTombstones();
+    tombstones.delete(cleanName);
+    tombstones.delete(`${cleanName}_${normProfileTime}`);
+    try {
+      localStorage.setItem(STORAGE_KEY_DELETED_TOMBSTONES, JSON.stringify(Array.from(tombstones)));
+      localStorage.removeItem(STORAGE_KEY_ALL_PROFILES_CLEARED);
+      void Preferences.remove({ key: STORAGE_KEY_ALL_PROFILES_CLEARED });
+    } catch {}
+
     const existing = getSavedKundaliProfiles().filter(
       (p) =>
         !(
-          p.name.trim().toLowerCase() === profile.name.trim().toLowerCase() &&
+          p.name.trim().toLowerCase() === cleanName &&
           (toTimeInput24h(p.birthTime) || p.birthTime) === normProfileTime
         )
     );
@@ -244,20 +328,37 @@ export function saveKundaliProfile(profile: KundaliData): void {
   } catch {}
 }
 
-export function deleteSavedKundaliProfile(name: string, birthTime: string): void {
+export async function deleteSavedKundaliProfile(name: string, birthTime?: string): Promise<KundaliData[]> {
   try {
-    const normTargetTime = toTimeInput24h(birthTime) || birthTime;
-    const existing = getSavedKundaliProfiles().filter(
-      (p) =>
-        !(
-          p.name.trim().toLowerCase() === name.trim().toLowerCase() &&
-          (toTimeInput24h(p.birthTime) || p.birthTime) === normTargetTime
-        )
-    );
+    const cleanName = name.trim().toLowerCase();
+    const normTargetTime = birthTime ? (toTimeInput24h(birthTime) || birthTime) : '';
+
+    // Register tombstone
+    if (normTargetTime) {
+      addDeletedTombstone(`${cleanName}_${normTargetTime}`);
+    }
+    addDeletedTombstone(cleanName);
+
+    const existing = getSavedKundaliProfiles().filter((p) => {
+      const pName = (p.name || '').trim().toLowerCase();
+      const pTime = toTimeInput24h(p.birthTime) || p.birthTime || '';
+      if (pName !== cleanName) return true;
+      if (!normTargetTime) return false;
+      return pTime !== normTargetTime && p.birthTime !== birthTime;
+    });
+
     invalidateProfilesCache();
     localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(existing));
-    void persistProfilesToNative(existing);
-  } catch {}
+    try {
+      await Preferences.set({
+        key: STORAGE_KEY_PROFILES,
+        value: JSON.stringify(existing.slice(0, 50)),
+      });
+    } catch {}
+    return existing;
+  } catch {
+    return getSavedKundaliProfiles();
+  }
 }
 
 export function exportKundaliProfilesJson(): string {
