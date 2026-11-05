@@ -211,10 +211,12 @@ export async function syncKundaliProfilesWithNativeStorage(): Promise<KundaliDat
 
     const localList = getSavedKundaliProfiles();
 
-    if ((localCleared || nativeCleared) && localList.length === 0) {
+    if (localCleared || nativeCleared) {
       try {
+        localStorage.removeItem(STORAGE_KEY_PROFILES);
         await Preferences.remove({ key: STORAGE_KEY_PROFILES });
       } catch {}
+      invalidateProfilesCache();
       return [];
     }
 
@@ -417,6 +419,10 @@ export function importKundaliProfilesJson(rawJson: string): { success: boolean; 
     const merged = Array.from(profileMap.values()).slice(0, 50);
     invalidateProfilesCache();
     localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
+    localStorage.removeItem(STORAGE_KEY_ALL_PROFILES_CLEARED);
+    try {
+      void Preferences.remove({ key: STORAGE_KEY_ALL_PROFILES_CLEARED });
+    } catch {}
     void persistProfilesToNative(merged);
 
     return { success: true, count: addedCount || candidateList.length };

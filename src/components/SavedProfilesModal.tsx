@@ -8,7 +8,25 @@ import {
   exportKundaliProfilesJson,
   importKundaliProfilesJson,
 } from '../services/storage';
-import { BookMarked, X, Trash2, Download, Upload, CheckCircle2, Copy, FileText, Cloud } from 'lucide-react';
+import {
+  saveProfilesToCloud,
+  restoreProfilesFromCloud,
+  getStoredCloudBackupKey,
+} from '../services/cloudBackup';
+import {
+  BookMarked,
+  X,
+  Trash2,
+  Download,
+  Upload,
+  CheckCircle2,
+  Copy,
+  FileText,
+  Cloud,
+  Smartphone,
+  RefreshCw,
+  Share2,
+} from 'lucide-react';
 import { useTranslation, useLanguage } from '../i18n';
 import { trRashi, trVedic } from '../i18n/vedicTranslate';
 import { ZeroScrollPager } from './ZeroScrollPager';
@@ -25,12 +43,15 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
   onClose,
   onSelectProfile,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { language } = useLanguage();
   const [profiles, setProfiles] = useState<KundaliData[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showPasteModal, setShowPasteModal] = useState<boolean>(false);
   const [pastedJsonText, setPastedJsonText] = useState<string>('');
+  const [activeBackupTab, setActiveBackupTab] = useState<'cloud' | 'local'>('cloud');
+  const [cloudPhone, setCloudPhone] = useState<string>(() => getStoredCloudBackupKey());
+  const [isCloudLoading, setIsCloudLoading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadList = () => {
@@ -43,6 +64,10 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
       void syncKundaliProfilesWithNativeStorage().then((synced) => {
         setProfiles(synced);
       });
+      const storedKey = getStoredCloudBackupKey();
+      if (storedKey && !cloudPhone) {
+        setCloudPhone(storedKey);
+      }
     }
   }, [isOpen]);
 
@@ -57,6 +82,11 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
     e.stopPropagation();
     const updated = await deleteSavedKundaliProfile(profile.name, profile.birthTime);
     setProfiles(updated);
+    window.dispatchEvent(
+      new CustomEvent('shakti-profile-deleted', {
+        detail: { name: profile.name, birthTime: profile.birthTime },
+      })
+    );
     showToast(`"${profile.name}" की कुंडली सूची से हटा दी गई।`);
   };
 
@@ -64,7 +94,62 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
     if (window.confirm('क्या आप सभी कुंडली साफ़ करके एकदम नई शुरुआत करना चाहते हैं?')) {
       await clearAllSavedKundaliProfiles();
       setProfiles([]);
+      window.dispatchEvent(new CustomEvent('shakti-profiles-cleared'));
       showToast('सभी सहेजी गई कुण्डलियाँ साफ़ कर दी गईं।');
+    }
+  };
+
+  const handleCloudBackup = async () => {
+    const cleanKey = cloudPhone.trim();
+    if (!cleanKey || cleanKey.length < 4) {
+      showToast('कृपया अपना 10-अंकों का मोबाइल नंबर या बैकअप कोड दर्ज करें।');
+      return;
+    }
+    if (profiles.length === 0) {
+      showToast('बैकअप लेने के लिए कम से कम 1 कुंडली होनी चाहिए।');
+      return;
+    }
+
+    setIsCloudLoading(true);
+    try {
+      const res = await saveProfilesToCloud(cleanKey, profiles);
+      if (res.success) {
+        showToast(`✅ ${res.message} (नंबर: ${cleanKey})`);
+      } else {
+        showToast(res.message);
+      }
+    } catch {
+      showToast('क्लाउड बैकअप के दौरान त्रुटि आई। कृपया इंटरनेट कनेक्शन जांचें।');
+    } finally {
+      setIsCloudLoading(false);
+    }
+  };
+
+  const handleCloudRestore = async () => {
+    const cleanKey = cloudPhone.trim();
+    if (!cleanKey || cleanKey.length < 4) {
+      showToast('कृपया अपना 10-अंकों का मोबाइल नंबर या बैकअप कोड दर्ज करें।');
+      return;
+    }
+
+    setIsCloudLoading(true);
+    try {
+      const res = await restoreProfilesFromCloud(cleanKey);
+      if (res.success && res.profiles.length > 0) {
+        const importRes = importKundaliProfilesJson(JSON.stringify(res.profiles));
+        if (importRes.success) {
+          loadList();
+          showToast(`✅ सफलता! ${importRes.count} कुण्डलियाँ क्लाउड से रीस्टोर हो गईं।`);
+        } else {
+          showToast('क्लाउड डेटा प्रारूप अमान्य है।');
+        }
+      } else {
+        showToast(res.message || 'इस नंबर पर कोई क्लाउड बैकअप नहीं मिला।');
+      }
+    } catch {
+      showToast('क्लाउड से रीस्टोर करने में त्रुटि आई।');
+    } finally {
+      setIsCloudLoading(false);
     }
   };
 
@@ -158,7 +243,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
           backgroundColor: 'var(--bx-panel)',
           borderColor: 'var(--bx-line)',
         }}
-        className="border-2 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col h-[85dvh] max-h-[100dvh] relative"
+        className="border-2 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col h-[88dvh] max-h-[100dvh] relative"
       >
         {/* Header */}
         <div
@@ -201,99 +286,178 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
           </div>
         </div>
 
-        {/* Permanent Dual Backup & Restore Action Toolbar */}
+        {/* Dual Mode Switcher: Cloud Backup vs Local File */}
         <div
           style={{
             backgroundColor: 'var(--bx-cream)',
             borderColor: 'var(--bx-line)',
           }}
-          className="px-3 py-2 border-b space-y-1.5 text-xs"
+          className="px-3 pt-2.5 pb-2 border-b space-y-2 text-xs"
         >
-          {/* Cloud + Local Sync Status Banner */}
-          <div className="bg-emerald-50 text-emerald-900 border border-emerald-300/80 rounded-lg p-2 flex items-center justify-between gap-2 text-[11px] shadow-2xs">
-            <div className="flex items-center gap-1.5 font-bold min-w-0">
-              <Cloud className="w-4 h-4 text-emerald-600 shrink-0" />
-              <div className="min-w-0">
-                <span className="block truncate text-emerald-950 font-bold">☁️ क्लाउड + लोकल बैकअप सक्रिय</span>
-                <span className="text-[9px] text-emerald-700 font-normal block leading-tight">
-                  फ़ोन बदलने या चार्जिंग पर Google Cloud स्वतः रीस्टोर करेगा
-                </span>
+          <div className="flex items-center rounded-lg bg-stone-200/70 p-0.5 border border-stone-300">
+            <button
+              type="button"
+              onClick={() => setActiveBackupTab('cloud')}
+              className={`flex-1 py-1.5 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                activeBackupTab === 'cloud'
+                  ? 'bg-amber-700 text-white shadow-xs'
+                  : 'text-stone-700 hover:text-stone-900'
+              }`}
+            >
+              <Cloud className="w-3.5 h-3.5" />
+              <span>☁️ सीधा क्लाउड बैकअप</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveBackupTab('local')}
+              className={`flex-1 py-1.5 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                activeBackupTab === 'local'
+                  ? 'bg-amber-700 text-white shadow-xs'
+                  : 'text-stone-700 hover:text-stone-900'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>📁 लोकल फ़ाइल / कॉपी</span>
+            </button>
+          </div>
+
+          {/* TAB 1: CLOUD BACKUP & RESTORE */}
+          {activeBackupTab === 'cloud' && (
+            <div className="space-y-2 animate-in fade-in duration-150">
+              <div className="bg-amber-50/90 border border-amber-300/80 rounded-xl p-2.5 space-y-2 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-amber-950 flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5 text-amber-700" />
+                    मोबाइल नंबर (नया फोन बदलने पर भी सुरक्षित):
+                  </span>
+                  <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-300">
+                    क्लाउड सुरक्षित
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="tel"
+                    value={cloudPhone}
+                    onChange={(e) => setCloudPhone(e.target.value)}
+                    placeholder="उदा. 9820012345 (10-अंकों का नंबर)"
+                    className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-amber-600 placeholder:text-stone-400"
+                  />
+                </div>
+
+                {/* Cloud Action Buttons */}
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={handleCloudBackup}
+                    disabled={isCloudLoading || profiles.length === 0}
+                    className="py-1.5 px-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer disabled:opacity-40 text-xs"
+                    title="सभी कुण्डलियों को क्लाउड में सुरक्षित रखें"
+                  >
+                    {isCloudLoading ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Cloud className="w-3.5 h-3.5" />
+                    )}
+                    <span>क्लाउड में सहेजें</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCloudRestore}
+                    disabled={isCloudLoading}
+                    className="py-1.5 px-2 rounded-lg bg-amber-800 hover:bg-amber-900 text-white font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer disabled:opacity-40 text-xs"
+                    title="इस नंबर से क्लाउड की सभी कुण्डलियाँ पुनः प्राप्त करें"
+                  >
+                    {isCloudLoading ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    )}
+                    <span>क्लाउड से रीस्टोर</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Google Drive / Share */}
+              <button
+                type="button"
+                onClick={handleExportBackup}
+                disabled={profiles.length === 0}
+                className="w-full py-1.5 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer text-xs disabled:opacity-40"
+              >
+                <Share2 className="w-3.5 h-3.5 text-amber-700" />
+                <span>Google Drive / WhatsApp पर बैकअप फ़ाइल भेजें</span>
+              </button>
+            </div>
+          )}
+
+          {/* TAB 2: LOCAL BACKUP & RESTORE */}
+          {activeBackupTab === 'local' && (
+            <div className="space-y-2 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportBackup}
+                  disabled={profiles.length === 0}
+                  style={{
+                    backgroundColor: 'var(--bx-panel)',
+                    borderColor: 'var(--bx-line)',
+                    color: 'var(--bx-header)',
+                  }}
+                  className="flex-1 py-1.5 px-2 rounded-lg border font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer hover:opacity-90 disabled:opacity-40"
+                  title="फोन मेमोरी (Downloads) में बैकअप फ़ाइल सुरक्षित करें"
+                >
+                  <Download className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
+                  <span>डाउनलोड फ़ाइल</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleImportClick}
+                  style={{
+                    backgroundColor: 'var(--bx-panel)',
+                    borderColor: 'var(--bx-line)',
+                    color: 'var(--bx-header)',
+                  }}
+                  className="flex-1 py-1.5 px-2 rounded-lg border font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer hover:opacity-90"
+                  title="फ़ाइल मैनेजर से Kundali_Backup फ़ाइल चुनें"
+                >
+                  <Upload className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
+                  <span>फ़ाइल से रीस्टोर</span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 text-[11px]">
+                <button
+                  type="button"
+                  onClick={handleCopyBackup}
+                  disabled={profiles.length === 0}
+                  className="flex-1 py-1 px-2 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 border border-amber-500/30 font-medium flex items-center justify-center gap-1 cursor-pointer transition disabled:opacity-40"
+                  title="पूरा बैकअप टेक्स्ट क्लिपबोर्ड में कॉपी करें"
+                >
+                  <Copy className="w-3 h-3 text-amber-700" />
+                  <span>डेटा कॉपी करें</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPasteModal(true)}
+                  className="flex-1 py-1 px-2 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 border border-amber-500/30 font-medium flex items-center justify-center gap-1 cursor-pointer transition"
+                  title="कॉपी किया गया बैकअप टेक्स्ट पेस्ट करके लोड करें"
+                >
+                  <FileText className="w-3 h-3 text-amber-700" />
+                  <span>टेक्स्ट पेस्ट रीस्टोर</span>
+                </button>
+              </div>
+
+              <div className="text-[10px] text-stone-600 bg-amber-50/80 px-2 py-1 rounded border border-amber-200/50 flex items-center justify-between">
+                <span>🔍 सर्च करें: <strong className="text-amber-900 font-mono">Kundali_Backup</strong></span>
+                <span className="text-stone-500 font-mono text-[9px]">{currentBackupFileName}</span>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleExportBackup}
-              disabled={profiles.length === 0}
-              className="shrink-0 text-[10px] bg-emerald-700 hover:bg-emerald-800 text-white px-2 py-1 rounded font-bold transition shadow-2xs cursor-pointer disabled:opacity-40"
-              title="Google Drive / Cloud में अभी बैकअप सहेजें"
-            >
-              ड्राइव में बैकअप
-            </button>
-          </div>
-
-          {/* Main Action Buttons */}
-          <div className="flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={handleExportBackup}
-              disabled={profiles.length === 0}
-              style={{
-                backgroundColor: 'var(--bx-panel)',
-                borderColor: 'var(--bx-line)',
-                color: 'var(--bx-header)',
-              }}
-              className="flex-1 py-1.5 px-2 rounded-lg border font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer hover:opacity-90 disabled:opacity-40"
-              title="फोन मेमोरी (Downloads) या ड्राइव में बैकअप फ़ाइल सुरक्षित करें"
-            >
-              <Download className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
-              <span>लोकल फ़ाइल (Export)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleImportClick}
-              style={{
-                backgroundColor: 'var(--bx-panel)',
-                borderColor: 'var(--bx-line)',
-                color: 'var(--bx-header)',
-              }}
-              className="flex-1 py-1.5 px-2 rounded-lg border font-bold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer hover:opacity-90"
-              title="फ़ाइल मैनेजर से Kundali_Backup फ़ाइल चुनें"
-            >
-              <Upload className="w-3.5 h-3.5" style={{ color: 'var(--bx-gold)' }} />
-              <span>फ़ाइल से रीस्टोर</span>
-            </button>
-          </div>
-
-          {/* Quick Copy & Paste Alternatives */}
-          <div className="flex items-center justify-between gap-2 text-[11px]">
-            <button
-              type="button"
-              onClick={handleCopyBackup}
-              disabled={profiles.length === 0}
-              className="flex-1 py-1 px-2 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 border border-amber-500/30 font-medium flex items-center justify-center gap-1 cursor-pointer transition disabled:opacity-40"
-              title="पूरा बैकअप टेक्स्ट क्लिपबोर्ड में कॉपी करें"
-            >
-              <Copy className="w-3 h-3 text-amber-700" />
-              <span>डेटा कॉपी करें</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowPasteModal(true)}
-              className="flex-1 py-1 px-2 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 border border-amber-500/30 font-medium flex items-center justify-center gap-1 cursor-pointer transition"
-              title="कॉपी किया गया बैकअप टेक्स्ट पेस्ट करके लोड करें"
-            >
-              <FileText className="w-3 h-3 text-amber-700" />
-              <span>टेक्स्ट पेस्ट रीस्टोर</span>
-            </button>
-          </div>
-
-          {/* Search Helper Notice */}
-          <div className="text-[10px] text-stone-600 bg-amber-50/80 px-2 py-1 rounded border border-amber-200/50 flex items-center justify-between">
-            <span>🔍 सर्च करें: <strong className="text-amber-900 font-mono">Kundali_Backup</strong></span>
-            <span className="text-stone-500 font-mono text-[9px]">{currentBackupFileName}</span>
-          </div>
+          )}
 
           {/* Hidden File Input for Import */}
           <input
@@ -365,7 +529,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
           </div>
         )}
 
-        {/* List */}
+        {/* List of Saved Profiles */}
         <ZeroScrollPager className="flex-1 overflow-hidden min-h-0" contentClassName="p-3 space-y-2">
           {profiles.length > 0 ? (
             profiles.map((p, idx) => (

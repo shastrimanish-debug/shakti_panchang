@@ -259,7 +259,6 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
         Math.abs((activeKundali.lagnaDegree || 0) - freshCheck.lagnaDegree) > 0.1
       ) {
         setActiveKundali(freshCheck);
-        saveKundaliProfile(freshCheck);
       }
     }
   }, [activeKundali]);

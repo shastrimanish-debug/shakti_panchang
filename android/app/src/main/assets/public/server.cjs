@@ -101,6 +101,86 @@ async function startServer() {
       return res.status(500).send("Download error");
     }
   });
+  const CLOUD_BACKUP_DIR = import_path.default.join(process.cwd(), "data");
+  const CLOUD_BACKUP_FILE = import_path.default.join(CLOUD_BACKUP_DIR, "cloud_backups.json");
+  function readCloudBackups() {
+    try {
+      if (!import_fs.default.existsSync(CLOUD_BACKUP_DIR)) {
+        import_fs.default.mkdirSync(CLOUD_BACKUP_DIR, { recursive: true });
+      }
+      if (import_fs.default.existsSync(CLOUD_BACKUP_FILE)) {
+        const raw = import_fs.default.readFileSync(CLOUD_BACKUP_FILE, "utf-8");
+        return JSON.parse(raw) || {};
+      }
+    } catch (e) {
+      console.warn("Failed to read cloud backups file:", e);
+    }
+    return {};
+  }
+  function writeCloudBackups(data) {
+    try {
+      if (!import_fs.default.existsSync(CLOUD_BACKUP_DIR)) {
+        import_fs.default.mkdirSync(CLOUD_BACKUP_DIR, { recursive: true });
+      }
+      import_fs.default.writeFileSync(CLOUD_BACKUP_FILE, JSON.stringify(data, null, 2), "utf-8");
+    } catch (e) {
+      console.warn("Failed to write cloud backups file:", e);
+    }
+  }
+  app.post("/api/cloud-backup/save", (req, res) => {
+    try {
+      const { key, profiles, clientInfo } = req.body;
+      const cleanKey = typeof key === "string" ? key.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") : "";
+      if (!cleanKey || cleanKey.length < 4) {
+        return res.status(400).json({ ok: false, error: "\u0915\u0943\u092A\u092F\u093E \u0915\u092E \u0938\u0947 \u0915\u092E 4 \u0905\u0915\u094D\u0937\u0930\u094B\u0902 \u0915\u093E \u0935\u0948\u0927 \u092E\u094B\u092C\u093E\u0907\u0932 \u0928\u0902\u092C\u0930 \u092F\u093E \u092C\u0948\u0915\u0905\u092A \u0915\u094B\u0921 \u0926\u0930\u094D\u091C \u0915\u0930\u0947\u0902\u0964" });
+      }
+      if (!Array.isArray(profiles)) {
+        return res.status(400).json({ ok: false, error: "\u0905\u092E\u093E\u0928\u094D\u092F \u0915\u0941\u0902\u0921\u0932\u0940 \u0921\u0947\u091F\u093E\u0964" });
+      }
+      const backups = readCloudBackups();
+      backups[cleanKey] = {
+        key: cleanKey,
+        profiles: profiles.slice(0, 100),
+        count: profiles.length,
+        updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        clientInfo: clientInfo || {}
+      };
+      writeCloudBackups(backups);
+      return res.json({
+        ok: true,
+        key: cleanKey,
+        count: profiles.length,
+        updatedAt: backups[cleanKey].updatedAt
+      });
+    } catch (err) {
+      console.error("Error in /api/cloud-backup/save:", err);
+      return res.status(500).json({ ok: false, error: "\u092C\u0948\u0915\u0905\u092A \u0938\u0941\u0930\u0915\u094D\u0937\u093F\u0924 \u0915\u0930\u0928\u0947 \u092E\u0947\u0902 \u0924\u094D\u0930\u0941\u091F\u093F \u0906\u0908\u0964" });
+    }
+  });
+  app.get("/api/cloud-backup/restore/:key", (req, res) => {
+    try {
+      const rawKey = req.params.key;
+      const cleanKey = typeof rawKey === "string" ? rawKey.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") : "";
+      if (!cleanKey) {
+        return res.status(400).json({ ok: false, error: "\u092C\u0948\u0915\u0905\u092A \u0915\u094B\u0921 \u092F\u093E \u092E\u094B\u092C\u093E\u0907\u0932 \u0928\u0902\u092C\u0930 \u0906\u0935\u0936\u094D\u092F\u0915 \u0939\u0948\u0964" });
+      }
+      const backups = readCloudBackups();
+      const record = backups[cleanKey];
+      if (!record || !Array.isArray(record.profiles)) {
+        return res.status(404).json({ ok: false, error: "\u0907\u0938 \u092E\u094B\u092C\u093E\u0907\u0932 \u0928\u0902\u092C\u0930 / \u092C\u0948\u0915\u0905\u092A \u0915\u094B\u0921 \u092A\u0930 \u0915\u094B\u0908 \u0938\u0939\u0947\u091C\u093E \u0939\u0941\u0906 \u092C\u0948\u0915\u0905\u092A \u0928\u0939\u0940\u0902 \u092E\u093F\u0932\u093E\u0964" });
+      }
+      return res.json({
+        ok: true,
+        key: cleanKey,
+        profiles: record.profiles,
+        count: record.count || record.profiles.length,
+        updatedAt: record.updatedAt
+      });
+    } catch (err) {
+      console.error("Error in /api/cloud-backup/restore:", err);
+      return res.status(500).json({ ok: false, error: "\u0915\u094D\u0932\u093E\u0909\u0921 \u0938\u0947 \u0930\u0940\u0938\u094D\u091F\u094B\u0930 \u0915\u0930\u0928\u0947 \u092E\u0947\u0902 \u0924\u094D\u0930\u0941\u091F\u093F \u0906\u0908\u0964" });
+    }
+  });
   app.post("/api/uma/chat", async (req, res) => {
     try {
       const { query, panchangContext, kundaliContext, chatHistory, systemPrompt } = req.body;

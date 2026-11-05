@@ -253,8 +253,33 @@ export function App() {
     void syncKundaliProfilesWithNativeStorage().then((profiles) => {
       if (profiles && profiles.length > 0) {
         setActiveKundali((prev) => prev || profiles[0]);
+      } else {
+        setActiveKundali(null);
       }
     });
+
+    const handleProfileDeleted = (e: any) => {
+      const deletedName = e?.detail?.name?.trim().toLowerCase();
+      const remaining = getSavedKundaliProfiles();
+      setActiveKundali((prev) => {
+        if (!prev) return remaining[0] || null;
+        if (prev.name.trim().toLowerCase() === deletedName) {
+          return remaining[0] || null;
+        }
+        return prev;
+      });
+    };
+
+    const handleProfilesCleared = () => {
+      setActiveKundali(null);
+    };
+
+    window.addEventListener('shakti-profile-deleted', handleProfileDeleted);
+    window.addEventListener('shakti-profiles-cleared', handleProfilesCleared);
+    return () => {
+      window.removeEventListener('shakti-profile-deleted', handleProfileDeleted);
+      window.removeEventListener('shakti-profiles-cleared', handleProfilesCleared);
+    };
   }, []);
 
   // Calculate high-precision Vedic Panchang based on server-synced Date and Geo-coordinates

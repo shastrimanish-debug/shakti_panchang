@@ -94,6 +94,94 @@ async function startServer() {
     }
   });
 
+  // -------------------------------------------------------------
+  // Cloud Backup & Restore for Kundali Profiles
+  // -------------------------------------------------------------
+  const CLOUD_BACKUP_DIR = path.join(process.cwd(), "data");
+  const CLOUD_BACKUP_FILE = path.join(CLOUD_BACKUP_DIR, "cloud_backups.json");
+
+  function readCloudBackups(): Record<string, any> {
+    try {
+      if (!fs.existsSync(CLOUD_BACKUP_DIR)) {
+        fs.mkdirSync(CLOUD_BACKUP_DIR, { recursive: true });
+      }
+      if (fs.existsSync(CLOUD_BACKUP_FILE)) {
+        const raw = fs.readFileSync(CLOUD_BACKUP_FILE, "utf-8");
+        return JSON.parse(raw) || {};
+      }
+    } catch (e) {
+      console.warn("Failed to read cloud backups file:", e);
+    }
+    return {};
+  }
+
+  function writeCloudBackups(data: Record<string, any>) {
+    try {
+      if (!fs.existsSync(CLOUD_BACKUP_DIR)) {
+        fs.mkdirSync(CLOUD_BACKUP_DIR, { recursive: true });
+      }
+      fs.writeFileSync(CLOUD_BACKUP_FILE, JSON.stringify(data, null, 2), "utf-8");
+    } catch (e) {
+      console.warn("Failed to write cloud backups file:", e);
+    }
+  }
+
+  app.post("/api/cloud-backup/save", (req: Request, res: Response) => {
+    try {
+      const { key, profiles, clientInfo } = req.body;
+      const cleanKey = typeof key === "string" ? key.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") : "";
+      if (!cleanKey || cleanKey.length < 4) {
+        return res.status(400).json({ ok: false, error: "कृपया कम से कम 4 अक्षरों का वैध मोबाइल नंबर या बैकअप कोड दर्ज करें।" });
+      }
+      if (!Array.isArray(profiles)) {
+        return res.status(400).json({ ok: false, error: "अमान्य कुंडली डेटा।" });
+      }
+      const backups = readCloudBackups();
+      backups[cleanKey] = {
+        key: cleanKey,
+        profiles: profiles.slice(0, 100),
+        count: profiles.length,
+        updatedAt: new Date().toISOString(),
+        clientInfo: clientInfo || {},
+      };
+      writeCloudBackups(backups);
+      return res.json({
+        ok: true,
+        key: cleanKey,
+        count: profiles.length,
+        updatedAt: backups[cleanKey].updatedAt,
+      });
+    } catch (err: any) {
+      console.error("Error in /api/cloud-backup/save:", err);
+      return res.status(500).json({ ok: false, error: "बैकअप सुरक्षित करने में त्रुटि आई।" });
+    }
+  });
+
+  app.get("/api/cloud-backup/restore/:key", (req: Request, res: Response) => {
+    try {
+      const rawKey = req.params.key;
+      const cleanKey = typeof rawKey === "string" ? rawKey.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") : "";
+      if (!cleanKey) {
+        return res.status(400).json({ ok: false, error: "बैकअप कोड या मोबाइल नंबर आवश्यक है।" });
+      }
+      const backups = readCloudBackups();
+      const record = backups[cleanKey];
+      if (!record || !Array.isArray(record.profiles)) {
+        return res.status(404).json({ ok: false, error: "इस मोबाइल नंबर / बैकअप कोड पर कोई सहेजा हुआ बैकअप नहीं मिला।" });
+      }
+      return res.json({
+        ok: true,
+        key: cleanKey,
+        profiles: record.profiles,
+        count: record.count || record.profiles.length,
+        updatedAt: record.updatedAt,
+      });
+    } catch (err: any) {
+      console.error("Error in /api/cloud-backup/restore:", err);
+      return res.status(500).json({ ok: false, error: "क्लाउड से रीस्टोर करने में त्रुटि आई।" });
+    }
+  });
+
   // UMA AI Vedic Astrologer Chat Endpoint
   app.post("/api/uma/chat", async (req: Request, res: Response) => {
     try {
