@@ -429,8 +429,9 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
   useEffect(() => {
     if (!svgRef.current) return;
 
-    const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
+    try {
+      const svg = d3.select(svgRef.current);
+      svg.selectAll('*').remove();
 
     const width = 280;
     const height = 240;
@@ -638,28 +639,20 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
 
     const targetAngle = 2 * Math.PI * Math.max(0.02, Math.min(1.0, tithiProgress));
 
-    const progressPath = svg
+    svg
       .append('path')
       .attr('transform', `translate(${cx}, ${cy})`)
       .attr('fill', 'url(#tithi-arc-grad)')
-      .attr('filter', 'drop-shadow(0px 0px 4px rgba(229,160,36,0.5))');
-
-    progressPath
-      .transition()
-      .duration(750)
-      .attrTween('d', () => {
-        const interpolate = d3.interpolate(0.01, targetAngle);
-        return (t) => {
-          return (
-            arcGenerator({
-              innerRadius: arcInnerRadius,
-              outerRadius: arcOuterRadius,
-              startAngle: 0,
-              endAngle: interpolate(t),
-            }) || ''
-          );
-        };
-      });
+      .attr('filter', 'drop-shadow(0px 0px 4px rgba(229,160,36,0.5))')
+      .attr(
+        'd',
+        arcGenerator({
+          innerRadius: arcInnerRadius,
+          outerRadius: arcOuterRadius,
+          startAngle: 0,
+          endAngle: targetAngle,
+        }) || ''
+      );
 
     const tipAngle = targetAngle - Math.PI / 2;
     const tipRadius = (arcInnerRadius + arcOuterRadius) / 2;
@@ -725,15 +718,18 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
       .attr('letter-spacing', '0.5px')
       .text('दशम-कला चन्द्र दर्शन (प्रत्यक्ष खगोल)');
 
-    svg
-      .append('text')
-      .attr('x', width - 14)
-      .attr('y', 22)
-      .attr('text-anchor', 'end')
-      .attr('fill', isWaxing ? '#74D99F' : '#E8B074')
-      .attr('font-size', '10px')
-      .attr('font-weight', '800')
-      .text(isWaxing ? '▲ शुक्ल (वर्धमान)' : '▼ कृष्ण (क्षीयमान)');
+      svg
+        .append('text')
+        .attr('x', width - 14)
+        .attr('y', 22)
+        .attr('text-anchor', 'end')
+        .attr('fill', isWaxing ? '#74D99F' : '#E8B074')
+        .attr('font-size', '10px')
+        .attr('font-weight', '800')
+        .text(isWaxing ? '▲ शुक्ल (वर्धमान)' : '▼ कृष्ण (क्षीयमान)');
+    } catch (err) {
+      console.error('MoonPhaseChart d3 render error:', err);
+    }
   }, [elongationDeg, tithiProgress, illuminationPct, isWaxing, pakshaName, tithiName, tithiProgressPct]);
 
   // 30-Day Tithi Cycle Map for quick lookup
