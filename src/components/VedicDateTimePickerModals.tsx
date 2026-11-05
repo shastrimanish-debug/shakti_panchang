@@ -14,7 +14,28 @@ const MONTH_NAMES: Record<string, string[]> = {
   hi: ['जनवरी', 'फरवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'],
   gu: ['જાન્યુઆરી', 'ફેબ્રુઆરી', 'માર્ચ', 'એપ્રિલ', 'મે', 'જૂન', 'જુલાઈ', 'ઑગસ્ટ', 'સપ્ટેમ્બર', 'ઑક્ટોબર', 'નવેમ્બર', 'ડિસેમ્બર'],
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-  mr: ['जानेवारी', 'फेब्रुवारी', 'मार्च', 'एप्रिल', 'मे', 'जून', 'जुलै', 'ऑगस्ट', 'सप्टेंबर', 'ऑक्टोबर', 'नोव्हेंबर', 'डಿಸेंबर'],
+  mr: ['जानेवारी', 'फेब्रुवारी', 'मार्च', 'एप्रिल', 'मे', 'जून', 'जुलै', 'ऑगस्ट', 'सप्टेंबर', 'ऑक्टोबर', 'नोव्हेंबर', 'डिसेंबर'],
+  bn: ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'],
+  ta: ['ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்', 'ஜூலை', 'ஆகஸ்ட்', 'செப்டம்பர்', 'அக்டோபர்', 'நவம்பர்', 'டிசம்பர்'],
+  te: ['జనవరి', 'ఫిబ్రవరి', 'మార్చి', 'ఏప్రిల్', 'మే', 'జూన్', 'జూలై', 'ఆగస్టు', 'సెప్టెంబర్', 'అక్టోబర్', 'నవంబర్', 'డిసెంబర్'],
+  kn: ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'],
+  ml: ['ജനുവരി', 'ഫെബ്രുവരി', 'മാർച്ച്', 'ഏപ്രിൽ', 'മെയ്', 'ജൂൺ', 'ജൂലൈ', 'ഓഗസ്റ്റ്', 'സെപ്റ്റംബർ', 'ഒക്ടോബർ', 'നവംബർ', 'ഡിസംബർ'],
+  pa: ['ਜਨਵਰੀ', 'ਫ਼ਰਵਰੀ', 'ਮਾਰਚ', 'ਅਪ੍ਰੈਲ', 'ਮਈ', 'ਜੂਨ', 'ਜੁਲਾਈ', 'ਅਗਸਤ', 'ਸਤੰਬਰ', 'ਅਕਤੂਬਰ', 'ਨਵੰਬਰ', 'ਦਸੰਬਰ'],
+  or: ['ଜାନୁଆରୀ', 'ଫେବୃଆରୀ', 'ମାର୍ଚ୍ଚ', 'ଏପ୍ରିଲ', 'ମେ', 'ଜୁନ', 'ଜୁଲାଇ', 'ଅଗଷ୍ଟ', 'ସେପ୍ଟେମ୍ବର', 'ଅକ୍ଟୋବର', 'ନଭେମ୍ବର', 'ଡିସେମ୍ବର'],
+};
+
+const WEEKDAY_NAMES: Record<string, string[]> = {
+  hi: ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'],
+  gu: ['રવિ', 'સોમ', 'મંગળ', 'બુધ', 'ગુરુ', 'શુક્ર', 'શનિ'],
+  en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+  mr: ['रवि', 'सोम', 'मंगळ', 'बुध', 'गुरु', 'शुक्र', 'शनि'],
+  bn: ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি'],
+  ta: ['ஞாயி', 'திங்', 'செவ்', 'புத', 'வியா', 'வெள்', 'சனி'],
+  te: ['ఆది', 'సోమ', 'మంగళ', 'బుధ', 'గురు', 'శుక్ర', 'శని'],
+  kn: ['ಭಾನು', 'ಸೋಮ', 'ಮಂಗಳ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ'],
+  ml: ['ഞായർ', 'തിങ്കൾ', 'ചൊവ്വ', 'ബുധൻ', 'വ്യാഴം', 'വെള്ളി', 'ശനി'],
+  pa: ['ਐਤ', 'ਸੋਮ', 'ਮੰਗਲ', 'ਬੁੱਧ', 'ਵੀਰ', 'ਸ਼ੁੱਕਰ', 'ਸ਼ਨੀ'],
+  or: ['ରବି', 'ସୋମ', 'ମଙ୍ଗଳ', 'ବୁଧ', 'ଗୁରୁ', 'ଶୁକ୍ର', 'ଶନି'],
 };
 
 export const VedicDatePickerModal: React.FC<VedicDatePickerModalProps> = ({
@@ -26,6 +47,7 @@ export const VedicDatePickerModal: React.FC<VedicDatePickerModalProps> = ({
 }) => {
   const { language } = useLanguage();
   const months = MONTH_NAMES[language] || MONTH_NAMES.hi;
+  const weekdays = WEEKDAY_NAMES[language] || WEEKDAY_NAMES.hi;
 
   const getInitialYMD = () => {
     if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -39,7 +61,7 @@ export const VedicDatePickerModal: React.FC<VedicDatePickerModalProps> = ({
   const [selectedY, setSelectedY] = useState<number>(() => getInitialYMD().y);
   const [selectedM, setSelectedM] = useState<number>(() => getInitialYMD().m);
   const [selectedD, setSelectedD] = useState<number>(() => getInitialYMD().d);
-  const [viewMode, setViewMode] = useState<'calendar' | 'yearPicker'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'months' | 'years'>('calendar');
 
   useEffect(() => {
     if (isOpen) {
@@ -54,6 +76,7 @@ export const VedicDatePickerModal: React.FC<VedicDatePickerModalProps> = ({
   if (!isOpen) return null;
 
   const daysInMonth = new Date(selectedY, selectedM + 1, 0).getDate();
+  const firstDayOfWeek = new Date(selectedY, selectedM, 1).getDay();
   const safeDay = Math.min(selectedD, daysInMonth);
 
   const handleApply = () => {
@@ -68,6 +91,7 @@ export const VedicDatePickerModal: React.FC<VedicDatePickerModalProps> = ({
     setSelectedY(now.getFullYear());
     setSelectedM(now.getMonth());
     setSelectedD(now.getDate());
+    setViewMode('calendar');
   };
 
   const yearsList: number[] = [];
@@ -120,107 +144,249 @@ export const VedicDatePickerModal: React.FC<VedicDatePickerModalProps> = ({
           </button>
         </div>
 
-        {/* Year & Month Control Bar */}
-        <div className="p-3 space-y-3">
-          <div className="flex items-center justify-between gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                if (selectedM === 0) {
-                  setSelectedM(11);
-                  setSelectedY((y) => Math.max(1920, y - 1));
-                } else {
-                  setSelectedM((m) => m - 1);
-                }
-              }}
-              className="p-1.5 rounded-lg border border-stone-300 bg-stone-100 hover:bg-stone-200 cursor-pointer text-stone-700"
-              title="पिछला माह"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            {/* Month Dropdown */}
-            <select
-              value={selectedM}
-              onChange={(e) => setSelectedM(Number(e.target.value))}
-              className="flex-1 py-1 px-2 rounded-lg border border-[#8C6239]/40 bg-[#FFF8F0] font-bold text-xs text-[#5C3A21] focus:ring-1 focus:ring-amber-600 outline-none cursor-pointer"
-            >
-              {months.map((m, idx) => (
-                <option key={idx} value={idx}>
-                  {m}
-                </option>
-              ))}
-            </select>
-
-            {/* Year Dropdown / Picker Toggle */}
-            <select
-              value={selectedY}
-              onChange={(e) => setSelectedY(Number(e.target.value))}
-              className="w-24 py-1 px-2 rounded-lg border border-[#8C6239]/40 bg-[#FFF8F0] font-bold text-xs text-[#5C3A21] focus:ring-1 focus:ring-amber-600 outline-none cursor-pointer"
-            >
-              {yearsList.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (selectedM === 11) {
-                  setSelectedM(0);
-                  setSelectedY((y) => Math.min(2035, y + 1));
-                } else {
-                  setSelectedM((m) => m + 1);
-                }
-              }}
-              className="p-1.5 rounded-lg border border-stone-300 bg-stone-100 hover:bg-stone-200 cursor-pointer text-stone-700"
-              title="अगला माह"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Quick Decade Jump Chips */}
-          <div className="flex items-center justify-between gap-1 overflow-x-auto py-0.5">
-            {[1980, 1990, 1995, 2000, 2005, 2010, 2020].map((quickYear) => (
+        {/* Month Selector Grid View */}
+        {viewMode === 'months' && (
+          <div className="p-3 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#8C6239]">
+                {language === 'gu' ? 'માસ પસંદ કરો' : language === 'en' ? 'Select Month' : 'माह चुनें'}
+              </span>
               <button
-                key={quickYear}
                 type="button"
-                onClick={() => setSelectedY(quickYear)}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition cursor-pointer shrink-0 ${
-                  selectedY === quickYear
-                    ? 'bg-[#8C4A00] text-white shadow-2xs'
-                    : 'bg-stone-200/80 hover:bg-stone-300 text-stone-800'
-                }`}
+                onClick={() => setViewMode('calendar')}
+                className="text-xs font-bold text-amber-800 hover:underline cursor-pointer"
               >
-                {quickYear}
+                ✕ {language === 'gu' ? 'કેલેન્ડર' : language === 'en' ? 'Calendar' : 'कैलेंडर'}
               </button>
-            ))}
-          </div>
-
-          {/* Days Grid (1 to 31) */}
-          <div className="grid grid-cols-7 gap-1.5 pt-1">
-            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
-              const isSelected = d === safeDay;
-              return (
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {months.map((m, idx) => (
                 <button
-                  key={d}
+                  key={idx}
                   type="button"
-                  onClick={() => setSelectedD(d)}
-                  className={`py-2 rounded-lg font-bold text-xs flex items-center justify-center transition cursor-pointer active:scale-95 ${
-                    isSelected
-                      ? 'bg-[#C2410C] text-white shadow-sm ring-2 ring-amber-400 font-black'
+                  onClick={() => {
+                    setSelectedM(idx);
+                    setViewMode('calendar');
+                  }}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95 ${
+                    selectedM === idx
+                      ? 'bg-[#C2410C] text-white shadow-sm ring-1 ring-amber-400 font-black'
                       : 'bg-[#FAF5ED] hover:bg-amber-100 text-[#4A2810] border border-amber-900/15'
                   }`}
                 >
-                  {d}
+                  {m}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Year Selector View */}
+        {viewMode === 'years' && (
+          <div className="p-3 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#8C6239]">
+                {language === 'gu' ? 'વર્ષ પસંદ કરો' : language === 'en' ? 'Select Year' : 'वर्ष चुनें'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setViewMode('calendar')}
+                className="text-xs font-bold text-amber-800 hover:underline cursor-pointer"
+              >
+                ✕ {language === 'gu' ? 'કેલેન્ડર' : language === 'en' ? 'Calendar' : 'कैलेंडर'}
+              </button>
+            </div>
+
+            {/* Quick +/- Stepper */}
+            <div className="flex items-center justify-center gap-1.5 bg-[#FAF2E4] p-1.5 rounded-xl border border-[#DFCBB5]">
+              <button
+                type="button"
+                onClick={() => setSelectedY((y) => Math.max(1920, y - 10))}
+                className="px-2 py-1 rounded bg-stone-200 hover:bg-stone-300 text-stone-800 text-[11px] font-bold cursor-pointer"
+                title="-10 वर्ष"
+              >
+                -10
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedY((y) => Math.max(1920, y - 1))}
+                className="px-2 py-1 rounded bg-stone-200 hover:bg-stone-300 text-stone-800 text-[11px] font-bold cursor-pointer"
+                title="-1 वर्ष"
+              >
+                -1
+              </button>
+              <span className="font-granth font-black text-lg text-[#78350F] px-3">
+                {selectedY}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedY((y) => Math.min(2035, y + 1))}
+                className="px-2 py-1 rounded bg-stone-200 hover:bg-stone-300 text-stone-800 text-[11px] font-bold cursor-pointer"
+                title="+1 वर्ष"
+              >
+                +1
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedY((y) => Math.min(2035, y + 10))}
+                className="px-2 py-1 rounded bg-stone-200 hover:bg-stone-300 text-stone-800 text-[11px] font-bold cursor-pointer"
+                title="+10 वर्ष"
+              >
+                +10
+              </button>
+            </div>
+
+            {/* Decade Chips */}
+            <div className="flex flex-wrap gap-1 justify-center py-0.5">
+              {[1950, 1960, 1970, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025].map((quickYear) => (
+                <button
+                  key={quickYear}
+                  type="button"
+                  onClick={() => setSelectedY(quickYear)}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                    selectedY === quickYear
+                      ? 'bg-[#8C4A00] text-white shadow-2xs font-black'
+                      : 'bg-stone-200 hover:bg-stone-300 text-stone-800'
+                  }`}
+                >
+                  {quickYear}
+                </button>
+              ))}
+            </div>
+
+            {/* Scrollable Years Grid */}
+            <div className="max-h-48 overflow-y-auto grid grid-cols-4 gap-1.5 p-1 bg-stone-100/60 rounded-xl border border-stone-200">
+              {yearsList.map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => {
+                    setSelectedY(y);
+                    setViewMode('calendar');
+                  }}
+                  className={`py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    selectedY === y
+                      ? 'bg-[#C2410C] text-white shadow-sm ring-1 ring-amber-400 font-black'
+                      : 'bg-white hover:bg-amber-50 text-[#4A2810] border border-stone-200'
+                  }`}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Default Calendar View */}
+        {viewMode === 'calendar' && (
+          <div className="p-3 space-y-2.5">
+            {/* Year & Month Control Bar */}
+            <div className="flex items-center justify-between gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedM === 0) {
+                    setSelectedM(11);
+                    setSelectedY((y) => Math.max(1920, y - 1));
+                  } else {
+                    setSelectedM((m) => m - 1);
+                  }
+                }}
+                className="p-1.5 rounded-lg border border-stone-300 bg-stone-100 hover:bg-stone-200 cursor-pointer text-stone-700 active:scale-95"
+                title="पिछला माह"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Month Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setViewMode('months')}
+                className="flex-1 py-1.5 px-2 rounded-lg border border-[#8C6239]/40 bg-[#FFF8F0] hover:bg-amber-100/60 font-bold text-xs text-[#5C3A21] flex items-center justify-center gap-1 cursor-pointer transition"
+              >
+                <span>{months[selectedM]}</span>
+                <span className="text-[10px] text-amber-700">▾</span>
+              </button>
+
+              {/* Year Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setViewMode('years')}
+                className="w-24 py-1.5 px-2 rounded-lg border border-[#8C6239]/40 bg-[#FFF8F0] hover:bg-amber-100/60 font-bold text-xs text-[#5C3A21] flex items-center justify-center gap-1 cursor-pointer transition"
+              >
+                <span>{selectedY}</span>
+                <span className="text-[10px] text-amber-700">▾</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedM === 11) {
+                    setSelectedM(0);
+                    setSelectedY((y) => Math.min(2035, y + 1));
+                  } else {
+                    setSelectedM((m) => m + 1);
+                  }
+                }}
+                className="p-1.5 rounded-lg border border-stone-300 bg-stone-100 hover:bg-stone-200 cursor-pointer text-stone-700 active:scale-95"
+                title="अगला माह"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Decade Jump Chips */}
+            <div className="flex items-center justify-between gap-1 overflow-x-auto py-0.5">
+              {[1970, 1980, 1990, 1995, 2000, 2005, 2010, 2020].map((quickYear) => (
+                <button
+                  key={quickYear}
+                  type="button"
+                  onClick={() => setSelectedY(quickYear)}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition cursor-pointer shrink-0 ${
+                    selectedY === quickYear
+                      ? 'bg-[#8C4A00] text-white shadow-2xs font-black'
+                      : 'bg-stone-200/80 hover:bg-stone-300 text-stone-800'
+                  }`}
+                >
+                  {quickYear}
+                </button>
+              ))}
+            </div>
+
+            {/* Weekday Names Row */}
+            <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-[#8C6239] pb-0.5 border-b border-stone-200">
+              {weekdays.map((w, idx) => (
+                <div key={idx} className={idx === 0 ? 'text-red-700' : ''}>
+                  {w}
+                </div>
+              ))}
+            </div>
+
+            {/* Days Grid (1 to 31 with first day offset) */}
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                <div key={`empty-${i}`} className="py-2" />
+              ))}
+              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
+                const isSelected = d === safeDay;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setSelectedD(d)}
+                    className={`py-1.5 rounded-lg font-bold text-xs flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                      isSelected
+                        ? 'bg-[#C2410C] text-white shadow-sm ring-2 ring-amber-400 font-black'
+                        : 'bg-[#FAF5ED] hover:bg-amber-100 text-[#4A2810] border border-amber-900/15'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="p-3 bg-[#FAF2E4] border-t border-[#DFCBB5] flex items-center justify-between gap-2">

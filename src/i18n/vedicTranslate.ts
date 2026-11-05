@@ -616,6 +616,18 @@ export function trVedic(term: string | undefined | null): string {
     return result;
   }
 
+  if (currentLang === 'mr') {
+    let result = term;
+    if (result === 'मंगलवार') return 'मंगळवार';
+    if (result === 'मंगल') return 'मंगळ';
+    if (result === 'राहु') return 'राहू';
+    if (result === 'केतु') return 'केतू';
+    if (result === 'पूर्णिमा') return 'पौर्णिमा';
+    if (result === 'कुम्भ' || result === 'कुम्भ राशि') return 'कुंभ राशि';
+    result = result.replace(/मंगलवार/g, 'मंगळवार').replace(/मंगल/g, 'मंगळ').replace(/पूर्णिमा/g, 'पौर्णिमा').replace(/राहु/g, 'राहू').replace(/केतु/g, 'केतू');
+    return result;
+  }
+
   return term;
 }
 
@@ -626,6 +638,11 @@ export function trPlanet(planet: string): string {
   }
   if (currentLang === 'gu' && PLANET_MAP_GU[planet]) {
     return PLANET_MAP_GU[planet];
+  }
+  if (currentLang === 'mr') {
+    if (planet === 'मंगल' || planet === 'मंगल देव') return 'मंगळ';
+    if (planet === 'राहु') return 'राहू';
+    if (planet === 'केतु') return 'केतू';
   }
   return planet;
 }
@@ -638,6 +655,9 @@ export function trRashi(rashi: string): string {
   if (currentLang === 'gu' && RASHI_MAP_GU[rashi]) {
     return RASHI_MAP_GU[rashi];
   }
+  if (currentLang === 'mr') {
+    if (rashi.includes('कुम्भ')) return rashi.replace('कुम्भ', 'कुंभ');
+  }
   return rashi;
 }
 
@@ -648,6 +668,9 @@ export function trWeekday(weekday: string): string {
   }
   if (currentLang === 'gu' && WEEKDAYS_MAP_GU[weekday]) {
     return WEEKDAYS_MAP_GU[weekday];
+  }
+  if (currentLang === 'mr') {
+    if (weekday === 'मंगलवार' || weekday === 'मंगल') return 'मंगळवार';
   }
   return weekday;
 }
@@ -684,7 +707,7 @@ export function trChoghadiyaMeaning(meaning: string, hindiName?: string): string
         return 'શુભ, પૂજા-પાઠ, વિદ્યા અને માંગલિક કાર્યો માટે ઉત્તમ';
       case 'लाभ':
         return 'લાભદાયી, વેપાર-વાણિજ્ય અને આર્થિક વૃદ્ધિ માટે અનુકૂળ';
-      case 'चर':
+      case 'ચર':
         return 'ગતિશીલ, યાત્રા, પ્રવાસ અને વાહન કાર્ય માટે શ્રેષ્ઠ';
       case 'चल':
         return 'મધ્યમ, રોજિંદા સામાન્ય કાર્યો માટે યોગ્ય';
@@ -694,6 +717,28 @@ export function trChoghadiyaMeaning(meaning: string, hindiName?: string): string
         return 'હાનિકારક, શનિ પ્રભાવિત, વિલંબ અને નુકસાનકારક, ત્યાજ્ય';
       case 'उद्वेग':
         return 'તણાવકારક, ચિંતા અને મનોવ્યથા કરાવનાર, મહત્વના કામ ટાળો';
+      default:
+        return meaning;
+    }
+  }
+  if (currentLang === 'mr') {
+    switch (hindiName) {
+      case 'अमृत':
+        return 'सर्वोत्तम, अमृततुल्य, सर्व कार्यात अक्षय यश देणारा';
+      case 'शुभ':
+        return 'शुभ, पूजा-पाठ, विद्या व मांगलिक कार्यांसाठी उत्तम';
+      case 'लाभ':
+        return 'लाभदायी, व्यापार व आर्थिक वृद्धीसाठी अनुकूल';
+      case 'चर':
+        return 'गतिमान, प्रवास व वाहन कार्यासाठी सर्वोत्तम';
+      case 'चल':
+        return 'मध्यम, रोजच्या सामान्य कामांसाठी योग्य';
+      case 'रोग':
+        return 'अशुभ, वाद व रोग-पीडा देणारा, नवीन कार्ये टाळा';
+      case 'काल':
+        return 'हानिकारक, शनी प्रभावित, नुकसान व विलंब करणारा, त्याज्य';
+      case 'उद्वेग':
+        return 'तणावपूर्ण, चिंता व क्लेशकारक, महत्त्वाची कामे टाळा';
       default:
         return meaning;
     }

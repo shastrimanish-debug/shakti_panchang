@@ -31,6 +31,7 @@ import { trVedic } from "../i18n/vedicTranslate";
 import { useLanguage } from "../i18n";
 import { triggerHapticSelection } from "../utils/haptics";
 import { DailyShlokaCard } from "./DailyShlokaCard";
+import { VedicDatePickerModal } from "./VedicDateTimePickerModals";
 
 function clock(d?: Date) {
   if (!d) return "—";
@@ -125,7 +126,17 @@ export function BoardDrawer({
   onHost: (el: HTMLDivElement | null) => void;
 }) {
   const { t, language } = useLanguage();
-  const brand = language === "en" ? "Shakti" : language === "gu" ? "શક્તિ" : "शक्ति";
+  const brand =
+    language === "en" ? "Shakti" :
+    language === "gu" ? "શક્તિ" :
+    language === "mr" ? "शक्ती" :
+    language === "bn" ? "শক্তি" :
+    language === "ta" ? "சக்தி" :
+    language === "te" ? "శక్తి" :
+    language === "kn" ? "ಶಕ್ತಿ" :
+    language === "ml" ? "ശക്തി" :
+    language === "pa" ? "ਸ਼ਕਤੀ" :
+    language === "or" ? "ଶକ୍ତି" : "शक्ति";
   const items = [
     { id: "services", label: t("nav.services", "सेवाएँ"), icon: LayoutGrid, onClick: onServices },
     { id: "panchang", label: t("nav.panchang", "पंचांग"), icon: Sun, onClick: onPanchang },
@@ -416,22 +427,98 @@ export function BoardDock({
 
 const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   {
-    title: { hi: "आज", en: "Today", gu: "આજ" },
+    title: {
+      hi: "आज",
+      en: "Today",
+      gu: "આજ",
+      mr: "आज",
+      bn: "আজ",
+      ta: "இன்று",
+      te: "ఈరోజు",
+      kn: "ಇಂದು",
+      ml: "ഇന്ന്",
+      pa: "ਅੱਜ",
+      or: "ଆଜି",
+    },
     ids: ["panchang", "kalnirnay", "gochar", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
   },
   {
-    title: { hi: "जन्म पत्रिका व लाल किताब", en: "Birth chart & Lal Kitab", gu: "જન્મ પત્રિકા અને લાલ કિતાબ" },
+    title: {
+      hi: "जन्म पत्रिका व लाल किताब",
+      en: "Birth Chart & Lal Kitab",
+      gu: "જન્મ પત્રિકા અને લાલ કિતાબ",
+      mr: "जन्म कुंडली आणि लाल किताब",
+      bn: "কোষ্ঠী ও লাল কিতাব",
+      ta: "ஜாதகம் மற்றும் லால் கிதாப்",
+      te: "జాతక చక్రం & లాల్ కితాబ్",
+      kn: "ಜನ್ಮ ಕುಂಡಲಿ ಮತ್ತು ಲಾಲ್ ಕಿತಾಬ್",
+      ml: "ജാതകവും ലാൽ കിതാബും",
+      pa: "ਜਨਮ ਕੁੰਡਲੀ ਅਤੇ ਲਾਲ ਕਿਤਾਬ",
+      or: "ଜନ୍ମ କୁଣ୍ଡଳୀ ଓ ଲାଲ୍ କିତାବ୍",
+    },
     ids: ["sadesati", "lal_kitab", "ravan_sanhita", "kundali", "milan", "prashna", "saral", "shastrokt", "sabar", "numerology", "gemology", "jain_mantras"],
   },
   {
-    title: { hi: "शास्त्र और पाठ", en: "Scripture", gu: "શાસ્ત્ર" },
+    title: {
+      hi: "शास्त्र और पाठ",
+      en: "Scriptures & Stotram",
+      gu: "શાસ્ત્ર અને પાઠ",
+      mr: "शास्त्र आणि पाठ",
+      bn: "শাস্ত্র ও স্তোত্র পাঠ",
+      ta: "சாஸ்திரங்கள் & ஸ்தோத்திரங்கள்",
+      te: "శాస్త్రాలు & స్తోత్రాలు",
+      kn: "ಶಾಸ್ತ್ರ ಮತ್ತು ಸ್ತೋತ್ರಗಳು",
+      ml: "ശാസ്ത്രങ്ങളും സ്തോത്രങ്ങളും",
+      pa: "ਸ਼ਾਸਤਰ ਅਤੇ ਪਾਠ",
+      or: "ଶାସ୍ତ୍ର ଓ ସ୍ତୋତ୍ର ପାଠ",
+    },
     ids: ["japamala", "vishnu_sahasranama", "granth_puran", "devta_arpan", "durga", "audio_player", "hanuman", "sundarkand", "gita", "vratkatha", "vastu", "reminders"],
   },
   {
-    title: { hi: "दर्शन", en: "Reading", gu: "દર્શન" },
+    title: {
+      hi: "दर्शन",
+      en: "Mystic Readings",
+      gu: "દર્શન",
+      mr: "दर्शन",
+      bn: "দিব্য দর্শন",
+      ta: "ஜோதிட வாசிப்பு",
+      te: "దివ్య దర్శనం",
+      kn: "ದರ್ಶನ",
+      ml: "ദർശനം",
+      pa: "ਦਰਸ਼ਨ",
+      or: "ଦର୍ଶନ",
+    },
     ids: ["palmistry", "tarot", "face_reading", "iching"],
   },
 ];
+
+const SEARCH_HINTS: Record<string, string> = {
+  hi: "सेवा खोजें",
+  en: "Find a service",
+  gu: "સેવા શોધો",
+  mr: "सेवा शोधा",
+  bn: "সেবা খুঁজুন",
+  ta: "சேவையைத் தேடுங்கள்",
+  te: "సేవను వెతకండి",
+  kn: "ಸೇವೆಯನ್ನು ಹುಡುಕಿ",
+  ml: "സേവനം തിരയുക",
+  pa: "ਸੇਵਾ ਖੋਜੋ",
+  or: "ସେବା ଖୋଜନ୍ତୁ",
+};
+
+const NO_MATCH_MESSAGES: Record<string, string> = {
+  hi: "कोई सेवा इस नाम से नहीं मिली।",
+  en: "No service matches that name.",
+  gu: "આ નામની સેવા મળી નથી.",
+  mr: "या नावाची कोणतीही सेवा आढळली नाही.",
+  bn: "এই নামের কোনও পরিষেবা পাওয়া যায়নি।",
+  ta: "இந்த பெயரில் எந்த சேவையும் கிடைக்கவில்லை.",
+  te: "ఈ పేరుతో ఎటువంటి సేవ కనుగొనబడలేదు.",
+  kn: "ಈ ಹೆಸರಿನ ಯಾವುದೇ ಸೇವೆ ಕಂಡುಬಂದಿಲ್ಲ.",
+  ml: "ഈ പേരിൽ ഒരു സേവനവും കണ്ടെത്തിയില്ല.",
+  pa: "ਇਸ ਨਾਮ ਦੀ ਕੋਈ ਸੇਵਾ ਨਹੀਂ ਮਿਲੀ।",
+  or: "ଏହି ନାମରେ କୌଣସି ସେବା ମିଳିଲା ନାହିଁ।",
+};
 
 function groupTitle(title: Record<string, string>, language: string) {
   return title[language] || title.hi;
@@ -448,7 +535,7 @@ export function ModuleBoard({
   const pages = BOOK_PAGES.map((page) => getLocalizedBookPage(page, language));
   const byId = useMemo(() => new Map(pages.map((page) => [page.id, page])), [pages]);
   const q = query.trim().toLowerCase();
-  const searchHint = language === "en" ? "Find a service" : language === "gu" ? "સેવા શોધો" : "सेवा खोजें";
+  const searchHint = SEARCH_HINTS[language] || SEARCH_HINTS.hi;
   const rank = (page: { label: string; title: string; desc: string }) => {
     const label = page.label.toLowerCase();
     const title = page.title.toLowerCase();
@@ -469,7 +556,10 @@ export function ModuleBoard({
   const used = new Set([...SERVICE_GROUPS.flatMap((group) => group.ids), "upay"]);
   const extra = pages.filter((page) => !used.has(page.id) && matches(page));
   if (extra.length) {
-    sections.push({ title: language === "en" ? "More" : language === "gu" ? "વધુ" : "और", pages: extra });
+    sections.push({
+      title: language === "en" ? "More" : language === "gu" ? "વધુ" : language === "mr" ? "अधिक" : "और",
+      pages: extra,
+    });
   }
   if (q) {
     const hits = sections
@@ -492,7 +582,7 @@ export function ModuleBoard({
       <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-3 pb-3 flex flex-col gap-3" resetKey={query}>
           {sections.length === 0 && (
             <div className="bx-fact text-sm">
-              {language === "en" ? "No service matches that name." : language === "gu" ? "આ નામની સેવા મળી નથી." : "कोई सेवा इस नाम से नहीं मिली।"}
+              {NO_MATCH_MESSAGES[language] || NO_MATCH_MESSAGES.hi}
             </div>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-stretch items-start content-start">
@@ -557,6 +647,7 @@ export function TodayBoard({
   const [isSavingHd, setIsSavingHd] = useState(false);
   const [isSharingHd, setIsSharingHd] = useState(false);
   const [hdNotice, setHdNotice] = useState<string | null>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   if (!panchang) {
     return <div className="p-4 text-sm">{t("common.loading", "पंचांग गणना हो रही है।")}</div>;
@@ -743,27 +834,21 @@ export function TodayBoard({
               <ChevronLeft className="w-4 h-4" />
             </motion.button>
 
-            <label className="relative flex items-center px-1.5 cursor-pointer">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticSelection();
+                setIsDatePickerOpen(true);
+              }}
+              className="relative flex items-center px-2 py-0.5 rounded-lg hover:bg-stone-200/60 cursor-pointer transition"
+            >
               <span
                 style={{ color: "var(--bx-ink)" }}
                 className="text-xs font-bold whitespace-nowrap"
               >
                 📅 {formattedDate}
               </span>
-              <input
-                type="date"
-                value={activeDate.toISOString().split("T")[0]}
-                onClick={(e) => {
-                  try {
-                    (e.currentTarget as any).showPicker?.();
-                  } catch {}
-                }}
-                onChange={(e) => {
-                  if (e.target.valueAsDate) onDateChange(e.target.valueAsDate);
-                }}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full"
-              />
-            </label>
+            </button>
 
             <motion.button
               type="button"
@@ -1013,6 +1098,19 @@ export function TodayBoard({
           <p>{t("nav.granthPuranDesc", "श्रीमद्भगवद्गीता, १० प्रमुख उपनिषद्, अष्टादश महापुराण व वैदिक सूक्त सार")}</p>
         </motion.button>
       </motion.div>
+
+      <VedicDatePickerModal
+        isOpen={isDatePickerOpen}
+        value={activeDate.toISOString().split("T")[0]}
+        onChange={(val) => {
+          const [y, m, d] = val.split("-").map(Number);
+          const newD = new Date(activeDate);
+          newD.setFullYear(y, m - 1, d);
+          onDateChange?.(newD);
+        }}
+        onClose={() => setIsDatePickerOpen(false)}
+        title={t("panchang.selectPanchangDate", "पंचांग तिथि चुनें")}
+      />
     </div>
   );
 }

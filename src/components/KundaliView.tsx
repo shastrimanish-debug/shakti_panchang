@@ -708,7 +708,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 onClick={() => setIsFormExpanded(true)}
                 className="px-2.5 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition cursor-pointer"
               >
-                विवरण बदलें ▼
+                {t('kundali.editDetails', 'विवरण बदलें ▼')}
               </button>
 
               <button
@@ -719,8 +719,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 title="59 पृष्ठीय सम्पूर्ण महा-जन्मपत्रिका PDF डाउनलोड करें"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">59-पृष्ठीय महा-पत्रिका (PDF)</span>
-                <span className="sm:hidden">59-पृष्ठ PDF</span>
+                <span className="hidden sm:inline">{t('kundali.exhaustive59PagePdf', '59-पृष्ठीय महा-पत्रिका (PDF)')}</span>
+                <span className="sm:hidden">59-PDF</span>
               </button>
 
               <button
@@ -735,7 +735,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 ) : (
                   <FileText className="w-3.5 h-3.5 text-[#FFD88A]" />
                 )}
-                <span>1-पृष्ठ PDF</span>
+                <span>{t('kundali.quick1PagePdf', '1-पृष्ठ PDF')}</span>
               </button>
 
               <button
@@ -763,7 +763,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   title="उमा - वैदिक दैवज्ञ परामर्श"
                 >
                   <Sparkles className="w-3.5 h-3.5 fill-stone-950 text-stone-950" />
-                  <span>उमा परामर्श ✨</span>
+                  <span>{t('kundali.umaConsult', 'उमा परामर्श ✨')}</span>
                 </button>
               )}
 
