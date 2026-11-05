@@ -7,8 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.webkit.WebView;
 
-import androidx.activity.EdgeToEdge;
-
 import com.getcapacitor.BridgeActivity;
 
 import java.io.File;
@@ -18,11 +16,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        try {
-            EdgeToEdge.enable(this);
-        } catch (Throwable ignored) {
-            // Backward compatibility
-        }
+        setTheme(R.style.AppTheme_NoActionBar);
         boolean wipeWebCache = clearStaleWebCacheOnce();
         registerPlugin(UmaVoicePlugin.class);
         registerPlugin(UmaDevicePlugin.class);

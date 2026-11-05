@@ -42,6 +42,7 @@ import { LalKitabUpayListView } from './LalKitabUpayListView';
 import { PrashnaJyotishPanel } from './PrashnaJyotishPanel';
 import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 import { UpayParchiModal } from './UpayParchiModal';
+import { VedicDatePickerModal, VedicTimePickerModal } from './VedicDateTimePickerModals';
 import { useTranslation, useLanguage } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
@@ -218,6 +219,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [girlCity, setGirlCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
   const [cityPickerTarget, setCityPickerTarget] = useState<'main' | 'boy' | 'girl'>('main');
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<'main' | 'boy' | 'girl'>('main');
 
   // Synchronize form inputs if activeKundali changes
   useEffect(() => {
@@ -922,30 +926,21 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               </div>
               <div className="relative flex items-center">
                 <input
-                  type="date"
+                  type="text"
+                  readOnly
                   value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  onClick={(e) => {
-                    try {
-                      (e.currentTarget as any).showPicker?.();
-                    } catch {}
+                  onClick={() => {
+                    setPickerTarget('main');
+                    setIsDatePickerOpen(true);
                   }}
-                  onFocus={(e) => {
-                    try {
-                      (e.currentTarget as any).showPicker?.();
-                    } catch {}
-                  }}
+                  placeholder="YYYY-MM-DD"
                   className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 pr-8 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none cursor-pointer"
                 />
                 <button
                   type="button"
-                  onClick={(e) => {
-                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                    try {
-                      input?.showPicker?.();
-                    } catch {
-                      input?.focus?.();
-                    }
+                  onClick={() => {
+                    setPickerTarget('main');
+                    setIsDatePickerOpen(true);
                   }}
                   className="absolute right-2 p-1 text-[#8C6239] hover:text-[#5C3A21] cursor-pointer"
                   title="कैलेंडर खोलें"
@@ -982,36 +977,21 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               <div className="flex items-center gap-1.5">
                 <div className="relative flex-1 flex items-center">
                   <input
-                    type="time"
-                    value={tob}
-                    onChange={(e) => setTob(e.target.value)}
-                    onBlur={() => {
-                      if (tob) {
-                        const normalized = toTimeInput24h(tob);
-                        if (normalized) setTob(normalized);
-                      }
+                    type="text"
+                    readOnly
+                    value={tob ? `${tob} (${formatTime12h(tob)})` : ''}
+                    onClick={() => {
+                      setPickerTarget('main');
+                      setIsTimePickerOpen(true);
                     }}
-                    onClick={(e) => {
-                      try {
-                        (e.currentTarget as any).showPicker?.();
-                      } catch {}
-                    }}
-                    onFocus={(e) => {
-                      try {
-                        (e.currentTarget as any).showPicker?.();
-                      } catch {}
-                    }}
+                    placeholder="HH:MM (e.g. 09:30)"
                     className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 pr-8 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none cursor-pointer"
                   />
                   <button
                     type="button"
-                    onClick={(e) => {
-                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                      try {
-                        input?.showPicker?.();
-                      } catch {
-                        input?.focus?.();
-                      }
+                    onClick={() => {
+                      setPickerTarget('main');
+                      setIsTimePickerOpen(true);
                     }}
                     className="absolute right-2 p-1 text-[#8C6239] hover:text-[#5C3A21] cursor-pointer"
                     title="समय घड़ी खोलें"
@@ -2370,38 +2350,28 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                         <div>
                           <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">{t('kundali.dob', 'जन्म तिथि')}</label>
                           <input
-                            type="date"
+                            type="text"
+                            readOnly
                             value={boyDob}
-                            onChange={(e) => setBoyDob(e.target.value)}
-                            onClick={(e) => {
-                              try {
-                                (e.currentTarget as any).showPicker?.();
-                              } catch {}
+                            onClick={() => {
+                              setPickerTarget('boy');
+                              setIsDatePickerOpen(true);
                             }}
-                            onFocus={(e) => {
-                              try {
-                                (e.currentTarget as any).showPicker?.();
-                              } catch {}
-                            }}
+                            placeholder="YYYY-MM-DD"
                             className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21] cursor-pointer"
                           />
                         </div>
                         <div>
                           <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">{t('kundali.time', 'जन्म समय')}</label>
                           <input
-                            type="time"
+                            type="text"
+                            readOnly
                             value={boyTob}
-                            onChange={(e) => setBoyTob(e.target.value)}
-                            onClick={(e) => {
-                              try {
-                                (e.currentTarget as any).showPicker?.();
-                              } catch {}
+                            onClick={() => {
+                              setPickerTarget('boy');
+                              setIsTimePickerOpen(true);
                             }}
-                            onFocus={(e) => {
-                              try {
-                                (e.currentTarget as any).showPicker?.();
-                              } catch {}
-                            }}
+                            placeholder="HH:MM"
                             className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21] cursor-pointer"
                           />
                         </div>
@@ -2511,38 +2481,28 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                         <div>
                           <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">{t('kundali.dob', 'जन्म तिथि')}</label>
                           <input
-                            type="date"
+                            type="text"
+                            readOnly
                             value={girlDob}
-                            onChange={(e) => setGirlDob(e.target.value)}
-                            onClick={(e) => {
-                              try {
-                                (e.currentTarget as any).showPicker?.();
-                              } catch {}
+                            onClick={() => {
+                              setPickerTarget('girl');
+                              setIsDatePickerOpen(true);
                             }}
-                            onFocus={(e) => {
-                              try {
-                                (e.currentTarget as any).showPicker?.();
-                              } catch {}
-                            }}
+                            placeholder="YYYY-MM-DD"
                             className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21] cursor-pointer"
                           />
                         </div>
                         <div>
                           <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">{t('kundali.time', 'जन्म समय')}</label>
                           <input
-                            type="time"
+                            type="text"
+                            readOnly
                             value={girlTob}
-                            onChange={(e) => setGirlTob(e.target.value)}
-                            onClick={(e) => {
-                              try {
-                                (e.currentTarget as any).showPicker?.();
-                              } catch {}
+                            onClick={() => {
+                              setPickerTarget('girl');
+                              setIsTimePickerOpen(true);
                             }}
-                            onFocus={(e) => {
-                              try {
-                                (e.currentTarget as any).showPicker?.();
-                              } catch {}
-                            }}
+                            placeholder="HH:MM"
                             className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21] cursor-pointer"
                           />
                         </div>
@@ -3040,6 +3000,44 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             );
           }
         }}
+      />
+
+      {/* In-App Vedic Date Picker Modal */}
+      <VedicDatePickerModal
+        isOpen={isDatePickerOpen}
+        value={pickerTarget === 'main' ? dob : pickerTarget === 'boy' ? boyDob : girlDob}
+        onChange={(newDate) => {
+          if (pickerTarget === 'main') setDob(newDate);
+          else if (pickerTarget === 'boy') setBoyDob(newDate);
+          else setGirlDob(newDate);
+        }}
+        onClose={() => setIsDatePickerOpen(false)}
+        title={
+          pickerTarget === 'main'
+            ? undefined
+            : pickerTarget === 'boy'
+            ? 'वर की जन्म तिथि चुनें'
+            : 'कन्या की जन्म तिथि चुनें'
+        }
+      />
+
+      {/* In-App Vedic Time Picker Modal */}
+      <VedicTimePickerModal
+        isOpen={isTimePickerOpen}
+        value={pickerTarget === 'main' ? tob : pickerTarget === 'boy' ? boyTob : girlTob}
+        onChange={(newTime) => {
+          if (pickerTarget === 'main') setTob(newTime);
+          else if (pickerTarget === 'boy') setBoyTob(newTime);
+          else setGirlTob(newTime);
+        }}
+        onClose={() => setIsTimePickerOpen(false)}
+        title={
+          pickerTarget === 'main'
+            ? undefined
+            : pickerTarget === 'boy'
+            ? 'वर का जन्म समय चुनें'
+            : 'कन्या का जन्म समय चुनें'
+        }
       />
     </div>
   );
