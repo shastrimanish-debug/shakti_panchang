@@ -156,8 +156,13 @@ export const RemindersView: React.FC<RemindersViewProps> = ({
                   type="date"
                   value={dateStr}
                   onChange={(e) => setDateStr(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full bg-[#FAF2E4] border border-[#DFCBB5] rounded-lg p-1.5 text-xs font-semibold text-[#5C3A21] outline-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try {
+                      (e.currentTarget as any).showPicker?.();
+                    } catch {}
+                  }}
+                  className="w-full bg-[#FAF2E4] border border-[#DFCBB5] rounded-lg p-1.5 text-xs font-semibold text-[#5C3A21] outline-none cursor-pointer"
                 />
               </div>
               <div>
@@ -166,8 +171,13 @@ export const RemindersView: React.FC<RemindersViewProps> = ({
                   type="time"
                   value={timeStr}
                   onChange={(e) => setTimeStr(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full bg-[#FAF2E4] border border-[#DFCBB5] rounded-lg p-1.5 text-xs font-semibold text-[#5C3A21] outline-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try {
+                      (e.currentTarget as any).showPicker?.();
+                    } catch {}
+                  }}
+                  className="w-full bg-[#FAF2E4] border border-[#DFCBB5] rounded-lg p-1.5 text-xs font-semibold text-[#5C3A21] outline-none cursor-pointer"
                 />
               </div>
             </div>

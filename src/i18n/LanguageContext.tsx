@@ -13,19 +13,22 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { t } = useTranslation();
+  const { t, i18n: i18nInstance } = useTranslation();
   const [language, setLanguageState] = useState<string>(() => {
     return i18n.language || getInitialLanguage();
   });
+  const [version, setVersion] = useState<number>(0);
 
   useEffect(() => {
     const handleLangChange = (lng: string) => {
       setLanguageState(lng);
+      setVersion((v) => v + 1);
     };
     const handleCustomEvent = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail && typeof detail === 'string') {
         setLanguageState(detail);
+        setVersion((v) => v + 1);
       }
     };
 
@@ -39,10 +42,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const setLanguage = useCallback(async (code: string) => {
-    // 1. Immediately update React state so UI re-renders synchronously
-    setLanguageState(code);
-    // 2. Update i18n instance and persistence
+    // 1. Await full i18n change first so dictionary is loaded & i18n.language is set
     await setAppLanguage(code);
+    // 2. Update React state and bump version to trigger full re-mount of child components
+    setLanguageState(code);
+    setVersion((v) => v + 1);
   }, []);
 
   const currentOption = useMemo(() => {
@@ -55,14 +59,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       currentOption,
       setLanguage,
       supportedLanguages: SUPPORTED_LANGUAGES,
-      t: (key: string, fallback?: string) => t(key, fallback || key),
+      t: (key: string, fallback?: string) => i18nInstance.t(key, fallback || key),
     }),
-    [language, currentOption, setLanguage, t]
+    [language, currentOption, setLanguage, i18nInstance, version]
   );
 
   return (
     <LanguageContext.Provider value={value}>
-      <div key={`lang-root-${language}`} className="w-full h-full">
+      <div key={`lang-root-${language}-${version}`} className="w-full h-full">
         {children}
       </div>
     </LanguageContext.Provider>

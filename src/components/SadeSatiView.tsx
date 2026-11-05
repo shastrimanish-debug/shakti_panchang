@@ -94,7 +94,12 @@ export const SadeSatiView: React.FC<SadeSatiViewProps> = ({
             type="date"
             value={transitDate}
             onChange={(e) => setTransitDate(e.target.value)}
-            className="bg-white border border-[#8C6239]/30 rounded px-1.5 py-0.5 text-xs text-[#5C3A21] outline-none"
+            onClick={(e) => {
+              try {
+                (e.currentTarget as any).showPicker?.();
+              } catch {}
+            }}
+            className="bg-white border border-[#8C6239]/30 rounded px-1.5 py-0.5 text-xs text-[#5C3A21] outline-none cursor-pointer"
           />
         </div>
       </div>

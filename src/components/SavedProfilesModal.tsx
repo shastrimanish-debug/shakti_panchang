@@ -9,7 +9,7 @@ import {
   importKundaliProfilesJson,
 } from '../services/storage';
 import { BookMarked, X, Trash2, Download, Upload, CheckCircle2, Copy, FileText, Cloud } from 'lucide-react';
-import { useTranslation } from '../i18n';
+import { useTranslation, useLanguage } from '../i18n';
 import { trRashi, trVedic } from '../i18n/vedicTranslate';
 import { ZeroScrollPager } from './ZeroScrollPager';
 import { saveOrDeliverKundaliBackup } from '../lib/device';
@@ -26,6 +26,7 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
   onSelectProfile,
 }) => {
   const { t, i18n } = useTranslation();
+  const { language } = useLanguage();
   const [profiles, setProfiles] = useState<KundaliData[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showPasteModal, setShowPasteModal] = useState<boolean>(false);
@@ -137,7 +138,8 @@ export const SavedProfilesModal: React.FC<SavedProfilesModalProps> = ({
 
   const formatDate = (d: Date) => {
     const dt = d instanceof Date ? d : new Date(d);
-    return dt.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'hi-IN', {
+    const loc = language === 'en' ? 'en-US' : language === 'gu' ? 'gu-IN' : 'hi-IN';
+    return dt.toLocaleDateString(loc, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

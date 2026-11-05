@@ -42,11 +42,12 @@ import { LalKitabUpayListView } from './LalKitabUpayListView';
 import { PrashnaJyotishPanel } from './PrashnaJyotishPanel';
 import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 import { UpayParchiModal } from './UpayParchiModal';
-import { useTranslation } from '../i18n';
+import { useTranslation, useLanguage } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
   User,
   Clock,
+  Calendar,
   Heart,
   HelpCircle,
   Shield,
@@ -165,6 +166,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   initialSubTab,
 }) => {
   const { t, i18n } = useTranslation();
+  const { language } = useLanguage();
   // Active Sub-Tab
   const [kundaliTab, setKundaliTab] = useState<'chart' | 'cosmic_3d' | 'dasha' | 'milan' | 'prashna' | 'remedies' | 'phalit' | 'sadesati' | 'kp_ashtakvarga'>(
     initialSubTab || 'chart'
@@ -740,14 +742,14 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 title="पारंपरिक ज्योतिषीय लेटरहेड पर ६-सूत्रीय उपाय पर्ची (Prescription Pad)"
               >
                 <FileText className="w-3.5 h-3.5 text-[#7A1D1D]" />
-                <span>📋 उपाय पर्ची</span>
+                <span>📋 {t('common.prescriptionPad', 'उपाय पर्ची')}</span>
               </button>
 
               <button
                 onClick={onOpenSavedModal}
                 className="px-2.5 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition cursor-pointer"
               >
-                सहेजे गए
+                {t('common.saved', 'सहेजे गए')}
               </button>
 
               {onOpenUmaModal && (
@@ -902,44 +904,137 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#8C6239] mb-1">{t('kundali.dob', 'जन्म तिथि (DOB)')}</label>
-              <input
-                type="date"
-                value={dob}
-                onChange={(e) => setDob(e.target.value)}
-                className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-[#8C6239]">{t('kundali.dob', 'जन्म तिथि (DOB)')}</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const y = now.getFullYear();
+                    const m = String(now.getMonth() + 1).padStart(2, '0');
+                    const d = String(now.getDate()).padStart(2, '0');
+                    setDob(`${y}-${m}-${d}`);
+                  }}
+                  className="text-[10px] text-[#B56A00] font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                >
+                  <Calendar className="w-3 h-3" />
+                  <span>{t('common.todayDate', 'आज')}</span>
+                </button>
+              </div>
+              <div className="relative flex items-center">
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  onClick={(e) => {
+                    try {
+                      (e.currentTarget as any).showPicker?.();
+                    } catch {}
+                  }}
+                  onFocus={(e) => {
+                    try {
+                      (e.currentTarget as any).showPicker?.();
+                    } catch {}
+                  }}
+                  className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 pr-8 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                    try {
+                      input?.showPicker?.();
+                    } catch {
+                      input?.focus?.();
+                    }
+                  }}
+                  className="absolute right-2 p-1 text-[#8C6239] hover:text-[#5C3A21] cursor-pointer"
+                  title="कैलेंडर खोलें"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#8C6239] mb-1 flex items-center justify-between gap-1">
-                <span>{t('kundali.time', 'जन्म समय (Time)')}</span>
-                {tob && (
-                  <span className="text-[10px] font-bold text-[#B56A00]">
-                    {formatTime12h(tob)}
-                  </span>
-                )}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-[#8C6239] flex items-center gap-1">
+                  <span>{t('kundali.time', 'जन्म समय (Time)')}</span>
+                  {tob && (
+                    <span className="text-[10px] font-bold text-[#B56A00]">
+                      {formatTime12h(tob)}
+                    </span>
+                  )}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const hh = String(now.getHours()).padStart(2, '0');
+                    const mm = String(now.getMinutes()).padStart(2, '0');
+                    setTob(`${hh}:${mm}`);
+                  }}
+                  className="text-[10px] text-[#B56A00] font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>{t('common.nowTime', 'अभी')}</span>
+                </button>
+              </div>
               <div className="flex items-center gap-1.5">
-                <input
-                  type="time"
-                  value={toTimeInput24h(tob) || tob}
-                  onChange={(e) => setTob(e.target.value)}
-                  className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none"
-                />
-                {tob && (() => {
-                  const { hours, minutes } = parseTimeString(tob);
-                  const isPmNow = hours >= 12;
+                <div className="relative flex-1 flex items-center">
+                  <input
+                    type="time"
+                    value={tob}
+                    onChange={(e) => setTob(e.target.value)}
+                    onBlur={() => {
+                      if (tob) {
+                        const normalized = toTimeInput24h(tob);
+                        if (normalized) setTob(normalized);
+                      }
+                    }}
+                    onClick={(e) => {
+                      try {
+                        (e.currentTarget as any).showPicker?.();
+                      } catch {}
+                    }}
+                    onFocus={(e) => {
+                      try {
+                        (e.currentTarget as any).showPicker?.();
+                      } catch {}
+                    }}
+                    className="w-full bg-[#F4E8D1] border border-[#8C6239]/40 rounded-lg p-2 pr-8 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none cursor-pointer"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                      try {
+                        input?.showPicker?.();
+                      } catch {
+                        input?.focus?.();
+                      }
+                    }}
+                    className="absolute right-2 p-1 text-[#8C6239] hover:text-[#5C3A21] cursor-pointer"
+                    title="समय घड़ी खोलें"
+                  >
+                    <Clock className="w-4 h-4" />
+                  </button>
+                </div>
+                {(() => {
+                  const { hours, minutes } = parseTimeString(tob || '12:00');
+                  const isPmNow = tob ? hours >= 12 : false;
                   return (
                     <div className="flex rounded-lg border border-[#8C6239]/40 overflow-hidden shrink-0">
                       <button
                         type="button"
                         onClick={() => {
-                          const nextH = hours >= 12 ? hours - 12 : hours;
-                          setTob(`${String(nextH).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+                          const currentH = tob ? hours : 9;
+                          const currentM = tob ? minutes : 0;
+                          const nextH = currentH >= 12 ? currentH - 12 : currentH;
+                          setTob(`${String(nextH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`);
                         }}
                         className={`px-2 py-2 text-[10px] font-black transition cursor-pointer ${
-                          !isPmNow ? 'bg-[#5C3A21] text-[#FFD88A]' : 'bg-[#F4E8D1] text-[#5C3A21]'
+                          tob && !isPmNow ? 'bg-[#5C3A21] text-[#FFD88A]' : 'bg-[#F4E8D1] text-[#5C3A21]'
                         }`}
                         title="प्रातः (AM)"
                       >
@@ -948,11 +1043,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          const nextH = hours < 12 ? hours + 12 : hours;
-                          setTob(`${String(nextH).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+                          const currentH = tob ? hours : 14;
+                          const currentM = tob ? minutes : 0;
+                          const nextH = currentH < 12 ? currentH + 12 : currentH;
+                          setTob(`${String(nextH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`);
                         }}
                         className={`px-2 py-2 text-[10px] font-black transition cursor-pointer ${
-                          isPmNow ? 'bg-[#5C3A21] text-[#FFD88A]' : 'bg-[#F4E8D1] text-[#5C3A21]'
+                          tob && isPmNow ? 'bg-[#5C3A21] text-[#FFD88A]' : 'bg-[#F4E8D1] text-[#5C3A21]'
                         }`}
                         title="दोपहर / सायं / रात्रि (PM)"
                       >
@@ -1011,7 +1108,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   type="submit"
                   className="w-full px-6 py-3 min-h-11 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-sm font-bold rounded-xl shadow-sm transition cursor-pointer"
                 >
-                  कुंडली बनाएँ और सहेजें
+                  {t('common.createAndSave', 'कुंडली बनाएँ और सहेजें')}
                 </button>
               </div>
             </div>
@@ -1082,15 +1179,15 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       <CalcSettingsPanel compact />
       <div className="grid grid-cols-2 gap-2 pb-16">
         {[
-          { id: 'phalit', label: 'फलादेश', icon: Sparkles },
-          { id: 'chart', label: 'वर्ग चक्र D1–D60', icon: Layers },
-          { id: 'cosmic_3d', label: '3D कुंडली', icon: Compass },
-          { id: 'dasha', label: 'विंशोत्तरी दशा', icon: Clock },
-          { id: 'milan', label: 'कुंडली मिलान', icon: Heart },
-          { id: 'sadesati', label: 'साढ़े साती', icon: Compass },
-          { id: 'kp_ashtakvarga', label: 'केपी व अष्टकवर्ग', icon: Zap },
-          { id: 'prashna', label: 'प्रश्न कुंडली', icon: HelpCircle },
-          { id: 'remedies', label: 'वैदिक उपाय व रत्न', icon: Shield },
+          { id: 'phalit', label: t('kundali.tabPhalit', 'फलादेश'), icon: Sparkles },
+          { id: 'chart', label: t('kundali.tabCharts', 'वर्ग चक्र D1–D60'), icon: Layers },
+          { id: 'cosmic_3d', label: t('kundali.tabCosmic3D', '3D कुंडली'), icon: Compass },
+          { id: 'dasha', label: t('kundali.tabDasha', 'विंशोत्तरी दशा'), icon: Clock },
+          { id: 'milan', label: t('kundali.tabMilan', 'कुंडली मिलान'), icon: Heart },
+          { id: 'sadesati', label: t('kundali.tabSadeSati', 'साढ़े साती'), icon: Compass },
+          { id: 'kp_ashtakvarga', label: t('kundali.tabKp', 'केपी व अष्टकवर्ग'), icon: Zap },
+          { id: 'prashna', label: t('kundali.tabPrashna', 'प्रश्न कुंडली'), icon: HelpCircle },
+          { id: 'remedies', label: t('kundali.tabRemedies', 'वैदिक उपाय व रत्न'), icon: Shield },
         ].map((tab, idx) => {
           const Icon = tab.icon;
           const isSel = kundaliTab === tab.id;
@@ -2272,21 +2369,41 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म तिथि</label>
+                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">{t('kundali.dob', 'जन्म तिथि')}</label>
                           <input
                             type="date"
                             value={boyDob}
                             onChange={(e) => setBoyDob(e.target.value)}
-                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                            onClick={(e) => {
+                              try {
+                                (e.currentTarget as any).showPicker?.();
+                              } catch {}
+                            }}
+                            onFocus={(e) => {
+                              try {
+                                (e.currentTarget as any).showPicker?.();
+                              } catch {}
+                            }}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21] cursor-pointer"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म समय</label>
+                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">{t('kundali.time', 'जन्म समय')}</label>
                           <input
                             type="time"
                             value={boyTob}
                             onChange={(e) => setBoyTob(e.target.value)}
-                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                            onClick={(e) => {
+                              try {
+                                (e.currentTarget as any).showPicker?.();
+                              } catch {}
+                            }}
+                            onFocus={(e) => {
+                              try {
+                                (e.currentTarget as any).showPicker?.();
+                              } catch {}
+                            }}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21] cursor-pointer"
                           />
                         </div>
                       </div>
@@ -2393,21 +2510,41 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म तिथि</label>
+                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">{t('kundali.dob', 'जन्म तिथि')}</label>
                           <input
                             type="date"
                             value={girlDob}
                             onChange={(e) => setGirlDob(e.target.value)}
-                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                            onClick={(e) => {
+                              try {
+                                (e.currentTarget as any).showPicker?.();
+                              } catch {}
+                            }}
+                            onFocus={(e) => {
+                              try {
+                                (e.currentTarget as any).showPicker?.();
+                              } catch {}
+                            }}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21] cursor-pointer"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">जन्म समय</label>
+                          <label className="text-[10px] font-bold text-[#5C3A21] block mb-0.5">{t('kundali.time', 'जन्म समय')}</label>
                           <input
                             type="time"
                             value={girlTob}
                             onChange={(e) => setGirlTob(e.target.value)}
-                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21]"
+                            onClick={(e) => {
+                              try {
+                                (e.currentTarget as any).showPicker?.();
+                              } catch {}
+                            }}
+                            onFocus={(e) => {
+                              try {
+                                (e.currentTarget as any).showPicker?.();
+                              } catch {}
+                            }}
+                            className="w-full bg-white border border-[#8C6239]/30 rounded p-1.5 text-xs text-[#5C3A21] cursor-pointer"
                           />
                         </div>
                       </div>

@@ -331,11 +331,11 @@ export function BoardHeader({
           onTheme();
         }}
         className="bx-head-btn shrink-0"
-        aria-label="थीम"
-        title="थीम बदलें"
+        aria-label={t("common.theme", "थीम")}
+        title={t("common.theme", "थीम")}
       >
         <Palette className="w-3.5 h-3.5" />
-        <span className="text-[11px] font-semibold">थीम</span>
+        <span className="text-[11px] font-semibold">{t("common.theme", "थीम")}</span>
       </button>
       <button
         type="button"
@@ -597,7 +597,7 @@ export function TodayBoard({
   const facts: [string, string][] = [
     [t("panchang.tithi", "तिथि"), trVedic(panchang.tithi)],
     [t("panchang.paksha", "पक्ष"), trVedic(panchang.paksha)],
-    [t("panchang.nakshatra", "नक्षत्र"), `${trVedic(panchang.nakshatra)} · चरण ${panchang.pada}`],
+    [t("panchang.nakshatra", "नक्षत्र"), `${trVedic(panchang.nakshatra)} · ${language === 'en' ? 'Charan' : language === 'gu' ? 'ચરણ' : 'चरण'} ${panchang.pada}`],
     [t("panchang.yoga", "योग"), trVedic(panchang.yoga)],
     [t("panchang.karana", "करण"), trVedic(panchang.karana)],
     [t("panchang.weekday", "वार"), trVedic(panchang.weekday)],
@@ -698,7 +698,7 @@ export function TodayBoard({
               style={{ backgroundColor: "var(--bx-gold)", color: "#FFFFFF" }}
               className="text-[10px] px-1.5 py-0.5 rounded font-black shrink-0"
             >
-              शहर बदलें ▾
+              {t("common.changeCity", "शहर बदलें ▾")}
             </span>
           </motion.button>
 
@@ -719,7 +719,7 @@ export function TodayBoard({
             className="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition cursor-pointer hover:opacity-90"
           >
             <Calendar className="w-3.5 h-3.5" style={{ color: "var(--bx-header)" }} />
-            <span>मासिक कैलेंडर</span>
+            <span>{t("common.monthlyCalendar", "मासिक कैलेंडर")}</span>
           </motion.button>
         </div>
 
@@ -737,8 +737,8 @@ export function TodayBoard({
               onClick={handlePrevDay}
               style={{ color: "var(--bx-ink)" }}
               className="p-1 rounded-lg hover:opacity-80 cursor-pointer"
-              title="पिछला दिन"
-              aria-label="पिछला दिन"
+              title={t("common.prevDay", "पिछला दिन")}
+              aria-label={t("common.prevDay", "पिछला दिन")}
             >
               <ChevronLeft className="w-4 h-4" />
             </motion.button>
@@ -753,6 +753,11 @@ export function TodayBoard({
               <input
                 type="date"
                 value={activeDate.toISOString().split("T")[0]}
+                onClick={(e) => {
+                  try {
+                    (e.currentTarget as any).showPicker?.();
+                  } catch {}
+                }}
                 onChange={(e) => {
                   if (e.target.valueAsDate) onDateChange(e.target.valueAsDate);
                 }}
@@ -767,10 +772,10 @@ export function TodayBoard({
               onClick={handleTodayReset}
               style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF" }}
               className="px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-              title="आज की तिथि पर लौटें"
+              title={t("common.todayBtn", "आज की तिथि पर लौटें")}
             >
               <RotateCcw className="w-3 h-3" />
-              <span>आज</span>
+              <span>{t("common.todayBtn", "आज")}</span>
             </motion.button>
 
             <motion.button
@@ -779,8 +784,8 @@ export function TodayBoard({
               onClick={handleNextDay}
               style={{ color: "var(--bx-ink)" }}
               className="p-1 rounded-lg hover:opacity-80 cursor-pointer"
-              title="अगला दिन"
-              aria-label="अगला दिन"
+              title={t("common.nextDay", "अगला दिन")}
+              aria-label={t("common.nextDay", "अगला दिन")}
             >
               <ChevronRight className="w-4 h-4" />
             </motion.button>
@@ -833,7 +838,7 @@ export function TodayBoard({
               ) : (
                 <Share2 className="w-3.5 h-3.5 text-[#FFD88A]" />
               )}
-              <span>शेयर करें</span>
+              <span>{t("common.share", "शेयर करें")}</span>
             </motion.button>
 
             <motion.button
@@ -849,7 +854,7 @@ export function TodayBoard({
               ) : (
                 <Download className="w-3.5 h-3.5 text-amber-200" />
               )}
-              <span>HD में सेव करें</span>
+              <span>{t("common.saveHd", "HD में सेव करें")}</span>
             </motion.button>
           </div>
         </div>

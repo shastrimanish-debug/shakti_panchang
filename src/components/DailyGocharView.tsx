@@ -69,6 +69,11 @@ export const DailyGocharView: React.FC<DailyGocharViewProps> = ({
           <input
             type="date"
             value={selectedDateStr}
+            onClick={(e) => {
+              try {
+                (e.currentTarget as any).showPicker?.();
+              } catch {}
+            }}
             onChange={(e) => {
               setSelectedDateStr(e.target.value);
               triggerHapticSelection();

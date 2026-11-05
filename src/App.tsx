@@ -532,7 +532,7 @@ export function App() {
                 tabMenu.go();
               }}
             >
-              मुख्य मेनू
+              {t("common.mainMenu", "मुख्य मेनू")}
             </motion.button>
           )}
         </div>
@@ -562,7 +562,7 @@ export function App() {
               style={{ backgroundColor: 'var(--bx-gold)', color: '#FFFFFF' }}
               className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-black shrink-0 hidden xs:inline"
             >
-              शहर ▾
+              {t("common.changeCity", "शहर ▾")}
             </span>
           </motion.button>
 
