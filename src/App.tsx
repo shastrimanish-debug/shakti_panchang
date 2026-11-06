@@ -579,10 +579,14 @@ export function App() {
               triggerHapticSelection();
               setIsLocationModalOpen(true);
             }}
-            title="शहर / स्थान बदलें (Select City)"
+            title={currentLang === 'en' ? "Select City / Location" : "शहर / स्थान बदलें (Select City)"}
           >
             <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
-            <span className="truncate max-w-[55px] xs:max-w-[90px] sm:max-w-[150px] text-xs font-semibold">{currentLocation.name}</span>
+            <span className="truncate max-w-[55px] xs:max-w-[90px] sm:max-w-[150px] text-xs font-semibold">
+              {currentLang === 'en'
+                ? (currentLocation.name.match(/\(([^)]+)\)/)?.[1] || currentLocation.name)
+                : currentLocation.name}
+            </span>
             <span
               style={{ backgroundColor: 'var(--bx-gold)', color: '#FFFFFF' }}
               className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-black shrink-0 hidden xs:inline"
@@ -604,13 +608,17 @@ export function App() {
               borderColor: appFontSize !== 'normal' ? 'var(--bx-gold)' : 'var(--bx-line)',
             }}
             onClick={handleCycleFontSize}
-            title={`अक्षर का आकार बदलें (वर्तमान: ${appFontSize === 'xlarge' ? 'अति-विशाल (वृद्धजन)' : appFontSize === 'large' ? 'बड़ा' : 'सामान्य'})`}
+            title={currentLang === 'en' ? `Font Size (${appFontSize})` : `अक्षर का आकार बदलें (वर्तमान: ${appFontSize === 'xlarge' ? 'अति-विशाल (वृद्धजन)' : appFontSize === 'large' ? 'बड़ा' : 'सामान्य'})`}
           >
             <span className="font-bold text-xs">
-              {appFontSize === 'xlarge' ? 'अ++' : appFontSize === 'large' ? 'अ+' : 'अ'}
+              {currentLang === 'en'
+                ? (appFontSize === 'xlarge' ? 'A++' : appFontSize === 'large' ? 'A+' : 'A')
+                : (appFontSize === 'xlarge' ? 'अ++' : appFontSize === 'large' ? 'अ+' : 'अ')}
             </span>
             <span className="text-[11px] font-semibold hidden sm:inline">
-              {appFontSize === 'xlarge' ? 'अति-विशाल' : appFontSize === 'large' ? 'बड़ा' : 'अक्षर'}
+              {currentLang === 'en'
+                ? (appFontSize === 'xlarge' ? 'Extra' : appFontSize === 'large' ? 'Large' : 'Font')
+                : (appFontSize === 'xlarge' ? 'अति-विशाल' : appFontSize === 'large' ? 'बड़ा' : 'अक्षर')}
             </span>
           </motion.button>
 
@@ -629,10 +637,10 @@ export function App() {
               triggerHapticSelection();
               setIsUmaModalOpen(true);
             }}
-            title="उमा वैदिक दैवज्ञ"
+            title={currentLang === 'en' ? "Uma Vedic Assistant" : "उमा वैदिक दैवज्ञ"}
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-gold)' }} />
-            <span className="text-xs font-bold">उमा</span>
+            <span className="text-xs font-bold">{currentLang === 'en' ? 'Uma' : currentLang === 'gu' ? 'ઉમા' : 'उमा'}</span>
           </motion.button>
         </div>
       </div>

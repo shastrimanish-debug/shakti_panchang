@@ -888,6 +888,66 @@ const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string;
     desc: 'Complete overview of all chapters, texts and tools',
     screenTitle: '📖 Granth Index',
   },
+  prashna: {
+    title: 'Horary Astrology (Prashna Kundali)',
+    label: 'Prashna Kundali',
+    desc: 'Instant query chart for career, success & clarity without birth time',
+    screenTitle: '❓ Instant Prashna Kundali',
+  },
+  kalnirnay: {
+    title: 'Monthly Vedic Calendar & Kalnirnay Panchang',
+    label: 'Monthly Panchang',
+    desc: 'Full 12-month calendar, Ekadashi, Purnima, Amavasya & sacred festivals',
+    screenTitle: '📅 Monthly Vedic Kalnirnay Panchang',
+  },
+  audio_player: {
+    title: 'Devotional Music & Sacred Audio Recitations',
+    label: 'Bhakti Music',
+    desc: 'Shiva Mahimna, Hanuman Chalisa, Durga Saptashati & divine aartis',
+    screenTitle: '🎧 Devotional Music & Audio',
+  },
+  saral: {
+    title: 'Simple Spiritual Remedies & Life Guidance (501)',
+    label: 'Simple Remedies',
+    desc: '501 practical, non-destructive spiritual remedies for daily peace & prosperity',
+    screenTitle: '🪔 Simple Spiritual Remedies',
+  },
+  shastrokt: {
+    title: '501 Certified Shastrokt Mantras & Sadhana Rituals',
+    label: '501 Mantras',
+    desc: 'Deity, sacred japa count, rosary, direction, day & complete Vedic ritual',
+    screenTitle: 'ॐ 501 Vedic Mantras',
+  },
+  sabar: {
+    title: '501 Siddh Sabar Mantras & Guru Gorakhnath Sadhana',
+    label: 'Sabar Mantras',
+    desc: '501 authentic Sabar mantras, deity invoke, day, rosary & consecrated procedure',
+    screenTitle: '🔱 Siddh Sabar Mantras',
+  },
+  jain_mantras: {
+    title: '201 Sacred Jain Mantras, Sutras & Stotras',
+    label: 'Jain Mantras',
+    desc: 'Navkar Mantra, Uvasaggaharam, Bhaktamar & holy Jain contemplations',
+    screenTitle: '☸ Sacred Jain Mantras',
+  },
+  sadesati: {
+    title: 'Shani Sade Sati & Dhaiya Astrological Analysis',
+    label: 'Sade Sati',
+    desc: 'Current Saturn transit, 3 phases, Kantaka & Ashtama Dhaiya impact & remedies',
+    screenTitle: '🪐 Shani Sade Sati & Dhaiya',
+  },
+  gochar: {
+    title: 'Daily Planetary Transits (Navagraha Gochar)',
+    label: 'Planetary Transits',
+    desc: 'Current celestial planetary positions, house effects & Phaladeepika analysis',
+    screenTitle: '🪐 Daily Planetary Transits',
+  },
+  japamala: {
+    title: '108 Digital Rudraksha Japa Mala & Mantra Sadhana',
+    label: 'Japa Mala',
+    desc: '108 Rudraksha beads, Sumeru peak, divine bell sound & daily japa tracker',
+    screenTitle: '📿 108 Digital Japa Mala',
+  },
 };
 
 const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
@@ -1052,6 +1112,90 @@ const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string;
     label: 'વિષ્ણુ સહસ્રનામ',
     desc: 'મહાભારત અનુશાસન પર્વ અંતર્ગત ભીષ્મ-યુધિષ્ઠિર સંવાદ, ૧૦૮ શ્લોક, ૧૦૦૦ દિવ્ય નામ અને ફલશ્રુતિ',
     screenTitle: '🙏 શ્રી વિષ્ણુ સહસ્રનામ સ્તોત્રમ્',
+  },
+  hanuman: {
+    title: 'શ્રી હનુમાન ચાલીસા સંપુટ પાઠ',
+    label: 'હનુમાન ચાલીસા',
+    desc: 'દોહા અને તમામ ૪૦ ચોપાઈઓ સાથે ભાવપૂર્ણ પાઠ',
+    screenTitle: '🙏 શ્રી હનુમાન ચાલીસા',
+  },
+  sundarkand: {
+    title: 'સંપૂર્ણ સુંદરકાંડ (શ્રીરામચરિતમાનસ)',
+    label: 'સુંદરકાંડ',
+    desc: 'તુલસીદાસ રચિત સંપૂર્ણ સુંદરકાંડ ચોપાઈ અને દોહા',
+    screenTitle: '📖 સંપૂર્ણ સુંદરકાંડ',
+  },
+  shiv_tantra: {
+    title: 'શિવ તંત્ર વિદ્યા (કાશ્મીર શૈવ દર્શન અને વિજ્ઞાન ભૈરવ)',
+    label: 'શિવ તંત્ર',
+    desc: 'કાશ્મીર શૈવ દર્શન • વિજ્ઞાન ભૈરવ તંત્ર ૧૧૨ સૂત્રો • ૭ ચક્ર અને ૩ નાડી વિજ્ઞાન',
+    screenTitle: '🔱 શિવ તંત્ર વિદ્યા',
+  },
+  devta_arpan: {
+    title: 'દેવતા અર્પણ ફળ અને પૂજન સામગ્રી વિધાન',
+    label: 'દેવતા અર્પણ',
+    desc: '૧૪+ દેવી-દેવતાઓ પર અર્પણ સામગ્રી, શાસ્ત્રોક્ત ફળ, મનોકામના સિદ્ધિ અને મંત્રો',
+    screenTitle: '🪔 દેવતા અર્પણ ફળ અને સામગ્રી',
+  },
+  prashna: {
+    title: 'પ્રશ્ન કુંડળી (તાત્કાલિક પ્રશ્ન વિચાર)',
+    label: 'પ્રશ્ન કુંડળી',
+    desc: 'જન્મ સમય વગર તાત્કાલિક પ્રશ્ન સમયની કુંડળીથી કાર્ય સિદ્ધિ વિચાર',
+    screenTitle: '❓ તાત્કાલિક પ્રશ્ન કુંડળી',
+  },
+  kalnirnay: {
+    title: 'માસિક સનાતન કાલનિર્ણય પંચાંગ',
+    label: 'માસિક પંચાંગ',
+    desc: 'સંપૂર્ણ ૧૨ માસનું કાલનિર્ણય કેલેન્ડર, એકાદશી, પૂનમ, અમાસ અને મુખ્ય પર્વ યાદી',
+    screenTitle: '📅 માસિક કાલનિર્ણય પંચાંગ',
+  },
+  audio_player: {
+    title: 'સૂરીલું ભક્તિ સંગીત અને પાવન ઓડિયો સંગ્રહ',
+    label: 'ભક્તિ સંગીત',
+    desc: 'શિવ મહિમ્ન, હનુમાન ચાલીસા, દુર્ગા સપ્તશતી, આરતી અને જાપ',
+    screenTitle: '🎧 સૂરીલું ભક્તિ સંગીત',
+  },
+  saral: {
+    title: 'સરળ ઉપાય અને મંત્ર પાઠ (૫૦૧)',
+    label: 'સરળ ઉપાય',
+    desc: '૫૦૧ વિશિષ્ટ આધ્યાત્મિક, સદાચાર અને જીવન વ્યવહાર ઉપાયો',
+    screenTitle: '🪔 સરળ વૈદિક ઉપાય',
+  },
+  shastrokt: {
+    title: '૫૦૧ શાસ્ત્રોક્ત મંત્રો અને સાધના વિધાન',
+    label: '૫૦૧ મંત્ર',
+    desc: 'દેવતા, જપ-સંખ્યા, દિવસ, માળા, દિશા અને સંપૂર્ણ શાસ્ત્રોક્ત વિધિ',
+    screenTitle: 'ॐ ૫૦૧ શાસ્ત્રોક્ત મંત્રો',
+  },
+  sabar: {
+    title: 'શાબર મંત્ર અને ગુરુ ગોરખનાથ સાધના',
+    label: 'શાબર મંત્ર',
+    desc: '૫૦૧ સિદ્ધ શાબર મંત્રો, દેવતા, દિવસ, માળા અને સંપૂર્ણ વિધિ',
+    screenTitle: '🔱 સિદ્ધ શાબર મંત્રો',
+  },
+  jain_mantras: {
+    title: '૨૦૧ પાવન જૈન પાઠ, સૂત્ર અને સ્તોત્ર',
+    label: 'જૈન મંત્રો',
+    desc: 'ણમોકાર, ઉવસગ્ગહરં, ભક્તામર અને ભાવ સ્મરણ',
+    screenTitle: '☸ પાવન જૈન પાઠ',
+  },
+  sadesati: {
+    title: 'શનિ સાડા સાતી અને ઢૈય્યા વિશ્લેષણ',
+    label: 'સાડા સાતી',
+    desc: 'વર્તમાન શનિ સ્થિતિ, ત્રણ તબક્કા અને અચૂક વૈદિક ઉપાયો',
+    screenTitle: '🪐 શનિ સાડા સાતી વિચાર',
+  },
+  gochar: {
+    title: 'દૈનિક નવગ્રહ ગોચર ચક્ર અને ફળાદેશ',
+    label: 'ગ્રહ ગોચર',
+    desc: 'આકાશી નવગ્રહ ગોચર, જન્મ રાશિ અનુસાર ભાવ સ્થિતિ અને ફળદીપિકા ફળ',
+    screenTitle: '🪐 દૈનિક નવગ્રહ ગોચર ચક્ર',
+  },
+  japamala: {
+    title: '૧૦૮ ડિજિટલ રુદ્રાક્ષ જપ માળા અને મંત્ર સાધના',
+    label: 'જપ માળા',
+    desc: '૧૦૮ રુદ્રાક્ષ મણકા, સુમેરુ, દિવ્ય ઘંટડી ધ્વનિ અને દૈનિક જપ સંકલ્પ ટ્રેકર',
+    screenTitle: '📿 ૧૦૮ ડિજિટલ રુદ્રાક્ષ જપ માળા',
   },
 };
 
@@ -1247,6 +1391,42 @@ const BOOK_PAGE_MR: Record<string, { title: string; label: string; desc: string;
     label: 'जप माळ',
     desc: 'मंत्र जप, मणी मोजणी व ध्यान',
     screenTitle: '📿 १०८ जप माळ',
+  },
+  prashna: {
+    title: 'प्रश्न कुंडली (तात्कालिक प्रश्न विचार)',
+    label: 'प्रश्न कुंडली',
+    desc: 'जन्मवेळेविना तात्काळ प्रश्न कुंडलीवरून कार्यसिद्धी विचार',
+    screenTitle: '❓ तात्कालिक प्रश्न कुंडली',
+  },
+  saral: {
+    title: 'सरळ उपाय व मंत्र पाठ (५०૧)',
+    label: 'सरळ उपाय',
+    desc: '५०१ विशिष्ट आध्यात्मिक व जीवनोपयोगी तोडगे व उपाय',
+    screenTitle: '🪔 सरळ वैदिक उपाय',
+  },
+  shastrokt: {
+    title: '५०१ शास्त्रोक्त मंत्र व साधना विधी',
+    label: '५०१ मंत्र',
+    desc: 'देवता, जपसंख्या, दिवस, माळ व संपूर्ण शास्त्रोक्त विधी',
+    screenTitle: 'ॐ ५०१ शास्त्रोक्त मंत्र',
+  },
+  sabar: {
+    title: 'शाबर मंत्र व गुरु गोरखनाथ साधना',
+    label: 'शाबर मंत्र',
+    desc: '५०१ सिद्ध शाबर मंत्र, देवता व सिद्ध विधी',
+    screenTitle: '🔱 सिद्ध शाबर मंत्र',
+  },
+  jain_mantras: {
+    title: '२०१ पवित्र जैन पाठ, सूत्रे व स्तोत्रे',
+    label: 'जैन मंत्र',
+    desc: 'णमोकार, उवसग्गहरं, भक्तामर व भावस्मरण',
+    screenTitle: '☸ पवित्र जैन पाठ',
+  },
+  gochar: {
+    title: 'दैनिक नवग्रह गोचर चक्र व फल',
+    label: 'ग्रह गोचर',
+    desc: 'वर्तमान आकाशीय ग्रह स्थिती व जन्म राशीनुसार फलदीपिका फलादेश',
+    screenTitle: '🪐 दैनिक नवग्रह गोचर चक्र',
   },
 };
 

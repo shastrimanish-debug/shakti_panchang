@@ -181,6 +181,21 @@ export const KARANA_MAP_EN: Record<string, string> = {
 };
 
 export const MASA_MAP_EN: Record<string, string> = {
+  'चैत्र मास': 'Chaitra Month',
+  'वैशाख मास': 'Vaishakha Month',
+  'ज्येष्ठ मास': 'Jyeshtha Month',
+  'आषाढ़ मास': 'Ashadha Month',
+  'आषाढ मास': 'Ashadha Month',
+  'श्रावण मास': 'Shravana Month',
+  'भाद्रपद मास': 'Bhadrapada Month',
+  'भाद्र मास': 'Bhadrapada Month',
+  'अश्विन मास': 'Ashwin Month',
+  'आश्विन मास': 'Ashwin Month',
+  'कार्तिक मास': 'Kartika Month',
+  'मार्गशीर्ष मास': 'Margashirsha Month',
+  'पौष मास': 'Pausha Month',
+  'माघ मास': 'Magha Month',
+  'फाल्गुन मास': 'Phalguna Month',
   'चैत्र': 'Chaitra',
   'वैशाख': 'Vaishakha',
   'ज्येष्ठ': 'Jyeshtha',
@@ -377,6 +392,21 @@ export const KARANA_MAP_GU: Record<string, string> = {
 };
 
 export const MASA_MAP_GU: Record<string, string> = {
+  'चैत्र मास': 'ચૈત્ર માસ',
+  'वैशाख मास': 'વૈશાખ માસ',
+  'ज्येष्ठ मास': 'જેઠ (જ્યેષ્ઠ) માસ',
+  'आषाढ़ मास': 'અષાઢ માસ',
+  'आषाढ मास': 'અષાઢ માસ',
+  'श्रावण मास': 'શ્રાવણ માસ',
+  'भाद्रपद मास': 'ભાદરવો (ભાદ્રપદ) માસ',
+  'भाद्र मास': 'ભાદરવો માસ',
+  'अश्विन मास': 'આસો (આશ્વિન) માસ',
+  'आश्विन मास': 'આસો (આશ્વિન) માસ',
+  'कार्तिक मास': 'કારતક (કાર્તિક) માસ',
+  'मार्गशीर्ष मास': 'માગશર (માર્ગશીર્ષ) માસ',
+  'पौष मास': 'પોષ માસ',
+  'माघ मास': 'મહા (માઘ) માસ',
+  'फाल्गुन मास': 'ફાગણ (ફાલ્ગુન) માસ',
   'चैत्र': 'ચૈત્ર',
   'वैशाख': 'વૈશાખ',
   'ज्येष्ठ': 'જેઠ (જ્યેષ્ઠ)',
@@ -490,20 +520,6 @@ export const GENERAL_PHRASES_EN: [RegExp, string][] = [
   [/मृग योनि/g, 'Mriga (Deer) Yoni'],
   [/वानर योनि/g, 'Vanara (Monkey) Yoni'],
   [/नकुल योनि/g, 'Nakula (Mongoose) Yoni'],
-  [/सिंह योनि/g, 'Simha (Lion) Yoni'],
-  [/अश्व/g, 'Ashwa'],
-  [/गज/g, 'Gaja'],
-  [/सर्प/g, 'Sarpa'],
-  [/श्वान/g, 'Shwan'],
-  [/मार्जार/g, 'Marjara'],
-  [/मूषक/g, 'Mushaka'],
-  [/गौ/g, 'Gau'],
-  [/महिष/g, 'Mahisha'],
-  [/व्याघ्र/g, 'Vyaghra'],
-  [/मृग/g, 'Mriga'],
-  [/वानर/g, 'Vanara'],
-  [/नकुल/g, 'Nakula'],
-  [/सिंह/g, 'Simha'],
   [/मांगलिक दोष मुक्त/g, 'Non-Manglik (Dosh-Free)'],
   [/मांगलिक/g, 'Manglik'],
   [/साढ़े साती नहीं है/g, 'No Sade Sati currently'],
@@ -515,10 +531,17 @@ export const GENERAL_PHRASES_EN: [RegExp, string][] = [
   [/मध्यम/g, 'Moderate'],
   [/लाहिरी अयनांश \(चित्रपक्ष\)/g, 'Lahiri Ayanamsha (Chitrapaksha)'],
   [/लाहिरी अयनांश/g, 'Lahiri Ayanamsha'],
+  [/लाहिरी \/ चित्रपक्ष/g, 'Lahiri / Chitrapaksha'],
   [/रमन अयनांश/g, 'Raman Ayanamsha'],
+  [/बी\.वी\. रमन/g, 'B.V. Raman'],
   [/के\.पी\. अयनांश \(न्यूकॉम्ब\)/g, 'K.P. Ayanamsha (Newcomb)'],
   [/के\.पी\. अयनांश/g, 'K.P. Ayanamsha'],
+  [/के\.पी\. \/ कृष्णमूर्ति/g, 'K.P. / Krishnamurti'],
   [/अयनांश/g, 'Ayanamsha'],
+  [/मध्य राहु \(Mean\)/g, 'Mean Rahu'],
+  [/सत्य राहु \(True\)/g, 'True Rahu'],
+  [/राशि भाव \(Whole Sign\)/g, 'Whole Sign Houses'],
+  [/श्रीपति भाव/g, 'Sripati Houses'],
 ];
 
 export const GENERAL_PHRASES_GU: [RegExp, string][] = [
@@ -621,19 +644,6 @@ export const GENERAL_PHRASES_GU: [RegExp, string][] = [
   [/वानर योनि/g, 'વાનર યોનિ'],
   [/नकुल योनि/g, 'નકુલ યોનિ'],
   [/सिंह योनि/g, 'સિંહ યોનિ'],
-  [/अश्व/g, 'અશ્વ'],
-  [/गज/g, 'ગજ'],
-  [/सर्प/g, 'સર્પ'],
-  [/श्वान/g, 'શ્વાન'],
-  [/मार्जार/g, 'માર્જાર'],
-  [/मूषक/g, 'મૂષક'],
-  [/गौ/g, 'ગૌ'],
-  [/महिष/g, 'મહિષ'],
-  [/व्याघ्र/g, 'વ્યાઘ્ર'],
-  [/मृग/g, 'મૃગ'],
-  [/वानर/g, 'વાનર'],
-  [/नकुल/g, 'નકુલ'],
-  [/सिंह/g, 'સિંહ'],
   [/मांगलिक दोष मुक्त/g, 'માંગલિક દોષ મુક્ત'],
   [/मांगलिक/g, 'માંગલિક'],
   [/साढ़े साती नहीं है/g, 'સાડા સાતી નથી'],
@@ -664,8 +674,8 @@ export function trVedic(term: string | undefined | null, langOverride?: string):
     if (KARANA_MAP_EN[result]) return KARANA_MAP_EN[result];
     if (MASA_MAP_EN[result]) return MASA_MAP_EN[result];
 
-    for (const [regex, replacement] of GENERAL_PHRASES_EN) {
-      result = result.replace(regex, replacement);
+    for (const [k, v] of Object.entries(MASA_MAP_EN)) {
+      if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
     }
     for (const [k, v] of Object.entries(PAKSHA_MAP_EN)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
@@ -682,14 +692,14 @@ export function trVedic(term: string | undefined | null, langOverride?: string):
     for (const [k, v] of Object.entries(KARANA_MAP_EN)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
     }
-    for (const [k, v] of Object.entries(MASA_MAP_EN)) {
-      if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
-    }
     for (const [k, v] of Object.entries(RASHI_MAP_EN)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
     }
     for (const [k, v] of Object.entries(WEEKDAYS_MAP_EN)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
+    }
+    for (const [regex, replacement] of GENERAL_PHRASES_EN) {
+      result = result.replace(regex, replacement);
     }
     return result;
   }
@@ -706,8 +716,8 @@ export function trVedic(term: string | undefined | null, langOverride?: string):
     if (KARANA_MAP_GU[result]) return KARANA_MAP_GU[result];
     if (MASA_MAP_GU[result]) return MASA_MAP_GU[result];
 
-    for (const [regex, replacement] of GENERAL_PHRASES_GU) {
-      result = result.replace(regex, replacement);
+    for (const [k, v] of Object.entries(MASA_MAP_GU)) {
+      if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
     }
     for (const [k, v] of Object.entries(PAKSHA_MAP_GU)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
@@ -724,14 +734,14 @@ export function trVedic(term: string | undefined | null, langOverride?: string):
     for (const [k, v] of Object.entries(KARANA_MAP_GU)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
     }
-    for (const [k, v] of Object.entries(MASA_MAP_GU)) {
-      if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
-    }
     for (const [k, v] of Object.entries(RASHI_MAP_GU)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
     }
     for (const [k, v] of Object.entries(WEEKDAYS_MAP_GU)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
+    }
+    for (const [regex, replacement] of GENERAL_PHRASES_GU) {
+      result = result.replace(regex, replacement);
     }
     return result;
   }

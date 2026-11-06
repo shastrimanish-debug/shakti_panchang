@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RASHIS } from '../services/astronomy';
 import { triggerHapticSelection } from '../utils/haptics';
+import { useTranslation } from '../i18n';
 
 export interface ThreeFormattedPlanet {
   name: string;
@@ -223,6 +224,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
   fontScale: initialFontScale = 'xlarge',
   onFallback,
 }) => {
+  const { i18n } = useTranslation();
+  const lang = i18n?.language?.slice(0, 2).toLowerCase() || 'hi';
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [cameraPreset, setCameraPreset] = useState<'perspective' | 'deep' | 'top'>('perspective');
   const [fontScale, setFontScale] = useState<'large' | 'xlarge'>(initialFontScale);
@@ -815,7 +818,11 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         className="absolute top-2.5 left-2.5 pointer-events-none px-2.5 py-1 rounded-lg border border-[#F59E0B]/60 text-[10px] font-bold tracking-wide"
         style={{ backgroundColor: 'rgba(62, 31, 13, 0.92)', color: '#FFF3C4' }}
       >
-        ✦ 3D स्वर्ण यंत्र • घुमाएँ व ज़ूम करें
+        {lang === 'en'
+          ? '✦ 3D Gold Yantra • Rotate & Zoom'
+          : lang === 'gu'
+          ? '✦ ૩D સુવર્ણ યંત્ર • ફેરવો અને ઝૂમ કરો'
+          : '✦ 3D स्वर्ण यंत्र • घुमाएँ व ज़ूम करें'}
       </div>
 
       {/* Collapsible Unified Bottom Control Dock */}
@@ -829,7 +836,9 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
           className="px-3 py-0.5 rounded-t-lg border border-b-0 border-[#D97706]/70 text-[10px] font-bold cursor-pointer"
           style={{ backgroundColor: '#4A2410', color: '#FFF3C4' }}
         >
-          {dockCollapsed ? '▴ 3D नियंत्रक दिखाएँ' : '▾ नियंत्रक छिपाएँ'}
+          {dockCollapsed
+            ? (lang === 'en' ? '▴ Show 3D Controls' : lang === 'gu' ? '▴ ૩D નિયંત્રક બતાવો' : '▴ 3D नियंत्रक दिखाएँ')
+            : (lang === 'en' ? '▾ Hide Controls' : lang === 'gu' ? '▾ નિયંત્રક છુપાવો' : '▾ नियंत्रक छिपाएँ')}
         </button>
 
         {!dockCollapsed && (
@@ -839,9 +848,9 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
           >
             <div className="flex items-center gap-1">
               {[
-                { id: 'perspective', label: '3D कोण' },
-                { id: 'deep', label: 'गहरा 3D' },
-                { id: 'top', label: 'शीर्ष दृश्य' },
+                { id: 'perspective', label: lang === 'en' ? '3D Angle' : lang === 'gu' ? '૩D કોણ' : '3D कोण' },
+                { id: 'deep', label: lang === 'en' ? 'Deep 3D' : lang === 'gu' ? 'ઊંડું ૩D' : 'गहरा 3D' },
+                { id: 'top', label: lang === 'en' ? 'Top View' : lang === 'gu' ? 'શીર્ષ દ્રશ્ય' : 'शीर्ष दृश्य' },
               ].map((p) => (
                 <button
                   key={p.id}
@@ -872,9 +881,11 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
               }}
               className="px-2 py-1 rounded-lg text-[10px] font-black border border-[#F59E0B]/60 cursor-pointer"
               style={{ backgroundColor: '#FFF3C4', color: '#3E1F0D' }}
-              title="ग्रहों के फ़ॉन्ट का आकार बदलें"
+              title={lang === 'en' ? 'Toggle Planet Font Size' : 'ग्रहों के फ़ॉन्ट का आकार बदलें'}
             >
-              {fontScale === 'xlarge' ? 'फ़ॉन्ट: अति-बड़ा (XL)' : 'फ़ॉन्ट: बड़ा (L)'}
+              {fontScale === 'xlarge'
+                ? (lang === 'en' ? 'Font: XL' : lang === 'gu' ? 'ફોન્ટ: મોટો (XL)' : 'फ़ॉन्ट: अति-बड़ा (XL)')
+                : (lang === 'en' ? 'Font: L' : lang === 'gu' ? 'ફોન્ટ: સામાન્ય (L)' : 'फ़ॉन्ट: बड़ा (L)')}
             </button>
           </div>
         )}

@@ -4,6 +4,7 @@ import { PlanetPosition } from '../types';
 import { RASHIS, calculateVargaSign } from '../services/astronomy';
 import { triggerHapticSelection } from '../utils/haptics';
 import { ThreeKundaliCanvas, ThreeFormattedPlanet } from './ThreeKundaliCanvas';
+import { useTranslation } from '../i18n';
 
 export interface KundaliChartProps {
   lagnaDegree: number;
@@ -62,6 +63,8 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
   allowToggleStyle = true,
   defaultRenderMode,
 }) => {
+  const { i18n } = useTranslation();
+  const lang = i18n?.language?.slice(0, 2).toLowerCase() || 'hi';
   const uid = useId().replace(/:/g, '');
   const [chartStyle, setChartStyle] = useState<'north' | 'south'>('north');
   const [showDegrees, setShowDegrees] = useState(true);
@@ -244,9 +247,11 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                     borderColor: '#C88A2B',
                   }
             }
-            title="3D स्वर्ण यंत्र या 3D उभरा यंत्र चुनें"
+            title={lang === 'en' ? 'Select 3D Gold Yantra or 3D Relief' : '3D स्वर्ण यंत्र या 3D उभरा यंत्र चुनें'}
           >
-            {renderMode === 'three3d' ? '✦ 3D स्वर्ण यंत्र: चालू' : '✦ 3D स्वर्ण यंत्र में देखें'}
+            {renderMode === 'three3d'
+              ? (lang === 'en' ? '✦ 3D Gold Yantra: ON' : lang === 'gu' ? '✦ ૩D સુવર્ણ યંત્ર: ચાલુ' : '✦ 3D स्वर्ण यंत्र: चालू')
+              : (lang === 'en' ? '✦ View in 3D Gold Yantra' : lang === 'gu' ? '✦ ૩D સુવર્ણ યંત્રમાં જુઓ' : '✦ 3D स्वर्ण यंत्र में देखें')}
           </button>
 
           {allowToggleStyle && (
@@ -264,9 +269,11 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                       ? { backgroundColor: '#5C2D0C', color: '#FFF3C4', borderColor: '#5C2D0C' }
                       : { backgroundColor: '#F4E8D1', color: '#5C2D0C', borderColor: '#C88A2B' }
                   }
-                  title="3D झुकाव एवं गहराई बदलें"
+                  title={lang === 'en' ? 'Change 3D depth and angle' : '3D झुकाव एवं गहराई बदलें'}
                 >
-                  {depthMode === 'deep' ? '3D: गहरा कोण' : '3D: उभरा दृश्य'}
+                  {depthMode === 'deep'
+                    ? (lang === 'en' ? '3D: Deep Angle' : lang === 'gu' ? '૩D: ઊંડો કોણ' : '3D: गहरा कोण')
+                    : (lang === 'en' ? '3D: Relief View' : lang === 'gu' ? '૩D: ઉભરેલું દ્રશ્ય' : '3D: उभरा दृश्य')}
                 </button>
               )}
 
@@ -282,9 +289,11 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                     ? { backgroundColor: '#B56A00', color: '#FFFFFF', borderColor: '#B56A00' }
                     : { backgroundColor: '#F4E8D1', color: '#5C2D0C', borderColor: '#C88A2B' }
                 }
-                title="ग्रहों के अंश दर्शाएँ या छिपाएँ"
+                title={lang === 'en' ? 'Show or hide planetary degrees' : 'ग्रहों के अंश दर्शाएँ या छिपाएँ'}
               >
-                {showDegrees ? 'अंश: चालू' : 'अंश: बंद'}
+                {showDegrees
+                  ? (lang === 'en' ? 'Degrees: ON' : lang === 'gu' ? 'અંશ: ચાલુ' : 'अंश: चालू')
+                  : (lang === 'en' ? 'Degrees: OFF' : lang === 'gu' ? 'અંશ: બંધ' : 'अंश: बंद')}
               </button>
               <button
                 type="button"
@@ -293,9 +302,11 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                   setChartStyle(chartStyle === 'north' ? 'south' : 'north');
                 }}
                 className="px-2 py-1 text-[10px] font-bold rounded-lg border bg-[#F4E8D1] hover:bg-[#EBDCC0] text-[#5C2D0C] border-[#C88A2B] transition cursor-pointer"
-                title="उत्तर/दक्षिण भारतीय शैली बदलें"
+                title={lang === 'en' ? 'Switch North / South Indian chart style' : 'उत्तर/दक्षिण भारतीय शैली बदलें'}
               >
-                {chartStyle === 'north' ? 'दक्षिण भारतीय' : 'उत्तर भारतीय'}
+                {chartStyle === 'north'
+                  ? (lang === 'en' ? 'South Indian' : lang === 'gu' ? 'દક્ષિણ ભારતીય' : 'दक्षिण भारतीय')
+                  : (lang === 'en' ? 'North Indian' : lang === 'gu' ? 'ઉત્તર ભારતીય' : 'उत्तर भारतीय')}
               </button>
             </>
           )}

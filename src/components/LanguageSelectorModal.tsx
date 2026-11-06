@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useLanguage, SUPPORTED_LANGUAGES, LanguageOption } from '../i18n';
 import { Globe, Check, Search, X, Sparkles } from 'lucide-react';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { GoogleTranslateBar } from './GoogleTranslateBar';
+import { isGoogleTranslateEnabled, applyGoogleTranslate } from '../services/googleTranslate';
 
 interface LanguageSelectorModalProps {
   isOpen: boolean;
@@ -28,6 +30,9 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
 
   const handleSelect = async (lang: LanguageOption) => {
     await setLanguage(lang.code);
+    if (isGoogleTranslateEnabled()) {
+      applyGoogleTranslate(lang.code);
+    }
     onLanguageSelected?.(lang);
     onClose();
   };
@@ -64,8 +69,13 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
           </button>
         </div>
 
+        {/* Google Translate Instant Auto-Translate Section */}
+        <div className="mt-3">
+          <GoogleTranslateBar currentLang={currentLangCode} />
+        </div>
+
         {/* Search Bar */}
-        <div className="mt-3 relative">
+        <div className="mt-2.5 relative">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
           <input
             type="text"
