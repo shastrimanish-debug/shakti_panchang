@@ -19,6 +19,7 @@ import {
   Download,
   CheckCircle2,
   Loader2,
+  Scale,
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
@@ -32,6 +33,7 @@ import { useLanguage } from "../i18n";
 import { triggerHapticSelection } from "../utils/haptics";
 import { DailyShlokaCard } from "./DailyShlokaCard";
 import { VedicDatePickerModal } from "./VedicDateTimePickerModals";
+import { TithiNirnayaModal } from "./TithiNirnayaModal";
 
 function clock(d?: Date) {
   if (!d) return "—";
@@ -648,6 +650,7 @@ export function TodayBoard({
   const [isSharingHd, setIsSharingHd] = useState(false);
   const [hdNotice, setHdNotice] = useState<string | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isTithiNirnayaOpen, setIsTithiNirnayaOpen] = useState(false);
 
   if (!panchang) {
     return <div className="p-4 text-sm">{t("common.loading", "पंचांग गणना हो रही है।")}</div>;
@@ -969,6 +972,45 @@ export function TodayBoard({
           </div>
         )}
 
+        {/* Shastrokt Tithi & Festival Decision Banner */}
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            triggerHapticSelection();
+            setIsTithiNirnayaOpen(true);
+          }}
+          style={{
+            backgroundColor: "var(--bx-header)",
+            color: "#FFFFFF",
+            borderColor: "var(--bx-gold)",
+          }}
+          className="w-full p-2.5 sm:p-3 rounded-2xl border shadow-xs flex items-center justify-between gap-2 cursor-pointer transition hover:brightness-105"
+        >
+          <div className="flex items-center gap-2.5 text-left">
+            <div className="w-8 h-8 rounded-xl bg-white/10 border border-amber-300/40 flex items-center justify-center shrink-0">
+              <Scale className="w-4 h-4 text-amber-300" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-amber-100 flex items-center gap-1.5 flex-wrap">
+                <span>{language === 'en' ? 'Shastric Tithi & Festival Decision' : language === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય પ્રમાણ' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण'}</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold">
+                  {language === 'en' ? '10-Yr Guide' : '१०-वर्षीय दिग्दर्शिका'}
+                </span>
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-amber-200/85 line-clamp-1">
+                {language === 'en'
+                  ? 'Why Dhanteras / festival today? View Skanda Purana & Nirnayasindhu proofs'
+                  : language === 'gu'
+                  ? 'આજે ધનતેરસ કેમ? સ્કંદ પુરાણ, નિર્ણયસિંધુ પ્રમાણ અને ૨ તિથિ સંશય સમાધાન'
+                  : 'आज धनतेरस क्यों? स्कन्द पुराण व निर्णयसिन्धु प्रमाण एवं २ तिथि संशय समाधान'}
+              </div>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-amber-300 shrink-0" />
+        </motion.button>
+
         <div className="grid grid-cols-2 gap-2">
           {facts.map(([k, v]) =>
             k === placeLabelKey && onPlace ? (
@@ -994,6 +1036,27 @@ export function TodayBoard({
                   <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-gold)" }} />
                   <span className="truncate">{v}</span>
                 </b>
+              </motion.button>
+            ) : k === t("panchang.tithi", "तिथि") ? (
+              <motion.button
+                key={k}
+                type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  triggerHapticSelection();
+                  setIsTithiNirnayaOpen(true);
+                }}
+                className="bx-fact bx-glass text-left cursor-pointer hover:border-amber-500 relative"
+                title={language === 'en' ? 'View Shastric Tithi & Festival Decision' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण देखें'}
+              >
+                <div className="bx-kicker flex items-center justify-between gap-1">
+                  <span>{k}</span>
+                  <span style={{ color: "var(--bx-header)" }} className="text-[9px] font-bold bg-amber-100/90 text-amber-900 px-1 py-0.2 rounded border border-amber-300/60">
+                    {language === 'en' ? 'Shastric Proof ▾' : language === 'gu' ? 'શાસ્ત્રોક્ત નિર્ણય ▾' : 'शास्त्रोक्त प्रमाण ▾'}
+                  </span>
+                </div>
+                <b className="text-base mt-1 text-[#4A2610]">{v}</b>
               </motion.button>
             ) : (
               <div key={k} className="bx-fact bx-glass">
@@ -1130,6 +1193,13 @@ export function TodayBoard({
         }}
         onClose={() => setIsDatePickerOpen(false)}
         title={t("panchang.selectPanchangDate", "पंचांग तिथि चुनें")}
+      />
+
+      <TithiNirnayaModal
+        isOpen={isTithiNirnayaOpen}
+        onClose={() => setIsTithiNirnayaOpen(false)}
+        panchang={panchang}
+        onDateSelect={onDateChange}
       />
     </div>
   );

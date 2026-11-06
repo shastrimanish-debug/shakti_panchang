@@ -11,9 +11,11 @@ import {
   Sun,
   Moon,
   Star,
+  Scale,
 } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
+import { TithiNirnayaModal } from './TithiNirnayaModal';
 
 interface FestivalsViewProps {
   currentDate: Date;
@@ -55,6 +57,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const [addedReminderId, setAddedReminderId] = useState<string | null>(null);
+  const [isTithiNirnayaOpen, setIsTithiNirnayaOpen] = useState(false);
 
   const selectedYear = currentDate.getFullYear() || 2026;
   const festivals = useMemo(() => getFestivalsForYear(selectedYear), [selectedYear]);
@@ -305,21 +308,77 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
         </div>
       ),
     },
+
+    // Slide 5: 10-Year Shastric Festival Conflict Resolver (2025-2035)
+    {
+      id: 'shastric-nirnaya',
+      title: '१०-वर्षीय शास्त्रोक्त पर्व निर्णय (2025-2035)',
+      subtitle: 'द्वि-तिथि संशय समाधान • निर्णयसिन्धु व धर्मसिन्धु प्रमाण',
+      badge: '१०-वर्षीय दिग्दर्शिका',
+      icon: '⚖️',
+      voiceText: 'सनातन धर्मशास्त्र के काल-व्याप्ति सिद्धांत अनुसार १०-वर्षीय पर्व निर्णय एवं प्रमाण।',
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2.5">
+          <div className="space-y-2 overflow-y-auto max-h-[440px] pr-0.5">
+            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[#4A2610] to-[#6A3716] text-amber-50 border border-amber-300 shadow-xs space-y-2.5">
+              <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
+                <Scale className="w-4 h-4" />
+                <span>शास्त्रोक्त काल-व्याप्ति व द्वि-तिथि समाधान</span>
+              </div>
+              <p className="text-xs text-amber-100/90 leading-relaxed">
+                जब एक दिन में २ तिथियां हों अथवा कोई तिथि २ दिनों में व्याप्त हो (जैसे धनतेरस, दीपावली, महाशिवरात्रि), तो धर्मशास्त्र (निर्णयसिन्धु, धर्मसिन्धु, स्कन्द पुराण) के कर्मकाल नियमानुसार किस दिन त्योहार मनाना चाहिए — इसका १० वर्षों (२०२५ से २०३५) का सूक्ष्म गणितीय व श्लोक प्रमाण सहित निर्णय।
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsTithiNirnayaOpen(true)}
+                className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 font-black text-xs transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <Scale className="w-4 h-4" />
+                <span>१०-वर्षीय शास्त्रोक्त पर्व निर्णय दिग्दर्शिका खोलें ➔</span>
+              </button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white/95 border border-amber-200 text-xs space-y-2">
+              <span className="font-bold text-[#8C4A00] block text-xs">प्रमुख कर्मकाल व्याप्ति नियम:</span>
+              <ul className="space-y-1 text-stone-700 text-[11px]">
+                <li>• <strong>प्रदोष काल (संध्या):</strong> धनतेरस, दीपावली लक्ष्मी पूजन, प्रदोष व्रत।</li>
+                <li>• <strong>निशीथ काल (मध्यरात्रि):</strong> महाशिवरात्रि, श्री कृष्ण जन्माष्टमी।</li>
+                <li>• <strong>मध्याह्न काल (दोपहर):</strong> श्री गणेश चतुर्थी, श्री राम नवमी।</li>
+                <li>• <strong>उदया तिथि (प्रातः):</strong> एकादशी व्रत, अनंत चतुर्दशी।</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-center text-[#8C6239] pt-1 border-t border-amber-200/60 shrink-0">
+            धर्मो रक्षति रक्षितः • धर्मसिन्धु व निर्णयसिन्धु आधारित प्रामाणिक निर्णय
+          </div>
+        </div>
+      ),
+    },
   ];
 
   return (
-    <UniversalStoryDeck
-      slides={slides}
-      headerTitle={t('nav.festivals', 'पर्व व त्योहार')}
-      headerIcon="🪔"
-      chapterNumber={6}
-      currentDate={currentDate}
-      onOpenUma={onOpenUmaModal ? () => onOpenUmaModal('आगामी त्योहार व व्रत पूजन विधि') : undefined}
-      onPrevChapter={onPrevChapter}
-      onNextChapter={onNextChapter}
-      prevChapterLabel="कुण्डली"
-      nextChapterLabel="स्मृति व संकल्प"
-    />
+    <>
+      <UniversalStoryDeck
+        slides={slides}
+        headerTitle={t('nav.festivals', 'पर्व व त्योहार')}
+        headerIcon="🪔"
+        chapterNumber={6}
+        currentDate={currentDate}
+        onOpenUma={onOpenUmaModal ? () => onOpenUmaModal('आगामी त्योहार व व्रत पूजन विधि') : undefined}
+        onPrevChapter={onPrevChapter}
+        onNextChapter={onNextChapter}
+        prevChapterLabel="कुण्डली"
+        nextChapterLabel="स्मृति व संकल्प"
+      />
+
+      <TithiNirnayaModal
+        isOpen={isTithiNirnayaOpen}
+        onClose={() => setIsTithiNirnayaOpen(false)}
+        initialTab="10year"
+        onDateSelect={onDateSelect}
+      />
+    </>
   );
 };
 
