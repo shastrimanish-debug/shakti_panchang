@@ -1201,7 +1201,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       {kundaliTab === 'phalit' && k && analysis && (
         <div className="space-y-4">
           <div className="bg-parchment border border-wood/40 rounded-xl p-4 space-y-2">
-            <h3 className="font-granth font-bold text-temple">इस जातक का सार — {k.name}</h3>
+            <h3 className="font-granth font-bold text-temple">
+              {t('kundali.nativeSummary', 'इस जातक का सार')} — {k.name}
+            </h3>
             {analysis.summaryLines.map((line) => (
               <p key={line} className="text-sm text-ink leading-relaxed">{line}</p>
             ))}
@@ -1217,26 +1219,26 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     area.strength === 'उच्च' ? 'bg-leaf text-temple' : area.strength === 'सावधानी' ? 'bg-vermilion/15 text-vermilion' : 'bg-sand text-temple'
                   }`}>{area.strength}</span>
                 </div>
-                <p className="text-sm text-ink leading-relaxed"><span className="font-bold">निष्कर्ष: </span>{area.finding}</p>
-                <p className="text-xs text-muted leading-relaxed"><span className="font-bold">कारण: </span>{area.why}</p>
-                <p className="text-xs text-muted"><span className="font-bold">समय: </span>{area.timing}</p>
-                <p className="text-xs text-ink"><span className="font-bold">सावधानी: </span>{area.caution}</p>
-                <p className="text-xs text-temple"><span className="font-bold">उपाय: </span>{area.remedy}</p>
+                <p className="text-sm text-ink leading-relaxed"><span className="font-bold">{t('kundali.finding', 'निष्कर्ष')}: </span>{area.finding}</p>
+                <p className="text-xs text-muted leading-relaxed"><span className="font-bold">{t('kundali.basis', 'कारण')}: </span>{area.why}</p>
+                <p className="text-xs text-muted"><span className="font-bold">{t('kundali.timing', 'समय')}: </span>{area.timing}</p>
+                <p className="text-xs text-ink"><span className="font-bold">{t('kundali.caution', 'सावधानी')}: </span>{area.caution}</p>
+                <p className="text-xs text-temple"><span className="font-bold">{t('kundali.remedy', 'उपाय')}: </span>{area.remedy}</p>
               </article>
             ))}
           </div>
 
           <div className="bg-parchment border border-wood/40 rounded-xl p-4 space-y-2">
-            <h4 className="font-bold text-sm text-temple">योग</h4>
+            <h4 className="font-bold text-sm text-temple">{t('kundali.yogas', 'योग')}</h4>
             {analysis.yogas.map((y) => <p key={y} className="text-sm text-ink leading-relaxed">• {y}</p>)}
-            <h4 className="font-bold text-sm text-temple pt-2">दोष विचार</h4>
+            <h4 className="font-bold text-sm text-temple pt-2">{t('kundali.doshas', 'दोष विचार')}</h4>
             {analysis.doshas.map((y) => <p key={y} className="text-sm text-ink leading-relaxed">• {y}</p>)}
           </div>
         </div>
       )}
 
       {kundaliTab === 'phalit' && !k && (
-        <p className="text-sm text-muted p-4">फलादेश के लिए पहले जन्म विवरण भरकर कुंडली बनाएँ।</p>
+        <p className="text-sm text-muted p-4">{t('kundali.createKundaliFirst', 'फलादेश के लिए पहले जन्म विवरण भरकर कुंडली बनाएँ।')}</p>
       )}
 
       {/* Tab: 3D Cosmic Kundali & UMA Sync (Zero Data Loss Architecture) */}
@@ -1255,40 +1257,40 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           {/* Key Attributes Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
-              <div className="text-[10px] text-[#8C6239] font-bold">लग्न</div>
-              <div className="text-sm font-black text-[#5C3A21]">{k.lagnaRashi} ({k.lagnaDegree.toFixed(1)}°)</div>
+              <div className="text-[10px] text-[#8C6239] font-bold">{t('kundali.lagna', 'लग्न')}</div>
+              <div className="text-sm font-black text-[#5C3A21]">{trRashi(k.lagnaRashi, language)} ({k.lagnaDegree.toFixed(1)}°)</div>
             </div>
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
-              <div className="text-[10px] text-[#8C6239] font-bold">चंद्र राशि</div>
-              <div className="text-sm font-black text-[#5C3A21]">{k.moonRashi}</div>
+              <div className="text-[10px] text-[#8C6239] font-bold">{t('kundali.moonSign', 'चंद्र राशि')}</div>
+              <div className="text-sm font-black text-[#5C3A21]">{trRashi(k.moonRashi, language)}</div>
             </div>
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
-              <div className="text-[10px] text-[#8C6239] font-bold">नक्षत्र</div>
-              <div className="text-sm font-black text-[#5C3A21]">{k.nakshatra} ({k.charan})</div>
+              <div className="text-[10px] text-[#8C6239] font-bold">{t('kundali.nakshatra', 'नक्षत्र')}</div>
+              <div className="text-sm font-black text-[#5C3A21]">{trVedic(k.nakshatra, language)} ({k.charan})</div>
             </div>
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
-              <div className="text-[10px] text-[#8C6239] font-bold">गण / नाड़ी</div>
-              <div className="text-sm font-black text-[#5C3A21]">{k.gana} | {k.nadi}</div>
+              <div className="text-[10px] text-[#8C6239] font-bold">{t('kundali.ganaNadi', 'गण / नाड़ी')}</div>
+              <div className="text-sm font-black text-[#5C3A21]">{trVedic(k.gana, language)} | {trVedic(k.nadi, language)}</div>
             </div>
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
-              <div className="text-[10px] text-[#8C6239] font-bold">योनि / वर्ण</div>
-              <div className="text-sm font-black text-[#5C3A21]">{k.yoni} | {k.varna}</div>
+              <div className="text-[10px] text-[#8C6239] font-bold">{t('kundali.yoniVarna', 'योनि / वर्ण')}</div>
+              <div className="text-sm font-black text-[#5C3A21]">{trVedic(k.yoni, language)} | {trVedic(k.varna, language)}</div>
             </div>
             <div className="bg-[#FAF2E4] p-3 rounded-xl border border-[#8C6239]/30 text-center">
-              <div className="text-[10px] text-[#8C6239] font-bold">वर्तमान सूक्ष्म दशा</div>
+              <div className="text-[10px] text-[#8C6239] font-bold">{t('kundali.currentMicroDasha', 'वर्तमान सूक्ष्म दशा')}</div>
               <div className="text-xs sm:text-sm font-black text-[#B56A00] truncate">
-                {k.mahadasha} / {k.antardasha} / {k.pratyantardasha}
+                {trPlanet(k.mahadasha, language)} / {trPlanet(k.antardasha, language)} / {trPlanet(k.pratyantardasha, language)}
               </div>
-              <div className="text-[9px] text-[#735133] mt-0.5">महा / अंतर / प्रत्यंतर</div>
+              <div className="text-[9px] text-[#735133] mt-0.5">{t('kundali.mahaAntarPratyantar', 'महा / अंतर / प्रत्यंतर')}</div>
             </div>
           </div>
 
           {/* Sub-Pages Segmented Bar for Chart Tab */}
           <div className="flex items-center justify-between gap-1 p-1 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
             {[
-              { id: 'twin', label: '१. लग्न व नवमांश', full: 'पृष्ठ १: लग्न (D1) व नवमांश (D9) चक्र' },
-              { id: 'planets', label: '२. ग्रह स्पष्ट तालिका', full: 'पृष्ठ २: ग्रह स्थिति एवं स्पष्ट तालिका' },
-              { id: 'vargas', label: '३. षोडशवर्ग (D1-D60)', full: 'पृष्ठ ३: सम्पूर्ण षोडशवर्ग (D1 से D60)' },
+              { id: 'twin', label: t('kundali.page1D1D9', '१. लग्न व नवमांश'), full: t('kundali.page1D1D9Full', 'पृष्ठ १: लग्न (D1) व नवमांश (D9) चक्र') },
+              { id: 'planets', label: t('kundali.page2Planets', '२. ग्रह स्पष्ट तालिका'), full: t('kundali.page2PlanetsFull', 'पृष्ठ २: ग्रह स्थिति एवं स्पष्ट तालिका') },
+              { id: 'vargas', label: t('kundali.page3Vargas', '३. षोडशवर्ग (D1-D60)'), full: t('kundali.page3VargasFull', 'पृष्ठ ३: सम्पूर्ण षोडशवर्ग (D1 से D60)') },
             ].map((sp) => (
               <button
                 key={sp.id}
@@ -1314,15 +1316,15 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-2">
                     <span className="text-xs font-bold text-[#5C3A21] uppercase tracking-wider">
-                      D1 लग्न चक्र (Lagna Rashi Chart)
+                      {t('kundali.d1Title', 'D1 लग्न चक्र (Lagna Rashi Chart)')}
                     </span>
-                    <span className="text-[11px] text-[#8C6239] font-medium">सम्पूर्ण देह व भौतिक जीवन</span>
+                    <span className="text-[11px] text-[#8C6239] font-medium">{t('kundali.d1Subtitle', 'सम्पूर्ण देह व भौतिक जीवन')}</span>
                   </div>
                   <KundaliChart
                     lagnaDegree={k.lagnaDegree}
                     planets={k.planets}
                     vargaDivision={1}
-                    chartTitle={`${k.name} — लग्न चक्र (D1)`}
+                    chartTitle={`${k.name} — ${t('kundali.d1Title', 'लग्न चक्र (D1)')}`}
                   />
                 </div>
 
@@ -1330,28 +1332,28 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-2">
                     <span className="text-xs font-bold text-[#5C3A21] uppercase tracking-wider">
-                      D9 नवमांश चक्र (Navamsha Chart)
+                      {t('kundali.d9Title', 'D9 नवमांश चक्र (Navamsha Chart)')}
                     </span>
-                    <span className="text-[11px] text-[#8C6239] font-medium">भाग्य, विवाह व सूक्ष्म सामर्थ्य</span>
+                    <span className="text-[11px] text-[#8C6239] font-medium">{t('kundali.d9Subtitle', 'भाग्य, विवाह व सूक्ष्म सामर्थ्य')}</span>
                   </div>
                   <KundaliChart
                     lagnaDegree={k.lagnaDegree}
                     planets={k.planets}
                     vargaDivision={9}
-                    chartTitle={`${k.name} — नवमांश चक्र (D9)`}
+                    chartTitle={`${k.name} — ${t('kundali.d9Title', 'नवमांश चक्र (D9)')}`}
                   />
                 </div>
               </div>
 
               {/* Bottom Pagination */}
               <div className="flex items-center justify-between p-3 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl shadow-xs">
-                <div className="text-xs font-bold text-[#8C6239]">पृष्ठ 1 / 3 (लग्न व नवमांश चक्र)</div>
+                <div className="text-xs font-bold text-[#8C6239]">{t('kundali.page1of3', 'पृष्ठ 1 / 3 (लग्न व नवमांश चक्र)')}</div>
                 <button
                   type="button"
                   onClick={() => setChartSubPage('planets')}
                   className="px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
                 >
-                  <span>अगला: २. ग्रह स्पष्ट तालिका</span>
+                  <span>{t('kundali.page2Planets', 'अगला: २. ग्रह स्पष्ट तालिका')}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -1363,42 +1365,42 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             <div className="space-y-4">
               <div className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-xl overflow-hidden shadow-xs">
                 <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] font-bold text-xs uppercase tracking-wider flex items-center justify-between">
-                  <span>ग्रह स्थिति, स्पष्ट अंश एवं भाव विवरण (Planetary Ephemeris)</span>
-                  <span className="text-[10px] text-[#FFD88A]">9 ग्रह स्थिति</span>
+                  <span>{t('kundali.planetsPositions', 'ग्रह स्थिति, स्पष्ट अंश एवं भाव विवरण (Planetary Ephemeris)')}</span>
+                  <span className="text-[10px] text-[#FFD88A]">{k.planets.length} {language === 'en' ? 'Planetary Positions' : 'ग्रह स्थिति'}</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-[#F4E8D1] text-[#5C3A21] border-b border-[#8C6239]/30">
                       <tr>
-                        <th className="py-2.5 px-3">ग्रह</th>
-                        <th className="py-2.5 px-3">राशि</th>
-                        <th className="py-2.5 px-3">भाव</th>
-                        <th className="py-2.5 px-3">अंश (Deg)</th>
-                        <th className="py-2.5 px-3">नक्षत्र व चरण</th>
-                        <th className="py-2.5 px-3">गति</th>
+                        <th className="py-2.5 px-3">{t('kundali.planet', 'ग्रह')}</th>
+                        <th className="py-2.5 px-3">{t('kundali.rashi', 'राशि')}</th>
+                        <th className="py-2.5 px-3">{t('kundali.house', 'भाव')}</th>
+                        <th className="py-2.5 px-3">{t('kundali.degrees', 'अंश (Deg)')}</th>
+                        <th className="py-2.5 px-3">{t('kundali.nakshatraPada', 'नक्षत्र व चरण')}</th>
+                        <th className="py-2.5 px-3">{t('kundali.state', 'गति')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#8C6239]/20">
                       {k.planets.map((p, idx) => (
                         <tr key={idx} className="hover:bg-[#F4E8D1]/60">
                           <td className="py-2 px-3 font-bold text-[#5C3A21]">
-                            {p.planet} ({p.englishName})
+                            {trPlanet(p.planet, language)} ({p.englishName})
                           </td>
-                          <td className="py-2 px-3 text-[#5C3A21]">{p.rashi}</td>
+                          <td className="py-2 px-3 text-[#5C3A21]">{trRashi(p.rashi, language)}</td>
                           <td className="py-2 px-3 font-bold text-[#B56A00]">{p.house}</td>
                           <td className="py-2 px-3 text-[#5C3A21]">
                             {p.degreeInRashi.toFixed(2)}°
                           </td>
                           <td className="py-2 px-3 text-[#5C3A21]">
-                            {p.nakshatra} (चरण {p.pada})
+                            {trVedic(p.nakshatra, language)} ({language === 'en' ? 'Charan' : 'चरण'} {p.pada})
                           </td>
                           <td className="py-2 px-3">
                             {p.isRetrograde ? (
                               <span className="text-rose-700 font-bold bg-rose-100 px-1.5 py-0.5 rounded text-[10px]">
-                                वक्री (R)
+                                {language === 'en' ? 'Retrograde (R)' : 'वक्री (R)'}
                               </span>
                             ) : (
-                              <span className="text-emerald-700 font-medium text-[10px]">मार्गी</span>
+                              <span className="text-emerald-700 font-medium text-[10px]">{language === 'en' ? 'Direct' : 'मार्गी'}</span>
                             )}
                           </td>
                         </tr>
@@ -1416,15 +1418,15 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#E5D2B8] border border-[#8C6239]/40 text-[#5C3A21] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>पिछला: १. लग्न व नवमांश</span>
+                  <span>{t('kundali.page1D1D9', 'पिछला: १. लग्न व नवमांश')}</span>
                 </button>
-                <div className="text-xs font-bold text-[#8C6239]">पृष्ठ 2 / 3</div>
+                <div className="text-xs font-bold text-[#8C6239]">{t('kundali.page2of3', 'पृष्ठ 2 / 3')}</div>
                 <button
                   type="button"
                   onClick={() => setChartSubPage('vargas')}
                   className="px-3 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
                 >
-                  <span>अगला: ३. षोडशवर्ग (D1-D60)</span>
+                  <span>{t('kundali.page3Vargas', 'अगला: ३. षोडशवर्ग (D1-D60)')}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -1773,7 +1775,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               }`}
             >
               <Zap className="w-4 h-4 text-[#B56A00]" />
-              <span>१. विंशोत्तरी दशा (३-स्तरीय ग्रह दशा)</span>
+              <span>1. {t('kundali.tabDasha', 'विंशोत्तरी दशा (३-स्तरीय ग्रह दशा)')}</span>
             </button>
 
             <button
@@ -1786,7 +1788,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
               }`}
             >
               <Sparkles className="w-4 h-4 text-[#B56A00]" />
-              <span>२. जैमिनी चर दशा व कारकांश (Jaimini Chara Dasha)</span>
+              <span>2. {language === 'en' ? 'Jaimini Chara Dasha & Karakamsha' : 'जैमिनी चर दशा व कारकांश (Jaimini Chara Dasha)'}</span>
             </button>
           </div>
 
@@ -1799,7 +1801,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-xs font-bold text-[#8C6239] uppercase tracking-wider flex items-center gap-1.5">
                 <Zap className="w-4 h-4 text-[#B56A00]" />
-                वर्तमान सक्रिय त्रि-स्तरीय विंशोत्तरी दशा (Active Vimshottari Dasha Timeline)
+                {language === 'en' ? 'Active 3-Tier Vimshottari Dasha Timeline' : 'वर्तमान सक्रिय त्रि-स्तरीय विंशोत्तरी दशा (Active Vimshottari Dasha Timeline)'}
               </div>
 
               <button
@@ -1807,7 +1809,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 className="px-3 py-1.5 bg-[#B56A00] hover:bg-[#945500] text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
               >
                 <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
-                <span>वर्तमान सक्रिय सूक्ष्म दशा पर जाएँ</span>
+                <span>{language === 'en' ? 'Jump to Active Micro Dasha' : 'वर्तमान सक्रिय सूक्ष्म दशा पर जाएँ'}</span>
               </button>
             </div>
 
@@ -1815,7 +1817,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             <div className="p-2.5 bg-gradient-to-r from-amber-100/90 via-amber-50 to-amber-100/90 border border-[#B56A00]/40 rounded-lg flex flex-wrap items-center justify-between gap-2 text-xs text-[#5C3A21]">
               <div className="flex items-center gap-2 font-bold">
                 <MoveHorizontal className="w-4 h-4 text-[#B56A00] shrink-0" />
-                <span>फोन पर दशा बदलने हेतु स्क्रीन पर बाएँ (←) या दाएँ (→) स्वाइप करें</span>
+                <span>{language === 'en' ? 'Swipe left or right or use buttons to change dasha tier' : 'फोन पर दशा बदलने हेतु स्क्रीन पर बाएँ (←) या दाएँ (→) स्वाइप करें'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -1830,13 +1832,13 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       ? 'opacity-40 cursor-not-allowed bg-[#FAF2E4] text-[#8C6239]'
                       : 'bg-[#5C3A21] text-[#FAF2E4] active:scale-95'
                   }`}
-                  title="पिछला स्तर"
+                  title={t('common.prev', 'पिछला')}
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>पिछला</span>
+                  <span>{t('common.prev', 'पिछला')}</span>
                 </button>
                 <span className="text-[11px] text-[#8C6239] font-bold px-1">
-                  {dashaViewLevel === 'maha' ? 'स्तर १/३' : dashaViewLevel === 'antar' ? 'स्तर २/३' : dashaViewLevel === 'pratyantar' ? 'स्तर ३/३' : 'समस्त'}
+                  {dashaViewLevel === 'maha' ? (language === 'en' ? 'Tier 1/3' : 'स्तर १/३') : dashaViewLevel === 'antar' ? (language === 'en' ? 'Tier 2/3' : 'स्तर २/३') : dashaViewLevel === 'pratyantar' ? (language === 'en' ? 'Tier 3/3' : 'स्तर ३/३') : (language === 'en' ? 'All' : 'समस्त')}
                 </span>
                 <button
                   type="button"
@@ -1850,9 +1852,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                       ? 'opacity-40 cursor-not-allowed bg-[#FAF2E4] text-[#8C6239]'
                       : 'bg-[#5C3A21] text-[#FAF2E4] active:scale-95'
                   }`}
-                  title="अगला स्तर"
+                  title={t('common.next', 'अगला')}
                 >
-                  <span>अगला</span>
+                  <span>{t('common.next', 'अगला')}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -1872,20 +1874,20 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 }`}
               >
                 <div className="text-[11px] text-[#8C6239] font-bold uppercase flex items-center justify-between">
-                  <span>1. महादशा (Mahadasha)</span>
+                  <span>1. {t('kundali.currentDasha', 'महादशा')} (Mahadasha)</span>
                   <span className="bg-[#B56A00] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">
-                    सक्रिय
+                    {language === 'en' ? 'Active' : 'सक्रिय'}
                   </span>
                 </div>
-                <div className="text-xl font-black text-[#5C3A21] mt-1">{k.mahadasha} महादशा</div>
+                <div className="text-xl font-black text-[#5C3A21] mt-1">{trPlanet(k.mahadasha, language)} {t('kundali.currentDasha', 'महादशा')}</div>
                 <div className="text-xs text-[#735133] mt-1 font-medium">
                   {currentActiveMahaPeriod
-                    ? `${fmtDate(currentActiveMahaPeriod.startDate)} से ${fmtDate(currentActiveMahaPeriod.endDate)}`
-                    : `स्वामी: ${k.mahadasha} देव`}
+                    ? `${fmtDate(currentActiveMahaPeriod.startDate)} ${language === 'en' ? 'to' : 'से'} ${fmtDate(currentActiveMahaPeriod.endDate)}`
+                    : `${language === 'en' ? 'Lord: ' : 'स्वामी: '}${trPlanet(k.mahadasha, language)}`}
                 </div>
                 <div className="text-[10px] text-[#8C6239] mt-1 flex items-center justify-between">
-                  <span>अवधि: {currentActiveMahaPeriod?.years.toFixed(1)} वर्ष</span>
-                  <span className="text-[#B56A00] font-bold underline text-[10px]">चक्र देखें →</span>
+                  <span>{t('kundali.duration', 'अवधि')}: {currentActiveMahaPeriod?.years.toFixed(1)} {language === 'en' ? 'years' : 'वर्ष'}</span>
+                  <span className="text-[#B56A00] font-bold underline text-[10px]">{language === 'en' ? 'View Cycle →' : 'चक्र देखें →'}</span>
                 </div>
               </div>
 
@@ -1902,20 +1904,20 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 }`}
               >
                 <div className="text-[11px] text-[#8C6239] font-bold uppercase flex items-center justify-between">
-                  <span>2. अंतर्दशा (Antardasha)</span>
+                  <span>2. {t('kundali.antardasha', 'अंतर्दशा')} (Antardasha)</span>
                   <span className="bg-[#B56A00] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">
-                    सक्रिय
+                    {language === 'en' ? 'Active' : 'सक्रिय'}
                   </span>
                 </div>
-                <div className="text-xl font-black text-[#B56A00] mt-1">{k.antardasha} अंतर्दशा</div>
+                <div className="text-xl font-black text-[#B56A00] mt-1">{trPlanet(k.antardasha, language)} {t('kundali.antardasha', 'अंतर्दशा')}</div>
                 <div className="text-xs text-[#735133] mt-1 font-medium">
                   {currentActiveAntarPeriod
-                    ? `${fmtDate(currentActiveAntarPeriod.startDate)} से ${fmtDate(currentActiveAntarPeriod.endDate)}`
-                    : `उप-स्वामी: ${k.antardasha} देव`}
+                    ? `${fmtDate(currentActiveAntarPeriod.startDate)} ${language === 'en' ? 'to' : 'से'} ${fmtDate(currentActiveAntarPeriod.endDate)}`
+                    : `${language === 'en' ? 'Sub-Lord: ' : 'उप-स्वामी: '}${trPlanet(k.antardasha, language)}`}
                 </div>
                 <div className="text-[10px] text-[#8C6239] mt-1 flex items-center justify-between">
-                  <span>अवधि: {((currentActiveAntarPeriod?.years || 0) * 12).toFixed(1)} माह</span>
-                  <span className="text-[#B56A00] font-bold underline text-[10px]">सूक्ष्म देखें →</span>
+                  <span>{t('kundali.duration', 'अवधि')}: {((currentActiveAntarPeriod?.years || 0) * 12).toFixed(1)} {language === 'en' ? 'months' : 'माह'}</span>
+                  <span className="text-[#B56A00] font-bold underline text-[10px]">{language === 'en' ? 'View Micro →' : 'सूक्ष्म देखें →'}</span>
                 </div>
               </div>
 
@@ -1932,20 +1934,20 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 }`}
               >
                 <div className="text-[11px] text-rose-800 font-bold uppercase flex items-center justify-between">
-                  <span>3. प्रत्यंतर्दशा (Pratyantar)</span>
+                  <span>3. {language === 'en' ? 'Pratyantar' : 'प्रत्यंतर्दशा (Pratyantar)'}</span>
                   <span className="bg-rose-700 text-white text-[9px] px-1.5 py-0.5 rounded font-bold animate-pulse">
-                    सक्रिय
+                    {language === 'en' ? 'Active' : 'सक्रिय'}
                   </span>
                 </div>
-                <div className="text-xl font-black text-rose-800 mt-1">{k.pratyantardasha} प्रत्यंतर</div>
+                <div className="text-xl font-black text-rose-800 mt-1">{trPlanet(k.pratyantardasha, language)} {language === 'en' ? 'Pratyantar' : 'प्रत्यंतर'}</div>
                 <div className="text-xs text-[#735133] mt-1 font-medium">
                   {currentActivePratyantarPeriod
-                    ? `${fmtDate(currentActivePratyantarPeriod.startDate)} से ${fmtDate(currentActivePratyantarPeriod.endDate)}`
-                    : `सूक्ष्म स्वामी: ${k.pratyantardasha} देव`}
+                    ? `${fmtDate(currentActivePratyantarPeriod.startDate)} ${language === 'en' ? 'to' : 'से'} ${fmtDate(currentActivePratyantarPeriod.endDate)}`
+                    : `${language === 'en' ? 'Micro-Lord: ' : 'सूक्ष्म स्वामी: '}${trPlanet(k.pratyantardasha, language)}`}
                 </div>
                 <div className="text-[10px] text-rose-800 mt-1 flex items-center justify-between">
-                  <span>अवधि: {currentActivePratyantarPeriod?.days} दिन</span>
-                  <span className="text-rose-700 font-bold underline text-[10px]">प्रत्यंतर तालिका →</span>
+                  <span>{t('kundali.duration', 'अवधि')}: {currentActivePratyantarPeriod?.days} {language === 'en' ? 'days' : 'दिन'}</span>
+                  <span className="text-rose-700 font-bold underline text-[10px]">{language === 'en' ? 'Pratyantar Table →' : 'प्रत्यंतर तालिका →'}</span>
                 </div>
               </div>
             </div>
@@ -3016,8 +3018,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           pickerTarget === 'main'
             ? undefined
             : pickerTarget === 'boy'
-            ? 'वर की जन्म तिथि चुनें'
-            : 'कन्या की जन्म तिथि चुनें'
+            ? (language === 'en' ? 'Select Groom Date of Birth' : 'वर की जन्म तिथि चुनें')
+            : (language === 'en' ? 'Select Bride Date of Birth' : 'कन्या की जन्म तिथि चुनें')
         }
       />
 
@@ -3035,8 +3037,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
           pickerTarget === 'main'
             ? undefined
             : pickerTarget === 'boy'
-            ? 'वर का जन्म समय चुनें'
-            : 'कन्या का जन्म समय चुनें'
+            ? (language === 'en' ? 'Select Groom Birth Time' : 'वर का जन्म समय चुनें')
+            : (language === 'en' ? 'Select Bride Birth Time' : 'कन्या का जन्म समय चुनें')
         }
       />
     </div>

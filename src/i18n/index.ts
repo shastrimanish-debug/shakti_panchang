@@ -62,7 +62,20 @@ i18n
   .init({
     resources,
     lng: getInitialLanguage(),
-    fallbackLng: ['hi', 'en'],
+    fallbackLng: {
+      default: ['en'],
+      en: ['en'],
+      hi: ['hi', 'en'],
+      gu: ['gu', 'en'],
+      mr: ['mr', 'en'],
+      bn: ['bn', 'en'],
+      ta: ['ta', 'en'],
+      te: ['te', 'en'],
+      kn: ['kn', 'en'],
+      ml: ['ml', 'en'],
+      pa: ['pa', 'en'],
+      or: ['or', 'en'],
+    },
     interpolation: {
       escapeValue: false, // React already does escaping
     },

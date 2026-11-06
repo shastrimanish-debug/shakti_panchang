@@ -459,6 +459,60 @@ export const GENERAL_PHRASES_EN: [RegExp, string][] = [
   [/अशुभ/g, 'Inauspicious'],
   [/त्याज्य/g, 'Avoidable'],
   [/वर्जित/g, 'Prohibited'],
+  [/देव गण/g, 'Deva (Divine) Gana'],
+  [/मनुष्य गण/g, 'Manushya (Human) Gana'],
+  [/राक्षस गण/g, 'Rakshasa (Fierce) Gana'],
+  [/देव/g, 'Deva'],
+  [/मनुष्य/g, 'Manushya'],
+  [/राक्षस/g, 'Rakshasa'],
+  [/आदि नाड़ी/g, 'Adi (First) Nadi'],
+  [/मध्य नाड़ी/g, 'Madhya (Middle) Nadi'],
+  [/अन्त्य नाड़ी/g, 'Antya (Last) Nadi'],
+  [/अंत्य नाड़ी/g, 'Antya (Last) Nadi'],
+  [/आदि/g, 'Adi'],
+  [/मध्य/g, 'Madhya'],
+  [/अन्त्य/g, 'Antya'],
+  [/अंत्य/g, 'Antya'],
+  [/ब्राह्मण/g, 'Brahmin'],
+  [/क्षत्रिय/g, 'Kshatriya'],
+  [/वैश्य/g, 'Vaishya'],
+  [/शूद्र/g, 'Shudra'],
+  [/अश्व योनि/g, 'Ashwa (Horse) Yoni'],
+  [/गज योनि/g, 'Gaja (Elephant) Yoni'],
+  [/मेष योनि/g, 'Mesha (Sheep) Yoni'],
+  [/सर्प योनि/g, 'Sarpa (Serpent) Yoni'],
+  [/श्वान योनि/g, 'Shwan (Dog) Yoni'],
+  [/मार्जार योनि/g, 'Marjara (Cat) Yoni'],
+  [/मूषक योनि/g, 'Mushaka (Rat) Yoni'],
+  [/गौ योनि/g, 'Gau (Cow) Yoni'],
+  [/महिष योनि/g, 'Mahisha (Buffalo) Yoni'],
+  [/व्याघ्र योनि/g, 'Vyaghra (Tiger) Yoni'],
+  [/मृग योनि/g, 'Mriga (Deer) Yoni'],
+  [/वानर योनि/g, 'Vanara (Monkey) Yoni'],
+  [/नकुल योनि/g, 'Nakula (Mongoose) Yoni'],
+  [/सिंह योनि/g, 'Simha (Lion) Yoni'],
+  [/अश्व/g, 'Ashwa'],
+  [/गज/g, 'Gaja'],
+  [/सर्प/g, 'Sarpa'],
+  [/श्वान/g, 'Shwan'],
+  [/मार्जार/g, 'Marjara'],
+  [/मूषक/g, 'Mushaka'],
+  [/गौ/g, 'Gau'],
+  [/महिष/g, 'Mahisha'],
+  [/व्याघ्र/g, 'Vyaghra'],
+  [/मृग/g, 'Mriga'],
+  [/वानर/g, 'Vanara'],
+  [/नकुल/g, 'Nakula'],
+  [/सिंह/g, 'Simha'],
+  [/मांगलिक दोष मुक्त/g, 'Non-Manglik (Dosh-Free)'],
+  [/मांगलिक/g, 'Manglik'],
+  [/साढ़े साती नहीं है/g, 'No Sade Sati currently'],
+  [/साढ़े साती/g, 'Sade Sati'],
+  [/शनि की ढैया/g, 'Shani Dhaiya'],
+  [/ढैया/g, 'Dhaiya'],
+  [/उच्च/g, 'High'],
+  [/सावधानी/g, 'Caution'],
+  [/मध्यम/g, 'Moderate'],
 ];
 
 export const GENERAL_PHRASES_GU: [RegExp, string][] = [
@@ -528,9 +582,9 @@ export const GENERAL_PHRASES_GU: [RegExp, string][] = [
 /**
  * Universal Vedic translator supporting English ('en'), Gujarati ('gu'), and Hindi ('hi')
  */
-export function trVedic(term: string | undefined | null): string {
+export function trVedic(term: string | undefined | null, langOverride?: string): string {
   if (!term) return '';
-  const currentLang = i18n.language || 'hi';
+  const currentLang = (langOverride || i18n.language || 'hi').slice(0, 2).toLowerCase();
 
   if (currentLang === 'en') {
     let result = term;
@@ -631,8 +685,8 @@ export function trVedic(term: string | undefined | null): string {
   return term;
 }
 
-export function trPlanet(planet: string): string {
-  const currentLang = i18n.language || 'hi';
+export function trPlanet(planet: string, langOverride?: string): string {
+  const currentLang = (langOverride || i18n.language || 'hi').slice(0, 2).toLowerCase();
   if (currentLang === 'en' && PLANET_MAP_EN[planet]) {
     return PLANET_MAP_EN[planet];
   }
@@ -647,8 +701,8 @@ export function trPlanet(planet: string): string {
   return planet;
 }
 
-export function trRashi(rashi: string): string {
-  const currentLang = i18n.language || 'hi';
+export function trRashi(rashi: string, langOverride?: string): string {
+  const currentLang = (langOverride || i18n.language || 'hi').slice(0, 2).toLowerCase();
   if (currentLang === 'en' && RASHI_MAP_EN[rashi]) {
     return RASHI_MAP_EN[rashi];
   }
@@ -661,8 +715,8 @@ export function trRashi(rashi: string): string {
   return rashi;
 }
 
-export function trWeekday(weekday: string): string {
-  const currentLang = i18n.language || 'hi';
+export function trWeekday(weekday: string, langOverride?: string): string {
+  const currentLang = (langOverride || i18n.language || 'hi').slice(0, 2).toLowerCase();
   if (currentLang === 'en' && WEEKDAYS_MAP_EN[weekday]) {
     return WEEKDAYS_MAP_EN[weekday];
   }
@@ -675,8 +729,8 @@ export function trWeekday(weekday: string): string {
   return weekday;
 }
 
-export function trChoghadiyaMeaning(meaning: string, hindiName?: string): string {
-  const currentLang = i18n.language || 'hi';
+export function trChoghadiyaMeaning(meaning: string, hindiName?: string, langOverride?: string): string {
+  const currentLang = (langOverride || i18n.language || 'hi').slice(0, 2).toLowerCase();
   if (currentLang === 'en') {
     switch (hindiName) {
       case 'अमृत':

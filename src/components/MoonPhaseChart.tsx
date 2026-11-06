@@ -17,7 +17,8 @@ import {
 import { saveImageNative } from '../lib/device';
 import { shareImageFile } from '../lib/shareHelper';
 import { triggerHapticSelection } from '../utils/haptics';
-import { trVedic } from '../i18n/vedicTranslate';
+import { trVedic, trRashi } from '../i18n/vedicTranslate';
+import { useLanguage } from '../i18n';
 
 interface MoonPhaseChartProps {
   panchang: VedicPanchangData;
@@ -330,6 +331,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
   placeName = 'उज्जैन',
   onWhatsApp,
 }) => {
+  const { t, language } = useLanguage();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [selectedTithiIndex, setSelectedTithiIndex] = useState<number | null>(null);
   const [showOrbitCycle, setShowOrbitCycle] = useState(false);
@@ -696,7 +698,14 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
       .attr('font-size', '13px')
       .attr('font-weight', '900')
       .attr('font-family', 'sans-serif')
-      .text(`${pakshaName} • ${tithiName}`);
+      .text(`${trVedic(pakshaName, language)} • ${trVedic(tithiName, language)}`);
+
+    const elapsedLabel =
+      language === 'en'
+        ? `Tithi Elapsed: ${tithiProgressPct}% (${(tithiProgress * 12).toFixed(1)}° / 12°)`
+        : language === 'gu'
+        ? `તિથિ વ્યતીત: ${tithiProgressPct}% (${(tithiProgress * 12).toFixed(1)}° / 12°)`
+        : `तिथि व्यतीत: ${tithiProgressPct}% (${(tithiProgress * 12).toFixed(1)}° / 12°)`;
 
     svg
       .append('text')
@@ -706,7 +715,14 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
       .attr('fill', '#E5A024')
       .attr('font-size', '11px')
       .attr('font-weight', '700')
-      .text(`तिथि व्यतीत: ${tithiProgressPct}% (${(tithiProgress * 12).toFixed(1)}° / 12°)`);
+      .text(elapsedLabel);
+
+    const obsLabel =
+      language === 'en'
+        ? 'Real-time Lunar Observation'
+        : language === 'gu'
+        ? 'દશમ-કલા ચંદ્ર દર્શન (ખગોળીય)'
+        : 'दशम-कला चन्द्र दर्शन (प्रत्यक्ष खगोल)';
 
     svg
       .append('text')
@@ -716,21 +732,33 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
       .attr('font-size', '10px')
       .attr('font-weight', '700')
       .attr('letter-spacing', '0.5px')
-      .text('दशम-कला चन्द्र दर्शन (प्रत्यक्ष खगोल)');
+      .text(obsLabel);
 
-      svg
-        .append('text')
-        .attr('x', width - 14)
-        .attr('y', 22)
-        .attr('text-anchor', 'end')
-        .attr('fill', isWaxing ? '#74D99F' : '#E8B074')
-        .attr('font-size', '10px')
-        .attr('font-weight', '800')
-        .text(isWaxing ? '▲ शुक्ल (वर्धमान)' : '▼ कृष्ण (क्षीयमान)');
+    const waxLabel = isWaxing
+      ? language === 'en'
+        ? '▲ Waxing (Shukla)'
+        : language === 'gu'
+        ? '▲ શુક્લ (વર્ધમાન)'
+        : '▲ शुक्ल (वर्धमान)'
+      : language === 'en'
+      ? '▼ Waning (Krishna)'
+      : language === 'gu'
+      ? '▼ કૃષ્ણ (ક્ષીયમાણ)'
+      : '▼ कृष्ण (क्षीयमान)';
+
+    svg
+      .append('text')
+      .attr('x', width - 14)
+      .attr('y', 22)
+      .attr('text-anchor', 'end')
+      .attr('fill', isWaxing ? '#74D99F' : '#E8B074')
+      .attr('font-size', '10px')
+      .attr('font-weight', '800')
+      .text(waxLabel);
     } catch (err) {
       console.error('MoonPhaseChart d3 render error:', err);
     }
-  }, [elongationDeg, tithiProgress, illuminationPct, isWaxing, pakshaName, tithiName, tithiProgressPct]);
+  }, [elongationDeg, tithiProgress, illuminationPct, isWaxing, pakshaName, tithiName, tithiProgressPct, language]);
 
   // 30-Day Tithi Cycle Map for quick lookup
   const all30Tithis = useMemo(() => {
@@ -795,10 +823,10 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
               style={{ color: "var(--bx-header)" }}
               className="font-bold font-granth text-sm sm:text-base flex items-center gap-1.5"
             >
-              <span>चन्द्र कला एवं तिथि ट्रैकर (Moon Phase Tracker)</span>
+              <span>{t('panchang.moonTrackerTitle', 'चन्द्र कला एवं तिथि ट्रैकर (Moon Phase Tracker)')}</span>
             </h3>
             <p style={{ color: "var(--bx-mute)" }} className="text-[11px]">
-              दृक-सिद्ध सूर्य-चंद्र कोणीय अंतर (Elongation) आधारित वास्तविक खगोलीय चन्द्रमा
+              {t('panchang.moonTrackerSubtitle', 'दृक-सिद्ध सूर्य-चंद्र कोणीय अंतर (Elongation) आधारित वास्तविक खगोलीय चन्द्रमा')}
             </p>
           </div>
         </div>
@@ -816,7 +844,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
           }}
           className="text-xs font-bold border rounded-lg px-2.5 py-1 flex items-center gap-1 transition cursor-pointer hover:opacity-90 shadow-2xs"
         >
-          <span>{showOrbitCycle ? 'चक्र संक्षेप' : '३० तिथि महा-चक्र'}</span>
+          <span>{showOrbitCycle ? t('panchang.cycleShort', 'चक्र संक्षेप') : t('panchang.cycleFull', '३० तिथि महा-चक्र')}</span>
           {showOrbitCycle ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
       </div>
@@ -848,7 +876,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
                 style={{ color: "var(--bx-mute)" }}
                 className="text-[10px] font-bold uppercase tracking-wider block"
               >
-                चन्द्र प्रकाश (Illumination)
+                {t('panchang.illumination', 'चन्द्र प्रकाश (Illumination)')}
               </span>
               <div className="flex items-baseline gap-1 mt-0.5">
                 <span
@@ -857,7 +885,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
                 >
                   {illuminationPct.toFixed(1)}%
                 </span>
-                <span style={{ color: "var(--bx-mute)" }} className="text-[11px] font-medium">प्रकाशित</span>
+                <span style={{ color: "var(--bx-mute)" }} className="text-[11px] font-medium">{t('panchang.illuminated', 'प्रकाशित')}</span>
               </div>
               <div
                 style={{ backgroundColor: "var(--bx-line)" }}
@@ -884,7 +912,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
                 style={{ color: "var(--bx-mute)" }}
                 className="text-[10px] font-bold uppercase tracking-wider block"
               >
-                सूर्य-चन्द्र कोणीय अंतर
+                {t('panchang.elongation', 'सूर्य-चन्द्र कोणीय अंतर')}
               </span>
               <div className="flex items-baseline gap-1 mt-0.5">
                 <span
@@ -893,10 +921,14 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
                 >
                   {elongationDeg.toFixed(1)}°
                 </span>
-                <span style={{ color: "var(--bx-mute)" }} className="text-[11px] font-medium">रेखांश</span>
+                <span style={{ color: "var(--bx-mute)" }} className="text-[11px] font-medium">{t('panchang.longitude', 'रेखांश')}</span>
               </div>
               <span style={{ color: "var(--bx-ink)" }} className="text-[10px] block mt-1">
-                १ तिथि = १२° (व्यतीत: {(tithiProgress * 12).toFixed(2)}°)
+                {language === 'en'
+                  ? `1 Tithi = 12° (Elapsed: ${(tithiProgress * 12).toFixed(2)}°)`
+                  : language === 'gu'
+                  ? `૧ તિથિ = ૧૨° (વ્યતીત: ${(tithiProgress * 12).toFixed(2)}°)`
+                  : `१ तिथि = १२° (व्यतीत: ${(tithiProgress * 12).toFixed(2)}°)`}
               </span>
             </div>
           </div>
@@ -915,29 +947,29 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
             >
               <span className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" style={{ color: "var(--bx-gold)" }} />
-                <span>तिथि विस्तार एवं समाप्ति</span>
+                <span>{t('panchang.tithiSpanConclusion', 'तिथि विस्तार एवं समाप्ति')}</span>
               </span>
               <span
                 style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF" }}
                 className="text-xs px-2 py-0.5 rounded-md font-bold"
               >
-                {tithiProgressPct}% व्यतीत
+                {tithiProgressPct}% {t('panchang.elapsed', 'व्यतीत')}
               </span>
             </div>
 
             <div style={{ color: "var(--bx-ink)" }} className="text-[11px] space-y-1">
               <p>
-                <strong>वर्तमान तिथि:</strong> {pakshaName} की {tithiName} (तिथि संख्या {tithiNum}/30)
+                <strong>{t('panchang.currentTithi', 'वर्तमान तिथि:')}</strong> {trVedic(pakshaName, language)} {language === 'en' ? '·' : 'की'} {trVedic(tithiName, language)} ({t('panchang.tithiNo', 'तिथि संख्या')} {tithiNum}/30)
               </p>
               {panchang.tithiSpan && (
                 <p>
-                  <strong>समाप्ति काल:</strong>{' '}
-                  {panchang.tithiSpan.end.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })} तक
-                  (तदोपरांत {panchang.tithiSpan.nextName} आरम्भ)
+                  <strong>{t('panchang.concludesAt', 'समाप्ति काल:')}</strong>{' '}
+                  {panchang.tithiSpan.end.toLocaleTimeString(language === 'en' ? 'en-US' : language === 'gu' ? 'gu-IN' : 'hi-IN', { hour: '2-digit', minute: '2-digit' })}{' '}
+                  {language === 'en' ? `(followed by ${trVedic(panchang.tithiSpan.nextName, language)})` : `तक (तदोपरांत ${trVedic(panchang.tithiSpan.nextName, language)} आरम्भ)`}
                 </p>
               )}
               <p>
-                <strong>चन्द्र स्थिति:</strong> {rashi} राशि • {nakshatra} नक्षत्र
+                <strong>{t('panchang.moonPosition', 'चन्द्र स्थिति:')}</strong> {trRashi(rashi, language)} • {trVedic(nakshatra, language)}
               </p>
             </div>
           </div>
@@ -953,7 +985,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
           >
             <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "var(--bx-gold)" }} />
             <span className="leading-snug">
-              सूर्य और चन्द्रमा के स्पष्ट देशांतर का अंतर जब १२° बढ़ता है, तब एक तिथि पूर्ण होती है। ०° पर अमावस्या तथा १८०° पर पूर्णिमा होती है।
+              {t('panchang.astronomicalNote', 'सूर्य और चन्द्रमा के स्पष्ट देशांतर का अंतर जब १२° बढ़ता है, तब एक तिथि पूर्ण होती है। ०° पर अमावस्या तथा १८०° पर पूर्णिमा होती है।')}
             </span>
           </div>
         </div>
@@ -972,7 +1004,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
           ) : (
             <Share2 className="w-4 h-4 text-[#FFD88A]" />
           )}
-          <span>पंचांग शेयर करें (Share)</span>
+          <span>{t('panchang.sharePanchang', 'पंचांग शेयर करें (Share)')}</span>
         </button>
 
         <button
@@ -986,7 +1018,7 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
           ) : (
             <Download className="w-4 h-4 text-amber-200" />
           )}
-          <span>HD में सेव करें (1080p)</span>
+          <span>{t('panchang.saveHd1080', 'HD में सेव करें (1080p)')}</span>
         </button>
 
         {onWhatsApp && (
@@ -997,10 +1029,10 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
               onWhatsApp();
             }}
             className="py-2.5 px-3 rounded-xl bg-[#F4E8D1] hover:bg-[#E8D5B5] border border-[#8C6239]/40 text-[#5C3A21] font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
-            title="व्हाट्सएप सुप्रभात पंचांग कार्ड स्टूडियो"
+            title={t('panchang.whatsappCard', 'व्हाट्सएप कार्ड')}
           >
             <MessageCircle className="w-4 h-4 text-emerald-700" />
-            <span>व्हाट्सएप कार्ड</span>
+            <span>{t('panchang.whatsappCard', 'व्हाट्सएप कार्ड')}</span>
           </button>
         )}
       </div>
@@ -1018,35 +1050,37 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-[#5C3A21] flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span>सम्पूर्ण ३० तिथि चन्द्र-कला चक्र (1 to 30 Lunar Cycle)</span>
+              <span>{t('panchang.all30CycleTitle', 'सम्पूर्ण ३० तिथि चन्द्र-कला चक्र (1 to 30 Lunar Cycle)')}</span>
             </span>
-            <span className="text-[11px] text-[#8C6239]">किसी भी तिथि पर क्लिक करें</span>
+            <span className="text-[11px] text-[#8C6239]">{t('panchang.tapTithiPrompt', 'किसी भी तिथि पर क्लिक करें')}</span>
           </div>
 
           <div className="grid grid-cols-5 sm:grid-cols-10 md:grid-cols-15 gap-1 text-center">
-            {all30Tithis.map((t) => {
-              const isSelected = selectedTithiIndex === t.index || (selectedTithiIndex === null && t.isCurrent);
+            {all30Tithis.map((tItem) => {
+              const isSelected = selectedTithiIndex === tItem.index || (selectedTithiIndex === null && tItem.isCurrent);
+              const localizedTithiName = trVedic(tItem.name, language);
+              const localizedPaksha = trVedic(tItem.paksha, language);
               return (
                 <button
-                  key={t.index}
+                  key={tItem.index}
                   type="button"
                   onClick={() => {
                     triggerHapticSelection();
-                    setSelectedTithiIndex(t.index);
+                    setSelectedTithiIndex(tItem.index);
                   }}
                   className={`p-1 rounded-md text-[10px] transition cursor-pointer flex flex-col items-center justify-between min-h-[52px] ${
-                    t.isCurrent
+                    tItem.isCurrent
                       ? 'bg-[#B56A00] text-white font-black shadow-xs ring-2 ring-[#B56A00]/40'
                       : isSelected
                       ? 'bg-[#5C3A21] text-white font-bold'
                       : 'bg-white hover:bg-[#F4E8D1] border border-[#8C6239]/20 text-[#5C3A21]'
                   }`}
-                  title={`${t.paksha} ${t.name} (प्रकाश: ${t.illum}%)`}
+                  title={`${localizedPaksha} ${localizedTithiName} (${tItem.illum}%)`}
                 >
-                  <span className="font-mono text-[9px] opacity-80">{t.index}</span>
-                  <span className="truncate w-full font-semibold">{t.name.slice(0, 4)}</span>
-                  <span className={`text-[9px] ${t.isCurrent ? 'text-amber-200' : 'text-[#8C6239]'}`}>
-                    {t.illum}%
+                  <span className="font-mono text-[9px] opacity-80">{tItem.index}</span>
+                  <span className="truncate w-full font-semibold">{localizedTithiName.slice(0, 5)}</span>
+                  <span className={`text-[9px] ${tItem.isCurrent ? 'text-amber-200' : 'text-[#8C6239]'}`}>
+                    {tItem.illum}%
                   </span>
                 </button>
               );
@@ -1057,11 +1091,15 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
           {selectedTithiIndex && (
             <div className="p-2 bg-white rounded-lg border border-[#8C6239]/30 text-xs flex items-center justify-between animate-in fade-in duration-100">
               <span className="font-bold text-[#5C3A21]">
-                तिथि {selectedTithiIndex}: {all30Tithis[selectedTithiIndex - 1]?.paksha}{' '}
-                {all30Tithis[selectedTithiIndex - 1]?.name}
+                {t('panchang.tithi', 'तिथि')} {selectedTithiIndex}: {trVedic(all30Tithis[selectedTithiIndex - 1]?.paksha, language)}{' '}
+                {trVedic(all30Tithis[selectedTithiIndex - 1]?.name, language)}
               </span>
               <span className="text-[#8C6239]">
-                अनुमानित चन्द्र कला: {all30Tithis[selectedTithiIndex - 1]?.illum}% प्रकाश
+                {language === 'en'
+                  ? `Est. Illumination: ${all30Tithis[selectedTithiIndex - 1]?.illum}% light`
+                  : language === 'gu'
+                  ? `અનુમાનિત ચંદ્ર કલા: ${all30Tithis[selectedTithiIndex - 1]?.illum}% પ્રકાશ`
+                  : `अनुमानित चन्द्र कला: ${all30Tithis[selectedTithiIndex - 1]?.illum}% प्रकाश`}
               </span>
             </div>
           )}

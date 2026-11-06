@@ -686,20 +686,20 @@ export function TodayBoard({
 
   const placeLabelKey = t("kundali.place", "स्थान");
   const facts: [string, string][] = [
-    [t("panchang.tithi", "तिथि"), trVedic(panchang.tithi)],
-    [t("panchang.paksha", "पक्ष"), trVedic(panchang.paksha)],
-    [t("panchang.nakshatra", "नक्षत्र"), `${trVedic(panchang.nakshatra)} · ${language === 'en' ? 'Charan' : language === 'gu' ? 'ચરણ' : 'चरण'} ${panchang.pada}`],
-    [t("panchang.yoga", "योग"), trVedic(panchang.yoga)],
-    [t("panchang.karana", "करण"), trVedic(panchang.karana)],
-    [t("panchang.weekday", "वार"), trVedic(panchang.weekday)],
-    [t("panchang.shareMasaPaksha", "मास"), trVedic(panchang.masa)],
-    [t("panchang.samvat", "संवत्"), panchang.samvat],
-    [t("panchang.shakaSamvat", "शक"), panchang.sakaSamvat],
+    [t("panchang.tithi", "तिथि"), trVedic(panchang.tithi, language)],
+    [t("panchang.paksha", "पक्ष"), trVedic(panchang.paksha, language)],
+    [t("panchang.nakshatra", "नक्षत्र"), `${trVedic(panchang.nakshatra, language)} · ${language === 'en' ? 'Charan' : language === 'gu' ? 'ચરણ' : 'चरण'} ${panchang.pada}`],
+    [t("panchang.yoga", "योग"), trVedic(panchang.yoga, language)],
+    [t("panchang.karana", "करण"), trVedic(panchang.karana, language)],
+    [t("panchang.weekday", "वार"), trVedic(panchang.weekday, language)],
+    [t("panchang.shareMasaPaksha", "मास"), trVedic(panchang.masa, language)],
+    [t("panchang.samvat", "संवत्"), trVedic(panchang.samvat, language)],
+    [t("panchang.shakaSamvat", "शक"), trVedic(panchang.sakaSamvat, language)],
     [t("panchang.sunrise", "सूर्योदय"), clock(panchang.solar.sunrise)],
     [t("panchang.solarNoon", "मध्याह्न"), clock(panchang.solar.solarNoon)],
     [t("panchang.sunset", "सूर्यास्त"), clock(panchang.solar.sunset)],
-    [t("panchang.sunSign", "सूर्य राशि"), trVedic(panchang.solarRashi)],
-    [t("panchang.moonSign", "चंद्र राशि"), trVedic(panchang.lunarRashi)],
+    [t("panchang.sunSign", "सूर्य राशि"), trVedic(panchang.solarRashi, language)],
+    [t("panchang.moonSign", "चंद्र राशि"), trVedic(panchang.lunarRashi, language)],
     [t("panchang.shareMoonSunSign", "अयनांश"), `${panchang.ayanamshaName} · ${panchang.ayanamsha.toFixed(2)}°`],
     [placeLabelKey, place.name],
   ];
@@ -713,10 +713,22 @@ export function TodayBoard({
       const dataUrl = await generateHdMoonPanchangDataUrl(panchang, place.name);
       const slug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
       await saveImageNative(dataUrl, `shakti-panchang-hd-${slug}.png`);
-      setHdNotice("✓ Full HD (1080p) पंचांग चित्र सेव हो गया!");
+      setHdNotice(
+        language === 'en'
+          ? "✓ Full HD (1080p) Panchang image saved!"
+          : language === 'gu'
+          ? "✓ ફુલ એચડી (1080p) પંચાંગ ચિત્ર સેવ થઈ ગયું!"
+          : "✓ Full HD (1080p) पंचांग चित्र सेव हो गया!"
+      );
       setTimeout(() => setHdNotice(null), 4000);
     } catch {
-      setHdNotice("HD सेव करने में त्रुटि हुई, पुनः प्रयास करें।");
+      setHdNotice(
+        language === 'en'
+          ? "Error saving HD image, please try again."
+          : language === 'gu'
+          ? "HD સેવ કરવામાં ક્ષતિ આવી, પુનઃ પ્રયાસ કરો."
+          : "HD सेव करने में त्रुटि हुई, पुनः प्रयास करें।"
+      );
     } finally {
       setIsSavingHd(false);
     }
@@ -730,19 +742,25 @@ export function TodayBoard({
     try {
       const dataUrl = await generateHdMoonPanchangDataUrl(panchang, place.name);
       const slug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
+      const shareTitle =
+        language === 'en'
+          ? `🕉️ *Today's Vedic Panchang & Lunar Phase (${place.name})*`
+          : language === 'gu'
+          ? `🕉️ *આજનું વૈદિક પંચાંગ અને ચંદ્ર કળા (${place.name})*`
+          : `🕉️ *आज का वैदिक पंचांग एवं चन्द्र कला (${place.name})*`;
       const shareText = [
-        `🕉️ *आज का वैदिक पंचांग एवं चन्द्र कला (${place.name})*`,
-        `• तिथि: ${trVedic(panchang.paksha)} ${trVedic(panchang.tithi)}`,
-        `• नक्षत्र: ${trVedic(panchang.nakshatra)} (चरण ${panchang.pada})`,
-        `• योग: ${trVedic(panchang.yoga)} | करण: ${trVedic(panchang.karana)}`,
-        `• वार: ${trVedic(panchang.weekday)} | मास: ${trVedic(panchang.masa)}`,
-        `• सूर्योदय: ${clock(panchang.solar.sunrise)} | सूर्यास्त: ${clock(panchang.solar.sunset)}`,
-        `• सूर्य राशि: ${trVedic(panchang.solarRashi)} | चन्द्र राशि: ${trVedic(panchang.lunarRashi)}`,
+        shareTitle,
+        `• ${t("panchang.tithi", "तिथि")}: ${trVedic(panchang.paksha, language)} ${trVedic(panchang.tithi, language)}`,
+        `• ${t("panchang.nakshatra", "नक्षत्र")}: ${trVedic(panchang.nakshatra, language)} (${language === 'en' ? 'Charan' : 'चरण'} ${panchang.pada})`,
+        `• ${t("panchang.yoga", "योग")}: ${trVedic(panchang.yoga, language)} | ${t("panchang.karana", "करण")}: ${trVedic(panchang.karana, language)}`,
+        `• ${t("panchang.weekday", "वार")}: ${trVedic(panchang.weekday, language)} | ${t("panchang.shareMasaPaksha", "मास")}: ${trVedic(panchang.masa, language)}`,
+        `• ${t("panchang.sunrise", "सूर्योदय")}: ${clock(panchang.solar.sunrise)} | ${t("panchang.sunset", "सूर्यास्त")}: ${clock(panchang.solar.sunset)}`,
+        `• ${t("panchang.sunSign", "सूर्य राशि")}: ${trVedic(panchang.solarRashi, language)} | ${t("panchang.moonSign", "चन्द्र राशि")}: ${trVedic(panchang.lunarRashi, language)}`,
       ].join("\n");
       await shareImageFile({
         imageUri: dataUrl,
         fileName: `shakti-panchang-hd-${slug}.png`,
-        title: "आज का वैदिक पंचांग (Full HD)",
+        title: language === 'en' ? "Today's Vedic Panchang (Full HD)" : "आज का वैदिक पंचांग (Full HD)",
         text: shareText,
       });
     } catch {
@@ -902,10 +920,10 @@ export function TodayBoard({
           <div>
             <div className="bx-kicker inline-flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span>{t("common.today", "आज का सम्पूर्ण पंचांग विवरण")}</span>
+              <span>{t("panchang.fullDetailsTitle", "आज का सम्पूर्ण पंचांग विवरण")}</span>
             </div>
             <h3 className="font-granth font-black text-base sm:text-lg text-[#5C3A21] mt-0.5">
-              {trVedic(panchang.paksha)} · {trVedic(panchang.tithi)} ({trVedic(panchang.weekday)})
+              {trVedic(panchang.paksha, language)} · {trVedic(panchang.tithi, language)} ({trVedic(panchang.weekday, language)})
             </h3>
           </div>
 
@@ -964,11 +982,13 @@ export function TodayBoard({
                   onPlace();
                 }}
                 className="bx-fact bx-glass text-left cursor-pointer hover:border-[#8B1E1E]"
-                title="शहर / स्थान बदलें"
+                title={t("common.changeCity", "शहर / स्थान बदलें")}
               >
                 <div className="bx-kicker flex items-center justify-between gap-1">
                   <span>{k}</span>
-                  <span style={{ color: "var(--bx-header)" }} className="text-[10px] font-bold underline">शहर बदलें ▾</span>
+                  <span style={{ color: "var(--bx-header)" }} className="text-[10px] font-bold underline">
+                    {t("common.changeCity", "शहर बदलें ▾")}
+                  </span>
                 </div>
                 <b className="text-base mt-1 flex items-center gap-1 truncate">
                   <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-gold)" }} />
@@ -991,7 +1011,7 @@ export function TodayBoard({
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.14 }}
         className="bx-kundali"
-        aria-label="आज की कुंडली"
+        aria-label={t("nav.kundali", "आज की कुंडली")}
       >
         <div className="bx-kundali-stage">
           <svg viewBox="0 0 100 100" className="bx-kundali-plate" aria-hidden="true">
@@ -1002,14 +1022,14 @@ export function TodayBoard({
           </svg>
           <div className="bx-kundali-core">
             <span>ॐ</span>
-            <b>{trVedic(panchang.tithi)}</b>
-            <small>{trVedic(panchang.nakshatra)}</small>
+            <b>{trVedic(panchang.tithi, language)}</b>
+            <small>{trVedic(panchang.nakshatra, language)}</small>
           </div>
         </div>
         <div className="bx-kundali-meta">
-          <span>{trVedic(panchang.weekday)}</span>
-          <span>{t("panchang.sunSign", "सूर्य")} · {trVedic(panchang.solarRashi)}</span>
-          <span>{t("panchang.moonSign", "चंद्र")} · {trVedic(panchang.lunarRashi)}</span>
+          <span>{trVedic(panchang.weekday, language)}</span>
+          <span>{t("panchang.sunSign", "सूर्य")} · {trVedic(panchang.solarRashi, language)}</span>
+          <span>{t("panchang.moonSign", "चंद्र")} · {trVedic(panchang.lunarRashi, language)}</span>
         </div>
       </motion.section>
 
