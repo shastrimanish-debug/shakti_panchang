@@ -28,7 +28,8 @@ import {
   formatTithiTiming,
   formatKarmaKala,
   formatDecisionReason,
-  formatAlternateNote
+  formatAlternateNote,
+  getDailyFestivalDecision,
 } from '../services/tithiNirnaya';
 import { VedicPanchangData } from '../types';
 import { trVedic } from '../i18n/vedicTranslate';
@@ -59,6 +60,7 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
 
   const mathExplanation = useMemo(() => getTithiCalculationExplanation(lang), [lang]);
+  const dailyDecision = useMemo(() => getDailyFestivalDecision(panchang?.date || new Date(), panchang, lang), [panchang, lang]);
 
   // Filter 10-year records
   const filteredRecords = useMemo(() => {
@@ -193,9 +195,14 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                       {panchang ? (
                         <>
                           {trVedic(panchang.paksha, lang)} · {trVedic(panchang.tithi, lang)}
+                          {dailyDecision?.isFestivalToday && dailyDecision.festivalName && (
+                            <span className="text-amber-800 ml-1.5 font-sans text-xs sm:text-sm font-bold block sm:inline">
+                              ({dailyDecision.festivalName})
+                            </span>
+                          )}
                         </>
                       ) : (
-                        'कार्तिक कृष्ण त्रयोदशी (धनतेरस)'
+                        dailyDecision?.festivalName || (lang === 'en' ? 'Vedic Panchang' : 'सनातन पंचांग')
                       )}
                     </h4>
                   </div>
@@ -246,38 +253,25 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                   </div>
                 )}
 
-                {/* Shastric Proof: Dhanteras / Festival Rule */}
+                {/* Shastric Proof: Dynamic by Festival / Tithi */}
                 <div className="p-3 bg-[#4A2610] text-amber-100 rounded-xl space-y-2 text-xs">
                   <div className="flex items-center gap-1.5 text-amber-300 font-bold">
                     <Scale className="w-4 h-4" />
                     <span>
-                      {lang === 'en'
-                        ? 'Why Dhanteras Is Observed Today (Shastric Proof)'
-                        : lang === 'gu'
-                        ? 'આજે જ ધનતેરસ કેમ ઉજવવી? (શાસ્ત્રોક્ત પ્રમાણ)'
-                        : 'आज ही धनतेरस क्यों करें? (शास्त्रोक्त प्रमाण)'}
+                      {dailyDecision.proofTitle}
                     </span>
                   </div>
 
                   <blockquote className="italic border-l-2 border-amber-400 pl-2.5 py-1 text-amber-200 text-xs font-serif bg-black/20 rounded-r-md">
-                    "कार्तिकस्यासिते पक्षे त्रयोदश्यां निशामुखे।<br />
-                    यमदीपं बहिर्दद्यादपमृत्युर्विनश्यति॥"<br />
+                    <span dangerouslySetInnerHTML={{ __html: dailyDecision.shlokQuote.replace(/\n/g, '<br />') }} />
+                    <br />
                     <span className="text-[10px] not-italic text-amber-300 font-sans font-bold">
-                      {lang === 'en'
-                        ? '— Skanda Purana & Nirnayasindhu (Shastric Pramana for Pradosha-Vyapti)'
-                        : lang === 'gu'
-                        ? '— સ્કંદ પુરાણ (કાશી ખંડ) અને નિર્ણયસિંધુ'
-                        : '— स्कन्द पुराण (काशी/प्रभास खण्ड) एवं निर्णयसिन्धु'}
+                      {dailyDecision.shlokSource}
                     </span>
                   </blockquote>
 
                   <p className="text-[11px] text-amber-100/90 leading-relaxed">
-                    <strong>{lang === 'en' ? 'The Rule of Pradosha-Vyapti:' : lang === 'gu' ? 'પ્રદોષ વ્યાપ્તિનો નિયમ:' : 'प्रदोष काल व्याप्ति का अटल नियम:'}</strong>{' '}
-                    {lang === 'en'
-                      ? 'Dhanteras (Dhanatrayodashi) and Yama Deepam must be observed on the day Kartik Krishna Trayodashi prevails during Pradosha Kaala (the 2 hours and 24 minutes following sunset). Even if Trayodashi begins midday, its presence in Pradosha gives it complete religious authority over the next day where Trayodashi ends shortly after sunrise.'
-                      : lang === 'gu'
-                      ? 'ધનતેરસ અને યમ દીપદાનનો મુખ્ય કર્મકાળ સૂર્યાસ્ત પછીના આશરે ૨ કલાક ૨૪ મિનિટ (પ્રદોષ કાળ) છે. ભલે તેરસ બપોરે લાગી હોય, પરંતુ સંધ્યાકાળે પ્રદોષ કાળમાં તેરસ હોવાને કારણે આજે જ ધનતેરસ શાસ્ત્રસંમત છે.'
-                      : 'धनतेरस एवं यम-दीपदान का मुख्य कर्मकाल सूर्यास्त के बाद के २ घण्टे २४ मिनट (प्रदोष काल) में होता है। भले ही त्रयोदशी दिन में किसी भी समय शुरू हुई हो, परन्तु सूर्यास्त के बाद प्रदोष काल में त्रयोदशी होने के कारण आज ही धनतेरस और यम दीपदान शास्त्रसम्मत है। अगले दिन केवल उदया तिथि होगी पर प्रदोष में चतुर्दशी आ जाएगी, अतः आज का दिन ही निर्विवाद है।'}
+                    {dailyDecision.explanation}
                   </p>
                 </div>
               </div>
@@ -412,6 +406,7 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                   >
                     <option value="all">{lang === 'en' ? 'All Festivals' : lang === 'gu' ? 'તમામ પર્વો' : 'समस्त महापर्व'}</option>
                     <option value="dhanteras">{lang === 'en' ? 'Dhanteras' : lang === 'gu' ? 'ધનતેરસ' : 'धनतेरस (Dhanteras)'}</option>
+                    <option value="narak-chaturdashi">{lang === 'en' ? 'Narak Chaturdashi / Roop Chaudas' : lang === 'gu' ? 'રૂપ ચૌદશ / કાળી ચૌદશ' : 'नरक चतुर्दशी (रूप चौदस)'}</option>
                     <option value="diwali">{lang === 'en' ? 'Diwali (Lakshmi Puja)' : lang === 'gu' ? 'દિવાળી (મહાલક્ષ્મી પૂજન)' : 'दीपावली (Diwali)'}</option>
                     <option value="shivratri">{lang === 'en' ? 'Maha Shivratri' : lang === 'gu' ? 'મહાશિવરાત્રિ' : 'महाशिवरात्रि (Maha Shivratri)'}</option>
                     <option value="janmashtami">{lang === 'en' ? 'Krishna Janmashtami' : lang === 'gu' ? 'શ્રીકૃષ્ણ જન્માષ્ટમી' : 'श्री कृष्ण जन्माष्टमी'}</option>

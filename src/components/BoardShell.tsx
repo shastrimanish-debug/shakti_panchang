@@ -34,6 +34,7 @@ import { triggerHapticSelection } from "../utils/haptics";
 import { DailyShlokaCard } from "./DailyShlokaCard";
 import { VedicDatePickerModal } from "./VedicDateTimePickerModals";
 import { TithiNirnayaModal } from "./TithiNirnayaModal";
+import { getDailyFestivalDecision } from "../services/tithiNirnaya";
 
 function clock(d?: Date) {
   if (!d) return "—";
@@ -688,13 +689,7 @@ export function TodayBoard({
   };
 
   const placeLabelKey = t("kundali.place", "स्थान");
-  const isDhanterasToday =
-    panchang.tithi.includes("त्रयोदशी") ||
-    (panchang.tithiSpan &&
-      (panchang.tithiSpan.nextName.includes("त्रयोदशी") ||
-        panchang.tithiSpan.name.includes("त्रयोदशी")));
-  const nextIsTrayodashi =
-    panchang.tithiSpan && panchang.tithiSpan.nextName.includes("त्रयोदशी");
+  const dailyDecision = getDailyFestivalDecision(activeDate, panchang, language);
 
   const formatPlaceDisplay = (name: string, lang: string): string => {
     if (!name) return '';
@@ -1027,28 +1022,16 @@ export function TodayBoard({
             <div className="min-w-0 flex-1">
               <div className="text-xs font-black flex items-center gap-1.5 flex-wrap" style={{ color: "#FFFDF5" }}>
                 <span style={{ color: "#FFFDF5" }}>
-                  {isDhanterasToday
-                    ? (language === 'gu' ? '✨ આજે ધનતેરસ છે (શાસ્ત્રોક્ત નિર્ણય)' : language === 'en' ? '✨ Dhanteras Today (Shastric Proof)' : '✨ आज धनतेरस है (शास्त्रोक्त निर्णय व प्रमाण)')
-                    : (language === 'en' ? 'Shastric Tithi & Festival Decision' : language === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય પ્રમાણ' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण')}
+                  {dailyDecision.isFestivalToday
+                    ? `✨ ${dailyDecision.title}`
+                    : dailyDecision.title}
                 </span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 border border-amber-400/30 font-bold" style={{ color: "#FDE68A" }}>
-                  {language === 'en' ? '10-Yr Guide' : language === 'gu' ? '૧૦-વર્ષીય માર્ગદર્શિકા' : '१०-वर्षीय दिग्दर्शिका'}
+                  {dailyDecision.badgeText}
                 </span>
               </div>
               <div className="text-[10px] sm:text-[11px] leading-snug mt-0.5" style={{ color: "#FEF08A" }}>
-                {isDhanterasToday && panchang.tithiSpan ? (
-                  language === 'gu'
-                    ? `આજે સવારે ${clock(panchang.tithiSpan.end)} વાગ્યાથી તેરસ શરૂ થશે. સંધ્યા પ્રદોષ કાળમાં તેરસ હોવાથી ધનતેરસ આજે જ ઉજવાશે.`
-                    : language === 'en'
-                    ? `Trayodashi begins at ${clock(panchang.tithiSpan.end)} today. Due to presence in Pradosha Kaal, Dhanteras is observed TODAY.`
-                    : `आज सुबह ${clock(panchang.tithiSpan.end)} बजे से त्रयोदशी (तेरस) लगेगी। संध्या प्रदोष काल में त्रयोदशी व्याप्त रहने से धनतेरस आज ही मनेगी (प्रमाण देखें ➔)`
-                ) : (
-                  language === 'en'
-                    ? 'Why festival today? View Skanda Purana & Nirnayasindhu proofs'
-                    : language === 'gu'
-                    ? 'સ્કંદ પુરાણ, નિર્ણયસિંધુ પ્રમાણ અને ૨ તિથિ સંશય સમાધાન'
-                    : 'स्कन्द पुराण व निर्णयसिन्धु प्रमाण एवं २ तिथि संशय समाधान'
-                )}
+                {dailyDecision.bannerNotice}
               </div>
             </div>
           </div>
@@ -1104,7 +1087,7 @@ export function TodayBoard({
                   <b className="text-base text-[#4A2610] block">{v}</b>
                   {panchang.tithiSpan && (
                     <span className="text-[10px] text-rose-700 font-bold block leading-tight">
-                      {clock(panchang.tithiSpan.end)} {language === 'gu' ? 'સુધી' : language === 'en' ? 'ends' : 'तक'} • {language === 'gu' ? 'ત્યારબાદ' : language === 'en' ? 'then' : 'आगे'} {trVedic(panchang.tithiSpan.nextName, language)} {nextIsTrayodashi ? `(${language === 'en' ? 'Dhanteras' : language === 'gu' ? 'ધનતેરસ' : language === 'mr' ? 'धनत्रयोदशी' : 'धनतेरस'})` : ''}
+                      {clock(panchang.tithiSpan.end)} {language === 'gu' ? 'સુધી' : language === 'en' ? 'ends' : 'तक'} • {language === 'gu' ? 'ત્યારબાદ' : language === 'en' ? 'then' : 'आगे'} {trVedic(panchang.tithiSpan.nextName, language)} {dailyDecision.nextTithiFestivalBadge ? `(${dailyDecision.nextTithiFestivalBadge})` : ''}
                     </span>
                   )}
                 </div>

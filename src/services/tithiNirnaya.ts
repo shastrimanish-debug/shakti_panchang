@@ -6,6 +6,9 @@
  * grounded in Nirnayasindhu, Dharmasindhu, and Skanda Purana.
  */
 
+import { VedicPanchangData } from '../types';
+import { getFestivalsForYear } from './festivals';
+
 export interface ShastricRule {
   id: string;
   name: string;
@@ -287,6 +290,23 @@ export const TEN_YEAR_FESTIVAL_DECISIONS: TenYearFestivalRecord[] = [
     decisionReason: '06 नवंबर को प्रातः 10:31 बजे त्रयोदशी (तेरस) का प्रवेश हो रहा है और यह संपूर्ण सायंकालीन प्रदोष काल में पूर्णतः व्याप्त है। 07 नवंबर को सूर्यास्त के प्रदोष काल में चतुर्दशी आ जाएगी। अतः धनतेरस, धन्वंतरि पूजन व यम दीपदान 06 नवंबर को ही शास्त्रसम्मत है।',
     shastricPramana: 'कार्तिकस्यासिते पक्षे त्रयोदश्यां निशामुखे। यमदीपं बहिर्दद्यादपमृत्युर्विनश्यति॥ (स्कन्द पुराण) — दिनद्वये प्रदोषव्याप्तौ पूर्वविद्धा ग्राह्या।',
     alternateDateNote: '07 नवंबर को केवल प्रातः काल उदया तिथि है, पर सायंकाल प्रदोष काल नहीं मिलेगा।',
+  },
+  {
+    year: 2026,
+    festivalId: 'narak-chaturdashi',
+    festivalName: 'Narak Chaturdashi / Roop Chaudas',
+    hindiName: 'नरक चतुर्दशी (रूप चौदस / छोटी दीवाली)',
+    guName: 'નરક ચતુર્દશી (રૂપ ચૌદશ / કાળી ચૌદશ)',
+    observedDate: '2026-11-07',
+    tithiName: 'कार्तिक कृष्ण चतुर्दशी',
+    tithiStart: '07 नवंबर प्रातः 10:48 से',
+    tithiEnd: '08 नवंबर दोपहर 12:12 तक',
+    hasConflict: true,
+    conflictType: 'दो_दिन_व्याप्ति',
+    karmaKala: 'प्रदोष काल (शाम 05:31 से 07:57) एवं अरुणोदय काल',
+    decisionReason: '07 नवंबर को प्रातः 10:48 पर त्रयोदशी समाप्त होकर चतुर्दशी प्रारंभ होगी जो सायंकालीन प्रदोष काल में व्याप्त रहेगी। यमराज निमित्त 14 दीपकों का दीपदान एवं रूप चौदस 07 नवंबर सायंकाल संपन्न होगी। 08 नवंबर प्रातः अरुणोदय काल में चतुर्दशी में अभ्यंग स्नान होगा। अतः रूप चौदस का सायंकालीन पर्व 07 नवंबर को ही शास्त्रसम्मत है।',
+    shastricPramana: 'ततोऽपराह्णे संव्याप्य नरकस्य चतुर्दशीम्। तैलाभ्यङ्गो निशि स्नाने यमलोकं न पश्यति॥ (निर्णयसिन्धु)',
+    alternateDateNote: '08 नवंबर को सायंकाल अमावस्या लग जाने से रूप चौदस का दीपदान 07 नवंबर की शाम ही होगा।',
   },
   {
     year: 2026,
@@ -807,6 +827,9 @@ export const formatDecisionReason = (rec: TenYearFestivalRecord, lang: string): 
     if (rec.festivalId === 'dhanteras') {
       return `On ${rec.observedDate}, Trayodashi is fully present during Pradosha Kaala (evening after sunset). Under Skanda Purana and Nirnayasindhu rules, Dhanteras & Yama Deepam must be observed when Trayodashi covers Pradosha Kaala. On the succeeding day, Trayodashi ends before or at sunset, making this date authoritative.`;
     }
+    if (rec.festivalId === 'narak-chaturdashi') {
+      return `Chaturdashi commences at 10:48 AM on ${rec.observedDate} and covers evening Pradosha Kaala. Under Nirnayasindhu, 14-lamp Yama Deepam and Roop Chaudas are observed on the evening Chaturdashi touches Pradosha. Abhyanga Snana occurs before sunrise on the succeeding morning.`;
+    }
     if (rec.festivalId === 'diwali') {
       return `On ${rec.observedDate}, Amavasya spans Pradosha Kaala, Vrishabha Sthira Lagna, and Nishita Kaala. Per Dharmasindhu, Lakshmi Puja is exclusively observed on the night Amavasya touches Pradosha.`;
     }
@@ -831,6 +854,9 @@ export const formatDecisionReason = (rec: TenYearFestivalRecord, lang: string): 
     if (rec.festivalId === 'dhanteras') {
       return `${rec.observedDate} ના રોજ સાંજે પ્રદોષ કાળમાં ત્રયોદશી વ્યાપ્ત છે. સ્કંદ પુરાણ મુજબ ધનતેરસ અને યમ દીપદાન પ્રદોષ કાળમાં ત્રયોદશી હોવાથી આ જ દિવસે શાસ્ત્રસંમત છે.`;
     }
+    if (rec.festivalId === 'narak-chaturdashi') {
+      return `${rec.observedDate} ના રોજ સવારે ૧૦:૪૮ વાગ્યે ચતુર્દશી શરૂ થઈ સાંજે પ્રદોષ કાળમાં વ્યાપ્ત રહેશે. નિર્ણયસિંધુ મુજબ ૧૪ દીવાઓનું યમ દીપદાન અને રૂપ ચૌદશ આ જ સાંજે શાસ્ત્રસંમત છે.`;
+    }
     if (rec.festivalId === 'diwali') {
       return `${rec.observedDate} ની રાત્રિએ પ્રદોષ કાળ, વૃષભ સ્થિર લગ્ન અને નિશીથ કાળ ત્રણેયમાં અમાસ વિદ્યમાન છે. ધર્મસિંધુ મુજબ આ જ દિવસે દીપાવલી માન્ય છે.`;
     }
@@ -847,6 +873,9 @@ export const formatAlternateNote = (rec: TenYearFestivalRecord, lang: string): s
     if (rec.festivalId === 'dhanteras') {
       return 'The subsequent day only has Udaya Tithi (sunrise touch) but Trayodashi is absent during evening Pradosha; hence observing Dhanteras on the next day is invalid per Nirnayasindhu.';
     }
+    if (rec.festivalId === 'narak-chaturdashi') {
+      return 'On the subsequent evening, Amavasya takes over before Pradosha begins; thus Roop Chaudas Deepam cannot be deferred to the next evening.';
+    }
     if (rec.festivalId === 'diwali') {
       return 'On the other date, Amavasya ends before evening Pradosha commences, so Lakshmi Puja cannot be performed on that night.';
     }
@@ -856,7 +885,401 @@ export const formatAlternateNote = (rec: TenYearFestivalRecord, lang: string): s
     if (rec.festivalId === 'dhanteras') {
       return 'બીજા દિવસે માત્ર ઉદયા તિથિ છે, પરંતુ સાંજના પ્રદોષ કાળમાં તેરસ નથી, તેથી બીજા દિવસે ધનતેરસ ન થઈ શકે.';
     }
+    if (rec.festivalId === 'narak-chaturdashi') {
+      return 'બીજા દિવસે સાંજે અમાસ આવી જતી હોવાથી રૂપ ચૌદશનો દીપદાન આ જ સાંજે શક્ય છે.';
+    }
     return 'બીજા દિવસે શાસ્ત્રોક્ત કર્મકાળ ઉપલબ્ધ ન હોવાથી તે ત્યાજ્ય છે.';
   }
   return rec.alternateDateNote;
 };
+
+export interface DailyFestivalDecision {
+  isFestivalToday: boolean;
+  festivalId?: string;
+  festivalName: string;
+  title: string;
+  badgeText: string;
+  bannerNotice: string;
+  proofTitle: string;
+  shlokQuote: string;
+  shlokSource: string;
+  explanation: string;
+  ruleCategory: 'pradosha' | 'nishita' | 'madhyahna' | 'udaya' | 'general';
+  nextTithiFestivalBadge?: string;
+}
+
+function formatClockTime(d?: Date): string {
+  if (!d || !(d instanceof Date) || isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Calculates authoritative, date-specific Shastric decisions for any chosen day.
+ * Distinguishes accurately between Dhanteras, Narak Chaturdashi, Diwali, Govardhan Puja, Bhai Dooj,
+ * Ekadashi, Shivratri, and regular Tithis. Eliminates false Dhanteras reporting on unrelated dates.
+ */
+export function getDailyFestivalDecision(
+  targetDate: Date,
+  panchang?: VedicPanchangData | null,
+  lang: string = 'hi'
+): DailyFestivalDecision {
+  const normalizedLang = lang.slice(0, 2).toLowerCase();
+  const year = targetDate.getFullYear();
+  const festivals = getFestivalsForYear(year);
+
+  // Check if targetDate matches any calculated festival
+  const matched = festivals.find((f) => {
+    if (!f.date) return false;
+    return (
+      f.date.getFullYear() === targetDate.getFullYear() &&
+      f.date.getMonth() === targetDate.getMonth() &&
+      f.date.getDate() === targetDate.getDate()
+    );
+  });
+
+  const spanEndStr = panchang?.tithiSpan ? formatClockTime(panchang.tithiSpan.end) : '';
+
+  // Determine next tithi badge if applicable
+  let nextTithiFestivalBadge: string | undefined = undefined;
+  if (panchang?.tithiSpan) {
+    const nextName = panchang.tithiSpan.nextName;
+    const isKartik = !panchang.masa || panchang.masa.includes('कार्तिक') || panchang.masa.includes('अश्विन');
+    if (nextName.includes('त्रयोदशी') && panchang.paksha.includes('कृष्ण') && isKartik) {
+      nextTithiFestivalBadge = normalizedLang === 'en' ? 'Dhanteras' : normalizedLang === 'gu' ? 'ધનતેરસ' : 'धनतेरस';
+    } else if (nextName.includes('चतुर्दशी') && panchang.paksha.includes('कृष्ण') && isKartik) {
+      nextTithiFestivalBadge = normalizedLang === 'en' ? 'Narak Chaturdashi' : normalizedLang === 'gu' ? 'રૂપ ચૌદશ' : 'नरक चतुर्दशी';
+    } else if (nextName.includes('अमावस्या') && isKartik) {
+      nextTithiFestivalBadge = normalizedLang === 'en' ? 'Diwali' : normalizedLang === 'gu' ? 'દિવાળી' : 'दीपावली';
+    } else if (nextName.includes('प्रतिपदा') && panchang.paksha.includes('शुक्ल') && isKartik) {
+      nextTithiFestivalBadge = normalizedLang === 'en' ? 'Govardhan Puja' : normalizedLang === 'gu' ? 'ગોવર્ધન પૂજા' : 'गोवर्धन पूजा';
+    } else if (nextName.includes('द्वितीया') && panchang.paksha.includes('शुक्ल') && isKartik) {
+      nextTithiFestivalBadge = normalizedLang === 'en' ? 'Bhai Dooj' : normalizedLang === 'gu' ? 'ભાઈબીજ' : 'भाई दूज';
+    }
+  }
+
+  // 1. Dhanteras
+  if (matched?.id.includes('dhanteras')) {
+    return {
+      isFestivalToday: true,
+      festivalId: 'dhanteras',
+      festivalName:
+        normalizedLang === 'en'
+          ? 'Dhanteras (Dhanatrayodashi)'
+          : normalizedLang === 'gu'
+          ? 'ધનતેરસ (ધનત્રયોદશી)'
+          : 'धनतेरस (धन्वंतरि जयंती व यम दीपदान)',
+      title:
+        normalizedLang === 'en'
+          ? 'Dhanteras Today (Shastric Proof)'
+          : normalizedLang === 'gu'
+          ? 'આજે ધનતેરસ છે (શાસ્ત્રોક્ત નિર્ણય)'
+          : 'आज धनतेरस है (शास्त्रोक्त निर्णय व प्रमाण)',
+      badgeText:
+        normalizedLang === 'en' ? 'Shastric Proof' : normalizedLang === 'gu' ? 'શાસ્ત્રોક્ત નિર્ણય' : 'शास्त्रोक्त निर्णय',
+      bannerNotice:
+        spanEndStr
+          ? normalizedLang === 'gu'
+            ? `આજે ${spanEndStr} વાગ્યાથી તેરસ શરૂ થશે. સંધ્યા પ્રદોષ કાળમાં તેરસ હોવાથી ધનતેરસ આજે જ ઉજવાશે (પ્રમાણ જુઓ ➔)`
+            : normalizedLang === 'en'
+            ? `Trayodashi commences at ${spanEndStr} today. As it prevails in evening Pradosha Kaal, Dhanteras is observed TODAY (View Proof ➔)`
+            : `आज ${spanEndStr} बजे से त्रयोदशी (तेरस) लगेगी। संध्या प्रदोष काल में त्रयोदशी व्याप्त रहने से धनतेरस आज ही मनेगी (प्रमाण देखें ➔)`
+          : normalizedLang === 'gu'
+          ? 'સંધ્યા પ્રદોષ કાળમાં ત્રયોદશી વ્યાપ્ત હોવાથી ધનતેરસ, ધન્વંતરિ પૂજન અને યમ દીપદાન આજે જ શાસ્ત્રસંમત છે (પ્રમાણ જુઓ ➔)'
+          : normalizedLang === 'en'
+          ? 'As Trayodashi prevails in evening Pradosha Kaal, Dhanteras and Yama Deepam are observed today (View Proof ➔)'
+          : 'संध्या प्रदोष काल में त्रयोदशी व्याप्त रहने से धनतेरस, धन्वंतरि पूजन व यम दीपदान आज ही शास्त्रसम्मत है (प्रमाण देखें ➔)',
+      proofTitle:
+        normalizedLang === 'en'
+          ? 'Why Dhanteras Is Observed Today (Shastric Proof)'
+          : normalizedLang === 'gu'
+          ? 'આજે જ ધનતેરસ કેમ ઉજવવી? (શાસ્ત્રોક્ત પ્રમાણ)'
+          : 'आज ही धनतेरस क्यों करें? (शास्त्रोक्त प्रमाण)',
+      shlokQuote: 'कार्तिकस्यासिते पक्षे त्रयोदश्यां निशामुखे।\nयमदीपं बहिर्दद्यादपमृत्युर्विनश्यति॥',
+      shlokSource:
+        normalizedLang === 'en'
+          ? '— Skanda Purana & Nirnayasindhu (Pradosha-Vyapti Rule)'
+          : normalizedLang === 'gu'
+          ? '— સ્કંદ પુરાણ (કાશી ખંડ) અને નિર્ણયસિંધુ'
+          : '— स्कन्द पुराण (काशी/प्रभास खण्ड) एवं निर्णयसिन्धु',
+      explanation:
+        normalizedLang === 'en'
+          ? 'Pradosha-Vyapti Rule: Dhanteras and Yama Deepam must be observed when Kartik Krishna Trayodashi prevails during Pradosha Kaala (the ~2 hours 24 minutes following sunset). Even if Trayodashi begins during the day, its presence in Pradosha gives it complete authority over the succeeding day where Trayodashi ends around sunrise.'
+          : normalizedLang === 'gu'
+          ? 'પ્રદોષ વ્યાપ્તિનો નિયમ: ધનતેરસ અને યમ દીપદાનનો મુખ્ય કર્મકાળ સૂર્યાસ્ત પછીના આશરે ૨ કલાક ૨૪ મિનિટ (પ્રદોષ કાળ) છે. ભલે તેરસ બપોરે લાગી હોય, પરંતુ સંધ્યાકાળે પ્રદોષ કાળમાં તેરસ હોવાને કારણે આજે જ ધનતેરસ શાસ્ત્રસંમત છે. બીજા દિવસે સાંજે ચતુર્દશી આવી જશે, તેથી આજે જ ધનતેરસ ઉજવવી શાસ્ત્રોક્ત છે.'
+          : 'प्रदोष काल व्याप्ति का अटल नियम: धनतेरस एवं यम-दीपदान का मुख्य कर्मकाल सूर्यास्त के बाद के २ घण्टे २४ मिनट (प्रदोष काल) में होता है। भले ही त्रयोदशी दिन में किसी भी समय शुरू हुई हो, परन्तु सूर्यास्त के बाद प्रदोष काल में त्रयोदशी होने के कारण आज ही धनतेरस और यम दीपदान शास्त्रसम्मत है। अगले दिन केवल उदया तिथि होगी पर प्रदोष में चतुर्दशी आ जाएगी, अतः आज का दिन ही निर्विवाद है।',
+      ruleCategory: 'pradosha',
+      nextTithiFestivalBadge,
+    };
+  }
+
+  // 2. Narak Chaturdashi / Roop Chaudas (Choti Diwali)
+  if (matched?.id.includes('narak')) {
+    return {
+      isFestivalToday: true,
+      festivalId: 'narak-chaturdashi',
+      festivalName:
+        normalizedLang === 'en'
+          ? 'Narak Chaturdashi / Roop Chaudas'
+          : normalizedLang === 'gu'
+          ? 'નરક ચતુર્દશી (રૂપ ચૌદશ / કાળી ચૌદશ)'
+          : 'नरक चतुर्दशी (रूप चौदस / छोटी दीवाली)',
+      title:
+        normalizedLang === 'en'
+          ? 'Narak Chaturdashi & Roop Chaudas Today'
+          : normalizedLang === 'gu'
+          ? 'આજે નરક ચતુર્દશી (રૂપ ચૌદશ) છે'
+          : 'आज नरक चतुर्दशी (रूप चौदस / छोटी दीवाली) है',
+      badgeText:
+        normalizedLang === 'en' ? 'Shastric Proof' : normalizedLang === 'gu' ? 'શાસ્ત્રોક્ત નિર્ણય' : 'शास्त्रोक्त निर्णय',
+      bannerNotice:
+        spanEndStr
+          ? normalizedLang === 'gu'
+            ? `આજે ${spanEndStr} વાગ્યે તેરસ સમાપ્ત થઈ ચતુર્દશી શરૂ થશે. સાંજે પ્રદોષ કાળમાં ચતુર્દશી હોવાથી રૂપ ચૌદશ અને યમ દીપદાન આજે જ ઉજવાશે (પ્રમાણ જુઓ ➔)`
+            : normalizedLang === 'en'
+            ? `Trayodashi ends at ${spanEndStr} giving way to Chaturdashi. Covering evening Pradosha, Roop Chaudas & 14 Yama Deepam are observed today (View Proof ➔)`
+            : `आज ${spanEndStr} बजे त्रयोदशी समाप्त होकर चतुर्दशी लगेगी। संध्या प्रदोष काल में चतुर्दशी रहने से रूप चौदस, छोटी दीवाली व यम दीपदान आज ही मनेगा (प्रमाण देखें ➔)`
+          : normalizedLang === 'gu'
+          ? 'સાંજે પ્રદોષ કાળમાં ચતુર્દશી હોવાથી રૂપ ચૌદશ, કાળી ચૌદશ અને યમ દીપદાન આજે જ શાસ્ત્રસંમત છે (પ્રમાણ જુઓ ➔)'
+          : normalizedLang === 'en'
+          ? 'With Chaturdashi prevailing in evening Pradosha, Roop Chaudas & 14 Yama Deepam are observed today (View Proof ➔)'
+          : 'सायंकालीन प्रदोष काल में चतुर्दशी व्याप्त रहने से नरक चतुर्दशी, रूप चौदस व यम दीपदान आज ही शास्त्रसम्मत है (प्रमाण देखें ➔)',
+      proofTitle:
+        normalizedLang === 'en'
+          ? 'Why Narak Chaturdashi & Roop Chaudas Observed Today (Shastric Proof)'
+          : normalizedLang === 'gu'
+          ? 'આજે જ રૂપ ચૌદશ / કાળી ચૌદશ કેમ ઉજવવી? (શાસ્ત્રોક્ત પ્રમાણ)'
+          : 'आज ही नरक चतुर्दशी (रूप चौदस) क्यों मनाएं? (शास्त्रोक्त प्रमाण)',
+      shlokQuote: 'ततोऽपराह्णे संव्याप्य नरकस्य चतुर्दशीम्।\nतैलाभ्यङ्गो निशि स्नाने यमलोकं न पश्यति॥',
+      shlokSource:
+        normalizedLang === 'en'
+          ? '— Nirnayasindhu, Dharmasindhu & Bhavishya Purana'
+          : normalizedLang === 'gu'
+          ? '— નિર્ણયસિંધુ, ધર્મસિંધુ અને ભવિષ્ય પુરાણ'
+          : '— निर्णयसिन्धु, धर्मसिन्धु एवं भविष्य पुराण',
+      explanation:
+        normalizedLang === 'en'
+          ? 'Narak Chaturdashi & Roop Chaudas Injunction: Per Nirnayasindhu and Dharmasindhu, when Chaturdashi prevails during evening Pradosha Kaala, the 14-lamp Yama Deepam and Roop Chaudas rituals are performed on that very evening. Trayodashi ends in the morning, after which Chaturdashi reigns across the entire afternoon, evening, and night. Therefore, Roop Chaudas is observed today; today is strictly not Dhanteras. (Arunodaya Abhyanga Snana is observed early morning before sunrise on Chaturdashi).'
+          : normalizedLang === 'gu'
+          ? 'નિર્ણયસિંધુ અને ધર્મસિંધુ અનુસાર ચતુર્દશી તિથિ જ્યારે સંધ્યા પ્રદોષ કાળમાં વ્યાપ્ત હોય ત્યારે યમરાજ નિમિત્તે ૧૪ દીવાઓનું દાન અને રૂપ ચૌદશની પૂજા તે જ સાંજે થાય છે. સવારે તેરસ પૂર્ણ થઈ સમગ્ર સાંજ અને રાત્રિ ચતુર્દશી રહેતી હોવાથી આજે જ રૂપ ચૌદશ/કાળી ચૌદશ ઉજવાશે, આજે ધનતેરસ નથી.'
+          : 'नरक चतुर्दशी व रूप चौदस का अटल निर्णय: निर्णयसिन्धु के अनुसार जब चतुर्दशी सायंकाल प्रदोष काल में व्याप्त होती है, तब चौदह दीपकों से यमराज हेतु दीपदान एवं रूप चौदस का पूजन उसी सायंकाल किया जाता है। आज प्रातः त्रयोदशी समाप्त होकर संपूर्ण सायंकाल प्रदोष में चतुर्दशी का साम्राज्य है। अतः आज रूप चौदस व यम दीपदान ही मनाया जाएगा, आज किसी भी प्रकार से धनतेरस नहीं है। (अरुणोदय कालीन अभ्यंग स्नान कल प्रातः सूर्योदय से पूर्व चतुर्दशी में होगा)।',
+      ruleCategory: 'pradosha',
+      nextTithiFestivalBadge,
+    };
+  }
+
+  // 3. Diwali (Lakshmi Puja)
+  if (matched?.id.includes('diwali')) {
+    return {
+      isFestivalToday: true,
+      festivalId: 'diwali',
+      festivalName:
+        normalizedLang === 'en'
+          ? 'Diwali (Maha Lakshmi Puja)'
+          : normalizedLang === 'gu'
+          ? 'દિવાળી (મહાલક્ષ્મી પૂજન)'
+          : 'दीपावली (महालक्ष्मी पूजन)',
+      title:
+        normalizedLang === 'en'
+          ? 'Diwali (Lakshmi Puja) Today'
+          : normalizedLang === 'gu'
+          ? 'આજે દીપાવલી (મહાલક્ષ્મી પૂજન) છે'
+          : 'आज दीपावली (महालक्ष्मी पूजन) है',
+      badgeText:
+        normalizedLang === 'en' ? 'Shastric Proof' : normalizedLang === 'gu' ? 'શાસ્ત્રોક્ત નિર્ણય' : 'शास्त्रोक्त निर्णय',
+      bannerNotice:
+        spanEndStr
+          ? normalizedLang === 'gu'
+            ? `આજે ${spanEndStr} વાગ્યાથી અમાસ શરૂ થશે. સંધ્યા પ્રદોષ, સ્થિર વૃષભ લગ્ન અને નિશીથ કાળમાં અમાસ હોવાથી દિવાળી મહાલક્ષ્મી પૂજન આજે જ થશે (પ્રમાણ જુઓ ➔)`
+            : normalizedLang === 'en'
+            ? `Amavasya commences at ${spanEndStr} today. Prevailing through evening Pradosha, Taurus Sthir Lagna, and Nishita, Diwali Lakshmi Puja is observed tonight (View Proof ➔)`
+            : `आज ${spanEndStr} बजे से अमावस्या लगेगी। संध्या प्रदोष काल, स्थिर वृषभ लग्न व निशीथ काल में अमावस्या रहने से महालक्ष्मी पूजन आज ही शास्त्रसम्मत है (प्रमाण देखें ➔)`
+          : normalizedLang === 'gu'
+          ? 'સાંજે પ્રદોષ, સ્થિર વૃષભ લગ્ન અને નિશીથ કાળમાં અમાસ હોવાથી મહાલક્ષ્મી પૂજન આજે જ શાસ્ત્રસંમત છે (પ્રમાણ જુઓ ➔)'
+          : normalizedLang === 'en'
+          ? 'Prevailing in evening Pradosha, Taurus Sthir Lagna, and Nishita, Diwali Lakshmi Puja is observed tonight (View Proof ➔)'
+          : 'सायंकाल प्रदोष काल, स्थिर वृषभ लग्न व निशीथ काल में अमावस्या रहने से महालक्ष्मी पूजन आज ही शास्त्रसम्मत है (प्रमाण देखें ➔)',
+      proofTitle:
+        normalizedLang === 'en'
+          ? 'Why Diwali Maha Lakshmi Puja Observed Today (Shastric Proof)'
+          : normalizedLang === 'gu'
+          ? 'આજે જ દિવાળી મહાલક્ષ્મી પૂજન કેમ કરવું? (શાસ્ત્રોક્ત પ્રમાણ)'
+          : 'आज ही दीपावली महालक्ष्मी पूजन क्यों करें? (शास्त्रोक्त प्रमाण)',
+      shlokQuote: 'अमावस्यायां प्रदोषव्यापिन्यां लक्ष्मीं पूजयेत्।\nप्रदोषसमये दीपान् प्रज्वाल्य विधिवन्नरः॥',
+      shlokSource:
+        normalizedLang === 'en'
+          ? '— Nirnayasindhu, Dharmasindhu & Skanda Purana'
+          : normalizedLang === 'gu'
+          ? '— નિર્ણયસિંધુ, ધર્મસિંધુ અને સ્કંદ પુરાણ'
+          : '— निर्णयसिन्धु, धर्मसिन्धु एवं स्कन्द पुराण',
+      explanation:
+        normalizedLang === 'en'
+          ? 'Diwali Lakshmi Puja Mandate: Dharmasindhu specifies that Lakshmi Puja and Diwali Deepdan must be observed on the evening when Amavasya prevails during Pradosha Kaala (~2h 24m after sunset). Tonight, Amavasya is fully present across evening Pradosha, Taurus Fixed Ascendant, and midnight Nishita Kaala. On the succeeding evening, Pratipada commences before Pradosha; hence tonight is undisputed for Diwali.'
+          : normalizedLang === 'gu'
+          ? 'ધર્મસિંધુ અને નિર્ણયસિંધુ મુજબ જે દિવસે અમાસ સૂર્યાસ્ત પછી પ્રદોષ કાળમાં વ્યાપ્ત હોય તે જ રાત્રે લક્ષ્મી પૂજન અને દીપાવલી પર્વ ઉજવાય છે. આજે પ્રદોષ, સ્થિર વૃષભ લગ્ન અને નિશીથ કાળમાં અમાસ હોવાથી આજે જ દિવાળી ઉજવાશે.'
+          : 'दीपावली लक्ष्मी पूजन का शास्त्रोक्त विधान: धर्मसिन्धु का स्पष्ट वचन है कि जिस दिन अमावस्या सूर्यास्त के बाद प्रदोष काल (२ घटी २४ पल) में विद्यमान हो, उसी दिन महालक्ष्मी पूजन और दीपमालिका प्रज्वलन करना चाहिए। आज सायंकाल प्रदोष काल, स्थिर वृषभ लग्न और मध्यरात्रि निशीथ काल तीनों में अमावस्या पूर्ण रूप से व्याप्त है। अगले दिन सायंकाल प्रतिपदा आ जाएगी, अतः आज की रात्रि ही दीपावली के लिए सर्वथा शास्त्रसम्मत है।',
+      ruleCategory: 'pradosha',
+      nextTithiFestivalBadge,
+    };
+  }
+
+  // 4. Govardhan Puja
+  if (matched?.id.includes('govardhan')) {
+    return {
+      isFestivalToday: true,
+      festivalId: 'govardhan-puja',
+      festivalName:
+        normalizedLang === 'en'
+          ? 'Govardhan Puja & Annakut'
+          : normalizedLang === 'gu'
+          ? 'ગોવર્ધન પૂજા અને અન્નકૂટ'
+          : 'गोवर्धन पूजा / अन्नकूट महोत्सव',
+      title:
+        normalizedLang === 'en'
+          ? 'Govardhan Puja & Annakut Today'
+          : normalizedLang === 'gu'
+          ? 'આજે ગોવર્ધન પૂજા અને અન્નકૂટ મહોત્સવ છે'
+          : 'आज गोवर्धन पूजा व अन्नकूट महोत्सव है',
+      badgeText:
+        normalizedLang === 'en' ? 'Shastric Proof' : normalizedLang === 'gu' ? 'શાસ્ત્રોક્ત નિર્ણય' : 'शास्त्रोक्त निर्णय',
+      bannerNotice:
+        normalizedLang === 'gu'
+          ? 'કારતક સુદ એકમે ગોવર્ધન પૂજા, અન્નકૂટ મહોત્સવ અને ગૌ પૂજન આજે શાસ્ત્રસંમત છે (પ્રમાણ જુઓ ➔)'
+          : normalizedLang === 'en'
+          ? 'Govardhan Puja, Annakut Mahotsav, and Gau Puja are observed today per Shastric rules (View Proof ➔)'
+          : 'कार्तिक शुक्ल प्रतिपदा पर गोवर्धन पूजा, अन्नकूट महोत्सव एवं गौ पूजन आज शास्त्रसम्मत विधि से मनेगा (प्रमाण देखें ➔)',
+      proofTitle:
+        normalizedLang === 'en'
+          ? 'Why Govardhan Puja Observed Today (Shastric Proof)'
+          : normalizedLang === 'gu'
+          ? 'આજે જ ગોવર્ધન પૂજા કેમ કરવી? (શાસ્ત્રોક્ત પ્રમાણ)'
+          : 'आज ही गोवर्धन पूजा क्यों करें? (शास्त्रोक्त प्रमाण)',
+      shlokQuote: 'प्रतिपद्दर्शने पूर्वाह्णे गोवर्धनमहोत्सवः।\nगोपूजा च विधातव्या प्रातर्गोष्ठे समन्विता॥',
+      shlokSource: '— श्रीमद्भागवत एवं निर्णयसिन्धु',
+      explanation:
+        normalizedLang === 'en'
+          ? 'Observed on Kartik Shukla Pratipada. Per Nirnayasindhu, when Pratipada prevails in the morning and forenoon, Govardhan Puja, Annakut Mahotsav, and cattle worship are observed.'
+          : normalizedLang === 'gu'
+          ? 'કારતક સુદ એકમે ગોવર્ધન પૂજા અને અન્નકૂટનો વિધાન છે. નિર્ણયસિંધુ મુજબ આજે ગોવર્ધન પૂજા શાસ્ત્રોક્ત છે.'
+          : 'कार्तिक शुक्ल प्रतिपदा पर गोवर्धन पूजा और अन्नकूट का विधान है। निर्णयसिन्धु अनुसार जब प्रतिपदा प्रातः व पूर्वाह्ण काल में व्याप्त हो तब गोवर्धन पूजा और बलि पूजा की जाती है।',
+      ruleCategory: 'madhyahna',
+      nextTithiFestivalBadge,
+    };
+  }
+
+  // 5. Bhai Dooj
+  if (matched?.id.includes('bhai-dooj')) {
+    return {
+      isFestivalToday: true,
+      festivalId: 'bhai-dooj',
+      festivalName:
+        normalizedLang === 'en'
+          ? 'Bhai Dooj (Yama Dwitiya)'
+          : normalizedLang === 'gu'
+          ? 'ભાઈબીજ (યમ દ્વિતીયા)'
+          : 'भाई दूज (यम द्वितीया)',
+      title:
+        normalizedLang === 'en'
+          ? 'Bhai Dooj (Yama Dwitiya) Today'
+          : normalizedLang === 'gu'
+          ? 'આજે ભાઈબીજ (યમ દ્વિતીયા) છે'
+          : 'आज भाई दूज (यम द्वितीया) है',
+      badgeText:
+        normalizedLang === 'en' ? 'Shastric Proof' : normalizedLang === 'gu' ? 'શાસ્ત્રોક્ત નિર્ણય' : 'शास्त्रोक्त निर्णय',
+      bannerNotice:
+        normalizedLang === 'gu'
+          ? 'કારતક સુદ બીજે ભાઈબીજ (યમ દ્વિતીયા) પર્વ આજે શાસ્ત્રોક્ત વિધિથી ઉજવાશે (પ્રમાણ જુઓ ➔)'
+          : normalizedLang === 'en'
+          ? 'Bhai Dooj (Yama Dwitiya) is observed today during Aparahna per Shastras (View Proof ➔)'
+          : 'कार्तिक शुक्ल द्वितीया पर भाई दूज (यम द्वितीया) एवं चित्रगुप्त पूजन आज अपराह्ण काल में शास्त्रसम्मत है (प्रमाण देखें ➔)',
+      proofTitle:
+        normalizedLang === 'en'
+          ? 'Why Bhai Dooj Observed Today (Shastric Proof)'
+          : normalizedLang === 'gu'
+          ? 'આજે જ ભાઈબીજ કેમ ઉજવવી? (શાસ્ત્રોક્ત પ્રમાણ)'
+          : 'आज ही भाई दूज क्यों मनाएं? (शास्त्रोक्त प्रमाण)',
+      shlokQuote: 'कार्तिकस्य सिते पक्षे द्वितीयायां यमं यमी।\nभोजित्वा पूजयित्वा च ततो भ्रातृद्वितीयेति॥',
+      shlokSource: '— पद्म पुराण एवं निर्णयसिन्धु',
+      explanation:
+        normalizedLang === 'en'
+          ? 'Kartik Shukla Dwitiya is observed as Yama Dwitiya and Bhai Dooj. Per Nirnayasindhu, when Dwitiya prevails during Aparahna (afternoon), sisters apply tilak and pray for brothers longevity.'
+          : normalizedLang === 'gu'
+          ? 'કારતક સુદ બીજે યમ દ્વિતીયા અને ભાઈબીજ પર્વ અપરાહ્ન કાળમાં ઉજવાય છે.'
+          : 'कार्तिक शुक्ल द्वितीया को यम द्वितीया और भाई दूज कहा जाता है। निर्णयसिन्धु के अनुसार द्वितीया तिथि जब अपराह्ण काल (दोपहर) में व्याप्त हो तब बहनों द्वारा भाइयों को तिलक व भोजन कराने का विधान है।',
+      ruleCategory: 'madhyahna',
+      nextTithiFestivalBadge,
+    };
+  }
+
+  // 6. Other specific festival match from astronomical calendar
+  if (matched) {
+    const festName = normalizedLang === 'en' ? matched.name : matched.hindiName;
+    return {
+      isFestivalToday: true,
+      festivalId: matched.id,
+      festivalName: festName,
+      title:
+        normalizedLang === 'en'
+          ? `${festName} Today`
+          : normalizedLang === 'gu'
+          ? `આજે ${festName} છે`
+          : `आज ${festName} है`,
+      badgeText:
+        normalizedLang === 'en' ? 'Festival Decision' : normalizedLang === 'gu' ? 'પર્વ નિર્ણય' : 'पर्व निर्णय',
+      bannerNotice: `${festName} · ${matched.description || ''}`,
+      proofTitle:
+        normalizedLang === 'en'
+          ? `Why ${festName} Is Observed Today`
+          : normalizedLang === 'gu'
+          ? `આજે જ ${festName} કેમ ઉજવવું?`
+          : `आज ही ${festName} क्यों मनाएं?`,
+      shlokQuote: 'यस्मिन् दिने यस्य विहितः कालस्तस्मिन्नेव कार्यम्।\nकर्मणो यस्य यः कालस्तत्कालव्यापिनी तिथिः॥',
+      shlokSource: '— निर्णयसिन्धु एवं धर्मसिन्धु (कर्मकाल व्याप्ति सूत्र)',
+      explanation: matched.description || 'शास्त्रसम्मत तिथि एवं कर्मकाल के अनुसार आज यह पर्व/व्रत मनाया जाना पूर्णतः प्रामाणिक है।',
+      ruleCategory: 'general',
+      nextTithiFestivalBadge,
+    };
+  }
+
+  // 7. General Day (Not a major festival)
+  return {
+    isFestivalToday: false,
+    festivalName: '',
+    title:
+      normalizedLang === 'en'
+        ? 'Shastric Tithi & Festival Decision'
+        : normalizedLang === 'gu'
+        ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય પ્રમાણ'
+        : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण',
+    badgeText:
+      normalizedLang === 'en' ? '10-Yr Guide' : normalizedLang === 'gu' ? '૧૦-વર્ષીય માર્ગદર્શિકા' : '१०-वर्षीय दिग्दर्शिका',
+    bannerNotice:
+      panchang?.tithiSpan
+        ? normalizedLang === 'gu'
+          ? `${panchang.tithiSpan.name} સમાપ્ત ${spanEndStr} વાગ્યે • ત્યારબાદ ${panchang.tithiSpan.nextName} (શાસ્ત્રોક્ત કર્મકાળ નિર્ણય જુઓ ➔)`
+          : normalizedLang === 'en'
+          ? `${panchang.tithiSpan.name} ends at ${spanEndStr} • followed by ${panchang.tithiSpan.nextName} (View Shastric Timing Rules ➔)`
+          : `${panchang.tithiSpan.name} समाप्त ${spanEndStr} बजे • तदोपरांत ${panchang.tithiSpan.nextName} (शास्त्रोक्त कर्मकाल निर्णय देखें ➔)`
+        : normalizedLang === 'gu'
+        ? 'સ્કંદ પુરાણ, નિર્ણયસિંધુ પ્રમાણ અને ૨ તિથિ સંશય સમાધાન'
+        : normalizedLang === 'en'
+        ? 'Why festival today? View Skanda Purana & Nirnayasindhu proofs'
+        : 'स्कन्द पुराण व निर्णयसिन्धु प्रमाण एवं २ तिथि संशय समाधान',
+    proofTitle:
+      normalizedLang === 'en'
+        ? 'Shastric Tithi Determination & Karma-Kala Rule'
+        : normalizedLang === 'gu'
+        ? 'આજની તિથિનો શાસ્ત્રોક્ત નિર્ણય અને કર્મકાળ'
+        : 'आज की तिथि का शास्त्रोक्त निर्णय व कर्मकाल',
+    shlokQuote: 'उदये त्रिमुहूर्ता चेत् तिथिः पूर्णा प्रकीर्तिता।\nकस्यचित् कर्मणः काले तद्व्याप्ता सा विधीयते॥',
+    shlokSource: '— धर्मसिन्धु एवं निर्णयसिन्धु (तिथि द्वैध सामान्य नियम)',
+    explanation:
+      normalizedLang === 'en'
+        ? 'General religious duties follow the Udaya Tithi (sunrise tithi). However, specific fasts and worship strictly adhere to their respective Karma-Kala (e.g. Pradosha for evening worship, Nishita for midnight rituals, Madhyahna for midday worship). If two tithis touch one day, the karma is performed in the specific muhurta prevailing that day.'
+        : normalizedLang === 'gu'
+        ? 'સનાતન ધર્મશાસ્ત્રમાં સામાન્ય કર્મો માટે ઉદયા તિથિ માન્ય રહે છે, પરંતુ વિશેષ પૂજન અને વ્રત માટે તે પૂજાના ચોક્કસ મુહૂર્ત (પ્રદોષ, નિશીથ, મધ્યાહ્ન) માં વ્યાપ્ત તિથિ જ મુખ્ય ગણાય છે.'
+        : 'सनातन धर्मशास्त्र में सामान्य नित्य कर्मों के लिए उदया तिथि (सूर्योदय कालीन तिथि) ग्राह्य होती है। परन्तु किसी विशिष्ट पर्व, व्रत या पूजन के लिए उस कर्म के विशिष्ट काल (जैसे प्रदोष, निशीथ, मध्याह्न, अपराह्ण या अरुणोदय) में विद्यमान तिथि ही मुख्य मानी जाती है।',
+    ruleCategory: 'general',
+    nextTithiFestivalBadge,
+  };
+}
+
