@@ -688,6 +688,19 @@ export function TodayBoard({
   };
 
   const placeLabelKey = t("kundali.place", "स्थान");
+  const isDhanterasToday =
+    panchang.tithi.includes("त्रयोदशी") ||
+    (panchang.tithiSpan &&
+      (panchang.tithiSpan.nextName.includes("त्रयोदशी") ||
+        panchang.tithiSpan.name.includes("त्रयोदशी")));
+  const nextIsTrayodashi =
+    panchang.tithiSpan && panchang.tithiSpan.nextName.includes("त्रयोदशी");
+
+  const masaDisplay =
+    panchang.masa === "अश्विन"
+      ? `${trVedic(panchang.masa, language)} (${language === "gu" ? "આસો / અમાન્ત" : "अमान्त / पूर्णिमान्त: कार्तिक"})`
+      : trVedic(panchang.masa, language);
+
   const facts: [string, string][] = [
     [t("panchang.tithi", "तिथि"), trVedic(panchang.tithi, language)],
     [t("panchang.paksha", "पक्ष"), trVedic(panchang.paksha, language)],
@@ -695,7 +708,7 @@ export function TodayBoard({
     [t("panchang.yoga", "योग"), trVedic(panchang.yoga, language)],
     [t("panchang.karana", "करण"), trVedic(panchang.karana, language)],
     [t("panchang.weekday", "वार"), trVedic(panchang.weekday, language)],
-    [t("panchang.shareMasaPaksha", "मास"), trVedic(panchang.masa, language)],
+    [t("panchang.shareMasaPaksha", "मास"), masaDisplay],
     [t("panchang.samvat", "संवत्"), trVedic(panchang.samvat, language)],
     [t("panchang.shakaSamvat", "शक"), trVedic(panchang.sakaSamvat, language)],
     [t("panchang.sunrise", "सूर्योदय"), clock(panchang.solar.sunrise)],
@@ -926,7 +939,13 @@ export function TodayBoard({
               <span>{t("panchang.fullDetailsTitle", "आज का सम्पूर्ण पंचांग विवरण")}</span>
             </div>
             <h3 className="font-granth font-black text-base sm:text-lg text-[#5C3A21] mt-0.5">
-              {trVedic(panchang.paksha, language)} · {trVedic(panchang.tithi, language)} ({trVedic(panchang.weekday, language)})
+              <span>{trVedic(panchang.paksha, language)} · {trVedic(panchang.tithi, language)}</span>
+              {panchang.tithiSpan && (
+                <span className="text-xs font-bold text-rose-800 ml-1.5">
+                  ({clock(panchang.tithiSpan.end)} {language === "gu" ? "સુધી" : language === "en" ? "ends" : "तक"} ➔ {trVedic(panchang.tithiSpan.nextName, language)})
+                </span>
+              )}
+              {" "}· {trVedic(panchang.weekday, language)}
             </h3>
           </div>
 
@@ -992,19 +1011,31 @@ export function TodayBoard({
             <div className="w-8 h-8 rounded-xl bg-white/10 border border-amber-300/40 flex items-center justify-center shrink-0">
               <Scale className="w-4 h-4 text-amber-300" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="text-xs font-black text-amber-100 flex items-center gap-1.5 flex-wrap">
-                <span>{language === 'en' ? 'Shastric Tithi & Festival Decision' : language === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય પ્રમાણ' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण'}</span>
+                <span>
+                  {isDhanterasToday
+                    ? (language === 'gu' ? '✨ આજે ધનતેરસ છે (શાસ્ત્રોક્ત નિર્ણય)' : language === 'en' ? '✨ Dhanteras Today (Shastric Proof)' : '✨ आज धनतेरस है (शास्त्रोक्त निर्णय व प्रमाण)')
+                    : (language === 'en' ? 'Shastric Tithi & Festival Decision' : language === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય પ્રમાણ' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण')}
+                </span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold">
                   {language === 'en' ? '10-Yr Guide' : '१०-वर्षीय दिग्दर्शिका'}
                 </span>
               </div>
-              <div className="text-[10px] sm:text-[11px] text-amber-200/85 line-clamp-1">
-                {language === 'en'
-                  ? 'Why Dhanteras / festival today? View Skanda Purana & Nirnayasindhu proofs'
-                  : language === 'gu'
-                  ? 'આજે ધનતેરસ કેમ? સ્કંદ પુરાણ, નિર્ણયસિંધુ પ્રમાણ અને ૨ તિથિ સંશય સમાધાન'
-                  : 'आज धनतेरस क्यों? स्कन्द पुराण व निर्णयसिन्धु प्रमाण एवं २ तिथि संशय समाधान'}
+              <div className="text-[10px] sm:text-[11px] text-amber-200/90 leading-snug mt-0.5">
+                {isDhanterasToday && panchang.tithiSpan ? (
+                  language === 'gu'
+                    ? `આજે સવારે ${clock(panchang.tithiSpan.end)} વાગ્યાથી તેરસ શરૂ થશે. સંધ્યા પ્રદોષ કાળમાં તેરસ હોવાથી ધનતેરસ આજે જ ઉજવાશે.`
+                    : language === 'en'
+                    ? `Trayodashi begins at ${clock(panchang.tithiSpan.end)} today. Due to presence in Pradosha Kaal, Dhanteras is observed TODAY.`
+                    : `आज सुबह ${clock(panchang.tithiSpan.end)} बजे से त्रयोदशी (तेरस) लगेगी। संध्या प्रदोष काल में त्रयोदशी व्याप्त रहने से धनतेरस आज ही मनेगी (प्रमाण देखें ➔)`
+                ) : (
+                  language === 'en'
+                    ? 'Why festival today? View Skanda Purana & Nirnayasindhu proofs'
+                    : language === 'gu'
+                    ? 'સ્કંદ પુરાણ, નિર્ણયસિંધુ પ્રમાણ અને ૨ તિથિ સંશય સમાધાન'
+                    : 'स्कन्द पुराण व निर्णयसिन्धु प्रमाण एवं २ तिथि संशय समाधान'
+                )}
               </div>
             </div>
           </div>
@@ -1047,16 +1078,23 @@ export function TodayBoard({
                   triggerHapticSelection();
                   setIsTithiNirnayaOpen(true);
                 }}
-                className="bx-fact bx-glass text-left cursor-pointer hover:border-amber-500 relative"
+                className="bx-fact bx-glass text-left cursor-pointer hover:border-amber-500 relative flex flex-col justify-between"
                 title={language === 'en' ? 'View Shastric Tithi & Festival Decision' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण देखें'}
               >
                 <div className="bx-kicker flex items-center justify-between gap-1">
                   <span>{k}</span>
-                  <span style={{ color: "var(--bx-header)" }} className="text-[9px] font-bold bg-amber-100/90 text-amber-900 px-1 py-0.2 rounded border border-amber-300/60">
+                  <span style={{ color: "var(--bx-header)" }} className="text-[9px] font-bold bg-amber-100/90 text-amber-900 px-1 py-0.2 rounded border border-amber-300/60 shrink-0">
                     {language === 'en' ? 'Shastric Proof ▾' : language === 'gu' ? 'શાસ્ત્રોક્ત નિર્ણય ▾' : 'शास्त्रोक्त प्रमाण ▾'}
                   </span>
                 </div>
-                <b className="text-base mt-1 text-[#4A2610]">{v}</b>
+                <div className="mt-1 space-y-0.5">
+                  <b className="text-base text-[#4A2610] block">{v}</b>
+                  {panchang.tithiSpan && (
+                    <span className="text-[10px] text-rose-700 font-bold block leading-tight">
+                      {clock(panchang.tithiSpan.end)} {language === 'gu' ? 'સુધી' : language === 'en' ? 'ends' : 'तक'} • {language === 'gu' ? 'ત્યારબાદ' : language === 'en' ? 'then' : 'आगे'} {trVedic(panchang.tithiSpan.nextName, language)} {nextIsTrayodashi ? `(${language === 'gu' ? 'ધનતેરસ' : 'धनतेरस'})` : ''}
+                    </span>
+                  )}
+                </div>
               </motion.button>
             ) : (
               <div key={k} className="bx-fact bx-glass">
