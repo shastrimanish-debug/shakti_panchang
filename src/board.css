@@ -755,11 +755,34 @@
   color: var(--bx-mark) !important;
 }
 
+/* 🌟 High-contrast protection on dark surfaces across all themes (no dark-on-dark or blue-on-dark) */
+.board .bx-dark-surface,
+.board .bx-dark-surface *,
+.board .bx-modal-dark-head,
+.board .bx-modal-dark-head *,
+.board .bx-dark-btn,
+.board .bx-dark-btn *,
+.board [class*="from-[#5C2"] [class*="text-amber"],
+.board [class*="from-[#4A2"] [class*="text-amber"],
+.board [class*="bg-[#4A2"] [class*="text-amber"],
+.board [class*="bg-[#5C2"] [class*="text-amber"],
+.board [class*="bg-[#6D3"] [class*="text-amber"],
 .board [class*="bg-[#5C3"] [class*="text-amber"],
 .board [class*="bg-[#462"] [class*="text-amber"],
 .board [class*="from-amber-500"] [class*="text-amber"],
 .board [class*="from-amber-400"] [class*="text-amber"] {
-  color: #fffaf6 !important;
+  color: #fffdf5 !important;
+}
+
+.board .bx-dark-surface .text-amber-200,
+.board .bx-dark-surface .text-amber-300,
+.board .bx-modal-dark-head .text-amber-200,
+.board .bx-modal-dark-head .text-amber-300,
+.board [class*="from-[#5C2"] [class*="text-amber-200"],
+.board [class*="from-[#5C2"] [class*="text-amber-300"],
+.board [class*="from-[#4A2"] [class*="text-amber-200"],
+.board [class*="from-[#4A2"] [class*="text-amber-300"] {
+  color: #fef08a !important;
 }
 
 .board [class*="text-[#2C1"],

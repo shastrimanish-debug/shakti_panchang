@@ -22,7 +22,13 @@ import {
   TEN_YEAR_FESTIVAL_DECISIONS,
   getTithiCalculationExplanation,
   TenYearFestivalRecord,
-  ShastricRule
+  ShastricRule,
+  formatFestivalDisplayName,
+  formatConflictLabel,
+  formatTithiTiming,
+  formatKarmaKala,
+  formatDecisionReason,
+  formatAlternateNote
 } from '../services/tithiNirnaya';
 import { VedicPanchangData } from '../types';
 import { trVedic } from '../i18n/vedicTranslate';
@@ -79,19 +85,24 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
         style={{ color: '#3A2010' }}
       >
         {/* Modal Header */}
-        <div className="p-3.5 sm:p-4 border-b border-amber-200/90 bg-gradient-to-r from-[#5C2D11] via-[#7A3E18] to-[#5C2D11] text-amber-50 flex items-center justify-between shrink-0">
+        <div
+          style={{ backgroundColor: '#5C2D11', color: '#FFFFFF' }}
+          className="bx-modal-dark-head p-3.5 sm:p-4 border-b border-amber-200/90 bg-gradient-to-r from-[#5C2D11] via-[#7A3E18] to-[#5C2D11] flex items-center justify-between shrink-0"
+        >
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-amber-500/20 border border-amber-300/40 flex items-center justify-center shadow-inner">
-              <Scale className="w-5 h-5 text-amber-300" />
+            <div className="w-9 h-9 rounded-2xl bg-white/10 border border-amber-300/40 flex items-center justify-center shadow-inner">
+              <Scale className="w-5 h-5" style={{ color: '#FDE68A' }} />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-black font-granth tracking-wide text-amber-100 flex items-center gap-1.5">
-                <span>{lang === 'en' ? 'Shastric Tithi & Festival Decision' : lang === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण'}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-400/30 font-sans font-bold">
-                  {lang === 'en' ? '10-Yr Engine' : '१०-वर्षीय दिग्दर्शिका'}
+              <h3 className="text-sm sm:text-base font-black font-granth tracking-wide flex items-center gap-1.5" style={{ color: '#FFFDF5' }}>
+                <span style={{ color: '#FFFDF5' }}>
+                  {lang === 'en' ? 'Shastric Tithi & Festival Decision' : lang === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण'}
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/30 font-sans font-bold" style={{ color: '#FDE68A' }}>
+                  {lang === 'en' ? '10-Yr Engine' : lang === 'gu' ? '૧૦-વર્ષીય એન્જિન' : '१०-वर्षीय दिग्दर्शिका'}
                 </span>
               </h3>
-              <p className="text-[10px] sm:text-[11px] text-amber-200/80 line-clamp-1">
+              <p className="text-[10px] sm:text-[11px] line-clamp-1" style={{ color: '#FEF08A' }}>
                 {lang === 'en'
                   ? 'Dharmasindhu & Nirnayasindhu Shastric Proofs for Dual-Tithis & Festivals'
                   : lang === 'gu'
@@ -103,10 +114,11 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-amber-100 flex items-center justify-center transition cursor-pointer"
-            aria-label="Close"
+            style={{ color: '#FFFFFF' }}
+            className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition cursor-pointer"
+            aria-label={lang === 'en' ? 'Close' : 'बंद करें'}
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" style={{ color: '#FFFFFF' }} />
           </button>
         </div>
 
@@ -251,7 +263,11 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                     "कार्तिकस्यासिते पक्षे त्रयोदश्यां निशामुखे।<br />
                     यमदीपं बहिर्दद्यादपमृत्युर्विनश्यति॥"<br />
                     <span className="text-[10px] not-italic text-amber-300 font-sans font-bold">
-                      — स्कन्द पुराण (काशी/प्रभास खण्ड) एवं निर्णयसिन्धु
+                      {lang === 'en'
+                        ? '— Skanda Purana & Nirnayasindhu (Shastric Pramana for Pradosha-Vyapti)'
+                        : lang === 'gu'
+                        ? '— સ્કંદ પુરાણ (કાશી ખંડ) અને નિર્ણયસિંધુ'
+                        : '— स्कन्द पुराण (काशी/प्रभास खण्ड) एवं निर्णयसिन्धु'}
                     </span>
                   </blockquote>
 
@@ -286,21 +302,69 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                     : 'जब कोई तिथि सूर्योदय के बाद शुरू होकर अगले सूर्योदय से पहले ही समाप्त हो जाए, तो उसे तिथि क्षय कहते हैं और एक ही दिन में दो तिथियां आ जाती हैं। धर्मशास्त्र के अनुसार व्रत का निर्णय उदया तिथि से नहीं, बल्कि उस व्रत के विशिष्ट कर्मकाल से होता है:'}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-[11px]">
-                  <div className="p-2 rounded-xl bg-amber-50 border border-amber-200/70">
-                    <span className="font-bold text-[#8C4A00] block mb-0.5">१. प्रदोष कर्मकाल (Evening)</span>
-                    <p className="text-stone-600">धनतेरस, दीपावली, प्रदोष व्रत जिस दिन सूर्यास्त के बाद प्रदोष में आएं, उसी दिन मनाएं।</p>
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80">
+                    <span className="font-bold text-[#7A2B0A] block mb-0.5">
+                      {lang === 'en'
+                        ? '1. Pradosha Karma-Kala (Evening)'
+                        : lang === 'gu'
+                        ? '૧. પ્રદોષ કર્મકાળ (સાંજ)'
+                        : '१. प्रदोष कर्मकाल (संध्या)'}
+                    </span>
+                    <p className="text-stone-700 leading-relaxed">
+                      {lang === 'en'
+                        ? 'Dhanteras, Diwali, Pradosha Vrata: Observed on the day when the tithi touches Pradosha (2h 24m after sunset).'
+                        : lang === 'gu'
+                        ? 'ધનતેરસ, દીપાવલી, પ્રદોષ વ્રત: જે દિવસે સૂર્યાસ્ત પછીના પ્રદોષ કાળમાં તિથિ હોય, તે જ દિવસે ઉજવાય.'
+                        : 'धनतेरस, दीपावली, प्रदोष व्रत जिस दिन सूर्यास्त के बाद प्रदोष में आएं, उसी दिन मनाएं।'}
+                    </p>
                   </div>
-                  <div className="p-2 rounded-xl bg-amber-50 border border-amber-200/70">
-                    <span className="font-bold text-[#8C4A00] block mb-0.5">२. निशीथ कर्मकाल (Midnight)</span>
-                    <p className="text-stone-600">महाशिवरात्रि और जन्माष्टमी जिस दिन अर्धरात्रि में व्याप्त हों, उसी दिन मान्य हैं।</p>
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80">
+                    <span className="font-bold text-[#7A2B0A] block mb-0.5">
+                      {lang === 'en'
+                        ? '2. Nishita Karma-Kala (Midnight)'
+                        : lang === 'gu'
+                        ? '૨. નિશીથ કર્મકાળ (મધ્યરાત્રિ)'
+                        : '२. निशीथ कर्मकाल (अर्धरात्रि)'}
+                    </span>
+                    <p className="text-stone-700 leading-relaxed">
+                      {lang === 'en'
+                        ? 'Maha Shivratri and Krishna Janmashtami: Must be celebrated when the tithi prevails at local midnight (Nishita).'
+                        : lang === 'gu'
+                        ? 'મહાશિવરાત્રિ અને શ્રીકૃષ્ણ જન્માષ્ટમી: જે દિવસે મધ્યરાત્રિએ નિશીથ કાળમાં તિથિ હોય, તે જ દિવસે માન્ય છે.'
+                        : 'महाशिवरात्रि और जन्माष्टमी जिस दिन अर्धरात्रि में व्याप्त हों, उसी दिन मान्य हैं।'}
+                    </p>
                   </div>
-                  <div className="p-2 rounded-xl bg-amber-50 border border-amber-200/70">
-                    <span className="font-bold text-[#8C4A00] block mb-0.5">३. मध्याह्न कर्मकाल (Noon)</span>
-                    <p className="text-stone-600">गणेश चतुर्थी व श्री राम नवमी दोपहर १२ बजे की मध्याह्न व्यापिनी तिथि में ही ग्राह्य हैं।</p>
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80">
+                    <span className="font-bold text-[#7A2B0A] block mb-0.5">
+                      {lang === 'en'
+                        ? '3. Madhyahna Karma-Kala (Noon)'
+                        : lang === 'gu'
+                        ? '૩. મધ્યાહ્ન કર્મકાળ (બપોર)'
+                        : '३. मध्याह्न कर्मकाल (दोपहर)'}
+                    </span>
+                    <p className="text-stone-700 leading-relaxed">
+                      {lang === 'en'
+                        ? 'Ganesh Chaturthi and Shri Rama Navami: Accepted only during solar midday (Madhyahna, ~11am–1:30pm).'
+                        : lang === 'gu'
+                        ? 'શ્રી ગણેશ ચતુર્થી અને શ્રી રામ નવમી: બપોરે ૧૨ વાગ્યાની મધ્યાહ્ન વ્યાપિની તિથિમાં જ ગ્રાહ્ય છે.'
+                        : 'गणेश चतुर्थी व श्री राम नवमी दोपहर १२ बजे की मध्याह्न व्यापिनी तिथि में ही ग्राह्य हैं।'}
+                    </p>
                   </div>
-                  <div className="p-2 rounded-xl bg-amber-50 border border-amber-200/70">
-                    <span className="font-bold text-[#8C4A00] block mb-0.5">४. उदया तिथि कर्मकाल (Sunrise)</span>
-                    <p className="text-stone-600">एकादशी, अनंत चतुर्दशी व सार्वत्रिक स्मार्त व्रत सूर्योदय-कालिक तिथि में मनाए जाते हैं।</p>
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80">
+                    <span className="font-bold text-[#7A2B0A] block mb-0.5">
+                      {lang === 'en'
+                        ? '4. Udaya Tithi Karma-Kala (Sunrise)'
+                        : lang === 'gu'
+                        ? '૪. ઉદયા તિથિ કર્મકાળ (સૂર્યોદય)'
+                        : '४. उदया तिथि कर्मकाल (सूर्योदय)'}
+                    </span>
+                    <p className="text-stone-700 leading-relaxed">
+                      {lang === 'en'
+                        ? 'Ekadashi, Ananta Chaturdashi, and Smartha Vratas: Observed when the tithi is present at local sunrise.'
+                        : lang === 'gu'
+                        ? 'એકાદશી, અનંત ચતુર્દશી અને સ્માર્ત વ્રતો: સૂર્યોદય-કાલિક ઉદયા તિથિમાં જ ઉજવાય છે.'
+                        : 'एकादशी, अनंत चतुर्दशी व सार्वत्रिक स्मार्त व्रत सूर्योदय-कालिक तिथि में मनाए जाते हैं।'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -346,12 +410,12 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                     onChange={(e) => setSelectedFestivalFilter(e.target.value)}
                     className="text-xs font-bold px-2.5 py-1 rounded-lg border border-amber-300 bg-amber-50 text-amber-950 focus:outline-none"
                   >
-                    <option value="all">{lang === 'en' ? 'All Festivals' : 'समस्त महापर्व'}</option>
-                    <option value="dhanteras">धनतेरस (Dhanteras)</option>
-                    <option value="diwali">दीपावली (Diwali)</option>
-                    <option value="shivratri">महाशिवरात्रि (Maha Shivratri)</option>
-                    <option value="janmashtami">श्री कृष्ण जन्माष्टमी</option>
-                    <option value="rakshabandhan">रक्षाबंधन</option>
+                    <option value="all">{lang === 'en' ? 'All Festivals' : lang === 'gu' ? 'તમામ પર્વો' : 'समस्त महापर्व'}</option>
+                    <option value="dhanteras">{lang === 'en' ? 'Dhanteras' : lang === 'gu' ? 'ધનતેરસ' : 'धनतेरस (Dhanteras)'}</option>
+                    <option value="diwali">{lang === 'en' ? 'Diwali (Lakshmi Puja)' : lang === 'gu' ? 'દિવાળી (મહાલક્ષ્મી પૂજન)' : 'दीपावली (Diwali)'}</option>
+                    <option value="shivratri">{lang === 'en' ? 'Maha Shivratri' : lang === 'gu' ? 'મહાશિવરાત્રિ' : 'महाशिवरात्रि (Maha Shivratri)'}</option>
+                    <option value="janmashtami">{lang === 'en' ? 'Krishna Janmashtami' : lang === 'gu' ? 'શ્રીકૃષ્ણ જન્માષ્ટમી' : 'श्री कृष्ण जन्माष्टमी'}</option>
+                    <option value="rakshabandhan">{lang === 'en' ? 'Raksha Bandhan' : lang === 'gu' ? 'રક્ષાબંધન' : 'रक्षाबंधन'}</option>
                   </select>
                 </div>
 
@@ -362,7 +426,7 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={lang === 'en' ? 'Search festival, shloka, or conflict...' : 'त्योहार, श्लोक या तिथि संशय खोजें...'}
+                    placeholder={lang === 'en' ? 'Search festival, shloka, or conflict...' : lang === 'gu' ? 'પર્વ, શ્લોક કે તિથિ સંશય શોધો...' : 'त्योहार, श्लोक या तिथि संशय खोजें...'}
                     className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50/50 text-xs text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-500"
                   />
                 </div>
@@ -385,12 +449,12 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                                 {rec.year}
                               </span>
                               <h4 className="font-black font-granth text-sm text-[#4A2610]">
-                                {rec.hindiName}
+                                {formatFestivalDisplayName(rec, lang)}
                               </h4>
                               {rec.hasConflict && (
                                 <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1">
                                   <AlertTriangle className="w-2.5 h-2.5" />
-                                  <span>{rec.conflictType?.replace(/_/g, ' ') || 'द्वि-तिथि संशय'}</span>
+                                  <span>{formatConflictLabel(rec.conflictType, lang)}</span>
                                 </span>
                               )}
                             </div>
@@ -403,8 +467,8 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                                   year: 'numeric',
                                 })}
                               </span>
-                              <span>• {rec.tithiName}</span>
-                              <span>• कर्मकाल: {rec.karmaKala}</span>
+                              <span>• {trVedic(rec.tithiName, lang)}</span>
+                              <span>• {lang === 'en' ? 'Karma-Kala:' : lang === 'gu' ? 'કર્મકાળ:' : 'कर्मकाल:'} {formatKarmaKala(rec.karmaKala, lang)}</span>
                             </div>
                           </div>
 
@@ -413,37 +477,37 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                             onClick={() => setExpandedRecordId(isExpanded ? null : `${rec.year}-${rec.festivalId}`)}
                             className="px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold transition shrink-0 cursor-pointer"
                           >
-                            {isExpanded ? (lang === 'en' ? 'Hide Proof' : 'संक्षिप्त करें') : (lang === 'en' ? 'Shastric Proof' : 'शास्त्रोक्त प्रमाण देखें')}
+                            {isExpanded ? (lang === 'en' ? 'Hide Proof' : lang === 'gu' ? 'સંક્ષિપ્ત કરો' : 'संक्षिप्त करें') : (lang === 'en' ? 'Shastric Proof' : lang === 'gu' ? 'શાસ્ત્રોક્ત પ્રમાણ' : 'शास्त्रोक्त प्रमाण देखें')}
                           </button>
                         </div>
 
                         {/* Tithi Span */}
                         <div className="text-[11px] text-stone-600 bg-amber-50/70 p-2 rounded-xl border border-amber-100 flex items-center justify-between gap-2 flex-wrap">
                           <span>
-                            <strong>प्रारंभ:</strong> {rec.tithiStart}
+                            <strong>{lang === 'en' ? 'Starts:' : lang === 'gu' ? 'પ્રારંભ:' : 'प्रारंभ:'}</strong> {formatTithiTiming(rec.tithiStart, lang)}
                           </span>
                           <span>
-                            <strong>समाप्ति:</strong> {rec.tithiEnd}
+                            <strong>{lang === 'en' ? 'Ends:' : lang === 'gu' ? 'સમાપ્તિ:' : 'समाप्ति:'}</strong> {formatTithiTiming(rec.tithiEnd, lang)}
                           </span>
                         </div>
 
                         {/* Decision Reason */}
                         <div className="text-xs text-stone-800 leading-relaxed">
-                          <strong>{lang === 'en' ? 'Decision & Why This Day:' : 'निर्णय एवं यही दिन क्यों:'}</strong> {rec.decisionReason}
+                          <strong>{lang === 'en' ? 'Decision & Why This Day:' : lang === 'gu' ? 'નિર્ણય અને આ જ દિવસ કેમ:' : 'निर्णय एवं यही दिन क्यों:'}</strong> {formatDecisionReason(rec, lang)}
                         </div>
 
                         {/* Expanded Shastric Shloka & Proof */}
                         {isExpanded && (
                           <div className="mt-2 p-2.5 rounded-xl bg-[#4A2610] text-amber-100 text-xs space-y-1.5 animate-in fade-in duration-150">
                             <span className="text-[10px] font-bold text-amber-300 block">
-                              📜 धर्मसिन्धु / निर्णयसिन्धु श्लोक प्रमाण:
+                              📜 {lang === 'en' ? 'Dharmasindhu / Nirnayasindhu Shloka Proof:' : lang === 'gu' ? 'ધર્મસિંધુ / નિર્ણયસિંધુ શ્લોક પ્રમાણ:' : 'धर्मसिन्धु / निर्णयसिन्धु श्लोक प्रमाण:'}
                             </span>
                             <p className="font-serif italic text-amber-200 text-[11px] border-l-2 border-amber-400 pl-2">
                               {rec.shastricPramana}
                             </p>
                             {rec.alternateDateNote && (
                               <p className="text-[10px] text-amber-300/80 pt-0.5">
-                                ⚠️ <strong>अन्य दिन क्यों त्याज्य है:</strong> {rec.alternateDateNote}
+                                ⚠️ <strong>{lang === 'en' ? 'Why other day is rejected:' : lang === 'gu' ? 'અન્ય દિવસ કેમ ત્યાજ્ય છે:' : 'अन्य दिन क्यों त्याज्य है:'}</strong> {formatAlternateNote(rec, lang)}
                               </p>
                             )}
                           </div>
@@ -453,7 +517,7 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                   })
                 ) : (
                   <div className="text-center py-8 text-xs text-stone-500">
-                    कोई पर्व रिकॉर्ड नहीं मिला। कृपया फ़िल्टर बदलें।
+                    {lang === 'en' ? 'No festival records found. Please adjust filters.' : lang === 'gu' ? 'કોઈ પર્વ રેકોર્ડ મળ્યો નથી.' : 'कोई पर्व रिकॉर्ड नहीं मिला। कृपया फ़िल्टर बदलें।'}
                   </div>
                 )}
               </div>
@@ -464,7 +528,11 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
           {activeTab === 'rules' && (
             <div className="space-y-3">
               <div className="text-xs text-stone-700 bg-amber-50 p-3 rounded-2xl border border-amber-200 leading-relaxed">
-                सनातन धर्मशास्त्र (धर्मसिन्धु, निर्णयसिन्धु, हेमाद्रि) के अनुसार किसी भी व्रत अथवा पर्व के निर्णय में <strong>'काल-व्याप्ति सिद्धांत'</strong> ही सर्वोपरि प्रमाण है। नीचे ६ प्रमुख काल-व्याप्ति नियम दिए गए हैं:
+                {lang === 'en'
+                  ? "According to Sanatan Dharmashastra (Dharmasindhu, Nirnayasindhu, Hemadri), the 'Kala-Vyapti Siddhanta' (Time-Span Doctrine) is the supreme authority for deciding festival dates when dual tithis occur. Below are the 7 primary Shastric Kala-Vyapti rules:"
+                  : lang === 'gu'
+                  ? "સનાતન ધર્મશાસ્ત્ર (ધર્મસિંધુ, નિર્ણયસિંધુ, હેમાદ્રિ) અનુસાર વ્રત કે પર્વના નિર્ણયમાં 'કાલ-વ્યાપ્તિ સિદ્ધાંત' જ સર્વોચ્ચ પ્રમાણ છે. નીચે ૭ મુખ્ય કાલ-વ્યાપ્તિ નિયમો આપેલા છે:"
+                  : "सनातन धर्मशास्त्र (धर्मसिन्धु, निर्णयसिन्धु, हेमाद्रि) के अनुसार किसी भी व्रत अथवा पर्व के निर्णय में 'काल-व्याप्ति सिद्धांत' ही सर्वोपरि प्रमाण है। नीचे ७ प्रमुख काल-व्याप्ति नियम दिए गए हैं:"}
               </div>
 
               <div className="grid grid-cols-1 gap-3">
@@ -476,24 +544,24 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-0.5">
                         <h4 className="font-black font-granth text-sm text-[#4A2610]">
-                          {rule.hindiName}
+                          {lang === 'en' ? rule.name : lang === 'gu' ? (rule.guName || rule.hindiName) : rule.hindiName}
                         </h4>
                         <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full inline-block">
-                          कर्मकाल: {rule.karmaKala}
+                          {lang === 'en' ? 'Karma-Kala:' : lang === 'gu' ? 'કર્મકાળ:' : 'कर्मकाल:'} {lang === 'en' ? (rule.karmaKalaEn || rule.karmaKala) : lang === 'gu' ? (rule.karmaKalaGu || rule.karmaKala) : rule.karmaKala}
                         </span>
                       </div>
                       <span className="text-[10px] text-stone-500 font-bold">
-                        स्रोत: {rule.source}
+                        {lang === 'en' ? 'Source:' : lang === 'gu' ? 'સ્રોત:' : 'स्रोत:'} {lang === 'en' ? (rule.sourceEn || rule.source) : lang === 'gu' ? (rule.sourceGu || rule.source) : rule.source}
                       </span>
                     </div>
 
                     <p className="text-xs text-stone-700 leading-relaxed">
-                      <strong>मूल सिद्धांत:</strong> {rule.principle}
+                      <strong>{lang === 'en' ? 'Core Principle:' : lang === 'gu' ? 'મૂળ સિદ્ધાંત:' : 'मूल सिद्धांत:'}</strong> {lang === 'en' ? (rule.principleEn || rule.principle) : lang === 'gu' ? (rule.principleGu || rule.principle) : rule.principle}
                     </p>
 
                     <div className="p-2.5 rounded-xl bg-[#4A2610] text-amber-100 text-xs space-y-1">
                       <span className="text-[10px] font-bold text-amber-300 block">
-                        संस्कृत श्लोक प्रमाण:
+                        {lang === 'en' ? 'Sanskrit Shloka Proof:' : lang === 'gu' ? 'સંસ્કૃત શ્લોક પ્રમાણ:' : 'संस्कृत श्लोक प्रमाण:'}
                       </span>
                       <p className="font-serif italic text-amber-200 text-xs border-l-2 border-amber-400 pl-2">
                         {rule.sanskritShloka}
@@ -501,12 +569,12 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
                     </div>
 
                     <div className="p-2 rounded-xl bg-orange-50 border border-orange-200/70 text-xs text-orange-950">
-                      <strong>द्वि-तिथि संशय समाधान:</strong> {rule.dualTithiRule}
+                      <strong>{lang === 'en' ? 'Dual-Tithi Resolution:' : lang === 'gu' ? 'દ્વિ-તિથિ સમાધાન:' : 'द्वि-तिथि संशय समाधान:'}</strong> {lang === 'en' ? (rule.dualTithiRuleEn || rule.dualTithiRule) : lang === 'gu' ? (rule.dualTithiRuleGu || rule.dualTithiRule) : rule.dualTithiRule}
                     </div>
 
                     <div className="text-[11px] text-stone-600 flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-stone-800">प्रमुख उदाहरण:</span>
-                      {rule.examples.map((ex, i) => (
+                      <span className="font-bold text-stone-800">{lang === 'en' ? 'Key Examples:' : lang === 'gu' ? 'મુખ્ય ઉદાહરણ:' : 'प्रमुख उदाहरण:'}</span>
+                      {(lang === 'en' && rule.examplesEn ? rule.examplesEn : lang === 'gu' && rule.examplesGu ? rule.examplesGu : rule.examples).map((ex, i) => (
                         <span key={i} className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 border border-stone-200">
                           {ex}
                         </span>
@@ -523,13 +591,17 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
             <div className="space-y-3">
               <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#4A2610] to-[#6A3716] text-amber-100 space-y-2">
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase">
-                  खगोलीय सूत्र (Astronomical Formula)
+                  {lang === 'en' ? 'Astronomical Formula (Siddhanta)' : lang === 'gu' ? 'ખગોળીય સૂત્ર' : 'खगोलीय सूत्र (Astronomical Formula)'}
                 </span>
                 <h4 className="text-base sm:text-lg font-black font-mono text-amber-200 tracking-wider">
-                  तिथि = ⌊ (λ_Moon - λ_Sun) mod 360° / 12° ⌋ + 1
+                  {lang === 'en' ? 'Tithi = ⌊ (λ_Moon - λ_Sun) mod 360° / 12° ⌋ + 1' : 'तिथि = ⌊ (λ_Moon - λ_Sun) mod 360° / 12° ⌋ + 1'}
                 </h4>
                 <p className="text-xs text-amber-100/80 leading-relaxed">
-                  चन्द्रमा द्वारा सूर्य से सापेक्ष १२ अंश (12°) आगे निकलना एक तिथि कहलाता है। जब चन्द्रमा सूर्य के साथ ०° पर होता है तो अमावस्या, और १८०° पर होता है तो पूर्णिमा होती है।
+                  {lang === 'en'
+                    ? 'A tithi is defined as the 12° angular advance of the Moon relative to the Sun. When the Moon is conjunct with the Sun (0° elongation), it is Amavasya (New Moon). When directly opposite (180°), it is Purnima (Full Moon).'
+                    : lang === 'gu'
+                    ? 'ચંદ્ર સૂર્યથી ૧૨ અંશ આગળ વધે તેને એક તિથિ કહે છે. જ્યારે ચંદ્ર અને સૂર્ય એક જ અંશ (૦°) પર હોય ત્યારે અમાસ, અને ૧૮૦° પર સામસામે હોય ત્યારે પૂર્ણિમા થાય છે.'
+                    : 'चन्द्रमा द्वारा सूर्य से सापेक्ष १२ अंश (12°) आगे निकलना एक तिथि कहलाता है। जब चन्द्रमा सूर्य के साथ ०° पर होता है तो अमावस्या, और १८०° पर होता है तो पूर्णिमा होती है।'}
                 </p>
               </div>
 
@@ -558,14 +630,21 @@ export const TithiNirnayaModal: React.FC<TithiNirnayaModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-3 border-t border-amber-200 bg-amber-100/50 flex items-center justify-between text-xs text-[#8C6239] shrink-0">
-          <span>धर्मो रक्षति रक्षितः • निर्णयसिन्धु व धर्मसिन्धु सम्मत</span>
+        <div className="p-3 border-t border-amber-200 bg-amber-100/50 flex items-center justify-between text-xs shrink-0">
+          <span style={{ color: '#5C3A21' }} className="font-bold">
+            {lang === 'en'
+              ? 'Dharma Protects Those Who Uphold It • Dharmasindhu & Nirnayasindhu Certified'
+              : lang === 'gu'
+              ? 'ધર્મો રક્ષતિ રક્ષિતઃ • નિર્ણયસિંધુ અને ધર્મસિંધુ સંમત'
+              : 'धर्मो रक्षति रक्षितः • निर्णयसिन्धु व धर्मसिन्धु सम्मत'}
+          </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-[#6D3414] hover:bg-[#5C2D11] text-amber-100 font-bold transition cursor-pointer"
+            style={{ backgroundColor: '#6D3414', color: '#FFFFFF' }}
+            className="bx-dark-btn px-4 py-1.5 rounded-xl bg-[#6D3414] hover:bg-[#5C2D11] text-white font-bold transition cursor-pointer shadow-xs"
           >
-            {lang === 'en' ? 'Close' : 'बंद करें'}
+            <span style={{ color: '#FFFFFF' }}>{lang === 'en' ? 'Close' : lang === 'gu' ? 'બંધ કરો' : 'बंद करें'}</span>
           </button>
         </div>
       </div>

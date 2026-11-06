@@ -10,12 +10,23 @@ export interface ShastricRule {
   id: string;
   name: string;
   hindiName: string;
+  guName?: string;
   karmaKala: string;
+  karmaKalaEn?: string;
+  karmaKalaGu?: string;
   principle: string;
+  principleEn?: string;
+  principleGu?: string;
   sanskritShloka: string;
   source: string;
+  sourceEn?: string;
+  sourceGu?: string;
   dualTithiRule: string;
+  dualTithiRuleEn?: string;
+  dualTithiRuleGu?: string;
   examples: string[];
+  examplesEn?: string[];
+  examplesGu?: string[];
 }
 
 export interface TenYearFestivalRecord {
@@ -23,6 +34,7 @@ export interface TenYearFestivalRecord {
   festivalId: string;
   festivalName: string;
   hindiName: string;
+  guName?: string;
   observedDate: string; // YYYY-MM-DD
   tithiName: string;
   tithiStart: string;
@@ -40,78 +52,155 @@ export const SHASTRIC_RULES: ShastricRule[] = [
     id: 'pradosha',
     name: 'Pradosha Vyapini (प्रदोष-व्यापिनी)',
     hindiName: 'प्रदोष-व्यापिनी नियम',
+    guName: 'પ્રદોષ-વ્યાપિની નિયમ',
     karmaKala: 'सूर्यास्त के बाद २ घटी २४ पल (लगभग २ घण्टे २४ मिनट)',
+    karmaKalaEn: '2 Ghatis and 24 Palas after sunset (~2 hours 24 minutes)',
+    karmaKalaGu: 'સૂર્યાસ્ત પછી ૨ ઘડી ૨૪ પળ (આશરે ૨ કલાક ૨૪ મિનિટ)',
     principle: 'जिस दिन अभीष्ट तिथि प्रदोष काल में व्याप्त होती है, उसी दिन पूजन व व्रत का विधान है।',
+    principleEn: 'Vratas and worship are observed on the day the desired Tithi prevails during Pradosha Kaala.',
+    principleGu: 'જે દિવસે અભીષ્ટ તિથિ પ્રદોષ કાળમાં વ્યાપ્ત હોય તે દિવસે જ પૂજન અને વ્રતનો વિધાન છે.',
     sanskritShloka: 'कार्तिकस्यासिते पक्षे त्रयोदश्यां निशामुखे। यमदीपं बहिर्दद्यादपमृत्युर्विनश्यति॥ (स्कन्द पुराण / निर्णयसिन्धु)',
     source: 'निर्णयसिन्धु, धर्मसिन्धु, स्कन्द पुराण',
+    sourceEn: 'Nirnayasindhu, Dharmasindhu, Skanda Purana',
+    sourceGu: 'નિર્ણયસિંધુ, ધર્મસિંધુ, સ્કંદ પુરાણ',
     dualTithiRule: 'यदि दोनों दिन प्रदोष में तिथि व्याप्त हो या केवल प्रथम दिन व्याप्त हो, तो पूर्वविद्धा (प्रथम दिन) ही ग्राह्य है। यदि केवल दूसरे दिन व्याप्त हो तो द्वितीय दिन ग्राह्य है।',
+    dualTithiRuleEn: 'If Tithi touches Pradosha on both days or on the first day only, Purvaviddha (Day 1) is accepted. If only on Day 2, Day 2 is accepted.',
+    dualTithiRuleGu: 'જો બંને દિવસે પ્રદોષમાં તિથિ હોય અથવા પ્રથમ દિવસે હોય તો પ્રથમ દિવસ માન્ય રહે છે.',
     examples: ['धनतेरस (कार्तिक कृष्ण त्रयोदशी)', 'दीपावली लक्ष्मी पूजन (कार्तिक कृष्ण अमावस्या)', 'प्रदोष व्रत (त्रयोदशी)', 'मासिक शिवरात्रि'],
+    examplesEn: ['Dhanteras (Kartik Krishna Trayodashi)', 'Diwali Lakshmi Puja (Kartik Krishna Amavasya)', 'Pradosha Vrata', 'Monthly Shivratri'],
+    examplesGu: ['ધનતેરસ (કાર્તિક કૃષ્ણ ત્રયોદશી)', 'દિવાળી લક્ષ્મી પૂજન', 'પ્રદોષ વ્રત', 'માસિક શિવરાત્રિ'],
   },
   {
     id: 'nishita',
     name: 'Nishita Vyapini (निशीथ-व्यापिनी)',
     hindiName: 'निशीथ-व्यापिनी नियम',
+    guName: 'નિશીથ-વ્યાપિની નિયમ',
     karmaKala: 'मध्यरात्रि का काल (रात्रि के ८वें मुहूर्त / रात ११:४० से १२:३० के मध्य)',
+    karmaKalaEn: 'Midnight Muhurta (8th Muhurta of night / ~11:40 PM to 12:30 AM)',
+    karmaKalaGu: 'મધ્યરાત્રિ કાળ (રાત્રિના ૮મા મુહૂર્ત / રાત્રે ૧૧:૪૦ થી ૧૨:૩૦ વચ્ચે)',
     principle: 'अर्धरात्रि में होने वाली पूजाओं हेतु जिस दिन निशीथ काल में तिथि विद्यमान हो, वही दिन मुख्य है।',
+    principleEn: 'For nocturnal midnight rituals, the day the Tithi touches Nishita Kaala is authoritative.',
+    principleGu: 'મધ્યરાત્રિ પૂજાઓ માટે જે દિવસે નિશીથ કાળમાં તિથિ હોય તે જ દિવસ મુખ્ય છે.',
     sanskritShloka: 'अर्धरात्रे यदा युक्ता निशीथे च विशेषतः। तदा सा शिवरात्रिः स्यात् सर्वपापप्रणाशिनी॥ (ईशान संहिता)',
     source: 'ईशान संहिता, निर्णयसिन्धु',
+    sourceEn: 'Ishana Samhita, Nirnayasindhu',
+    sourceGu: 'ઈશાન સંહિતા, નિર્ણયસિંધુ',
     dualTithiRule: 'दोनों दिन निशीथ में तिथि रहने पर अथवा केवल पहले दिन रहने पर पूर्वविद्धा ग्राह्य होती है।',
+    dualTithiRuleEn: 'If Tithi touches Nishita on both nights or Day 1 night, Day 1 is accepted.',
+    dualTithiRuleGu: 'બંને દિવસે નિશીથમાં તિથિ હોય કે પહેલા દિવસે હોય તો પૂર્વવિદ્ધા ગ્રાહ્ય છે.',
     examples: ['महाशिवरात्रि (फाल्गुन कृष्ण चतुर्दशी)', 'श्री कृष्ण जन्माष्टमी (भाद्रपद कृष्ण अष्टमी निशीथ व रोहिणी)'],
+    examplesEn: ['Maha Shivratri (Phalguna Krishna Chaturdashi)', 'Krishna Janmashtami (Midnight Ashtami & Rohini)'],
+    examplesGu: ['મહાશિવરાત્રિ', 'શ્રીકૃષ્ણ જન્માષ્ટમી'],
   },
   {
     id: 'madhyahna',
     name: 'Madhyahna Vyapini (मध्याह्न-व्यापिनी)',
     hindiName: 'मध्याह्न-व्यापिनी नियम',
+    guName: 'મધ્યાહ્ન-વ્યાપિની નિયમ',
     karmaKala: 'दिन का तृतीय भाग (दिन के लगभग ११:०० से १:३० के मध्य)',
+    karmaKalaEn: 'Third part of the daytime (~11:00 AM to 1:30 PM)',
+    karmaKalaGu: 'દિવસનો ત્રીજો ભાગ (બપોરે ૧૧:૦૦ થી ૧:૩૦ વચ્ચે)',
     principle: 'जिन देवों का प्राकट्य मध्याह्न काल में हुआ, उनका व्रत व पूजन मध्याह्न-व्यापिनी तिथि में ही होता है।',
+    principleEn: 'Deities who manifested at solar noon are worshipped only when the Tithi touches solar noon.',
+    principleGu: 'જે દેવોનો પ્રાગટ્ય મધ્યાહ્ન કાળે થયો, તેમનો ઉત્સવ મધ્યાહ્ન-વ્યાપિની તિથિમાં જ થાય છે.',
     sanskritShloka: 'मध्याह्ने पूजयेद्देवं विघ्नेशं मोदकप्रियम्। मध्याह्नव्यापिनी चेत्स्याच्चतुर्थी गणनायक॥ (धर्मसिन्धु)',
     source: 'धर्मसिन्धु, भविष्योत्तर पुराण',
+    sourceEn: 'Dharmasindhu, Bhavishyottara Purana',
+    sourceGu: 'ધર્મસિંધુ, ભવિષ્યોત્તર પુરાણ',
     dualTithiRule: 'यदि दोनों दिन मध्याह्न में चतुर्थी या नवमी व्याप्त हो, तो पूर्वविद्धा को त्यागकर परविद्धा या शास्त्रोक्त युग्म नियम से निर्णय होता है।',
+    dualTithiRuleEn: 'If Tithi spans solar noon on both days, Shastric pairing (Yugma) determines the authentic day.',
+    dualTithiRuleGu: 'જો બંને દિવસે મધ્યાહ્નમાં તિથિ હોય તો શાસ્ત્રોક્ત યુગ્મ નિયમથી નિર્ણય થાય છે.',
     examples: ['श्री गणेश चतुर्थी (भाद्रपद शुक्ल चतुर्थी)', 'श्री राम नवमी (चैत्र शुक्ल नवमी मध्याह्न १२:००)'],
+    examplesEn: ['Ganesh Chaturthi (Bhadrapada Shukla Chaturthi)', 'Shri Rama Navami (Chaitra Shukla Navami at Noon)'],
+    examplesGu: ['શ્રી ગણેશ ચતુર્થી', 'શ્રી રામ નવમી'],
   },
   {
     id: 'udaya',
     name: 'Udaya Vyapini (उदय-व्यापिनी)',
     hindiName: 'उदय-व्यापिनी नियम',
+    guName: 'ઉદય-વ્યાપિની નિયમ',
     karmaKala: 'प्रातः सूर्योदय काल (३ मुहूर्त या सूर्योदय स्पर्श)',
+    karmaKalaEn: 'Sunrise instant and first 3 Muhurtas (Udaya Tithi)',
+    karmaKalaGu: 'પ્રાતઃ સૂર્યોદય કાળ (૩ મુહૂર્ત કે સૂર્યોદય સ્પર્શ)',
     principle: 'अधिकांश स्मार्त व सार्वत्रिक व्रतों में सूर्योदय-कालिक तिथि (उदया तिथि) ही सर्वमान्य होती है।',
+    principleEn: 'For general and Smartha fasting, the Tithi prevailing at local sunrise is authoritative.',
+    principleGu: 'મોટાભાગના સ્માર્ત વ્રતોમાં સૂર્યોદય કાળની ઉદયા તિથિ સર્વમાન્ય ગણાય છે.',
     sanskritShloka: 'यस्योदये रवेस्तिथिः सैव सर्वत्र पूजिता। आदित्येऽस्तं गते रात्रिस्तिथिरन्या न गृह्यते॥',
     source: 'निर्णयसिन्धु, कालमाधव',
+    sourceEn: 'Nirnayasindhu, Kalamiadhava',
+    sourceGu: 'નિર્ણયસિંધુ, કાલમાધવ',
     dualTithiRule: 'एकादशी में यदि दशमी का वेध (अरुणोदय वेध) हो तो वह त्याज्य है; द्वादशी युक्त शुद्ध एकादशी ही ग्राह्य है।',
+    dualTithiRuleEn: 'On Ekadashi, any overlap with Dashami at dawn is shunned; pure Ekadashi with Dvadashi is observed.',
+    dualTithiRuleGu: 'એકાદશીમાં દશમીનો વેધ ત્યાજ્ય છે; શુદ્ધ દ્વાદશી યુક્ત એકાદશી જ ગ્રાહ્ય છે.',
     examples: ['एकादशी व्रत', 'अनंत चतुर्दशी', 'वट सावित्री व्रत', 'छठ पूजा पारण (सप्तमी उदय)'],
+    examplesEn: ['Ekadashi Fasting', 'Ananta Chaturdashi', 'Vat Savitri Vrata', 'Chhath Puja Parana'],
+    examplesGu: ['એકાદશી વ્રત', 'અનંત ચતુર્દશી', 'વટ સાવિત્રી વ્રત', 'છઠ પૂજા પારણ'],
   },
   {
     id: 'aparahna',
     name: 'Aparahna Vyapini (अपराह्ण-व्यापिनी)',
     hindiName: 'अपराह्ण-व्यापिनी नियम',
+    guName: 'અપરાહ્ન-વ્યાપિની નિયમ',
     karmaKala: 'दिन का चौथा भाग (दोपहर १:३० से ४:०० के मध्य)',
+    karmaKalaEn: 'Fourth quarter of the day (~1:30 PM to 4:00 PM)',
+    karmaKalaGu: 'દિવસનો ચોથો ભાગ (બપોરે ૧:૩૦ થી ૪:૦૦ વચ્ચે)',
     principle: 'श्राद्ध, पितृ तर्पण एवं रक्षाबंधन का कर्मकाल अपराह्ण व्यापिनी तिथि है।',
+    principleEn: 'Ancestral Tarpan, Shraddha, and Raksha Bandhan require Aparahna Tithi devoid of Bhadra.',
+    principleGu: 'શ્રાદ્ધ, પિતૃતર્પણ અને રક્ષાબંધનનો કર્મકાળ અપરાહ્ન વ્યાપિની તિથિ છે.',
     sanskritShloka: 'अपराह्णे पितृणां तु दद्यात् पिण्डोदकं नरः। भद्रावर्जिते काले रक्षाबन्धनमिष्यते॥',
     source: 'हेमाद्रि, निर्णयसिन्धु',
+    sourceEn: 'Hemadri, Nirnayasindhu',
+    sourceGu: 'હેમાદ્રિ, નિર્ણયસિંધુ',
     dualTithiRule: 'रक्षाबंधन में पूर्णिमा अपराह्ण में भद्रारहित होनी चाहिए। यदि भद्रा हो तो भद्रा समाप्त होने तक या भद्रा-पुच्छ काल में ही रक्षासूत्र बांधना चाहिए।',
+    dualTithiRuleEn: 'Raksha Bandhan requires Purnima during Aparahna without Bhadra. If Bhadra exists, tying is done after Bhadra ends or in Bhadra-Puccha.',
+    dualTithiRuleGu: 'રક્ષાબંધનમાં ભદ્રારહિત અપરાહ્ન કાળ માન્ય છે; ભદ્રા હોય તો તેની સમાપ્તિ પછી જ રક્ષાસૂત્ર બાંધવું.',
     examples: ['रक्षाबंधन (श्रावण पूर्णिमा)', 'पितृ पक्ष श्राद्ध तर्पण (अपराह्ण व्यापिनी)'],
+    examplesEn: ['Raksha Bandhan (Shravana Purnima)', 'Pitru Paksha Shraddha Tarpan'],
+    examplesGu: ['રક્ષાબંધન', 'પિતૃ પક્ષ શ્રાદ્ધ તર્પણ'],
   },
   {
     id: 'chandrodaya',
     name: 'Chandrodaya Vyapini (चन्द्रोदय-व्यापिनी)',
     hindiName: 'चन्द्रोदय-व्यापिनी नियम',
+    guName: 'ચંદ્રોદય-વ્યાપિની નિયમ',
     karmaKala: 'रात्रि में चन्द्रमा के उदय होने का काल',
+    karmaKalaEn: 'Moment of Moonrise at night',
+    karmaKalaGu: 'રાત્રે ચંદ્ર ઉદય થવાનો સમય',
     principle: 'जिस दिन चन्द्रमा का दर्शन व अर्घ्य अभीष्ट तिथि में संभव हो, उसी दिन वह व्रत मान्य होता है।',
+    principleEn: 'Fasts requiring sighting and offering to the Moon are observed when Tithi is present at Moonrise.',
+    principleGu: 'જે દિવસે ચંદ્રોદય સમયે અભીષ્ટ તિથિ હોય તે દિવસે તે વ્રત માન્ય થાય છે.',
     sanskritShloka: 'कार्तिककृष्णपक्षे तु चतुर्थी चन्द्रसंयुता। तत्रोपवासः कर्तव्यो यावच्चन्द्रोदयो भवेत्॥',
     source: 'निर्णयसिन्धु, व्रतराज',
+    sourceEn: 'Nirnayasindhu, Vrataraja',
+    sourceGu: 'નિર્ણયસિંધુ, વ્રતરાજ',
     dualTithiRule: 'जिस दिन चन्द्रोदय के समय चतुर्थी तिथि विद्यमान हो, उसी दिन करवा चौथ का व्रत व पारण मान्य है।',
+    dualTithiRuleEn: 'Karwa Chauth is observed on the day Chaturthi exists at the local Moonrise time.',
+    dualTithiRuleGu: 'જે દિવસે ચંદ્રોદય વખતે ચતુર્થી હોય તે દિવસે કરવા ચોથ માન્ય છે.',
     examples: ['करवा चौथ (कार्तिक कृष्ण चतुर्थी)', 'संकष्टी गणेश चतुर्थी (चन्द्र दर्शन)'],
+    examplesEn: ['Karwa Chauth (Kartik Krishna Chaturthi)', 'Sankashti Ganesh Chaturthi'],
+    examplesGu: ['કરવા ચોથ', 'સંકષ્ટી ગણેશ ચતુર્થી'],
   },
   {
     id: 'yugma',
     name: 'Yugma-Vakya Siddhanta (युग्म-वाक्य नियम)',
     hindiName: 'युग्म-वाक्य सिद्धांत',
+    guName: 'યુગ્મ-વાક્ય સિદ્ધાંત',
     karmaKala: 'द्वि-तिथि संशय की स्थिति में तिथि युग्म की ग्राह्यता',
+    karmaKalaEn: 'Authentic Tithi Pairing Doctrine in dual-tithi dilemmas',
+    karmaKalaGu: 'બે તિથિ સંશય વખતે તિથિ જોડીની ગ્રાહ્યતા',
     principle: 'धर्मशास्त्र के अनुसार कुछ तिथियां पूर्व तिथि से युक्त तथा कुछ उत्तर तिथि से युक्त होकर अधिक पुण्य फलदायी होती हैं।',
+    principleEn: 'Certain tithis yield highest merit when paired with preceding or succeeding compatible tithis.',
+    principleGu: 'ધર્મશાસ્ત્ર મુજબ કેટલીક તિથિઓ આગળની કે પાછળની તિથિ સાથે જોડાવાથી અધિક પુણ્યદાયી બને છે.',
     sanskritShloka: 'युग्माग्नियुगखट्वक्षैः षष्ठीभाद्रपदैस्तथा। एकादशी द्वादशी च तथा सर्वाः फलप्रदाः॥',
     source: 'निर्णयसिन्धु, वसिष्ठ संहिता',
+    sourceEn: 'Nirnayasindhu, Vasistha Samhita',
+    sourceGu: 'નિર્ણયસિંધુ, વસિષ્ઠ સંહિતા',
     dualTithiRule: 'द्वितीया तृतीया के साथ, चतुर्थी पंचमी के साथ, षष्ठी सप्तमी के साथ, अष्टमी नवमी के साथ, एकादशी द्वादशी के साथ, चतुर्दशी पूर्णिमा के साथ युग्म बनाती है।',
+    dualTithiRuleEn: 'Dvitiya pairs with Tritiya, Chaturthi with Panchami, Shashthi with Saptami, Ashtami with Navami, Ekadashi with Dvadashi.',
+    dualTithiRuleGu: 'બીજ-ત્રીજ, ચોથ-પાંચમ, છઠ-સાતમ, આઠમ-નોમ, અગિયારસ-બારસ એકબીજા સાથે શુભ યુગ્મ બનાવે છે.',
     examples: ['द्वितीया-तृतीया संशय', 'अष्टमी-नवमी संशय', 'एकादशी-द्वादशी व्रत'],
+    examplesEn: ['Dvitiya-Tritiya Resolution', 'Ashtami-Navami Resolution', 'Ekadashi-Dvadashi Pairing'],
+    examplesGu: ['બીજ-ત્રીજ નિર્ણય', 'આઠમ-નોમ નિર્ણય', 'અગિયારસ-બારસ વ્રત'],
   },
 ];
 
@@ -595,3 +684,179 @@ export function getTithiCalculationExplanation(language: string = 'hi') {
     ]
   };
 }
+
+/**
+ * Multi-lingual helpers for 10-Year Conflict Resolver to ensure zero Hindi/English mixing.
+ */
+export const formatFestivalDisplayName = (rec: TenYearFestivalRecord, lang: string): string => {
+  if (lang === 'en') return rec.festivalName;
+  if (lang === 'gu') {
+    if (rec.festivalId === 'dhanteras') return 'ધનતેરસ (ધનત્રયોદશી અને યમ દીપદાન)';
+    if (rec.festivalId === 'diwali') return 'દીપાવલી (મહાલક્ષ્મી પૂજન)';
+    if (rec.festivalId === 'shivratri') return 'મહાશિવરાત્રિ';
+    if (rec.festivalId === 'janmashtami') return 'શ્રીકૃષ્ણ જન્માષ્ટમી';
+    if (rec.festivalId === 'rakshabandhan') return 'રક્ષાબંધન (બળેવ)';
+    if (rec.festivalId === 'ramnavami') return 'શ્રી રામ નવમી';
+    if (rec.festivalId === 'ganeshotsav') return 'શ્રી ગણેશ ચતુર્થી';
+    if (rec.festivalId === 'karwachauth') return 'કરવા ચોથ';
+    if (rec.festivalId === 'holika') return 'હોલિકા દહન';
+    return rec.guName || rec.hindiName;
+  }
+  return rec.hindiName;
+};
+
+export const formatConflictLabel = (conflictType: string | undefined, lang: string): string => {
+  if (!conflictType) return lang === 'en' ? 'Dual-Tithi Span' : lang === 'gu' ? 'દ્વિ-તિથિ સંશય' : 'द्वि-तिथि संशय';
+  if (lang === 'en') {
+    switch (conflictType) {
+      case 'दो_दिन_व्याप्ति': return '2-Day Tithi Span (Dual-Day)';
+      case 'तिथि_क्षय': return 'Tithi Kshaya (Omitted Tithi)';
+      case 'तिथि_वृद्धि': return 'Tithi Vriddhi (Extended Tithi)';
+      case 'भद्रा_दोष': return 'Bhadra Avoidance (Muhurta)';
+      case 'स्मार्त_वैष्णव_भेद': return 'Smartha vs Vaishnava Tradition';
+      default: return 'Dual-Tithi Conflict';
+    }
+  }
+  if (lang === 'gu') {
+    switch (conflictType) {
+      case 'दो_दिन_व्याप्ति': return 'બે દિવસ વ્યાપ્તિ';
+      case 'तिथि_क्षय': return 'તિથિ ક્ષય';
+      case 'तिथि_वृद्धि': return 'તિથિ વૃદ્ધિ';
+      case 'भद्रा_दोष': return 'ભદ્રા દોષ નિવારણ';
+      case 'स्मार्त_वैष्णव_भेद': return 'સ્માર્ત-વૈષ્ણવ મતભેદ';
+      default: return 'દ્વિ-તિથિ સંશય';
+    }
+  }
+  return conflictType.replace(/_/g, ' ');
+};
+
+export const formatTithiTiming = (timing: string, lang: string): string => {
+  if (!timing || lang === 'hi') return timing;
+  if (lang === 'en') {
+    let s = timing;
+    const months: [RegExp, string][] = [
+      [/जनवरी/g, 'Jan'], [/फरवरी/g, 'Feb'], [/मार्च/g, 'Mar'], [/अप्रैल/g, 'Apr'],
+      [/मई/g, 'May'], [/जून/g, 'Jun'], [/जुलाई/g, 'Jul'], [/अगस्त/g, 'Aug'],
+      [/सितंबर/g, 'Sep'], [/अक्टूबर/g, 'Oct'], [/नवंबर/g, 'Nov'], [/दिसंबर/g, 'Dec']
+    ];
+    for (const [re, rep] of months) s = s.replace(re, rep);
+    return s
+      .replace(/दोपहर/g, 'Afternoon')
+      .replace(/सायं|शाम/g, 'Evening')
+      .replace(/रात|रात्रि/g, 'Night')
+      .replace(/प्रातः|सुबह/g, 'Morning')
+      .replace(/से/g, 'from')
+      .replace(/तक/g, 'to');
+  }
+  if (lang === 'gu') {
+    let s = timing;
+    const monthsGu: [RegExp, string][] = [
+      [/जनवरी/g, 'જાન્યુઆરી'], [/फरवरी/g, 'ફેબ્રુઆરી'], [/मार्च/g, 'માર્ચ'], [/अप्रैल/g, 'એપ્રિલ'],
+      [/मई/g, 'મે'], [/जून/g, 'જૂન'], [/जुલાઈ/g, 'જુલાઈ'], [/अगस्त/g, 'ઓગસ્ટ'],
+      [/सितंबर/g, 'સપ્ટેમ્બર'], [/अक्टूबर/g, 'ઓક્ટોબર'], [/नवंबर/g, 'નવેમ્બર'], [/दिसंबर/g, 'ડિસેમ્બર']
+    ];
+    for (const [re, rep] of monthsGu) s = s.replace(re, rep);
+    return s
+      .replace(/दोपहर/g, 'બપોરે')
+      .replace(/सायं|शाम/g, 'સાંજે')
+      .replace(/रात|रात्रि/g, 'રાત્રે')
+      .replace(/प्रातः|सुबह/g, 'સવારે')
+      .replace(/से/g, 'થી')
+      .replace(/तक/g, 'સુધી');
+  }
+  return timing;
+};
+
+export const formatKarmaKala = (karmaKala: string, lang: string): string => {
+  if (!karmaKala || lang === 'hi') return karmaKala;
+  if (lang === 'en') {
+    return karmaKala
+      .replace(/प्रदोष काल/g, 'Pradosha Kaala (Sunset Twilight)')
+      .replace(/निशीथ काल/g, 'Nishita Kaala (Midnight Muhurta)')
+      .replace(/मध्याह्न काल/g, 'Madhyahna Kaala (Solar Noon)')
+      .replace(/उदया तिथि/g, 'Udaya Tithi (Sunrise)')
+      .replace(/अपराह्ण काल/g, 'Aparahna Kaala (Afternoon)')
+      .replace(/शाम/g, 'Evening')
+      .replace(/रात्रि|रात/g, 'Night')
+      .replace(/सुबह|प्रातः/g, 'Morning')
+      .replace(/दोपहर/g, 'Afternoon')
+      .replace(/से/g, 'to')
+      .replace(/तक/g, 'until');
+  }
+  if (lang === 'gu') {
+    return karmaKala
+      .replace(/प्रदोष काल/g, 'પ્રદોષ કાળ (સૂર્યાસ્ત સાંજ)')
+      .replace(/निशीथ काल/g, 'નિશીથ કાળ (મધ્યરાત્રિ)')
+      .replace(/मध्याह्न काल/g, 'મધ્યાહ્ન કાળ (બપોર)')
+      .replace(/उदया तिथि/g, 'ઉદયા તિથિ (સૂર્યોદય)')
+      .replace(/अपराह्ण काल/g, 'અપરાહ્ન કાળ')
+      .replace(/शाम/g, 'સાંજે')
+      .replace(/रात्रि|रात/g, 'રાત્રે')
+      .replace(/सुबह|प्रातः/g, 'સવારે')
+      .replace(/दोपहर/g, 'બપોરે')
+      .replace(/से/g, 'થી')
+      .replace(/तक/g, 'સુધી');
+  }
+  return karmaKala;
+};
+
+export const formatDecisionReason = (rec: TenYearFestivalRecord, lang: string): string => {
+  if (lang === 'hi') return rec.decisionReason;
+  if (lang === 'en') {
+    // Check specific festival types for fluent English explanations
+    if (rec.festivalId === 'dhanteras') {
+      return `On ${rec.observedDate}, Trayodashi is fully present during Pradosha Kaala (evening after sunset). Under Skanda Purana and Nirnayasindhu rules, Dhanteras & Yama Deepam must be observed when Trayodashi covers Pradosha Kaala. On the succeeding day, Trayodashi ends before or at sunset, making this date authoritative.`;
+    }
+    if (rec.festivalId === 'diwali') {
+      return `On ${rec.observedDate}, Amavasya spans Pradosha Kaala, Vrishabha Sthira Lagna, and Nishita Kaala. Per Dharmasindhu, Lakshmi Puja is exclusively observed on the night Amavasya touches Pradosha.`;
+    }
+    if (rec.festivalId === 'shivratri') {
+      return `Maha Shivratri requires Chaturdashi to be present at midnight (Nishita Kaala). On ${rec.observedDate}, Phalguna Krishna Chaturdashi covers the entire midnight hour, fulfilling the Ishana Samhita mandate.`;
+    }
+    if (rec.festivalId === 'janmashtami') {
+      return `Ashtami Tithi prevails at midnight (Nishita Kaala) on ${rec.observedDate}, matching the authentic Rohini Nakshatra alignment for Shri Krishna Janmashtami.`;
+    }
+    if (rec.festivalId === 'rakshabandhan') {
+      return `On ${rec.observedDate}, Purnima prevails during Aparahna (afternoon) and is free from the inauspicious Bhadra period. Per Hemadri, Raksha Bandhan is observed on this pure auspicious window.`;
+    }
+    // Generic fallback with translation
+    return rec.decisionReason
+      .replace(/अक्टूबर|नवंबर|दिसंबर|जनवरी|फरवरी|मार्च|अप्रैल|मई|जून|जुलाई|अगस्त|सितंबर/g, 'Date')
+      .replace(/को सायंकाल/g, ' in the evening')
+      .replace(/प्रदोष काल में/g, ' during Pradosha Kaala')
+      .replace(/शत-प्रतिशत व्याप्त है/g, ' is 100% prevalent')
+      .replace(/अतः .* शास्त्रसम्मत है।?/g, 'Hence, this date is authentic and certified per Shastric injunctions.');
+  }
+  if (lang === 'gu') {
+    if (rec.festivalId === 'dhanteras') {
+      return `${rec.observedDate} ના રોજ સાંજે પ્રદોષ કાળમાં ત્રયોદશી વ્યાપ્ત છે. સ્કંદ પુરાણ મુજબ ધનતેરસ અને યમ દીપદાન પ્રદોષ કાળમાં ત્રયોદશી હોવાથી આ જ દિવસે શાસ્ત્રસંમત છે.`;
+    }
+    if (rec.festivalId === 'diwali') {
+      return `${rec.observedDate} ની રાત્રિએ પ્રદોષ કાળ, વૃષભ સ્થિર લગ્ન અને નિશીથ કાળ ત્રણેયમાં અમાસ વિદ્યમાન છે. ધર્મસિંધુ મુજબ આ જ દિવસે દીપાવલી માન્ય છે.`;
+    }
+    if (rec.festivalId === 'shivratri') {
+      return `મહાશિવરાત્રિ માટે નિશીથ કાળ (મધ્યરાત્રિ) માં ચતુર્દશી હોવી અનિવાર્ય છે, જે ${rec.observedDate} ના રોજ સંપૂર્ણ વ્યાપ્ત છે.`;
+    }
+  }
+  return rec.decisionReason;
+};
+
+export const formatAlternateNote = (rec: TenYearFestivalRecord, lang: string): string => {
+  if (!rec.alternateDateNote || lang === 'hi') return rec.alternateDateNote || '';
+  if (lang === 'en') {
+    if (rec.festivalId === 'dhanteras') {
+      return 'The subsequent day only has Udaya Tithi (sunrise touch) but Trayodashi is absent during evening Pradosha; hence observing Dhanteras on the next day is invalid per Nirnayasindhu.';
+    }
+    if (rec.festivalId === 'diwali') {
+      return 'On the other date, Amavasya ends before evening Pradosha commences, so Lakshmi Puja cannot be performed on that night.';
+    }
+    return 'The alternate date lacks the required Shastric Karma-Kala (muhurta span) and is rejected per Dharmashastra.';
+  }
+  if (lang === 'gu') {
+    if (rec.festivalId === 'dhanteras') {
+      return 'બીજા દિવસે માત્ર ઉદયા તિથિ છે, પરંતુ સાંજના પ્રદોષ કાળમાં તેરસ નથી, તેથી બીજા દિવસે ધનતેરસ ન થઈ શકે.';
+    }
+    return 'બીજા દિવસે શાસ્ત્રોક્ત કર્મકાળ ઉપલબ્ધ ન હોવાથી તે ત્યાજ્ય છે.';
+  }
+  return rec.alternateDateNote;
+};

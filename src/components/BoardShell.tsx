@@ -696,9 +696,22 @@ export function TodayBoard({
   const nextIsTrayodashi =
     panchang.tithiSpan && panchang.tithiSpan.nextName.includes("त्रयोदशी");
 
+  const formatPlaceDisplay = (name: string, lang: string): string => {
+    if (!name) return '';
+    if (lang === 'en') {
+      const match = name.match(/\(([^)]+)\)/);
+      if (match && match[1]) {
+        const flagMatch = name.match(/^(\p{Emoji}|\p{Extended_Pictographic}|\S+)\s+/u);
+        const flag = flagMatch && !flagMatch[0].match(/[\u0900-\u097F]/) ? flagMatch[0] : '';
+        return `${flag}${match[1]}`.trim();
+      }
+    }
+    return name;
+  };
+
   const masaDisplay =
     panchang.masa === "अश्विन"
-      ? `${trVedic(panchang.masa, language)} (${language === "gu" ? "આસો / અમાન્ત" : "अमान्त / पूर्णिमान्त: कार्तिक"})`
+      ? `${trVedic(panchang.masa, language)} (${language === "en" ? "Amanta / Purnimanta: Kartika" : language === "gu" ? "આસો / અમાન્ત" : "अमान्त / पूर्णिमान्त: कार्तिक"})`
       : trVedic(panchang.masa, language);
 
   const facts: [string, string][] = [
@@ -717,7 +730,7 @@ export function TodayBoard({
     [t("panchang.sunSign", "सूर्य राशि"), trVedic(panchang.solarRashi, language)],
     [t("panchang.moonSign", "चंद्र राशि"), trVedic(panchang.lunarRashi, language)],
     [t("panchang.ayanamsha", "अयनांश"), `${trVedic(panchang.ayanamshaName, language)} · ${panchang.ayanamsha.toFixed(2)}°`],
-    [placeLabelKey, place.name],
+    [placeLabelKey, formatPlaceDisplay(place.name, language)],
   ];
 
   const handleSaveHd = async () => {
@@ -818,7 +831,7 @@ export function TodayBoard({
             title="शहर / स्थान बदलें"
           >
             <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-mark-soft)" }} />
-            <span className="truncate max-w-[130px] sm:max-w-[180px]">{place.name}</span>
+            <span className="truncate max-w-[130px] sm:max-w-[180px]">{formatPlaceDisplay(place.name, language)}</span>
             <span
               style={{ backgroundColor: "var(--bx-gold)", color: "#FFFFFF" }}
               className="text-[10px] px-1.5 py-0.5 rounded font-black shrink-0"
@@ -1001,28 +1014,28 @@ export function TodayBoard({
             setIsTithiNirnayaOpen(true);
           }}
           style={{
-            backgroundColor: "var(--bx-header)",
+            backgroundColor: "#5C2D11",
             color: "#FFFFFF",
             borderColor: "var(--bx-gold)",
           }}
-          className="w-full p-2.5 sm:p-3 rounded-2xl border shadow-xs flex items-center justify-between gap-2 cursor-pointer transition hover:brightness-105"
+          className="bx-dark-surface w-full p-2.5 sm:p-3 rounded-2xl border shadow-xs flex items-center justify-between gap-2 cursor-pointer transition hover:brightness-105"
         >
           <div className="flex items-center gap-2.5 text-left">
-            <div className="w-8 h-8 rounded-xl bg-white/10 border border-amber-300/40 flex items-center justify-center shrink-0">
-              <Scale className="w-4 h-4 text-amber-300" />
+            <div className="w-8 h-8 rounded-xl bg-white/15 border border-amber-300/40 flex items-center justify-center shrink-0">
+              <Scale className="w-4 h-4" style={{ color: "#FDE68A" }} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-black text-amber-100 flex items-center gap-1.5 flex-wrap">
-                <span>
+              <div className="text-xs font-black flex items-center gap-1.5 flex-wrap" style={{ color: "#FFFDF5" }}>
+                <span style={{ color: "#FFFDF5" }}>
                   {isDhanterasToday
                     ? (language === 'gu' ? '✨ આજે ધનતેરસ છે (શાસ્ત્રોક્ત નિર્ણય)' : language === 'en' ? '✨ Dhanteras Today (Shastric Proof)' : '✨ आज धनतेरस है (शास्त्रोक्त निर्णय व प्रमाण)')
                     : (language === 'en' ? 'Shastric Tithi & Festival Decision' : language === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય પ્રમાણ' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण')}
                 </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold">
-                  {language === 'en' ? '10-Yr Guide' : '१०-वर्षीय दिग्दर्शिका'}
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 border border-amber-400/30 font-bold" style={{ color: "#FDE68A" }}>
+                  {language === 'en' ? '10-Yr Guide' : language === 'gu' ? '૧૦-વર્ષીય માર્ગદર્શિકા' : '१०-वर्षीय दिग्दर्शिका'}
                 </span>
               </div>
-              <div className="text-[10px] sm:text-[11px] text-amber-200/90 leading-snug mt-0.5">
+              <div className="text-[10px] sm:text-[11px] leading-snug mt-0.5" style={{ color: "#FEF08A" }}>
                 {isDhanterasToday && panchang.tithiSpan ? (
                   language === 'gu'
                     ? `આજે સવારે ${clock(panchang.tithiSpan.end)} વાગ્યાથી તેરસ શરૂ થશે. સંધ્યા પ્રદોષ કાળમાં તેરસ હોવાથી ધનતેરસ આજે જ ઉજવાશે.`
@@ -1039,7 +1052,7 @@ export function TodayBoard({
               </div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-amber-300 shrink-0" />
+          <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "#FDE68A" }} />
         </motion.button>
 
         <div className="grid grid-cols-2 gap-2">
@@ -1091,7 +1104,7 @@ export function TodayBoard({
                   <b className="text-base text-[#4A2610] block">{v}</b>
                   {panchang.tithiSpan && (
                     <span className="text-[10px] text-rose-700 font-bold block leading-tight">
-                      {clock(panchang.tithiSpan.end)} {language === 'gu' ? 'સુધી' : language === 'en' ? 'ends' : 'तक'} • {language === 'gu' ? 'ત્યારબાદ' : language === 'en' ? 'then' : 'आगे'} {trVedic(panchang.tithiSpan.nextName, language)} {nextIsTrayodashi ? `(${language === 'gu' ? 'ધનતેરસ' : 'धनतेरस'})` : ''}
+                      {clock(panchang.tithiSpan.end)} {language === 'gu' ? 'સુધી' : language === 'en' ? 'ends' : 'तक'} • {language === 'gu' ? 'ત્યારબાદ' : language === 'en' ? 'then' : 'आगे'} {trVedic(panchang.tithiSpan.nextName, language)} {nextIsTrayodashi ? `(${language === 'en' ? 'Dhanteras' : language === 'gu' ? 'ધનતેરસ' : language === 'mr' ? 'धनत्रयोदशी' : 'धनतेरस'})` : ''}
                     </span>
                   )}
                 </div>
