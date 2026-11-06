@@ -959,13 +959,19 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
 
             <div style={{ color: "var(--bx-ink)" }} className="text-[11px] space-y-1">
               <p>
-                <strong>{t('panchang.currentTithi', 'वर्तमान तिथि:')}</strong> {trVedic(pakshaName, language)} {language === 'en' ? '·' : 'की'} {trVedic(tithiName, language)} ({t('panchang.tithiNo', 'तिथि संख्या')} {tithiNum}/30)
+                <strong>{t('panchang.currentTithi', 'वर्तमान तिथि:')}</strong> {trVedic(pakshaName, language)} {language === 'en' ? '·' : language === 'gu' ? 'ની' : language === 'mr' ? 'ची' : 'की'} {trVedic(tithiName, language)} ({t('panchang.tithiNo', 'तिथि संख्या')} {tithiNum}/30)
               </p>
               {panchang.tithiSpan && (
                 <p>
                   <strong>{t('panchang.concludesAt', 'समाप्ति काल:')}</strong>{' '}
                   {panchang.tithiSpan.end.toLocaleTimeString(language === 'en' ? 'en-US' : language === 'gu' ? 'gu-IN' : 'hi-IN', { hour: '2-digit', minute: '2-digit' })}{' '}
-                  {language === 'en' ? `(followed by ${trVedic(panchang.tithiSpan.nextName, language)})` : `तक (तदोपरांत ${trVedic(panchang.tithiSpan.nextName, language)} आरम्भ)`}
+                  {language === 'en'
+                    ? `(followed by ${trVedic(panchang.tithiSpan.nextName, language)})`
+                    : language === 'gu'
+                    ? `સુધી (ત્યારબાદ ${trVedic(panchang.tithiSpan.nextName, language)} પ્રારંભ)`
+                    : language === 'mr'
+                    ? `पर्यंत (त्यानंतर ${trVedic(panchang.tithiSpan.nextName, language)} सुरू)`
+                    : `तक (तदोपरांत ${trVedic(panchang.tithiSpan.nextName, language)} आरम्भ)`}
                 </p>
               )}
               <p>

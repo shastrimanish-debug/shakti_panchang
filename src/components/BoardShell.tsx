@@ -700,7 +700,7 @@ export function TodayBoard({
     [t("panchang.sunset", "सूर्यास्त"), clock(panchang.solar.sunset)],
     [t("panchang.sunSign", "सूर्य राशि"), trVedic(panchang.solarRashi, language)],
     [t("panchang.moonSign", "चंद्र राशि"), trVedic(panchang.lunarRashi, language)],
-    [t("panchang.shareMoonSunSign", "अयनांश"), `${panchang.ayanamshaName} · ${panchang.ayanamsha.toFixed(2)}°`],
+    [t("panchang.ayanamsha", "अयनांश"), `${trVedic(panchang.ayanamshaName, language)} · ${panchang.ayanamsha.toFixed(2)}°`],
     [placeLabelKey, place.name],
   ];
 
