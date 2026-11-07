@@ -215,6 +215,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
   const [tob, setTob] = useState('');
+  const [formGotra, setFormGotra] = useState<string>('kashyapa');
   const [selectedCity, setSelectedCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
   const [boyCity, setBoyCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
   const [girlCity, setGirlCity] = useState<SavedLocation>(() => currentLocation || DEFAULT_LOCATION);
@@ -228,6 +229,9 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   useEffect(() => {
     if (activeKundali) {
       setName(activeKundali.name);
+      if (activeKundali.gotra) {
+        setFormGotra(activeKundali.gotra);
+      }
       const { y, m, d } = extractCalendarYMD(activeKundali.birthDate);
       const mm = String(m + 1).padStart(2, '0');
       const dd = String(d).padStart(2, '0');
@@ -383,7 +387,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
       selectedCity.name,
       selectedCity.latitude,
       selectedCity.longitude,
-      selectedCity.timezoneHours
+      selectedCity.timezoneHours,
+      formGotra
     );
     setFormError(null);
     setActiveKundali(k);
@@ -703,9 +708,14 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     ({dob} • {formatTime12h(tob) || tob})
                   </span>
                   {k && (
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-[#5C3A21] text-[#FFD88A] font-bold">
-                      लग्न {k.lagnaRashiNumber} • {k.lagnaRashi}
-                    </span>
+                    <>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-[#5C3A21] text-[#FFD88A] font-bold">
+                        लग्न {k.lagnaRashiNumber} • {k.lagnaRashi}
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-[#FAF2E4] border border-[#8C6239]/40 text-[#7A1D1D] font-bold">
+                        गोत्र: {GOTRA_LIST.find(g => g.id === (k.gotra || formGotra))?.name.split(' ')[0] || 'कश्यप'}
+                      </span>
+                    </>
                   )}
                 </div>
                 <div className="text-[11px] text-[#735133] flex flex-wrap items-center gap-1.5">
@@ -1075,6 +1085,32 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 </span>
                 <span className="text-[11px] text-[#B56A00] underline shrink-0 font-bold ml-1">{t('common.select', 'स्थान बदलें')}</span>
               </button>
+            </div>
+
+            {/* गोत्र चयन (Gotra Selector for Triveni Gemology & Shodhan) */}
+            <div>
+              <label className="block text-xs font-bold text-[#7A1D1D] mb-1 flex items-center justify-between">
+                <span>जातक का गोत्र (Gotra)</span>
+                <span className="text-[10px] text-[#B56A00] font-semibold">त्रिवेणी शोधन</span>
+              </label>
+              <select
+                value={formGotra}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormGotra(val);
+                  setSelectedGotraId(val);
+                  if (k) {
+                    k.gotra = val;
+                  }
+                }}
+                className="w-full bg-[#F4E8D1] hover:bg-[#EBDBC0] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none cursor-pointer"
+              >
+                {GOTRA_LIST.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="sm:col-span-2 md:col-span-4 flex flex-wrap items-center justify-between gap-2 mt-2">

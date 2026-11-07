@@ -382,7 +382,8 @@ export function calculateKundali(
   birthPlace: string = 'उज्जैन',
   latitude: number = 23.1765,
   longitude: number = 75.7885,
-  timezoneHours?: number
+  timezoneHours?: number,
+  gotra?: string
 ): KundaliData {
   const { hours, minutes, seconds } = parseTimeString(birthTime);
   const { y, m, d } = extractCalendarYMD(birthDate);
@@ -515,6 +516,7 @@ export function calculateKundali(
     antarPeriods,
     pratyantarPeriods: pratyantars,
     calculatedAt: getSyncedNow(),
+    gotra: gotra || 'kashyapa',
   };
 }
 

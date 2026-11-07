@@ -10,6 +10,7 @@ import {
   UpayParchiDetailedItem,
   GrahanShantiDeepDive,
 } from '../services/umaMicroAstrology';
+import { GOTRA_LIST } from '../services/triveniGemology';
 import {
   getAstrologerBranding,
   saveAstrologerBranding,
@@ -156,6 +157,8 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const [highlightedItemIndex, setHighlightedItemIndex] = useState<number | null>(null);
   const [expandedCardIndices, setExpandedCardIndices] = useState<number[]>([0, 1, 2, 3, 4, 5]);
 
+  const [selectedGotra, setSelectedGotra] = useState<string>(() => effectiveKundali?.gotra || 'kashyapa');
+
   const [isEditing, setIsEditing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -229,7 +232,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      const fresh = generateTraditionalUpayParchi(effectiveKundali, panchang);
+      const g = effectiveKundali?.gotra || 'kashyapa';
+      setSelectedGotra(g);
+      const fresh = generateTraditionalUpayParchi(
+        effectiveKundali ? { ...effectiveKundali, gotra: g } : null,
+        panchang
+      );
       setParchiData(fresh);
       setSalutation(fresh.salutation);
       setSerialNo(fresh.serialNo);
@@ -1051,17 +1059,56 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   </div>
 
                   <div className="border-t border-[#8C6239]/25 pt-3 space-y-2.5 text-xs">
-                    <div>
-                      <label className="block font-bold text-[#7A1D1D] mb-1">
-                        २. यजमान / जातक का संबोधन (Salutation):
-                      </label>
-                      <input
-                        type="text"
-                        value={salutation}
-                        onChange={(e) => setSalutation(e.target.value)}
-                        placeholder="उदा. श्री यजमान जी"
-                        className="w-full sm:w-80 bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-sm font-bold text-[#162C6A]"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-bold text-[#7A1D1D] mb-1">
+                          २. यजमान / जातक का संबोधन (Salutation):
+                        </label>
+                        <input
+                          type="text"
+                          value={salutation}
+                          onChange={(e) => setSalutation(e.target.value)}
+                          placeholder="उदा. श्री यजमान जी"
+                          className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-sm font-bold text-[#162C6A]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-[#7A1D1D] mb-1 flex items-center justify-between">
+                          <span>जातक का गोत्र (Triveni Gotra):</span>
+                          <span className="text-[10px] text-[#8C6239] font-normal">रत्न व धातु निर्धारण</span>
+                        </label>
+                        <select
+                          value={selectedGotra}
+                          onChange={(e) => {
+                            const newG = e.target.value;
+                            setSelectedGotra(newG);
+                            if (effectiveKundali) {
+                              effectiveKundali.gotra = newG;
+                            }
+                            const updated = generateTraditionalUpayParchi(
+                              effectiveKundali ? { ...effectiveKundali, gotra: newG } : null,
+                              panchang
+                            );
+                            setParchiData(updated);
+                            // Update point 1 with freshly recalculated Triveni Gemstone
+                            if (updated.points && updated.points[0]) {
+                              setPoints((prev) => {
+                                const next = [...prev];
+                                next[0] = updated.points[0];
+                                return next;
+                              });
+                            }
+                          }}
+                          className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-[#162C6A] outline-none cursor-pointer"
+                        >
+                          {GOTRA_LIST.map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {g.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <label className="block font-bold text-[#7A1D1D]">
