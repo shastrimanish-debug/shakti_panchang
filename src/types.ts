@@ -142,6 +142,7 @@ export interface KundaliData {
   dashaPeriods: DashaPeriod[];
   antarPeriods: AntarDashaPeriod[];
   pratyantarPeriods: DashaPratyantarPeriod[];
+  gotra?: string;
   calculatedAt?: Date;
 }
 

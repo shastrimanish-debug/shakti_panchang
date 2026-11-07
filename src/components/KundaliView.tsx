@@ -43,6 +43,7 @@ import { PrashnaJyotishPanel } from './PrashnaJyotishPanel';
 import { ShlokaPosterModal, ShlokaPosterData } from './ShlokaPosterModal';
 import { UpayParchiModal } from './UpayParchiModal';
 import { VedicDatePickerModal, VedicTimePickerModal } from './VedicDateTimePickerModals';
+import { calculateTriveniGemology, GOTRA_LIST, GotraProfile, TriveniRatnaResult } from '../services/triveniGemology';
 import { useTranslation, useLanguage } from '../i18n';
 import { trVedic, trRashi, trPlanet } from '../i18n/vedicTranslate';
 import {
@@ -462,6 +463,21 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
   // Remedies calculation
   const remedies = k ? getVedicRemedies(k) : null;
+
+  // त्रिवेणी रत्न शोधन (कुण्डली + अंक ज्योतिष + गोत्र)
+  const [selectedGotraId, setSelectedGotraId] = useState<string>(() => k?.gotra || 'kashyapa');
+  const [copiedTriveni, setCopiedTriveni] = useState(false);
+
+  useEffect(() => {
+    if (k?.gotra) {
+      setSelectedGotraId(k.gotra);
+    }
+  }, [k?.gotra]);
+
+  const triveniResult: TriveniRatnaResult | null = useMemo(() => {
+    if (!k) return null;
+    return calculateTriveniGemology(k, selectedGotraId);
+  }, [k, selectedGotraId]);
 
   const fmtDate = (d: Date) =>
     d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -2966,6 +2982,319 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                     </li>
                   ))}
                 </ul>
+              </div>
+            </div>
+          )}
+
+          {/* 🌟 त्रिवेणी रत्न शोधन (Triveni Gemology: Kundali + Ank Jyotish + Gotra) 🌟 */}
+          {triveniResult && (
+            <div className="bg-[#FAF2E4] border-2 border-[#B58738]/60 rounded-2xl p-5 sm:p-6 shadow-md space-y-5 text-[#5C3A21]">
+              {/* Header with Title and Gotra Dropdown */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#8C6239]/20 pb-4">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7A1D1D]/10 text-[#7A1D1D] text-[11px] font-black uppercase tracking-wider mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
+                    <span>त्रिवेणी रत्न शोधन पद्धति (Triveni Ratna Shodhan)</span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold font-granth text-[#5C3A21]">
+                    कुण्डली + अंक ज्योतिष + गोत्र अनुसार सटीक रत्न निर्णय
+                  </h3>
+                  <p className="text-xs text-[#8C6239] mt-0.5">
+                    केवल राशि से नहीं, बल्कि लग्नेश-त्रिकोण, मूलांक-भाग्यांक तथा गोत्र-ऋषिकुल के तत्व व धातु समन्वय से प्रमाणित।
+                  </p>
+                </div>
+
+                {/* Gotra Selector */}
+                <div className="flex items-center gap-2 bg-[#F4E8D1] border border-[#B58738]/40 px-3 py-2 rounded-xl">
+                  <label htmlFor="gotra-select" className="text-xs font-bold text-[#7A1D1D] whitespace-nowrap">
+                    गोत्र चुनें:
+                  </label>
+                  <select
+                    id="gotra-select"
+                    value={selectedGotraId}
+                    onChange={(e) => {
+                      const newGotra = e.target.value;
+                      setSelectedGotraId(newGotra);
+                      if (k) {
+                        k.gotra = newGotra;
+                      }
+                    }}
+                    className="bg-white text-xs font-bold text-[#5C3A21] px-2.5 py-1 rounded-md border border-[#8C6239]/40 outline-none focus:ring-1 focus:ring-[#B56A00] cursor-pointer"
+                  >
+                    {GOTRA_LIST.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 3 Pillars Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Pillar 1: Kundali Trikona */}
+                <div className="bg-[#F4E8D1]/80 rounded-xl p-3.5 border border-[#8C6239]/25 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-[#7A1D1D] mb-1">
+                      <span>१. कुण्डली त्रिकोण स्तंभ</span>
+                      <Crown className="w-3.5 h-3.5 text-[#B56A00]" />
+                    </div>
+                    <div className="text-xs font-black text-[#5C3A21]">
+                      लग्न: {triveniResult.lagnaSign} (स्वामी: {triveniResult.lagnaLord})
+                    </div>
+                    <div className="text-[11px] text-[#8C6239] mt-1 leading-snug">
+                      चंद्र राशि: {triveniResult.moonSign} • नक्षत्र: {triveniResult.nakshatra}
+                    </div>
+                  </div>
+                  <div className="mt-2 text-[10px] font-bold text-[#7A1D1D] bg-[#FAF2E4] px-2 py-1 rounded border border-[#8C6239]/20">
+                    मारक (२, ७) व त्रिक (६, ८, १२) दोष परिहारित
+                  </div>
+                </div>
+
+                {/* Pillar 2: Ank Jyotish */}
+                <div className="bg-[#F4E8D1]/80 rounded-xl p-3.5 border border-[#8C6239]/25 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-[#7A1D1D] mb-1">
+                      <span>२. अंक ज्योतिष स्तंभ</span>
+                      <Zap className="w-3.5 h-3.5 text-[#B56A00]" />
+                    </div>
+                    <div className="text-xs font-black text-[#5C3A21]">
+                      मूलांक {triveniResult.mulank} ({triveniResult.mulankPlanet}) • भाग्यांक {triveniResult.bhagyank} ({triveniResult.bhagyankPlanet})
+                    </div>
+                    <div className="text-[11px] text-[#8C6239] mt-1 leading-snug">
+                      गण प्रवृत्ति: <span className="font-bold text-[#5C3A21]">{triveniResult.ganaClassification}</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-[10px] font-bold text-[#7A1D1D] bg-[#FAF2E4] px-2 py-1 rounded border border-[#8C6239]/20">
+                    संख्या रश्मि: {triveniResult.mulankGem}
+                  </div>
+                </div>
+
+                {/* Pillar 3: Gotra & Rishi Kula */}
+                <div className="bg-[#F4E8D1]/80 rounded-xl p-3.5 border border-[#8C6239]/25 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-[#7A1D1D] mb-1">
+                      <span>३. गोत्र व ऋषिकुल स्तंभ</span>
+                      <Flame className="w-3.5 h-3.5 text-[#B56A00]" />
+                    </div>
+                    <div className="text-xs font-black text-[#5C3A21]">
+                      गोत्र: {triveniResult.gotra.name}
+                    </div>
+                    <div className="text-[11px] text-[#8C6239] mt-1 leading-snug">
+                      तत्व: <span className="font-bold text-[#5C3A21]">{triveniResult.gotra.element}</span> • ऋषि: {triveniResult.gotra.rishi}
+                    </div>
+                  </div>
+                  <div className="mt-2 text-[10px] font-bold text-[#7A1D1D] bg-[#FAF2E4] px-2 py-1 rounded border border-[#8C6239]/20">
+                    गोत्रानुकूल धातु: {triveniResult.gotra.favoredMetals.join(', ')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Primary Recommended Stone & Secondary Bhagya Stone */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Primary Life Stone */}
+                <div className="bg-gradient-to-br from-[#FFF8ED] to-[#F4E8D1] border-2 border-[#B58738] rounded-xl p-4 shadow-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#7A1D1D] text-[#FFD88A] text-[11px] font-black tracking-wide">
+                      मुख्य जीवन रत्न (Primary Life Stone)
+                    </span>
+                    <span className="text-xs font-bold text-[#8C6239]">
+                      {triveniResult.primaryLifeStone.planetRole} ({triveniResult.primaryLifeStone.planet})
+                    </span>
+                  </div>
+
+                  <div className="text-base sm:text-lg font-black text-[#7A1D1D]">
+                    💎 {triveniResult.primaryLifeStone.gem}
+                  </div>
+                  <div className="text-xs text-[#8C6239]">
+                    उपरत्न: <span className="font-bold text-[#5C3A21]">{triveniResult.primaryLifeStone.subGem}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                    <div className="bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                      <span className="text-[10px] font-bold text-[#8C6239] block">वजन (Weight):</span>
+                      <span className="font-bold text-[#5C3A21]">{triveniResult.primaryLifeStone.weightRatti}</span>
+                    </div>
+                    <div className="bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                      <span className="text-[10px] font-bold text-[#8C6239] block">धातु (Metal):</span>
+                      <span className="font-bold text-[#5C3A21]">{triveniResult.primaryLifeStone.metal}</span>
+                    </div>
+                    <div className="bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                      <span className="text-[10px] font-bold text-[#8C6239] block">अंगुली (Finger):</span>
+                      <span className="font-bold text-[#5C3A21]">{triveniResult.primaryLifeStone.finger}</span>
+                    </div>
+                    <div className="bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                      <span className="text-[10px] font-bold text-[#8C6239] block">दिन व वेला:</span>
+                      <span className="font-bold text-[#5C3A21]">{triveniResult.primaryLifeStone.day} ({triveniResult.primaryLifeStone.choghadiya})</span>
+                    </div>
+                  </div>
+
+                  <div className="text-xs bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                    <span className="text-[10px] font-bold text-[#7A1D1D] block">जाप बीज मंत्र:</span>
+                    <span className="font-black text-[#7A1D1D] font-mono">{triveniResult.primaryLifeStone.beejMantra}</span>
+                  </div>
+                  <p className="text-[11px] text-[#5C3A21] leading-relaxed pt-1">
+                    {triveniResult.primaryLifeStone.shastricReason}
+                  </p>
+                </div>
+
+                {/* Secondary / Bhagya Stone or Rudraksha Synergy */}
+                {triveniResult.secondaryBhagyaStone ? (
+                  <div className="bg-[#F4E8D1] border border-[#8C6239]/40 rounded-xl p-4 shadow-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#8C6239] text-[#FAF2E4] text-[11px] font-black tracking-wide">
+                        सहायक भाग्य रत्न (Secondary Bhagya Stone)
+                      </span>
+                      <span className="text-xs font-bold text-[#8C6239]">
+                        {triveniResult.secondaryBhagyaStone.planetRole} ({triveniResult.secondaryBhagyaStone.planet})
+                      </span>
+                    </div>
+
+                    <div className="text-base sm:text-lg font-black text-[#5C3A21]">
+                      ✨ {triveniResult.secondaryBhagyaStone.gem}
+                    </div>
+                    <div className="text-xs text-[#8C6239]">
+                      उपरत्न: <span className="font-bold text-[#5C3A21]">{triveniResult.secondaryBhagyaStone.subGem}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                      <div className="bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                        <span className="text-[10px] font-bold text-[#8C6239] block">वजन (Weight):</span>
+                        <span className="font-bold text-[#5C3A21]">{triveniResult.secondaryBhagyaStone.weightRatti}</span>
+                      </div>
+                      <div className="bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                        <span className="text-[10px] font-bold text-[#8C6239] block">धातु (Metal):</span>
+                        <span className="font-bold text-[#5C3A21]">{triveniResult.secondaryBhagyaStone.metal}</span>
+                      </div>
+                      <div className="bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                        <span className="text-[10px] font-bold text-[#8C6239] block">अंगुली (Finger):</span>
+                        <span className="font-bold text-[#5C3A21]">{triveniResult.secondaryBhagyaStone.finger}</span>
+                      </div>
+                      <div className="bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                        <span className="text-[10px] font-bold text-[#8C6239] block">दिन व वेला:</span>
+                        <span className="font-bold text-[#5C3A21]">{triveniResult.secondaryBhagyaStone.day}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-xs bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20">
+                      <span className="text-[10px] font-bold text-[#7A1D1D] block">जाप बीज मंत्र:</span>
+                      <span className="font-black text-[#7A1D1D] font-mono">{triveniResult.secondaryBhagyaStone.beejMantra}</span>
+                    </div>
+                    <p className="text-[11px] text-[#5C3A21] leading-relaxed pt-1">
+                      {triveniResult.secondaryBhagyaStone.shastricReason}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-[#F4E8D1] border border-[#8C6239]/40 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#B56A00] text-white text-[11px] font-black tracking-wide">
+                          रुद्राक्ष कवच (Protective Rudraksha)
+                        </span>
+                        <span className="text-xs font-bold text-[#8C6239]">
+                          {triveniResult.remedialRudraksha.planet}
+                        </span>
+                      </div>
+                      <div className="text-base font-black text-[#5C3A21]">
+                        📿 {triveniResult.remedialRudraksha.mukhi}
+                      </div>
+                      <p className="text-xs text-[#5C3A21] mt-2 leading-relaxed">
+                        {triveniResult.remedialRudraksha.benefits}
+                      </p>
+                    </div>
+                    <div className="text-[11px] text-[#8C6239] bg-[#FAF2E4] p-2 rounded border border-[#8C6239]/20 mt-3">
+                      प्राण-प्रतिष्ठा: सोमवार अथवा शिवरात्रि के दिन गंगाजल व पंचामृत से अभिमंत्रित कर लाल धागे में धारण करें।
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Forbidden Gemstones Warning (कदापि धारण न करें) */}
+              {triveniResult.forbiddenGems && triveniResult.forbiddenGems.length > 0 && (
+                <div className="bg-[#FFF1F1] border-2 border-[#D9534F]/40 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-black text-[#C9302C]">
+                    <AlertTriangle className="w-4 h-4 text-[#C9302C]" />
+                    <span>शास्त्रीय निषेध (Strictly Forbidden Gemstones): भूलकर भी न पहनें</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {triveniResult.forbiddenGems.map((f, idx) => (
+                      <div key={idx} className="bg-white/90 p-2.5 rounded-lg border border-[#D9534F]/20 text-xs">
+                        <div className="font-bold text-[#C9302C] flex items-center justify-between">
+                          <span>❌ {f.gem} ({f.planet})</span>
+                          <span className="text-[10px] bg-[#FFF1F1] px-1.5 py-0.5 rounded text-[#A94442] font-semibold">{f.role}</span>
+                        </div>
+                        <p className="text-[11px] text-[#5C3A21] mt-1 leading-snug">
+                          {f.reason}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Vedic Sankalpa Mantra */}
+              <div className="bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl p-4 space-y-1.5">
+                <div className="text-xs font-bold text-[#7A1D1D] flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>रत्न धारण वैदिक संकल्प मंत्र (Vedic Sankalpa Mantra):</span>
+                </div>
+                <div className="text-xs sm:text-sm font-black text-[#5C3A21] font-mono leading-relaxed bg-[#FAF2E4] p-3 rounded-lg border border-[#8C6239]/20 select-all">
+                  {triveniResult.sankalpaMantra}
+                </div>
+                <p className="text-[11px] text-[#8C6239]">
+                  विधि: शुभ मुहूर्त में पूर्वाभिमुख बैठकर ताम्रपात्र में गंगाजल, कच्चा दूध, तुलसीदल रखकर रत्न को स्नान कराएं तथा १०८ बार बीज मंत्र जप कर धारण करें।
+                </p>
+              </div>
+
+              {/* Actions: Open Upay Parchi & Copy Triveni Details */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsUpayParchiOpen(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:brightness-110 text-[#FFD88A] text-xs font-bold rounded-lg shadow-sm border border-[#B58738] flex items-center gap-2 cursor-pointer transition"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>📋 इस निर्णय को उपाय पर्ची (Prescription Pad) में देखें</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = [
+                      `॥ त्रिवेणी रत्न शोधन निर्णय ॥`,
+                      `जातक: ${triveniResult.personName}`,
+                      `लग्न: ${triveniResult.lagnaSign} (स्वामी: ${triveniResult.lagnaLord})`,
+                      `मूलांक: ${triveniResult.mulank} (${triveniResult.mulankPlanet}) | भाग्यांक: ${triveniResult.bhagyank} (${triveniResult.bhagyankPlanet})`,
+                      `गोत्र: ${triveniResult.gotra.name} (${triveniResult.gotra.element})`,
+                      `---------------------------------------`,
+                      `मुख्य जीवन रत्न: ${triveniResult.primaryLifeStone.gem} (${triveniResult.primaryLifeStone.weightRatti})`,
+                      `धातु: ${triveniResult.primaryLifeStone.metal} | अंगुली: ${triveniResult.primaryLifeStone.finger}`,
+                      `वार व वेला: ${triveniResult.primaryLifeStone.day} (${triveniResult.primaryLifeStone.choghadiya})`,
+                      `बीज मंत्र: ${triveniResult.primaryLifeStone.beejMantra}`,
+                      triveniResult.secondaryBhagyaStone ? `सहायक रत्न: ${triveniResult.secondaryBhagyaStone.gem} (${triveniResult.secondaryBhagyaStone.metal})` : '',
+                      `वर्जित रत्न: ${triveniResult.forbiddenGems.map(f => f.gem).join(', ') || 'कोई नहीं'}`,
+                      `---------------------------------------`,
+                      `संकल्प: ${triveniResult.sankalpaMantra}`,
+                    ].filter(Boolean).join('\n');
+
+                    navigator.clipboard.writeText(text);
+                    setCopiedTriveni(true);
+                    setTimeout(() => setCopiedTriveni(false), 2500);
+                  }}
+                  className="px-3.5 py-2 bg-[#F4E8D1] hover:bg-[#EBDBC0] text-[#5C3A21] text-xs font-bold rounded-lg border border-[#8C6239]/40 flex items-center gap-1.5 cursor-pointer transition"
+                >
+                  {copiedTriveni ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span className="text-emerald-700">प्रतिलिपि बन गई (Copied)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4 text-[#8C6239]" />
+                      <span>त्रिवेणी रत्न विवरण कॉपी करें</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}

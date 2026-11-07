@@ -7,6 +7,7 @@ import { calculateJaiminiAnalysis } from './jaimini';
 import { getVargaChartData } from './vargaAnalysis';
 import { calculateKundali, DASHA_ORDER, DASHA_YEARS } from './kundali';
 import { calculateHoraTable } from './horaPanchakYogas';
+import { calculateTriveniGemology } from './triveniGemology';
 
 export interface MicroHouseLordInfo {
   house: number;
@@ -1655,21 +1656,27 @@ export function generateTraditionalUpayParchi(
 
   uniqueCandidates.sort((a, b) => b.score - a.score);
 
-  const primaryCandidate = uniqueCandidates[0] || {
-    planet: lagnaLord,
-    role: 'लग्नेश',
-    info: GEM_CATALOG[lagnaLord] || GEM_CATALOG['गुरु'],
-  };
-  const secondaryCandidate = uniqueCandidates[1];
+  // =========================================================================
+  // POINT 1: त्रिवेणी रत्न शोधन (कुण्डली + अंक ज्योतिष + गोत्र का त्रि-स्तरीय संगम)
+  // =========================================================================
+  const triveni = calculateTriveniGemology(k, k.gotra);
+  const primaryGem = triveni.primaryLifeStone;
+  const secondaryGem = triveni.secondaryBhagyaStone;
 
   let point1 = '';
   let gemReason = '';
-  if (secondaryCandidate && secondaryCandidate.planet !== primaryCandidate.planet) {
-    point1 = `${primaryCandidate.info.gem} + ${secondaryCandidate.info.gem} (${primaryCandidate.info.weight}, ${primaryCandidate.info.metal}) धारण करें।`;
-    gemReason = `आपकी कुंडली में ${primaryCandidate.role} ${primaryCandidate.planet} (भाव ${getHouse(primaryCandidate.planet)}) तथा ${secondaryCandidate.role} ${secondaryCandidate.planet} (भाव ${getHouse(secondaryCandidate.planet)}) सर्वाधिक शुभ फलदायक हैं। इनके बल संवर्धन से स्वास्थ्य, आत्मविश्वास एवं भाग्योदय होता है।`;
+
+  if (secondaryGem && secondaryGem.gem !== primaryGem.gem) {
+    point1 = `${primaryGem.gem} + ${secondaryGem.gem} (${primaryGem.weightRatti}, ${primaryGem.metal}) धारण करें।`;
+    gemReason = `[त्रिवेणी रत्न शोधन: कुण्डली + अंक ज्योतिष (मूलांक ${triveni.mulank}, भाग्यांक ${triveni.bhagyank}) + गोत्र (${triveni.gotra.name})] आपकी कुण्डली में ${primaryGem.planetRole} ${primaryGem.planet} एवं ${secondaryGem.planetRole} ${secondaryGem.planet} सर्वाधिक योगकारक हैं। गोत्र अनुकूल धातु (${primaryGem.metal}) में ${primaryGem.finger} में ${primaryGem.day} को ${primaryGem.choghadiya} में धारण करना श्रेष्ठ फलप्रद है। बीज मंत्र: ${primaryGem.beejMantra}।`;
   } else {
-    point1 = `${primaryCandidate.info.gem} ${primaryCandidate.info.weight} (${primaryCandidate.info.metal}, ${primaryCandidate.info.finger} में) धारण करें।`;
-    gemReason = `आपकी कुंडली में ${primaryCandidate.role} ${primaryCandidate.planet} (भाव ${getHouse(primaryCandidate.planet)}) के रश्मि-बल को जाग्रत करने हेतु यह रत्न शुभ फलप्रद है।`;
+    point1 = `${primaryGem.gem} ${primaryGem.weightRatti} (${primaryGem.metal}, ${primaryGem.finger} में) धारण करें।`;
+    gemReason = `[त्रिवेणी रत्न शोधन: कुण्डली + अंक ज्योतिष (मूलांक ${triveni.mulank}, भाग्यांक ${triveni.bhagyank}) + गोत्र (${triveni.gotra.name})] ${primaryGem.planetRole} ${primaryGem.planet} के रश्मि-बल को जाग्रत करने हेतु यह रत्न पूर्णतः शास्त्रीय, गोत्रानुकूल एवं शुभप्रद है। धारण वार: ${primaryGem.day} (${primaryGem.choghadiya}), बीज मंत्र: ${primaryGem.beejMantra}।`;
+  }
+
+  if (triveni.forbiddenGems && triveni.forbiddenGems.length > 0) {
+    const forbiddenNames = triveni.forbiddenGems.map(f => f.gem).join(', ');
+    gemReason += ` (सावधानी: मारक/त्रिक भाव प्रभाव के कारण ${forbiddenNames} कदापि धारण न करें)।`;
   }
 
   // =========================================================================
