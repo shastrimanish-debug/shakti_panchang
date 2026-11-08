@@ -285,6 +285,29 @@ function detectDoshas(k: KundaliData, map: Record<string, PlanetPosition>): stri
       out.push(`अस्त विचार — ${combust.map((p) => p.planet).join(", ")} सूर्य के सान्निध्य में; बाह्य फल क्षीण, आंतरिक तेज शेष।`);
     }
   }
+
+  // Grahan Yog Check (Surya / Chandra with Rahu / Ketu)
+  const angD = (d1: number, d2: number) => {
+    const diff = Math.abs(d1 - d2) % 360;
+    return diff > 180 ? 360 - diff : diff;
+  };
+  const sunP = map["सूर्य"];
+  const moonP = map["चंद्र"];
+  const rahuP = map["राहु"];
+  const ketuP = map["केतु"];
+
+  if (sunP && rahuP && (sunP.rashi === rahuP.rashi || sunP.house === rahuP.house || angD(sunP.degree, rahuP.degree) <= 15.0)) {
+    out.unshift(`सूर्य-राहु ग्रहण योग संकेत — ${sunP.rashi} राशि (${sunP.house}वें भाव) में सूर्य और राहु की युति। आत्मबल, पिता व प्रतिष्ठा संरक्षण हेतु महामृत्युंजय जप व आदित्यहृदय पाठ विहित।`);
+  } else if (sunP && ketuP && (sunP.rashi === ketuP.rashi || sunP.house === ketuP.house || angD(sunP.degree, ketuP.degree) <= 15.0)) {
+    out.unshift(`सूर्य-केतु ग्रहण योग संकेत — ${sunP.rashi} राशि (${sunP.house}वें भाव) में सूर्य और केतु की युति। आत्म-संशय व आजीविका अवरोध शमन हेतु सूर्य उपासना आवश्यक।`);
+  }
+
+  if (moonP && rahuP && (moonP.rashi === rahuP.rashi || moonP.house === rahuP.house || angD(moonP.degree, rahuP.degree) <= 15.0)) {
+    out.unshift(`चंद्र-राहु ग्रहण योग (कपालिका दोष) संकेत — ${moonP.rashi} राशि (${moonP.house}वें भाव) में चंद्रमा और राहु की युति। मानसिक तनाव, अनिद्रा व भय शमन हेतु एकादशवार रुद्राभिषेक व शिव-साधना श्रेयस्कर।`);
+  } else if (moonP && ketuP && (moonP.rashi === ketuP.rashi || moonP.house === ketuP.house || angD(moonP.degree, ketuP.degree) <= 15.0)) {
+    out.unshift(`चंद्र-केतु ग्रहण योग संकेत — ${moonP.rashi} राशि (${moonP.house}वें भाव) में चंद्रमा और केतु की युति। मानसिक विषाद व वैराग्य-भ्रम निवारण हेतु शिव रुद्राभिषेक विहित।`);
+  }
+
   return out;
 }
 

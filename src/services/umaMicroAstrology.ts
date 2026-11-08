@@ -1182,10 +1182,41 @@ export function getRemedyDeepDetail(
   let shantiDeep: ShantiDeepDive | undefined = undefined;
 
   if (isGrahan) {
-    const hasSunRahu = sunH > 0 && sunH === rahuH;
-    const hasSunKetu = sunH > 0 && sunH === ketuH;
-    const hasMoonRahu = moonH > 0 && moonH === rahuH;
-    const hasMoonKetu = moonH > 0 && moonH === ketuH;
+    const angDist = (d1?: number, d2?: number) => {
+      if (d1 === undefined || d2 === undefined) return 999;
+      const d = Math.abs(d1 - d2) % 360;
+      return d > 180 ? 360 - d : d;
+    };
+
+    const sunDistRahu = angDist(sunPlanet?.degree, rahuPlanet?.degree);
+    const sunDistKetu = angDist(sunPlanet?.degree, ketuPlanet?.degree);
+    const moonDistRahu = angDist(moonPlanet?.degree, rahuPlanet?.degree);
+    const moonDistKetu = angDist(moonPlanet?.degree, ketuPlanet?.degree);
+
+    const hasSunRahu = Boolean(
+      (sunH > 0 && sunH === rahuH) ||
+      (sunPlanet && rahuPlanet && sunPlanet.rashi === rahuPlanet.rashi) ||
+      sunDistRahu <= 15.0 ||
+      p.includes('सूर्य-राहु')
+    );
+    const hasSunKetu = Boolean(
+      (sunH > 0 && sunH === ketuH) ||
+      (sunPlanet && ketuPlanet && sunPlanet.rashi === ketuPlanet.rashi) ||
+      sunDistKetu <= 15.0 ||
+      p.includes('सूर्य-केतु')
+    );
+    const hasMoonRahu = Boolean(
+      (moonH > 0 && moonH === rahuH) ||
+      (moonPlanet && rahuPlanet && moonPlanet.rashi === rahuPlanet.rashi) ||
+      moonDistRahu <= 15.0 ||
+      p.includes('चंद्र-राहु') || p.includes('कपालिका')
+    );
+    const hasMoonKetu = Boolean(
+      (moonH > 0 && moonH === ketuH) ||
+      (moonPlanet && ketuPlanet && moonPlanet.rashi === ketuPlanet.rashi) ||
+      moonDistKetu <= 15.0 ||
+      p.includes('चंद्र-केतु')
+    );
 
     let type: 'surya_rahu' | 'surya_ketu' | 'chandra_rahu' | 'chandra_ketu' | 'other' = 'surya_rahu';
     let typeLabel = 'सूर्य-राहु ग्रहण योग (Surya Grahan Yog)';
@@ -1196,32 +1227,32 @@ export function getRemedyDeepDetail(
     if (hasSunRahu) {
       type = 'surya_rahu';
       typeLabel = 'सूर्य-राहु ग्रहण योग (आत्मबल, पिता व प्रतिष्ठा ग्रहण)';
-      houseNum = sunH;
-      rashi = sunPlanet?.rashi || '';
-      degreeDiff = Math.abs((sunPlanet?.degreeInRashi || 10) - (rahuPlanet?.degreeInRashi || 15));
+      houseNum = sunH > 0 ? sunH : rahuH > 0 ? rahuH : 1;
+      rashi = sunPlanet?.rashi || rahuPlanet?.rashi || '';
+      degreeDiff = sunDistRahu < 180 ? sunDistRahu : Math.abs((sunPlanet?.degreeInRashi || 10) - (rahuPlanet?.degreeInRashi || 15));
     } else if (hasSunKetu) {
       type = 'surya_ketu';
       typeLabel = 'सूर्य-केतु ग्रहण योग (आत्म-संशय व आजीविका अवरोध)';
-      houseNum = sunH;
-      rashi = sunPlanet?.rashi || '';
-      degreeDiff = Math.abs((sunPlanet?.degreeInRashi || 10) - (ketuPlanet?.degreeInRashi || 15));
+      houseNum = sunH > 0 ? sunH : ketuH > 0 ? ketuH : 1;
+      rashi = sunPlanet?.rashi || ketuPlanet?.rashi || '';
+      degreeDiff = sunDistKetu < 180 ? sunDistKetu : Math.abs((sunPlanet?.degreeInRashi || 10) - (ketuPlanet?.degreeInRashi || 15));
     } else if (hasMoonRahu) {
       type = 'chandra_rahu';
       typeLabel = 'चंद्र-राहु ग्रहण योग (कपालिका दोष — मानसिक तनाव व भ्रम)';
-      houseNum = moonH;
-      rashi = moonPlanet?.rashi || '';
-      degreeDiff = Math.abs((moonPlanet?.degreeInRashi || 12) - (rahuPlanet?.degreeInRashi || 16));
+      houseNum = moonH > 0 ? moonH : rahuH > 0 ? rahuH : 1;
+      rashi = moonPlanet?.rashi || rahuPlanet?.rashi || '';
+      degreeDiff = moonDistRahu < 180 ? moonDistRahu : Math.abs((moonPlanet?.degreeInRashi || 12) - (rahuPlanet?.degreeInRashi || 16));
     } else if (hasMoonKetu) {
       type = 'chandra_ketu';
       typeLabel = 'चंद्र-केतु ग्रहण योग (मानसिक विषाद व वैराग्य-भ्रम)';
-      houseNum = moonH;
-      rashi = moonPlanet?.rashi || '';
-      degreeDiff = Math.abs((moonPlanet?.degreeInRashi || 12) - (ketuPlanet?.degreeInRashi || 18));
+      houseNum = moonH > 0 ? moonH : ketuH > 0 ? ketuH : 1;
+      rashi = moonPlanet?.rashi || ketuPlanet?.rashi || '';
+      degreeDiff = moonDistKetu < 180 ? moonDistKetu : Math.abs((moonPlanet?.degreeInRashi || 12) - (ketuPlanet?.degreeInRashi || 18));
     } else {
       type = 'other';
       typeLabel = 'छाया ग्रह ग्रहण दोष शान्ति संकल्प';
-      houseNum = sunH > 0 ? sunH : 1;
-      rashi = sunPlanet?.rashi || k?.lagnaRashi || '';
+      houseNum = sunH > 0 ? sunH : moonH > 0 ? moonH : 1;
+      rashi = sunPlanet?.rashi || moonPlanet?.rashi || k?.lagnaRashi || '';
       degreeDiff = undefined;
     }
 
@@ -1229,15 +1260,18 @@ export function getRemedyDeepDetail(
     let severity: 'अत्यधिक तीव्र' | 'तीव्र' | 'मध्यम' = 'तीव्र';
     let severityDesc = '';
 
-    if (degreeDiff !== undefined && diffVal <= 5) {
+    if (degreeDiff !== undefined && diffVal <= 5.0) {
       severity = 'अत्यधिक तीव्र';
       severityDesc = `ग्रह और छाया ग्रह केवल ${diffVal.toFixed(1)}° के अति-सूक्ष्म अंतर पर हैं। यह ९०%+ पूर्ण ग्रहण का रूप है, जिससे जीवन के इस भाव में तीव्र ऊर्जा अवरोध उत्पन्न होता है।`;
-    } else if (degreeDiff !== undefined && diffVal <= 9) {
+    } else if (degreeDiff !== undefined && diffVal <= 10.0) {
       severity = 'तीव्र';
-      severityDesc = `ग्रह और छाया ग्रह ${diffVal.toFixed(1)}° की निकट युति में हैं। इसके प्रभाव से मानसिक तनाव अथवा कार्यक्षेत्र में बार-बार बनते काम अटकने का योग बनता है।`;
+      severityDesc = `ग्रह और छाया ग्रह ${diffVal.toFixed(1)}° की शास्त्रीय दीप्तांश युति में हैं। इसके प्रभाव से मानसिक तनाव अथवा कार्यक्षेत्र में बार-बार बनते काम अटकने का योग बनता है।`;
+    } else if (degreeDiff !== undefined && diffVal <= 15.0) {
+      severity = 'मध्यम';
+      severityDesc = `ग्रह और छाया ग्रह ${diffVal.toFixed(1)}° के दीप्तांश प्रभाव मंडल में हैं। इसके प्रभाव से जीवन के संबंधित क्षेत्रों में उतार-चढ़ाव रहता है।`;
     } else {
       severity = 'मध्यम';
-      severityDesc = `छाया ग्रह प्रभाव के शमन एवं मानसिक/आत्मिक शांति हेतु विधिपूर्वक वैदिक शान्ति विहित है।`;
+      severityDesc = `ग्रह और छाया ग्रह एक ही ${rashi ? `${rashi} राशि/भाव` : 'भाव'} में स्थित होकर ग्रहण योग निर्मित कर रहे हैं।`;
     }
 
     const isSurya = type.startsWith('surya');
@@ -1959,6 +1993,60 @@ export function generateTraditionalUpayParchi(
 
   afflictionScores.sort((a, b) => b.score - a.score);
 
+  // Angular distance and conjunction calculation helpers
+  const getAngularDistance = (deg1: number, deg2: number): number => {
+    const diff = Math.abs(deg1 - deg2) % 360;
+    return diff > 180 ? 360 - diff : diff;
+  };
+
+  const areConjunct = (
+    p1?: PlanetPosition,
+    p2?: PlanetPosition,
+    maxOrb = 15.0
+  ): { conjunct: boolean; diff: number; sameRashi: boolean; sameHouse: boolean } => {
+    if (!p1 || !p2) return { conjunct: false, diff: 999, sameRashi: false, sameHouse: false };
+    const sameRashi = Boolean(p1.rashi && p2.rashi && p1.rashi === p2.rashi);
+    const sameHouse = Boolean(p1.house > 0 && p2.house > 0 && p1.house === p2.house);
+    const diff = getAngularDistance(p1.degree, p2.degree);
+    const conjunct = sameRashi || sameHouse || diff <= maxOrb;
+    return { conjunct, diff, sameRashi, sameHouse };
+  };
+
+  const sunH = getHouse('सूर्य');
+  const moonH = getHouse('चंद्र');
+  const marsH = getHouse('मंगल');
+  const jupH = getHouse('गुरु');
+  const satH = getHouse('शनि');
+  const rahuH = getHouse('राहु');
+  const ketuH = getHouse('केतु');
+
+  // Classical Parashari Grahan Yoga Checks (Same Sign, Same House, or Angular Distance <= 15°)
+  const suryaRahuCheck = areConjunct(sunP, rahuP, 15.0);
+  const suryaKetuCheck = areConjunct(sunP, ketuP, 15.0);
+  const chandraRahuCheck = areConjunct(moonP, rahuP, 15.0);
+  const chandraKetuCheck = areConjunct(moonP, ketuP, 15.0);
+
+  const isSuryaRahuGrahan = suryaRahuCheck.conjunct;
+  const isSuryaKetuGrahan = suryaKetuCheck.conjunct;
+  const isChandraRahuGrahan = chandraRahuCheck.conjunct;
+  const isChandraKetuGrahan = chandraKetuCheck.conjunct;
+
+  const hasSuryaGrahan = isSuryaRahuGrahan || isSuryaKetuGrahan;
+  const hasChandraGrahan = isChandraRahuGrahan || isChandraKetuGrahan;
+
+  // Check Kaal Sarp Yoga: All 7 non-node planets strictly between Rahu & Ketu
+  let isKaalSarp = false;
+  if (rahuP && ketuP) {
+    const nonNodes = planets.filter((p) => !p.planet.includes('राहु') && !p.planet.includes('केतु'));
+    const rDeg = rahuP.degree;
+    const kDeg = ketuP.degree;
+    const arc = ((kDeg - rDeg) % 360 + 360) % 360;
+    const onArc = nonNodes.map((p) => (((p.degree - rDeg) % 360 + 360) % 360) <= arc);
+    if (nonNodes.length >= 7 && (onArc.every(Boolean) || onArc.every((x) => !x))) {
+      isKaalSarp = true;
+    }
+  }
+
   // Top afflicted planet for Fasting (Point 2)
   const topAfflictedForFast = afflictionScores.find((a) => a.planet !== 'राहु' && a.planet !== 'केतु') || {
     planet: k.mahadasha || 'गुरु',
@@ -1977,8 +2065,16 @@ export function generateTraditionalUpayParchi(
   };
 
   const fastInfo = FAST_WEEKDAY_MAP[topAfflictedForFast.planet] || FAST_WEEKDAY_MAP['गुरु'];
-  const point2 = `${fastInfo.day} का सात्विक उपवास करें (${topAfflictedForFast.planet} शान्ति हेतु)।`;
-  const upvasReason = `आपकी जन्मपत्रिका में ${topAfflictedForFast.planet} (${topAfflictedForFast.reason}) के कारण आ रही अड़चनों एवं मानसिक/शारीरिक कष्टों के निवारण हेतु ${fastInfo.day} का उपवास श्रेष्ठ है।`;
+  let point2 = `${fastInfo.day} का सात्विक उपवास करें (${topAfflictedForFast.planet} शान्ति हेतु)।`;
+  let upvasReason = `आपकी जन्मपत्रिका में ${topAfflictedForFast.planet} (${topAfflictedForFast.reason}) के कारण आ रही अड़चनों एवं कष्टों के निवारण हेतु ${fastInfo.day} का उपवास श्रेष्ठ है।`;
+
+  if (hasSuryaGrahan) {
+    point2 = 'रविवार का सात्विक उपवास करें (सूर्य ग्रहण शान्ति हेतु)।';
+    upvasReason = 'आपकी पत्रिका में सूर्य पर छाया ग्रह राहु/केतु का ग्रहण होने से आत्मबल, पिता के स्वास्थ्य एवं राजकीय बाधा निवारण हेतु रविवार का उपवास श्रेष्ठ है।';
+  } else if (hasChandraGrahan) {
+    point2 = 'सोमवार का सात्विक उपवास करें (चंद्रमा कपालिका ग्रहण शान्ति हेतु)।';
+    upvasReason = 'आपकी पत्रिका में चंद्रमा पर छाया ग्रह राहु/केतु का ग्रहण (कपालिका दोष) होने से मानसिक शांति, अनिद्रा व भय निवारण हेतु सोमवार का उपवास अमृततुल्य है।';
+  }
 
   // Top afflicted planet for Daan (Point 4)
   const topAfflictedForDaan = afflictionScores[0] || {
@@ -1988,8 +2084,16 @@ export function generateTraditionalUpayParchi(
   };
 
   const daanPlanet = topAfflictedForDaan.planet;
-  const point4 = PLANET_PARCHI_DAAN[daanPlanet] || PLANET_PARCHI_DAAN['शनि'];
-  const daanReason = `शास्त्रानुसार दान अनिष्ट एवं मारक-बाधक ग्रह का किया जाता है। कुंडली में ${daanPlanet} (${topAfflictedForDaan.reason}) का दान करने से उसकी अशुभ रश्मियों का दुष्प्रभाव नष्ट होता है।`;
+  let point4 = PLANET_PARCHI_DAAN[daanPlanet] || PLANET_PARCHI_DAAN['शनि'];
+  let daanReason = `शास्त्रानुसार दान अनिष्ट एवं मारक-बाधक ग्रह का किया जाता है। कुंडली में ${daanPlanet} (${topAfflictedForDaan.reason}) का दान करने से उसकी अशुभ रश्मियों का दुष्प्रभाव नष्ट होता है।`;
+
+  if (hasSuryaGrahan) {
+    point4 = 'कांस्य पात्र में सरसों तेल भरकर मुख देखकर छाया दान, सप्तधान्य, नारियल, दक्षिणा (रविवार/अमावस्या - 1 बार)';
+    daanReason = 'सूर्य पर छाया ग्रह राहु/केतु के ग्रहण जनित अनिष्ट को दूर करने हेतु छाया दान एवं सप्तधान्य दान शास्त्रोक्त महा-दान है।';
+  } else if (hasChandraGrahan) {
+    point4 = 'सफेद वस्त्र, कच्चा दूध, चांदी, चावल, नारियल, सप्तधान्य, दक्षिणा (सोमवार/पूर्णिमा - 1 बार)';
+    daanReason = 'चंद्रमा पर राहु/केतु के ग्रहण जनित कपालिका दोष की शांति हेतु श्वेत वस्तुओं एवं छाया दान का विधान विहित है।';
+  }
 
   // =========================================================================
   // POINT 3: नित्य स्तोत्र / मंत्र पाठ (Ishta & Dasha Harmonization)
@@ -1998,7 +2102,13 @@ export function generateTraditionalUpayParchi(
   let stotraReason = '';
 
   const maha = k.mahadasha || 'गुरु';
-  if (maha === 'राहु') {
+  if (hasSuryaGrahan) {
+    point3 = 'श्री आदित्यहृदय स्तोत्र एवं महामृत्युंजय मंत्र का नित्य पाठ करें।';
+    stotraReason = 'सूर्य पर राहु/केतु के ग्रहण प्रभाव को शांत कर आत्म-विश्वास एवं आरोग्यता जाग्रत करने हेतु आदित्यहृदय स्तोत्र अचूक है।';
+  } else if (hasChandraGrahan) {
+    point3 = 'श्री शिव रुद्राष्टकम, चंद्र कवच एवं महामृत्युंजय मंत्र का पाठ करें।';
+    stotraReason = 'कपालिका चंद्र ग्रहण में मन की स्थिरता, मानसिक क्लेश व भय निवारण हेतु भगवान शिव की स्तुति सर्वोत्तम है।';
+  } else if (maha === 'राहु') {
     point3 = 'श्री दुर्गा सप्तशती (अर्गला, कीलक, कवच) व सिद्ध कुंजिका स्तोत्र का पाठ करें।';
     stotraReason = 'राहु महादशा में छाया-भ्रम व मानसिक अशांति शमन हेतु देवी कवच व दुर्गा सप्तशती अमृततुल्य है।';
   } else if (maha === 'केतु') {
@@ -2030,9 +2140,9 @@ export function generateTraditionalUpayParchi(
   let point5 = 'गाय और कुत्ते को रोटी खिलावें।';
   let sevaReason = '';
 
-  if (topAfflictedForDaan.planet === 'शनि' || topAfflictedForDaan.planet === 'राहु' || topAfflictedForDaan.planet === 'केतु') {
+  if (hasSuryaGrahan || hasChandraGrahan || topAfflictedForDaan.planet === 'शनि' || topAfflictedForDaan.planet === 'राहु' || topAfflictedForDaan.planet === 'केतु') {
     point5 = 'काले श्वान (कुत्ते) को सरसों तेल चुपड़ी ताजी रोटी एवं मछलियों को आटे की गोलियां खिलावें।';
-    sevaReason = 'शनि-राहु-केतु के क्रूर प्रभाव के शमन हेतु भैरव वाहन श्वान एवं जलचर मत्स्य सेवा सर्वोत्तम वैदिक उपाय है।';
+    sevaReason = 'शनि-राहु-केतु एवं छाया ग्रहण के क्रूर प्रभाव के शमन हेतु भैरव वाहन श्वान एवं जलचर मत्स्य सेवा सर्वोत्तम वैदिक उपाय है।';
   } else if (topAfflictedForDaan.planet === 'सूर्य' || topAfflictedForDaan.planet === 'मंगल') {
     point5 = 'गौमाता को ताजी गुड़-रोटी एवं बंदरों को भुने चने खिलावें, पक्षियों हेतु जलपात्र रखें।';
     sevaReason = 'सूर्य व मंगल के तेज व रक्त-दोष निवारण हेतु कामधेनु गौमाता एवं हनुमान स्वरूप वानर सेवा विहित है।';
@@ -2047,100 +2157,71 @@ export function generateTraditionalUpayParchi(
   // =========================================================================
   // POINT 6: विशिष्ट ग्रह दोष / योग शान्ति (Strict Vedic Mathematical Calculation)
   // =========================================================================
-  const sunH = getHouse('सूर्य');
-  const moonH = getHouse('चंद्र');
-  const marsH = getHouse('मंगल');
-  const jupH = getHouse('गुरु');
-  const satH = getHouse('शनि');
-  const rahuH = getHouse('राहु');
-  const ketuH = getHouse('केतु');
-
-  // Strict Classical Grahan Yoga Checks (Deeptaamsha Orb <= 9.0° in same house)
-  const isSuryaRahuGrahan = Boolean(
-    sunP && rahuP && sunP.house > 0 && sunP.house === rahuP.house &&
-    Math.abs(sunP.degreeInRashi - rahuP.degreeInRashi) <= 9.0
-  );
-  const isSuryaKetuGrahan = Boolean(
-    sunP && ketuP && sunP.house > 0 && sunP.house === ketuP.house &&
-    Math.abs(sunP.degreeInRashi - ketuP.degreeInRashi) <= 9.0
-  );
-  const isChandraRahuGrahan = Boolean(
-    moonP && rahuP && moonP.house > 0 && moonP.house === rahuP.house &&
-    Math.abs(moonP.degreeInRashi - rahuP.degreeInRashi) <= 9.0
-  );
-  const isChandraKetuGrahan = Boolean(
-    moonP && ketuP && moonP.house > 0 && moonP.house === ketuP.house &&
-    Math.abs(moonP.degreeInRashi - ketuP.degreeInRashi) <= 9.0
-  );
-
-  const hasSuryaGrahan = isSuryaRahuGrahan || isSuryaKetuGrahan;
-  const hasChandraGrahan = isChandraRahuGrahan || isChandraKetuGrahan;
-
-  // Check Kaal Sarp Yoga: All 7 non-node planets strictly between Rahu & Ketu
-  let isKaalSarp = false;
-  if (rahuP && ketuP) {
-    const nonNodes = planets.filter((p) => !p.planet.includes('राहु') && !p.planet.includes('केतु'));
-    const rDeg = rahuP.degree;
-    const kDeg = ketuP.degree;
-    const arc = ((kDeg - rDeg) % 360 + 360) % 360;
-    const onArc = nonNodes.map((p) => (((p.degree - rDeg) % 360 + 360) % 360) <= arc);
-    if (nonNodes.length >= 7 && (onArc.every(Boolean) || onArc.every((x) => !x))) {
-      isKaalSarp = true;
-    }
-  }
-
   let point6 = `${maha} महादशा एवं नवग्रह शान्ति करावें।`;
   let detectedDoshaYoga = `${maha} महादशा एवं नवग्रह शान्ति`;
   let shantiReason = `वर्तमान में चल रही ${maha} महादशा के अनुकूल फल प्राप्त करने, जीवन में स्थिरता एवं आरोग्य वृद्धि हेतु नवग्रह हवन एवं रुद्राभिषेक करावें।`;
 
-  if (isKaalSarp) {
+  if (hasSuryaGrahan) {
+    const isRahu = isSuryaRahuGrahan;
+    const gPartner = isRahu ? 'राहु' : 'केतु';
+    const check = isRahu ? suryaRahuCheck : suryaKetuCheck;
+    const diffStr = check.diff < 180 ? `${check.diff.toFixed(1)}°` : '';
+    const hNum = sunH > 0 ? sunH : 1;
+    if (isKaalSarp) {
+      point6 = `सूर्य-${gPartner} ग्रहण योग एवं कालसर्प योग शान्ति करावें।`;
+      detectedDoshaYoga = `सूर्य-${gPartner} ग्रहण योग + कालसर्प`;
+      shantiReason = `कुंडली के ${hNum}वें भाव (${sunP?.rashi || ''} राशि) में सूर्य के साथ ${gPartner} की ${diffStr ? `${diffStr} ` : ''}युति से आत्मबल, मान-सम्मान व पिता/आरोग्य में अवरोध रहता है तथा समस्त ग्रह राहु-केतु अक्ष में बंधे हैं; अतः ग्रहण एवं कालसर्प शांति अनिवार्य है।`;
+    } else {
+      point6 = `सूर्य-${gPartner} ग्रहण योग शान्ति एवं महामृत्युंजय जप करावें।`;
+      detectedDoshaYoga = `सूर्य-${gPartner} ग्रहण योग`;
+      shantiReason = `कुंडली के ${hNum}वें भाव (${sunP?.rashi || ''} राशि) में सूर्य के साथ ${gPartner} की ${diffStr ? `${diffStr} ` : ''}युति से आत्म-संशय, मान-सम्मान व पिता/आरोग्य में बाधा बनती है; इसका वैदिक जप-हवन अनिवार्य है।`;
+    }
+  } else if (hasChandraGrahan) {
+    const isRahu = isChandraRahuGrahan;
+    const gPartner = isRahu ? 'राहु' : 'केतु';
+    const check = isRahu ? chandraRahuCheck : chandraKetuCheck;
+    const diffStr = check.diff < 180 ? `${check.diff.toFixed(1)}°` : '';
+    const hNum = moonH > 0 ? moonH : 1;
+    if (isKaalSarp) {
+      point6 = `चंद्र-${gPartner} ग्रहण योग (कपालिका) एवं कालसर्प योग शान्ति करावें।`;
+      detectedDoshaYoga = `चंद्र-${gPartner} ग्रहण योग (कपालिका) + कालसर्प`;
+      shantiReason = `कुंडली के ${hNum}वें भाव (${moonP?.rashi || ''} राशि) में चंद्रमा के साथ ${gPartner} की ${diffStr ? `${diffStr} ` : ''}युति से अत्यधिक मानसिक तनाव, अनिद्रा व भय रहता है तथा कालसर्प अक्ष भी सक्रिय है; अतः चंद्र ग्रहण व कालसर्प शांति अनिवार्य है।`;
+    } else {
+      point6 = isRahu
+        ? 'चंद्र-राहु ग्रहण योग (कपालिका दोष) शान्ति करावें।'
+        : 'चंद्र-केतु ग्रहण योग शान्ति एवं शिव रुद्राभिषेक करावें।';
+      detectedDoshaYoga = `चंद्र-${gPartner} ग्रहण योग (कपालिका)`;
+      shantiReason = `कुंडली के ${hNum}वें भाव (${moonP?.rashi || ''} राशि) में चंद्रमा के साथ ${gPartner} की ${diffStr ? `${diffStr} ` : ''}युति से अत्यधिक मानसिक तनाव, अनिद्रा, ओवरथिंकिंग व भय रहता है; इसकी शांति से पूर्ण मानसिक शांति व स्वास्थ्य मिलता है।`;
+    }
+  } else if (isKaalSarp) {
     point6 = 'कालसर्प योग शान्ति एवं नागबलि / रुद्राभिषेक करावें।';
     detectedDoshaYoga = 'कालसर्प योग (राहु-केतु अक्ष बंधन)';
     shantiReason = 'कुंडली के समस्त ग्रह राहु और केतु के मध्य बंधे होने से भाग्योदय में रुकावट आती है, अतः नागबलि/रुद्राभिषेक आवश्यक है।';
-  } else if (hasSuryaGrahan) {
-    if (isSuryaRahuGrahan) {
-      const diffDeg = Math.abs(sunP!.degreeInRashi - rahuP!.degreeInRashi).toFixed(1);
-      point6 = 'सूर्य-राहु ग्रहण योग शान्ति एवं महामृत्युंजय जप करावें।';
-      detectedDoshaYoga = 'सूर्य-राहु ग्रहण योग';
-      shantiReason = `कुंडली के ${sunH}वें भाव में सूर्य के साथ राहु की ${diffDeg}° निकट युति से मान-सम्मान व पिता/आरॉग्य में बाधा बनती है; इसका वैदिक जप-हवन अनिवार्य है।`;
-    } else {
-      const diffDeg = Math.abs(sunP!.degreeInRashi - ketuP!.degreeInRashi).toFixed(1);
-      point6 = 'सूर्य-केतु ग्रहण योग शान्ति एवं महामृत्युंजय जप करावें।';
-      detectedDoshaYoga = 'सूर्य-केतु ग्रहण योग';
-      shantiReason = `कुंडली के ${sunH}वें भाव में सूर्य के साथ केतु की ${diffDeg}° निकट युति से आत्म-संशय व आजीविका अवरोध बनता है; इसका वैदिक जप-हवन अनिवार्य है।`;
-    }
-  } else if (hasChandraGrahan) {
-    if (isChandraRahuGrahan) {
-      const diffDeg = Math.abs(moonP!.degreeInRashi - rahuP!.degreeInRashi).toFixed(1);
-      point6 = 'चंद्र-राहु ग्रहण योग (कपालिका दोष) शान्ति करावें।';
-      detectedDoshaYoga = 'चंद्र-राहु ग्रहण योग';
-      shantiReason = `कुंडली के ${moonH}वें भाव में चंद्रमा के साथ राहु की ${diffDeg}° निकट युति से अत्यधिक मानसिक तनाव, अनिद्रा व भय रहता है; इसकी शांति से पूर्ण मानसिक शांति मिलती है।`;
-    } else {
-      const diffDeg = Math.abs(moonP!.degreeInRashi - ketuP!.degreeInRashi).toFixed(1);
-      point6 = 'चंद्र-केतु ग्रहण योग शान्ति एवं शिव रुद्राभिषेक करावें।';
-      detectedDoshaYoga = 'चंद्र-केतु ग्रहण योग';
-      shantiReason = `कुंडली के ${moonH}वें भाव में चंद्रमा के साथ केतु की ${diffDeg}° निकट युति से मानसिक विषाद व वैराग्य-भ्रम बनता है; भगवान शिव की शांति से मन स्थिर होता है।`;
-    }
-  } else if (jupH > 0 && rahuH > 0 && jupH === rahuH && Math.abs(getDegInRashi('गुरु') - getDegInRashi('राहु')) <= 10.0) {
+  } else if (areConjunct(jupP, rahuP, 15.0).conjunct) {
+    const jH = jupH > 0 ? jupH : 1;
     point6 = 'गुरु-चाण्डाल योग शान्ति एवं श्री हरि पूजन करावें।';
     detectedDoshaYoga = 'गुरु-चाण्डाल योग (गुरु-राहु युति)';
-    shantiReason = `कुंडली के ${jupH}वें भाव में बृहस्पति के साथ राहु की युति से निर्णय भ्रम व विद्या/संतान चिंता रहती है; गुरु शांति श्रेयस्कर है।`;
-  } else if (marsH > 0 && rahuH > 0 && marsH === rahuH && Math.abs(getDegInRashi('मंगल') - getDegInRashi('राहु')) <= 10.0) {
+    shantiReason = `कुंडली के ${jH}वें भाव (${jupP?.rashi || ''} राशि) में बृहस्पति के साथ राहु की युति से निर्णय भ्रम व विद्या/संतान चिंता रहती है; गुरु शांति श्रेयस्कर है।`;
+  } else if (areConjunct(marsP, rahuP, 15.0).conjunct) {
+    const mH = marsH > 0 ? marsH : 1;
     point6 = 'अंगारक योग शान्ति एवं बटुक भैरव साधना करावें।';
     detectedDoshaYoga = 'अंगारक योग (मंगल-राहु युति)';
-    shantiReason = `कुंडली के ${marsH}वें भाव में मंगल और राहु की युति से उग्रता व रक्त विकार भय रहता है; अंगारक शांति से जीवन सुरक्षित होता है।`;
-  } else if (satH > 0 && moonH > 0 && satH === moonH && Math.abs(getDegInRashi('शनि') - getDegInRashi('चंद्र')) <= 10.0) {
+    shantiReason = `कुंडली के ${mH}वें भाव (${marsP?.rashi || ''} राशि) में मंगल और राहु की युति से उग्रता व रक्त विकार भय रहता है; अंगारक शांति से जीवन सुरक्षित होता है।`;
+  } else if (areConjunct(satP, moonP, 15.0).conjunct) {
+    const sH = moonH > 0 ? moonH : 1;
     point6 = 'विष योग शान्ति एवं एकादशवार रुद्राभिषेक करावें।';
     detectedDoshaYoga = 'विष योग (शनि-चंद्र युति)';
-    shantiReason = `कुंडली के ${moonH}वें भाव में शनि-चंद्र की युति से निराशावाद, अवसाद व कार्य में विलंब होता है; भगवान शिव का रुद्राभिषेक परम कल्याणकारी है।`;
-  } else if (satH > 0 && rahuH > 0 && satH === rahuH && Math.abs(getDegInRashi('शनि') - getDegInRashi('राहु')) <= 10.0) {
+    shantiReason = `कुंडली के ${sH}वें भाव (${moonP?.rashi || ''} राशि) में शनि-चंद्र की युति से निराशावाद, अवसाद व कार्य में विलंब होता है; भगवान शिव का रुद्राभिषेक परम कल्याणकारी है।`;
+  } else if (areConjunct(satP, rahuP, 15.0).conjunct) {
+    const sH = satH > 0 ? satH : 1;
     point6 = 'शापित दोष शान्ति एवं गया श्राद्ध / तर्पण करावें।';
     detectedDoshaYoga = 'शनि-राहु शापित योग';
-    shantiReason = `कुंडली के ${satH}वें भाव में शनि-राहु की युति से पूर्व जन्म के पितृ ऋण व शापित योग बनता है; इसके निवारण हेतु तर्पण-शांति आवश्यक है।`;
-  } else if (sunH > 0 && satH > 0 && sunH === satH && Math.abs(getDegInRashi('सूर्य') - getDegInRashi('शनि')) <= 10.0) {
+    shantiReason = `कुंडली के ${sH}वें भाव (${satP?.rashi || ''} राशि) में शनि-राहु की युति से पूर्व जन्म के पितृ ऋण व शापित योग बनता है; इसके निवारण हेतु तर्पण-शांति आवश्यक है।`;
+  } else if (areConjunct(sunP, satP, 15.0).conjunct) {
+    const sH = sunH > 0 ? sunH : 1;
     point6 = 'पितृ दोष शान्ति एवं नारायण बलि करावें।';
     detectedDoshaYoga = 'सूर्य-शनि पितृ दोष संकेत';
-    shantiReason = `कुंडली के ${sunH}वें भाव में सूर्य और शनि परस्पर परम शत्रु होकर युति में हैं; प्रतिष्ठा व वंश वृद्धि में बाधा निवारण हेतु पितृ शांति करावें।`;
+    shantiReason = `कुंडली के ${sH}वें भाव (${sunP?.rashi || ''} राशि) में सूर्य और शनि परस्पर परम शत्रु होकर युति में हैं; प्रतिष्ठा व वंश वृद्धि में बाधा निवारण हेतु पितृ शांति करावें।`;
   } else if (k.isManglik) {
     point6 = `मंगल भात पूजा (उज्जैन) अथवा ${marsH > 0 ? `${marsH}वें भाव` : ''} मंगल दोष शान्ति करावें।`;
     detectedDoshaYoga = `मांगलिक दोष (${marsH > 0 ? `${marsH}वें भाव में मंगल` : 'भौम प्रभाव'})`;
