@@ -735,14 +735,16 @@ const PLANET_REMEDY: Record<string, { mantra: string; japaCount: string; daan: s
 };
 
 export interface GrahanShantiDeepDive {
+  doshCategory?: 'grahan' | 'kaalsarp' | 'manglik' | 'guru_chandal' | 'angarak' | 'vish_yog' | 'shapit' | 'pitra_dosh' | 'neecha' | 'mahadasha_navgrah';
   doshName: string;
-  grahanType: 'surya_rahu' | 'surya_ketu' | 'chandra_rahu' | 'chandra_ketu' | 'other';
-  grahanTypeLabel: string;
-  houseNum: number;
-  houseName: string;
-  rashi: string;
+  grahanType?: 'surya_rahu' | 'surya_ketu' | 'chandra_rahu' | 'chandra_ketu' | 'other';
+  grahanTypeLabel?: string;
+  typeLabel?: string;
+  houseNum?: number;
+  houseName?: string;
+  rashi?: string;
   degreeDiff?: number;
-  severity: 'अत्यधिक तीव्र' | 'तीव्र' | 'मध्यम';
+  severity: 'अत्यधिक तीव्र' | 'तीव्र' | 'मध्यम' | 'सौम्य / अनुकूल';
   severityDesc: string;
   whyReason: string;
   whatBenefits: string[];
@@ -758,6 +760,8 @@ export interface GrahanShantiDeepDive {
     mantra: string;
   }[];
 }
+
+export type ShantiDeepDive = GrahanShantiDeepDive;
 
 export interface UpayParchiDetailedItem {
   index: number;
@@ -1148,26 +1152,40 @@ export function getRemedyDeepDetail(
     };
   }
 
-  // 6. Shanti (दोष व योग शान्ति — विशेषतः ग्रहण योग, कालसर्प, मांगलिक, गुरु-चाण्डाल)
+  // 6. Shanti (विशिष्ट ग्रह दोष / दशा शान्ति — शास्त्रीय विस्तृत निर्णय)
   const isGrahan = p.includes('ग्रहण');
   const isKaalsarp = p.includes('कालसर्प');
   const isMangal = p.includes('मंगल') || p.includes('मांगलिक');
   const isChandal = p.includes('चाण्डाल');
+  const isVish = p.includes('विष');
+  const isAngarak = p.includes('अंगारक');
+  const isShapit = p.includes('शापित');
   const isPitra = p.includes('पितृ');
+  const isNeecha = p.includes('नीच');
 
-  // Deep dive calculations for Grahan Yog
-  let grahanDeep: GrahanShantiDeepDive | undefined = undefined;
+  const sunPlanet = k?.planets?.find((pl) => pl.planet === 'सूर्य');
+  const moonPlanet = k?.planets?.find((pl) => pl.planet === 'चंद्र');
+  const marsPlanet = k?.planets?.find((pl) => pl.planet === 'मंगल');
+  const jupPlanet = k?.planets?.find((pl) => pl.planet === 'गुरु');
+  const satPlanet = k?.planets?.find((pl) => pl.planet === 'शनि');
+  const rahuPlanet = k?.planets?.find((pl) => pl.planet === 'राहु');
+  const ketuPlanet = k?.planets?.find((pl) => pl.planet === 'केतु');
+
+  const sunH = sunPlanet?.house ?? -1;
+  const moonH = moonPlanet?.house ?? -1;
+  const marsH = marsPlanet?.house ?? -1;
+  const jupH = jupPlanet?.house ?? -1;
+  const satH = satPlanet?.house ?? -1;
+  const rahuH = rahuPlanet?.house ?? -1;
+  const ketuH = ketuPlanet?.house ?? -1;
+
+  let shantiDeep: ShantiDeepDive | undefined = undefined;
 
   if (isGrahan) {
-    const sunPlanet = k?.planets?.find((pl) => pl.planet === 'सूर्य');
-    const moonPlanet = k?.planets?.find((pl) => pl.planet === 'चंद्र');
-    const rahuPlanet = k?.planets?.find((pl) => pl.planet === 'राहु');
-    const ketuPlanet = k?.planets?.find((pl) => pl.planet === 'केतु');
-
-    const sunH = sunPlanet?.house ?? -1;
-    const moonH = moonPlanet?.house ?? -1;
-    const rahuH = rahuPlanet?.house ?? -1;
-    const ketuH = ketuPlanet?.house ?? -1;
+    const hasSunRahu = sunH > 0 && sunH === rahuH;
+    const hasSunKetu = sunH > 0 && sunH === ketuH;
+    const hasMoonRahu = moonH > 0 && moonH === rahuH;
+    const hasMoonKetu = moonH > 0 && moonH === ketuH;
 
     let type: 'surya_rahu' | 'surya_ketu' | 'chandra_rahu' | 'chandra_ketu' | 'other' = 'surya_rahu';
     let typeLabel = 'सूर्य-राहु ग्रहण योग (Surya Grahan Yog)';
@@ -1175,49 +1193,51 @@ export function getRemedyDeepDetail(
     let rashi = sunPlanet?.rashi || moonPlanet?.rashi || k?.lagnaRashi || 'मेष';
     let degreeDiff: number | undefined = undefined;
 
-    if (sunH > 0 && sunH === rahuH) {
+    if (hasSunRahu) {
       type = 'surya_rahu';
-      typeLabel = 'सूर्य-राहु ग्रहण योग (आत्मबल व पिता/प्रतिष्ठा ग्रहण)';
+      typeLabel = 'सूर्य-राहु ग्रहण योग (आत्मबल, पिता व प्रतिष्ठा ग्रहण)';
       houseNum = sunH;
       rashi = sunPlanet?.rashi || '';
       degreeDiff = Math.abs((sunPlanet?.degreeInRashi || 10) - (rahuPlanet?.degreeInRashi || 15));
-    } else if (sunH > 0 && sunH === ketuH) {
+    } else if (hasSunKetu) {
       type = 'surya_ketu';
       typeLabel = 'सूर्य-केतु ग्रहण योग (आत्म-संशय व आजीविका अवरोध)';
       houseNum = sunH;
       rashi = sunPlanet?.rashi || '';
       degreeDiff = Math.abs((sunPlanet?.degreeInRashi || 10) - (ketuPlanet?.degreeInRashi || 15));
-    } else if (moonH > 0 && moonH === rahuH) {
+    } else if (hasMoonRahu) {
       type = 'chandra_rahu';
       typeLabel = 'चंद्र-राहु ग्रहण योग (कपालिका दोष — मानसिक तनाव व भ्रम)';
       houseNum = moonH;
       rashi = moonPlanet?.rashi || '';
       degreeDiff = Math.abs((moonPlanet?.degreeInRashi || 12) - (rahuPlanet?.degreeInRashi || 16));
-    } else if (moonH > 0 && moonH === ketuH) {
+    } else if (hasMoonKetu) {
       type = 'chandra_ketu';
-      typeLabel = 'चंद्र-केतु ग्रहण योग (मानसिक विषाद व अकेलापन)';
+      typeLabel = 'चंद्र-केतु ग्रहण योग (मानसिक विषाद व वैराग्य-भ्रम)';
       houseNum = moonH;
       rashi = moonPlanet?.rashi || '';
       degreeDiff = Math.abs((moonPlanet?.degreeInRashi || 12) - (ketuPlanet?.degreeInRashi || 18));
     } else {
-      type = 'surya_rahu';
-      typeLabel = 'सूर्य/चंद्र ग्रहण योग (छाया ग्रह प्रभाव)';
-      degreeDiff = 6.4;
+      type = 'other';
+      typeLabel = 'छाया ग्रह ग्रहण दोष शान्ति संकल्प';
+      houseNum = sunH > 0 ? sunH : 1;
+      rashi = sunPlanet?.rashi || k?.lagnaRashi || '';
+      degreeDiff = undefined;
     }
 
-    const diffVal = degreeDiff !== undefined ? Math.abs(degreeDiff) : 7.5;
+    const diffVal = degreeDiff !== undefined ? Math.abs(degreeDiff) : 8.0;
     let severity: 'अत्यधिक तीव्र' | 'तीव्र' | 'मध्यम' = 'तीव्र';
     let severityDesc = '';
 
-    if (diffVal <= 5) {
+    if (degreeDiff !== undefined && diffVal <= 5) {
       severity = 'अत्यधिक तीव्र';
-      severityDesc = `सूर्य/चंद्र और छाया ग्रह केवल ${diffVal.toFixed(1)}° के सूक्ष्म अंतर पर हैं। यह ९०%+ पूर्ण ग्रहण का रूप है, जिससे जीवन के इस भाव में तीव्र ऊर्जा अवरोध उत्पन्न होता है।`;
-    } else if (diffVal <= 12) {
+      severityDesc = `ग्रह और छाया ग्रह केवल ${diffVal.toFixed(1)}° के अति-सूक्ष्म अंतर पर हैं। यह ९०%+ पूर्ण ग्रहण का रूप है, जिससे जीवन के इस भाव में तीव्र ऊर्जा अवरोध उत्पन्न होता है।`;
+    } else if (degreeDiff !== undefined && diffVal <= 9) {
       severity = 'तीव्र';
       severityDesc = `ग्रह और छाया ग्रह ${diffVal.toFixed(1)}° की निकट युति में हैं। इसके प्रभाव से मानसिक तनाव अथवा कार्यक्षेत्र में बार-बार बनते काम अटकने का योग बनता है।`;
     } else {
       severity = 'मध्यम';
-      severityDesc = `ग्रह एक ही भाव (${houseNum}वें भाव - ${rashi} राशि) में स्थित हैं, जिससे मध्यम छाया प्रभाव बन रहा है। विधिपूर्वक शान्ति से यह पूर्णतः शांत हो जाता है।`;
+      severityDesc = `छाया ग्रह प्रभाव के शमन एवं मानसिक/आत्मिक शांति हेतु विधिपूर्वक वैदिक शान्ति विहित है।`;
     }
 
     const isSurya = type.startsWith('surya');
@@ -1302,7 +1322,8 @@ export function getRemedyDeepDetail(
           { planet: 'महामृत्युंजय', count: '१,२५,००० (सवा लाख) जप', mantra: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥' },
         ];
 
-    grahanDeep = {
+    shantiDeep = {
+      doshCategory: 'grahan',
       doshName: typeLabel,
       grahanType: type,
       grahanTypeLabel: typeLabel,
@@ -1318,40 +1339,231 @@ export function getRemedyDeepDetail(
       sixStepVidhi,
       recommendedJapa,
     };
+  } else if (isKaalsarp) {
+    const rHouse = rahuH > 0 ? rahuH : 1;
+    const kHouse = ketuH > 0 ? ketuH : 7;
+    const KS_TITLES: Record<number, string> = {
+      1: 'अनन्त कालसर्प योग (१-७ अक्ष)',
+      2: 'कुलिक कालसर्प योग (२-८ अक्ष)',
+      3: 'वासुकि कालसर्प योग (३-९ अक्ष)',
+      4: 'शंखपाल कालसर्प योग (४-१० अक्ष)',
+      5: 'पद्म कालसर्प योग (५-११ अक्ष)',
+      6: 'महापद्म कालसर्प योग (६-१२ अक्ष)',
+      7: 'तक्षक कालसर्प योग (७-१ अक्ष)',
+      8: 'कर्कोटक कालसर्प योग (८-२ अक्ष)',
+      9: 'शंखचूड़ कालसर्प योग (९-३ अक्ष)',
+      10: 'घातक कालसर्प योग (१०-४ अक्ष)',
+      11: 'विषधर कालसर्प योग (११-५ अक्ष)',
+      12: 'शेषनाग कालसर्प योग (१२-६ अक्ष)',
+    };
+    const ksName = KS_TITLES[rHouse] || 'कालसर्प योग (राहु-केतु अक्ष बंधन)';
 
-    return {
-      index,
-      bullet,
-      title: p,
-      category: 'shanti',
-      categoryLabel: 'दोष व योग शान्ति विधान',
-      whyReason,
-      benefits: whatBenefits,
-      vidhi: 'यह अनुष्ठान किसी सिद्ध तीर्थ (काशी, उज्जैन, त्र्यंबकेश्वर) या घर पर विद्वान आचार्यों द्वारा विधिपूर्वक ६ चरणों में संपन्न कराया जाता है।',
-      mantra: recommendedJapa[0].mantra,
-      japaCount: recommendedJapa.map((j) => `${j.planet}: ${j.count}`).join(' | '),
-      samagri: 'कांस्य पात्र, सरसों का तेल, सप्तधान्य, मदार/पलाश/दूर्वा/कुश समिधा, हवन सामग्री, पंचामृत, गंगाजल, रुद्राक्ष माला।',
-      precautions: 'अनुष्ठान के दौरान पूर्ण ब्रह्मचर्य, भूमि शयन अथवा सात्विक आहार का पालन करें। मद्य-मांस का पूर्ण त्याग रखें।',
-      shantiDeepDive: grahanDeep,
+    shantiDeep = {
+      doshCategory: 'kaalsarp',
+      doshName: ksName,
+      typeLabel: ksName,
+      houseNum: rHouse,
+      houseName: `${rHouse}वें से ${kHouse}वें भाव अक्ष`,
+      rashi: rahuPlanet?.rashi || '',
+      severity: 'तीव्र',
+      severityDesc: `कुंडली के समस्त ग्रह राहु (${rHouse}वें भाव) और केतु (${kHouse}वें भाव) के मध्य बंधे होने से भाग्योदय व प्रगति में निरंतर रुकावटें आती हैं।`,
+      whyReason: `आपकी जन्मपत्रिका में समस्त शुभ ग्रह राहु और केतु की परिधि में आ जाने से कालसर्प योग बन रहा है। इसके प्रभाव से व्यक्ति अथक परिश्रम के उपरांत भी अपेक्षित फल से वंचित रहता है, विद्या, व्यापार अथवा वैवाहिक जीवन में अनपेक्षित विलंब होता है तथा मानसिक तनाव बना रहता है।`,
+      whatBenefits: [
+        'भाग्योदय की समस्त गुप्त व प्रत्यक्ष बाधाओं का स्थायी निवारण',
+        'व्यापार, आजीविका व धन संचय में निरंतर वृद्धि एवं स्थिरता',
+        'संतान सुख, विद्या लाभ एवं मानसिक शांति की प्राप्ति',
+        'अज्ञात भय, बुरे स्वप्न एवं सर्प भय से पूर्ण मुक्ति',
+        'पारिवारिक जीवन में सद्भाव व सुख-शांति का स्थायी वास',
+      ],
+      lifeImpact: [
+        'सफलता के ऐन वक्त पर काम का बिगड़ जाना',
+        'कड़ी मेहनत के बाद भी उचित मान-सम्मान न मिलना',
+        'समय-समय पर भारी आर्थिक अस्थिरता या कर्ज़ की स्थिति',
+      ],
+      sixStepVidhi: [
+        { stepNo: 1, stepName: 'प्रायश्चित संकल्प व तीर्थ स्नान', stepVidhi: 'त्र्यंबकेश्वर, उज्जैन अथवा गंगा तट पर यजमान द्वारा नाम, गोत्र व कालसर्प मुक्ति का वैदिक संकल्प।' },
+        { stepNo: 2, stepName: 'नागबलि व नारायण पूजन', stepVidhi: 'स्वर्ण/चांदी के नाग-नागिन का निर्माण, प्राण-प्रतिष्ठा एवं षोडशोपचार विधिवत पूजन।' },
+        { stepNo: 3, stepName: 'एकादशवार रुद्राभिषेक', stepVidhi: 'काल के नियंता देवाधिदेव महादेव का पंचामृत, गन्ने के रस व भस्म से रुद्राष्टाध्यायी युक्त महाभिषेक।' },
+        { stepNo: 4, stepName: 'राहु-केतु वैदिक मंत्र अनुष्ठान', stepVidhi: 'राहु का ७२,००० जप एवं केतु का ६८,००० जप कलियुग चतुर्गुण विधान से विद्वान आचार्यों द्वारा संपन्न।' },
+        { stepNo: 5, stepName: 'दशांश हवन एवं आहुति', stepVidhi: 'दूर्वा, कुश, काले तिल, जौ व शुद्ध घृत से राहु-केतु एवं नवग्रह समिधा हवन।' },
+        { stepNo: 6, stepName: 'चांदी के नाग-नागिन विसर्जन व गोदान', stepVidhi: 'पूजित नाग-नागिन को पवित्र नदी/कुंड में विसर्जन, ब्राह्मण भोजन, वस्त्र व दक्षिणा अर्पण।' },
+      ],
+      recommendedJapa: [
+        { planet: 'राहु देव', count: '७२,००० जप', mantra: 'ॐ भ्रां भ्रीं भ्रौं सः राहवे नमः' },
+        { planet: 'केतु देव', count: '६८,००० जप', mantra: 'ॐ स्रां स्रीं स्रौं सः केतवे नमः' },
+        { planet: 'महामृत्युंजय', count: '१,२५,००० जप', mantra: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥' },
+      ],
+    };
+  } else if (isMangal) {
+    const mHouse = marsH > 0 ? marsH : 1;
+    shantiDeep = {
+      doshCategory: 'manglik',
+      doshName: `मांगलिक दोष शान्ति (${mHouse}वें भाव भौम प्रभाव)`,
+      typeLabel: `मांगलिक दोष शान्ति एवं मंगल भात पूजा`,
+      houseNum: mHouse,
+      houseName: HOUSE_NAMES[mHouse] || `${mHouse}वां भाव`,
+      rashi: marsPlanet?.rashi || '',
+      severity: 'तीव्र',
+      severityDesc: `कुंडली के ${mHouse}वें भाव में मंगल की स्थिति से दांपत्य, स्वभाव व रक्त-उग्रता में प्रतिकूल प्रभाव रहता है।`,
+      whyReason: `आपकी जन्मपत्रिका के ${mHouse}वें भाव में मंगल देव स्थित होने से मांगलिक योग बन रहा है। मंगल तेज, पराक्रम व अग्नि तत्व के अधिपति हैं। जब यह लग्न, चतुर्थ, सप्तम, अष्टम या द्वादश भाव में होते हैं, तो दांपत्य जीवन में वैचारिक मतभेद, विवाह में विलंब, क्रोध व रक्त विकार की संभावना बनती है।`,
+      whatBenefits: [
+        'विवाह में आ रही समस्त अड़चनों, विलंब व दोषों का शमन',
+        'दांपत्य जीवन में प्रेम, मधुरता एवं दीर्घायु की प्राप्ति',
+        'उग्र स्वभाव, क्रोध एवं मानसिक उत्तेजना में शांति',
+        'भूमि, भवन, वाहन एवं अचल संपत्ति की प्राप्ति में सुगमता',
+        'रक्त विकार, दुर्घटना एवं शल्य-चिकित्सा (Surgery) भय से सुरक्षा',
+      ],
+      lifeImpact: [
+        'छोटी-छोटी बातों पर उग्र विवाद या क्रोध आना',
+        'विवाह योग्य आयु में योग्य रिश्ते मिलने में बाधा',
+        'रक्तचाप अथवा बार-बार चोट-चपेट लगना',
+      ],
+      sixStepVidhi: [
+        { stepNo: 1, stepName: 'संकल्प एवं भौम पूजन', stepVidhi: 'मंगलवार के दिन लाल पुष्प, कुमकुम, अक्षत लेकर मंगल देव की प्रसन्नता व विवाह सुख हेतु संकल्प।' },
+        { stepNo: 2, stepName: 'मंगल भात पूजा (अंगारेश्वर/उज्जैन विधान)', stepVidhi: 'शिवलिंग स्वरूप मंगल देव पर पके हुए चावल (भात) से शीतलीकरण अभिषेक, दही-दूध अर्पण।' },
+        { stepNo: 3, stepName: 'ऋणमोचक मंगल स्तोत्र पाठ', stepVidhi: 'भगवान कार्तिकेय एवं मंगल देव के २१ पाठों द्वारा मंगल दोष व कर्ज बाधा का निवारण।' },
+        { stepNo: 4, stepName: 'मंगल बीज मंत्र जप (४०,००० संख्या)', stepVidhi: 'ॐ क्रां क्रीं क्रौं सः भौमाय नमः मंत्र का कलियुग विधान अनुसार चालीस हजार जप।' },
+        { stepNo: 5, stepName: 'खदिर समिधा दशांश हवन', stepVidhi: 'खैर (खदिर) की समिधा, लाल चंदन, घृत, गुड़ व तिल से दशांश हवन संपन्न करना।' },
+        { stepNo: 6, stepName: 'ताम्र पात्र, मसूर व लाल वस्त्र दान', stepVidhi: 'तांबे का लोटा, सवा किलो लाल मसूर दाल, गुड़, लाल वस्त्र व दक्षिणा ब्राह्मण को अर्पण।' },
+      ],
+      recommendedJapa: [
+        { planet: 'मंगल देव (वैदिक)', count: '४०,००० जप', mantra: 'ॐ क्रां क्रीं क्रौं सः भौमाय नमः' },
+        { planet: 'अंगारक गायत्री', count: '१०,००० जप', mantra: 'ॐ अंगारकाय विद्महे शक्तिहस्ताय धीमहि तन्नो भौमः प्रचोदयात्॥' },
+        { planet: 'हनुमान साधना', count: 'नित्य पाठ', mantra: 'श्री सुन्दरकाण्ड एवं हनुमान चालीसा' },
+      ],
+    };
+  } else if (isChandal) {
+    const jHouse = jupH > 0 ? jupH : 1;
+    shantiDeep = {
+      doshCategory: 'guru_chandal',
+      doshName: 'गुरु-चाण्डाल योग शान्ति (बृहस्पति-राहु युति)',
+      typeLabel: 'गुरु-चाण्डाल योग शान्ति एवं श्री हरि पूजन',
+      houseNum: jHouse,
+      houseName: HOUSE_NAMES[jHouse] || `${jHouse}वां भाव`,
+      rashi: jupPlanet?.rashi || '',
+      severity: 'तीव्र',
+      severityDesc: `कुंडली के ${jHouse}वें भाव में देवगुरु बृहस्पति के साथ छाया ग्रह राहु की युति से ज्ञान, विवेक व संतान सुख पर ग्रहण लगता है।`,
+      whyReason: `आपकी कुंडली में देवगुरु बृहस्पति के साथ राहु की युति होने से चाण्डाल योग बन रहा है। गुरु धर्म, विवेक, ज्ञान, संतान व समृद्धि के कारक हैं। राहु के प्रभाव से व्यक्ति के निर्णयों में भ्रम, बड़े-बुजुर्गों से मतभेद, विद्या व संतान प्राप्ति में अड़चनें आती हैं।`,
+      whatBenefits: [
+        'सटीक निर्णय क्षमता, प्रज्ञा व बौद्धिक स्पष्टता की पुनर्प्राप्ति',
+        'संतान सुख, उच्च शिक्षा एवं प्रतियोगी परीक्षाओं में सफलता',
+        'समाज में मान-सम्मान, पद-प्रतिष्ठा एवं गुरुजनों का आशीर्वाद',
+        'आर्थिक हानियों व व्यर्थ के निवेशों पर पूर्ण रोक',
+        'धार्मिक कार्यों में रुचि एवं आध्यात्मिक शांति का उदय',
+      ],
+      lifeImpact: [
+        'ज्ञान होने के बावजूद गलत निर्णय ले लेना',
+        'संतान से चिंता या विद्या में बार-बार भटकाव',
+        'बड़ों के प्रति कभी-कभी अनादर का भाव उत्पन्न होना',
+      ],
+      sixStepVidhi: [
+        { stepNo: 1, stepName: 'गुरु-राहु शुद्धि संकल्प', stepVidhi: 'गुरुवार को पीले पुष्प व गंगाजल लेकर चाण्डाल दोष शमन एवं सात्विक विवेक हेतु संकल्प।' },
+        { stepNo: 2, stepName: 'श्री हरि विष्णु व देवगुरु पूजन', stepVidhi: 'शालिग्राम जी अथवा विष्णु प्रतिमा का पंचामृत अभिषेक, तुलसी दल व पीले वस्त्र अर्पण।' },
+        { stepNo: 3, stepName: 'श्रीविष्णुसहस्रनाम पारायण', stepVidhi: 'विद्वान ब्राह्मणों द्वारा विष्णुसहस्रनाम एवं पुरुषसूक्त के ११ सस्वर पाठ।' },
+        { stepNo: 4, stepName: 'गुरु व राहु मंत्र जप', stepVidhi: 'गुरु बीज मंत्र का ७६,००० जप एवं राहु मंत्र का ७२,००० जप कलियुग चतुर्गुण विधान से।' },
+        { stepNo: 5, stepName: 'पीपल समिधा दशांश हवन', stepVidhi: 'पीपल की समिधा, चने की दाल, हल्दी, शुद्ध घृत व खीर से दशांश हवन संपन्न करना।' },
+        { stepNo: 6, stepName: 'पीत वस्त्र, चने की दाल व स्वर्ण दान', stepVidhi: 'पीले वस्त्र, चना दाल, गुड़, हल्दी, पञ्चरत्न/स्वर्ण दक्षिणा योग्य वेदपाठी विप्र को अर्पण।' },
+      ],
+      recommendedJapa: [
+        { planet: 'गुरु देव', count: '७६,००० जप', mantra: 'ॐ ग्रां ग्रीं ग्रौं सः गुरवे नमः' },
+        { planet: 'राहु देव', count: '७२,००० जप', mantra: 'ॐ भ्रां भ्रीं भ्रौं सः राहवे नमः' },
+        { planet: 'विष्णु स्तुति', count: '११ पाठ', mantra: 'ॐ नमो भगवते वासुदेवाय' },
+      ],
+    };
+  } else if (isVish) {
+    const vHouse = moonH > 0 ? moonH : 1;
+    shantiDeep = {
+      doshCategory: 'vish_yog',
+      doshName: 'विष योग शान्ति (शनि-चंद्र युति)',
+      typeLabel: 'विष योग शान्ति एवं एकादशवार रुद्राभिषेक',
+      houseNum: vHouse,
+      houseName: HOUSE_NAMES[vHouse] || `${vHouse}वां भाव`,
+      rashi: moonPlanet?.rashi || '',
+      severity: 'तीव्र',
+      severityDesc: `कुंडली के ${vHouse}वें भाव में शनि और चंद्रमा की युति से मन में अवसाद, निराशावाद व विलंब का योग बनता है।`,
+      whyReason: `चंद्रमा मन के स्वामी हैं और शनि अंधकार, मंदता व वैराग्य के कारक हैं। जब दोनों एक साथ बैठते हैं तो इसे 'विष योग' कहा जाता है। इससे व्यक्ति अत्यधिक ओवरथिंकिंग, निराशा, अकेलापन, माता को कष्ट एवं बनते हुए कार्यों में ऐन वक्त पर विलंब का सामना करता है।`,
+      whatBenefits: [
+        'मानसिक अवसाद (Depression), नकारात्मक विचारों व घबराहट से स्थायी मुक्ति',
+        'मन में अपार शांति, सकारात्मकता, उत्साह एवं एकाग्रता का संचार',
+        'माता के स्वास्थ्य में सुधार व माता से सुख-आशीर्वाद की प्राप्ति',
+        'कार्यक्षेत्र में निरंतर हो रहे विलंब व रुकावटों का अंत',
+        'पारिवारिक व व्यक्तिगत जीवन में स्थायित्व एवं आत्मविश्वास',
+      ],
+      lifeImpact: [
+        'बिना कारण मन उदास रहना या अकेले रहने की इच्छा होना',
+        'रात में देर तक नींद न आना और नकारात्मक विचार चलना',
+        'किसी भी काम में बार-बार अंतिम क्षणों में रुकावट आना',
+      ],
+      sixStepVidhi: [
+        { stepNo: 1, stepName: 'विष योग मुक्ति संकल्प', stepVidhi: 'सोमवार या शनिवार को गंगाजल हाथ में लेकर शिव-पार्वती सम्मुख मानसिक शांति व विष योग निवारण संकल्प।' },
+        { stepNo: 2, stepName: 'महादेव का एकादशवार रुद्राभिषेक', stepVidhi: 'कच्चे गाय के दूध, गंगाजल, शहद व गन्ने के रस से नमक-चमक युक्त रुद्राष्टाध्यायी के ११ पाठों द्वारा अभिषेक।' },
+        { stepNo: 3, stepName: 'शिव सहस्रनाम व मृत्युंजय जप', stepVidhi: 'भगवान भोलेनाथ के सहस्रनाम पाठ एवं महामृत्युंजय मंत्र का संपुट जप विद्वान आचार्यों द्वारा।' },
+        { stepNo: 4, stepName: 'शनि व चंद्र मंत्र जप संख्या', stepVidhi: 'शनि देव का ९२,००० जप एवं चंद्र देव का ४४,००० जप कलियुग चतुर्गुण विधान अनुसार संपन्न करना।' },
+        { stepNo: 5, stepName: 'शमी व पलाश समिधा हवन', stepVidhi: 'शनि हेतु शमी व चंद्र हेतु पलाश समिधा, काले तिल, चावल, घृत व खीर से दशांश हवन।' },
+        { stepNo: 6, stepName: 'छाया दान व विप्र सेवा', stepVidhi: 'कांस्य पात्र में सरसों तेल छाया दान, काला व सफेद वस्त्र दान, खीर का प्रसाद वितरण।' },
+      ],
+      recommendedJapa: [
+        { planet: 'शनि देव', count: '९२,००० जप', mantra: 'ॐ शं शनैश्चराय नमः' },
+        { planet: 'चंद्र देव', count: '४४,००० जप', mantra: 'ॐ सों सोमाय नमः' },
+        { planet: 'महामृत्युंजय', count: '१,२५,००० जप', mantra: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥' },
+      ],
+    };
+  } else {
+    // Default Authentic Vedic Remedy: Mahadasha & Navagraha Shanti
+    const mahaLord = k?.mahadasha || 'नवग्रह';
+    const mahaSpec = PLANET_REMEDY[mahaLord] || PLANET_REMEDY['गुरु'];
+    shantiDeep = {
+      doshCategory: 'mahadasha_navgrah',
+      doshName: `${mahaLord} महादशा एवं नवग्रह शान्ति`,
+      typeLabel: `${mahaLord} महादशा अनुकूलन एवं नवग्रह मंडल हवन`,
+      houseNum: 1,
+      houseName: 'समस्त भाव व कुण्डली आधार',
+      rashi: k?.lagnaRashi || 'मेष',
+      severity: 'सौम्य / अनुकूल',
+      severityDesc: `कुंडली में वर्तमान चल रही ${mahaLord} महादशा के अनुकूल फल प्राप्त करने एवं नवग्रहों की शुभ रश्मियां जाग्रत करने हेतु शास्त्रीय विधान।`,
+      whyReason: `जन्मपत्रिका में दशा काल का सर्वोपरि महत्व है। वर्तमान में आपकी पत्रिका में **${mahaLord} की महादशा** सक्रिय है। जातक के जीवन की समस्त घटनाएं, सुख-दुःख, आरोग्य व धन लाभ वर्तमान दशा स्वामी ग्रह के आधीन होते हैं। अतः दशा नाथ की अनुकूलता एवं नवग्रहों के सामंजस्य हेतु यह शान्ति अनुष्ठान सर्वश्रेष्ठ है।`,
+      whatBenefits: [
+        `वर्तमान ${mahaLord} महादशा के अनिष्ट फलों का शमन एवं शुभ परिणामों में चमत्कारिक वृद्धि`,
+        'समस्त नवग्रहों की अनुकूलता से जीवन के सभी क्षेत्रों में स्थिरता व शांति',
+        'आरोग्य लाभ, मानसिक तनाव व पारिवारिक कलह से पूर्ण मुक्ति',
+        'आजीविका, नौकरी, पदोन्नति एवं व्यापारिक लेन-देन में निरंतर प्रगति',
+        'घर में मांगलिक कार्यों का मार्ग प्रशस्त एवं इष्टदेव की कृपा प्राप्ति',
+      ],
+      lifeImpact: [
+        'वर्तमान समय में बनते कार्यों में अप्रत्याशित विलंब या बाधाएं',
+        'दशा स्वामी ग्रह की निर्बलता के कारण मन में चिंता या स्वास्थ्य उतार-चढ़ाव',
+        'पारिवारिक या आर्थिक मामलों में अनावश्यक खर्च व तनाव',
+      ],
+      sixStepVidhi: [
+        { stepNo: 1, stepName: 'वैदिक संकल्प (Sankalp)', stepVidhi: 'शुभ दिन (दशा स्वामी वार अथवा पूर्णिमा/अमावस्या) पर हाथ में जल, अक्षत व पुष्प लेकर यजमान का नाम, गोत्र व दशा-शांति संकल्प।' },
+        { stepNo: 2, stepName: 'नवग्रह मंडल व पीठ स्थापन', stepVidhi: 'सप्तधान्य पर नवग्रह मंडल, अधिदेवता, प्रत्यधिदेवता, पंचलोकपाल एवं वास्तु पीठ का प्रामाणिक पूजन।' },
+        { stepNo: 3, stepName: 'एकादशवार रुद्राष्टाध्यायी अभिषेक', stepVidhi: 'समस्त ग्रहों के अधिपति भगवान शिव का गाय के दूध, गंगाजल, शहद व गन्ने के रस से महाभिषेक।' },
+        { stepNo: 4, stepName: `${mahaLord} महादशा नाथ वैदिक मंत्र जप`, stepVidhi: `${mahaLord} के वैदिक/बीज मंत्र का कलियुग चतुर्गुण संख्या में विद्वान ब्राह्मणों द्वारा जप अनुष्ठान।` },
+        { stepNo: 5, stepName: 'नवग्रह समिधा दशांश हवन', stepVidhi: 'नवग्रहों की ९ समिधाओं (मदार, पलाश, खदिर, अपामार्ग, पीपल, गूलर, शमी, दूर्वा, कुश) से दशांश आहुति व पूर्णाहूति।' },
+        { stepNo: 6, stepName: 'ब्राह्मण भोजन, गोसेवा व दक्षिणा', stepVidhi: 'योग्य वेदपाठी ब्राह्मणों को भोजन, वस्त्र, दक्षिणा अर्पण एवं गौमाता को गुड़-रोटी खिलाकर आशीर्वाद ग्रहण।' },
+      ],
+      recommendedJapa: [
+        { planet: `${mahaLord} (दशा नाथ)`, count: `${mahaSpec.japaCount}`, mantra: mahaSpec.mantra },
+        { planet: 'नवग्रह एकाक्षरी', count: '२१,००० जप', mantra: 'ॐ ब्रह्मा मुरारिस्त्रिपुरान्तकारी भानुः शशी भूमिसुतो बुधश्च। गुरुश्च शुक्रः शनिराहुकेतवः सर्वे ग्रहाः शान्तिकरा भवन्तु॥' },
+        { planet: 'महामृत्युंजय', count: '२१,००० जप', mantra: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥' },
+      ],
     };
   }
 
-  // Other shantis (Kaalsarp, Manglik, Pitra, General)
   return {
     index,
     bullet,
     title: p,
     category: 'shanti',
-    categoryLabel: 'शास्त्रीय शान्ति अनुष्ठान',
-    whyReason: `आपकी जन्मपत्रिका में चल रही ग्रह स्थिति अथवा मुख्य योग जनित दोष के निवारणार्थ यह शान्ति विधान आवश्यक है। इससे ग्रहों की प्रतिकूल रश्मियां शांत होकर अनुकूल परिणाम देने लगती हैं।`,
-    benefits: [
-      'जीवन में निरंतर आ रहे अवरोधों, विलंब व संघर्षों का स्थायी शमन',
-      'भाग्य का पूर्ण सहयोग एवं मानसिक शांति की प्राप्ति',
-      'परिवार में समृद्धि, स्वास्थ्य एवं मांगलिक कार्यों का मार्ग प्रशस्त',
-    ],
-    vidhi: 'विद्वान ब्राह्मण द्वारा संकल्प, नवग्रह पूजन, रुद्राभिषेक, वैदिक मंत्र जप (कलियुग चतुर्गुण संख्या), दशांश हवन एवं दान पूर्वक संपन्न करें।',
-    samagri: 'हवन सामग्री, पंचामृत, समिधा, वस्त्र, तिल, जौ, घृत एवं दक्षिणा।',
-    precautions: 'अनुष्ठान के समय सात्विक भाव रखें व इष्टदेव पर पूर्ण श्रद्धा बनाए रखें।',
+    categoryLabel: 'विशिष्ट दोष व ग्रह शान्ति विधान',
+    whyReason: shantiDeep!.whyReason,
+    benefits: shantiDeep!.whatBenefits,
+    vidhi: 'यह अनुष्ठान किसी सिद्ध तीर्थ (काशी, उज्जैन, त्र्यंबकेश्वर) या घर पर विद्वान आचार्यों द्वारा विधिपूर्वक ६ चरणों में संपन्न कराया जाता है।',
+    mantra: shantiDeep!.recommendedJapa[0]?.mantra || 'ॐ नमो भगवते वासुदेवाय',
+    japaCount: shantiDeep!.recommendedJapa.map((j) => `${j.planet}: ${j.count}`).join(' | '),
+    samagri: 'कांस्य पात्र, सरसों का तेल/तिल, नवग्रह समिधा (मदार/पलाश/शमी/दूर्वा/कुश), हवन सामग्री, पंचामृत, गंगाजल, रुद्राक्ष माला।',
+    precautions: 'अनुष्ठान के दौरान पूर्ण ब्रह्मचर्य, भूमि शयन अथवा सात्विक आहार का पालन करें। मद्य-मांस का पूर्ण त्याग रखें।',
+    shantiDeepDive: shantiDeep,
   };
 }
 
@@ -1407,10 +1619,12 @@ export function buildDetailedParchiGuideText(
     if (item.shantiDeepDive) {
       const g = item.shantiDeepDive;
       lines.push(``);
-      lines.push(`🔱 **ग्रहण योग सूक्ष्म निर्णय एवं ६-चरणीय शान्ति विधान:**`);
-      lines.push(`• **दोष का स्वरूप:** ${g.grahanTypeLabel}`);
-      lines.push(`• **भाव व राशि:** ${g.houseName} (${g.rashi} राशि)`);
-      lines.push(`• **ग्रहण योग की तीव्रता:** **${g.severity}** (${g.severityDesc})`);
+      lines.push(`🔱 **${g.doshName} — सूक्ष्म निर्णय एवं ६-चरणीय शान्ति विधान:**`);
+      lines.push(`• **दोष / योग का स्वरूप:** ${g.typeLabel || g.grahanTypeLabel || g.doshName}`);
+      if (g.houseName) {
+        lines.push(`• **भाव व स्थिति:** ${g.houseName} ${g.rashi ? `(${g.rashi} राशि)` : ''}`);
+      }
+      lines.push(`• **तीव्रता व प्रभाव:** **${g.severity}** (${g.severityDesc})`);
       lines.push(`• **६-चरणीय पूर्ण शान्ति विधि:**`);
       g.sixStepVidhi.forEach((s) => {
         lines.push(`  ${s.stepNo}. **${s.stepName}:** ${s.stepVidhi}`);
@@ -1831,7 +2045,7 @@ export function generateTraditionalUpayParchi(
   }
 
   // =========================================================================
-  // POINT 6: विशिष्ट ग्रह दोष / योग शान्ति (Deep Conjunction & Orb Analysis)
+  // POINT 6: विशिष्ट ग्रह दोष / योग शान्ति (Strict Vedic Mathematical Calculation)
   // =========================================================================
   const sunH = getHouse('सूर्य');
   const moonH = getHouse('चंद्र');
@@ -1841,12 +2055,28 @@ export function generateTraditionalUpayParchi(
   const rahuH = getHouse('राहु');
   const ketuH = getHouse('केतु');
 
-  const isConjunctWithinOrb = (p1?: PlanetPosition, p2?: PlanetPosition, maxOrb = 12) => {
-    if (!p1 || !p2 || !p1.house || !p2.house || p1.house <= 0 || p1.house !== p2.house) return false;
-    return Math.abs(p1.degreeInRashi - p2.degreeInRashi) <= maxOrb;
-  };
+  // Strict Classical Grahan Yoga Checks (Deeptaamsha Orb <= 9.0° in same house)
+  const isSuryaRahuGrahan = Boolean(
+    sunP && rahuP && sunP.house > 0 && sunP.house === rahuP.house &&
+    Math.abs(sunP.degreeInRashi - rahuP.degreeInRashi) <= 9.0
+  );
+  const isSuryaKetuGrahan = Boolean(
+    sunP && ketuP && sunP.house > 0 && sunP.house === ketuP.house &&
+    Math.abs(sunP.degreeInRashi - ketuP.degreeInRashi) <= 9.0
+  );
+  const isChandraRahuGrahan = Boolean(
+    moonP && rahuP && moonP.house > 0 && moonP.house === rahuP.house &&
+    Math.abs(moonP.degreeInRashi - rahuP.degreeInRashi) <= 9.0
+  );
+  const isChandraKetuGrahan = Boolean(
+    moonP && ketuP && moonP.house > 0 && moonP.house === ketuP.house &&
+    Math.abs(moonP.degreeInRashi - ketuP.degreeInRashi) <= 9.0
+  );
 
-  // Check Kaal Sarp Yoga
+  const hasSuryaGrahan = isSuryaRahuGrahan || isSuryaKetuGrahan;
+  const hasChandraGrahan = isChandraRahuGrahan || isChandraKetuGrahan;
+
+  // Check Kaal Sarp Yoga: All 7 non-node planets strictly between Rahu & Ketu
   let isKaalSarp = false;
   if (rahuP && ketuP) {
     const nonNodes = planets.filter((p) => !p.planet.includes('राहु') && !p.planet.includes('केतु'));
@@ -1854,63 +2084,73 @@ export function generateTraditionalUpayParchi(
     const kDeg = ketuP.degree;
     const arc = ((kDeg - rDeg) % 360 + 360) % 360;
     const onArc = nonNodes.map((p) => (((p.degree - rDeg) % 360 + 360) % 360) <= arc);
-    if (onArc.every(Boolean) || onArc.every((x) => !x)) {
+    if (nonNodes.length >= 7 && (onArc.every(Boolean) || onArc.every((x) => !x))) {
       isKaalSarp = true;
     }
   }
 
-  const hasGrahanYog =
-    isConjunctWithinOrb(sunP, rahuP, 14) ||
-    isConjunctWithinOrb(sunP, ketuP, 14) ||
-    isConjunctWithinOrb(moonP, rahuP, 14) ||
-    isConjunctWithinOrb(moonP, ketuP, 14);
-
   let point6 = `${maha} महादशा एवं नवग्रह शान्ति करावें।`;
   let detectedDoshaYoga = `${maha} महादशा एवं नवग्रह शान्ति`;
-  let shantiReason = `वर्तमान में चल रही ${maha} महादशा के अनुकूल फल प्राप्त करने हेतु नवग्रह हवन एवं रुद्राभिषेक करावें।`;
+  let shantiReason = `वर्तमान में चल रही ${maha} महादशा के अनुकूल फल प्राप्त करने, जीवन में स्थिरता एवं आरोग्य वृद्धि हेतु नवग्रह हवन एवं रुद्राभिषेक करावें।`;
 
   if (isKaalSarp) {
     point6 = 'कालसर्प योग शान्ति एवं नागबलि / रुद्राभिषेक करावें।';
     detectedDoshaYoga = 'कालसर्प योग (राहु-केतु अक्ष बंधन)';
     shantiReason = 'कुंडली के समस्त ग्रह राहु और केतु के मध्य बंधे होने से भाग्योदय में रुकावट आती है, अतः नागबलि/रुद्राभिषेक आवश्यक है।';
-  } else if (hasGrahanYog) {
-    const isSurya = isConjunctWithinOrb(sunP, rahuP) || isConjunctWithinOrb(sunP, ketuP);
-    point6 = isSurya
-      ? 'सूर्य-राहु ग्रहण योग शान्ति एवं महामृत्युंजय जप करावें।'
-      : 'चंद्र-राहु ग्रहण योग (कपालिका) शान्ति करावें।';
-    detectedDoshaYoga = isSurya ? 'सूर्य-राहु ग्रहण योग' : 'चंद्र-राहु ग्रहण योग';
-    shantiReason = isSurya
-      ? 'सूर्य के साथ छाया ग्रह की निकट युति से मान-सम्मान व पिता/आरोग्य बाधा बनती है; इसका वैदिक जप-हवन अनिवार्य है।'
-      : 'चंद्रमा के साथ छाया ग्रह से अत्यधिक मानसिक तनाव, अनिद्रा व भय रहता है; इसकी शांति से पूर्ण मानसिक शांति मिलती है।';
-  } else if (jupH > 0 && (jupH === rahuH || jupH === ketuH)) {
+  } else if (hasSuryaGrahan) {
+    if (isSuryaRahuGrahan) {
+      const diffDeg = Math.abs(sunP!.degreeInRashi - rahuP!.degreeInRashi).toFixed(1);
+      point6 = 'सूर्य-राहु ग्रहण योग शान्ति एवं महामृत्युंजय जप करावें।';
+      detectedDoshaYoga = 'सूर्य-राहु ग्रहण योग';
+      shantiReason = `कुंडली के ${sunH}वें भाव में सूर्य के साथ राहु की ${diffDeg}° निकट युति से मान-सम्मान व पिता/आरॉग्य में बाधा बनती है; इसका वैदिक जप-हवन अनिवार्य है।`;
+    } else {
+      const diffDeg = Math.abs(sunP!.degreeInRashi - ketuP!.degreeInRashi).toFixed(1);
+      point6 = 'सूर्य-केतु ग्रहण योग शान्ति एवं महामृत्युंजय जप करावें।';
+      detectedDoshaYoga = 'सूर्य-केतु ग्रहण योग';
+      shantiReason = `कुंडली के ${sunH}वें भाव में सूर्य के साथ केतु की ${diffDeg}° निकट युति से आत्म-संशय व आजीविका अवरोध बनता है; इसका वैदिक जप-हवन अनिवार्य है।`;
+    }
+  } else if (hasChandraGrahan) {
+    if (isChandraRahuGrahan) {
+      const diffDeg = Math.abs(moonP!.degreeInRashi - rahuP!.degreeInRashi).toFixed(1);
+      point6 = 'चंद्र-राहु ग्रहण योग (कपालिका दोष) शान्ति करावें।';
+      detectedDoshaYoga = 'चंद्र-राहु ग्रहण योग';
+      shantiReason = `कुंडली के ${moonH}वें भाव में चंद्रमा के साथ राहु की ${diffDeg}° निकट युति से अत्यधिक मानसिक तनाव, अनिद्रा व भय रहता है; इसकी शांति से पूर्ण मानसिक शांति मिलती है।`;
+    } else {
+      const diffDeg = Math.abs(moonP!.degreeInRashi - ketuP!.degreeInRashi).toFixed(1);
+      point6 = 'चंद्र-केतु ग्रहण योग शान्ति एवं शिव रुद्राभिषेक करावें।';
+      detectedDoshaYoga = 'चंद्र-केतु ग्रहण योग';
+      shantiReason = `कुंडली के ${moonH}वें भाव में चंद्रमा के साथ केतु की ${diffDeg}° निकट युति से मानसिक विषाद व वैराग्य-भ्रम बनता है; भगवान शिव की शांति से मन स्थिर होता है।`;
+    }
+  } else if (jupH > 0 && rahuH > 0 && jupH === rahuH && Math.abs(getDegInRashi('गुरु') - getDegInRashi('राहु')) <= 10.0) {
     point6 = 'गुरु-चाण्डाल योग शान्ति एवं श्री हरि पूजन करावें।';
     detectedDoshaYoga = 'गुरु-चाण्डाल योग (गुरु-राहु युति)';
-    shantiReason = 'बृहस्पति के साथ छाया ग्रह के प्रभाव से निर्णय भ्रम, विद्या व संतान चिंता रहती है; गुरु शांति श्रेयस्कर है।';
-  } else if (marsH > 0 && (marsH === rahuH || marsH === ketuH)) {
+    shantiReason = `कुंडली के ${jupH}वें भाव में बृहस्पति के साथ राहु की युति से निर्णय भ्रम व विद्या/संतान चिंता रहती है; गुरु शांति श्रेयस्कर है।`;
+  } else if (marsH > 0 && rahuH > 0 && marsH === rahuH && Math.abs(getDegInRashi('मंगल') - getDegInRashi('राहु')) <= 10.0) {
     point6 = 'अंगारक योग शान्ति एवं बटुक भैरव साधना करावें।';
     detectedDoshaYoga = 'अंगारक योग (मंगल-राहु युति)';
-    shantiReason = 'मंगल और राहु की युति से उग्रता, रक्त विकार व दुर्घटना भय रहता है; अंगारक शांति से जीवन सुरक्षित होता है।';
-  } else if (satH > 0 && satH === moonH) {
+    shantiReason = `कुंडली के ${marsH}वें भाव में मंगल और राहु की युति से उग्रता व रक्त विकार भय रहता है; अंगारक शांति से जीवन सुरक्षित होता है।`;
+  } else if (satH > 0 && moonH > 0 && satH === moonH && Math.abs(getDegInRashi('शनि') - getDegInRashi('चंद्र')) <= 10.0) {
     point6 = 'विष योग शान्ति एवं एकादशवार रुद्राभिषेक करावें।';
     detectedDoshaYoga = 'विष योग (शनि-चंद्र युति)';
-    shantiReason = 'शनि-चंद्र युति से निराशावाद, अवसाद व कार्य में विलंब होता है; भगवान शिव का रुद्राभिषेक परम कल्याणकारी है।';
-  } else if (satH > 0 && (satH === rahuH || satH === ketuH)) {
+    shantiReason = `कुंडली के ${moonH}वें भाव में शनि-चंद्र की युति से निराशावाद, अवसाद व कार्य में विलंब होता है; भगवान शिव का रुद्राभिषेक परम कल्याणकारी है।`;
+  } else if (satH > 0 && rahuH > 0 && satH === rahuH && Math.abs(getDegInRashi('शनि') - getDegInRashi('राहु')) <= 10.0) {
     point6 = 'शापित दोष शान्ति एवं गया श्राद्ध / तर्पण करावें।';
     detectedDoshaYoga = 'शनि-राहु शापित योग';
-    shantiReason = 'पूर्व जन्म के पितृ ऋण व शापित योग निवारण हेतु गया जी अथवा त्र्यंबकेश्वर में तर्पण-शांति आवश्यक है।';
-  } else if (sunH > 0 && sunH === satH) {
+    shantiReason = `कुंडली के ${satH}वें भाव में शनि-राहु की युति से पूर्व जन्म के पितृ ऋण व शापित योग बनता है; इसके निवारण हेतु तर्पण-शांति आवश्यक है।`;
+  } else if (sunH > 0 && satH > 0 && sunH === satH && Math.abs(getDegInRashi('सूर्य') - getDegInRashi('शनि')) <= 10.0) {
     point6 = 'पितृ दोष शान्ति एवं नारायण बलि करावें।';
     detectedDoshaYoga = 'सूर्य-शनि पितृ दोष संकेत';
-    shantiReason = 'सूर्य और शनि परस्पर परम शत्रु हैं; इनकी युति से वंश वृद्धि व प्रतिष्ठा में बाधा आती है, अतः पितृ शांति करावें।';
+    shantiReason = `कुंडली के ${sunH}वें भाव में सूर्य और शनि परस्पर परम शत्रु होकर युति में हैं; प्रतिष्ठा व वंश वृद्धि में बाधा निवारण हेतु पितृ शांति करावें।`;
   } else if (k.isManglik) {
-    point6 = `मंगल भात पूजा (उज्जैन) अथवा ${marsH}वें भाव मंगल दोष शान्ति करावें।`;
-    detectedDoshaYoga = `मांगलिक दोष (${marsH}वें भाव में मंगल)`;
-    shantiReason = `कुंडली के ${marsH}वें भाव में मंगल की स्थिति से दांपत्य जीवन व रक्त-क्रोध में अवरोध रहता है; मंगल भात पूजा से दोष शांत होता है।`;
+    point6 = `मंगल भात पूजा (उज्जैन) अथवा ${marsH > 0 ? `${marsH}वें भाव` : ''} मंगल दोष शान्ति करावें।`;
+    detectedDoshaYoga = `मांगलिक दोष (${marsH > 0 ? `${marsH}वें भाव में मंगल` : 'भौम प्रभाव'})`;
+    shantiReason = `कुंडली के ${marsH > 0 ? `${marsH}वें भाव` : 'विशेष भाव'} में मंगल की स्थिति से दांपत्य जीवन व रक्त-क्रोध में अवरोध रहता है; मंगल भात पूजा से दोष शांत होता है।`;
   } else if (debilList.length > 0) {
     const debG = debilList[0].split(' ')[0];
+    const debP = pMap[debG];
     point6 = `नीच ${debG} ग्रह शान्ति एवं बीज मंत्र अनुष्ठान करावें।`;
-    detectedDoshaYoga = `नीच ${debG} ग्रह दोष`;
-    shantiReason = `कुंडली में ${debG} ग्रह नीच राशि में होकर निर्बल है; इसकी शांति से जीवन की मुख्य बाधाएं दूर होंगी।`;
+    detectedDoshaYoga = `नीच ${debG} ग्रह दोष (${debP?.rashi || ''} राशि)`;
+    shantiReason = `कुंडली में ${debG} ग्रह अपनी नीच राशि (${debP?.rashi || ''}) में होकर निर्बल है; इसकी शांति से जीवन की मुख्य बाधाएं दूर होंगी।`;
   }
 
   const points = [point1, point2, point3, point4, point5, point6];

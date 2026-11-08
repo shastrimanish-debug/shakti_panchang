@@ -3394,7 +3394,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
 
       {/* 🌟 Dedicated In-App Vedic Gotra Selector Modal (100% Android & Mobile Friendly) 🌟 */}
       {isGotraModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FFD88A] p-4 flex items-center justify-between border-b border-[#B58738]/60 shrink-0">

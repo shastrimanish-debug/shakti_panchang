@@ -268,7 +268,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const currentDetailedItems: UpayParchiDetailedItem[] = points.map((pt, idx) =>
     getRemedyDeepDetail(pt, idx, effectiveKundali)
   );
-  const currentGrahanDeep: GrahanShantiDeepDive | undefined =
+  const currentShantiDeep: GrahanShantiDeepDive | undefined =
     currentDetailedItems.find((it) => it.shantiDeepDive)?.shantiDeepDive;
 
   const currentGuideText = buildDetailedParchiGuideText(
@@ -279,7 +279,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       ? `${effectiveKundali.lagnaRashi} लग्न • ${effectiveKundali.moonRashi} राशि • ${effectiveKundali.mahadasha} महादशा`
       : 'तात्कालिक प्रश्न लग्न',
     currentDetailedItems,
-    currentGrahanDeep
+    currentShantiDeep
   );
 
   const handleCloseModal = () => {
@@ -364,8 +364,8 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
         .join('। ');
 
       const spokenSummary = `॥ ॐ श्री गणेशाय नमः ॥ ॥ ॐ नमो भगवते वासुदेवाय ॥ सदा कल्याण हो ${salutation}! आपकी जन्मपत्रिका के ग्रह दोषों की शांति और भाग्योदय हेतु, यह प्रामाणिक वैदिक उपाय पर्ची श्रवण करें। ${pointsSpeech}। ${
-        currentGrahanDeep
-          ? `आपकी पत्रिका में ${currentGrahanDeep.grahanTypeLabel} के निवारण हेतु संकल्प, नवग्रह पूजन, एकादशवार रुद्राभिषेक एवं वैदिक जप की छह चरणीय शांति अवश्य कराएं। `
+        currentShantiDeep
+          ? `आपकी पत्रिका में ${currentShantiDeep.typeLabel || currentShantiDeep.grahanTypeLabel || currentShantiDeep.doshName} के निवारण हेतु संकल्प, नवग्रह पूजन, एकादशवार रुद्राभिषेक एवं वैदिक जप की छह चरणीय शांति अवश्य कराएं। `
           : ''
       } श्रद्धा और विश्वास के साथ इन उपायों का नित्य पालन करें। भगवान श्री हरि विष्णु एवं देवाधिदेव महादेव आपके सर्व मनोरथ पूर्ण करें। ॥ ॐ शान्तिः शान्तिः शान्तिः ॥`;
 
@@ -1512,8 +1512,8 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 </div>
               </div>
 
-              {/* SPECIAL HIGHLIGHT CARD: GRAHAN YOG DEEP DIVE (If Grahan Yog is active or in slip) */}
-              {currentGrahanDeep && (
+              {/* SPECIAL HIGHLIGHT CARD: AUTHENTIC SHANTI DEEP DIVE (Calculated for native's actual chart) */}
+              {currentShantiDeep && (
                 <div className="bg-gradient-to-br from-[#FFF9F0] via-[#FFF3E0] to-[#FFE8CC] border-2 border-amber-600 rounded-2xl p-4 sm:p-5 shadow-md space-y-3.5">
                   <div className="flex items-start justify-between gap-2 border-b border-amber-400/40 pb-2.5">
                     <div className="flex items-center gap-2">
@@ -1521,22 +1521,25 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-bold text-base sm:text-lg text-[#7A1D1D]">
-                            {currentGrahanDeep.grahanTypeLabel}
+                            {currentShantiDeep.doshName}
                           </h4>
                           <span
                             className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                              currentGrahanDeep.severity === 'अत्यधिक तीव्र'
+                              currentShantiDeep.severity === 'अत्यधिक तीव्र'
                                 ? 'bg-rose-700 text-white animate-pulse'
-                                : currentGrahanDeep.severity === 'तीव्र'
+                                : currentShantiDeep.severity === 'तीव्र'
                                 ? 'bg-amber-700 text-white'
+                                : currentShantiDeep.severity === 'सौम्य / अनुकूल'
+                                ? 'bg-indigo-700 text-white'
                                 : 'bg-emerald-700 text-white'
                             }`}
                           >
-                            तीव्रता: {currentGrahanDeep.severity}
+                            स्थिति: {currentShantiDeep.severity}
                           </span>
                         </div>
-                        <p className="text-xs text-[#5C3A21] font-semibold">
-                          स्थिति: {currentGrahanDeep.houseName} ({currentGrahanDeep.rashi} राशि) • {currentGrahanDeep.severityDesc}
+                        <p className="text-xs text-[#5C3A21] font-semibold mt-0.5">
+                          {currentShantiDeep.houseName ? `${currentShantiDeep.houseName}${currentShantiDeep.rashi ? ` (${currentShantiDeep.rashi} राशि)` : ''} • ` : ''}
+                          {currentShantiDeep.severityDesc}
                         </p>
                       </div>
                     </div>
@@ -1545,10 +1548,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   {/* Why this Shanti is needed */}
                   <div className="bg-white/80 rounded-xl p-3 border border-amber-300 text-xs sm:text-sm text-[#3E2714] space-y-1.5 shadow-2xs">
                     <h5 className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs sm:text-sm">
-                      <span>❓ यह ग्रहण योग शान्ति क्यों आवश्यक है? (ज्योतिषीय कारण):</span>
+                      <span>❓ यह शान्ति अनुष्ठान क्यों आवश्यक है? (ज्योतिषीय कारण):</span>
                     </h5>
                     <p className="leading-relaxed whitespace-pre-line text-[#4A2610]">
-                      {currentGrahanDeep.whyReason}
+                      {currentShantiDeep.whyReason}
                     </p>
                   </div>
 
@@ -1559,7 +1562,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                       <span>🌟 इस शान्ति अनुष्ठान से क्या-क्या प्रत्यक्ष लाभ होंगे?</span>
                     </h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      {currentGrahanDeep.whatBenefits.map((b, bIdx) => (
+                      {currentShantiDeep.whatBenefits.map((b, bIdx) => (
                         <div key={bIdx} className="flex items-start gap-1.5 bg-emerald-50/70 p-2 rounded-lg border border-emerald-200">
                           <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
                           <span className="text-[#2C0A0A] font-semibold">{b}</span>
@@ -1575,7 +1578,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                       <span>📿 प्रामाणिक ६-चरणीय वैदिक शान्ति विधान:</span>
                     </h5>
                     <div className="space-y-2">
-                      {currentGrahanDeep.sixStepVidhi.map((step) => (
+                      {currentShantiDeep.sixStepVidhi.map((step) => (
                         <div key={step.stepNo} className="bg-amber-50/70 p-2.5 rounded-lg border border-amber-200 flex items-start gap-2.5">
                           <span className="w-6 h-6 rounded-full bg-[#7A1D1D] text-[#FFD88A] flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
                             {step.stepNo}
@@ -1597,7 +1600,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                       <span>📜 कलियुग चतुर्गुण शास्त्रीय जप संख्या तालिका (निर्णयसिंधु अनुसार):</span>
                     </h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      {currentGrahanDeep.recommendedJapa.map((rj, rjIdx) => (
+                      {currentShantiDeep.recommendedJapa.map((rj, rjIdx) => (
                         <div key={rjIdx} className="bg-[#FAF2E4] p-2 rounded-lg border border-[#8C6239]/30">
                           <div className="flex items-center justify-between font-bold text-[#7A1D1D]">
                             <span>{rj.planet}</span>
