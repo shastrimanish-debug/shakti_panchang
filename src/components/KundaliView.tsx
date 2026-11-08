@@ -298,6 +298,8 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
   const [girlNakIdx, setGirlNakIdx] = useState<number>(1); // भरणी
   const [girlCharan, setGirlCharan] = useState<number>(2);
   const [girlIsManglik, setGirlIsManglik] = useState<boolean>(false);
+  const [isGotraModalOpen, setIsGotraModalOpen] = useState(false);
+  const [gotraSearchQuery, setGotraSearchQuery] = useState('');
   const [milanPosterData, setMilanPosterData] = useState<ShlokaPosterData | null>(null);
   const [isUpayParchiOpen, setIsUpayParchiOpen] = useState(false);
 
@@ -1093,24 +1095,19 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <span>जातक का गोत्र (Gotra)</span>
                 <span className="text-[10px] text-[#B56A00] font-semibold">त्रिवेणी शोधन</span>
               </label>
-              <select
-                value={formGotra}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setFormGotra(val);
-                  setSelectedGotraId(val);
-                  if (k) {
-                    k.gotra = val;
-                  }
-                }}
-                className="w-full bg-[#F4E8D1] hover:bg-[#EBDBC0] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] focus:ring-1 focus:ring-[#B56A00] outline-none cursor-pointer"
+              <button
+                type="button"
+                onClick={() => setIsGotraModalOpen(true)}
+                className="w-full bg-[#F4E8D1] hover:bg-[#EBDBC0] border border-[#8C6239]/40 rounded-lg p-2 text-xs sm:text-sm font-semibold text-[#5C3A21] flex items-center justify-between transition text-left cursor-pointer"
               >
-                {GOTRA_LIST.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
+                <span className="truncate flex items-center gap-1.5 font-bold text-[#5C3A21]">
+                  <span>🪷</span>
+                  <span className="truncate">
+                    {GOTRA_LIST.find((g) => g.id === formGotra)?.name || 'कश्यप (Kashyapa)'}
+                  </span>
+                </span>
+                <span className="text-[11px] text-[#B56A00] underline shrink-0 font-bold ml-1">गोत्र चुनें ▾</span>
+              </button>
             </div>
 
             <div className="sm:col-span-2 md:col-span-4 flex flex-wrap items-center justify-between gap-2 mt-2">
@@ -3040,30 +3037,18 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                   </p>
                 </div>
 
-                {/* Gotra Selector */}
-                <div className="flex items-center gap-2 bg-[#F4E8D1] border border-[#B58738]/40 px-3 py-2 rounded-xl">
-                  <label htmlFor="gotra-select" className="text-xs font-bold text-[#7A1D1D] whitespace-nowrap">
-                    गोत्र चुनें:
-                  </label>
-                  <select
-                    id="gotra-select"
-                    value={selectedGotraId}
-                    onChange={(e) => {
-                      const newGotra = e.target.value;
-                      setSelectedGotraId(newGotra);
-                      if (k) {
-                        k.gotra = newGotra;
-                      }
-                    }}
-                    className="bg-white text-xs font-bold text-[#5C3A21] px-2.5 py-1 rounded-md border border-[#8C6239]/40 outline-none focus:ring-1 focus:ring-[#B56A00] cursor-pointer"
-                  >
-                    {GOTRA_LIST.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Gotra Selector Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsGotraModalOpen(true)}
+                  className="flex items-center gap-2 bg-[#F4E8D1] hover:bg-[#EBDBC0] border border-[#B58738]/60 px-3 py-1.5 rounded-xl text-xs font-bold text-[#5C3A21] cursor-pointer transition shadow-xs"
+                >
+                  <span className="text-[#7A1D1D] font-black">गोत्र:</span>
+                  <span className="font-bold underline text-[#7A1D1D]">
+                    {GOTRA_LIST.find((g) => g.id === selectedGotraId)?.name || 'कश्यप (Kashyapa)'}
+                  </span>
+                  <span className="text-[10px] text-[#B56A00]">बदलें ▾</span>
+                </button>
               </div>
 
               {/* 3 Pillars Summary Cards */}
@@ -3406,6 +3391,130 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
             : (language === 'en' ? 'Select Bride Birth Time' : 'कन्या का जन्म समय चुनें')
         }
       />
+
+      {/* 🌟 Dedicated In-App Vedic Gotra Selector Modal (100% Android & Mobile Friendly) 🌟 */}
+      {isGotraModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FFD88A] p-4 flex items-center justify-between border-b border-[#B58738]/60 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🪷</span>
+                <div>
+                  <h3 className="font-bold text-base font-granth text-white leading-tight">
+                    वैदिक गोत्र व ऋषिकुल चयन
+                  </h3>
+                  <p className="text-[11px] text-[#E6C687]">
+                    त्रिवेणी रत्न शोधन, धातु व संकल्प अनुकूलता हेतु
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsGotraModalOpen(false);
+                  setGotraSearchQuery('');
+                }}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm cursor-pointer transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="p-3 bg-[#F4E8D1] border-b border-[#8C6239]/20 shrink-0">
+              <input
+                type="text"
+                value={gotraSearchQuery}
+                onChange={(e) => setGotraSearchQuery(e.target.value)}
+                placeholder="गोत्र खोजें (उदा. कश्यप, भारद्वाज, पुलस्त्य, भृगु...)"
+                className="w-full bg-white border border-[#8C6239]/40 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[#5C3A21] placeholder-[#8C6239]/70 focus:ring-2 focus:ring-[#B56A00] outline-none"
+                autoFocus
+              />
+            </div>
+
+            {/* Gotra List */}
+            <div className="overflow-y-auto p-3 space-y-2 flex-1 divide-y divide-[#8C6239]/15">
+              {GOTRA_LIST.filter(
+                (g) =>
+                  !gotraSearchQuery.trim() ||
+                  g.name.toLowerCase().includes(gotraSearchQuery.trim().toLowerCase()) ||
+                  g.nameEn.toLowerCase().includes(gotraSearchQuery.trim().toLowerCase()) ||
+                  g.rishi.toLowerCase().includes(gotraSearchQuery.trim().toLowerCase())
+              ).map((g) => {
+                const isSelected = (formGotra || selectedGotraId) === g.id;
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => {
+                      setFormGotra(g.id);
+                      setSelectedGotraId(g.id);
+                      if (k) {
+                        k.gotra = g.id;
+                      }
+                      setIsGotraModalOpen(false);
+                      setGotraSearchQuery('');
+                    }}
+                    className={`w-full text-left p-3 rounded-xl transition cursor-pointer flex items-start justify-between gap-3 ${
+                      isSelected
+                        ? 'bg-[#5C1414]/10 border-2 border-[#7A1D1D] shadow-xs'
+                        : 'hover:bg-[#F4E8D1] border border-transparent'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-[#5C3A21]">{g.name}</span>
+                        {isSelected && (
+                          <span className="text-[10px] bg-[#7A1D1D] text-[#FFD88A] px-2 py-0.5 rounded-full font-bold">
+                            चयनित ✓
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-[#7A1D1D] font-bold">
+                        {g.rishi} • <span className="text-[#8C6239] font-normal">तत्व: {g.element}</span>
+                      </div>
+                      <div className="text-[11px] text-[#5C3A21]/80 leading-relaxed">
+                        अनुकूल धातु: <span className="font-bold text-[#5C3A21]">{g.favoredMetals.join(', ')}</span>
+                      </div>
+                      <div className="text-[10px] text-[#8C6239] leading-snug">
+                        {g.description}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 pt-1">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          isSelected
+                            ? 'border-[#7A1D1D] bg-[#7A1D1D] text-white'
+                            : 'border-[#8C6239]/40 bg-white'
+                        }`}
+                      >
+                        {isSelected && <span className="text-[11px] font-bold">✓</span>}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-[#F4E8D1] border-t border-[#8C6239]/20 flex items-center justify-between text-xs text-[#8C6239] shrink-0">
+              <span>कुल १३ प्रामाणिक वैदिक गोत्र उपलब्ध</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsGotraModalOpen(false);
+                  setGotraSearchQuery('');
+                }}
+                className="px-4 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] font-bold rounded-lg cursor-pointer"
+              >
+                बंद करें
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

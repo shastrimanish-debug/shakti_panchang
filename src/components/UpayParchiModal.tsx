@@ -158,6 +158,8 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const [expandedCardIndices, setExpandedCardIndices] = useState<number[]>([0, 1, 2, 3, 4, 5]);
 
   const [selectedGotra, setSelectedGotra] = useState<string>(() => effectiveKundali?.gotra || 'kashyapa');
+  const [isParchiGotraModalOpen, setIsParchiGotraModalOpen] = useState(false);
+  const [parchiGotraSearch, setParchiGotraSearch] = useState('');
 
   const [isEditing, setIsEditing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -1078,36 +1080,16 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                           <span>जातक का गोत्र (Triveni Gotra):</span>
                           <span className="text-[10px] text-[#8C6239] font-normal">रत्न व धातु निर्धारण</span>
                         </label>
-                        <select
-                          value={selectedGotra}
-                          onChange={(e) => {
-                            const newG = e.target.value;
-                            setSelectedGotra(newG);
-                            if (effectiveKundali) {
-                              effectiveKundali.gotra = newG;
-                            }
-                            const updated = generateTraditionalUpayParchi(
-                              effectiveKundali ? { ...effectiveKundali, gotra: newG } : null,
-                              panchang
-                            );
-                            setParchiData(updated);
-                            // Update point 1 with freshly recalculated Triveni Gemstone
-                            if (updated.points && updated.points[0]) {
-                              setPoints((prev) => {
-                                const next = [...prev];
-                                next[0] = updated.points[0];
-                                return next;
-                              });
-                            }
-                          }}
-                          className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-[#162C6A] outline-none cursor-pointer"
+                        <button
+                          type="button"
+                          onClick={() => setIsParchiGotraModalOpen(true)}
+                          className="w-full bg-[#FAF2E4] hover:bg-[#EBDBC0] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-[#162C6A] flex items-center justify-between transition text-left cursor-pointer"
                         >
-                          {GOTRA_LIST.map((g) => (
-                            <option key={g.id} value={g.id}>
-                              {g.name}
-                            </option>
-                          ))}
-                        </select>
+                          <span className="truncate">
+                            🪷 {GOTRA_LIST.find((g) => g.id === selectedGotra)?.name || 'कश्यप (Kashyapa)'}
+                          </span>
+                          <span className="text-[10px] text-[#7A1D1D] underline ml-1 shrink-0">बदलें ▾</span>
+                        </button>
                       </div>
                     </div>
 
@@ -2283,6 +2265,141 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
             >
               वापस जाएं
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 🌟 Gotra Selector Modal for Upay Parchi 🌟 */}
+      {isParchiGotraModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-[#FAF2E4] border-2 border-[#8C6239] rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#5C1414] via-[#7A1D1D] to-[#5C1414] text-[#FFD88A] p-4 flex items-center justify-between border-b border-[#B58738]/60 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🪷</span>
+                <div>
+                  <h3 className="font-bold text-base font-granth text-white leading-tight">
+                    उपाय पर्ची हेतु गोत्र चयन
+                  </h3>
+                  <p className="text-[11px] text-[#E6C687]">
+                    रत्न व धातु त्रिवेणी गणना स्वतः अद्यतन होगी
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsParchiGotraModalOpen(false);
+                  setParchiGotraSearch('');
+                }}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm cursor-pointer transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="p-3 bg-[#F4E8D1] border-b border-[#8C6239]/20 shrink-0">
+              <input
+                type="text"
+                value={parchiGotraSearch}
+                onChange={(e) => setParchiGotraSearch(e.target.value)}
+                placeholder="गोत्र खोजें (उदा. कश्यप, भारद्वाज, पुलस्त्य, भृगु...)"
+                className="w-full bg-white border border-[#8C6239]/40 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[#5C3A21] placeholder-[#8C6239]/70 focus:ring-2 focus:ring-[#B56A00] outline-none"
+                autoFocus
+              />
+            </div>
+
+            {/* Gotra List */}
+            <div className="overflow-y-auto p-3 space-y-2 flex-1 divide-y divide-[#8C6239]/15">
+              {GOTRA_LIST.filter(
+                (g) =>
+                  !parchiGotraSearch.trim() ||
+                  g.name.toLowerCase().includes(parchiGotraSearch.trim().toLowerCase()) ||
+                  g.nameEn.toLowerCase().includes(parchiGotraSearch.trim().toLowerCase()) ||
+                  g.rishi.toLowerCase().includes(parchiGotraSearch.trim().toLowerCase())
+              ).map((g) => {
+                const isSelected = selectedGotra === g.id;
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedGotra(g.id);
+                      if (effectiveKundali) {
+                        effectiveKundali.gotra = g.id;
+                      }
+                      const updated = generateTraditionalUpayParchi(
+                        effectiveKundali ? { ...effectiveKundali, gotra: g.id } : null,
+                        panchang
+                      );
+                      setParchiData(updated);
+                      if (updated.points && updated.points[0]) {
+                        setPoints((prev) => {
+                          const next = [...prev];
+                          next[0] = updated.points[0];
+                          return next;
+                        });
+                      }
+                      setIsParchiGotraModalOpen(false);
+                      setParchiGotraSearch('');
+                    }}
+                    className={`w-full text-left p-3 rounded-xl transition cursor-pointer flex items-start justify-between gap-3 ${
+                      isSelected
+                        ? 'bg-[#5C1414]/10 border-2 border-[#7A1D1D] shadow-xs'
+                        : 'hover:bg-[#F4E8D1] border border-transparent'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-[#5C3A21]">{g.name}</span>
+                        {isSelected && (
+                          <span className="text-[10px] bg-[#7A1D1D] text-[#FFD88A] px-2 py-0.5 rounded-full font-bold">
+                            चयनित ✓
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-[#7A1D1D] font-bold">
+                        {g.rishi} • <span className="text-[#8C6239] font-normal">तत्व: {g.element}</span>
+                      </div>
+                      <div className="text-[11px] text-[#5C3A21]/80 leading-relaxed">
+                        अनुकूल धातु: <span className="font-bold text-[#5C3A21]">{g.favoredMetals.join(', ')}</span>
+                      </div>
+                      <div className="text-[10px] text-[#8C6239] leading-snug">
+                        {g.description}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 pt-1">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          isSelected
+                            ? 'border-[#7A1D1D] bg-[#7A1D1D] text-white'
+                            : 'border-[#8C6239]/40 bg-white'
+                        }`}
+                      >
+                        {isSelected && <span className="text-[11px] font-bold">✓</span>}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 bg-[#F4E8D1] border-t border-[#8C6239]/20 flex items-center justify-between text-xs text-[#8C6239] shrink-0">
+              <span>कुल १३ प्रामाणिक वैदिक गोत्र उपलब्ध</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsParchiGotraModalOpen(false);
+                  setParchiGotraSearch('');
+                }}
+                className="px-4 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] font-bold rounded-lg cursor-pointer"
+              >
+                बंद करें
+              </button>
+            </div>
           </div>
         </div>
       )}
