@@ -71,8 +71,8 @@
   --bx-mark: #0369a1;
   --bx-mark-soft: #eaf3fa;
   --bx-gold: #c8892d;
-  --bx-header: #5c3a21;
-  --bx-header-2: #1e3a5f;
+  --bx-header: #1e3a5f;
+  --bx-header-2: #0284c7;
   --bx-cream: #eef5fb;
 }
 
@@ -85,7 +85,7 @@
   --bx-mark: #15803d;
   --bx-mark-soft: #dcfce7;
   --bx-gold: #c8892d;
-  --bx-header: #5c3a21;
+  --bx-header: #14532d;
   --bx-header-2: #15803d;
   --bx-cream: #eaf8ee;
 }
@@ -232,9 +232,9 @@
   gap: 8px;
   height: auto;
   padding: 8px 12px;
-  background: rgba(255, 250, 243, 0.94);
-  border-bottom: 1.5px solid rgba(212, 162, 74, 0.55);
-  box-shadow: 0 2px 10px rgba(58, 29, 16, 0.06);
+  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%);
+  border-bottom: 2px solid var(--bx-line);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   z-index: 40;
 }
 
@@ -612,32 +612,55 @@
 }
 
 /* 🌟 Universal Sub-View Theme Propagation (Kundali, Prashnavali, Numerology, Mantras, Muhurat, Choghadiya, etc.) */
-.board div[class*="bg-[#FAF2E4]"],
-.board div[class*="bg-[#F4E8D1]"],
-.board div[class*="bg-[#FCF8EC]"],
-.board div[class*="bg-[#FAF5ED]"],
-.board div[class*="bg-[#FAF6EE]"],
-.board div[class*="bg-[#fff7ef]"],
-.board div[class*="bg-[#FBF0DD]"],
-.board div[class*="bg-amber-50"],
-.board section[class*="bg-[#FAF2E4]"],
-.board section[class*="bg-[#F4E8D1]"],
+.board [class*="bg-[#FAF2E4]"],
+.board [class*="bg-[#F4E8D1]"],
+.board [class*="bg-[#FCF8EC]"],
+.board [class*="bg-[#FAF5ED]"],
+.board [class*="bg-[#FAF6EE]"],
+.board [class*="bg-[#fff7ef]"],
+.board [class*="bg-[#FBF0DD]"],
+.board [class*="bg-[#E5D2B8]"],
+.board [class*="bg-[#EBDBC0]"],
+.board [class*="bg-[#f5e8d1]"],
+.board [class*="bg-[#faf2e4]"],
+.board [class*="bg-[#fffaf3]"],
+.board [class*="bg-[#fff9ee]"],
+.board [class*="bg-[#fff7ed]"],
+.board [class*="bg-amber-50"],
+.board [class*="bg-amber-100"],
 .board [style*="background-color: rgb(250, 242, 228)"],
 .board [style*="background-color: #FAF2E4"],
 .board [style*="background-color:#FAF2E4"],
 .board [style*="background: rgb(250, 242, 228)"],
 .board [style*="background: #FAF2E4"],
 .board [style*="background:#FAF2E4"],
+.board [style*="background-color: #FAF3E3"],
+.board [style*="background-color: rgb(244, 232, 209)"],
+.board [style*="background-color: #F4E8D1"],
+.board [style*="background-color:#F4E8D1"],
+.board [style*="background: rgb(244, 232, 209)"],
+.board [style*="background: #F4E8D1"],
+.board [style*="background:#F4E8D1"],
 .board [style*="backgroundColor: '#FAF2E4'"],
-.board [style*="backgroundColor: \"#FAF2E4\""] {
+.board [style*="backgroundColor: \"#FAF2E4\""],
+.board [style*="backgroundColor: '#F4E8D1'"],
+.board [style*="backgroundColor: \"#F4E8D1\""],
+.board [style*="background: '#F4E8D1'"],
+.board [style*="background: '#FAF2E4'"],
+.board [style*="background: \"#F4E8D1\""],
+.board [style*="background: \"#FAF2E4\""] {
   background-color: var(--bx-cream) !important;
   color: var(--bx-ink) !important;
 }
 
-.board div[class*="bg-[#FFFDF8]"],
-.board div[class*="bg-[#FFFDF9]"],
-.board section[class*="bg-[#FFFDF8]"],
-.board section[class*="bg-[#FFFDF9]"],
+.board [class*="hover:bg-[#E5D2B8]"]:hover,
+.board [class*="hover:bg-[#EBDBC0]"]:hover,
+.board [class*="hover:bg-[#FAF2E4]"]:hover {
+  background-color: color-mix(in srgb, var(--bx-cream) 78%, var(--bx-line)) !important;
+}
+
+.board [class*="bg-[#FFFDF8]"],
+.board [class*="bg-[#FFFDF9]"],
 .board [style*="background-color: rgb(255, 253, 248)"],
 .board [style*="background-color: #FFFDF8"],
 .board [style*="background-color:#FFFDF8"],
@@ -651,14 +674,20 @@
 }
 
 /* Sub-view borders track theme line color */
-.board div[class*="border-[#8C6239]"],
-.board div[class*="border-[#DFCBB5]"],
-.board div[class*="border-[#E8DCCB]"],
-.board div[class*="border-[#E5D2B8]"],
-.board div[class*="border-amber-200"],
-.board div[class*="border-amber-300"],
-.board button[class*="border-[#8C6239]"],
-.board section[class*="border-[#8C6239]"] {
+.board [class*="border-[#8C6239]"],
+.board [class*="border-[#DFCBB5]"],
+.board [class*="border-[#E8DCCB]"],
+.board [class*="border-[#E5D2B8]"],
+.board [class*="border-amber-200"],
+.board [class*="border-amber-300"],
+.board [class*="border-[#C89D66]"],
+.board [class*="border-[#D6B892]"],
+.board [style*="border-color: #C89D66"],
+.board [style*="borderColor: '#C89D66'"],
+.board [style*="border-color: #D6B892"],
+.board [style*="borderColor: '#D6B892'"],
+.board [style*="border-color: rgba(140, 98, 57"],
+.board [style*="borderColor: 'rgba(140, 98, 57"] {
   border-color: var(--bx-line) !important;
 }
 
@@ -921,8 +950,8 @@
   --bx-mark: #0369a1;
   --bx-mark-soft: #eaf3fa;
   --bx-gold: #c8892d;
-  --bx-header: #5c3a21;
-  --bx-header-2: #1e3a5f;
+  --bx-header: #1e3a5f;
+  --bx-header-2: #0284c7;
   --bx-cream: #eef5fb;
 }
 .tulsi-theme .board {
@@ -934,7 +963,7 @@
   --bx-mark: #15803d;
   --bx-mark-soft: #dcfce7;
   --bx-gold: #c8892d;
-  --bx-header: #5c3a21;
+  --bx-header: #14532d;
   --bx-header-2: #15803d;
   --bx-cream: #eaf8ee;
 }
@@ -1334,11 +1363,11 @@
 
 /* 3. Top Header Rail & Menu/Navigation 3D Buttons */
 .board.bx-bento .bx-rail {
-  background: linear-gradient(180deg, #FFFDF9 0%, #FAF2E4 100%) !important;
-  border-bottom: 2px solid #B58738 !important;
+  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%) !important;
+  border-bottom: 2px solid var(--bx-line) !important;
   box-shadow:
-    0 3px 0 rgba(140, 98, 57, 0.4),
-    0 8px 18px rgba(58, 29, 16, 0.08),
+    0 3px 0 color-mix(in srgb, var(--bx-gold) 40%, transparent),
+    0 6px 14px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
 }
 
@@ -1384,8 +1413,8 @@
 /* 4. All General Interactive Buttons & Chips inside Modules (3D Push-Buttons) */
 .board.bx-bento main button:not(.bx-tile):not(.bx-verse) {
   box-shadow:
-    0 3px 0 rgba(140, 98, 57, 0.65),
-    0 5px 8px rgba(58, 29, 16, 0.12),
+    0 3px 0 color-mix(in srgb, var(--bx-gold) 75%, #000),
+    0 5px 8px rgba(0, 0, 0, 0.12),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.45);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
@@ -1393,8 +1422,8 @@
 .board.bx-bento main button:not(.bx-tile):not(.bx-verse):active {
   transform: translateY(2px);
   box-shadow:
-    0 0.5px 0 rgba(140, 98, 57, 0.65),
-    0 2px 4px rgba(58, 29, 16, 0.1);
+    0 0.5px 0 color-mix(in srgb, var(--bx-gold) 75%, #000),
+    0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* 5. Bottom Navigation Dock 3D Buttons */

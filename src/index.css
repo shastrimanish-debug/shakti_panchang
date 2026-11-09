@@ -254,7 +254,7 @@
 .gangajal-theme .flutter-card,
 .gangajal-theme .flutter-card-elevated {
   background: #ffffff !important;
-  border-color: #dfcbb5 !important;
+  border-color: #cbe0f0 !important;
   box-shadow: 0 4px 16px -2px rgba(2, 132, 199, 0.06) !important;
 }
 .gangajal-theme .flutter-hero-gradient {
@@ -273,7 +273,7 @@
 .tulsi-theme .flutter-card,
 .tulsi-theme .flutter-card-elevated {
   background: #ffffff !important;
-  border-color: #dfcbb5 !important;
+  border-color: #bfe8cd !important;
   box-shadow: 0 4px 16px -2px rgba(21, 128, 61, 0.06) !important;
 }
 .tulsi-theme .flutter-hero-gradient {
@@ -292,7 +292,7 @@
 .sindoor-theme .flutter-card,
 .sindoor-theme .flutter-card-elevated {
   background: #ffffff !important;
-  border-color: #dfcbb5 !important;
+  border-color: #fed5db !important;
   box-shadow: 0 4px 16px -2px rgba(190, 18, 60, 0.06) !important;
 }
 .sindoor-theme .flutter-hero-gradient {
