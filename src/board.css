@@ -21,14 +21,14 @@
 
 /* 10 Devotional Themes Uniform CSS Overrides */
 .board.kesariya-theme, .kesariya-theme .board {
-  --bx-bg: #fff7ed;
+  --bx-bg: #fff8f0;
   --bx-panel: #ffffff;
   --bx-ink: #431407;
   --bx-mute: #9a3412;
   --bx-line: #fed7aa;
   --bx-mark: #ea580c;
   --bx-mark-soft: #ffedd5;
-  --bx-gold: #f97316;
+  --bx-gold: #c8892d;
   --bx-header: #9a3412;
   --bx-header-2: #c2410c;
   --bx-cream: #fff7ed;
@@ -56,24 +56,24 @@
   --bx-line: #fde047;
   --bx-mark: #ca8a04;
   --bx-mark-soft: #fef9c3;
-  --bx-gold: #eab308;
+  --bx-gold: #ca8a04;
   --bx-header: #854d0e;
   --bx-header-2: #a16207;
   --bx-cream: #fefce8;
 }
 
 .board.gangajal-theme, .gangajal-theme .board {
-  --bx-bg: #f0f7ff;
+  --bx-bg: #f4f8fc;
   --bx-panel: #ffffff;
-  --bx-ink: #082f49;
-  --bx-mute: #0369a1;
-  --bx-line: #bae6fd;
-  --bx-mark: #0284c7;
-  --bx-mark-soft: #e0f2fe;
-  --bx-gold: #0ea5e9;
-  --bx-header: #075985;
-  --bx-header-2: #0284c7;
-  --bx-cream: #f0f7ff;
+  --bx-ink: #1e3a5f;
+  --bx-mute: #2a527a;
+  --bx-line: #dfcbb5;
+  --bx-mark: #0369a1;
+  --bx-mark-soft: #eaf3fa;
+  --bx-gold: #c8892d;
+  --bx-header: #5c3a21;
+  --bx-header-2: #1e3a5f;
+  --bx-cream: #fffdf9;
 }
 
 .board.tulsi-theme, .tulsi-theme .board {
@@ -81,13 +81,13 @@
   --bx-panel: #ffffff;
   --bx-ink: #052e16;
   --bx-mute: #166534;
-  --bx-line: #86efac;
+  --bx-line: #dfcbb5;
   --bx-mark: #15803d;
   --bx-mark-soft: #dcfce7;
-  --bx-gold: #16a34a;
-  --bx-header: #14532d;
+  --bx-gold: #c8892d;
+  --bx-header: #5c3a21;
   --bx-header-2: #15803d;
-  --bx-cream: #f2fbf4;
+  --bx-cream: #fffdf9;
 }
 
 .board.sindoor-theme, .sindoor-theme .board {
@@ -95,13 +95,13 @@
   --bx-panel: #ffffff;
   --bx-ink: #4c0519;
   --bx-mute: #9f1239;
-  --bx-line: #fecdd3;
-  --bx-mark: #e11d48;
+  --bx-line: #dfcbb5;
+  --bx-mark: #be123c;
   --bx-mark-soft: #ffe4e6;
-  --bx-gold: #f43f5e;
-  --bx-header: #881337;
+  --bx-gold: #c8892d;
+  --bx-header: #7a1d1d;
   --bx-header-2: #be123c;
-  --bx-cream: #fff5f5;
+  --bx-cream: #fffdf9;
 }
 
 .board.swarna-theme, .swarna-theme .board {
@@ -112,7 +112,7 @@
   --bx-line: #fde68a;
   --bx-mark: #d97706;
   --bx-mark-soft: #fef3c7;
-  --bx-gold: #f59e0b;
+  --bx-gold: #c8892d;
   --bx-header: #78350f;
   --bx-header-2: #b45309;
   --bx-cream: #fffbeb;
@@ -126,7 +126,7 @@
   --bx-line: #cbd5e1;
   --bx-mark: #c2410c;
   --bx-mark-soft: #f1f5f9;
-  --bx-gold: #64748b;
+  --bx-gold: #c8892d;
   --bx-header: #1e293b;
   --bx-header-2: #334155;
   --bx-cream: #ffffff;
@@ -616,200 +616,34 @@
 .board .text-wood,
 .board .text-gold,
 .board .text-muted {
-  color: var(--bx-ink) !important;
+  color: var(--bx-ink);
 }
 
 .board .text-muted,
 .board .text-wood {
-  color: var(--bx-mute) !important;
-}
-
-.board .border-wood,
-.board .border-gold {
-  border-color: var(--bx-line) !important;
-}
-
-.board [class*="bg-amber-50/"],
-.board [class*="bg-amber-50 "],
-.board [class$="bg-amber-50"],
-.board [class*="bg-amber-100"],
-.board [class*="bg-amber-200"],
-.board [class*="bg-[#FAF"],
-.board [class*="bg-[#FFF"],
-.board [class*="bg-[#FCF"],
-.board [class*="bg-[#F4E"],
-.board [class*="bg-[#FBF"],
-.board [class*="bg-[#EED"],
-.board [class*="bg-[#E5D"],
-.board [class*="bg-[#EBD"],
-.board [class*="bg-white"] {
-  background-color: var(--bx-panel) !important;
-  background-image: none !important;
-  color: var(--bx-ink);
-}
-
-.board [class*="bg-[#5C3"],
-.board [class*="bg-[#462"],
-.board [class*="bg-[#2C1"],
-.board [class*="bg-[#3E2"],
-.board [class*="from-amber-400"],
-.board [class*="from-amber-500"],
-.board [class*="from-amber-600"],
-.board [class*="from-amber-700"],
-.board [class*="to-amber-400"],
-.board [class*="to-amber-500"],
-.board [class*="to-amber-600"],
-.board [class*="from-yellow-400"],
-.board [class*="from-yellow-500"],
-.board [class*="to-yellow-400"],
-.board [class*="to-yellow-500"],
-.board [class*="via-yellow-400"],
-.board [class*="via-yellow-500"],
-.board [class*="from-[#8B1"],
-.board [class*="from-[#B56"],
-.board [class*="from-[#462"],
-.board [class*="via-[#5C3"],
-.board [class*="via-[#A84"],
-.board [class*="to-[#3E2"],
-.board [class*="to-[#5C3"],
-.board [class*="bg-amber-400"]:not([class*="bg-amber-400/"]),
-.board [class*="bg-amber-500"]:not([class*="bg-amber-500/"]),
-.board [class*="bg-amber-600"],
-.board [class*="bg-amber-700"],
-.board [class*="bg-amber-800"],
-.board [class*="bg-amber-900"] {
-  background-image: none !important;
-  background-color: var(--bx-mark) !important;
-  color: #fffaf6 !important;
-  box-shadow: none !important;
-  animation: none !important;
-}
-
-.board [class*="bg-amber-400/"],
-.board [class*="bg-amber-500/"],
-.board [class*="from-amber-50/"],
-.board [class*="from-amber-50 "],
-.board [class$="from-amber-50"],
-.board [class*="from-amber-100"],
-.board [class*="from-amber-200"],
-.board [class*="to-amber-50/"],
-.board [class*="to-amber-50 "],
-.board [class$="to-amber-50"],
-.board [class*="to-amber-100"],
-.board [class*="to-amber-200"],
-.board [class*="from-yellow-50/"],
-.board [class*="from-yellow-50 "],
-.board [class$="from-yellow-50"],
-.board [class*="from-yellow-100"],
-.board [class*="from-yellow-200"],
-.board [class*="to-yellow-50/"],
-.board [class*="to-yellow-50 "],
-.board [class$="to-yellow-50"],
-.board [class*="to-yellow-100"],
-.board [class*="to-yellow-200"],
-.board [class*="via-yellow-50/"],
-.board [class*="via-yellow-50 "],
-.board [class$="via-yellow-50"],
-.board [class*="via-yellow-100"],
-.board [class*="via-yellow-200"],
-.board [class*="via-amber-50/"],
-.board [class*="via-amber-50 "],
-.board [class$="via-amber-50"],
-.board [class*="via-amber-100"] {
-  background-color: var(--bx-mark-soft) !important;
-  background-image: none !important;
-  color: var(--bx-ink) !important;
+  color: var(--bx-mute);
 }
 
 .board header[class*="bg-gradient"],
 .board header[class*="from-[#"] {
-  background: var(--bx-panel) !important;
-  background-image: none !important;
-  color: var(--bx-ink) !important;
-  box-shadow: none !important;
-  border-color: var(--bx-line) !important;
-  padding: 4px 8px !important;
+  padding: 4px 8px;
 }
 
-.board header[class*="bg-gradient"] h2,
-.board header[class*="bg-gradient"] p,
-.board header[class*="bg-gradient"] span,
-.board header[class*="from-[#"] h2,
-.board header[class*="from-[#"] p,
-.board header[class*="from-[#"] span {
-  color: var(--bx-ink) !important;
-}
-
-.board header[class*="bg-gradient"] button,
-.board header[class*="from-[#"] button {
-  background: var(--bx-bg) !important;
-  color: var(--bx-ink) !important;
-  border-color: var(--bx-line) !important;
-  box-shadow: none !important;
-}
-
-.board [class*="text-[#B56"],
-.board [class*="text-[#8C4"],
-.board [class*="text-[#8C6"],
-.board [class*="text-amber"] {
-  color: var(--bx-mark) !important;
-}
-
-/* 🌟 High-contrast protection on dark surfaces across all themes (no dark-on-dark or blue-on-dark) */
+/* 🌟 High-contrast protection on dark surfaces across all themes */
 .board .bx-dark-surface,
 .board .bx-dark-surface *,
 .board .bx-modal-dark-head,
 .board .bx-modal-dark-head *,
 .board .bx-dark-btn,
-.board .bx-dark-btn *,
-.board [class*="from-[#5C2"] [class*="text-amber"],
-.board [class*="from-[#4A2"] [class*="text-amber"],
-.board [class*="bg-[#4A2"] [class*="text-amber"],
-.board [class*="bg-[#5C2"] [class*="text-amber"],
-.board [class*="bg-[#6D3"] [class*="text-amber"],
-.board [class*="bg-[#5C3"] [class*="text-amber"],
-.board [class*="bg-[#462"] [class*="text-amber"],
-.board [class*="from-amber-500"] [class*="text-amber"],
-.board [class*="from-amber-400"] [class*="text-amber"] {
+.board .bx-dark-btn * {
   color: #fffdf5 !important;
 }
 
 .board .bx-dark-surface .text-amber-200,
 .board .bx-dark-surface .text-amber-300,
 .board .bx-modal-dark-head .text-amber-200,
-.board .bx-modal-dark-head .text-amber-300,
-.board [class*="from-[#5C2"] [class*="text-amber-200"],
-.board [class*="from-[#5C2"] [class*="text-amber-300"],
-.board [class*="from-[#4A2"] [class*="text-amber-200"],
-.board [class*="from-[#4A2"] [class*="text-amber-300"] {
+.board .bx-modal-dark-head .text-amber-300 {
   color: #fef08a !important;
-}
-
-.board [class*="text-[#2C1"],
-.board [class*="text-[#462"],
-.board [class*="text-[#5C3"],
-.board [class*="text-[#735"],
-.board [class*="text-[#6E4"] {
-  color: var(--bx-ink) !important;
-}
-
-.board [class*="border-amber"],
-.board [class*="border-[#E"],
-.board [class*="border-[#D"],
-.board [class*="border-[#B56"],
-.board [class*="border-[#8C"] {
-  border-color: var(--bx-line) !important;
-}
-
-.board .uma-glow-badge,
-.board .granth-border,
-.board .animate-pulse {
-  animation: none !important;
-  box-shadow: none !important;
-}
-
-.board main [class*="shadow"] {
-  box-shadow: none !important;
 }
 
 .board input,
@@ -818,41 +652,6 @@
   background: var(--bx-panel);
   color: var(--bx-ink);
   border-color: var(--bx-line);
-}
-
-.board [class*="bg-[#7A1"],
-.board [class*="bg-[#5C1"],
-.board [class*="bg-[#4A1"],
-.board [class*="bg-[#8F2"],
-.board [class*="from-[#5C1"],
-.board [class*="from-[#7A1"],
-.board [class*="via-[#7A1"],
-.board [class*="to-[#5C1"],
-.board [class*="to-[#4A1"],
-.board [class*="to-[#8F2"] {
-  background-image: none !important;
-  background-color: var(--bx-mark) !important;
-  color: #fffaf6 !important;
-  box-shadow: none !important;
-}
-
-.board [class*="bg-[#B58"],
-.board [class*="from-[#B58"],
-.board [class*="to-[#734"],
-.board [class*="bg-[#9B7"] {
-  background-image: none !important;
-  background-color: var(--bx-mark-soft) !important;
-  color: var(--bx-mark) !important;
-  box-shadow: none !important;
-}
-
-.board [class*="text-[#7A1"],
-.board [class*="text-[#5C1"],
-.board [class*="text-[#2C0"],
-.board [class*="border-[#B58"],
-.board [class*="border-[#8C6"] {
-  color: var(--bx-mark);
-  border-color: var(--bx-line) !important;
 }
 
 .bx-verse {
@@ -1018,50 +817,50 @@
   --bx-header-2: #a16207;
 }
 .gangajal-theme .board {
-  --bx-bg: #f0f7ff;
-  --bx-panel: #f8fbff;
-  --bx-ink: #082f49;
-  --bx-mute: #0369a1;
-  --bx-line: #bae6fd;
-  --bx-mark: #0284c7;
-  --bx-mark-soft: #e0f2fe;
-  --bx-gold: #0ea5e9;
-  --bx-header: #075985;
-  --bx-header-2: #0284c7;
+  --bx-bg: #f4f8fc;
+  --bx-panel: #ffffff;
+  --bx-ink: #1e3a5f;
+  --bx-mute: #2a527a;
+  --bx-line: #dfcbb5;
+  --bx-mark: #0369a1;
+  --bx-mark-soft: #eaf3fa;
+  --bx-gold: #c8892d;
+  --bx-header: #5c3a21;
+  --bx-header-2: #1e3a5f;
 }
 .tulsi-theme .board {
   --bx-bg: #f2fbf4;
-  --bx-panel: #f8fff8;
+  --bx-panel: #ffffff;
   --bx-ink: #052e16;
   --bx-mute: #166534;
-  --bx-line: #86efac;
+  --bx-line: #dfcbb5;
   --bx-mark: #15803d;
   --bx-mark-soft: #dcfce7;
-  --bx-gold: #16a34a;
-  --bx-header: #14532d;
+  --bx-gold: #c8892d;
+  --bx-header: #5c3a21;
   --bx-header-2: #15803d;
 }
 .sindoor-theme .board {
   --bx-bg: #fff5f5;
-  --bx-panel: #fffafa;
+  --bx-panel: #ffffff;
   --bx-ink: #4c0519;
   --bx-mute: #9f1239;
-  --bx-line: #fecdd3;
+  --bx-line: #dfcbb5;
   --bx-mark: #be123c;
   --bx-mark-soft: #ffe4e6;
-  --bx-gold: #e11d48;
-  --bx-header: #881337;
+  --bx-gold: #c8892d;
+  --bx-header: #7a1d1d;
   --bx-header-2: #be123c;
 }
 .swarna-theme .board {
   --bx-bg: #fffbeb;
-  --bx-panel: #fffdf6;
+  --bx-panel: #ffffff;
   --bx-ink: #451a03;
   --bx-mute: #92400e;
   --bx-line: #fde68a;
   --bx-mark: #b45309;
   --bx-mark-soft: #fef3c7;
-  --bx-gold: #d97706;
+  --bx-gold: #c8892d;
   --bx-header: #78350f;
   --bx-header-2: #b45309;
 }
@@ -1073,7 +872,7 @@
   --bx-line: #cbd5e1;
   --bx-mark: #334155;
   --bx-mark-soft: #e2e8f0;
-  --bx-gold: #64748b;
+  --bx-gold: #c8892d;
   --bx-header: #1e293b;
   --bx-header-2: #334155;
 }
@@ -1434,12 +1233,12 @@
 
 /* 3. Top Header Rail & Menu/Navigation 3D Buttons */
 .board.bx-bento .bx-rail {
-  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%) !important;
-  border-bottom: 2px solid var(--bx-gold) !important;
+  background: linear-gradient(180deg, #FFFDF9 0%, #FAF2E4 100%) !important;
+  border-bottom: 2px solid #B58738 !important;
   box-shadow:
-    0 3px 0 color-mix(in srgb, var(--bx-gold) 65%, #000),
-    0 8px 18px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+    0 3px 0 rgba(140, 98, 57, 0.4),
+    0 8px 18px rgba(58, 29, 16, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
 }
 
 .board.bx-bento .bx-menu-btn,
@@ -1447,12 +1246,12 @@
 .board.bx-bento .bx-iconbtn,
 .board.bx-bento .bx-navbtn,
 .board.bx-bento .bx-head-btn {
-  background: linear-gradient(180deg, var(--bx-panel) 0%, color-mix(in srgb, var(--bx-cream) 85%, var(--bx-panel)) 100%) !important;
-  border: 1.5px solid var(--bx-gold) !important;
-  color: var(--bx-ink) !important;
+  background: linear-gradient(180deg, #FFFDF9 0%, #F5E8D1 100%) !important;
+  border: 1.5px solid #8C6239 !important;
+  color: #3A2414 !important;
   box-shadow:
-    0 3px 0 color-mix(in srgb, var(--bx-gold) 65%, #000),
-    0 6px 12px rgba(0, 0, 0, 0.12),
+    0 3px 0 #8C6239,
+    0 5px 10px rgba(58, 29, 16, 0.12),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.85) !important;
   transition: transform 0.12s ease, box-shadow 0.12s ease !important;
 }
@@ -1464,19 +1263,19 @@
 .board.bx-bento .bx-head-btn:active {
   transform: translateY(2.5px) !important;
   box-shadow:
-    0 0.5px 0 color-mix(in srgb, var(--bx-gold) 65%, #000),
-    0 2px 4px rgba(0, 0, 0, 0.12),
-    inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+    0 0.5px 0 #8C6239,
+    0 2px 4px rgba(58, 29, 16, 0.1) !important;
+  inset: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Solid / Active 3D Nav Button */
 .board.bx-bento .bx-navbtn-solid,
 .board.bx-bento .bx-iconbtn[aria-pressed="true"] {
-  background: linear-gradient(180deg, var(--bx-header) 0%, var(--bx-header-2) 100%) !important;
-  border: 1.5px solid var(--bx-gold) !important;
-  color: #fff8ee !important;
+  background: linear-gradient(180deg, #7A1D1D 0%, #5C1414 100%) !important;
+  border: 1.5px solid #B58738 !important;
+  color: #FFF8EE !important;
   box-shadow:
-    0 3px 0 color-mix(in srgb, var(--bx-header-2) 65%, #000),
+    0 3px 0 #3E0C0C,
     0 6px 12px rgba(0, 0, 0, 0.25),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.35) !important;
 }
@@ -1484,18 +1283,17 @@
 /* 4. All General Interactive Buttons & Chips inside Modules (3D Push-Buttons) */
 .board.bx-bento main button:not(.bx-tile):not(.bx-verse) {
   box-shadow:
-    0 3px 0 color-mix(in srgb, var(--bx-gold) 65%, #000),
-    0 6px 10px rgba(0, 0, 0, 0.12),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.45) !important;
-  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+    0 3px 0 rgba(140, 98, 57, 0.65),
+    0 5px 8px rgba(58, 29, 16, 0.12),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .board.bx-bento main button:not(.bx-tile):not(.bx-verse):active {
-  transform: translateY(2.5px) !important;
+  transform: translateY(2px);
   box-shadow:
-    0 0.5px 0 color-mix(in srgb, var(--bx-gold) 65%, #000),
-    0 2px 4px rgba(0, 0, 0, 0.1),
-    inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+    0 0.5px 0 rgba(140, 98, 57, 0.65),
+    0 2px 4px rgba(58, 29, 16, 0.1);
 }
 
 /* 5. Bottom Navigation Dock 3D Buttons */

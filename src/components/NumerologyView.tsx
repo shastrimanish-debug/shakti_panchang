@@ -295,18 +295,24 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
             <button
               type="button"
               onClick={() => setGender('male')}
-              className={`flex-1 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
-                gender === 'male' ? 'bg-[#5C3A21] text-amber-200 border-[#5C3A21]' : 'bg-white text-stone-600 border-amber-200'
-              }`}
+              style={
+                gender === 'male'
+                  ? { backgroundColor: '#5C3A21', color: '#FFD88A', borderColor: '#3E2714' }
+                  : { backgroundColor: '#FFFDF9', color: '#5C3A21', borderColor: '#DFCBB5' }
+              }
+              className="flex-1 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer shadow-xs"
             >
               पुरुष
             </button>
             <button
               type="button"
               onClick={() => setGender('female')}
-              className={`flex-1 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
-                gender === 'female' ? 'bg-[#5C3A21] text-amber-200 border-[#5C3A21]' : 'bg-white text-stone-600 border-amber-200'
-              }`}
+              style={
+                gender === 'female'
+                  ? { backgroundColor: '#5C3A21', color: '#FFD88A', borderColor: '#3E2714' }
+                  : { backgroundColor: '#FFFDF9', color: '#5C3A21', borderColor: '#DFCBB5' }
+              }
+              className="flex-1 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer shadow-xs"
             >
               स्त्री
             </button>

@@ -582,6 +582,19 @@ export interface DevotionalThemeInfo {
 
 export const DEVOTIONAL_THEMES: DevotionalThemeInfo[] = [
   {
+    id: 'bhojpatra',
+    name: 'भोजपत्र पाण्डुलिपि',
+    nameEn: 'Bhojpatra Parchment',
+    deity: 'महर्षि वेदव्यास व वैदिक संहिता',
+    icon: '📜',
+    bgHex: '#FAF2DE',
+    cardBgHex: '#FFFDF9',
+    accentHex: '#78350F',
+    borderHex: '#DFCBB5',
+    desc: 'प्राचीन भोजपत्र स्वर्ण पाण्डुलिपि परम्परा (स्वर्ण व काष्ठ आभा)',
+    isLight: true,
+  },
+  {
     id: 'kesariya',
     name: 'केसरी भगवा',
     nameEn: 'Kesariya Bhagwa',
@@ -626,11 +639,11 @@ export const DEVOTIONAL_THEMES: DevotionalThemeInfo[] = [
     nameEn: 'Gangajal Shiva',
     deity: 'माँ गंगा व भगवान शिव',
     icon: '🌊',
-    bgHex: '#F0F7FF',
+    bgHex: '#F4F8FC',
     cardBgHex: '#FFFFFF',
-    accentHex: '#0284C7',
-    borderHex: '#BAE6FD',
-    desc: 'हरिद्वार-ऋषिकेश पावन गंगा नीलिमा धारा',
+    accentHex: '#0369A1',
+    borderHex: '#DFCBB5',
+    desc: 'हरिद्वार-ऋषिकेश पावन गंगा नीलिमा धारा व स्वर्ण आभा',
     isLight: true,
   },
   {
@@ -642,7 +655,7 @@ export const DEVOTIONAL_THEMES: DevotionalThemeInfo[] = [
     bgHex: '#F2FBF4',
     cardBgHex: '#FFFFFF',
     accentHex: '#15803D',
-    borderHex: '#86EFAC',
+    borderHex: '#DFCBB5',
     desc: 'वृन्दावन कुंज व पावन तुलसीदल आभा',
     isLight: true,
   },
@@ -655,7 +668,7 @@ export const DEVOTIONAL_THEMES: DevotionalThemeInfo[] = [
     bgHex: '#FFF5F5',
     cardBgHex: '#FFFFFF',
     accentHex: '#BE123C',
-    borderHex: '#FECDD3',
+    borderHex: '#DFCBB5',
     desc: 'माँ जगदम्बा कुमकुम व शक्ति कृपा',
     isLight: true,
   },
@@ -686,19 +699,6 @@ export const DEVOTIONAL_THEMES: DevotionalThemeInfo[] = [
     isLight: true,
   },
   {
-    id: 'bhojpatra',
-    name: 'भोजपत्र पाण्डुलिपि',
-    nameEn: 'Bhojpatra Parchment',
-    deity: 'महर्षि वेदव्यास व वैदिक संहिता',
-    icon: '📜',
-    bgHex: '#FAF2DE',
-    cardBgHex: '#FFFDF9',
-    accentHex: '#78350F',
-    borderHex: '#DFCBB5',
-    desc: 'प्राचीन भोजपत्र स्वर्ण पाण्डुलिपि परम्परा',
-    isLight: true,
-  },
-  {
     id: 'tamra',
     name: 'ताम्र-डार्क',
     nameEn: 'Tamra Night',
@@ -718,7 +718,7 @@ export function getStoredTheme(): AppTheme {
     const val = localStorage.getItem(STORAGE_KEY_THEME);
     if (val && DEVOTIONAL_THEMES.some((t) => t.id === val)) return val as AppTheme;
   } catch {}
-  return 'kesariya';
+  return 'bhojpatra';
 }
 
 export function setStoredTheme(theme: AppTheme): void {
