@@ -25,13 +25,13 @@
   --bx-panel: #ffffff;
   --bx-ink: #431407;
   --bx-mute: #9a3412;
-  --bx-line: #fed7aa;
+  --bx-line: #fdba74;
   --bx-mark: #ea580c;
   --bx-mark-soft: #ffedd5;
   --bx-gold: #c8892d;
   --bx-header: #9a3412;
   --bx-header-2: #c2410c;
-  --bx-cream: #fff7ed;
+  --bx-cream: #ffedd5;
 }
 
 .board.chandan-theme, .chandan-theme .board {
@@ -45,7 +45,7 @@
   --bx-gold: #b56a00;
   --bx-header: #78350f;
   --bx-header-2: #9a3412;
-  --bx-cream: #fff9ee;
+  --bx-cream: #f5e8d4;
 }
 
 .board.peetambari-theme, .peetambari-theme .board {
@@ -59,7 +59,7 @@
   --bx-gold: #ca8a04;
   --bx-header: #854d0e;
   --bx-header-2: #a16207;
-  --bx-cream: #fefce8;
+  --bx-cream: #fef9c3;
 }
 
 .board.gangajal-theme, .gangajal-theme .board {
@@ -67,13 +67,13 @@
   --bx-panel: #ffffff;
   --bx-ink: #1e3a5f;
   --bx-mute: #2a527a;
-  --bx-line: #dfcbb5;
+  --bx-line: #cbe0f0;
   --bx-mark: #0369a1;
   --bx-mark-soft: #eaf3fa;
   --bx-gold: #c8892d;
   --bx-header: #5c3a21;
   --bx-header-2: #1e3a5f;
-  --bx-cream: #fffdf9;
+  --bx-cream: #eef5fb;
 }
 
 .board.tulsi-theme, .tulsi-theme .board {
@@ -81,13 +81,13 @@
   --bx-panel: #ffffff;
   --bx-ink: #052e16;
   --bx-mute: #166534;
-  --bx-line: #dfcbb5;
+  --bx-line: #bfe8cd;
   --bx-mark: #15803d;
   --bx-mark-soft: #dcfce7;
   --bx-gold: #c8892d;
   --bx-header: #5c3a21;
   --bx-header-2: #15803d;
-  --bx-cream: #fffdf9;
+  --bx-cream: #eaf8ee;
 }
 
 .board.sindoor-theme, .sindoor-theme .board {
@@ -95,13 +95,13 @@
   --bx-panel: #ffffff;
   --bx-ink: #4c0519;
   --bx-mute: #9f1239;
-  --bx-line: #dfcbb5;
+  --bx-line: #fed5db;
   --bx-mark: #be123c;
   --bx-mark-soft: #ffe4e6;
   --bx-gold: #c8892d;
   --bx-header: #7a1d1d;
   --bx-header-2: #be123c;
-  --bx-cream: #fffdf9;
+  --bx-cream: #fff0f2;
 }
 
 .board.swarna-theme, .swarna-theme .board {
@@ -115,7 +115,7 @@
   --bx-gold: #c8892d;
   --bx-header: #78350f;
   --bx-header-2: #b45309;
-  --bx-cream: #fffbeb;
+  --bx-cream: #fef3c7;
 }
 
 .board.shvet-theme, .shvet-theme .board {
@@ -124,12 +124,12 @@
   --bx-ink: #0f172a;
   --bx-mute: #334155;
   --bx-line: #cbd5e1;
-  --bx-mark: #c2410c;
+  --bx-mark: #334155;
   --bx-mark-soft: #f1f5f9;
   --bx-gold: #c8892d;
   --bx-header: #1e293b;
   --bx-header-2: #334155;
-  --bx-cream: #ffffff;
+  --bx-cream: #f1f5f9;
 }
 
 .board.bhojpatra-theme, .bhojpatra-theme .board {
@@ -143,7 +143,7 @@
   --bx-gold: #b56a00;
   --bx-header: #5c3a21;
   --bx-header-2: #8c4a00;
-  --bx-cream: #fffdf9;
+  --bx-cream: #f4e8d1;
 }
 
 .board.tamra-theme, .tamra-theme .board {
@@ -593,7 +593,7 @@
   opacity: 0.35;
 }
 
-/* Old manuscript skins become the same paper system. Data stays. */
+/* Old manuscript skins become the same paper system with tactile 3D depth */
 .board .flutter-scaffold-bg,
 .board .flutter-card,
 .board .flutter-card-elevated,
@@ -608,14 +608,77 @@
   background-image: none !important;
   color: var(--bx-ink) !important;
   border-color: var(--bx-line) !important;
-  box-shadow: none !important;
+  box-shadow: 0 4px 16px -2px rgba(70, 43, 23, 0.08), 0 2px 6px rgba(70, 43, 23, 0.04) !important;
+}
+
+/* 🌟 Universal Sub-View Theme Propagation (Kundali, Prashnavali, Numerology, Mantras, Muhurat, Choghadiya, etc.) */
+.board div[class*="bg-[#FAF2E4]"],
+.board div[class*="bg-[#F4E8D1]"],
+.board div[class*="bg-[#FCF8EC]"],
+.board div[class*="bg-[#FAF5ED]"],
+.board div[class*="bg-[#FAF6EE]"],
+.board div[class*="bg-[#fff7ef]"],
+.board div[class*="bg-[#FBF0DD]"],
+.board div[class*="bg-amber-50"],
+.board section[class*="bg-[#FAF2E4]"],
+.board section[class*="bg-[#F4E8D1]"],
+.board [style*="background-color: rgb(250, 242, 228)"],
+.board [style*="background-color: #FAF2E4"],
+.board [style*="background-color:#FAF2E4"],
+.board [style*="background: rgb(250, 242, 228)"],
+.board [style*="background: #FAF2E4"],
+.board [style*="background:#FAF2E4"],
+.board [style*="backgroundColor: '#FAF2E4'"],
+.board [style*="backgroundColor: \"#FAF2E4\""] {
+  background-color: var(--bx-cream) !important;
+  color: var(--bx-ink) !important;
+}
+
+.board div[class*="bg-[#FFFDF8]"],
+.board div[class*="bg-[#FFFDF9]"],
+.board section[class*="bg-[#FFFDF8]"],
+.board section[class*="bg-[#FFFDF9]"],
+.board [style*="background-color: rgb(255, 253, 248)"],
+.board [style*="background-color: #FFFDF8"],
+.board [style*="background-color:#FFFDF8"],
+.board [style*="background: rgb(255, 253, 248)"],
+.board [style*="background: #FFFDF8"],
+.board [style*="background:#FFFDF8"],
+.board [style*="backgroundColor: '#FFFDF8'"],
+.board [style*="backgroundColor: \"#FFFDF8\""] {
+  background-color: var(--bx-panel) !important;
+  color: var(--bx-ink) !important;
+}
+
+/* Sub-view borders track theme line color */
+.board div[class*="border-[#8C6239]"],
+.board div[class*="border-[#DFCBB5]"],
+.board div[class*="border-[#E8DCCB]"],
+.board div[class*="border-[#E5D2B8]"],
+.board div[class*="border-amber-200"],
+.board div[class*="border-amber-300"],
+.board button[class*="border-[#8C6239]"],
+.board section[class*="border-[#8C6239]"] {
+  border-color: var(--bx-line) !important;
+}
+
+/* Sub-view accent & muted text tracks theme */
+.board [class*="text-[#8C4A00]"],
+.board [class*="text-[#B56A00]"],
+.board [class*="text-[#CA8A04]"],
+.board [class*="text-[#C2410C]"] {
+  color: var(--bx-mark) !important;
+}
+
+.board [class*="text-[#8C6239]"],
+.board [class*="text-[#7A5A3A]"],
+.board [class*="text-[#78350F]"] {
+  color: var(--bx-mute) !important;
 }
 
 .board .text-temple,
 .board .text-ink,
-.board .text-wood,
-.board .text-gold,
-.board .text-muted {
+.board .text-gold {
   color: var(--bx-ink);
 }
 
@@ -630,19 +693,51 @@
 }
 
 /* 🌟 High-contrast protection on dark surfaces across all themes */
+.board [class*="bg-[#7A1D1D]"],
+.board [class*="bg-[#6E1409]"],
+.board [class*="bg-[#5C3A21]"],
+.board [class*="bg-[#462B17]"],
+.board [class*="bg-[#5C1414]"],
+.board [style*="background-color: rgb(110, 20, 9)"],
+.board [style*="background-color: #6E1409"],
+.board [style*="background-color:#6E1409"],
+.board [style*="background-color: rgb(92, 58, 33)"],
+.board [style*="background-color: #5C3A21"],
+.board [style*="background-color:#5C3A21"],
+.board [style*="background-color: rgb(122, 29, 29)"],
+.board [style*="background-color: #7A1D1D"],
+.board [style*="background-color:#7A1D1D"],
 .board .bx-dark-surface,
-.board .bx-dark-surface *,
 .board .bx-modal-dark-head,
-.board .bx-modal-dark-head *,
-.board .bx-dark-btn,
-.board .bx-dark-btn * {
+.board .bx-dark-btn {
   color: #fffdf5 !important;
+}
+
+.board [class*="bg-[#7A1D1D]"] *,
+.board [class*="bg-[#6E1409]"] *,
+.board [class*="bg-[#5C3A21]"] *,
+.board [class*="bg-[#462B17]"] *,
+.board [class*="bg-[#5C1414]"] *,
+.board [style*="background-color: rgb(110, 20, 9)"] *,
+.board [style*="background-color: #6E1409"] *,
+.board [style*="background-color: rgb(92, 58, 33)"] *,
+.board [style*="background-color: #5C3A21"] *,
+.board [style*="background-color: rgb(122, 29, 29)"] *,
+.board [style*="background-color: #7A1D1D"] *,
+.board .bx-dark-surface *,
+.board .bx-modal-dark-head *,
+.board .bx-dark-btn * {
+  color: inherit !important;
 }
 
 .board .bx-dark-surface .text-amber-200,
 .board .bx-dark-surface .text-amber-300,
 .board .bx-modal-dark-head .text-amber-200,
-.board .bx-modal-dark-head .text-amber-300 {
+.board .bx-modal-dark-head .text-amber-300,
+.board [class*="bg-[#7A1D1D]"] .text-amber-200,
+.board [class*="bg-[#7A1D1D]"] .text-amber-300,
+.board [class*="bg-[#5C3A21]"] .text-amber-200,
+.board [class*="bg-[#5C3A21]"] .text-amber-300 {
   color: #fef08a !important;
 }
 
@@ -655,18 +750,19 @@
 }
 
 .bx-verse {
-  border: 1.5px solid #C89D66;
+  border: 1.5px solid var(--bx-line) !important;
   border-radius: 14px;
-  background: #FFFDF8;
+  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%) !important;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  color: #1F1006;
+  color: var(--bx-ink) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
 }
 
 .bx-verse .bx-kicker {
-  color: #6E1409 !important;
+  color: var(--bx-mark) !important;
   font-weight: 800;
   font-size: 12px;
 }
@@ -680,14 +776,14 @@
   font-size: 15px;
   line-height: 1.65;
   font-weight: 700;
-  color: #4A0E0E !important;
+  color: var(--bx-ink) !important;
 }
 
 .bx-verse .bx-mean {
   font-size: 13.5px;
   line-height: 1.6;
   font-weight: 600;
-  color: #241004 !important;
+  color: var(--bx-mute) !important;
 }
 
 .bx-iconbtn svg,
@@ -697,27 +793,27 @@
 
 .board .bx-more .zsp-flow button:not([style]),
 .board .bx-more .zsp-flow a {
-  background-color: #fffaf3 !important;
+  background-color: var(--bx-panel) !important;
   background-image: none !important;
-  color: #2c180c !important;
-  border: 1px solid #c9b296 !important;
-  box-shadow: none !important;
+  color: var(--bx-ink) !important;
+  border: 1px solid var(--bx-line) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
 .board .bx-more .zsp-flow button div,
 .board .bx-more .zsp-flow button span,
 .board .bx-more .zsp-flow a span {
-  color: #2c180c !important;
+  color: var(--bx-ink) !important;
 }
 
 .board .bx-more .zsp-flow button svg {
-  color: #5c3a21 !important;
+  color: var(--bx-mark) !important;
 }
 
 .board .bx-more .zsp-flow button [class*="text-[9px]"],
 .board .bx-more .zsp-flow button [class*="text-[10px]"],
 .board .bx-more .zsp-flow button [class*="text-[11px]"] {
-  color: #4a3424 !important;
+  color: var(--bx-mute) !important;
   font-size: 12.5px !important;
   line-height: 1.45 !important;
   font-weight: 600 !important;
@@ -725,14 +821,14 @@
 
 .board .bx-more .zsp-flow button [class*="text-xs"],
 .board .bx-more .zsp-flow button [class*="text-sm"] {
-  color: #2c180c !important;
+  color: var(--bx-ink) !important;
   font-size: 14px !important;
   line-height: 1.35 !important;
 }
 
 .board .bx-more .zsp-flow button > span[class*="rounded-full"],
 .board .bx-more .zsp-flow button > span[class*="rounded-lg"] {
-  background-color: #5c3a21 !important;
+  background-color: var(--bx-mark) !important;
   color: #fffaf3 !important;
   font-size: 11px !important;
   line-height: 1.15 !important;
@@ -821,36 +917,39 @@
   --bx-panel: #ffffff;
   --bx-ink: #1e3a5f;
   --bx-mute: #2a527a;
-  --bx-line: #dfcbb5;
+  --bx-line: #cbe0f0;
   --bx-mark: #0369a1;
   --bx-mark-soft: #eaf3fa;
   --bx-gold: #c8892d;
   --bx-header: #5c3a21;
   --bx-header-2: #1e3a5f;
+  --bx-cream: #eef5fb;
 }
 .tulsi-theme .board {
   --bx-bg: #f2fbf4;
   --bx-panel: #ffffff;
   --bx-ink: #052e16;
   --bx-mute: #166534;
-  --bx-line: #dfcbb5;
+  --bx-line: #bfe8cd;
   --bx-mark: #15803d;
   --bx-mark-soft: #dcfce7;
   --bx-gold: #c8892d;
   --bx-header: #5c3a21;
   --bx-header-2: #15803d;
+  --bx-cream: #eaf8ee;
 }
 .sindoor-theme .board {
   --bx-bg: #fff5f5;
   --bx-panel: #ffffff;
   --bx-ink: #4c0519;
   --bx-mute: #9f1239;
-  --bx-line: #dfcbb5;
+  --bx-line: #fed5db;
   --bx-mark: #be123c;
   --bx-mark-soft: #ffe4e6;
   --bx-gold: #c8892d;
   --bx-header: #7a1d1d;
   --bx-header-2: #be123c;
+  --bx-cream: #fff0f2;
 }
 .swarna-theme .board {
   --bx-bg: #fffbeb;
@@ -863,6 +962,7 @@
   --bx-gold: #c8892d;
   --bx-header: #78350f;
   --bx-header-2: #b45309;
+  --bx-cream: #fef3c7;
 }
 .shvet-theme .board {
   --bx-bg: #f8fafc;
@@ -875,6 +975,7 @@
   --bx-gold: #c8892d;
   --bx-header: #1e293b;
   --bx-header-2: #334155;
+  --bx-cream: #f1f5f9;
 }
 .bhojpatra-theme .board {
   --bx-bg: #faf2de;
@@ -1246,11 +1347,11 @@
 .board.bx-bento .bx-iconbtn,
 .board.bx-bento .bx-navbtn,
 .board.bx-bento .bx-head-btn {
-  background: linear-gradient(180deg, #FFFDF9 0%, #F5E8D1 100%) !important;
-  border: 1.5px solid #8C6239 !important;
-  color: #3A2414 !important;
+  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%) !important;
+  border: 1.5px solid var(--bx-gold) !important;
+  color: var(--bx-ink) !important;
   box-shadow:
-    0 3px 0 #8C6239,
+    0 3px 0 var(--bx-gold),
     0 5px 10px rgba(58, 29, 16, 0.12),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.85) !important;
   transition: transform 0.12s ease, box-shadow 0.12s ease !important;
@@ -1263,7 +1364,7 @@
 .board.bx-bento .bx-head-btn:active {
   transform: translateY(2.5px) !important;
   box-shadow:
-    0 0.5px 0 #8C6239,
+    0 0.5px 0 var(--bx-gold),
     0 2px 4px rgba(58, 29, 16, 0.1) !important;
   inset: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
 }
