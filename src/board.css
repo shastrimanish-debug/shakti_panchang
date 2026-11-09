@@ -1308,6 +1308,7 @@
 .board.bx-bento main .bx-tile,
 .board.bx-bento main button.bx-verse,
 .board.bx-bento .bx-kundali {
+  touch-action: pan-y !important;
   background: linear-gradient(180deg, var(--bx-panel) 0%, color-mix(in srgb, var(--bx-panel) 80%, var(--bx-cream)) 100%) !important;
   border: 1.5px solid var(--bx-line) !important;
   border-radius: 18px !important;
@@ -1521,8 +1522,32 @@
 .shiv-tantra-view .dark\:text-amber-200\/90 {
   color: var(--bx-mute) !important;
 }
-.shiv-tantra-view .bg-\[\#5C3A21\] {
+.shiv-tantra-view .bg-[#5C3A21] {
   background-color: var(--bx-header-2) !important;
   color: #FFFFFF !important;
+}
+
+/* ============================================================================
+ * MOBILE TOUCH SCROLLING & OVERSCROLL OPTIMIZATIONS
+ * Ensures silky-smooth, unblocked vertical touch scrolling across all devices.
+ * ============================================================================ */
+
+.overflow-y-auto,
+[class*="overflow-y-auto"],
+.overflow-auto,
+[class*="overflow-auto"] {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  overscroll-behavior-y: contain !important;
+}
+
+/* Ensure verse cards and list buttons allow vertical gesture passthrough */
+.bx-verse,
+button.bx-verse,
+.board.bx-bento main button.bx-verse,
+.board.bx-bento .bx-tile,
+.board.bx-bento .bx-fact {
+  touch-action: pan-y !important;
 }
 

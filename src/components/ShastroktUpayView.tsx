@@ -25,7 +25,7 @@ export function ShastroktUpayView() {
   });
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+    <div className="flex-1 min-h-0 h-full w-full flex flex-col overflow-hidden">
       <div className="shrink-0 relative z-10 px-3 pt-1 pb-2 flex flex-col gap-1.5 bg-[#fff7ef]">
         {selected ? (
           <button type="button" className="text-left text-sm font-semibold truncate" onClick={() => setSelectedId(null)}>
@@ -51,9 +51,18 @@ export function ShastroktUpayView() {
           </>
         )}
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2 pb-16 flex flex-col gap-1.5">
+      <div
+        className="flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain px-2 pb-28 flex flex-col gap-1.5"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+      >
         {selected ? <Detail item={selected} /> : list.map((item) => (
-          <button key={item.id} type="button" className="bx-verse text-left w-full" onClick={() => setSelectedId(item.id)}>
+          <button
+            key={item.id}
+            type="button"
+            className="bx-verse text-left w-full cursor-pointer"
+            style={{ touchAction: "pan-y" }}
+            onClick={() => setSelectedId(item.id)}
+          >
             <div className="bx-kicker">{item.id} · {item.deity}</div>
             <strong className="text-sm font-bold" style={{ color: "#241004" }}>{item.title}</strong>
             <span className="text-xs font-semibold" style={{ color: "#4A0E0E" }}>{item.mantra}</span>

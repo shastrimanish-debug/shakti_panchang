@@ -57,7 +57,7 @@ export function RavanSanhitaUpayView({
 
   return (
     <div
-      className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-2xl"
+      className="flex-1 min-h-0 h-full w-full flex flex-col overflow-hidden"
       style={{ backgroundColor: "#FFF9F0" }}
     >
       {/* Uniform Header & Filter Bar */}
@@ -154,7 +154,13 @@ export function RavanSanhitaUpayView({
       </div>
 
       {/* Uniform Remedy Cards List or Full Step-by-Step Detail View */}
-      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain px-2 py-2 pb-16 flex flex-col gap-1.5">
+      <div
+        className="flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain px-2 py-2 pb-28 flex flex-col gap-2.5"
+        style={{
+          WebkitOverflowScrolling: "touch",
+          touchAction: "pan-y",
+        }}
+      >
         {selected ? (
           <Detail item={selected} onAskUma={onAskUma} />
         ) : (
@@ -163,6 +169,7 @@ export function RavanSanhitaUpayView({
               key={item.id}
               type="button"
               className="bx-verse text-left w-full cursor-pointer transition hover:opacity-95"
+              style={{ touchAction: "pan-y" }}
               onClick={() => setSelectedId(item.id)}
             >
               <div className="bx-kicker flex flex-wrap items-center justify-between gap-1.5">

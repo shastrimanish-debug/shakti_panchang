@@ -677,7 +677,7 @@ export function App() {
               duration: 0.16,
               ease: [0.25, 0.1, 0.25, 1],
             }}
-            className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
+            className="flex-1 min-h-0 h-full w-full flex flex-col overflow-hidden relative"
           >
           <Suspense
             fallback={
@@ -889,26 +889,36 @@ export function App() {
 
             {activeTab === 'vishnu_sahasranama' && <VishnuSahasranamaPathView />}
 
-            {activeTab === 'sabar' && <SabarMantraView />}
+            {activeTab === 'sabar' && (
+              <div className="flex-1 min-h-0 h-full w-full flex flex-col overflow-hidden">
+                <SabarMantraView />
+              </div>
+            )}
 
             {activeTab === 'jain_mantras' && <JainMantraView />}
 
             {activeTab === 'saral' && (
-              <div className="flex-1 min-h-0 flex flex-col w-full overflow-y-auto overscroll-contain p-2 pb-16">
+              <div className="flex-1 min-h-0 h-full flex flex-col w-full overflow-y-auto overscroll-y-contain p-2 pb-24" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
                 <div className="shrink-0 px-1 pb-2 text-[13px] font-semibold text-[#5C3A21]">सरल उपाय · 501 पाठ</div>
                 <SaralUpayPanel />
               </div>
             )}
 
-            {activeTab === 'shastrokt' && <ShastroktUpayView />}
+            {activeTab === 'shastrokt' && (
+              <div className="flex-1 min-h-0 h-full w-full flex flex-col overflow-hidden">
+                <ShastroktUpayView />
+              </div>
+            )}
 
             {activeTab === 'ravan_sanhita' && (
-              <RavanSanhitaUpayView
-                onAskUma={(query) => {
-                  setUmaInitialPrompt(query);
-                  setIsUmaModalOpen(true);
-                }}
-              />
+              <div className="flex-1 min-h-0 h-full w-full flex flex-col overflow-hidden">
+                <RavanSanhitaUpayView
+                  onAskUma={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                />
+              </div>
             )}
 
             {(activeTab === 'upay' || activeTab === 'lal_kitab') && (
