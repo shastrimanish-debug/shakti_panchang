@@ -1527,6 +1527,18 @@
   color: #FFFFFF !important;
 }
 
+.shiv-tantra-view {
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+}
+
+.shiv-tantra-view button,
+.shiv-tantra-view [role="button"],
+.shiv-tantra-view .bx-verse {
+  touch-action: pan-y !important;
+}
+
 /* ============================================================================
  * MOBILE TOUCH SCROLLING & OVERSCROLL OPTIMIZATIONS
  * Ensures silky-smooth, unblocked vertical touch scrolling across all devices.

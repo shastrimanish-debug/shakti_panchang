@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { VedicPanchangData, SavedLocation } from '../types';
-import { COMMON_INDIAN_CITIES, calculateYatraShool } from '../services/disha';
-import { Compass, MapPin, Navigation, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { COMMON_INDIAN_CITIES, calculateYatraShool, type IndianCity } from '../services/disha';
+import { CheckCircle2, ShieldAlert, Search, X } from 'lucide-react';
 import { DigitalCompass } from './DigitalCompass';
 import { useTranslation } from '../i18n';
 import { trVedic, trWeekday } from '../i18n/vedicTranslate';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
+import { triggerHapticSelection } from '../utils/haptics';
 
 interface YatraViewProps {
   panchang: VedicPanchangData;
@@ -13,6 +14,222 @@ interface YatraViewProps {
   onOpenUmaModal?: (query?: string) => void;
   onPrevChapter?: () => void;
   onNextChapter?: () => void;
+}
+
+const REGION_FILTERS = [
+  { id: 'all', label: 'सभी' },
+  { id: 'pilgrimage', label: '🚩 तीर्थ व धाम' },
+  { id: 'मध्य प्रदेश', label: 'मध्य प्रदेश' },
+  { id: 'उत्तर प्रदेश', label: 'उत्तर प्रदेश' },
+  { id: 'गुजरात', label: 'गुजरात' },
+  { id: 'उत्तराखंड', label: 'उत्तराखंड' },
+  { id: 'राजस्थान', label: 'राजस्थान' },
+  { id: 'महाराष्ट्र', label: 'महाराष्ट्र' },
+  { id: 'हरियाणा', label: 'हरियाणा' },
+  { id: 'पंजाब', label: 'पंजाब' },
+  { id: 'बिहार', label: 'बिहार' },
+];
+
+interface YatraCityPickerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  selectedCityName: string;
+  onSelectCity: (city: IndianCity) => void;
+}
+
+function YatraCityPickerModal({
+  isOpen,
+  onClose,
+  title,
+  selectedCityName,
+  onSelectCity,
+}: YatraCityPickerModalProps) {
+  const [search, setSearch] = useState('');
+  const [regionFilter, setRegionFilter] = useState('all');
+
+  if (!isOpen) return null;
+
+  const needle = search.trim().toLowerCase();
+  const filtered = COMMON_INDIAN_CITIES.filter((c) => {
+    if (regionFilter === 'pilgrimage' && c.type !== 'pilgrimage') return false;
+    if (regionFilter !== 'all' && regionFilter !== 'pilgrimage' && c.state !== regionFilter) return false;
+    if (!needle) return true;
+    return `${c.name} ${c.state}`.toLowerCase().includes(needle);
+  });
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full sm:max-w-md max-h-[85vh] sm:max-h-[80vh] h-[540px] flex flex-col rounded-t-3xl sm:rounded-3xl border-2 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
+        style={{
+          background: "linear-gradient(180deg, var(--bx-panel) 0%, color-mix(in srgb, var(--bx-panel) 92%, var(--bx-cream)) 100%)",
+          borderColor: "var(--bx-gold)",
+          color: "var(--bx-ink)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div
+          className="shrink-0 p-3 sm:p-4 border-b flex items-center justify-between"
+          style={{ borderColor: "var(--bx-line)" }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🧭</span>
+            <div>
+              <h3 className="text-sm sm:text-base font-black font-granth" style={{ color: "var(--bx-header)" }}>
+                {title}
+              </h3>
+              <p className="text-[10px] text-[#8C6239] font-medium">
+                {filtered.length} नगर/तीर्थ उपलब्ध
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center border cursor-pointer transition hover:opacity-80 active:scale-95"
+            style={{
+              backgroundColor: "var(--bx-cream)",
+              borderColor: "var(--bx-line)",
+              color: "var(--bx-ink)",
+            }}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="shrink-0 p-2.5 pb-1 space-y-2">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-800/60" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="नगर या तीर्थ खोजें (उदा: काशी, उज्जैन, अयोध्या, दिल्ली)..."
+              className="w-full rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm font-semibold outline-none border"
+              style={{
+                backgroundColor: "var(--bx-panel)",
+                borderColor: "var(--bx-line)",
+                color: "var(--bx-ink)",
+              }}
+              autoFocus
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8C6239] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Region Chips */}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            {REGION_FILTERS.map((r) => {
+              const active = regionFilter === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => {
+                    triggerHapticSelection();
+                    setRegionFilter(r.id);
+                  }}
+                  className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${
+                    active ? 'shadow-xs scale-102' : 'opacity-85'
+                  }`}
+                  style={{
+                    backgroundColor: active ? "var(--bx-header)" : "var(--bx-cream)",
+                    color: active ? "#FFFFFF" : "var(--bx-ink)",
+                    borderColor: active ? "var(--bx-gold)" : "var(--bx-line)",
+                  }}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Scrollable City List */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-2.5 space-y-1.5"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            touchAction: "pan-y",
+          }}
+        >
+          {filtered.length === 0 ? (
+            <div className="text-center py-8 text-xs font-semibold text-[#8C6239]">
+              कोई नगर या तीर्थ नहीं मिला।
+            </div>
+          ) : (
+            filtered.map((c) => {
+              const isSelected = c.name === selectedCityName;
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  onClick={() => {
+                    triggerHapticSelection();
+                    onSelectCity(c);
+                    onClose();
+                  }}
+                  className={`w-full text-left p-2.5 rounded-xl border transition flex items-center justify-between cursor-pointer ${
+                    isSelected ? 'shadow-xs border-2' : 'hover:opacity-95'
+                  }`}
+                  style={{
+                    backgroundColor: isSelected ? "var(--bx-cream)" : "var(--bx-panel)",
+                    borderColor: isSelected ? "var(--bx-gold)" : "var(--bx-line)",
+                    color: "var(--bx-ink)",
+                    touchAction: "pan-y",
+                  }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base shrink-0">
+                      {c.type === 'pilgrimage' ? '🚩' : '📍'}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold truncate">
+                        {c.name}
+                      </div>
+                      <div className="text-[10px] text-[#8C6239] font-medium flex items-center gap-1.5">
+                        <span>{c.state}</span>
+                        {c.type === 'pilgrimage' && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-500/15 text-amber-900 border border-amber-400/40">
+                            तीर्थ क्षेत्र
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <span
+                      className="shrink-0 text-[11px] font-black px-2 py-0.5 rounded-md border flex items-center gap-1"
+                      style={{
+                        backgroundColor: "var(--bx-header)",
+                        color: "#FFFFFF",
+                        borderColor: "var(--bx-gold)",
+                      }}
+                    >
+                      ✓ चयनित
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export const YatraView: React.FC<YatraViewProps> = ({
@@ -33,6 +250,7 @@ export const YatraView: React.FC<YatraViewProps> = ({
       state: 'उत्तर प्रदेश',
     };
   const [destination, setDestination] = useState<SavedLocation>(defaultDest);
+  const [pickerTarget, setPickerTarget] = useState<'origin' | 'destination' | null>(null);
 
   const result = calculateYatraShool(
     origin.name,
@@ -117,38 +335,72 @@ export const YatraView: React.FC<YatraViewProps> = ({
       voiceText: `यात्रा मार्ग: ${origin.name} से ${destination.name}।`,
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-2">
-          {/* Origin / Dest Selectors */}
-          <div className="grid grid-cols-2 gap-1.5 shrink-0">
-            <div>
-              <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">प्रस्थान (Origin)</label>
-              <select
-                value={origin.name}
-                onChange={(e) => {
-                  const f = COMMON_INDIAN_CITIES.find((c) => c.name === e.target.value);
-                  if (f) setOrigin(f);
-                }}
-                className="w-full bg-white border border-[#DFCBB5] rounded-lg p-1.5 text-xs font-semibold text-[#5C3A21] outline-none"
-              >
-                {COMMON_INDIAN_CITIES.map((c) => (
-                  <option key={c.name} value={c.name}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-[#8C6239] block mb-0.5">गंतव्य (Destination)</label>
-              <select
-                value={destination.name}
-                onChange={(e) => {
-                  const f = COMMON_INDIAN_CITIES.find((c) => c.name === e.target.value);
-                  if (f) setDestination(f);
-                }}
-                className="w-full bg-white border border-[#DFCBB5] rounded-lg p-1.5 text-xs font-semibold text-[#5C3A21] outline-none"
-              >
-                {COMMON_INDIAN_CITIES.map((c) => (
-                  <option key={c.name} value={c.name}>{c.name}</option>
-                ))}
-              </select>
-            </div>
+          {/* Origin / Dest Selectors with Dedicated Devotional Picker */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticSelection();
+                setPickerTarget('origin');
+              }}
+              className="flex-1 rounded-xl p-2 text-left border shadow-xs transition cursor-pointer hover:border-[#B56A00] active:scale-98"
+              style={{
+                backgroundColor: "var(--bx-panel)",
+                borderColor: "var(--bx-line)",
+                color: "var(--bx-ink)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[#8C6239]">प्रस्थान (Origin)</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/15 text-amber-900 font-bold">बदलें ▾</span>
+              </div>
+              <div className="text-xs font-black truncate mt-0.5 flex items-center gap-1" style={{ color: "var(--bx-header)" }}>
+                <span>🚩</span>
+                <span className="truncate">{origin.name}</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              title="स्थान आपस में बदलें (Swap)"
+              onClick={() => {
+                triggerHapticSelection();
+                const temp = origin;
+                setOrigin(destination);
+                setDestination(temp);
+              }}
+              className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold shadow-xs shrink-0 cursor-pointer transition hover:scale-105 active:scale-95"
+              style={{
+                backgroundColor: "var(--bx-cream)",
+                borderColor: "var(--bx-gold)",
+                color: "var(--bx-header)",
+              }}
+            >
+              ⇄
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticSelection();
+                setPickerTarget('destination');
+              }}
+              className="flex-1 rounded-xl p-2 text-left border shadow-xs transition cursor-pointer hover:border-[#B56A00] active:scale-98"
+              style={{
+                backgroundColor: "var(--bx-panel)",
+                borderColor: "var(--bx-line)",
+                color: "var(--bx-ink)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[#8C6239]">गंतव्य (Destination)</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/15 text-amber-900 font-bold">बदलें ▾</span>
+              </div>
+              <div className="text-xs font-black truncate mt-0.5 flex items-center gap-1" style={{ color: "var(--bx-header)" }}>
+                <span>🎯</span>
+                <span className="truncate">{destination.name}</span>
+              </div>
+            </button>
           </div>
 
           <div className={`p-3 rounded-xl border-2 my-auto ${
@@ -207,18 +459,37 @@ export const YatraView: React.FC<YatraViewProps> = ({
   ];
 
   return (
-    <UniversalStoryDeck
-      slides={slides}
-      headerTitle={t('nav.yatra', 'यात्रा दिशाशूल')}
-      headerIcon="🧭"
-      chapterNumber={4}
-      currentDate={panchang.date}
-      onOpenUma={onOpenUmaModal ? () => onOpenUmaModal('यात्रा दिशाशूल परामर्श') : undefined}
-      onPrevChapter={onPrevChapter}
-      onNextChapter={onNextChapter}
-      prevChapterLabel="शुभ मुहूर्त"
-      nextChapterLabel="कुण्डली"
-    />
+    <>
+      <UniversalStoryDeck
+        slides={slides}
+        headerTitle={t('nav.yatra', 'यात्रा दिशाशूल')}
+        headerIcon="🧭"
+        chapterNumber={4}
+        currentDate={panchang.date}
+        onOpenUma={onOpenUmaModal ? () => onOpenUmaModal('यात्रा दिशाशूल परामर्श') : undefined}
+        onPrevChapter={onPrevChapter}
+        onNextChapter={onNextChapter}
+        prevChapterLabel="शुभ मुहूर्त"
+        nextChapterLabel="कुण्डली"
+      />
+
+      {pickerTarget && (
+        <YatraCityPickerModal
+          isOpen={pickerTarget !== null}
+          onClose={() => setPickerTarget(null)}
+          title={pickerTarget === 'origin' ? '🚩 प्रस्थान नगर चुनें (Origin)' : '🎯 गंतव्य नगर चुनें (Destination)'}
+          selectedCityName={pickerTarget === 'origin' ? origin.name : destination.name}
+          onSelectCity={(city) => {
+            if (pickerTarget === 'origin') {
+              setOrigin(city);
+            } else {
+              setDestination(city);
+            }
+          }}
+        />
+      )}
+    </>
   );
 };
+
 export default YatraView;

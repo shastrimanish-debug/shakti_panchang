@@ -207,7 +207,13 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
   };
 
   return (
-    <div className="shiv-tantra-view flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-4 pb-24">
+    <div
+      className="shiv-tantra-view flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain p-2.5 sm:p-4 pb-32"
+      style={{
+        WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
+      }}
+    >
       {/* Top Breadcrumb / Title Bar */}
       <div className="max-w-4xl mx-auto space-y-3">
         {/* Sacred Header Card - Uses Active Devotional Theme Variables */}

@@ -753,16 +753,18 @@ export function App() {
             )}
 
             {activeTab === 'yatra' && (
-              <YatraView
-                panchang={panchang}
-                currentLocation={currentLocation}
-                onOpenUmaModal={(query?: string) => {
-                  if (query) setUmaInitialPrompt(query);
-                  setIsUmaModalOpen(true);
-                }}
-                onPrevChapter={handlePrevPage}
-                onNextChapter={handleNextPage}
-              />
+              <div className="flex-1 min-h-0 h-full w-full flex flex-col overflow-hidden">
+                <YatraView
+                  panchang={panchang}
+                  currentLocation={currentLocation}
+                  onOpenUmaModal={(query?: string) => {
+                    if (query) setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                  onPrevChapter={handlePrevPage}
+                  onNextChapter={handleNextPage}
+                />
+              </div>
             )}
 
             {(activeTab === 'kundali' || activeTab === 'milan' || activeTab === 'prashna') && (
@@ -1015,14 +1017,16 @@ export function App() {
             )}
 
             {activeTab === 'shiv_tantra' && (
-              <ShivTantraView
-                onOpenUmaWithQuery={(query) => {
-                  setUmaInitialPrompt(query);
-                  setIsUmaModalOpen(true);
-                }}
-                onPrevChapter={handlePrevPage}
-                onNextChapter={handleNextPage}
-              />
+              <div className="flex-1 min-h-0 h-full w-full flex flex-col overflow-hidden">
+                <ShivTantraView
+                  onOpenUmaWithQuery={(query) => {
+                    setUmaInitialPrompt(query);
+                    setIsUmaModalOpen(true);
+                  }}
+                  onPrevChapter={handlePrevPage}
+                  onNextChapter={handleNextPage}
+                />
+              </div>
             )}
 
             {activeTab === 'sadesati' && (
