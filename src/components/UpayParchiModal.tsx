@@ -972,7 +972,8 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
         <div
           ref={scrollContainerRef}
           onScroll={handleContentScroll}
-          className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 bg-[#EBDCC0]/60 relative"
+          className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 bg-[#EBDCC0]/60 relative pb-24 overscroll-y-contain"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
         >
           {/* TAB 1: PARCHI VIEW */}
           {activeTab === 'parchi' && (
@@ -1797,20 +1798,14 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
           )}
         </div>
 
-        {/* Modal Footer Controls (Auto-collapsible on Scroll to give full reading space) */}
-        <div
-          className={`shrink-0 transition-all duration-300 ease-in-out overflow-hidden ${
-            !isChromeVisible || isZenMode
-              ? 'max-h-0 opacity-0 py-0 border-t-0 pointer-events-none'
-              : 'max-h-40 opacity-100'
-          }`}
-        >
+        {/* Modal Footer Controls - Cleanly docked at bottom so buttons are always accessible */}
+        <div className={`shrink-0 z-20 ${isZenMode ? 'hidden' : 'block'}`}>
           <div className="bg-[#F4E8D1] px-4 py-3 border-t-2 border-[#8C6239]/40 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleCopySlip}
-                className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+                className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition active:scale-95"
               >
                 {copied ? (
                   <>
@@ -1834,7 +1829,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     setActiveTab('parchi');
                   }
                 }}
-                className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+                className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition active:scale-95"
               >
                 <BookOpen className="w-4 h-4 text-[#B56A00]" />
                 <span>{activeTab === 'parchi' ? '📖 यजमान विस्तृत मार्गदर्शन' : '📜 पारंपरिक पर्ची'}</span>
@@ -1846,7 +1841,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 type="button"
                 onClick={handleDownloadImage}
                 disabled={isDownloading}
-                className="px-4 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:from-[#5C1414] hover:to-[#3E0A0A] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50"
+                className="px-4 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] hover:from-[#5C1414] hover:to-[#3E0A0A] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50 active:scale-95"
               >
                 {isDownloading ? (
                   <>
@@ -1865,7 +1860,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 type="button"
                 onClick={handleShareWhatsApp}
                 disabled={isDownloading}
-                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50"
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50 active:scale-95"
               >
                 <Share2 className="w-4 h-4" />
                 <span>📲 WhatsApp पर्ची</span>
@@ -1874,60 +1869,16 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
           </div>
         </div>
 
-        {/* Floating Bottom Reveal Pill (Shown when Header & Footer are auto-hidden) */}
-        {(!isChromeVisible || isZenMode) && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 sm:gap-2 bg-[#5C1414]/95 text-[#FFD88A] border-2 border-[#B58738] rounded-full px-3 py-1.5 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-2 duration-200">
-            <button
-              type="button"
-              onClick={() => {
-                setIsChromeVisible(true);
-                setIsZenMode(false);
-                cooldownUntilRef.current = Date.now() + 600;
-              }}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#FFD88A] hover:text-white px-2 py-0.5 rounded-full hover:bg-white/10 transition cursor-pointer"
-              title="मेनू, डाउनलोड व हेडर फिर से दिखाएं"
-            >
-              <Eye className="w-3.5 h-3.5 text-[#E6C687]" />
-              <span>मेनू व डाउनलोड दिखाएं</span>
-            </button>
-
-            <div className="h-4 w-px bg-[#B58738]/50" />
-
-            <div className="flex items-center gap-0.5" title="अक्षर का आकार (सुगम फॉन्ट)">
-              {(['normal', 'large', 'xlarge'] as AppFontSize[]).map((sz) => (
-                <button
-                  key={sz}
-                  type="button"
-                  onClick={() => handleUpdateFontSize(sz)}
-                  className={`px-1.5 py-0.5 rounded text-[11px] font-bold cursor-pointer transition ${
-                    fontSize === sz
-                      ? 'bg-[#FFD88A] text-[#5C1414] font-extrabold'
-                      : 'text-[#E6C687] hover:bg-white/10'
-                  }`}
-                  title={
-                    sz === 'normal'
-                      ? 'सामान्य आकार'
-                      : sz === 'large'
-                      ? 'बड़ा आकार'
-                      : 'अति बड़ा आकार (वृद्धजनों हेतु)'
-                  }
-                >
-                  {sz === 'normal' ? 'अ' : sz === 'large' ? 'अ+' : 'अ++'}
-                </button>
-              ))}
-            </div>
-
-            <div className="h-4 w-px bg-[#B58738]/50" />
-
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="p-1 rounded-full text-[#E6C687] hover:text-white hover:bg-white/10 cursor-pointer"
-              title="पर्ची बंद करें"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+        {/* In Zen / Fullscreen mode, subtle exit button at top right */}
+        {isZenMode && (
+          <button
+            type="button"
+            onClick={() => setIsZenMode(false)}
+            className="absolute top-3 right-3 z-50 p-2 rounded-full bg-black/75 text-white shadow-xl hover:bg-black cursor-pointer transition"
+            title="सामान्य मोड में वापस लौटें"
+          >
+            <X className="w-5 h-5" />
+          </button>
         )}
       </div>
 

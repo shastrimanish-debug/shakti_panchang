@@ -1527,6 +1527,55 @@
   color: #FFFFFF !important;
 }
 
+/* 9. Kundali View & 3D Kundali Complete Devotional Theme Adaptability */
+.kundali-view {
+  color: var(--bx-ink);
+}
+.kundali-view .bg-\[\#FAF2E4\],
+.kundali-view .bg-\[\#FFFDF9\],
+.kundali-view .bg-\[\#FFFDF8\],
+.kundali-view .bg-\[\#FAF5ED\] {
+  background-color: var(--bx-panel) !important;
+}
+.kundali-view .bg-\[\#F4E8D1\],
+.kundali-view .bg-\[\#EBDCC0\],
+.kundali-view .bg-\[\#E5D2B8\] {
+  background-color: var(--bx-cream) !important;
+}
+.kundali-view .border-\[\#8C6239\],
+.kundali-view .border-\[\#8C6239\]\/40,
+.kundali-view .border-\[\#8C6239\]\/25,
+.kundali-view .border-\[\#DFCBB5\],
+.kundali-view .border-\[\#B56A00\]\/45,
+.kundali-view .border-\[\#D6B377\] {
+  border-color: var(--bx-line) !important;
+}
+.kundali-view .text-\[\#5C3A21\],
+.kundali-view .text-\[\#3E2714\],
+.kundali-view .text-\[\#4A200A\],
+.kundali-view .text-\[\#2A1205\],
+.kundali-view .text-\[\#3E1F0D\],
+.kundali-view .text-\[\#2C180C\] {
+  color: var(--bx-ink) !important;
+}
+.kundali-view .text-\[\#7A1D1D\],
+.kundali-view .text-\[\#8B1E1E\],
+.kundali-view .text-\[\#7C2D12\],
+.kundali-view .text-\[\#9A3412\] {
+  color: var(--bx-header) !important;
+}
+.kundali-view .bg-\[\#5C3A21\],
+.kundali-view .bg-\[\#7A1D1D\],
+.kundali-view .bg-\[\#7C2D12\] {
+  background-color: var(--bx-header) !important;
+  color: #FFFFFF !important;
+}
+.kundali-view .text-\[\#8C6239\],
+.kundali-view .text-\[\#735133\],
+.kundali-view .text-\[\#78350F\] {
+  color: var(--bx-mute) !important;
+}
+
 .shiv-tantra-view {
   touch-action: pan-y !important;
   -webkit-overflow-scrolling: touch !important;

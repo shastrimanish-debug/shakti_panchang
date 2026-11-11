@@ -5,6 +5,7 @@ import { RASHIS, calculateVargaSign } from '../services/astronomy';
 import { triggerHapticSelection } from '../utils/haptics';
 import { ThreeKundaliCanvas, ThreeFormattedPlanet } from './ThreeKundaliCanvas';
 import { useTranslation } from '../i18n';
+import { trPlanet, trRashi, trVedic } from '../i18n/vedicTranslate';
 
 export interface KundaliChartProps {
   lagnaDegree: number;
@@ -191,8 +192,10 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
         vargaDivision === 1 ? p.degreeInRashi : (p.degreeInRashi % slice) * vargaDivision;
       const degStr = `${Math.floor(degInVarga)}°`;
 
+      const localizedName = trPlanet(p.planet, lang);
+
       const item: ThreeFormattedPlanet = {
-        name: p.planet,
+        name: localizedName,
         degreeStr: degStr,
         isRetro: p.isRetrograde,
         isBenefic,
@@ -204,23 +207,30 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
     });
 
     return { housePlanets: hMap, signPlanets: sMap };
-  }, [planets, vargaDivision, ascSignIdx]);
+  }, [planets, vargaDivision, ascSignIdx, lang]);
 
   return (
     <div
-      className="flex flex-col items-center p-3 sm:p-4 rounded-2xl border border-[#B56A00]/45 shadow-sm w-full"
+      className="flex flex-col items-center p-3 sm:p-4 rounded-2xl border shadow-sm w-full"
       style={{
-        background: 'linear-gradient(180deg, #FFFDF9 0%, #FAF2E4 100%)',
+        background: 'linear-gradient(180deg, var(--bx-panel, #FFFDF9) 0%, var(--bx-cream, #FAF2E4) 100%)',
+        borderColor: 'var(--bx-gold, rgba(181, 106, 0, 0.45))',
       }}
     >
       {/* Chart Header */}
-      <div className="w-full flex flex-wrap items-center justify-between gap-2 mb-2.5 pb-2 border-b border-[#8C6239]/25">
-        <div className="text-xs sm:text-sm font-black font-granth text-[#4A200A] uppercase tracking-wider flex items-center gap-1.5">
+      <div
+        className="w-full flex flex-wrap items-center justify-between gap-2 mb-2.5 pb-2 border-b"
+        style={{ borderColor: 'var(--bx-line, rgba(140, 98, 57, 0.25))' }}
+      >
+        <div
+          className="text-xs sm:text-sm font-black font-granth uppercase tracking-wider flex items-center gap-1.5"
+          style={{ color: 'var(--bx-header, #4A200A)' }}
+        >
           <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#F59E0B] to-[#8B1E1E] shadow-xs" />
-          <span>{chartTitle || '3D वैदिक कुण्डली चक्र'}</span>
+          <span>{chartTitle || (lang === 'en' ? '3D Vedic Kundali Chart' : lang === 'gu' ? '3D વૈદિક કુંડળી ચક્ર' : '3D वैदिक कुण्डली चक्र')}</span>
           <span
             className="text-[10px] px-1.5 py-0.5 rounded font-bold"
-            style={{ backgroundColor: '#5C2D0C', color: '#FFF3C4' }}
+            style={{ backgroundColor: 'var(--bx-header, #5C2D0C)', color: '#FFFFFF' }}
           >
             3D
           </span>
@@ -549,7 +559,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                             strokeWidth: '3px',
                           }}
                         >
-                          ॥ लग्न ॥
+                          {lang === 'en' ? '॥ Lagna ॥' : lang === 'gu' ? '॥ લગ્ન ॥' : '॥ लग्न ॥'}
                         </text>
                       )}
 
@@ -707,7 +717,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                                 {p.name}
                                 {p.isRetro && (
                                   <tspan fill="#DC2626" fontWeight="900">
-                                    (व)
+                                    {lang === 'en' ? '(R)' : lang === 'gu' ? '(વ)' : '(व)'}
                                   </tspan>
                                 )}
                                 {showDegrees && (
@@ -926,24 +936,28 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
             <div
               key={houseNum}
               data-zsp-atomic="1"
-              className="rounded-xl border shadow-2xs text-left flex flex-col"
+              className="rounded-xl border shadow-2xs text-left flex flex-col overflow-hidden"
               style={{
-                backgroundColor: '#FFFDF8',
-                borderColor: isLagnaHouse ? '#B45309' : '#D6B377',
+                backgroundColor: 'var(--bx-panel, #FFFDF8)',
+                borderColor: isLagnaHouse ? 'var(--bx-gold, #B45309)' : 'var(--bx-line, #D6B377)',
               }}
             >
               <div
-                className="px-2.5 py-1 rounded-t-[11px] flex items-center justify-between text-[11px] font-bold"
+                className="px-2.5 py-1 flex items-center justify-between text-[11px] font-bold"
                 style={{
                   background: isLagnaHouse
-                    ? 'linear-gradient(90deg, #7C2D12 0%, #9A3412 100%)'
-                    : 'linear-gradient(90deg, #5C2D0C 0%, #78350F 100%)',
-                  color: '#FFF3C4',
+                    ? 'linear-gradient(90deg, var(--bx-header, #7C2D12) 0%, var(--bx-header-2, #9A3412) 100%)'
+                    : 'linear-gradient(90deg, var(--bx-mark, #5C2D0C) 0%, var(--bx-header, #78350F) 100%)',
+                  color: '#FFFFFF',
                 }}
               >
-                <span>{isLagnaHouse ? 'भाव 1 (लग्न)' : `भाव ${houseNum}`}</span>
                 <span>
-                  {signIdx + 1}. {RASHIS[signIdx]}
+                  {isLagnaHouse
+                    ? (lang === 'en' ? 'House 1 (Ascendant)' : lang === 'gu' ? 'ભાવ 1 (લગ્ન)' : 'भाव 1 (लग्न)')
+                    : (lang === 'en' ? `House ${houseNum}` : lang === 'gu' ? `ભાવ ${houseNum}` : `भाव ${houseNum}`)}
+                </span>
+                <span>
+                  {signIdx + 1}. {trRashi(RASHIS[signIdx], lang)}
                 </span>
               </div>
               <div className="px-2.5 py-2 flex flex-wrap items-center gap-x-1.5 gap-y-1">
@@ -953,13 +967,13 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                       key={i}
                       className="text-xs sm:text-sm font-black leading-normal"
                       style={{
-                        color: p.isRetro ? '#B91C1C' : p.isBenefic ? '#065F46' : '#2A1205',
+                        color: p.isRetro ? '#B91C1C' : p.isBenefic ? '#065F46' : 'var(--bx-ink, #2A1205)',
                       }}
                     >
                       {p.name}
-                      {p.isRetro ? '(व)' : ''}
+                      {p.isRetro ? (lang === 'en' ? '(R)' : lang === 'gu' ? '(વ)' : '(व)') : ''}
                       {showDegrees ? (
-                        <span className="text-[11px] font-bold text-[#7C2D12]">
+                        <span className="text-[11px] font-bold" style={{ color: 'var(--bx-header, #7C2D12)' }}>
                           {' '}
                           {p.degreeStr}
                         </span>
@@ -970,7 +984,9 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                     </span>
                   ))
                 ) : (
-                  <span className="text-xs font-bold text-[#78350F] leading-normal">लग्न भाव (शांत)</span>
+                  <span className="text-xs font-bold leading-normal" style={{ color: 'var(--bx-mute, #78350F)' }}>
+                    {lang === 'en' ? 'House 1 (Quiet)' : lang === 'gu' ? 'લગ્ન ભાવ (શાંત)' : 'लग्न भाव (शांत)'}
+                  </span>
                 )}
               </div>
             </div>
@@ -979,24 +995,27 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
       </div>
 
       {/* Chart Legend */}
-      <div className="w-full mt-2.5 pt-2 border-t border-[#8C6239]/25 flex flex-wrap items-center justify-between text-xs text-[#5C3A21] gap-2 font-semibold">
-        <div className="flex items-center gap-2">
-          <span className="font-black text-[#3E1F0D]">
-            लग्न: {RASHIS[ascSignIdx]} ({lagnaDegree.toFixed(1)}°)
+      <div
+        className="w-full mt-2.5 pt-2 border-t flex flex-wrap items-center justify-between text-xs gap-2 font-semibold"
+        style={{ borderColor: 'var(--bx-line, rgba(140, 98, 57, 0.25))', color: 'var(--bx-ink, #5C3A21)' }}
+      >
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-black" style={{ color: 'var(--bx-header, #3E1F0D)' }}>
+            {lang === 'en' ? 'Lagna' : lang === 'gu' ? 'લગ્ન' : 'लग्न'}: {trRashi(RASHIS[ascSignIdx], lang)} ({lagnaDegree.toFixed(1)}°)
           </span>
-          <span className="text-[#8C6239]">•</span>
+          <span style={{ color: 'var(--bx-mute, #8C6239)' }}>•</span>
           <span style={{ color: '#065F46' }} className="font-bold">
-            शुभ ग्रह (हरित)
+            {lang === 'en' ? 'Benefic Planets (Green)' : lang === 'gu' ? 'શુભ ગ્રહો (લીલો)' : 'शुभ ग्रह (हरित)'}
           </span>
-          <span className="text-[#8C6239]">•</span>
+          <span style={{ color: 'var(--bx-mute, #8C6239)' }}>•</span>
           <span style={{ color: '#B91C1C' }} className="font-bold">
-            (व) = वक्री (कुमकुम लाल)
+            {lang === 'en' ? '(R) = Retrograde (Red)' : lang === 'gu' ? '(વ) = વક્રી (લાલ)' : '(व) = वक्री (कुमकुम लाल)'}
           </span>
         </div>
-        <div className="text-[11px] text-[#735133]">
+        <div className="text-[11px]" style={{ color: 'var(--bx-mute, #735133)' }}>
           {chartStyle === 'north'
-            ? '3D उत्तर भारतीय (भाव स्थिर, राशि चलायमान)'
-            : '3D दक्षिण भारतीय (राशि स्थिर, भाव चलायमान)'}
+            ? (lang === 'en' ? '3D North Indian (Fixed Houses, Moving Signs)' : lang === 'gu' ? '3D ઉત્તર ભારતીય (ભાવ સ્થિર, રાશિ ચલાયમાન)' : '3D उत्तर भारतीय (भाव स्थिर, राशि चलायमान)')
+            : (lang === 'en' ? '3D South Indian (Fixed Signs, Moving Houses)' : lang === 'gu' ? '3D દક્ષિણ ભારતીય (રાશિ સ્થિર, ભાવ ચલાયમાન)' : '3D दक्षिण भारतीय (राशि स्थिर, भाव चलायमान)')}
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RASHIS } from '../services/astronomy';
 import { triggerHapticSelection } from '../utils/haptics';
 import { useTranslation } from '../i18n';
+import { trRashi } from '../i18n/vedicTranslate';
 
 export interface ThreeFormattedPlanet {
   name: string;
@@ -87,7 +88,8 @@ function createPlanetClusterBadgeTexture(
   showDegrees: boolean,
   fontScale: 'large' | 'xlarge',
   maxAnisotropy: number,
-  stackVertically = false
+  stackVertically = false,
+  lang = 'hi'
 ): { texture: THREE.CanvasTexture; aspect: number } {
   const canvas = document.createElement('canvas');
   const cols = stackVertically ? 1 : planets.length > 2 ? 2 : 1;
@@ -146,7 +148,7 @@ function createPlanetClusterBadgeTexture(
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      const retroTag = p.isRetro ? '(व)' : '';
+      const retroTag = p.isRetro ? (lang === 'en' ? '(R)' : lang === 'gu' ? '(વ)' : '(व)') : '';
       const degTag = showDegrees ? ` ${p.degreeStr}` : '';
       const fullLabel = `${p.name}${retroTag}${degTag}`;
 
@@ -175,7 +177,8 @@ function createRashiMedallionTexture(
   signNum: number,
   rashiName: string,
   isLagna: boolean,
-  maxAnisotropy: number
+  maxAnisotropy: number,
+  lang = 'hi'
 ): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 272;
@@ -198,12 +201,15 @@ function createRashiMedallionTexture(
     ctx.fill();
     ctx.stroke();
 
+    const locRashi = trRashi(rashiName, lang);
+    const lagnaPrefix = lang === 'en' ? 'Lagna' : lang === 'gu' ? 'લગ્ન' : 'लग्न';
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = isLagna ? '#FFF3C4' : '#3E1F0D';
     ctx.font = '900 44px "Tiro Devanagari Hindi", sans-serif';
     ctx.fillText(
-      isLagna ? `लग्न ${signNum} • ${rashiName}` : `${signNum} • ${rashiName}`,
+      isLagna ? `${lagnaPrefix} ${signNum} • ${locRashi}` : `${signNum} • ${locRashi}`,
       136,
       64
     );
@@ -545,7 +551,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         chartRootGroup.add(medMesh);
 
         // High-Contrast Rashi Sign Label Sprite
-        const rashiTex = createRashiMedallionTexture(signNum, rashiName, isLagna, maxAnisotropy);
+        const rashiTex = createRashiMedallionTexture(signNum, rashiName, isLagna, maxAnisotropy, lang);
         disposableTextures.push(rashiTex);
         const rashiSpriteMat = new THREE.SpriteMaterial({
           map: rashiTex,
@@ -610,7 +616,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
           degOn,
           fScale,
           maxAnisotropy,
-          stackVertically
+          stackVertically,
+          lang
         );
         disposableTextures.push(badgeTex);
 

@@ -800,7 +800,7 @@ export function App() {
 
             {(activeTab === 'kundali' || activeTab === 'milan' || activeTab === 'prashna') && (
               <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
-                <div className="w-full px-2 pb-8">
+                <div className="kundali-view w-full px-2 pb-16">
                 <KundaliView
                   activeKundali={activeKundali}
                   setActiveKundali={setActiveKundali}
