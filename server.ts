@@ -71,6 +71,73 @@ async function startServer() {
     });
   });
 
+  // Dynamic Translated Vedic Panchang API (Supports /api.php?lang=xx & /api/panchang?lang=xx)
+  // Meets Play Console requirement: "fetch('api.php?lang=hi') returns translated data"
+  app.all(["/api.php", "/api/panchang"], async (req: Request, res: Response) => {
+    try {
+      const rawLang = (req.query.lang || req.body?.lang || "hi").toString().toLowerCase().trim();
+      const lang = ["en", "gu", "mr", "hi"].includes(rawLang) ? rawLang : (rawLang.startsWith("en") ? "en" : (rawLang.startsWith("gu") ? "gu" : "hi"));
+
+      const rawDate = (req.query.date || req.body?.date || "").toString();
+      const targetDate = rawDate ? new Date(rawDate) : new Date();
+      const validDate = isNaN(targetDate.getTime()) ? new Date() : targetDate;
+
+      const lat = Number(req.query.lat || req.body?.lat) || 23.1765; // Ujjain default
+      const lng = Number(req.query.lng || req.body?.lng) || 75.7885;
+      const tz = Number(req.query.tz || req.body?.tz) || 5.5;
+
+      const { calculateVedicPanchang } = await import("./src/services/astronomy.js");
+      const { trVedic, trWeekday, trRashi, trChoghadiyaMeaning } = await import("./src/i18n/vedicTranslate.js");
+
+      const panchangData = calculateVedicPanchang(validDate, lat, lng, tz);
+
+      const translatedPanchang = {
+        date: validDate.toISOString().split("T")[0],
+        weekday: trWeekday(panchangData.weekday, lang),
+        tithi: trVedic(panchangData.tithi, lang),
+        paksha: trVedic(panchangData.paksha, lang),
+        nakshatra: trVedic(panchangData.nakshatra, lang),
+        yoga: trVedic(panchangData.yoga, lang),
+        karana: trVedic(panchangData.karana, lang),
+        sunRashi: trRashi(panchangData.solarRashi, lang),
+        moonRashi: trRashi(panchangData.lunarRashi, lang),
+        vikramSamvat: panchangData.samvat,
+        sakaSamvat: panchangData.sakaSamvat,
+        masa: trVedic(panchangData.masa, lang),
+        sunrise: panchangData.solar?.sunrise?.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) || "06:00 AM",
+        sunset: panchangData.solar?.sunset?.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) || "06:30 PM",
+        dayWindows: panchangData.dayWindows?.map((dw: any) => ({
+          title: trVedic(dw.title, lang),
+          start: dw.start instanceof Date ? dw.start.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) : String(dw.start),
+          end: dw.end instanceof Date ? dw.end.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) : String(dw.end),
+          kind: dw.kind,
+        })),
+      };
+
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=300"); // 5 minutes cache
+      return res.json({
+        ok: true,
+        language: lang,
+        date: validDate.toISOString().split("T")[0],
+        location: {
+          latitude: lat,
+          longitude: lng,
+          timezoneHours: tz,
+        },
+        panchang: translatedPanchang,
+        source: "authoritative_vedic_backend",
+      });
+    } catch (err: any) {
+      console.error("Error in dynamic panchang API (/api.php):", err);
+      return res.status(500).json({
+        ok: false,
+        error: "CALCULATION_ERROR",
+        message: err?.message || "Failed to calculate dynamic panchang",
+      });
+    }
+  });
+
   // Upay Parchi Direct Server-Side Download (100% reliable for Android WebView, iOS Safari, PWA)
   app.post("/api/parchi/download", (req: Request, res: Response) => {
     try {

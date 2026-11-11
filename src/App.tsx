@@ -4,8 +4,9 @@ import { MapPin, Sparkles } from 'lucide-react';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, syncKundaliProfilesWithNativeStorage, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES, getStoredFontSize, setStoredFontSize, AppFontSize } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
+import { fetchDynamicPanchang, getLocalizedPanchang } from './services/panchangApi';
 import { scheduleMorningBriefs } from './services/morningBrief';
-import { SavedLocation, KundaliData } from './types';
+import { SavedLocation, KundaliData, VedicPanchangData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
 import { BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TabMenuContext, TodayBoard } from './components/BoardShell';
 import { SubscriptionModal } from './components/SubscriptionModal';
@@ -282,8 +283,11 @@ export function App() {
     };
   }, []);
 
-  // Calculate high-precision Vedic Panchang based on server-synced Date and Geo-coordinates
-  const panchang = useMemo(() => {
+  // Calculate high-precision Vedic Panchang based on server-synced Date, Geo-coordinates & selected Language
+  const [dynamicPanchangData, setDynamicPanchangData] = useState<VedicPanchangData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
     const resolvedLoc = resolveBirthCoordinates(
       currentLocation.name,
       currentLocation.latitude,
@@ -291,13 +295,40 @@ export function App() {
       currentLocation.timezoneHours,
       currentDate
     );
-    return calculateVedicPanchang(
+    // Dynamic request with selected language code to 'api.php?lang={currentLang}'
+    fetchDynamicPanchang(
+      currentDate,
+      resolvedLoc.latitude,
+      resolvedLoc.longitude,
+      resolvedLoc.timezoneHours,
+      currentLang
+    ).then((res) => {
+      if (!cancelled && res) {
+        setDynamicPanchangData(res);
+      }
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [currentDate, currentLocation, currentLang]);
+
+  const panchang = useMemo(() => {
+    if (dynamicPanchangData) return dynamicPanchangData;
+    const resolvedLoc = resolveBirthCoordinates(
+      currentLocation.name,
+      currentLocation.latitude,
+      currentLocation.longitude,
+      currentLocation.timezoneHours,
+      currentDate
+    );
+    const base = calculateVedicPanchang(
       currentDate,
       resolvedLoc.latitude,
       resolvedLoc.longitude,
       resolvedLoc.timezoneHours
     );
-  }, [currentDate, currentLocation]);
+    return getLocalizedPanchang(base, currentLang);
+  }, [currentDate, currentLocation, currentLang, dynamicPanchangData]);
 
   useEffect(() => {
     scheduleMorningBriefs(
