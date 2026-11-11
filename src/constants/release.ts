@@ -1,0 +1,10 @@
+/** Saved GitHub release location — do not invent other URLs. */
+export const GITHUB_OWNER = "shastrimanish-debug";
+export const GITHUB_REPO = "shakti_panchang";
+export const GITHUB_REPO_URL = "https://github.com/shastrimanish-debug/shakti_panchang";
+export const GITHUB_RELEASES_URL = "https://github.com/shastrimanish-debug/shakti_panchang/releases";
+export const GITHUB_LATEST_RELEASE_URL = "https://github.com/shastrimanish-debug/shakti_panchang/releases/latest";
+export const RELEASE_VERSION = "1.0.36";
+export const RELEASE_CODE = 36;
+export const RELEASE_TAG = "v1.0.36";
+export const RELEASE_NAME = "शक्ति पंचांग ग्रंथ v1.0.36 (Code 36, 100% Dynamic Upay Engine & D-1/D-9 Bhojpatra Patrika)";

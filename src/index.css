@@ -1,0 +1,453 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-parchment: #faf2e4;
+  --color-parchment-deep: #f4e8d1;
+  --color-leaf: #ebd8bd;
+  --color-leaf-dark: #e5d2b8;
+  --color-sand: #d9c4a9;
+  --color-gold: #b56a00;
+  --color-gold-mid: #e69a33;
+  --color-gold-bright: #ffd88a;
+  --color-gold-dark: #c27803;
+  --color-temple: #5c3a21;
+  --color-temple-deep: #462b17;
+  --color-temple-dark: #2c180c;
+  --color-wood: #8c6239;
+  --color-muted: #735133;
+  --color-vermilion: #8b1e1e;
+  --color-ink: #3e2714;
+}
+
+@layer base {
+  html, body {
+    font-family: 'Yantramanav', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    margin: 0;
+    padding: 0;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #root {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
+
+  h1, h2, h3, h4, .font-granth {
+    font-family: 'Rozha One', 'Cinzel Decorative', 'Tiro Devanagari Hindi', Georgia, serif;
+    letter-spacing: 0.02em;
+  }
+}
+
+/* 🌟 Elder & Senior Citizen Accessibility Font Scaling (वृद्धजन सुपाठ्यता) */
+[data-font-size="large"] {
+  --app-font-multiplier: 1.15;
+}
+[data-font-size="large"] .text-xs {
+  font-size: 0.85rem !important;
+  line-height: 1.35rem !important;
+}
+[data-font-size="large"] .text-sm {
+  font-size: 0.98rem !important;
+  line-height: 1.48rem !important;
+}
+[data-font-size="large"] .text-base {
+  font-size: 1.15rem !important;
+  line-height: 1.65rem !important;
+}
+
+[data-font-size="xlarge"] {
+  --app-font-multiplier: 1.32;
+}
+[data-font-size="xlarge"] .text-xs {
+  font-size: 0.96rem !important;
+  line-height: 1.45rem !important;
+}
+[data-font-size="xlarge"] .text-sm {
+  font-size: 1.12rem !important;
+  line-height: 1.62rem !important;
+}
+[data-font-size="xlarge"] .text-base {
+  font-size: 1.28rem !important;
+  line-height: 1.82rem !important;
+}
+[data-font-size="xlarge"] .text-lg {
+  font-size: 1.42rem !important;
+  line-height: 2rem !important;
+}
+
+/* 🌟 Ancient Manuscript High-Readability Theme (वार्म आईवरी/क्रीम & गहरा भूरा) */
+.instagram-story-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  touch-action: pan-x pinch-zoom !important;
+  overscroll-behavior: contain !important;
+  position: relative !important;
+}
+
+.zsp-off {
+  display: none !important;
+}
+
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.flutter-scaffold-bg {
+  background: #FCF8EC;
+  color: #1A0F0A;
+  background-attachment: fixed;
+}
+
+.flutter-card {
+  background: #FFFFFF;
+  color: #1A0F0A;
+  border: 1px solid #EADBCC;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 12px -2px rgba(70, 43, 23, 0.08), 0 1px 4px rgba(70, 43, 23, 0.04);
+}
+
+.flutter-card-elevated {
+  background: #FFFFFF;
+  color: #1A0F0A;
+  border-radius: 1.25rem;
+  border: 1px solid #E2D2BE;
+  box-shadow: 0 4px 20px -3px rgba(70, 43, 23, 0.1), 0 2px 6px rgba(70, 43, 23, 0.05);
+}
+
+.flutter-hero-gradient {
+  background: linear-gradient(135deg, #FFF9EE 0%, #FFF2DB 50%, #FFE9BF 100%);
+  border: 1.5px solid #F0CFA7;
+  box-shadow: 0 4px 20px -2px rgba(181, 106, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.flutter-pill-tab {
+  transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.flutter-pill-tab-active {
+  background: linear-gradient(135deg, #5C3A21 0%, #462B17 100%);
+  color: #FFF6E5;
+  box-shadow: 0 2px 10px rgba(70, 43, 23, 0.25);
+}
+
+/* Flutter Touch Ripple Feel */
+.m3-touch {
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.12s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.m3-touch:active {
+  transform: scale(0.965);
+}
+
+/* Glowing Jewel Badge */
+.uma-glow-badge {
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.55);
+  animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 6px 28px rgba(245, 158, 11, 0.75);
+    transform: scale(1.03);
+  }
+}
+
+/* ========================================================================= */
+/* 🌟 8 DEVOTIONAL LIGHT THEMES (८ पावन भक्तिमय प्रकाश थीम) */
+/* ========================================================================= */
+
+/* 1. 🚩 केसरी भगवा (Kesariya Bhagwa - Ram & Hanuman Saffron Glow) */
+.kesariya-theme {
+  background-color: #fff8f0 !important;
+  color: #2a1205 !important;
+}
+.kesariya-theme .flutter-scaffold-bg {
+  background: #fff8f0 !important;
+}
+.kesariya-theme .flutter-card,
+.kesariya-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #fed7aa !important;
+  box-shadow: 0 4px 16px -2px rgba(194, 65, 12, 0.08) !important;
+}
+.kesariya-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fed7aa 100%) !important;
+  border-color: #fb923c !important;
+}
+
+/* 2. 🪵 श्री चन्दन (Shree Chandan - Sandalwood Sacred Bark) */
+.chandan-theme {
+  background-color: #faf5ec !important;
+  color: #2c180c !important;
+}
+.chandan-theme .flutter-scaffold-bg {
+  background: #faf5ec !important;
+}
+.chandan-theme .flutter-card,
+.chandan-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #dfcbb5 !important;
+  box-shadow: 0 4px 16px -2px rgba(92, 58, 33, 0.08) !important;
+}
+.chandan-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fff9ee 0%, #fff2db 50%, #ffe9bf 100%) !important;
+  border-color: #f0cfa7 !important;
+}
+
+/* 3. 💛 पीताम्बरी (Peetambari - Vishnu Gold & Turmeric Light) */
+.peetambari-theme {
+  background-color: #fefce8 !important;
+  color: #3b2005 !important;
+}
+.peetambari-theme .flutter-scaffold-bg {
+  background: #fefce8 !important;
+}
+.peetambari-theme .flutter-card,
+.peetambari-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #fde047 !important;
+  box-shadow: 0 4px 16px -2px rgba(161, 98, 7, 0.08) !important;
+}
+.peetambari-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fefce8 0%, #fef08a 50%, #fde047 100%) !important;
+  border-color: #eab308 !important;
+}
+
+/* 4. 🌊 गंगाजल शिव (Gangajal Shiva - Sacred Ganga Nilakantha Light) */
+.gangajal-theme {
+  background-color: #f4f8fc !important;
+  color: #1e3a5f !important;
+}
+.gangajal-theme .flutter-scaffold-bg {
+  background: #f4f8fc !important;
+}
+.gangajal-theme .flutter-card,
+.gangajal-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #cbe0f0 !important;
+  box-shadow: 0 4px 16px -2px rgba(2, 132, 199, 0.06) !important;
+}
+.gangajal-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f3fc 50%, #d8ebf8 100%) !important;
+  border-color: #b8d9f0 !important;
+}
+
+/* 5. 🌿 पावन तुलसी (Pawan Tulsi - Vrindavan Herbal Green Light) */
+.tulsi-theme {
+  background-color: #f2fbf4 !important;
+  color: #052e16 !important;
+}
+.tulsi-theme .flutter-scaffold-bg {
+  background: #f2fbf4 !important;
+}
+.tulsi-theme .flutter-card,
+.tulsi-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #bfe8cd !important;
+  box-shadow: 0 4px 16px -2px rgba(21, 128, 61, 0.06) !important;
+}
+.tulsi-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #f2fbf4 0%, #dcfce7 50%, #bbf7d0 100%) !important;
+  border-color: #86efac !important;
+}
+
+/* 6. 🌺 सिन्दूरी शक्ति (Sindoor Shakti - Divine Devi Rose Blush Light) */
+.sindoor-theme {
+  background-color: #fff5f5 !important;
+  color: #4c0519 !important;
+}
+.sindoor-theme .flutter-scaffold-bg {
+  background: #fff5f5 !important;
+}
+.sindoor-theme .flutter-card,
+.sindoor-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #fed5db !important;
+  box-shadow: 0 4px 16px -2px rgba(190, 18, 60, 0.06) !important;
+}
+.sindoor-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 50%, #fecdd3 100%) !important;
+  border-color: #fb7185 !important;
+}
+
+/* 7. ✨ स्वर्ण महालक्ष्मी (Swarna Lakshmi - Rich Honey Gold Light) */
+.swarna-theme {
+  background-color: #fffbeb !important;
+  color: #451a03 !important;
+}
+.swarna-theme .flutter-scaffold-bg {
+  background: #fffbeb !important;
+}
+.swarna-theme .flutter-card,
+.swarna-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #fde68a !important;
+  box-shadow: 0 4px 16px -2px rgba(180, 83, 9, 0.08) !important;
+}
+.swarna-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%) !important;
+  border-color: #f59e0b !important;
+}
+
+/* 8. 🕊️ श्वेत प्रकाश (Shvet Kailash - Pure Pearl White) */
+.shvet-theme {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+.shvet-theme .flutter-scaffold-bg {
+  background: #f8fafc !important;
+}
+.shvet-theme .flutter-card,
+.shvet-theme .flutter-card-elevated {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* 9. 📜 भोजपत्र पार्चमेंट (Bhojpatra Ancient Manuscript Light) */
+.bhojpatra-theme {
+  background-color: #faf2de !important;
+  color: #2c1810 !important;
+}
+.bhojpatra-theme .flutter-scaffold-bg {
+  background: #faf2de !important;
+}
+.bhojpatra-theme .flutter-card,
+.bhojpatra-theme .flutter-card-elevated {
+  background: #fffdf9 !important;
+  border-color: #dfcbb5 !important;
+  box-shadow: 0 4px 16px -2px rgba(92, 58, 33, 0.08) !important;
+}
+.bhojpatra-theme .flutter-hero-gradient {
+  background: linear-gradient(135deg, #fffdf9 0%, #fbf0dc 50%, #f5e4c6 100%) !important;
+  border-color: #d8b688 !important;
+}
+
+/* 10. 🌙 ताम्र-डार्क (Night / Bronze Dark Theme) */
+.tamra-theme {
+  background-color: #17110e !important;
+  color: #f7ebd0 !important;
+}
+.tamra-theme .flutter-scaffold-bg {
+  background: radial-gradient(circle at 50% 0%, #2A1A12 0%, #1D120B 50%, #120A06 100%) !important;
+}
+.tamra-theme .flutter-card {
+  background: rgba(36, 25, 19, 0.92) !important;
+  border-color: rgba(184, 122, 60, 0.25) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+}
+.tamra-theme .flutter-card-elevated {
+  background: #231710 !important;
+  border-color: rgba(184, 122, 60, 0.3) !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4b584;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b56a00;
+}
+
+/* ==========================================================================
+   📖 Grantha Page-Turn: Subtle Fade Entry Animation for Content Views
+   (Uses opacity only at rest so position:fixed modals are never clipped)
+   ========================================================================== */
+@keyframes fadingSlideForward {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadingSlideBackward {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadingSlideEntry {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fading-slide-forward {
+  animation: fadingSlideForward 0.18s ease-out;
+}
+
+.fading-slide-backward {
+  animation: fadingSlideBackward 0.18s ease-out;
+}
+
+.fading-slide-entry {
+  animation: fadingSlideEntry 0.18s ease-out;
+}
+
+/* Granth page turn alias classes */
+.book-page-turn-forward {
+  animation: fadingSlideForward 0.18s ease-out;
+}
+
+.book-page-turn-backward {
+  animation: fadingSlideBackward 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fading-slide-forward,
+  .fading-slide-backward,
+  .fading-slide-entry,
+  .book-page-turn-forward,
+  .book-page-turn-backward {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Shakti Panchang</string>
+    <string name="title_activity_main">Shakti Panchang</string>
+    <string name="package_name">com.shaktipanchang.app</string>
+    <string name="custom_url_scheme">com.shaktipanchang.app</string>
+</resources>

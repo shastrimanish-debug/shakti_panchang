@@ -1,0 +1,405 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Background Vignette Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4A1E0E"/>
+      <stop offset="65%" stop-color="#261007"/>
+      <stop offset="100%" stop-color="#140803"/>
+    </radialGradient>
+
+    <!-- Royal Temple Red Enamel Disc Gradient -->
+    <radialGradient id="enamelRed" cx="42%" cy="38%" r="62%">
+      <stop offset="0%" stop-color="#B92D1D"/>
+      <stop offset="45%" stop-color="#841717"/>
+      <stop offset="85%" stop-color="#4E0C0C"/>
+      <stop offset="100%" stop-color="#2D0606"/>
+    </radialGradient>
+
+    <!-- Metallic Gold 3D Gradient (Light to Shadow) -->
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF4D0"/>
+      <stop offset="25%" stop-color="#FCD34D"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="75%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+
+    <linearGradient id="goldReverse" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#78350F"/>
+      <stop offset="35%" stop-color="#B45309"/>
+      <stop offset="70%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#FEF3C7"/>
+    </linearGradient>
+
+    <!-- Rich Amber Solar Flare -->
+    <radialGradient id="sunFlare" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFE082" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#F59E0B" stop-opacity="0.6"/>
+      <stop offset="75%" stop-color="#B45309" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#78350F" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Silver-Gold Moon Gradient -->
+    <linearGradient id="moonGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF5"/>
+      <stop offset="50%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filters -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.65"/>
+    </filter>
+
+    <filter id="glowGold" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <filter id="innerEmboss">
+      <feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Base Icon Background (Squircle / App Icon Shape) -->
+  <rect x="32" y="32" width="960" height="960" rx="230" ry="230" fill="url(#bgGlow)"/>
+  
+  <!-- Outer Filigree Gold Border -->
+  <rect x="36" y="36" width="952" height="952" rx="226" ry="226" fill="none" stroke="url(#goldLight)" stroke-width="8" opacity="0.85"/>
+  <rect x="52" y="52" width="920" height="920" rx="212" ry="212" fill="none" stroke="url(#goldReverse)" stroke-width="3" stroke-dasharray="12 8" opacity="0.6"/>
+
+  <!-- Celestial Solar Center Group -->
+  <g transform="translate(512, 512)" filter="url(#dropShadow)">
+    
+    <!-- Ambient Solar Radiance -->
+    <circle r="410" fill="url(#sunFlare)" />
+
+    <!-- 12 Primary Ornate Aditya Rays (Sun Points for 12 Rashis / Months) -->
+    <g id="adityaRays">
+      
+        <g transform="rotate(0)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(30)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(60)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(90)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(120)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(150)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(180)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(210)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(240)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(270)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(300)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+
+        <g transform="rotate(330)">
+          <!-- Main Spear Ray -->
+          <polygon points="0,-420 28,-310 0,-330 -28,-310" fill="url(#goldLight)" filter="url(#innerEmboss)"/>
+          <polygon points="0,-420 0,-330 28,-310" fill="url(#goldReverse)" opacity="0.8"/>
+          <!-- Ray Tip Star/Dot -->
+          <circle cx="0" cy="-428" r="8" fill="#FFF4D0" filter="url(#glowGold)"/>
+        </g>
+    </g>
+
+    <!-- 12 Secondary Lotus Petal Rays (Alternating at 15 deg) -->
+    <g id="lotusRays">
+      
+        <g transform="rotate(15)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(45)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(75)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(105)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(135)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(165)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(195)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(225)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(255)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(285)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(315)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+
+        <g transform="rotate(345)">
+          <path d="M 0,-375 C 22,-320 28,-290 0,-270 C -28,-290 -22,-320 0,-375 Z" fill="url(#goldLight)" opacity="0.95"/>
+          <circle cx="0" cy="-380" r="5" fill="#FCD34D"/>
+        </g>
+    </g>
+
+    <!-- Outer Gold Ring with 27 Nakshatra Beads -->
+    <circle r="300" fill="none" stroke="url(#goldLight)" stroke-width="14"/>
+    <circle r="286" fill="none" stroke="#2D0606" stroke-width="4"/>
+    
+    <!-- 27 Nakshatra Pearls around Ring -->
+    <g id="nakshatraBeads">
+      <circle cx="0.00" cy="-293.00" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="67.57" cy="-285.10" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="131.50" cy="-261.83" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="188.34" cy="-224.45" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="235.02" cy="-174.97" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="269.04" cy="-116.05" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="288.55" cy="-50.88" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="292.50" cy="17.04" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="280.69" cy="84.03" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="253.75" cy="146.50" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="213.12" cy="201.07" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="161.01" cy="244.80" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="100.21" cy="275.33" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="34.02" cy="291.02" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-34.02" cy="291.02" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-100.21" cy="275.33" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-161.01" cy="244.80" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-213.12" cy="201.07" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-253.75" cy="146.50" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-280.69" cy="84.03" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-292.50" cy="17.04" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-288.55" cy="-50.88" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-269.04" cy="-116.05" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-235.02" cy="-174.97" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-188.34" cy="-224.45" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-131.50" cy="-261.83" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+<circle cx="-67.57" cy="-285.10" r="6" fill="#FFFBEB" stroke="#92400E" stroke-width="1.5" />
+    </g>
+
+    <!-- Inner Vermilion / Temple Red Celestial Shield -->
+    <circle r="275" fill="url(#enamelRed)" stroke="url(#goldReverse)" stroke-width="12" />
+
+    <!-- 12 Petal Lotus Chakra Bed Inside Enamel -->
+    <g opacity="0.35">
+      
+        <g transform="rotate(0)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(30)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(60)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(90)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(120)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(150)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(180)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(210)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(240)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(270)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(300)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+
+        <g transform="rotate(330)">
+          <path d="M 0,-255 C 35,-190 35,-120 0,-90 C -35,-120 -35,-190 0,-255 Z" fill="none" stroke="url(#goldLight)" stroke-width="3"/>
+        </g>
+    </g>
+
+    <!-- Sacred Crescent Moon (चन्द्र दर्शन - प्रतीक तिथि व मन) -->
+    <path d="M -130,-155 A 195 195 0 0 0 -130, 155 A 165 165 0 0 1 -130,-155 Z" 
+          fill="url(#moonGrad)" 
+          opacity="0.88" 
+          filter="url(#glowGold)"/>
+
+    <!-- Central Radiant Star/Ring for Omkara -->
+    <circle r="190" fill="none" stroke="url(#goldLight)" stroke-width="3" stroke-dasharray="6 6" opacity="0.6"/>
+
+    <!-- Central Auspicious OM (ॐ) - Sacred Classical Calligraphic Glyph -->
+    <g id="sacredOm" filter="url(#glowGold)">
+      <!-- OM Soft Back Glow -->
+      <path d="M -75,-60 
+               C -95,-110 -35,-155 35,-140 
+               C 95,-125 105,-65 65,-25 
+               C 120,5 125,95 55,140 
+               C -25,185 -105,140 -115,80 
+               C -118,60 -95,55 -90,75 
+               C -80,115 -25,145 35,115 
+               C 85,85 75,25 20,20 
+               C 0,18 -5,-2 -5,-10 
+               C -5,-20 10,-25 35,-30 
+               C 70,-40 65,-95 20,-105 
+               C -25,-115 -65,-85 -55,-55 
+               C -50,-35 -70,-35 -75,-60 Z
+               M 20,-10 C 60,-5 120,30 145,100 C 150,115 170,110 165,95 C 135,15 70,-25 20,-20 Z
+               M -15,-180 C 15,-205 65,-205 95,-180 C 70,-190 40,-190 15,-180 Z"
+            fill="none" stroke="#F59E0B" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+
+      <!-- Primary Om Body in Pure Metallic 3D Gold -->
+      <!-- 3-digit curve & lower tail -->
+      <path d="M -70,-50 
+               C -90,-95 -35,-140 30,-125 
+               C 85,-110 95,-60 55,-22 
+               C 110,5 115,85 50,128 
+               C -20,170 -95,130 -105,75 
+               C -108,58 -88,52 -85,70 
+               C -75,108 -20,135 35,105 
+               C 80,78 70,22 18,18 
+               L 5,16 L 5,-15 L 20,-17 
+               C 55,-25 55,-78 16,-88 
+               C -20,-98 -58,-72 -48,-45 
+               C -44,-28 -66,-28 -70,-50 Z" 
+            fill="url(#goldLight)" 
+            stroke="#78350F" 
+            stroke-width="5"/>
+
+      <!-- Center-Right Sweeping Trunk (सूंड) -->
+      <path d="M 25,-12 
+               C 75,-8 135,32 155,105 
+               C 160,122 178,118 174,102 
+               C 148,22 80,-28 25,-25 Z" 
+            fill="url(#goldLight)" 
+            stroke="#78350F" 
+            stroke-width="4"/>
+
+      <!-- Crescent Moon Top (चन्द्रबिन्दु - अर्क) -->
+      <path d="M -20,-165 
+               C 20,-195 80,-195 120,-165 
+               C 85,-178 35,-178 -5,-165 
+               C -15,-162 -25,-158 -20,-165 Z" 
+            fill="url(#goldLight)" 
+            stroke="#78350F" 
+            stroke-width="3"/>
+
+      <!-- Sacred Bindu (बिन्दु - शून्य / ब्रह्म) -->
+      <circle cx="50" cy="-210" r="18" fill="url(#goldLight)" stroke="#78350F" stroke-width="4"/>
+      <circle cx="46" cy="-214" r="6" fill="#FFFDF5" />
+    </g>
+
+    <!-- Subtitle / Foundation Arc Text: 'शक्ति पंचांग' (Optional ornamental flourishes) -->
+    <path d="M -110, 205 Q 0, 235 110, 205" fill="none" stroke="url(#goldLight)" stroke-width="4" stroke-linecap="round"/>
+    <polygon points="0,218 -8,228 8,228" fill="url(#goldLight)"/>
+  </g>
+</svg>

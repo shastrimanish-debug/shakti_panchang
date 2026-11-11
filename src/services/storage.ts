@@ -1,0 +1,787 @@
+import { SavedLocation, KundaliData, AppReminder } from '../types';
+import { calculateKundali, extractCalendarYMD, toTimeInput24h } from './kundali';
+import { Preferences } from '@capacitor/preferences';
+
+const STORAGE_KEY_LOCATION = 'shakti_selected_location';
+const STORAGE_KEY_PROFILES = 'shakti_saved_kundali_profiles_v1';
+const STORAGE_KEY_REMINDERS = 'shakti_app_reminders_v1';
+const STORAGE_KEY_CUSTOM_LOCS = 'shakti_panchang_user_custom_locations';
+
+export const DEFAULT_LOCATION: SavedLocation = {
+  name: 'नई दिल्ली (New Delhi)',
+  latitude: 28.6139,
+  longitude: 77.2090,
+  state: 'दिल्ली',
+};
+
+export function getStoredLocation(): SavedLocation {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_LOCATION);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        typeof parsed.latitude === 'number' &&
+        !Number.isNaN(parsed.latitude) &&
+        typeof parsed.longitude === 'number' &&
+        !Number.isNaN(parsed.longitude) &&
+        typeof parsed.name === 'string'
+      ) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return DEFAULT_LOCATION;
+}
+
+export function setStoredLocation(loc: SavedLocation): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_LOCATION, JSON.stringify(loc));
+  } catch {}
+}
+
+let _memoryCachedRawProfiles: string | null = null;
+let _memoryCachedParsedProfiles: KundaliData[] = [];
+
+export function invalidateProfilesCache(): void {
+  _memoryCachedRawProfiles = null;
+  _memoryCachedParsedProfiles = [];
+}
+
+export function getSavedKundaliProfiles(): KundaliData[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PROFILES);
+    if (!raw) {
+      _memoryCachedRawProfiles = null;
+      _memoryCachedParsedProfiles = [];
+      return [];
+    }
+
+    if (raw === _memoryCachedRawProfiles && _memoryCachedParsedProfiles.length > 0) {
+      return _memoryCachedParsedProfiles;
+    }
+
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    let needsResave = false;
+
+    const profiles: KundaliData[] = arr
+      .filter((p: any) => {
+        if (!p || typeof p.name !== 'string') return false;
+        return p.name.trim().length > 0;
+      })
+      .map((p: any) => {
+        // FAST-PATH: If profile already has calculated planets and houses, return immediately (<0.01ms)
+        if (Array.isArray(p.planets) && p.planets.length > 0 && p.lagnaRashi) {
+          return {
+            ...p,
+            birthDate: new Date(p.birthDate),
+            calculatedAt: new Date(p.calculatedAt || Date.now()),
+            dashaPeriods: (p.dashaPeriods || []).map((d: any) => ({
+              ...d,
+              startDate: new Date(d.startDate),
+              endDate: new Date(d.endDate),
+            })),
+            antarPeriods: (p.antarPeriods || []).map((a: any) => ({
+              ...a,
+              startDate: new Date(a.startDate),
+              endDate: new Date(a.endDate),
+            })),
+            pratyantarPeriods: (p.pratyantarPeriods || []).map((pr: any) => ({
+              ...pr,
+              startDate: new Date(pr.startDate),
+              endDate: new Date(pr.endDate),
+            })),
+          };
+        }
+
+        // SLOW FALLBACK ONLY for incomplete/corrupted records lacking pre-calculated planets
+        try {
+          const { y, m, d } = extractCalendarYMD(p.birthDate);
+          const safeDate = new Date(y, m, d, 12, 0, 0);
+          const storedLoc = getStoredLocation();
+          const placeName =
+            typeof p.birthPlace === 'string' && p.birthPlace.trim()
+              ? p.birthPlace.trim()
+              : storedLoc.name;
+
+          let timeToUse =
+            typeof p.birthTime === 'string' && p.birthTime.trim() ? p.birthTime.trim() : '12:00';
+
+          const fresh = calculateKundali(
+            p.name.trim(),
+            safeDate,
+            timeToUse,
+            placeName,
+            typeof p.latitude === 'number' && !Number.isNaN(p.latitude) ? p.latitude : storedLoc.latitude,
+            typeof p.longitude === 'number' && !Number.isNaN(p.longitude) ? p.longitude : storedLoc.longitude,
+            typeof p.timezoneHours === 'number' && !Number.isNaN(p.timezoneHours)
+              ? p.timezoneHours
+              : storedLoc.timezoneHours ?? 5.5
+          );
+
+          needsResave = true;
+          return fresh;
+        } catch {
+          return {
+            ...p,
+            birthDate: new Date(p.birthDate),
+            calculatedAt: new Date(p.calculatedAt || Date.now()),
+            dashaPeriods: (p.dashaPeriods || []).map((d: any) => ({
+              ...d,
+              startDate: new Date(d.startDate),
+              endDate: new Date(d.endDate),
+            })),
+            antarPeriods: (p.antarPeriods || []).map((a: any) => ({
+              ...a,
+              startDate: new Date(a.startDate),
+              endDate: new Date(a.endDate),
+            })),
+            pratyantarPeriods: (p.pratyantarPeriods || []).map((pr: any) => ({
+              ...pr,
+              startDate: new Date(pr.startDate),
+              endDate: new Date(pr.endDate),
+            })),
+          };
+        }
+      });
+
+    if (needsResave && profiles.length > 0) {
+      try {
+        const serialized = JSON.stringify(profiles.slice(0, 50));
+        localStorage.setItem(STORAGE_KEY_PROFILES, serialized);
+        _memoryCachedRawProfiles = serialized;
+        _memoryCachedParsedProfiles = profiles;
+        return profiles;
+      } catch {}
+    }
+
+    _memoryCachedRawProfiles = raw;
+    _memoryCachedParsedProfiles = profiles;
+    return profiles;
+  } catch {}
+  return [];
+}
+
+const STORAGE_KEY_DELETED_TOMBSTONES = 'shakti_deleted_kundali_tombstones_v1';
+const STORAGE_KEY_ALL_PROFILES_CLEARED = 'shakti_all_profiles_cleared_v1';
+
+function getDeletedTombstones(): Set<string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_DELETED_TOMBSTONES);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {}
+  return new Set();
+}
+
+function addDeletedTombstone(key: string): void {
+  try {
+    const tombstones = getDeletedTombstones();
+    tombstones.add(key);
+    const arr = Array.from(tombstones).slice(-200);
+    localStorage.setItem(STORAGE_KEY_DELETED_TOMBSTONES, JSON.stringify(arr));
+    void Preferences.set({
+      key: STORAGE_KEY_DELETED_TOMBSTONES,
+      value: JSON.stringify(arr),
+    });
+  } catch {}
+}
+
+export async function persistProfilesToNative(profiles: KundaliData[]): Promise<void> {
+  try {
+    await Preferences.set({
+      key: STORAGE_KEY_PROFILES,
+      value: JSON.stringify(profiles.slice(0, 50)),
+    });
+  } catch {}
+}
+
+export async function syncKundaliProfilesWithNativeStorage(): Promise<KundaliData[]> {
+  try {
+    // Check if user previously cleared all profiles
+    const localCleared = localStorage.getItem(STORAGE_KEY_ALL_PROFILES_CLEARED) === 'true';
+    let nativeCleared = false;
+    try {
+      const { value } = await Preferences.get({ key: STORAGE_KEY_ALL_PROFILES_CLEARED });
+      nativeCleared = value === 'true';
+    } catch {}
+
+    const localList = getSavedKundaliProfiles();
+
+    if (localCleared || nativeCleared) {
+      try {
+        localStorage.removeItem(STORAGE_KEY_PROFILES);
+        await Preferences.remove({ key: STORAGE_KEY_PROFILES });
+      } catch {}
+      invalidateProfilesCache();
+      return [];
+    }
+
+    // Load tombstones to prevent resurrecting deleted profiles
+    const tombstones = getDeletedTombstones();
+    try {
+      const { value: nativeTombstonesRaw } = await Preferences.get({ key: STORAGE_KEY_DELETED_TOMBSTONES });
+      if (nativeTombstonesRaw) {
+        const parsed = JSON.parse(nativeTombstonesRaw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((k: string) => tombstones.add(k));
+        }
+      }
+    } catch {}
+
+    const { value } = await Preferences.get({ key: STORAGE_KEY_PROFILES });
+    let nativeList: any[] = [];
+    if (value) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) nativeList = parsed;
+      } catch {}
+    }
+
+    const isTombstoned = (p: any): boolean => {
+      if (!p || typeof p.name !== 'string') return true;
+      const cleanName = p.name.trim().toLowerCase();
+      const normTime = toTimeInput24h(p.birthTime) || p.birthTime || '12:00';
+      return tombstones.has(`${cleanName}_${normTime}`) || tombstones.has(cleanName);
+    };
+
+    // Map by name + time to ensure no loss of genuinely active profiles
+    const profileMap = new Map<string, any>();
+
+    for (const p of nativeList) {
+      if (p && typeof p.name === 'string' && p.name.trim() && !isTombstoned(p)) {
+        const key = `${p.name.trim().toLowerCase()}_${toTimeInput24h(p.birthTime) || p.birthTime || '12:00'}`;
+        profileMap.set(key, p);
+      }
+    }
+
+    for (const p of localList) {
+      if (p && typeof p.name === 'string' && p.name.trim() && !isTombstoned(p)) {
+        const key = `${p.name.trim().toLowerCase()}_${toTimeInput24h(p.birthTime) || p.birthTime || '12:00'}`;
+        profileMap.set(key, p);
+      }
+    }
+
+    const merged = Array.from(profileMap.values()).slice(0, 50);
+    invalidateProfilesCache();
+    localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
+    void persistProfilesToNative(merged);
+
+    return getSavedKundaliProfiles();
+  } catch {
+    return getSavedKundaliProfiles();
+  }
+}
+
+export async function clearAllSavedKundaliProfiles(): Promise<void> {
+  try {
+    const current = getSavedKundaliProfiles();
+    for (const p of current) {
+      if (p?.name) {
+        const cleanName = p.name.trim().toLowerCase();
+        const normTime = toTimeInput24h(p.birthTime) || p.birthTime || '12:00';
+        addDeletedTombstone(`${cleanName}_${normTime}`);
+        addDeletedTombstone(cleanName);
+      }
+    }
+    invalidateProfilesCache();
+    localStorage.removeItem(STORAGE_KEY_PROFILES);
+    localStorage.setItem(STORAGE_KEY_ALL_PROFILES_CLEARED, 'true');
+    try {
+      await Preferences.remove({ key: STORAGE_KEY_PROFILES });
+      await Preferences.set({ key: STORAGE_KEY_ALL_PROFILES_CLEARED, value: 'true' });
+    } catch {}
+  } catch {}
+}
+
+export function saveKundaliProfile(profile: KundaliData): void {
+  try {
+    const normProfileTime = toTimeInput24h(profile.birthTime) || profile.birthTime;
+    const cleanName = profile.name.trim().toLowerCase();
+
+    // Revoke any tombstone if user is re-adding this profile
+    const tombstones = getDeletedTombstones();
+    tombstones.delete(cleanName);
+    tombstones.delete(`${cleanName}_${normProfileTime}`);
+    try {
+      localStorage.setItem(STORAGE_KEY_DELETED_TOMBSTONES, JSON.stringify(Array.from(tombstones)));
+      localStorage.removeItem(STORAGE_KEY_ALL_PROFILES_CLEARED);
+      void Preferences.remove({ key: STORAGE_KEY_ALL_PROFILES_CLEARED });
+    } catch {}
+
+    const existing = getSavedKundaliProfiles().filter(
+      (p) =>
+        !(
+          p.name.trim().toLowerCase() === cleanName &&
+          (toTimeInput24h(p.birthTime) || p.birthTime) === normProfileTime
+        )
+    );
+    existing.unshift({
+      ...profile,
+      birthTime: normProfileTime,
+    });
+    const updated = existing.slice(0, 50);
+    invalidateProfilesCache();
+    localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(updated));
+    void persistProfilesToNative(updated);
+  } catch {}
+}
+
+export async function deleteSavedKundaliProfile(name: string, birthTime?: string): Promise<KundaliData[]> {
+  try {
+    const cleanName = name.trim().toLowerCase();
+    const normTargetTime = birthTime ? (toTimeInput24h(birthTime) || birthTime) : '';
+
+    // Register tombstone
+    if (normTargetTime) {
+      addDeletedTombstone(`${cleanName}_${normTargetTime}`);
+    }
+    addDeletedTombstone(cleanName);
+
+    const existing = getSavedKundaliProfiles().filter((p) => {
+      const pName = (p.name || '').trim().toLowerCase();
+      const pTime = toTimeInput24h(p.birthTime) || p.birthTime || '';
+      if (pName !== cleanName) return true;
+      if (!normTargetTime) return false;
+      return pTime !== normTargetTime && p.birthTime !== birthTime;
+    });
+
+    invalidateProfilesCache();
+    localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(existing));
+    try {
+      await Preferences.set({
+        key: STORAGE_KEY_PROFILES,
+        value: JSON.stringify(existing.slice(0, 50)),
+      });
+    } catch {}
+    return existing;
+  } catch {
+    return getSavedKundaliProfiles();
+  }
+}
+
+export function exportKundaliProfilesJson(): string {
+  const profiles = getSavedKundaliProfiles();
+  return JSON.stringify(
+    {
+      app: 'Shakti Panchang',
+      version: '1.0.41',
+      exportedAt: new Date().toISOString(),
+      count: profiles.length,
+      profiles,
+    },
+    null,
+    2
+  );
+}
+
+export function importKundaliProfilesJson(rawJson: string): { success: boolean; count: number; error?: string } {
+  try {
+    const parsed = JSON.parse(rawJson);
+    const candidateList = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.profiles)
+      ? parsed.profiles
+      : null;
+
+    if (!candidateList || candidateList.length === 0) {
+      return { success: false, count: 0, error: 'फ़ाइल में कोई वैध कुंडली डेटा नहीं मिला।' };
+    }
+
+    const currentProfiles = getSavedKundaliProfiles();
+    const profileMap = new Map<string, any>();
+
+    for (const p of currentProfiles) {
+      if (p && typeof p.name === 'string' && p.name.trim()) {
+        const key = `${p.name.trim().toLowerCase()}_${toTimeInput24h(p.birthTime) || p.birthTime || '12:00'}`;
+        profileMap.set(key, p);
+      }
+    }
+
+    let addedCount = 0;
+    for (const p of candidateList) {
+      if (p && typeof p.name === 'string' && p.name.trim().length > 0) {
+        const normTime = toTimeInput24h(p.birthTime) || p.birthTime || '12:00';
+        const key = `${p.name.trim().toLowerCase()}_${normTime}`;
+        if (!profileMap.has(key)) {
+          addedCount++;
+        }
+        profileMap.set(key, {
+          ...p,
+          birthTime: normTime,
+        });
+      }
+    }
+
+    const merged = Array.from(profileMap.values()).slice(0, 50);
+    invalidateProfilesCache();
+    localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(merged));
+    localStorage.removeItem(STORAGE_KEY_ALL_PROFILES_CLEARED);
+    try {
+      void Preferences.remove({ key: STORAGE_KEY_ALL_PROFILES_CLEARED });
+    } catch {}
+    void persistProfilesToNative(merged);
+
+    return { success: true, count: addedCount || candidateList.length };
+  } catch (err: any) {
+    return { success: false, count: 0, error: err?.message || 'अमान्य JSON फ़ाइल प्रारूप।' };
+  }
+}
+
+export function getStoredReminders(): AppReminder[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_REMINDERS);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
+}
+
+export function saveReminder(rem: AppReminder): void {
+  try {
+    const list = getStoredReminders();
+    list.unshift(rem);
+    localStorage.setItem(STORAGE_KEY_REMINDERS, JSON.stringify(list.slice(0, 50)));
+  } catch {}
+}
+
+export const saveAppReminder = saveReminder;
+
+export function deleteReminder(id: string): void {
+  try {
+    const filtered = getStoredReminders().filter((r) => r.id !== id);
+    localStorage.setItem(STORAGE_KEY_REMINDERS, JSON.stringify(filtered));
+  } catch {}
+}
+
+export function getUserCustomLocations(): SavedLocation[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CUSTOM_LOCS);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
+}
+
+export function saveUserCustomLocation(loc: SavedLocation): void {
+  try {
+    const existing = getUserCustomLocations().filter((l) => l.name !== loc.name);
+    existing.unshift(loc);
+    localStorage.setItem(STORAGE_KEY_CUSTOM_LOCS, JSON.stringify(existing.slice(0, 50)));
+  } catch {}
+}
+
+// -------------------------------------------------------------
+// Annual Membership & Subscription Model (₹99 / Year)
+// -------------------------------------------------------------
+const STORAGE_KEY_SUBSCRIPTION = 'shakti_panchang_annual_subscription_v1';
+
+export interface SubscriptionStatus {
+  isSubscribed: boolean;
+  activatedAt: string;
+  expiresAt: string;
+  daysRemaining: number;
+  planName: string;
+  amount: number;
+  txnId?: string;
+  paymentMethod?: string;
+}
+
+export function getSubscriptionStatus(): SubscriptionStatus {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SUBSCRIPTION);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const expires = new Date(parsed.expiresAt);
+      const now = new Date();
+      const diffMs = expires.getTime() - now.getTime();
+      const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      const isSubscribed = diffMs > 0;
+
+      return {
+        isSubscribed,
+        activatedAt: parsed.activatedAt,
+        expiresAt: parsed.expiresAt,
+        daysRemaining,
+        planName: parsed.planName || 'श्री शक्ति पंचांग वार्षिक सदस्यता',
+        amount: parsed.amount || 99,
+        txnId: parsed.txnId,
+        paymentMethod: parsed.paymentMethod,
+      };
+    }
+  } catch {}
+
+  return {
+    isSubscribed: false,
+    activatedAt: '',
+    expiresAt: '',
+    daysRemaining: 0,
+    planName: 'श्री शक्ति पंचांग वार्षिक सदस्यता',
+    amount: 99,
+  };
+}
+
+export function activateSubscription(
+  txnId?: string,
+  paymentMethod: string = 'Play'
+): SubscriptionStatus {
+  const now = new Date();
+  const oneYearLater = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+  const status: SubscriptionStatus = {
+    isSubscribed: true,
+    activatedAt: now.toISOString(),
+    expiresAt: oneYearLater.toISOString(),
+    daysRemaining: 365,
+    planName: 'श्री शक्ति पंचांग वार्षिक सदस्यता',
+    amount: 99,
+    txnId: txnId || `TXN${Date.now().toString().slice(-8)}`,
+    paymentMethod,
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEY_SUBSCRIPTION, JSON.stringify(status));
+  } catch {}
+
+  return status;
+}
+
+export function cancelSubscription(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY_SUBSCRIPTION);
+  } catch {}
+}
+
+const STORAGE_KEY_THEME = 'shakti_app_theme_mode';
+
+export type AppTheme =
+  | 'kesariya'
+  | 'chandan'
+  | 'peetambari'
+  | 'gangajal'
+  | 'tulsi'
+  | 'sindoor'
+  | 'swarna'
+  | 'shvet'
+  | 'bhojpatra'
+  | 'tamra';
+
+export interface DevotionalThemeInfo {
+  id: AppTheme;
+  name: string;
+  nameEn: string;
+  deity: string;
+  icon: string;
+  bgHex: string;
+  cardBgHex: string;
+  accentHex: string;
+  borderHex: string;
+  desc: string;
+  isLight: boolean;
+}
+
+export const DEVOTIONAL_THEMES: DevotionalThemeInfo[] = [
+  {
+    id: 'bhojpatra',
+    name: 'भोजपत्र पाण्डुलिपि',
+    nameEn: 'Bhojpatra Parchment',
+    deity: 'महर्षि वेदव्यास व वैदिक संहिता',
+    icon: '📜',
+    bgHex: '#FAF2DE',
+    cardBgHex: '#FFFDF9',
+    accentHex: '#78350F',
+    borderHex: '#DFCBB5',
+    desc: 'प्राचीन भोजपत्र स्वर्ण पाण्डुलिपि परम्परा (स्वर्ण व काष्ठ आभा)',
+    isLight: true,
+  },
+  {
+    id: 'kesariya',
+    name: 'केसरी भगवा',
+    nameEn: 'Kesariya Bhagwa',
+    deity: 'श्री राम व हनुमान जी',
+    icon: '🚩',
+    bgHex: '#FFF8F0',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#C2410C',
+    borderHex: '#FDBA74',
+    desc: 'अयोध्या राम मंदिर व सूर्य-हनुमान दिव्य तेज',
+    isLight: true,
+  },
+  {
+    id: 'chandan',
+    name: 'श्री चन्दन',
+    nameEn: 'Shree Chandan',
+    deity: 'श्री बद्रीनाथ व जगन्नाथ',
+    icon: '🪵',
+    bgHex: '#FAF5EC',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#8C4A00',
+    borderHex: '#DFCBB5',
+    desc: 'पवित्र चन्दन तिलक व वैदिक भोजपत्र आभा',
+    isLight: true,
+  },
+  {
+    id: 'peetambari',
+    name: 'पीताम्बरी',
+    nameEn: 'Peetambari Gold',
+    deity: 'श्री हरि विष्णु व माँ बगलामुखी',
+    icon: '💛',
+    bgHex: '#FEFCE8',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#A16207',
+    borderHex: '#FDE047',
+    desc: 'पावन हरि पीताम्बर व स्वर्ण प्रभा',
+    isLight: true,
+  },
+  {
+    id: 'gangajal',
+    name: 'गंगाजल शिव',
+    nameEn: 'Gangajal Shiva',
+    deity: 'माँ गंगा व भगवान शिव',
+    icon: '🌊',
+    bgHex: '#F4F8FC',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#0369A1',
+    borderHex: '#DFCBB5',
+    desc: 'हरिद्वार-ऋषिकेश पावन गंगा नीलिमा धारा व स्वर्ण आभा',
+    isLight: true,
+  },
+  {
+    id: 'tulsi',
+    name: 'पावन तुलसी',
+    nameEn: 'Pawan Tulsi',
+    deity: 'श्री राधा-कृष्ण व वृन्दावन',
+    icon: '🌿',
+    bgHex: '#F2FBF4',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#15803D',
+    borderHex: '#DFCBB5',
+    desc: 'वृन्दावन कुंज व पावन तुलसीदल आभा',
+    isLight: true,
+  },
+  {
+    id: 'sindoor',
+    name: 'सिन्दूरी शक्ति',
+    nameEn: 'Sindoor Shakti',
+    deity: 'माँ दुर्गा व कामाख्या',
+    icon: '🌺',
+    bgHex: '#FFF5F5',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#BE123C',
+    borderHex: '#DFCBB5',
+    desc: 'माँ जगदम्बा कुमकुम व शक्ति कृपा',
+    isLight: true,
+  },
+  {
+    id: 'swarna',
+    name: 'स्वर्ण महालक्ष्मी',
+    nameEn: 'Swarna Lakshmi',
+    deity: 'माँ महालक्ष्मी व काशी विश्वनाथ',
+    icon: '✨',
+    bgHex: '#FFFBEB',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#B45309',
+    borderHex: '#FDE68A',
+    desc: 'महालक्ष्मी समृद्धि व काशी स्वर्ण आभा',
+    isLight: true,
+  },
+  {
+    id: 'shvet',
+    name: 'श्वेत प्रकाश',
+    nameEn: 'Shvet Kailash',
+    deity: 'माँ सरस्वती व कैलास शांति',
+    icon: '🕊️',
+    bgHex: '#F8FAFC',
+    cardBgHex: '#FFFFFF',
+    accentHex: '#334155',
+    borderHex: '#CBD5E1',
+    desc: 'धवल कैलास शांति व उच्च पठनीयता',
+    isLight: true,
+  },
+  {
+    id: 'tamra',
+    name: 'ताम्र-डार्क',
+    nameEn: 'Tamra Night',
+    deity: 'निशाकाल व रात्रि उपासना',
+    icon: '🌙',
+    bgHex: '#17110E',
+    cardBgHex: '#231710',
+    accentHex: '#D97706',
+    borderHex: '#78350F',
+    desc: 'पारंपरिक ताम्र कांस्य डार्क मोड',
+    isLight: false,
+  },
+];
+
+export function getStoredTheme(): AppTheme {
+  try {
+    const val = localStorage.getItem(STORAGE_KEY_THEME);
+    if (val && DEVOTIONAL_THEMES.some((t) => t.id === val)) return val as AppTheme;
+  } catch {}
+  return 'bhojpatra';
+}
+
+export function setStoredTheme(theme: AppTheme): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_THEME, theme);
+  } catch {}
+}
+
+// -------------------------------------------------------------
+// Astrologer / Pandit Custom Visiting Card Branding
+// -------------------------------------------------------------
+export interface AstrologerBranding {
+  enabled: boolean;
+  name: string;
+  title: string;
+  phone: string;
+  city: string;
+  sansthan?: string;
+  specialization?: string;
+}
+
+const STORAGE_KEY_BRANDING = 'shakti_astrologer_branding_v1';
+
+export function getAstrologerBranding(): AstrologerBranding {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_BRANDING);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return {
+    enabled: false,
+    name: '',
+    title: 'वैदिक ज्योतिषी',
+    phone: '',
+    city: '',
+    sansthan: '',
+    specialization: 'जन्म पत्रिका, विवाह मेलापक, वास्तु एवं अनुष्ठान',
+  };
+}
+
+export function saveAstrologerBranding(branding: AstrologerBranding): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_BRANDING, JSON.stringify(branding));
+  } catch {}
+}
+
+// -------------------------------------------------------------
+// App & Reading Font Size Scaling (Senior / Elder Accessible)
+// -------------------------------------------------------------
+export type AppFontSize = 'normal' | 'large' | 'xlarge';
+const STORAGE_KEY_FONT_SIZE = 'shakti_app_font_size_v1';
+
+export function getStoredFontSize(): AppFontSize {
+  try {
+    const val = localStorage.getItem(STORAGE_KEY_FONT_SIZE);
+    if (val === 'normal' || val === 'large' || val === 'xlarge') return val;
+  } catch {}
+  return 'normal';
+}
+
+export function setStoredFontSize(size: AppFontSize): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_FONT_SIZE, size);
+  } catch {}
+}
+
+
