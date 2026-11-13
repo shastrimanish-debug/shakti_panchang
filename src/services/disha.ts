@@ -197,6 +197,35 @@ export const DISHASHOOL_REMEDIES: Record<number, string> = {
 
 export const TRAVEL_REMEDIES = DISHASHOOL_REMEDIES;
 
+export function getLocalizedDishaRemedy(weekday: number, lang: string = 'hi'): string {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (c === 'en') {
+    const EN: Record<number, string> = {
+      0: 'Sunday Dishashool Remedy: Eat porridge or a spoon of ghee and offer water (Arghya) to Surya Dev before departing.',
+      1: 'Monday Dishashool Remedy: Look at your reflection in a mirror or sip a little milk before starting your journey.',
+      2: 'Tuesday Dishashool Remedy: Eat jaggery or chew coriander seeds and recite Hanuman Chalisa before leaving.',
+      3: 'Wednesday Dishashool Remedy: Chew sesame seeds or green cardamom and remember Lord Ganesha before departing.',
+      4: 'Thursday Dishashool Remedy: Eat curd (dahi) or carry yellow mustard seeds and meditate on Lord Vishnu.',
+      5: 'Friday Dishashool Remedy: Eat barley or kheer and remember Goddess Mahalakshmi before departing.',
+      6: 'Saturday Dishashool Remedy: Eat a tiny piece of ginger, urad, or mustard seeds and remember Shani Dev before travel.',
+    };
+    return EN[weekday] || EN[0];
+  }
+  if (c === 'gu') {
+    const GU: Record<number, string> = {
+      0: 'રવિવાર દિશાશૂળ પરિહાર: યાત્રા પૂર્વે દલિયા અથવા ઘી ખાઈને સૂર્યદેવને અર્ઘ્ય અર્પણ કરીને પ્રસ્થાન કરો.',
+      1: 'સોમવાર દિશાશૂળ પરિહાર: અરીસામાં પોતાનું મુખ જોઈને અથવા થોડું દૂધ પીને યાત્રા શરૂ કરો.',
+      2: 'મંગળવાર દિશાશૂળ પરિહાર: ગોળ અથવા ધાણા ખાઈને અને હનુમાન ચાલીસાનું સ્મરણ કરીને પ્રસ્થાન કરો.',
+      3: 'બુધવાર દિશાશૂળ પરિહાર: તલ અથવા લીલી એલચી ખાઈને ભગવાન ગણેશનું સ્મરણ કરી યાત્રા કરો.',
+      4: 'ગુરુવાર દિશાશૂળ પરિહાર: દહીં ખાઈને અથવા પીળી સરસવ સાથે રાખી શ્રી હરિ વિષ્ણુનું ધ્યાન કરો.',
+      5: 'શુક્રવાર દિશાશૂળ પરિહાર: જવ અથવા ખીર ખાઈને મા લક્ષ્મીનું ધ્યાન કરીને પ્રસ્થાન કરો.',
+      6: 'શનિવાર દિશાશૂળ પરિહાર: આદુ, અડદ અથવા રાઈ ખાઈને શનિદેવનું સ્મરણ કરી યાત્રા શરૂ કરો.',
+    };
+    return GU[weekday] || GU[0];
+  }
+  return DISHASHOOL_REMEDIES[weekday] || '';
+}
+
 function toRad(deg: number) {
   return (deg * Math.PI) / 180;
 }
@@ -262,8 +291,10 @@ export function calculateYatraShool(
   toName: string,
   toLat: number,
   toLon: number,
-  date: Date
+  date: Date,
+  lang: string = 'hi'
 ): YatraShoolResult {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
   const weekday = date.getDay();
   const shoolDir = DISHASHOOL_MAP[weekday] || 'पश्चिम';
   const bearing = calculateBearing(fromLat, fromLon, toLat, toLon);
@@ -282,27 +313,45 @@ export function calculateYatraShool(
   const isBlocked = exactBlocked || partialBlocked;
 
   let message = '';
-  if (exactBlocked) {
-    message = `आज ${direction} दिशा में सीधा दिशाशूल है। वैदिक मान्यतानुसार आज इस दिशा में यात्रा प्रारंभ करने से बचें। यदि यात्रा अत्यावश्यक हो तो नीचे दिया गया पारंपरिक परिहार अवश्य करें।`;
-  } else if (partialBlocked) {
-    message = `आज ${direction} दिशा आंशिक रूप से दिशाशूल (${shoolDir}) से प्रभावित है। सावधानी बरतें और शुभ चौघड़िया में ही यात्रा प्रारंभ करें।`;
+  if (c === 'en') {
+    if (exactBlocked) {
+      message = 'Direct Dishashool applies in this direction today. Avoid unnecessary travel or perform the traditional remedy below before departing.';
+    } else if (partialBlocked) {
+      message = 'This route is partially influenced by today\'s Dishashool. Exercise caution and begin in an auspicious Choghadiya.';
+    } else {
+      message = 'This travel direction is completely free of Dishashool today and is auspicious for your journey.';
+    }
+  } else if (c === 'gu') {
+    if (exactBlocked) {
+      message = 'આજે આ દિશામાં સીધું દિશાશૂળ છે. અનિવાર્ય ન હોય તો યાત્રા ટાળો અથવા નીચે આપેલો શાસ્ત્રીય પરિહાર કરીને પ્રસ્થાન કરો.';
+    } else if (partialBlocked) {
+      message = 'આજે આ દિશા આંશિક રીતે દિશાશૂળથી પ્રભાવિત છે. સાવચેતી રાખો અને શુભ ચોઘડિયામાં પ્રસ્થાન કરો.';
+    } else {
+      message = 'આજની યાત્રા દિશા દિશાશૂળથી સંપૂર્ણ મુક્ત છે અને યાત્રા માટે શુભ અને અનુકૂળ છે.';
+    }
   } else {
-    message = `आज की यात्रा दिशा (${direction}) दिशाशूल से पूर्णतया मुक्त है। यात्रा के लिए यह दिशा शुभ और अनुकूल है।`;
+    if (exactBlocked) {
+      message = `आज ${direction} दिशा में सीधा दिशाशूल है। वैदिक मान्यतानुसार आज इस दिशा में यात्रा प्रारंभ करने से बचें। यदि यात्रा अत्यावश्यक हो तो नीचे दिया गया पारंपरिक परिहार अवश्य करें।`;
+    } else if (partialBlocked) {
+      message = `आज ${direction} दिशा आंशिक रूप से दिशाशूल (${shoolDir}) से प्रभावित है। सावधानी बरतें और शुभ चौघड़िया में ही यात्रा प्रारंभ करें।`;
+    } else {
+      message = `आज की यात्रा दिशा (${direction}) दिशाशूल से पूर्णतया मुक्त है। यात्रा के लिए यह दिशा शुभ और अनुकूल है।`;
+    }
   }
 
   const solar = calculateSolarTimes(date, fromLat, fromLon);
   const dayChoghadiyas = getDayChoghadiya(solar, weekday);
   const inauspiciousWindows = getInauspiciousWindows(solar, weekday);
 
-  const suitablePeriods = dayChoghadiyas.filter((c) => {
-    if (['Kaal', 'Rog', 'Udveg'].includes(c.name)) return false;
+  const suitablePeriods = dayChoghadiyas.filter((item) => {
+    if (['Kaal', 'Rog', 'Udveg'].includes(item.name)) return false;
     const overlapsRahu = inauspiciousWindows.some(
-      (w) => w.title === 'राहु काल' && c.start < w.end && c.end > w.start
+      (w) => w.title === 'राहु काल' && item.start < w.end && item.end > w.start
     );
     return !overlapsRahu;
   });
 
-  const remedy = DISHASHOOL_REMEDIES[weekday] || '';
+  const remedy = getLocalizedDishaRemedy(weekday, c);
 
   return {
     fromName,

@@ -260,26 +260,68 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
       return;
     }
 
+    const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+    const dateLocale = cLang === 'en' ? 'en-US' : cLang === 'gu' ? 'gu-IN' : 'hi-IN';
+    const dateStr = panchang.date.toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
     let speechText = '';
-    const loc = locationName ? ` स्थान ${locationName}।` : '';
-    const dateStr = panchang.date.toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    if (currentSlide === 0) {
-      speechText = `आज का पंचांग। ${trWeekday(panchang.weekday)}, ${dateStr}। संवत् ${panchang.samvat}। ${panchang.paksha}, ${panchang.tithi}। ${loc}`;
-    } else if (currentSlide === 1) {
-      speechText = `आज की तिथि ${panchang.tithi}। श्री गणेशाय नमः। शुभं करोति कल्याणम्।`;
-    } else if (currentSlide === 2) {
-      speechText = `आज का नक्षत्र ${panchang.nakshatra}, चरण ${panchang.pada}। नक्षत्र समाप्ति ${panchang.nakshatraSpan ? fmt(panchang.nakshatraSpan.end) : ''}।`;
-    } else if (currentSlide === 3) {
-      speechText = `चन्द्र राशि ${panchang.lunarRashi}, सूर्य राशि ${panchang.solarRashi}।`;
-    } else if (currentSlide === 4) {
-      speechText = `आज का योग ${panchang.yoga}, और करण ${panchang.karana} है।`;
-    } else if (currentSlide === 5) {
-      speechText = `आज का शुभ अभिजित मुहूर्त ${abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} से ${fmt(abhijitWindow.end)} तक` : 'आज नहीं है'}। ब्रह्म मुहूर्त ${brahmaWindow ? fmt(brahmaWindow.start) : 'प्रातःकाल'}।`;
-    } else if (currentSlide === 6) {
-      speechText = `राहुकाल ${rahuWindow ? `${fmt(rahuWindow.start)} से ${fmt(rahuWindow.end)} तक` : 'नहीं है'}। आज का दिशाशूल ${dishaInfo.dirHindi} दिशा में है।`;
+    if (cLang === 'en') {
+      const loc = locationName ? ` Location: ${locationName}.` : '';
+      if (currentSlide === 0) {
+        speechText = `Today's Panchang. ${trWeekday(panchang.weekday, 'en')}, ${dateStr}. Samvat ${trVedic(panchang.samvat, 'en')}. ${trVedic(panchang.paksha, 'en')}, ${trVedic(panchang.tithi, 'en')}.${loc}`;
+      } else if (currentSlide === 1) {
+        speechText = `Today's Tithi is ${trVedic(panchang.tithi, 'en')}. Shri Ganeshaya Namah. Shubham Karoti Kalyanam.`;
+      } else if (currentSlide === 2) {
+        speechText = `Today's Nakshatra is ${trVedic(panchang.nakshatra, 'en')}, Pada ${panchang.pada}. Nakshatra ends at ${panchang.nakshatraSpan ? fmt(panchang.nakshatraSpan.end) : ''}.`;
+      } else if (currentSlide === 3) {
+        speechText = `Moon Sign ${trRashi(panchang.lunarRashi, 'en')}, Sun Sign ${trRashi(panchang.solarRashi, 'en')}.`;
+      } else if (currentSlide === 4) {
+        speechText = `Today's Yoga is ${trVedic(panchang.yoga, 'en')}, and Karana is ${trVedic(panchang.karana, 'en')}.`;
+      } else if (currentSlide === 5) {
+        speechText = `Abhijit Muhurat ${abhijitWindow && weekdayNum !== 3 ? `from ${fmt(abhijitWindow.start)} to ${fmt(abhijitWindow.end)}` : 'is not active today'}. Brahma Muhurat ${brahmaWindow ? fmt(brahmaWindow.start) : 'early morning'}.`;
+      } else if (currentSlide === 6) {
+        speechText = `Rahu Kaal ${rahuWindow ? `from ${fmt(rahuWindow.start)} to ${fmt(rahuWindow.end)}` : 'not applicable'}. Today's Dishashool is towards ${dishaInfo.dirEnglish}.`;
+      } else {
+        speechText = `Panchak status: ${panchak.isActive ? trVedic(panchak.typeNameHindi, 'en') : 'Panchak Free'}. Bhadra: ${bhadra.isActive ? trVedic(bhadra.vas, 'en') : 'Bhadra Free'}.`;
+      }
+    } else if (cLang === 'gu') {
+      const loc = locationName ? ` સ્થળ ${locationName}.` : '';
+      if (currentSlide === 0) {
+        speechText = `આજનું પંચાંગ. ${trWeekday(panchang.weekday, 'gu')}, ${dateStr}. સંવત ${trVedic(panchang.samvat, 'gu')}. ${trVedic(panchang.paksha, 'gu')}, ${trVedic(panchang.tithi, 'gu')}.${loc}`;
+      } else if (currentSlide === 1) {
+        speechText = `આજની તિથિ ${trVedic(panchang.tithi, 'gu')}. શ્રી ગણેશાય નમઃ. શુભં કરોતિ કલ્યાણમ્.`;
+      } else if (currentSlide === 2) {
+        speechText = `આજનું નક્ષત્ર ${trVedic(panchang.nakshatra, 'gu')}, ચરણ ${panchang.pada}. નક્ષત્ર સમાપ્તિ ${panchang.nakshatraSpan ? fmt(panchang.nakshatraSpan.end) : ''}.`;
+      } else if (currentSlide === 3) {
+        speechText = `ચંદ્ર રાશિ ${trRashi(panchang.lunarRashi, 'gu')}, સૂર્ય રાશિ ${trRashi(panchang.solarRashi, 'gu')}.`;
+      } else if (currentSlide === 4) {
+        speechText = `આજનો યોગ ${trVedic(panchang.yoga, 'gu')} અને કરણ ${trVedic(panchang.karana, 'gu')} છે.`;
+      } else if (currentSlide === 5) {
+        speechText = `આજનું શુભ અભિજિત મુહૂર્ત ${abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} થી ${fmt(abhijitWindow.end)} સુધી` : 'આજે નથી'}. બ્રહ્મ મુહૂર્ત ${brahmaWindow ? fmt(brahmaWindow.start) : 'વહેલી સવારે'}.`;
+      } else if (currentSlide === 6) {
+        speechText = `રાહુકાળ ${rahuWindow ? `${fmt(rahuWindow.start)} થી ${fmt(rahuWindow.end)} સુધી` : 'નથી'}. આજનું દિશાશૂળ ${trVedic(dishaInfo.dirHindi, 'gu')} દિશામાં છે.`;
+      } else {
+        speechText = `પંચક સ્થિતિ: ${panchak.isActive ? trVedic(panchak.typeNameHindi, 'gu') : 'પંચક મુક્ત'}. ભદ્રા: ${bhadra.isActive ? trVedic(bhadra.vas, 'gu') : 'ભદ્રા મુક્ત'}.`;
+      }
     } else {
-      speechText = `पञ्चक स्थिति: ${panchak.isActive ? panchak.typeNameHindi : 'पञ्चक मुक्त'}। भद्रा: ${bhadra.isActive ? bhadra.vas : 'भद्रा मुक्त'}।`;
+      const loc = locationName ? ` स्थान ${locationName}।` : '';
+      if (currentSlide === 0) {
+        speechText = `आज का पंचांग। ${trWeekday(panchang.weekday)}, ${dateStr}। संवत् ${panchang.samvat}। ${panchang.paksha}, ${panchang.tithi}। ${loc}`;
+      } else if (currentSlide === 1) {
+        speechText = `आज की तिथि ${panchang.tithi}। श्री गणेशाय नमः। शुभं करोति कल्याणम्।`;
+      } else if (currentSlide === 2) {
+        speechText = `आज का नक्षत्र ${panchang.nakshatra}, चरण ${panchang.pada}। नक्षत्र समाप्ति ${panchang.nakshatraSpan ? fmt(panchang.nakshatraSpan.end) : ''}।`;
+      } else if (currentSlide === 3) {
+        speechText = `चन्द्र राशि ${panchang.lunarRashi}, सूर्य राशि ${panchang.solarRashi}।`;
+      } else if (currentSlide === 4) {
+        speechText = `आज का योग ${panchang.yoga}, और करण ${panchang.karana} है।`;
+      } else if (currentSlide === 5) {
+        speechText = `आज का शुभ अभिजित मुहूर्त ${abhijitWindow && weekdayNum !== 3 ? `${fmt(abhijitWindow.start)} से ${fmt(abhijitWindow.end)} तक` : 'आज नहीं है'}। ब्रह्म मुहूर्त ${brahmaWindow ? fmt(brahmaWindow.start) : 'प्रातःकाल'}।`;
+      } else if (currentSlide === 6) {
+        speechText = `राहुकाल ${rahuWindow ? `${fmt(rahuWindow.start)} से ${fmt(rahuWindow.end)} तक` : 'नहीं है'}। आज का दिशाशूल ${dishaInfo.dirHindi} दिशा में है।`;
+      } else {
+        speechText = `पञ्चक स्थिति: ${panchak.isActive ? panchak.typeNameHindi : 'पञ्चक मुक्त'}। भद्रा: ${bhadra.isActive ? bhadra.vas : 'भद्रा मुक्त'}।`;
+      }
     }
 
     setIsSpeaking(true);
@@ -344,6 +386,7 @@ export const PanchangStoryView: React.FC<PanchangStoryViewProps> = ({
         answer: buildPanchangShareText(),
         locationName,
         date: panchang.date,
+        lang: language,
       });
 
       setPdfSuccessInfo({

@@ -21,6 +21,15 @@ import {
 } from '../services/choghadiya';
 import { shareImageFile, shareTextContent } from '../lib/shareHelper';
 import { saveImageNative } from '../lib/device';
+import { useLanguage } from '../i18n';
+import { trVedic } from '../i18n/vedicTranslate';
+
+function pickL<T>(lang: string, hi: T, en: T, gu: T): T {
+  const l = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (l === 'en') return en;
+  if (l === 'gu') return gu;
+  return hi;
+}
 
 interface WhatsAppPanchangModalProps {
   isOpen: boolean;
@@ -37,23 +46,43 @@ type CardTemplateMode = 'panchang' | 'choghadiya' | 'status_9_16';
 const DAILY_SHLOKAS = [
   {
     shloka: 'शुभं करोति कल्याणं आरोग्यं धनसंपदाम्। शत्रुबुद्धिविनाशाय दीपज्योतिर्नमोऽस्तुते॥',
-    meaning: 'दीपज्योति कल्याण, आरोग्य और धन-सम्पत्ति प्रदान करती है तथा सन्मार्ग की ओर प्रेरित करती है।',
+    meaning: {
+      hi: 'दीपज्योति कल्याण, आरोग्य और धन-सम्पत्ति प्रदान करती है तथा सन्मार्ग की ओर प्रेरित करती है।',
+      en: 'Salutations to the sacred lamp light that brings auspiciousness, good health, prosperity, and destroys negative thoughts.',
+      gu: 'દીપજ્યોતિ કલ્યાણ, આરોગ્ય અને ધન-સંપત્તિ પ્રદાન કરે છે તથા સન્માર્ગ તરફ પ્રેરિત કરે છે.',
+    },
   },
   {
     shloka: 'ॐ भूर्भुवः स्वः तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि धियो यो नः प्रचोदयात्॥',
-    meaning: 'सृष्टि के प्रकाशक परमात्मा हमारे अंतःकरण को सद्बुद्धि व सन्मार्ग से प्रकाशित करें।',
+    meaning: {
+      hi: 'सृष्टि के प्रकाशक परमात्मा हमारे अंतःकरण को सद्बुद्धि व सन्मार्ग से प्रकाशित करें।',
+      en: 'We meditate upon the divine radiance of Lord Savitur; may He illuminate our intellect onto the righteous path.',
+      gu: 'સૃષ્ટિના પ્રકાશક પરમાત્મા આપણા અંતઃકરણને સદ્બુદ્ધિ અને સન્માર્ગથી પ્રકાશિત કરે.',
+    },
   },
   {
     shloka: 'कर्मण्येवाधिकारस्ते मा फलेषु कदाचन। मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥',
-    meaning: 'तुम्हारा अधिकार केवल कर्म करने में है, फल की चिंता में नहीं। कर्तव्य पथ पर अग्रसर रहें।',
+    meaning: {
+      hi: 'तुम्हारा अधिकार केवल कर्म करने में है, फल की चिंता में नहीं। कर्तव्य पथ पर अग्रसर रहें।',
+      en: 'You have the right to perform your duty alone, never to the fruits thereof. Stay steadfast on the path of righteous action.',
+      gu: 'તમારો અધિકાર કેવળ કર્મ કરવાનો છે, ફળની ચિંતાનો નહીં. કર્તવ્ય પથ પર આગળ વધતા રહો.',
+    },
   },
   {
     shloka: 'सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः। सर्वे भद्राणि पश्यन्तु मा कश्चिद्दुःखभाग्भवेत्॥',
-    meaning: 'सब सुखी हों, सब निरोगी हों, सब का कल्याण हो, कोई भी दुःखी न हो।',
+    meaning: {
+      hi: 'सब सुखी हों, सब निरोगी हों, सब का कल्याण हो, कोई भी दुःखी न हो।',
+      en: 'May all beings be happy, may all be free from illness, may all witness auspiciousness, and may none suffer sorrow.',
+      gu: 'સૌ સુખી થાઓ, સૌ નિરોગી રહો, સૌનું કલ્યાણ થાઓ, કોઈ પણ દુઃખી ન થાઓ.',
+    },
   },
   {
     shloka: 'विद्या ददाति विनयं विनयाद्याति पात्रताम्। पात्रत्वाद्धनमाप्नोति धनाद्धर्मं ततः सुखम्॥',
-    meaning: 'विद्या विनय देती है, विनय से पात्रता आती है, पात्रता से धन और धर्म से सच्चा सुख मिलता है।',
+    meaning: {
+      hi: 'विद्या विनय देती है, विनय से पात्रता आती है, पात्रता से धन और धर्म से सच्चा सुख मिलता है।',
+      en: 'True knowledge bestows humility, humility brings worthiness, worthiness brings wealth, and righteousness leads to true joy.',
+      gu: 'વિદ્યા વિનય આપે છે, વિનયથી પાત્રતા આવે છે, પાત્રતાથી ધન અને ધર્મથી સાચું સુખ મળે છે.',
+    },
   },
 ];
 
@@ -97,6 +126,10 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   personName,
   onOpenBrandingModal,
 }) => {
+  const { language } = useLanguage();
+  const currentLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const locale = currentLang === 'en' ? 'en-US' : currentLang === 'gu' ? 'gu-IN' : 'hi-IN';
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [templateMode, setTemplateMode] = useState<CardTemplateMode>('panchang');
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -107,6 +140,12 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
   const shlokaIndex = currentDate.getDate() % DAILY_SHLOKAS.length;
   const currentShloka = DAILY_SHLOKAS[shlokaIndex];
+  const shlokaMeaningText =
+    currentLang === 'en'
+      ? currentShloka.meaning.en
+      : currentLang === 'gu'
+      ? currentShloka.meaning.gu
+      : currentShloka.meaning.hi;
 
   useEffect(() => {
     if (isOpen) {
@@ -122,7 +161,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   const auspiciousWindows = getAuspiciousWindows(panchang.solar);
 
   const fmtShort = (d: Date) =>
-    d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+    d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 
   const rahuWin =
     inauspiciousWindows.find((w) => w.title.includes('राहु')) || inauspiciousWindows[0];
@@ -142,6 +181,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     leftX: number,
     footerY: number
   ) => {
+    const appBrandName = pickL(currentLang, 'सनातन शक्ति पंचांग', 'Shakti Sanatan Panchang', 'સનાતન શક્તિ પંચાંગ');
     if (branding.enabled && branding.name) {
       const cardGrad = ctx.createLinearGradient(leftX, footerY, W - leftX, footerY + 230);
       cardGrad.addColorStop(0, '#5C3A21');
@@ -157,7 +197,16 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.fillStyle = '#FFD88A';
       ctx.font = 'bold 20px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('॥ प्रामाणिक वैदिक ज्योतिष एवं कर्मकांड परामर्श ॥', W / 2, footerY + 42);
+      ctx.fillText(
+        pickL(
+          currentLang,
+          '॥ प्रामाणिक वैदिक ज्योतिष एवं कर्मकांड परामर्श ॥',
+          'Authentic Vedic Astrology & Karmakanda Consultation',
+          '॥ પ્રામાણિક વૈદિક જ્યોતિષ અને કર્મકાંડ પરામર્શ ॥'
+        ),
+        W / 2,
+        footerY + 42
+      );
 
       ctx.fillStyle = '#FAF2E4';
       ctx.font = 'bold 36px sans-serif';
@@ -165,7 +214,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
       ctx.fillStyle = '#FFD88A';
       ctx.font = '24px sans-serif';
-      ctx.fillText(branding.title || 'वैदिक ज्योतिषी', W / 2, footerY + 130);
+      ctx.fillText(branding.title || pickL(currentLang, 'वैदिक ज्योतिषी', 'Vedic Astrologer', 'વૈદિક જ્યોતિષી'), W / 2, footerY + 130);
 
       ctx.fillStyle = '#FAF2E4';
       ctx.font = 'bold 25px sans-serif';
@@ -176,12 +225,16 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ]
         .filter(Boolean)
         .join('   •   ');
-      ctx.fillText(contactStr || 'सनातन शक्ति पंचांग', W / 2, footerY + 172);
+      ctx.fillText(contactStr || appBrandName, W / 2, footerY + 172);
 
       if (branding.specialization) {
         ctx.fillStyle = 'rgba(255, 216, 138, 0.88)';
         ctx.font = '19px sans-serif';
-        ctx.fillText(`विशेषज्ञता: ${branding.specialization}`, W / 2, footerY + 208);
+        ctx.fillText(
+          `${pickL(currentLang, 'विशेषज्ञता:', 'Specialization:', 'વિશેષતા:')} ${branding.specialization}`,
+          W / 2,
+          footerY + 208
+        );
       }
     } else {
       ctx.fillStyle = '#5C3A21';
@@ -195,11 +248,20 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.fillStyle = '#FFD88A';
       ctx.font = 'bold 36px serif';
       ctx.textAlign = 'center';
-      ctx.fillText('सनातन शक्ति पंचांग', W / 2, footerY + 70);
+      ctx.fillText(appBrandName, W / 2, footerY + 70);
 
       ctx.fillStyle = '#FAF2E4';
       ctx.font = '24px sans-serif';
-      ctx.fillText('अचूक वैदिक खगोलशास्त्र • सूर्य सिद्धान्त एवं लाहिरी अयनांश', W / 2, footerY + 118);
+      ctx.fillText(
+        pickL(
+          currentLang,
+          'अचूक वैदिक खगोलशास्त्र • सूर्य सिद्धान्त एवं लाहिरी अयनांश',
+          'Precision Vedic Astronomy • Surya Siddhanta & Lahiri Ayanamsha',
+          'સચોટ વૈદિક ખગોળશાસ્ત્ર • સૂર્ય સિદ્ધાંત અને લાહિરી અયનાંશ'
+        ),
+        W / 2,
+        footerY + 118
+      );
 
       ctx.fillStyle = '#FFD88A';
       ctx.font = '22px sans-serif';
@@ -207,7 +269,16 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
       ctx.fillStyle = 'rgba(250, 242, 228, 0.78)';
       ctx.font = '19px sans-serif';
-      ctx.fillText('दैनिक पंचांग, शुभ मुहूर्त, चौघड़िया एवं कुंडली मिलान', W / 2, footerY + 198);
+      ctx.fillText(
+        pickL(
+          currentLang,
+          'दैनिक पंचांग, शुभ मुहूर्त, चौघड़िया एवं कुंडली मिलान',
+          'Daily Panchang, Shubh Muhurat, Choghadiya & Kundali Matching',
+          'દૈનિક પંચાંગ, શુભ મુહૂર્ત, ચોઘડિયા અને કુંડળી મિલાન'
+        ),
+        W / 2,
+        footerY + 198
+      );
     }
   };
 
@@ -291,14 +362,14 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.font = 'bold 36px sans-serif';
     const headerText =
       templateMode === 'choghadiya'
-        ? 'आज का शुभ चौघड़िया व मुहूर्त'
+        ? pickL(currentLang, 'आज का शुभ चौघड़िया व मुहूर्त', "Today's Shubh Choghadiya & Muhurat", 'આજનું શુભ ચોઘડિયા અને મુહૂર્ત')
         : templateMode === 'status_9_16'
-          ? 'आज का सुभाषित एवं पंचांग दर्शन'
-          : 'दैनिक वैदिक पञ्चाङ्गम्';
+          ? pickL(currentLang, 'आज का सुभाषित एवं पंचांग दर्शन', "Today's Subhashita & Panchang", 'આજનું સુભાષિત અને પંચાંગ દર્શન')
+          : pickL(currentLang, 'दैनिक वैदिक पञ्चाङ्गम्', 'Daily Vedic Panchang', 'દૈનિક વૈદિક પંચાંગમ્');
     ctx.fillText(headerText, W / 2, 158);
 
     // 5. Date & Location Bar
-    const dateStr = currentDate.toLocaleDateString('hi-IN', {
+    const dateStr = currentDate.toLocaleDateString(locale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -312,7 +383,9 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.font = 'bold 24px sans-serif';
     const locName = location.name.split('(')[0].trim();
     const who = personName ? `${personName} • ` : '';
-    ctx.fillText(`${who}स्थान: ${locName} • संवत्: ${panchang.samvat || '2083'}`, W / 2, 275);
+    const locLabel = pickL(currentLang, 'स्थान:', 'Place:', 'સ્થળ:');
+    const samvatLabel = pickL(currentLang, 'संवत्:', 'Samvat:', 'સંવત:');
+    ctx.fillText(`${who}${locLabel} ${locName} • ${samvatLabel} ${panchang.samvat || '2083'}`, W / 2, 275);
 
     // Divider Line
     ctx.strokeStyle = '#8C6239';
@@ -323,6 +396,14 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     ctx.stroke();
 
     const leftX = 75;
+    const tithiTr = trVedic(panchang.tithi, currentLang);
+    const pakshaTr = trVedic(panchang.paksha, currentLang);
+    const nakTr = trVedic(panchang.nakshatra, currentLang);
+    const yogaTr = trVedic(panchang.yoga, currentLang);
+    const karanaTr = trVedic(panchang.karana, currentLang);
+
+    const chogDisplayName = (ch: { hindiName: string; name: string }) =>
+      currentLang === 'en' ? ch.name : trVedic(ch.hindiName, currentLang);
 
     if (templateMode === 'choghadiya') {
       // ================== CHOGHADIYA POSTER MODE ==================
@@ -337,7 +418,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.fillStyle = '#FFD88A';
       ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('☀️ दिन का चौघड़िया', leftX + colW / 2, 358);
+      ctx.fillText(pickL(currentLang, '☀️ दिन का चौघड़िया', '☀️ Day Choghadiya', '☀️ દિવસનું ચોઘડિયા'), leftX + colW / 2, 358);
 
       // Night Choghadiya Header
       ctx.fillStyle = '#3E2714';
@@ -346,7 +427,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.fill();
       ctx.fillStyle = '#FFD88A';
       ctx.font = 'bold 24px sans-serif';
-      ctx.fillText('🌙 रात्रि का चौघड़िया', rightX + colW / 2, 358);
+      ctx.fillText(pickL(currentLang, '🌙 रात्रि का चौघड़िया', '🌙 Night Choghadiya', '🌙 રાત્રિનું ચોઘડિયા'), rightX + colW / 2, 358);
 
       const drawChogRow = (
         x: number,
@@ -368,7 +449,11 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
         ctx.textAlign = 'left';
         ctx.fillStyle = isGood ? '#065F46' : isNeutral ? '#92400E' : '#7F1D1D';
         ctx.font = 'bold 22px sans-serif';
-        const tag = isGood ? '✦ शुभ' : isNeutral ? '• चल' : '× त्याज्य';
+        const tag = isGood
+          ? pickL(currentLang, '✦ शुभ', '✦ Good', '✦ શુભ')
+          : isNeutral
+          ? pickL(currentLang, '• चल', '• Neutral', '• ચલ')
+          : pickL(currentLang, '× त्याज्य', '× Avoid', '× ત્યાજ્ય');
         ctx.fillText(`${name} (${tag})`, x + 16, y + 34);
 
         ctx.textAlign = 'right';
@@ -382,7 +467,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
         drawChogRow(
           leftX,
           rowY,
-          ch.hindiName,
+          chogDisplayName(ch),
           `${fmtShort(ch.start)} - ${fmtShort(ch.end)}`,
           ch.nature
         );
@@ -393,7 +478,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
         drawChogRow(
           rightX,
           rowY,
-          ch.hindiName,
+          chogDisplayName(ch),
           `${fmtShort(ch.start)} - ${fmtShort(ch.end)}`,
           ch.nature
         );
@@ -412,12 +497,16 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.textAlign = 'center';
       ctx.fillStyle = '#15803D';
       ctx.font = 'bold 24px sans-serif';
-      ctx.fillText(`✨ अभिजित मुहूर्त (सर्वश्रेष्ठ): ${abhijitStr}`, W / 2, stripY + 44);
+      ctx.fillText(
+        `${pickL(currentLang, '✨ अभिजित मुहूर्त (सर्वश्रेष्ठ):', '✨ Abhijit Muhurat (Best):', '✨ અભિજિત મુહૂર્ત (સર્વોત્તમ):')} ${abhijitStr}`,
+        W / 2,
+        stripY + 44
+      );
 
       ctx.fillStyle = '#991B1B';
       ctx.font = 'bold 23px sans-serif';
       ctx.fillText(
-        `⚠️ राहुकाल (त्याज्य समय): ${rahuStr}   •   तिथि: ${panchang.tithi} (${panchang.nakshatra})`,
+        `${pickL(currentLang, '⚠️ राहुकाल (त्याज्य समय):', '⚠️ Rahu Kaal (Avoid):', '⚠️ રાહુકાળ (ત્યાજ્ય સમય):')} ${rahuStr}   •   ${pickL(currentLang, 'तिथि:', 'Tithi:', 'તિથિ:')} ${tithiTr} (${nakTr})`,
         W / 2,
         stripY + 86
       );
@@ -442,7 +531,11 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.textAlign = 'center';
       ctx.fillStyle = '#8B1E1E';
       ctx.font = 'bold 28px serif';
-      ctx.fillText('॥ आज का पावन वैदिक सुभाषित ॥', W / 2, heroY + 60);
+      ctx.fillText(
+        pickL(currentLang, '॥ आज का पावन वैदिक सुभाषित ॥', "Today's Sacred Vedic Subhashita", '॥ આજનું પાવન વૈદિક સુભાષિત ॥'),
+        W / 2,
+        heroY + 60
+      );
 
       // Wrap Sanskrit
       ctx.fillStyle = '#4A0E0E';
@@ -478,11 +571,15 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
       ctx.fillStyle = '#8B1E1E';
       ctx.font = 'bold 25px sans-serif';
-      ctx.fillText('✦ हिंदी भावार्थ ✦', W / 2, heroY + 368);
+      ctx.fillText(
+        pickL(currentLang, '✦ हिंदी भावार्थ ✦', '✦ Meaning ✦', '✦ ગુજરાતી ભાવાર્થ ✦'),
+        W / 2,
+        heroY + 368
+      );
 
       ctx.fillStyle = '#1F1006';
       ctx.font = 'bold 27px sans-serif';
-      const mWords = currentShloka.meaning.split(' ');
+      const mWords = shlokaMeaningText.split(' ');
       const mLines: string[] = [];
       let mCur = '';
       for (const w of mWords) {
@@ -515,18 +612,23 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
       ctx.fillStyle = '#6E1409';
       ctx.font = 'bold 30px serif';
-      ctx.fillText('📜 आज के पंचांग के प्रमुख बिंदु', W / 2, pBoxY + 56);
+      ctx.fillText(
+        pickL(currentLang, '📜 आज के पंचांग के प्रमुख बिंदु', "Today's Panchang Highlights", '📜 આજના પંચાંગના મુખ્ય અંશો'),
+        W / 2,
+        pBoxY + 56
+      );
 
+      const padaWord = pickL(currentLang, 'चरण', 'Pada', 'ચરણ');
       const rows = [
-        ['🌙 तिथि व पक्ष', `${panchang.tithi} (${panchang.paksha})`],
-        ['⭐ नक्षत्र व चरण', `${panchang.nakshatra} (चरण ${panchang.pada})`],
-        ['☸ योग व करण', `${panchang.yoga}  •  ${panchang.karana}`],
+        [pickL(currentLang, '🌙 तिथि व पक्ष', '🌙 Tithi & Paksha', '🌙 તિથિ અને પક્ષ'), `${tithiTr} (${pakshaTr})`],
+        [pickL(currentLang, '⭐ नक्षत्र व चरण', '⭐ Nakshatra & Pada', '⭐ નક્ષત્ર અને ચરણ'), `${nakTr} (${padaWord} ${panchang.pada})`],
+        [pickL(currentLang, '☸ योग व करण', '☸ Yoga & Karana', '☸ યોગ અને કરણ'), `${yogaTr}  •  ${karanaTr}`],
         [
-          '🌅 सूर्योदय व सूर्यास्त',
+          pickL(currentLang, '🌅 सूर्योदय व सूर्यास्त', '🌅 Sunrise & Sunset', '🌅 સૂર્યોદય અને સૂર્યાસ્ત'),
           `${panchang.solar ? fmtShort(panchang.solar.sunrise) : '06:15'}  —  ${panchang.solar ? fmtShort(panchang.solar.sunset) : '18:22'}`,
         ],
-        ['✨ अभिजित मुहूर्त (शुभ)', abhijitStr],
-        ['⚠️ राहुकाल (त्याज्य)', rahuStr],
+        [pickL(currentLang, '✨ अभिजित मुहूर्त (शुभ)', '✨ Abhijit Muhurat (Shubh)', '✨ અભિજિત મુહૂર્ત (શુભ)'), abhijitStr],
+        [pickL(currentLang, '⚠️ राहुकाल (त्याज्य)', '⚠️ Rahu Kaal (Avoid)', '⚠️ રાહુકાળ (ત્યાજ્ય)'), rahuStr],
       ];
 
       rows.forEach(([label, val], idx) => {
@@ -599,19 +701,21 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       const cardW = 445;
       const cardH = 115;
       const rightX = 560;
+      const endsPrefix = pickL(currentLang, 'समाप्ति:', 'Ends:', 'સમાપ્તિ:');
+      const padaPrefix = pickL(currentLang, 'चरण', 'Pada', 'ચરણ');
 
       const tithiSub = panchang.tithiSpan
-        ? `समाप्ति: ${fmtShort(panchang.tithiSpan.end)}`
-        : panchang.paksha;
-      card(leftX, 330, cardW, cardH, 'तिथि (Tithi)', `${panchang.tithi}`, tithiSub, '🌙');
+        ? `${endsPrefix} ${fmtShort(panchang.tithiSpan.end)}`
+        : pakshaTr;
+      card(leftX, 330, cardW, cardH, pickL(currentLang, 'तिथि (Tithi)', 'Tithi', 'તિથિ (Tithi)'), tithiTr, tithiSub, '🌙');
 
       const nakSub = panchang.nakshatraSpan
-        ? `समाप्ति: ${fmtShort(panchang.nakshatraSpan.end)}`
-        : `चरण ${panchang.pada}`;
-      card(rightX, 330, cardW, cardH, 'नक्षत्र (Nakshatra)', `${panchang.nakshatra}`, nakSub, '⭐');
+        ? `${endsPrefix} ${fmtShort(panchang.nakshatraSpan.end)}`
+        : `${padaPrefix} ${panchang.pada}`;
+      card(rightX, 330, cardW, cardH, pickL(currentLang, 'नक्षत्र (Nakshatra)', 'Nakshatra', 'નક્ષત્ર (Nakshatra)'), nakTr, nakSub, '⭐');
 
-      card(leftX, 465, cardW, cardH, 'योग (Yoga)', `${panchang.yoga}`, 'शुभ कार्य सिद्धि', '☸');
-      card(rightX, 465, cardW, cardH, 'करण (Karana)', `${panchang.karana}`, 'तिथि अर्ध भाग', '⚡');
+      card(leftX, 465, cardW, cardH, pickL(currentLang, 'योग (Yoga)', 'Yoga', 'યોગ (Yoga)'), yogaTr, pickL(currentLang, 'शुभ कार्य सिद्धि', 'Auspicious Alignment', 'શુભ કાર્ય સિદ્ધિ'), '☸');
+      card(rightX, 465, cardW, cardH, pickL(currentLang, 'करण (Karana)', 'Karana', 'કરણ (Karana)'), karanaTr, pickL(currentLang, 'तिथि अर्ध भाग', 'Half-Tithi Division', 'તિથિ અર્ધ ભાગ'), '⚡');
 
       // Sunrise, Sunset & Rahu Kaal Banner
       const sunBoxY = 605;
@@ -633,21 +737,21 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
       ctx.fillStyle = '#FFD88A';
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillText('🌅 सूर्योदय', sec1, sunBoxY + 42);
+      ctx.fillText(pickL(currentLang, '🌅 सूर्योदय', '🌅 Sunrise', '🌅 સૂર્યોદય'), sec1, sunBoxY + 42);
       ctx.fillStyle = '#FAF2E4';
       ctx.font = 'bold 28px sans-serif';
       ctx.fillText(sRise, sec1, sunBoxY + 84);
 
       ctx.fillStyle = '#FFD88A';
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillText('🌄 सूर्यास्त', sec2, sunBoxY + 42);
+      ctx.fillText(pickL(currentLang, '🌄 सूर्यास्त', '🌄 Sunset', '🌄 સૂર્યાસ્ત'), sec2, sunBoxY + 42);
       ctx.fillStyle = '#FAF2E4';
       ctx.font = 'bold 28px sans-serif';
       ctx.fillText(sSet, sec2, sunBoxY + 84);
 
       ctx.fillStyle = '#FFB4A2';
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillText('⚠️ राहुकाल', sec3, sunBoxY + 42);
+      ctx.fillText(pickL(currentLang, '⚠️ राहुकाल', '⚠️ Rahu Kaal', '⚠️ રાહુકાળ'), sec3, sunBoxY + 42);
       ctx.fillStyle = '#FAF2E4';
       ctx.font = 'bold 26px sans-serif';
       ctx.fillText(rahuStr, sec3, sunBoxY + 84);
@@ -665,12 +769,20 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.textAlign = 'left';
       ctx.fillStyle = '#8B1E1E';
       ctx.font = 'bold 22px sans-serif';
-      ctx.fillText('✨ आज का अभिजित मुहूर्त (श्रेष्ठ समय):', leftX + 25, muhuratY + 47);
+      ctx.fillText(
+        pickL(currentLang, '✨ आज का अभिजित मुहूर्त (श्रेष्ठ समय):', "✨ Today's Abhijit Muhurat (Best Window):", '✨ આજનું અભિજિત મુહૂર્ત (શ્રેષ્ઠ સમય):'),
+        leftX + 25,
+        muhuratY + 47
+      );
 
       ctx.textAlign = 'right';
       ctx.fillStyle = '#1F1006';
       ctx.font = 'bold 25px sans-serif';
-      ctx.fillText(`${abhijitStr} (सर्वकार्य सिद्धि)`, W - leftX - 25, muhuratY + 47);
+      ctx.fillText(
+        `${abhijitStr} (${pickL(currentLang, 'सर्वकार्य सिद्धि', 'All-Success Window', 'સર્વકાર્ય સિદ્ધિ')})`,
+        W - leftX - 25,
+        muhuratY + 47
+      );
 
       // Daily Sacred Subhashita / Shloka Box
       const shlokaY = 835;
@@ -685,7 +797,11 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ctx.textAlign = 'center';
       ctx.fillStyle = '#8B1E1E';
       ctx.font = 'bold 22px sans-serif';
-      ctx.fillText('॥ आज का पावन सुभाषित व विचार ॥', W / 2, shlokaY + 40);
+      ctx.fillText(
+        pickL(currentLang, '॥ आज का पावन सुभाषित व विचार ॥', "Today's Sacred Subhashita & Thought", '॥ આજનું પાવન સુભાષિત અને વિચાર ॥'),
+        W / 2,
+        shlokaY + 40
+      );
 
       ctx.fillStyle = '#4A0E0E';
       ctx.font = 'bold 23px serif';
@@ -693,7 +809,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
       ctx.fillStyle = '#241005';
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillText(`“${currentShloka.meaning}”`, W / 2, shlokaY + 124);
+      ctx.fillText(`“${shlokaMeaningText}”`, W / 2, shlokaY + 124);
 
       drawFooterBranding(ctx, W, leftX, 1020);
     }
@@ -712,12 +828,15 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
     currentDate,
     branding,
     currentShloka,
+    shlokaMeaningText,
     personName,
     templateMode,
     dayChoghadiyas,
     nightChoghadiyas,
     rahuStr,
     abhijitStr,
+    currentLang,
+    locale,
   ]);
 
   useEffect(() => {
@@ -731,7 +850,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
 
   if (!isOpen) return null;
 
-  const dateFormatted = currentDate.toLocaleDateString('hi-IN', {
+  const dateFormatted = currentDate.toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -740,39 +859,58 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   const locShort = location.name.split('(')[0].trim();
 
   const getShareText = () => {
+    const tithiTr = trVedic(panchang.tithi, currentLang);
+    const pakshaTr = trVedic(panchang.paksha, currentLang);
+    const nakTr = trVedic(panchang.nakshatra, currentLang);
+    const yogaTr = trVedic(panchang.yoga, currentLang);
+    const karanaTr = trVedic(panchang.karana, currentLang);
+    const sRise = panchang.solar ? fmtShort(panchang.solar.sunrise) : '06:15';
+    const sSet = panchang.solar ? fmtShort(panchang.solar.sunset) : '18:22';
+
     let txt = `*॥ श्री गणेशाय नमः ॥*\n`;
-    txt += `*दैनिक वैदिक पञ्चाङ्गम् एवं चौघड़िया — शक्ति पंचांग*\n`;
-    txt += `📅 *दिनांक:* ${dateFormatted}\n`;
-    txt += `📍 *स्थान:* ${locShort}\n`;
+    txt += `*${pickL(
+      currentLang,
+      'दैनिक वैदिक पञ्चाङ्गम् एवं चौघड़िया — शक्ति पंचांग',
+      'Daily Vedic Panchang & Choghadiya — Shakti Panchang',
+      'દૈનિક વૈદિક પંચાંગમ્ અને ચોઘડિયા — શક્તિ પંચાંગ'
+    )}*\n`;
+    txt += `📅 *${pickL(currentLang, 'दिनांक:', 'Date:', 'તારીખ:')}* ${dateFormatted}\n`;
+    txt += `📍 *${pickL(currentLang, 'स्थान:', 'Location:', 'સ્થળ:')}* ${locShort}\n`;
     txt += `──────────────────\n`;
-    txt += `🌙 *तिथि:* ${panchang.tithi} (${panchang.paksha})\n`;
-    txt += `⭐ *नक्षत्र:* ${panchang.nakshatra} (चरण ${panchang.pada})\n`;
-    txt += `☸ *योग:* ${panchang.yoga}  •  *करण:* ${panchang.karana}\n`;
-    txt += `🌅 *सूर्योदय:* ${panchang.solar ? fmtShort(panchang.solar.sunrise) : '06:15'} | 🌄 *सूर्यास्त:* ${panchang.solar ? fmtShort(panchang.solar.sunset) : '18:22'}\n`;
-    txt += `✨ *अभिजित मुहूर्त:* ${abhijitStr}\n`;
-    txt += `⚠️ *राहुकाल:* ${rahuStr}\n`;
+    txt += `🌙 *${pickL(currentLang, 'तिथि:', 'Tithi:', 'તિથિ:')}* ${tithiTr} (${pakshaTr})\n`;
+    txt += `⭐ *${pickL(currentLang, 'नक्षत्र:', 'Nakshatra:', 'નક્ષત્ર:')}* ${nakTr} (${pickL(currentLang, 'चरण', 'Pada', 'ચરણ')} ${panchang.pada})\n`;
+    txt += `☸ *${pickL(currentLang, 'योग:', 'Yoga:', 'યોગ:')}* ${yogaTr}  •  *${pickL(currentLang, 'करण:', 'Karana:', 'કરણ:')}* ${karanaTr}\n`;
+    txt += `🌅 *${pickL(currentLang, 'सूर्योदय:', 'Sunrise:', 'સૂર્યોદય:')}* ${sRise} | 🌄 *${pickL(currentLang, 'सूर्यास्त:', 'Sunset:', 'સૂર્યાસ્ત:')}* ${sSet}\n`;
+    txt += `✨ *${pickL(currentLang, 'अभिजित मुहूर्त:', 'Abhijit Muhurat:', 'અભિજિત મુહૂર્ત:')}* ${abhijitStr}\n`;
+    txt += `⚠️ *${pickL(currentLang, 'राहुकाल:', 'Rahu Kaal:', 'રાહુકાળ:')}* ${rahuStr}\n`;
     if (templateMode === 'choghadiya') {
       txt += `──────────────────\n`;
-      txt += `☀️ *आज के शुभ दिन चौघड़िया:*\n`;
+      txt += `☀️ *${pickL(currentLang, 'आज के शुभ दिन चौघड़िया:', "Today's Auspicious Day Choghadiya:", 'આજના શુભ દિવસના ચોઘડિયા:')}*\n`;
       dayChoghadiyas
         .filter((c) => c.nature === 'auspicious' || c.nature === 'neutral')
         .forEach((c) => {
-          txt += `• ${c.hindiName}: ${fmtShort(c.start)} – ${fmtShort(c.end)}\n`;
+          const chName = currentLang === 'en' ? c.name : trVedic(c.hindiName, currentLang);
+          txt += `• ${chName}: ${fmtShort(c.start)} – ${fmtShort(c.end)}\n`;
         });
     }
     txt += `──────────────────\n`;
-    txt += `📖 *सुभाषित:* ${currentShloka.shloka}\n`;
-    txt += `(अर्थ: ${currentShloka.meaning})\n`;
+    txt += `📖 *${pickL(currentLang, 'सुभाषित:', 'Subhashita:', 'સુભાષિત:')}* ${currentShloka.shloka}\n`;
+    txt += `(${pickL(currentLang, 'अर्थ:', 'Meaning:', 'અર્થ:')} ${shlokaMeaningText})\n`;
 
     if (branding.enabled && branding.name) {
       txt += `──────────────────\n`;
-      txt += `🙏 *ज्योतिषीय परामर्श सौजन्य:* ${branding.name}\n`;
+      txt += `🙏 *${pickL(currentLang, 'ज्योतिषीय परामर्श सौजन्य:', 'Astrological Consultation Courtesy:', 'જ્યોતિષીય પરામર્શ સૌજન્ય:')}* ${branding.name}\n`;
       if (branding.title) txt += `🎖️ ${branding.title}\n`;
-      if (branding.phone) txt += `📞 संपर्क: ${branding.phone}\n`;
+      if (branding.phone) txt += `📞 ${pickL(currentLang, 'संपर्क:', 'Contact:', 'સંપર્ક:')} ${branding.phone}\n`;
       if (branding.city) txt += `📍 ${branding.city}\n`;
     } else {
       txt += `──────────────────\n`;
-      txt += `सनातन शक्ति पंचांग — प्रामाणिक वैदिक पंचांग\n`;
+      txt += `${pickL(
+        currentLang,
+        'सनातन शक्ति पंचांग — प्रामाणिक वैदिक पंचांग',
+        'Shakti Sanatan Panchang — Authentic Vedic Almanac',
+        'સનાતન શક્તિ પંચાંગ — પ્રામાણિક વૈદિક પંચાંગ'
+      )}\n`;
     }
     return txt;
   };
@@ -780,17 +918,18 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
   const handleShareWhatsApp = async () => {
     const text = getShareText();
     const fileName = `Shakti-Panchang-${templateMode}-${currentDate.toISOString().slice(0, 10)}.png`;
+    const shareTitle = `${pickL(currentLang, 'दैनिक वैदिक पञ्चाङ्गम्', 'Daily Vedic Panchang', 'દૈનિક વૈદિક પંચાંગમ્')} - ${dateFormatted}`;
 
     if (imageUri) {
       await shareImageFile({
         imageUri,
         fileName,
-        title: `दैनिक वैदिक पञ्चाङ्गम् - ${dateFormatted}`,
+        title: shareTitle,
         text,
       });
     } else {
       await shareTextContent({
-        title: `दैनिक वैदिक पञ्चाङ्गम् - ${dateFormatted}`,
+        title: shareTitle,
         text,
       });
     }
@@ -817,7 +956,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
       ) {
         try {
           await navigator.share({
-            title: 'दैनिक वैदिक पंचांग कार्ड (HD)',
+            title: pickL(currentLang, 'दैनिक वैदिक पंचांग कार्ड (HD)', 'Daily Vedic Panchang Card (HD)', 'દૈનિક વૈદિક પંચાંગ કાર્ડ (HD)'),
             files: [file],
           });
           setDownloadSuccess(true);
@@ -894,10 +1033,15 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
                 className="font-granth font-bold text-sm sm:text-base"
                 style={{ color: '#FFFFFF' }}
               >
-                HD पंचांग, चौघड़िया व स्टेटस कार्ड
+                {pickL(currentLang, 'HD पंचांग, चौघड़िया व स्टेटस कार्ड', 'HD Panchang, Choghadiya & Status Card', 'HD પંચાંગ, ચોઘડિયા અને સ્ટેટસ કાર્ડ')}
               </h3>
               <p className="text-[11px]" style={{ color: '#FDE68A' }}>
-                ज्योतिषी ब्रांडिंग के साथ पंचांग या चौघड़िया फोटो शेयर करें
+                {pickL(
+                  currentLang,
+                  'ज्योतिषी ब्रांडिंग के साथ पंचांग या चौघड़िया फोटो शेयर करें',
+                  'Share Panchang or Choghadiya card with custom astrologer branding',
+                  'જ્યોતિષી બ્રાન્ડિંગ સાથે પંચાંગ કે ચોઘડિયા ફોટો શેર કરો'
+                )}
               </p>
             </div>
           </div>
@@ -921,9 +1065,9 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
         >
           {(
             [
-              { id: 'panchang', label: '📜 पंचांग कार्ड', icon: Calendar },
-              { id: 'choghadiya', label: '⏰ शुभ चौघड़िया', icon: Clock },
-              { id: 'status_9_16', label: '📱 स्टेटस (9:16)', icon: Smartphone },
+              { id: 'panchang', label: pickL(currentLang, '📜 पंचांग कार्ड', '📜 Panchang Card', '📜 પંચાંગ કાર્ડ'), icon: Calendar },
+              { id: 'choghadiya', label: pickL(currentLang, '⏰ शुभ चौघड़िया', '⏰ Choghadiya', '⏰ શુભ ચોઘડિયા'), icon: Clock },
+              { id: 'status_9_16', label: pickL(currentLang, '📱 स्टेटस (9:16)', '📱 Status (9:16)', '📱 સ્ટેટસ (9:16)'), icon: Smartphone },
             ] as const
           ).map((tab) => {
             const active = templateMode === tab.id;
@@ -971,13 +1115,13 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
               <div className="text-center p-4 space-y-2">
                 <Sparkles className="w-6 h-6 animate-spin mx-auto" style={{ color: '#8B1E1E' }} />
                 <p className="text-xs font-bold" style={{ color: '#3A1405' }}>
-                  एचडी पोस्टर कार्ड तैयार हो रहा है...
+                  {pickL(currentLang, 'एचडी पोस्टर कार्ड तैयार हो रहा है...', 'Preparing HD Poster Card...', 'HD પોસ્ટર કાર્ડ તૈયાર થઈ રહ્યું છે...')}
                 </p>
               </div>
             ) : (
               <img
                 src={imageUri}
-                alt="दैनिक पंचांग कार्ड"
+                alt={pickL(currentLang, 'दैनिक पंचांग कार्ड', 'Daily Panchang Card', 'દૈનિક પંચાંગ કાર્ડ')}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain rounded-lg"
               />
@@ -997,13 +1141,13 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
               <div className="truncate">
                 <span className="font-bold" style={{ color: '#241005' }}>
                   {branding.enabled && branding.name
-                    ? `परामर्शदाता: ${branding.name}`
-                    : 'साधारण ब्रांडिंग (शक्ति पंचांग)'}
+                    ? `${pickL(currentLang, 'परामर्शदाता:', 'Consultant:', 'પરામર્શદાતા:')} ${branding.name}`
+                    : pickL(currentLang, 'साधारण ब्रांडिंग (शक्ति पंचांग)', 'Standard Branding (Shakti Panchang)', 'સામાન્ય બ્રાન્ડિંગ (શક્તિ પંચાંગ)')}
                 </span>
                 <span className="text-[11px] block truncate" style={{ color: '#5C2D0C' }}>
                   {branding.enabled
                     ? `📞 ${branding.phone || branding.city}`
-                    : 'कार्ड पर अपना नाम, पद व मोबाइल नंबर जोड़ें'}
+                    : pickL(currentLang, 'कार्ड पर अपना नाम, पद व मोबाइल नंबर जोड़ें', 'Add your name, title & phone to the card', 'કાર્ડ પર તમારું નામ, પદ અને મોબાઈલ નંબર ઉમેરો')}
                 </span>
               </div>
             </div>
@@ -1018,7 +1162,9 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
                 style={{ backgroundColor: '#8B1E1E', color: '#FFFFFF' }}
                 className="text-[11px] px-2.5 py-1 font-bold rounded-lg shrink-0 cursor-pointer"
               >
-                {branding.enabled ? 'बदलें' : 'कार्ड बनाएँ'}
+                {branding.enabled
+                  ? pickL(currentLang, 'बदलें', 'Edit', 'બદલો')
+                  : pickL(currentLang, 'कार्ड बनाएँ', 'Customize', 'કાર્ડ બનાવો')}
               </button>
             )}
           </div>
@@ -1032,7 +1178,7 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
               className="w-full py-2.5 px-4 font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer active:scale-95"
             >
               <Share2 className="w-4 h-4" />
-              <span>व्हाट्सएप पर शेयर करें (WhatsApp Share)</span>
+              <span>{pickL(currentLang, 'व्हाट्सएप पर शेयर करें (WhatsApp Share)', 'Share on WhatsApp', 'વોટ્સએપ પર શેર કરો (WhatsApp Share)')}</span>
             </button>
 
             <div className="grid grid-cols-2 gap-2">
@@ -1046,12 +1192,12 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
                 {downloadSuccess ? (
                   <>
                     <Check className="w-3.5 h-3.5" style={{ color: '#86EFAC' }} />
-                    <span>गैलरी में सेव!</span>
+                    <span>{pickL(currentLang, 'गैलरी में सेव!', 'Saved to Gallery!', 'ગેલેરીમાં સેવ!')}</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-3.5 h-3.5" style={{ color: '#FDE047' }} />
-                    <span>HD चित्र डाउनलोड</span>
+                    <span>{pickL(currentLang, 'HD चित्र डाउनलोड', 'Download HD Image', 'HD ચિત્ર ડાઉનલોડ')}</span>
                   </>
                 )}
               </button>
@@ -1069,12 +1215,12 @@ export const WhatsAppPanchangModal: React.FC<WhatsAppPanchangModalProps> = ({
                 {copySuccess ? (
                   <>
                     <Check className="w-3.5 h-3.5" style={{ color: '#15803D' }} />
-                    <span>कॉपी हो गया!</span>
+                    <span>{pickL(currentLang, 'कॉपी हो गया!', 'Copied!', 'કોપી થઈ ગયું!')}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
-                    <span>टेक्स्ट कॉपी करें</span>
+                    <span>{pickL(currentLang, 'टेक्स्ट कॉपी करें', 'Copy Text', 'ટેક્સ્ટ કોપી કરો')}</span>
                   </>
                 )}
               </button>

@@ -257,6 +257,351 @@ export const NUMBER_DATA: Record<number, NumberInfo> = {
   },
 };
 
+const NUMBER_DATA_EXTRA: Record<
+  number,
+  {
+    en: Omit<NumberInfo, 'number' | 'planetEn' | 'luckyDates' | 'mantra' | 'japaCount' | 'friendlyNumbers' | 'enemyNumbers' | 'neutralNumbers'>;
+    gu: Omit<NumberInfo, 'number' | 'planetEn' | 'luckyDates' | 'mantra' | 'japaCount' | 'friendlyNumbers' | 'enemyNumbers' | 'neutralNumbers'>;
+  }
+> = {
+  1: {
+    en: {
+      planet: 'Sun',
+      deity: 'Lord Surya Narayana',
+      element: 'Fire',
+      nature: 'Leadership, confidence, self-respect, creativity',
+      luckyColors: ['Golden', 'Orange', 'Yellow'],
+      luckyDays: ['Sunday', 'Monday'],
+      luckyGem: 'Ruby (Manikya)',
+      subGem: 'Garnet / Red Agate',
+      rudraksha: '1 Mukhi or 12 Mukhi Rudraksha',
+      yantra: 'Shri Surya Yantra',
+      charity: ['Copper', 'Jaggery', 'Wheat', 'Red Cloth', 'Masoor Dal'],
+      traits: ['Born leader', 'Determined', 'Self-reliant', 'Honor-loving'],
+      careers: ['Administrative Services', 'Politics', 'Industrialist', 'Medicine (Surgery)', 'Government Sector'],
+      healthAdvice: ['Take special care of heart and eyes. Practice Surya Namaskar daily at sunrise.'],
+      waterBottleColor: 'Copper vessel or Golden/Orange glass bottle',
+    },
+    gu: {
+      planet: 'સૂર્ય (Sun)',
+      deity: 'ભગવાન સૂર્ય નારાયણ',
+      element: 'અગ્નિ (Fire)',
+      nature: 'નેતૃત્વ, આત્મવિશ્વાસ, સ્વાભિમાન, સર્જનશીલતા',
+      luckyColors: ['સોનેરી (Golden)', 'નારંગી (Orange)', 'પીળો (Yellow)'],
+      luckyDays: ['રવિવાર (Sunday)', 'સોમવાર (Monday)'],
+      luckyGem: 'માણેક (Ruby)',
+      subGem: 'ગાર્નેટ / લાલ અકીક',
+      rudraksha: '૧ મુખી અથવા ૧૨ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી સૂર્ય યંત્ર',
+      charity: ['તાંબુ', 'ગોળ', 'ઘઉં', 'લાલ વસ્ત્ર', 'મસૂર દાળ'],
+      traits: ['જન્મજાત નેતા', 'દૃઢ સંકલ્પી', 'આત્મનિર્ભર', 'સન્માનપ્રિય'],
+      careers: ['વહીવટી સેવા', 'રાજકારણ', 'ઉદ્યોગપતિ', 'તબીબી (સર્જરી)', 'સરકારી વિભાગ'],
+      healthAdvice: ['હૃદય અને આંખોની વિશેષ કાળજી રાખો. દરરોજ સવારે સૂર્ય નમસ્કાર કરો.'],
+      waterBottleColor: 'તાંબાનું પાત્ર અથવા સોનેરી/નારંગી બોટલ',
+    },
+  },
+  2: {
+    en: {
+      planet: 'Moon',
+      deity: 'Lord Shiva & Goddess Parvati',
+      element: 'Water',
+      nature: 'Imagination, gentleness, sensitivity, diplomacy',
+      luckyColors: ['White', 'Cream', 'Light Green'],
+      luckyDays: ['Monday', 'Sunday'],
+      luckyGem: 'Pearl (Moti)',
+      subGem: 'Moonstone',
+      rudraksha: '2 Mukhi Rudraksha',
+      yantra: 'Shri Chandra Yantra',
+      charity: ['Silver', 'Rice', 'Milk', 'Mishri', 'White Cloth'],
+      traits: ['Empathetic', 'Artistic', 'Peace-loving', 'Excellent advisor'],
+      careers: ['Art & Music', 'Psychology', 'Dairy/Water Products', 'Hospitality', 'Writing'],
+      healthAdvice: ['Avoid mental stress and phlegm issues. Offer raw milk on Shivling on Purnima.'],
+      waterBottleColor: 'Silver vessel or White/Clear glass bottle',
+    },
+    gu: {
+      planet: 'ચંદ્ર (Moon)',
+      deity: 'ભગવાન શિવ અને માતા પાર્વતી',
+      element: 'જળ (Water)',
+      nature: 'કલ્પનાશીલતા, સૌમ્યતા, સંવેદનશીલતા, મુત્સદ્દીપણું',
+      luckyColors: ['સફેદ (White)', 'ક્રીમ (Cream)', 'આછો લીલો (Light Green)'],
+      luckyDays: ['સોમવાર (Monday)', 'રવિવાર (Sunday)'],
+      luckyGem: 'મોતી (Pearl)',
+      subGem: 'મૂનસ્ટોન (Moonstone)',
+      rudraksha: '૨ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી ચંદ્ર યંત્ર',
+      charity: ['ચાંદી', 'ચોખા', 'દૂધ', 'સાકર', 'સફેદ વસ્ત્ર'],
+      traits: ['સહાનુભૂતિપૂર્ણ', 'કલાત્મક', 'શાંતિપ્રિય', 'ઉત્તમ સલાહકાર'],
+      careers: ['કલા અને સંગીત', 'મનોવિજ્ઞાન', 'ડેરી/જળ ઉત્પાદન', 'હોસ્પિટાલિટી', 'લેખન'],
+      healthAdvice: ['માનસિક તણાવ અને કફથી બચો. પૂર્ણિમાએ શિવલિંગ પર કાચું દૂધ ચઢાવો.'],
+      waterBottleColor: 'ચાંદીનું પાત્ર અથવા સફેદ/પારદર્શક કાચની બોટલ',
+    },
+  },
+  3: {
+    en: {
+      planet: 'Jupiter',
+      deity: 'Devguru Brihaspati & Lord Vishnu',
+      element: 'Ether (Akasha)',
+      nature: 'Wisdom, discrimination, spirituality, expansion, mentor-like',
+      luckyColors: ['Yellow', 'Saffron', 'Gold'],
+      luckyDays: ['Thursday', 'Tuesday'],
+      luckyGem: 'Yellow Sapphire (Pukhraj)',
+      subGem: 'Citrine (Sunehla)',
+      rudraksha: '5 Mukhi Rudraksha',
+      yantra: 'Shri Guru Yantra',
+      charity: ['Chana Dal', 'Turmeric', 'Bananas', 'Yellow Cloth', 'Sacred Books'],
+      traits: ['Knowledge seeker', 'Truthful', 'Counselor', 'Spiritual & generous'],
+      careers: ['Education & Research', 'Teaching', 'Law (Advocacy)', 'Banking & Finance', 'Spiritual Guide'],
+      healthAdvice: ['Care for liver and digestion. Avoid excessive sweets.'],
+      waterBottleColor: 'Yellow glass bottle or Brass vessel',
+    },
+    gu: {
+      planet: 'ગુરુ (Jupiter)',
+      deity: 'દેવગુરુ બૃહસ્પતિ અને ભગવાન વિષ્ણુ',
+      element: 'આકાશ (Ether)',
+      nature: 'જ્ઞાન, વિવેક, આધ્યાત્મ, વિસ્તાર, ગુરુ તુલ્ય',
+      luckyColors: ['પીળો (Yellow)', 'કેસરી (Saffron)', 'સોનેરી'],
+      luckyDays: ['ગુરુવાર (Thursday)', 'મંગળવાર (Tuesday)'],
+      luckyGem: 'પોખરાજ (Yellow Sapphire)',
+      subGem: 'સુનહલા (Citrine)',
+      rudraksha: '૫ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી ગુરુ યંત્ર',
+      charity: ['ચણાની દાળ', 'હળદર', 'કેળા', 'પીળું વસ્ત્ર', 'ધાર્મિક ગ્રંથો'],
+      traits: ['જ્ઞાનપિપાસુ', 'સત્યવાદી', 'પરામર્શદાતા', 'ધાર્મિક અને ઉદાર'],
+      careers: ['શિક્ષણ અને સંશોધન', 'અધ્યાપન', 'કાયદો (વકીલાત)', 'બેંકિંગ અને નાણાં', 'ધાર્મિક ઉપદેશક'],
+      healthAdvice: ['લિવર અને પાચનતંત્રનું ધ્યાન રાખો. વધુ પડતા ગળપણથી દૂર રહો.'],
+      waterBottleColor: 'પીળી કાચની બોટલ અથવા પિત્તળનું પાત્ર',
+    },
+  },
+  4: {
+    en: {
+      planet: 'Rahu',
+      deity: 'Goddess Saraswati & Lord Bhairava',
+      element: 'Air / Wood',
+      nature: 'Pragmatic, revolutionary, organizer, technical genius',
+      luckyColors: ['Blue', 'Grey', 'Khaki'],
+      luckyDays: ['Saturday', 'Sunday'],
+      luckyGem: 'Hessonite (Gomed)',
+      subGem: 'Brown Tourmaline',
+      rudraksha: '8 Mukhi Rudraksha',
+      yantra: 'Shri Rahu Yantra',
+      charity: ['Black Urad', 'Coconut', 'Coins', 'Black Sesame', 'Blanket'],
+      traits: ['Technical mind', 'Organizer', 'Hardworking', 'Unconventional'],
+      careers: ['Software / IT', 'Research', 'Engineering', 'Media / Aviation', 'Stock Market'],
+      healthAdvice: ['Guard against sudden ailments and vata imbalance. Feed birds daily.'],
+      waterBottleColor: 'Blue or Grey glass bottle',
+    },
+    gu: {
+      planet: 'રાહુ (Rahu)',
+      deity: 'માતા સરસ્વતી અને ભગવાન ભૈરવ',
+      element: 'વાયુ (Air/Wood)',
+      nature: 'વાસ્તવવાદી, ક્રાંતિકારી, આયોજક, ટેકનિકલ પ્રતિભા',
+      luckyColors: ['વાદળી (Blue)', 'ગ્રે (Grey)', 'ખાખી'],
+      luckyDays: ['શનિવાર (Saturday)', 'રવિવાર (Sunday)'],
+      luckyGem: 'ગોમેદ (Hessonite)',
+      subGem: 'ટુરમેલિન (Brown Tourmaline)',
+      rudraksha: '૮ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી રાહુ યંત્ર',
+      charity: ['અડદ', 'નાળિયેર', 'સિક્કા', 'કાળા તલ', 'ધાબળો'],
+      traits: ['ટેકનિકલ મગજ', 'વ્યવસ્થાપક', 'મહેનતુ', 'સુધારાવાદી'],
+      careers: ['સોફ્ટવેર/આઈટી', 'સંશોધન', 'એન્જિનિયરિંગ', 'મીડિયા/એવિએશન', 'શેર બજાર'],
+      healthAdvice: ['અચાનક આવતા રોગો અને વાયુ દોષથી સાવધાન રહો. રોજ પક્ષીઓને દાણા નાખો.'],
+      waterBottleColor: 'વાદળી કે ગ્રે રંગની કાચની બોટલ',
+    },
+  },
+  5: {
+    en: {
+      planet: 'Mercury',
+      deity: 'Lord Ganesha & Lord Narayana',
+      element: 'Earth',
+      nature: 'Intellect, balance, speech, commerce, agility',
+      luckyColors: ['Green', 'Light Khaki', 'Pistachio'],
+      luckyDays: ['Wednesday', 'Friday'],
+      luckyGem: 'Emerald (Panna)',
+      subGem: 'Peridot / Green Onyx',
+      rudraksha: '4 Mukhi or 10 Mukhi Rudraksha',
+      yantra: 'Shri Budh Yantra',
+      charity: ['Whole Green Moong', 'Green Vegetables', 'Bronze Vessel', 'Green Cloth'],
+      traits: ['Articulate speaker', 'Business acumen', 'Adaptable', 'Witty'],
+      careers: ['Trade / Commerce', 'Marketing', 'Communication / Journalism', 'Banking', 'CA / Accountancy'],
+      healthAdvice: ['Take care of nervous system. Feed green grass and spinach to cows.'],
+      waterBottleColor: 'Green glass bottle (Solarized green water)',
+    },
+    gu: {
+      planet: 'બુધ (Mercury)',
+      deity: 'ભગવાન ગણેશ અને નારાયણ',
+      element: 'પૃથ્વી (Earth)',
+      nature: 'બુદ્ધિ, સંતુલન, વાણી, વેપાર, ચપળતા',
+      luckyColors: ['લીલો (Green)', 'આછો ખાખી', 'પિસ્તા'],
+      luckyDays: ['બુધવાર (Wednesday)', 'શુક્રવાર (Friday)'],
+      luckyGem: 'પન્ના (Emerald)',
+      subGem: 'પેરિડોટ / ગ્રીન ઓનેક્સ',
+      rudraksha: '૪ મુખી અથવા ૧૦ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી બુધ યંત્ર',
+      charity: ['આખા મગ', 'લીલા શાકભાજી', 'કાંસાનું પાત્ર', 'લીલું વસ્ત્ર'],
+      traits: ['કુશળ વક્તા', 'વેપારી સમજ', 'અનુકૂળતા', 'હાજરજવાબી'],
+      careers: ['વેપાર/વાણિજ્ય', 'માર્કેટિંગ', 'સંચાર/પત્રકારત્વ', 'બેંકિંગ', 'સીએ/એકાઉન્ટન્સી'],
+      healthAdvice: ['ચેતાતંત્રનું ધ્યાન રાખો. ગાયને લીલું ઘાસ અને પાલક ખવડાવો.'],
+      waterBottleColor: 'લીલી કાચની બોટલ',
+    },
+  },
+  6: {
+    en: {
+      planet: 'Venus',
+      deity: 'Goddess Mahalakshmi',
+      element: 'Water / Metal',
+      nature: 'Beauty, love, charm, arts, luxury',
+      luckyColors: ['Shining White', 'Pink', 'Light Blue'],
+      luckyDays: ['Friday', 'Wednesday'],
+      luckyGem: 'Diamond (Heera)',
+      subGem: 'Opal / White Zircon',
+      rudraksha: '6 Mukhi Rudraksha',
+      yantra: 'Shri Shukra Yantra',
+      charity: ['Kheer', 'Silver', 'Perfume', 'White Silk Cloth', 'Rice & Camphor'],
+      traits: ['Magnetic personality', 'Art connoisseur', 'Family harmony', 'Material prosperity'],
+      careers: ['Fashion & Beauty', 'Cinema / Acting', 'Jewelry', 'Interior Design', 'Luxury Automobiles'],
+      healthAdvice: ['Watch sugar levels and hormonal balance. Use natural floral fragrance.'],
+      waterBottleColor: 'Clear glass bottle or Silver tumbler',
+    },
+    gu: {
+      planet: 'શુક્ર (Venus)',
+      deity: 'માતા મહાલક્ષ્મી',
+      element: 'જળ/ધાતુ (Metal/Water)',
+      nature: 'સૌંદર્ય, પ્રેમ, આકર્ષણ, કલા, વૈભવ',
+      luckyColors: ['ચમકતો સફેદ (White)', 'ગુલાબી (Pink)', 'આછો વાદળી'],
+      luckyDays: ['શુક્રવાર (Friday)', 'બુધવાર (Wednesday)'],
+      luckyGem: 'હીરો (Diamond)',
+      subGem: 'ઓપલ (Opal) / સફેદ જરકન',
+      rudraksha: '૬ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી શુક્ર યંત્ર',
+      charity: ['ખીર', 'ચાંદી', 'અત્તર', 'સફેદ રેશમી વસ્ત્ર', 'ચોખા અને કપૂર'],
+      traits: ['આકર્ષક વ્યક્તિત્વ', 'કલા પારખુ', 'કૌટુંબિક સુખ', 'ભૌતિક સમૃદ્ધિ'],
+      careers: ['ફેશન અને સૌંદર્ય', 'સિનેમા/અભિનય', 'જ્વેલરી', 'ઇન્ટિરિયર ડિઝાઇન', 'લક્ઝરી વાહન'],
+      healthAdvice: ['મધુપ્રમેહ અને હોર્મોનલ સંતુલનનું ધ્યાન રાખો. સુગંધિત અત્તરનો ઉપયોગ કરો.'],
+      waterBottleColor: 'પારદર્શક કાચની બોટલ અથવા ચાંદીનો ગ્લાસ',
+    },
+  },
+  7: {
+    en: {
+      planet: 'Ketu',
+      deity: 'Lord Ganesha',
+      element: 'Metal / Water',
+      nature: 'Mystery, research, spirituality, solitude, intuition',
+      luckyColors: ['Light Yellow', 'White', 'Light Green', 'Variegated'],
+      luckyDays: ['Monday', 'Thursday'],
+      luckyGem: "Cat's Eye (Lehsunia)",
+      subGem: 'Tiger Eye',
+      rudraksha: '9 Mukhi Rudraksha',
+      yantra: 'Shri Ketu Yantra',
+      charity: ['Black & White Sesame', 'Seven Grains', 'Blanket', 'Feeding Dogs'],
+      traits: ['Deep intuition', 'Philosophical', 'Spiritual seeker', 'Independent thinker'],
+      careers: ['Research & R&D', 'Philosophy', 'Astrology / Spirituality', 'Data Analytics', 'Investigation'],
+      healthAdvice: ['Avoid mental restlessness through meditation. Feed bread to black-and-white dogs.'],
+      waterBottleColor: 'Earthenware pot or Crystal bottle',
+    },
+    gu: {
+      planet: 'કેતુ (Ketu)',
+      deity: 'ભગવાન ગણેશજી',
+      element: 'ધાતુ/જળ (Metal)',
+      nature: 'રહસ્ય, સંશોધન, આધ્યાત્મ, એકાંત, અંતઃપ્રેરણા',
+      luckyColors: ['આછો પીળો', 'સફેદ', 'આછો લીલો', 'કાબરચીતરો'],
+      luckyDays: ['સોમવાર (Monday)', 'ગુરુવાર (Thursday)'],
+      luckyGem: 'લસણિયો (Cat’s Eye)',
+      subGem: 'ટાઇગર આઈ (Tiger Eye)',
+      rudraksha: '૯ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી કેતુ યંત્ર',
+      charity: ['કાળા-સફેદ તલ', 'સપ્તધાન્ય', 'ધાબળો', 'કૂતરાને ભોજન'],
+      traits: ['ઊંડી અંતર્દૃષ્ટિ', 'તત્વચિંતક', 'આધ્યાત્મપ્રિય', 'સ્વતંત્ર વિચારક'],
+      careers: ['સંશોધન', 'તત્વજ્ઞાન', 'જ્યોતિષ/આધ્યાત્મ', 'ડેટા એનાલિસિસ', 'તપાસ'],
+      healthAdvice: ['માનસિક અશાંતિથી બચવા ધ્યાન કરો. કાળા-સફેદ કૂતરાને રોટલી ખવડાવો.'],
+      waterBottleColor: 'માટીનું પાત્ર અથવા ક્રિસ્ટલ બોટલ',
+    },
+  },
+  8: {
+    en: {
+      planet: 'Saturn',
+      deity: 'Lord Shani Dev & Lord Hanuman',
+      element: 'Earth',
+      nature: 'Industrious, just, resilient, patient, lasting success',
+      luckyColors: ['Dark Blue', 'Black', 'Purple'],
+      luckyDays: ['Saturday', 'Wednesday'],
+      luckyGem: 'Blue Sapphire (Neelam)',
+      subGem: 'Iolite (Neeli) / Amethyst',
+      rudraksha: '7 Mukhi or 14 Mukhi Rudraksha',
+      yantra: 'Shri Shani Yantra',
+      charity: ['Mustard Oil', 'Iron', 'Black Urad', 'Black Sesame', 'Shoes / Umbrella'],
+      traits: ['Hardworking', 'Just & fair', 'Serious', 'Patient organizer'],
+      careers: ['Judiciary & Law', 'Real Estate', 'Mining / Oil / Steel', 'Labor Sector', 'Manufacturing'],
+      healthAdvice: ['Guard against joint pain and vata issues. Light a mustard oil lamp on Saturdays.'],
+      waterBottleColor: 'Dark Blue glass bottle or Steel vessel',
+    },
+    gu: {
+      planet: 'શનિ (Saturn)',
+      deity: 'ભગવાન શનિદેવ અને હનુમાનજી',
+      element: 'પૃથ્વી (Earth)',
+      nature: 'કર્મઠ, ન્યાયપ્રિય, સંઘર્ષશીલ, ધીરજવાન, ચિરસ્થાયી સફળતા',
+      luckyColors: ['ઘેરો વાદળી (Dark Blue)', 'કાળો (Black)', 'જાંબલી'],
+      luckyDays: ['શનિવાર (Saturday)', 'બુધવાર (Wednesday)'],
+      luckyGem: 'નીલમ (Blue Sapphire)',
+      subGem: 'નીલી (Iolite) / એમેથિસ્ટ',
+      rudraksha: '૭ મુખી અથવા ૧૪ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી શનિ યંત્ર',
+      charity: ['સરસવનું તેલ', 'લોખંડ', 'કાળા અડદ', 'કાળા તલ', 'ચંપલ/છત્રી'],
+      traits: ['સખત પરિશ્રમી', 'ન્યાયી', 'ગંભીર', 'ધીરજવાન અને સંગઠક'],
+      careers: ['ન્યાયતંત્ર અને વકીલાત', 'રિયલ એસ્ટેટ', 'ખાણ/ઓઇલ/સ્ટીલ', 'શ્રમ વિભાગ', 'ઉદ્યોગ'],
+      healthAdvice: ['સાંધાના દુખાવા અને વાયુ વિકારથી બચો. શનિવારે સરસવના તેલનો દીવો પ્રગટાવો.'],
+      waterBottleColor: 'ઘેરા વાદળી રંગની બોટલ અથવા સ્ટીલનું પાત્ર',
+    },
+  },
+  9: {
+    en: {
+      planet: 'Mars',
+      deity: 'Lord Hanuman & Kartikeya',
+      element: 'Fire',
+      nature: 'Energy, valor, speed, commander, philanthropic',
+      luckyColors: ['Red', 'Pink', 'Saffron'],
+      luckyDays: ['Tuesday', 'Sunday'],
+      luckyGem: 'Red Coral (Moonga)',
+      subGem: 'Red Carnelian',
+      rudraksha: '3 Mukhi Rudraksha',
+      yantra: 'Shri Mangal Yantra',
+      charity: ['Copper', 'Masoor Dal', 'Red Sandalwood', 'Jaggery', 'Sindoor'],
+      traits: ['Courageous', 'Enthusiastic', 'Helpful', 'Disciplined & firm'],
+      careers: ['Defense & Police', 'Sports', 'Surgery / Medicine', 'Engineering', 'Fire & Power Industry'],
+      healthAdvice: ['Control blood pressure and anger. Recite Hanuman Chalisa on Tuesdays.'],
+      waterBottleColor: 'Copper vessel or Red/Saffron bottle',
+    },
+    gu: {
+      planet: 'મંગળ (Mars)',
+      deity: 'શ્રી હનુમાનજી અને કાર્તિકેય',
+      element: 'અગ્નિ (Fire)',
+      nature: 'ઊર્જા, પરાક્રમ, ગતિ, સેનાપતિ, પરોપકાર',
+      luckyColors: ['લાલ (Red)', 'ગુલાબી', 'કેસરી (Saffron)'],
+      luckyDays: ['મંગળવાર (Tuesday)', 'રવિવાર (Sunday)'],
+      luckyGem: 'મૂંગા (Red Coral)',
+      subGem: 'કાર્નેલિયન (Red Carnelian)',
+      rudraksha: '૩ મુખી રુદ્રાક્ષ',
+      yantra: 'શ્રી મંગળ યંત્ર',
+      charity: ['તાંબુ', 'મસૂર દાળ', 'લાલ ચંદન', 'ગોળ', 'સિંદૂર'],
+      traits: ['સાહસી', 'ઉત્સાહી', 'મદદગાર', 'શિસ્તબદ્ધ અને દૃઢ'],
+      careers: ['સેના અને પોલીસ', 'રમતગમત', 'સર્જરી/તબીબી', 'એન્જિનિયરિંગ', 'અગ્નિ અને વિદ્યુત ઉદ્યોગ'],
+      healthAdvice: ['બ્લડ પ્રેશર અને ક્રોધ પર નિયંત્રણ રાખો. મંગળવારે હનુમાન ચાલીસાનો પાઠ કરો.'],
+      waterBottleColor: 'તાંબાનું પાત્ર અથવા લાલ/કેસરી બોટલ',
+    },
+  },
+};
+
+export function getLocalizedNumberInfo(num: number, lang: string = 'hi'): NumberInfo {
+  const base = NUMBER_DATA[num] || NUMBER_DATA[1];
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (c === 'en' && NUMBER_DATA_EXTRA[base.number]) {
+    return { ...base, ...NUMBER_DATA_EXTRA[base.number].en };
+  }
+  if (c === 'gu' && NUMBER_DATA_EXTRA[base.number]) {
+    return { ...base, ...NUMBER_DATA_EXTRA[base.number].gu };
+  }
+  return base;
+}
+
 // Chaldean letter values
 export const CHALDEAN_MAP: Record<string, number> = {
   A: 1, I: 1, J: 1, Q: 1, Y: 1,
@@ -344,66 +689,86 @@ export function calculateKuaNumber(year: number, gender: 'male' | 'female' = 'ma
 export function calculatePersonalYear(day: number, month: number, targetYear: number = new Date().getFullYear()): {
   yearNum: number;
   theme: string;
+  themeEn: string;
   themeGu: string;
   advice: string;
+  adviceEn: string;
   adviceGu: string;
 } {
   const yearSum = reduceToSingleDigit(targetYear);
   const yearNum = reduceToSingleDigit(day + month + yearSum);
 
-  const forecast: Record<number, { theme: string; themeGu: string; advice: string; adviceGu: string }> = {
+  const forecast: Record<number, { theme: string; themeEn: string; themeGu: string; advice: string; adviceEn: string; adviceGu: string }> = {
     1: {
       theme: 'नई शुरुआत, नए संकल्प, स्वतंत्रता और नेतृत्व का वर्ष',
+      themeEn: 'Year of new beginnings, resolve, independence and leadership',
       themeGu: 'નવી શરૂઆત, નવા સંકલ્પો, સ્વતંત્રતા અને નેતૃત્વનું વર્ષ',
       advice: 'नया व्यवसाय, नया कार्य या नौकरी बदलने के लिए सर्वोत्तम वर्ष। सक्रिय रहें और पहल करें।',
+      adviceEn: 'Best year to launch a venture, start a fresh project, or switch careers. Stay proactive and take initiative.',
       adviceGu: 'નવો વ્યવસાય, નવું કાર્ય કે કારકિર્દી બદલવા માટે ઉત્તમ વર્ષ. સક્રિય રહો.',
     },
     2: {
       theme: 'धैर्य, सहयोग, साझेदारी व संबंधों को संवारने का वर्ष',
+      themeEn: 'Year of patience, collaboration, partnerships and nurturing bonds',
       themeGu: 'ધીરજ, સહયોગ, ભાગીદારી અને સંબંધો મજબૂત કરવાનું વર્ષ',
       advice: 'जल्दबाजी से बचें। सामूहिक कार्य और कूटनीति से काम लें। भावनात्मक संतुलन रखें।',
+      adviceEn: 'Avoid haste. Rely on teamwork and diplomacy while maintaining emotional balance.',
       adviceGu: 'ઉતાવળ ટાળો. સામૂહિક કાર્ય અને સમજદારીથી કામ લો.',
     },
     3: {
       theme: 'सृजनशीलता, सामाजिक विस्तार, ज्ञान व आर्थिक उन्नति',
+      themeEn: 'Year of creativity, social expansion, wisdom and financial growth',
       themeGu: 'સર્જનાત્મકતા, સામાજિક વિસ્તાર, જ્ઞાન અને આર્થિક પ્રગતિ',
       advice: 'अपनी रचनात्मक प्रतिभा दिखाएं। नए मित्र व संपर्क बनेंगे। आत्मविश्वास से कार्य करें।',
+      adviceEn: 'Showcase your creative talents. New connections will form; proceed with optimism and confidence.',
       adviceGu: 'નવી પ્રતિભા ઉજાગર કરો. આત્મવિશ્વાસથી આગળ વધો.',
     },
     4: {
       theme: 'कठिन परिश्रम, अनुशासन, नींव मजबूत करने और व्यवस्था का वर्ष',
+      themeEn: 'Year of hard work, discipline, structure and building solid foundations',
       themeGu: 'કઠિન પરિશ્રમ, શિસ્ત, મજબૂત પાયો અને વ્યવસ્થાનું વર્ષ',
       advice: 'शॉर्टकट से बचें। दीर्घकालिक लक्ष्यों पर ध्यान दें और स्वास्थ्य की अनदेखी न करें।',
+      adviceEn: 'Avoid shortcuts. Focus on long-term goals and maintain disciplined health habits.',
       adviceGu: 'શોર્ટકટ ટાળો. લાંબા ગાળાના લક્ષ્યો પર ધ્યાન આપો.',
     },
     5: {
       theme: 'परिवर्तन, रोमांच, यात्रा, स्वतंत्रता और नए अवसरों का वर्ष',
+      themeEn: 'Year of change, travel, adaptability, freedom and fresh opportunities',
       themeGu: 'પરિવર્તન, રોમાંચ, યાત્રા, સ્વતંત્રતા અને નવી તકોનું વર્ષ',
       advice: 'बदलावों को खुले दिल से अपनाएं। यात्रा के योग बनेंगे। एकाग्रता बनाए रखें।',
+      adviceEn: 'Embrace constructive changes and travel opportunities while staying focused.',
       adviceGu: 'બદલાવોને સ્વીકારો. નવી યાત્રા અને ઉત્સાહ રહેશે.',
     },
     6: {
       theme: 'परिवार, प्रेम, दांपत्य सुख, घर की सजावट और जिम्मेदारी का वर्ष',
+      themeEn: 'Year of family, love, domestic bliss, home comfort and responsibility',
       themeGu: 'પરિવાર, પ્રેમ, દાંપત્ય સુખ, ગૃહ નિર્માણ અને જવાબદારીનું વર્ષ',
       advice: 'पारिवारिक सुख व संबंधों पर ध्यान दें। घर या वाहन क्रय के लिए अनुकूल समय है।',
+      adviceEn: 'Prioritize family harmony and relationships. Favorable time for buying a home or vehicle.',
       adviceGu: 'પરિવાર અને સંબંધોને પ્રાથમિકતા આપો. શુભ માંગલિક કાર્યો થશે.',
     },
     7: {
       theme: 'आत्म-मंथन, शोध, आध्यात्मिक उन्नति और ज्ञानार्जन का वर्ष',
+      themeEn: 'Year of introspection, research, spiritual growth and inner wisdom',
       themeGu: 'આત્મ-મંથન, સંશોધન, આધ્યાત્મિક ઉન્નતિ અને જ્ઞાનનું વર્ષ',
       advice: 'आंतरिक शांति के लिए समय निकालें। बड़े आर्थिक जोखिम से बचें और ध्यान-साधना करें।',
+      adviceEn: 'Carve out time for meditation and study. Avoid speculative financial risks.',
       adviceGu: 'શાંતિ અને એકાગ્રતા રાખો. આર્થિક જોખમ ટાળો.',
     },
     8: {
       theme: 'कर्म फल, अधिकार, पदोन्नति, धन लाभ और भौतिक सफलता का वर्ष',
+      themeEn: 'Year of karmic rewards, authority, promotion, wealth and material success',
       themeGu: 'કર્મ ફળ, અધિકાર, પદોન્નતિ, ધન પ્રાપ્તિ અને સફળતાનું વર્ષ',
       advice: 'अथक परिश्रम का पूर्ण फल मिलेगा। न्यायप्रिय और निष्पक्ष रहें। वित्तीय प्रबंधन रखें।',
+      adviceEn: 'Diligent effort brings rich rewards. Stay fair, ethical, and organize finances wisely.',
       adviceGu: 'પરિશ્રમનું શ્રેષ્ઠ ફળ મળશે. આર્થિક યોજનાઓ સફળ થશે.',
     },
     9: {
       theme: 'पूर्णता, विसर्जन, दान-पुण्य, परोपकार व अगले चक्र की तैयारी का वर्ष',
+      themeEn: 'Year of completion, release, charity, service and preparing for a new cycle',
       themeGu: 'પૂર્ણતા, મુક્તિ, દાન-પુણ્ય, પરોપકાર અને નવા ચક્રની તૈયારીનું વર્ષ',
       advice: 'पुरानी समस्याओं को समाप्त करें। दूसरों की सहायता करें और क्षमा भाव रखें।',
+      adviceEn: 'Wrap up pending matters, practice forgiveness, and engage in selfless charity.',
       adviceGu: 'જૂની ગૂંચવણો દૂર કરો. બીજાની મદદ કરો અને ક્ષમા રાખો.',
     },
   };
@@ -702,6 +1067,97 @@ export const MISSING_NUMBER_REMEDIES: Record<number, { title: string; titleGu: s
     ],
   },
 };
+
+const MISSING_NUMBER_REMEDIES_EN: Record<number, { title: string; remedies: string[] }> = {
+  1: {
+    title: 'Missing Number 1 (Lack of Self-Confidence & Recognition)',
+    remedies: [
+      'Offer water (Arghya) to the rising Sun daily from a copper vessel.',
+      'Keep the North direction of your home clean and clutter-free; place a small water bowl or fountain there.',
+      'Donate red cloth or a copper item on Sundays.',
+    ],
+  },
+  2: {
+    title: 'Missing Number 2 (Emotional Sensitivity & Relationship Hurdles)',
+    remedies: [
+      'Seek blessings daily from your mother or maternal elders.',
+      'Keep a small square piece of silver in your wallet or wear a silver ring.',
+      'Place a pair of crystal swans or quartz in the South-West corner of your home.',
+    ],
+  },
+  3: {
+    title: 'Missing Number 3 (Knowledge, Guru Grace & Growth Gaps)',
+    remedies: [
+      'Respect teachers and elders; recite Sri Vishnu Sahasranama on Thursdays.',
+      'Plant and water a sacred Tulsi plant in the North-East (Ishaan) corner.',
+      'Use a yellow pen or wear a Tulsi / turmeric bead mala.',
+    ],
+  },
+  4: {
+    title: 'Missing Number 4 (Discipline & Savings Challenges)',
+    remedies: [
+      'Hang a wooden wind chime in the South-East corner of your home.',
+      'Maintain strict financial discipline and set aside fixed monthly savings.',
+      'Wear a Rudraksha or Green Aventurine bracelet.',
+    ],
+  },
+  5: {
+    title: 'Missing Number 5 (Balance, Communication & Decision Stability)',
+    remedies: [
+      'Keep the center of the home (Brahmasthana) open, clean, and light.',
+      'Feed green fodder to cows or green moong to birds on Wednesdays.',
+      'Drink sun-charged water stored in a green glass bottle.',
+    ],
+  },
+  6: {
+    title: 'Missing Number 6 (Material Comforts, Luxury & Charm)',
+    remedies: [
+      'Hang a 6-rod metal wind chime in the North-West corner of the home.',
+      'Wear a silver bracelet/kada and use subtle natural fragrance daily.',
+      'Perform Mahalakshmi Aarti on Fridays and offer kheer to young girls.',
+    ],
+  },
+  7: {
+    title: 'Missing Number 7 (Focus, Research & Spiritual Depth)',
+    remedies: [
+      'Keep clean white or metallic decor items in the West zone of the home.',
+      'Offer Durva grass to Lord Ganesha regularly and recite Sankatnashan Stotra.',
+      'Feed bread to a black-and-white dog and practice quiet meditation.',
+    ],
+  },
+  8: {
+    title: 'Missing Number 8 (Stability, Property & Persistence)',
+    remedies: [
+      'Place a clear crystal or blue pyramid in the North-East corner.',
+      'Light a mustard oil lamp under a Peepal tree on Saturday evenings.',
+      'Help laborers and donate black sesame seeds on Saturdays.',
+    ],
+  },
+  9: {
+    title: 'Missing Number 9 (Vitality, Courage & Social Reputation)',
+    remedies: [
+      'Place a warm red light or copper Surya Yantra on the South wall.',
+      'Recite Hanuman Chalisa daily and listen to Sundarkand.',
+      'Donate jaggery or masoor dal on Tuesdays and tie a sacred red thread (kalawa).',
+    ],
+  },
+};
+
+export function getLocalizedMissingRemedy(
+  num: number,
+  lang: string = 'hi'
+): { title: string; remedies: string[] } | null {
+  const base = MISSING_NUMBER_REMEDIES[num];
+  if (!base) return null;
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (c === 'en' && MISSING_NUMBER_REMEDIES_EN[num]) {
+    return MISSING_NUMBER_REMEDIES_EN[num];
+  }
+  if (c === 'gu') {
+    return { title: base.titleGu, remedies: base.remediesGu };
+  }
+  return { title: base.title, remedies: base.remedies };
+}
 
 /** Evaluate Mobile / Vehicle Number Compatibility */
 export function analyzeNumberCompatibility(
@@ -1033,7 +1489,8 @@ export function generateNumerologyWhatsAppText(params: {
   const kua = calculateKuaNumber(year, gender);
   const personalYear = calculatePersonalYear(day, month, new Date().getFullYear());
   const loshu = calculateLoshuGrid(day, month, year);
-  const mulankInfo = NUMBER_DATA[mulank] || NUMBER_DATA[1];
+  const mulankInfo = getLocalizedNumberInfo(mulank, language);
+  const bhagyankInfo = getLocalizedNumberInfo(bhagyank, language);
   const dateStr = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
 
   if (language === 'gu') {
@@ -1043,7 +1500,7 @@ export function generateNumerologyWhatsAppText(params: {
 
 🔢 *મુખ્ય અંક ગણતરી:*
 • *મૂળાંક (Root No):* ${mulank} (${mulankInfo.planet})
-• *ભાગ્યાંક (Destiny No):* ${bhagyank} (${NUMBER_DATA[bhagyank]?.planet})
+• *ભાગ્યાંક (Destiny No):* ${bhagyank} (${bhagyankInfo.planet})
 • *નામાંક (Name No):* ${namank.single} (કુલ યોગ: ${namank.compound})
 • *કુઆ અંક (Kua No):* ${kua}
 • *વ્યક્તિગત વર્ષ ${new Date().getFullYear()}:* અંક ${personalYear.yearNum} (${personalYear.themeGu})
@@ -1070,17 +1527,17 @@ ${loshu.goldenRajYoga ? '✅ સ્વર્ણ રાજયોગ (4-5-6) સ�
 📅 *Date of Birth:* ${dateStr}
 
 🔢 *Core Numerology Numbers:*
-• *Root / Psychic Number (Mulank):* ${mulank} (${mulankInfo.planetEn})
-• *Destiny / Life Path Number (Bhagyank):* ${bhagyank} (${NUMBER_DATA[bhagyank]?.planetEn})
+• *Root / Psychic Number (Mulank):* ${mulank} (${mulankInfo.planet})
+• *Destiny / Life Path Number (Bhagyank):* ${bhagyank} (${bhagyankInfo.planet})
 • *Name Vibration Number (Namank):* ${namank.single} (Compound: ${namank.compound})
 • *Kua Number:* ${kua}
-• *Personal Year ${new Date().getFullYear()}:* Number ${personalYear.yearNum} (${personalYear.theme})
+• *Personal Year ${new Date().getFullYear()}:* Number ${personalYear.yearNum} (${personalYear.themeEn})
 
 🌟 *Auspicious Parameters:*
 • *Lucky Colors:* ${mulankInfo.luckyColors.join(', ')}
 • *Lucky Days:* ${mulankInfo.luckyDays.join(', ')}
 • *Lucky Dates:* ${mulankInfo.luckyDates.join(', ')}
-• *Auspicious Gemstone:* ${mulankInfo.luckyGem}
+• *Auspicious Gemstone:* ${mulankInfo.luckyGem} (${mulankInfo.subGem})
 • *Rudraksha:* ${mulankInfo.rudraksha}
 • *Beej Mantra:* ${mulankInfo.mantra}
 
@@ -1098,7 +1555,7 @@ ${loshu.goldenRajYoga ? '✅ Golden Raj Yoga (4-5-6) Present!\n' : ''}${loshu.si
 
 🔢 *मुख्य अंक शास्त्र चक्र:*
 • *मूलांक (Driver / Root Number):* ${mulank} (${mulankInfo.planet})
-• *भाग्यांक (Conductor / Destiny Number):* ${bhagyank} (${NUMBER_DATA[bhagyank]?.planet})
+• *भाग्यांक (Conductor / Destiny Number):* ${bhagyank} (${bhagyankInfo.planet})
 • *नामांक (Name Number):* ${namank.single} (संयुक्त योग: ${namank.compound})
 • *कुआ अंक (Kua Number):* ${kua}
 • *व्यक्तिगत वर्ष ${new Date().getFullYear()}:* अंक ${personalYear.yearNum} (${personalYear.theme})

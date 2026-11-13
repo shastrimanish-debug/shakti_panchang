@@ -76,8 +76,10 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
 }) => {
   const { t, currentOption, language } = useLanguage();
   const currentLang = currentOption;
+  const langCode = (language || 'hi').slice(0, 2).toLowerCase();
   const { status } = useLicense();
   const isEntitled = status.entitled;
+  const [showPrivacyInfo, setShowPrivacyInfo] = React.useState(false);
 
   if (!isOpen) return null;
 
@@ -151,16 +153,16 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
-                  <span>शिव तंत्र विद्या (कश्मीर शैव दर्शन)</span>
-                  <span className="text-[9px] bg-red-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-400/40">नया</span>
+                  <span>{langCode === 'en' ? 'Shiv Tantra Vidya (Kashmir Shaivism)' : langCode === 'gu' ? 'શિવ તંત્ર વિદ્યા (કાશ્મીર શૈવ દર્શન)' : 'शिव तंत्र विद्या (कश्मीर शैव दर्शन)'}</span>
+                  <span className="text-[9px] bg-red-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-400/40">{langCode === 'en' ? 'NEW' : langCode === 'gu' ? 'નવું' : 'नया'}</span>
                 </div>
                 <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
-                  विज्ञान भैरव ११२ ध्यान सूत्र • त्रिक दर्शन, ४ उपाय व कुण्डलिनी नाड़ी विज्ञान
+                  {langCode === 'en' ? 'Vigyan Bhairav 112 Meditation Sutras • Trika Philosophy & Kundalini' : langCode === 'gu' ? 'વિજ્ઞાન ભૈરવ ૧૧૨ ધ્યાન સૂત્ર • ત્રિક દર્શન અને કુંડલિની વિજ્ઞાન' : 'विज्ञान भैरव ११२ ध्यान सूत्र • त्रिक दर्शन, ४ उपाय व कुण्डलिनी नाड़ी विज्ञान'}
                 </div>
               </div>
             </div>
             <span className="text-[11px] bg-[#1A0505] text-[#FFD88A] border border-[#D4AF37]/50 px-2.5 py-1 rounded-lg font-bold shrink-0">
-              खोलें →
+              {langCode === 'en' ? 'Open →' : langCode === 'gu' ? 'ખોલો →' : 'खोलें →'}
             </span>
           </button>
         </div>
@@ -178,16 +180,16 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
-                  <span>देवता अर्पण फल व पूजन सामग्री</span>
-                  <span className="text-[9px] bg-red-950 text-amber-300 px-1.5 py-0.2 rounded font-bold">नया</span>
+                  <span>{langCode === 'en' ? 'Deity Offerings & Worship Items' : langCode === 'gu' ? 'દેવતા અર્પણ ફળ અને પૂજન સામગ્રી' : 'देवता अर्पण फल व पूजन सामग्री'}</span>
+                  <span className="text-[9px] bg-red-950 text-amber-300 px-1.5 py-0.2 rounded font-bold">{langCode === 'en' ? 'NEW' : langCode === 'gu' ? 'નવું' : 'नया'}</span>
                 </div>
                 <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
-                  १४+ देवता, ५०+ अर्पण सामग्री, प्रत्यक्ष फल, निषेध व मंत्र
+                  {langCode === 'en' ? '14+ Deities, 50+ Offerings, Benefits, Prohibitions & Mantras' : langCode === 'gu' ? '૧૪+ દેવતા, ૫૦+ અર્પણ સામગ્રી, પ્રત્યક્ષ ફળ, નિષેધ અને મંત્ર' : '१४+ देवता, ५०+ अर्पण सामग्री, प्रत्यक्ष फल, निषेध व मंत्र'}
                 </div>
               </div>
             </div>
             <span className="text-[11px] bg-[#2C0A0A] text-[#FFD88A] px-2.5 py-1 rounded-lg font-bold shrink-0">
-              खोलें →
+              {langCode === 'en' ? 'Open →' : langCode === 'gu' ? 'ખોલો →' : 'खोलें →'}
             </span>
           </button>
         </div>
@@ -205,15 +207,15 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs sm:text-sm font-black text-[#5C3A21] dark:text-[#FFD88A] leading-snug">
-                  प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय
+                  {t('nav.granthPuran', 'प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय')}
                 </div>
                 <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
-                  श्रीमद्भगवद्गीता, ईश-कठ-मुण्डक उपनिषद्, अष्टादश पुराण व वेद-सूक्त
+                  {t('nav.granthPuranDesc', 'श्रीमद्भगवद्गीता, ईश-कठ-मुण्डक उपनिषद्, अष्टादश पुराण व वेद-सूक्त')}
                 </div>
               </div>
             </div>
             <span className="text-[11px] bg-[#5C3A21] text-[#FFD88A] px-2.5 py-1 rounded-lg font-bold shrink-0">
-              पढ़ें →
+              {langCode === 'en' ? 'Read →' : langCode === 'gu' ? 'વાંચો →' : 'पढ़ें →'}
             </span>
           </button>
         </div>
@@ -231,16 +233,16 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
-                  <span>१०८ रुद्राक्ष डिजिटल जप माला</span>
-                  <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/40">विशेष</span>
+                  <span>{langCode === 'en' ? '108 Rudraksha Digital Japa Mala' : langCode === 'gu' ? '૧૦૮ રુદ્રાક્ષ ડિજિટલ જપ માળા' : '१०८ रुद्राक्ष डिजिटल जप माला'}</span>
+                  <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/40">{langCode === 'en' ? 'SPECIAL' : langCode === 'gu' ? 'વિશેષ' : 'विशेष'}</span>
                 </div>
                 <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
-                  सुगंधित मनके, मेरु कंपन, गायत्री-महामृत्युंजय ८ मंत्र व पावन घंटी
+                  {langCode === 'en' ? 'Rudraksha beads, Meru haptic, Gayatri & Mahamrityunjaya Mantras' : langCode === 'gu' ? 'સુગંધિત મણકા, મેરુ કંપન, ગાયત્રી-મહામૃત્યુંજય મંત્ર અને પાવન ઘંટડી' : 'सुगंधित मनके, मेरु कंपन, गायत्री-महामृत्युंजय ८ मंत्र व पावन घंटी'}
                 </div>
               </div>
             </div>
             <span className="text-[11px] bg-[#1C0D03] text-[#FFD88A] border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold shrink-0">
-              जपें →
+              {langCode === 'en' ? 'Chant →' : langCode === 'gu' ? 'જપો →' : 'जपें →'}
             </span>
           </button>
         </div>
@@ -258,16 +260,16 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs sm:text-sm font-black text-blue-200 leading-snug flex items-center gap-1.5">
-                  <span>शनि साढ़े साती एवं ढैया विचार</span>
-                  <span className="text-[9px] bg-blue-950 text-blue-300 px-1.5 py-0.2 rounded font-bold border border-blue-400/40">सटीक</span>
+                  <span>{langCode === 'en' ? 'Shani Sade Sati & Dhaiya Analysis' : langCode === 'gu' ? 'શનિ સાડાસાતી અને ઢૈયા વિચાર' : 'शनि साढ़े साती एवं ढैया विचार'}</span>
+                  <span className="text-[9px] bg-blue-950 text-blue-300 px-1.5 py-0.2 rounded font-bold border border-blue-400/40">{langCode === 'en' ? 'EXACT' : langCode === 'gu' ? 'સચોટ' : 'सटीक'}</span>
                 </div>
                 <div className="text-[10px] text-[#E0E8F5]/90 leading-snug mt-0.5">
-                  तीनों चरण टाइमलाइन (चढ़ती, शिखर, उतरती) व अचूक वैदिक शांति उपाय
+                  {langCode === 'en' ? '3-Phase Timeline (Rising, Peak, Setting) & Authentic Shani Remedies' : langCode === 'gu' ? 'ત્રણ ચરણ ટાઇમલાઇન અને અચૂક વૈદિક શાંતિ ઉપાય' : 'तीनों चरण टाइमलाइन (चढ़ती, शिखर, उतरती) व अचूक वैदिक शांति उपाय'}
                 </div>
               </div>
             </div>
             <span className="text-[11px] bg-[#121824] text-blue-200 border border-blue-400/40 px-2.5 py-1 rounded-lg font-bold shrink-0">
-              देखें →
+              {langCode === 'en' ? 'View →' : langCode === 'gu' ? 'જુઓ →' : 'देखें →'}
             </span>
           </button>
         </div>
@@ -285,16 +287,16 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
-                  <span>दैनिक ग्रह गोचर चक्र व फल</span>
-                  <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/40">लाइव</span>
+                  <span>{langCode === 'en' ? 'Daily Planetary Transits (Gochar)' : langCode === 'gu' ? 'દૈનિક ગ્રહ ગોચર ચક્ર અને ફળ' : 'दैनिक ग्रह गोचर चक्र व फल'}</span>
+                  <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/40">{langCode === 'en' ? 'LIVE' : langCode === 'gu' ? 'લાઇવ' : 'लाइव'}</span>
                 </div>
                 <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
-                  ९ ग्रहों की वास्तविक अंश स्थिति, वक्री/अस्त व चंद्र राशि फलक
+                  {langCode === 'en' ? 'Live 9-planet degrees, retrograde/combust & Moon sign transit results' : langCode === 'gu' ? '૯ ગ્રહોની વાસ્તવિક અંશ સ્થિતિ, વક્રી/અસ્ત અને ચંદ્ર રાશિ ફળ' : '९ ग्रहों की वास्तविक अंश स्थिति, वक्री/अस्त व चंद्र राशि फलक'}
                 </div>
               </div>
             </div>
             <span className="text-[11px] bg-[#201507] text-[#FFD88A] border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold shrink-0">
-              देखें →
+              {langCode === 'en' ? 'View →' : langCode === 'gu' ? 'જુઓ →' : 'देखें →'}
             </span>
           </button>
         </div>
@@ -540,7 +542,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] leading-snug flex items-center gap-1.5">
-                  <span>नवीनतम रिलीज़ नोट्स (Release Notes)</span>
+                  <span>{langCode === 'en' ? 'Latest Release Notes' : langCode === 'gu' ? 'નવીનતમ રિલીઝ નોટ્સ' : 'नवीनतम रिलीज़ नोट्स (Release Notes)'}</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 font-black">
                     v{CURRENT_RELEASE.version} (Code {CURRENT_RELEASE.versionCode})
                   </span>
@@ -551,7 +553,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               </div>
             </div>
             <span className="text-xs text-[#B56A00] dark:text-amber-300 font-bold shrink-0">
-              देखें →
+              {langCode === 'en' ? 'View →' : langCode === 'gu' ? 'જુઓ →' : 'देखें →'}
             </span>
           </button>
         </div>
@@ -563,16 +565,22 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             {t('common.appName', 'शक्ति पंचांग')} • {t('common.poweredBy', 'Powered by Shiv Shakti Astro')}
           </span>
         </div>
-        <a
-          href="#privacy"
-          onClick={(e) => {
-            e.preventDefault();
-            alert('सनातन शक्ति पंचांग आपकी गोपनीयता का पूर्ण सम्मान करता है। आपकी जन्म कुंडली व व्यक्तिगत विवरण केवल आपके उपकरण (लोकल स्टोरेज) में सुरक्षित रहते हैं।');
-          }}
-          className="block text-center text-[11px] font-bold text-[#8C6239] underline pt-2"
+        <button
+          type="button"
+          onClick={() => setShowPrivacyInfo((prev) => !prev)}
+          className="w-full text-center text-[11px] font-bold text-[#8C6239] underline pt-2 cursor-pointer"
         >
           {t('more.privacyPolicy', 'गोपनीयता नीति')}
-        </a>
+        </button>
+        {showPrivacyInfo && (
+          <div className="mt-2 p-2.5 rounded-xl bg-[#FAF2E4] dark:bg-[#341F14] border border-[#8C6239]/30 text-[11px] text-[#5C3A21] dark:text-[#FAF2E4] leading-relaxed text-center">
+            {langCode === 'en'
+              ? 'Sanatan Shakti Panchang fully respects your privacy. Your birth charts and personal details remain securely stored locally on your device.'
+              : langCode === 'gu'
+              ? 'સનાતન શક્તિ પંચાંગ તમારી ગોપનીયતાનું સંપૂર્ણ સન્માન કરે છે. તમારી જન્મકુંડળી અને વ્યક્તિગત વિગતો માત્ર તમારા ઉપકરણમાં જ સુરક્ષિત રહે છે.'
+              : 'सनातन शक्ति पंचांग आपकी गोपनीयता का पूर्ण सम्मान करता है। आपकी जन्म कुंडली व व्यक्तिगत विवरण केवल आपके उपकरण (लोकल स्टोरेज) में सुरक्षित रहते हैं।'}
+          </div>
+        )}
       </ZeroScrollPager>
       </div>
     </div>

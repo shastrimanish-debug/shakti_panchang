@@ -5,6 +5,7 @@ import { PDF_MM_H, PDF_MM_W, PDF_PX_H, PDF_PX_W } from './pdfPage';
 import { deliverPdf } from '../lib/device';
 import { calculateVargaSign, RASHIS, NAKSHATRAS } from './astronomy';
 import { analyzeKundali, SIGN_LORDS } from './predictions';
+import { trPlanet, trRashi, trVedic, trWeekday } from '../i18n/vedicTranslate';
 
 export interface BhojpatraPdfOptions {
   title?: string;
@@ -15,26 +16,55 @@ export interface BhojpatraPdfOptions {
   kundali?: KundaliData | null;
   locationName?: string;
   date?: Date;
+  lang?: string;
 }
 
 /**
  * Planet short abbreviations for North Indian Kundali chart
  */
-const PLANET_ABBR_MAP: Record<string, string> = {
-  सूर्य: 'सू',
-  चंद्र: 'चं',
-  मंगल: 'मं',
-  बुध: 'बु',
-  गुरु: 'गु',
-  बृहस्पति: 'गु',
-  शुक्र: 'शु',
-  शनि: 'श',
-  राहु: 'रा',
-  केतु: 'के',
+const PLANET_ABBR_MAPS: Record<string, Record<string, string>> = {
+  hi: {
+    सूर्य: 'सू',
+    चंद्र: 'चं',
+    मंगल: 'मं',
+    बुध: 'बु',
+    गुरु: 'गु',
+    बृहस्पति: 'गु',
+    शुक्र: 'शु',
+    शनि: 'श',
+    राहु: 'रा',
+    केतु: 'के',
+  },
+  en: {
+    सूर्य: 'Su',
+    चंद्र: 'Mo',
+    मंगल: 'Ma',
+    बुध: 'Me',
+    गुरु: 'Ju',
+    बृहस्पति: 'Ju',
+    शुक्र: 'Ve',
+    शनि: 'Sa',
+    राहु: 'Ra',
+    केतु: 'Ke',
+  },
+  gu: {
+    सूर्य: 'સૂ',
+    चंद्र: 'ચં',
+    मंगल: 'મં',
+    बुध: 'બુ',
+    गुरु: 'ગુ',
+    बृहस्पति: 'ગુ',
+    शुक्र: 'શુ',
+    शनि: 'શ',
+    राहु: 'રા',
+    केतु: 'કે',
+  },
 };
 
-function getPlanetAbbr(planetName: string): string {
-  for (const [k, v] of Object.entries(PLANET_ABBR_MAP)) {
+function getPlanetAbbr(planetName: string, lang: string = 'hi'): string {
+  const cLang = (lang || 'hi').slice(0, 2).toLowerCase();
+  const map = PLANET_ABBR_MAPS[cLang] || PLANET_ABBR_MAPS.hi;
+  for (const [k, v] of Object.entries(map)) {
     if (planetName.includes(k)) return v;
   }
   return planetName.slice(0, 2);
@@ -88,8 +118,10 @@ function drawNorthIndianDiamondChart(
   vargaDivision: number,
   kundali: KundaliData,
   title: string,
-  subTitle?: string
+  subTitle?: string,
+  lang: string = 'hi'
 ) {
+  const cLang = (lang || 'hi').slice(0, 2).toLowerCase();
   ctx.save();
   const half = size / 2;
   const x0 = centerX - half;
@@ -161,11 +193,13 @@ function drawNorthIndianDiamondChart(
     const vdeg = vargaDivision === 1 ? p.degreeInRashi : (p.degreeInRashi % slice) * vargaDivision;
 
     hPlanets[house]?.push({
-      name: getPlanetAbbr(p.planet),
+      name: getPlanetAbbr(p.planet, cLang),
       retro: p.isRetrograde,
       deg: `${Math.floor(vdeg)}°`,
     });
   });
+
+  const retroTag = cLang === 'en' ? 'R' : cLang === 'gu' ? 'વ' : 'व';
 
   // 5. Draw House Rashi Numbers and Resident Planets
   anchors.forEach(({ h, cx: acx, cy: acy, nx, ny }) => {
@@ -188,7 +222,7 @@ function drawNorthIndianDiamondChart(
 
     plist.forEach((p, idx) => {
       ctx.fillStyle = p.retro ? '#8B1E1E' : '#2A1502';
-      const label = n >= 4 ? `${p.name}${p.retro ? 'व' : ''}` : `${p.name}${p.retro ? 'व' : ''} ${p.deg}`;
+      const label = n >= 4 ? `${p.name}${p.retro ? retroTag : ''}` : `${p.name}${p.retro ? retroTag : ''} ${p.deg}`;
       ctx.fillText(label, px, py + (idx - (n - 1) / 2) * lh);
     });
   });
@@ -218,8 +252,10 @@ function drawGrahaSpashtaTable(
   y: number,
   width: number,
   height: number,
-  kundali: KundaliData
+  kundali: KundaliData,
+  lang: string = 'hi'
 ) {
+  const currentLang = (lang || 'hi').slice(0, 2).toLowerCase();
   ctx.save();
 
   // Outer container
@@ -230,11 +266,17 @@ function drawGrahaSpashtaTable(
   ctx.strokeRect(x, y, width, height);
 
   // Table Title
+  const tableTitle = currentLang === 'en'
+    ? '॥ Planetary Positions & Nakshatra Table ॥'
+    : currentLang === 'gu'
+    ? '॥ ગ્રહ સ્પષ્ટ સ્થિતિ અને નક્ષત્ર સારણી ॥'
+    : '॥ ग्रह स्पष्ट स्थिति व नक्षत्र सारणी ॥';
+
   ctx.fillStyle = '#8B1E1E';
   ctx.font = 'bold 15px "Tiro Devanagari Hindi", serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText('॥ ग्रह स्पष्ट स्थिति व नक्षत्र सारणी ॥', x + width / 2, y - 10);
+  ctx.fillText(tableTitle, x + width / 2, y - 10);
 
   // Header Bar
   const headerH = 25;
@@ -255,11 +297,17 @@ function drawGrahaSpashtaTable(
   };
 
   const midH = y + headerH / 2;
-  ctx.fillText('ग्रह', colX.graha, midH);
-  ctx.fillText('राशि', colX.rashi, midH);
-  ctx.fillText('अंश/कला', colX.deg, midH);
-  ctx.fillText('नक्षत्र (चरण)', colX.nakshatra, midH);
-  ctx.fillText('स्थिति/गति', colX.status, midH);
+  const thGraha = currentLang === 'en' ? 'Planet' : currentLang === 'gu' ? 'ગ્રહ' : 'ग्रह';
+  const thRashi = currentLang === 'en' ? 'Sign' : currentLang === 'gu' ? 'રાશિ' : 'राशि';
+  const thDeg = currentLang === 'en' ? 'Deg/Min' : currentLang === 'gu' ? 'અંશ/કળા' : 'अंश/कला';
+  const thNak = currentLang === 'en' ? 'Nakshatra (Pada)' : currentLang === 'gu' ? 'નક્ષત્ર (ચરણ)' : 'नक्षत्र (चरण)';
+  const thStatus = currentLang === 'en' ? 'Status/Motion' : currentLang === 'gu' ? 'સ્થિતિ/ગતિ' : 'स्थिति/गति';
+
+  ctx.fillText(thGraha, colX.graha, midH);
+  ctx.fillText(thRashi, colX.rashi, midH);
+  ctx.fillText(thDeg, colX.deg, midH);
+  ctx.fillText(thNak, colX.nakshatra, midH);
+  ctx.fillText(thStatus, colX.status, midH);
 
   // Prepare 10 rows: Lagna + 9 Grahas
   const lagnaDeg = kundali.lagnaDegree;
@@ -294,13 +342,16 @@ function drawGrahaSpashtaTable(
     isLagna?: boolean;
   }
 
+  const lagnaStatus = currentLang === 'en' ? 'Ascendant' : currentLang === 'gu' ? 'ઉદય (Udaya)' : 'उदय (Udaya)';
+  const lagnaName = currentLang === 'en' ? 'Ascendant' : currentLang === 'gu' ? 'લગ્ન' : 'लग्न (Asc)';
+
   const rows: TableRow[] = [
     {
-      name: 'लग्न (Asc)',
-      rashi: kundali.lagnaRashi,
+      name: lagnaName,
+      rashi: trRashi(kundali.lagnaRashi, currentLang),
       deg: fmtDMS(lagnaDegInRashi),
-      nakshatra: `${NAKSHATRAS[lagnaNakIdx % 27] || '—'} (${lagnaPada})`,
-      status: 'उदय (Udaya)',
+      nakshatra: `${trVedic(NAKSHATRAS[lagnaNakIdx % 27] || '—', currentLang)} (${lagnaPada})`,
+      status: lagnaStatus,
       statusColor: '#8B1E1E',
       isLagna: true,
     },
@@ -310,25 +361,27 @@ function drawGrahaSpashtaTable(
     const p = pMap[g];
     if (!p) return;
 
-    let status = p.isRetrograde ? 'वक्री (R)' : 'मार्गी (D)';
+    let status = p.isRetrograde
+      ? (currentLang === 'en' ? 'Retrograde (R)' : currentLang === 'gu' ? 'વક્રી (R)' : 'वक्री (R)')
+      : (currentLang === 'en' ? 'Direct (D)' : currentLang === 'gu' ? 'માર્ગી (D)' : 'मार्गी (D)');
     let statusColor = p.isRetrograde ? '#8B1E1E' : '#2A1402';
 
     if (EXALTATION_SIGNS[g] === p.rashi) {
-      status = 'उच्च (Exalt)';
+      status = currentLang === 'en' ? 'Exalted' : currentLang === 'gu' ? 'ઉચ્ચ' : 'उच्च (Exalt)';
       statusColor = '#1A5319';
     } else if (DEBILITATION_SIGNS[g] === p.rashi) {
-      status = 'नीच (Debil)';
+      status = currentLang === 'en' ? 'Debilitated' : currentLang === 'gu' ? 'નીચ' : 'नीच (Debil)';
       statusColor = '#9A1B1B';
     } else if (OWN_SIGNS_MAP[g]?.includes(p.rashi)) {
-      status = 'स्वराशि (Own)';
+      status = currentLang === 'en' ? 'Own Sign' : currentLang === 'gu' ? 'સ્વરાશિ' : 'स्वराशि (Own)';
       statusColor = '#1F4529';
     }
 
     rows.push({
-      name: p.planet,
-      rashi: p.rashi,
+      name: trPlanet(p.planet, currentLang),
+      rashi: trRashi(p.rashi, currentLang),
       deg: fmtDMS(p.degreeInRashi),
-      nakshatra: `${p.nakshatra} (${p.pada})`,
+      nakshatra: `${trVedic(p.nakshatra, currentLang)} (${p.pada})`,
       status,
       statusColor,
     });
@@ -468,11 +521,13 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
   drawCornerKnot(subPad + 14, height - subPad - 14);
   drawCornerKnot(width - subPad - 14, height - subPad - 14);
 
+  const currentLang = (options.lang || 'hi').slice(0, 2).toLowerCase();
+
   // =========================================================================
   // IF KUNDALI DATA IS PROVIDED -> RENDER COMPLETE SACRED KUNDALI PATRIKA
   // =========================================================================
   if (kundali) {
-    const analysis = analyzeKundali(kundali);
+    const analysis = analyzeKundali(kundali, currentLang);
     const lagnaLord = SIGN_LORDS[kundali.lagnaRashi] || '—';
     const moonLord = SIGN_LORDS[kundali.moonRashi] || '—';
 
@@ -480,38 +535,100 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     const bhagyaSign = RASHIS[((kundali.lagnaRashiNumber - 1 + 8) % 12)] || '—';
     const bhagyaLord = SIGN_LORDS[bhagyaSign] || '—';
 
-    // Auspicious gemstone based on Lagna
-    const GEMSTONE_MAP: Record<string, string> = {
-      मेष: 'मूँगा (Red Coral)',
-      वृषभ: 'हीरा अथवा ओपल (Diamond/Opal)',
-      मिथुन: 'पन्ना (Emerald)',
-      कर्क: 'सच्चा मोती (Natural Pearl)',
-      सिंह: 'माणिक्य (Ruby)',
-      कन्या: 'पन्ना (Emerald)',
-      तुला: 'हीरा / श्वेत पुखराज (Diamond)',
-      वृश्चिक: 'मूँगा (Red Coral)',
-      धनु: 'पीला पुखराज (Yellow Sapphire)',
-      मकर: 'नीलम (Blue Sapphire)',
-      कुंभ: 'नीलम अथवा जमुनिया (Blue Sapphire)',
-      मीन: 'पीला पुखराज (Yellow Sapphire)',
-    };
-    const luckyGem = GEMSTONE_MAP[kundali.lagnaRashi] || 'पुखराज / मूँगा';
+    // Auspicious gemstone based on Lagna & Language
+    const luckyGem = (() => {
+      if (currentLang === 'en') {
+        const enGem: Record<string, string> = {
+          मेष: 'Red Coral (Moonga)',
+          वृषभ: 'Diamond or Opal',
+          मिथुन: 'Emerald (Panna)',
+          कर्क: 'Natural Pearl (Moti)',
+          सिंह: 'Ruby (Manikya)',
+          कन्या: 'Emerald (Panna)',
+          तुला: 'Diamond / White Sapphire',
+          वृश्चिक: 'Red Coral (Moonga)',
+          धनु: 'Yellow Sapphire (Pukhraj)',
+          मकर: 'Blue Sapphire (Neelam)',
+          कुंभ: 'Blue Sapphire or Amethyst',
+          मीन: 'Yellow Sapphire (Pukhraj)',
+        };
+        return enGem[kundali.lagnaRashi] || 'Yellow Sapphire / Coral';
+      }
+      if (currentLang === 'gu') {
+        const guGem: Record<string, string> = {
+          मेष: 'લાલ પરવાળું (મૂંગા)',
+          वृषभ: 'હીરો અથવા ઓપલ',
+          मिथुन: 'પન્ના (Emerald)',
+          कर्क: 'સાચું મોતી',
+          सिंह: 'માણેક (રૂબી)',
+          कन्या: 'પન્ના (Emerald)',
+          तुला: 'હીરો / શ્વેત પોખરાજ',
+          वृश्चिक: 'લાલ પરવાળું (મૂંગા)',
+          धनु: 'પીળો પોખરાજ',
+          मकर: 'નીલમ (Blue Sapphire)',
+          कुंभ: 'નીલમ અથવા જાંબુડીયો (Amethyst)',
+          मीन: 'પીળો પોખરાજ',
+        };
+        return guGem[kundali.lagnaRashi] || 'પોખરાજ / પરવાળું';
+      }
+      const GEMSTONE_MAP: Record<string, string> = {
+        मेष: 'मूँगा (Red Coral)',
+        वृषभ: 'हीरा अथवा ओपल (Diamond/Opal)',
+        मिथुन: 'पन्ना (Emerald)',
+        कर्क: 'सच्चा मोती (Natural Pearl)',
+        सिंह: 'माणिक्य (Ruby)',
+        कन्या: 'पन्ना (Emerald)',
+        तुला: 'हीरा / श्वेत पुखराज (Diamond)',
+        वृश्चिक: 'मूँगा (Red Coral)',
+        धनु: 'पीला पुखराज (Yellow Sapphire)',
+        मकर: 'नीलम (Blue Sapphire)',
+        कुंभ: 'नीलम अथवा जमुनिया (Blue Sapphire)',
+        मीन: 'पीला पुखराज (Yellow Sapphire)',
+      };
+      return GEMSTONE_MAP[kundali.lagnaRashi] || 'पुखराज / मूँगा';
+    })();
 
     // Ishta Devta based on 5th house sign
     const fifthSign = RASHIS[((kundali.lagnaRashiNumber - 1 + 4) % 12)] || 'मेष';
     const fifthLord = SIGN_LORDS[fifthSign] || 'सूर्य';
-    const DEITY_MAP: Record<string, string> = {
-      सूर्य: 'भगवान सूर्य नारायण / गायत्री माता',
-      चंद्र: 'भगवान शिव शंकर / माता पार्वती',
-      मंगल: 'श्री हनुमान जी / भगवान कार्तिकेय',
-      बुध: 'भगवान श्री गणेश / श्री विष्णु',
-      गुरु: 'भगवान श्री हरि विष्णु / दत्तात्रेय',
-      शुक्र: 'माँ महालक्ष्मी / श्री राधा-कृष्ण',
-      शनि: 'श्री हनुमान जी / भगवान शिव / शनिदेव',
-    };
-    const ishtaDev = DEITY_MAP[fifthLord] || 'भगवान श्री हरि विष्णु';
+    const ishtaDev = (() => {
+      if (currentLang === 'en') {
+        const enDeity: Record<string, string> = {
+          सूर्य: 'Lord Surya Narayana / Mother Gayatri',
+          चंद्र: 'Lord Shiva Shankar / Mother Parvati',
+          मंगल: 'Sri Hanuman Ji / Lord Kartikeya',
+          बुध: 'Lord Sri Ganesha / Sri Vishnu',
+          गुरु: 'Lord Sri Hari Vishnu / Dattatreya',
+          शुक्र: 'Maa Mahalakshmi / Sri Radha-Krishna',
+          शनि: 'Sri Hanuman Ji / Lord Shiva / Shanidev',
+        };
+        return enDeity[fifthLord] || 'Lord Sri Hari Vishnu';
+      }
+      if (currentLang === 'gu') {
+        const guDeity: Record<string, string> = {
+          सूर्य: 'ભગવાન સૂર્ય નારાયણ / ગાયત્રી માતા',
+          चंद्र: 'ભગવાન શિવ શંકર / માતા પાર્વતી',
+          मंगल: 'શ્રી હનુમાનજી / ભગવાન કાર્તિકેય',
+          बुध: 'ભગવાન શ્રી ગણેશ / શ્રી વિષ્ણુ',
+          गुरु: 'ભગવાન શ્રી હરિ વિષ્ણુ / દત્તાત્રેય',
+          शुक्र: 'માઁ મહાલક્ષ્મી / શ્રી રાધા-કૃષ્ણ',
+          शनि: 'શ્રી હનુમાનજી / ભગવાન શિવ / શનિદેવ',
+        };
+        return guDeity[fifthLord] || 'ભગવાન શ્રી હરિ વિષ્ણુ';
+      }
+      const DEITY_MAP: Record<string, string> = {
+        सूर्य: 'भगवान सूर्य नारायण / गायत्री माता',
+        चंद्र: 'भगवान शिव शंकर / माता पार्वती',
+        मंगल: 'श्री हनुमान जी / भगवान कार्तिकेय',
+        बुध: 'भगवान श्री गणेश / श्री विष्णु',
+        गुरु: 'भगवान श्री हरि विष्णु / दत्तात्रेय',
+        शुक्र: 'माँ महालक्ष्मी / श्री राधा-कृष्ण',
+        शनि: 'श्री हनुमान जी / भगवान शिव / शनिदेव',
+      };
+      return DEITY_MAP[fifthLord] || 'भगवान श्री हरि विष्णु';
+    })();
 
-    // 4. Header & Invocations
+    // 4. Header & Invocations (Sacred Sanskrit mantras kept intact)
     let cursorY = 82;
     ctx.fillStyle = '#8b1e1e';
     ctx.font = 'bold 22px "Tiro Devanagari Hindi", serif';
@@ -521,16 +638,22 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     cursorY += 34;
     ctx.fillStyle = '#4a2505';
     ctx.font = 'bold 32px "Rozha One", "Tiro Devanagari Hindi", serif';
-    ctx.fillText('॥ श्री शक्ति वैदिक जन्म-कुण्डली चक्र एवं सम्पूर्ण फलादेश ॥', width / 2, cursorY);
+    const mainTitle = currentLang === 'en'
+      ? '॥ Sri Shakti Vedic Janma-Kundali Chart & Complete Predictions ॥'
+      : currentLang === 'gu'
+      ? '॥ શ્રી શક્તિ વૈદિક જન્મ-કુંડળી ચક્ર અને સંપૂર્ણ ફળાદેશ ॥'
+      : '॥ श्री शक्ति वैदिक जन्म-कुण्डली चक्र एवं सम्पूर्ण फलादेश ॥';
+    ctx.fillText(mainTitle, width / 2, cursorY);
 
     cursorY += 24;
     ctx.fillStyle = '#7a4b18';
     ctx.font = '14.5px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(
-      'प्रामाणिक लग्न कुण्डली (D-1), नवमांश चक्र (D-9), ग्रह स्पष्ट, विंशोत्तरी दशा व शास्त्र-सम्मत जीवन विश्लेषण',
-      width / 2,
-      cursorY
-    );
+    const subTitleText = currentLang === 'en'
+      ? 'Authentic Lagna Chart (D-1), Navamsha (D-9), Planetary Longitudes, Vimshottari Dasha & Classical Guidance'
+      : currentLang === 'gu'
+      ? 'પ્રામાણિક લગ્ન કુંડળી (D-1), નવમાંશ ચક્ર (D-9), ગ્રહ સ્પષ્ટ, વિંશોત્તરી દશા અને શાસ્ત્ર-સંમત જીવન વિશ્લેષણ'
+      : 'प्रामाणिक लग्न कुण्डली (D-1), नवमांश चक्र (D-9), ग्रह स्पष्ट, विंशोत्तरी दशा व शास्त्र-सम्मत जीवन विश्लेषण';
+    ctx.fillText(subTitleText, width / 2, cursorY);
 
     // Ornate Divider
     cursorY += 20;
@@ -559,7 +682,8 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
 
     // Profile Grid
     const birthDateObj = kundali.birthDate instanceof Date ? kundali.birthDate : new Date(kundali.birthDate);
-    const dateStr = birthDateObj.toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    const dateLocale = currentLang === 'en' ? 'en-US' : currentLang === 'gu' ? 'gu-IN' : 'hi-IN';
+    const dateStr = birthDateObj.toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
 
     ctx.fillStyle = '#3a1f0a';
     ctx.font = '13.5px "Tiro Devanagari Hindi", serif';
@@ -570,60 +694,84 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     const col3 = pBoxX + 575;
     const col4 = pBoxX + 850;
 
+    const lblJatak = currentLang === 'en' ? 'Native' : currentLang === 'gu' ? 'જાતક' : 'जातक';
+    const lblBirthPlace = currentLang === 'en' ? 'Birth Place' : currentLang === 'gu' ? 'જન્મ સ્થળ' : 'जन्म स्थान';
+    const lblLagna = currentLang === 'en' ? 'Ascendant' : currentLang === 'gu' ? 'લગ્ન' : 'लग्न';
+    const lblLord = currentLang === 'en' ? 'Lord' : currentLang === 'gu' ? 'સ્વામી' : 'स्वामी';
+    const lblSunRashi = currentLang === 'en' ? 'Sun Sign' : currentLang === 'gu' ? 'સૂર્ય રાશિ' : 'सूर्य राशि';
+    const lblBirthDate = currentLang === 'en' ? 'Birth Date' : currentLang === 'gu' ? 'જન્મ તારીખ' : 'जन्म तिथि';
+    const lblCoords = currentLang === 'en' ? 'Coordinates' : currentLang === 'gu' ? 'અક્ષાંશ/રેખાંશ' : 'अक्षांश/रेखांश';
+    const lblMoonRashi = currentLang === 'en' ? 'Moon Sign' : currentLang === 'gu' ? 'ચંદ્ર રાશિ' : 'चंद्र राशि';
+    const lblManglik = currentLang === 'en' ? 'Manglik' : currentLang === 'gu' ? 'માંગલિક' : 'मांगलिक';
+    const lblBirthTime = currentLang === 'en' ? 'Birth Time' : currentLang === 'gu' ? 'જન્મ સમય' : 'जन्म समय';
+    const lblDayTithi = currentLang === 'en' ? 'Day & Tithi' : currentLang === 'gu' ? 'વાર અને તિથિ' : 'वार व तिथि';
+    const lblNakshatra = currentLang === 'en' ? 'Nakshatra' : currentLang === 'gu' ? 'નક્ષત્ર' : 'नक्षत्र';
+    const lblPada = currentLang === 'en' ? 'Pada' : currentLang === 'gu' ? 'ચરણ' : 'चरण';
+    const lblGana = currentLang === 'en' ? 'Gana' : currentLang === 'gu' ? 'ગણ' : 'गण';
+    const lblNadi = currentLang === 'en' ? 'Nadi' : currentLang === 'gu' ? 'નાડી' : 'नाड़ी';
+    const lblVarna = currentLang === 'en' ? 'Varna' : currentLang === 'gu' ? 'વર્ણ' : 'वर्ण';
+
+    const manglikVal = kundali.isManglik
+      ? (currentLang === 'en' ? 'Yes (Manglik)' : currentLang === 'gu' ? 'હા (માંગલિક પ્રભાવ)' : 'हाँ (मांगलिक प्रभाव)')
+      : (currentLang === 'en' ? 'No (Dosha Free)' : currentLang === 'gu' ? 'ના (દોષ મુક્ત)' : 'नहीं (दोष मुक्त)');
+
     let rY = cursorY + 24;
     ctx.fillStyle = '#8b1e1e';
     ctx.font = 'bold 14px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(`जातक: ${kundali.name}`, col1, rY);
+    ctx.fillText(`${lblJatak}: ${kundali.name}`, col1, rY);
     ctx.font = '13.5px "Tiro Devanagari Hindi", serif';
     ctx.fillStyle = '#3a1f0a';
-    ctx.fillText(`जन्म स्थान: ${kundali.birthPlace}`, col2, rY);
-    ctx.fillText(`लग्न: ${kundali.lagnaRashi} (स्वामी: ${lagnaLord})`, col3, rY);
-    ctx.fillText(`सूर्य राशि: ${kundali.sunRashi}`, col4, rY);
+    ctx.fillText(`${lblBirthPlace}: ${kundali.birthPlace}`, col2, rY);
+    ctx.fillText(`${lblLagna}: ${trRashi(kundali.lagnaRashi, currentLang)} (${lblLord}: ${trPlanet(lagnaLord, currentLang)})`, col3, rY);
+    ctx.fillText(`${lblSunRashi}: ${trRashi(kundali.sunRashi, currentLang)}`, col4, rY);
 
     rY += 24;
-    ctx.fillText(`जन्म तिथि: ${dateStr}`, col1, rY);
-    ctx.fillText(`अक्षांश/रेखांश: ${kundali.latitude.toFixed(2)}°N, ${kundali.longitude.toFixed(2)}°E`, col2, rY);
-    ctx.fillText(`चंद्र राशि: ${kundali.moonRashi} (स्वामी: ${moonLord})`, col3, rY);
-    ctx.fillText(`मांगलिक: ${kundali.isManglik ? 'हाँ (मांगलिक प्रभाव)' : 'नहीं (दोष मुक्त)'}`, col4, rY);
+    ctx.fillText(`${lblBirthDate}: ${dateStr}`, col1, rY);
+    ctx.fillText(`${lblCoords}: ${kundali.latitude.toFixed(2)}°N, ${kundali.longitude.toFixed(2)}°E`, col2, rY);
+    ctx.fillText(`${lblMoonRashi}: ${trRashi(kundali.moonRashi, currentLang)} (${lblLord}: ${trPlanet(moonLord, currentLang)})`, col3, rY);
+    ctx.fillText(`${lblManglik}: ${manglikVal}`, col4, rY);
 
     rY += 24;
-    ctx.fillText(`जन्म समय: ${kundali.birthTime}`, col1, rY);
-    ctx.fillText(`वार व तिथि: ${panchang.weekday} | ${panchang.paksha} ${panchang.tithi}`, col2, rY);
-    ctx.fillText(`नक्षत्र: ${kundali.nakshatra} (चरण ${kundali.charan})`, col3, rY);
-    ctx.fillText(`गण: ${kundali.gana} | नाड़ी: ${kundali.nadi} | वर्ण: ${kundali.varna}`, col4, rY);
+    ctx.fillText(`${lblBirthTime}: ${kundali.birthTime}`, col1, rY);
+    ctx.fillText(`${lblDayTithi}: ${trWeekday(panchang.weekday, currentLang)} | ${trVedic(panchang.paksha, currentLang)} ${trVedic(panchang.tithi, currentLang)}`, col2, rY);
+    ctx.fillText(`${lblNakshatra}: ${trVedic(kundali.nakshatra, currentLang)} (${lblPada} ${kundali.charan})`, col3, rY);
+    ctx.fillText(`${lblGana}: ${trVedic(kundali.gana, currentLang)} | ${lblNadi}: ${trVedic(kundali.nadi, currentLang)} | ${lblVarna}: ${trVedic(kundali.varna, currentLang)}`, col4, rY);
 
     // 6. Visual Kundali Charts & Graha Spashta Table Section
-    // Center D-1 at X = 230, D-9 at X = 575, Graha Table at X = 755
     cursorY += pBoxH + 34;
     const chartSize = 310;
     const chartCenterY = cursorY + chartSize / 2;
 
+    const d1Title = currentLang === 'en'
+      ? '॥ Lagna Kundali Chart (D-1) ॥'
+      : currentLang === 'gu'
+      ? '॥ લગ્ન કુંડળી ચક્ર (D-1) ॥'
+      : '॥ लग्न कुण्डली चक्र (D-1) ॥';
+    const d1Sub = currentLang === 'en'
+      ? `Ascendant: ${trRashi(kundali.lagnaRashi, 'en')} (${kundali.lagnaRashiNumber}) • Tanu Bhava`
+      : currentLang === 'gu'
+      ? `લગ્ન: ${trRashi(kundali.lagnaRashi, 'gu')} (${kundali.lagnaRashiNumber}) • તનુ ચક્ર`
+      : `लग्न: ${kundali.lagnaRashi} (${kundali.lagnaRashiNumber}) • तनु चक्र`;
+
+    const d9Title = currentLang === 'en'
+      ? '॥ Navamsha Kundali Chart (D-9) ॥'
+      : currentLang === 'gu'
+      ? '॥ નવમાંશ કુંડળી ચક્ર (D-9) ॥'
+      : '॥ नवमांश कुण्डली चक्र (D-9) ॥';
+    const d9Sub = currentLang === 'en'
+      ? 'Atmakaraka, Fortune & Marital Potential'
+      : currentLang === 'gu'
+      ? 'આત્મકારક, ભાગ્ય અને વૈવાહિક સામર્થ્ય'
+      : 'आत्मकारक, भाग्य एवं वैवाहिक सामर्थ्य';
+
     // D-1 Lagna Chart
-    drawNorthIndianDiamondChart(
-      ctx,
-      230,
-      chartCenterY,
-      chartSize,
-      1,
-      kundali,
-      `॥ लग्न कुण्डली चक्र (D-1) ॥`,
-      `लग्न: ${kundali.lagnaRashi} (${kundali.lagnaRashiNumber}) • तनु चक्र`
-    );
+    drawNorthIndianDiamondChart(ctx, 230, chartCenterY, chartSize, 1, kundali, d1Title, d1Sub, currentLang);
 
     // D-9 Navamsha Chart
-    drawNorthIndianDiamondChart(
-      ctx,
-      575,
-      chartCenterY,
-      chartSize,
-      9,
-      kundali,
-      `॥ नवमांश कुण्डली चक्र (D-9) ॥`,
-      `आत्मकारक, भाग्य एवं वैवाहिक सामर्थ्य`
-    );
+    drawNorthIndianDiamondChart(ctx, 575, chartCenterY, chartSize, 9, kundali, d9Title, d9Sub, currentLang);
 
     // Graha Spashta & Dignity Table
-    drawGrahaSpashtaTable(ctx, 755, cursorY, width - 755 - 72, chartSize, kundali);
+    drawGrahaSpashtaTable(ctx, 755, cursorY, width - 755 - 72, chartSize, kundali, currentLang);
 
     // 7. Vimshottari Dasha & Planetary Friendship Banner
     cursorY += chartSize + 32;
@@ -637,19 +785,22 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     ctx.fillStyle = '#8b1e1e';
     ctx.font = 'bold 14px "Tiro Devanagari Hindi", serif';
     ctx.textAlign = 'left';
-    ctx.fillText(
-      `★ वर्तमान विंशोत्तरी दशा:  ${kundali.mahadasha} महादशा  ➔  ${kundali.antardasha} अंतर्दशा  ➔  ${kundali.pratyantardasha} प्रत्यंतर दशा`,
-      pBoxX + 16,
-      cursorY + 24
-    );
+
+    const dashaBannerText = currentLang === 'en'
+      ? `★ Current Vimshottari Dasha:  ${trPlanet(kundali.mahadasha, 'en')} Mahadasha  ➔  ${trPlanet(kundali.antardasha, 'en')} Antardasha  ➔  ${trPlanet(kundali.pratyantardasha, 'en')} Pratyantar Dasha`
+      : currentLang === 'gu'
+      ? `★ વર્તમાન વિંશોત્તરી દશા:  ${trPlanet(kundali.mahadasha, 'gu')} મહાદશા  ➔  ${trPlanet(kundali.antardasha, 'gu')} અંતર્દશા  ➔  ${trPlanet(kundali.pratyantardasha, 'gu')} પ્રત્યંતર દશા`
+      : `★ वर्तमान विंशोत्तरी दशा:  ${kundali.mahadasha} महादशा  ➔  ${kundali.antardasha} अंतर्दशा  ➔  ${kundali.pratyantardasha} प्रत्यंतर दशा`;
+    ctx.fillText(dashaBannerText, pBoxX + 16, cursorY + 24);
 
     ctx.fillStyle = '#4a2505';
     ctx.font = '13px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(
-      `प्रमुख ग्रहीय सूत्र:  लग्न स्वामी: ${lagnaLord}  |  भाग्येश (9th): ${bhagyaLord}  |  इष्ट देव: ${ishtaDev}  |  शुभ रत्न: ${luckyGem}  |  मुख्य योग: ${analysis.yogas[0] || 'शुभ राजयोग'}`,
-      pBoxX + 16,
-      cursorY + 48
-    );
+    const formulaText = currentLang === 'en'
+      ? `Key Planetary Formulas:  Ascendant Lord: ${trPlanet(lagnaLord, 'en')}  |  Fortune Lord (9th): ${trPlanet(bhagyaLord, 'en')}  |  Ishta Devta: ${ishtaDev}  |  Lucky Gem: ${luckyGem}  |  Key Yoga: ${analysis.yogas[0] || 'Raj Yoga'}`
+      : currentLang === 'gu'
+      ? `પ્રમુખ ગ્રહીય સૂત્રો:  લગ્ન સ્વામી: ${trPlanet(lagnaLord, 'gu')}  |  ભાગ્યેશ (9th): ${trPlanet(bhagyaLord, 'gu')}  |  ઇષ્ટ દેવ: ${ishtaDev}  |  શુભ રત્ન: ${luckyGem}  |  મુખ્ય યોગ: ${analysis.yogas[0] || 'શુભ રાજયોગ'}`
+      : `प्रमुख ग्रहीय सूत्र:  लग्न स्वामी: ${lagnaLord}  |  भाग्येश (9th): ${bhagyaLord}  |  इष्ट देव: ${ishtaDev}  |  शुभ रत्न: ${luckyGem}  |  मुख्य योग: ${analysis.yogas[0] || 'शुभ राजयोग'}`;
+    ctx.fillText(formulaText, pBoxX + 16, cursorY + 48);
 
     // 8. Bento Shastra-Sammat Predictions & Remedies (4 Classical Quadrants)
     cursorY += dBoxH + 18;
@@ -726,106 +877,210 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
       ctx.restore();
     };
 
-    // Bento 1: व्यक्तित्व, स्वभाव एवं शारीरिक गठन
-    drawBentoCard(
-      bento1X,
-      cursorY,
-      '१. व्यक्तित्व, स्वभाव एवं शारीरिक गठन',
-      'तनु व मानस विचार',
-      [
-        {
-          label: 'लग्न एवं राशि प्रभाव',
-          text: `${kundali.name} का जन्म ${kundali.lagnaRashi} लग्न एवं ${kundali.moonRashi} चंद्र राशि में हुआ है। लग्न स्वामी ${lagnaLord} की स्थिति जातक को कर्मठ, दूरदर्शी और आत्मविश्वासी बनाती है।`,
-        },
-        {
-          label: 'नक्षत्र व मानसिक स्वभाव',
-          text: `नक्षत्र ${kundali.nakshatra} (चरण ${kundali.charan}) के प्रभाव से जातक तीक्ष्ण बुद्धि, स्वाभिमानी तथा विषम परिस्थितियों में भी धैर्यपूर्वक मार्ग प्रशस्त करने की क्षमता रखता है।`,
-        },
-        {
-          label: 'स्वास्थ्य व शारीरिक बल',
-          text: healthArea?.finding
-            ? `${healthArea.finding} ${healthArea.caution || ''}`
-            : 'सामान्यतः जीवनशक्ति उत्तम रहेगी। मौसमी विकारों और पित्त-वात संतुलन पर ध्यान दें।',
-        },
-      ]
-    );
+    // Bento 1: Personality
+    const bento1Title = currentLang === 'en' ? '1. Personality, Nature & Physical Build' : currentLang === 'gu' ? '૧. વ્યક્તિત્વ, સ્વભાવ અને શારીરિક બંધારણ' : '१. व्यक्तित्व, स्वभाव एवं शारीरिक गठन';
+    const bento1Tag = currentLang === 'en' ? 'Body & Mind' : currentLang === 'gu' ? 'તનુ અને માનસ વિચાર' : 'तनु व मानस विचार';
+    const bento1Lines = currentLang === 'en'
+      ? [
+          {
+            label: 'Ascendant & Moon Influence',
+            text: `${kundali.name} was born in ${trRashi(kundali.lagnaRashi, 'en')} ascendant and ${trRashi(kundali.moonRashi, 'en')} moon sign. Ascendant lord ${trPlanet(lagnaLord, 'en')} bestows diligence, foresight and confidence.`,
+          },
+          {
+            label: 'Nakshatra & Nature',
+            text: `Under nakshatra ${trVedic(kundali.nakshatra, 'en')} (pada ${kundali.charan}), the native possesses sharp intellect, dignity, and patience in overcoming obstacles.`,
+          },
+          {
+            label: 'Health & Vitality',
+            text: healthArea?.finding ? `${healthArea.finding} ${healthArea.caution || ''}` : 'Vital energy remains strong. Maintain balance in seasonal diets and daily routine.',
+          },
+        ]
+      : currentLang === 'gu'
+      ? [
+          {
+            label: 'લગ્ન અને રાશિ પ્રભાવ',
+            text: `${kundali.name}નો જન્મ ${trRashi(kundali.lagnaRashi, 'gu')} લગ્ન અને ${trRashi(kundali.moonRashi, 'gu')} ચંદ્ર રાશિમાં થયો છે. લગ્ન સ્વામી ${trPlanet(lagnaLord, 'gu')} જાતકને કર્મઠ, દીર્ઘદ્રષ્ટા અને આત્મવિશ્વાસુ બનાવે છે.`,
+          },
+          {
+            label: 'નક્ષત્ર અને માનસિક સ્વભાવ',
+            text: `નક્ષત્ર ${trVedic(kundali.nakshatra, 'gu')} (ચરણ ${kundali.charan})ના પ્રભાવથી જાતક તીક્ષ્ણ બુદ્ધિ, સ્વાભિમાની અને વિષમ પરિસ્થિતિઓમાં પણ ધૈર્યપૂર્વક માર્ગ બનાવવાની ક્ષમતા ધરાવે છે.`,
+          },
+          {
+            label: 'સ્વાસ્થ્ય અને શારીરિક બળ',
+            text: healthArea?.finding ? `${healthArea.finding} ${healthArea.caution || ''}` : 'સામાન્ય રીતે જીવનશક્તિ ઉત્તમ રહેશે. મોસમી આહાર અને પિત્ત-વાત સંતુલન પર ધ્યાન આપવું.',
+          },
+        ]
+      : [
+          {
+            label: 'लग्न एवं राशि प्रभाव',
+            text: `${kundali.name} का जन्म ${kundali.lagnaRashi} लग्न एवं ${kundali.moonRashi} चंद्र राशि में हुआ है। लग्न स्वामी ${lagnaLord} की स्थिति जातक को कर्मठ, दूरदर्शी और आत्मविश्वासी बनाती है।`,
+          },
+          {
+            label: 'नक्षत्र व मानसिक स्वभाव',
+            text: `नक्षत्र ${kundali.nakshatra} (चरण ${kundali.charan}) के प्रभाव से जातक तीक्ष्ण बुद्धि, स्वाभिमानी तथा विषम परिस्थितियों में भी धैर्यपूर्वक मार्ग प्रशस्त करने की क्षमता रखता है।`,
+          },
+          {
+            label: 'स्वास्थ्य व शारीरिक बल',
+            text: healthArea?.finding ? `${healthArea.finding} ${healthArea.caution || ''}` : 'सामान्यतः जीवनशक्ति उत्तम रहेगी। मौसमी विकारों और पित्त-वात संतुलन पर ध्यान दें।',
+          },
+        ];
+    drawBentoCard(bento1X, cursorY, bento1Title, bento1Tag, bento1Lines);
 
-    // Bento 2: कार्यक्षेत्र, धन-वैभव एवं आजीविका
-    drawBentoCard(
-      bento2X,
-      cursorY,
-      '२. कार्यक्षेत्र, धन-वैभव एवं आजीविका',
-      'कर्म व अर्थ लाभ',
-      [
-        {
-          label: 'आजीविका व करियर दिशा',
-          text: careerArea?.finding
-            ? `${careerArea.finding} (कारण: ${careerArea.why})`
-            : 'दशम भाव व लग्न स्वामी के प्रभाव से प्रशासनिक, तकनीकी, व्यापारिक अथवा स्वतंत्र उद्यम में विशेष ख्याति प्राप्त होगी।',
-        },
-        {
-          label: 'धन संचय व आर्थिक योग',
-          text: financeArea?.finding
-            ? financeArea.finding
-            : 'द्वितीय (धन) एवं एकादश (आय) भाव के योग से मध्यम आयु के उपरांत सुदृढ़ आर्थिक स्थिरता एवं भूमि-भवन लाभ के योग हैं।',
-        },
-        {
-          label: 'समय व निर्णय सावधानी',
-          text: careerArea?.caution || 'महत्त्वपूर्ण व्यावसायिक व वित्तीय निर्णय सदैव शुभ गोचर व इष्ट स्मरण से लें।',
-        },
-      ]
-    );
+    // Bento 2: Career & Wealth
+    const bento2Title = currentLang === 'en' ? '2. Career, Wealth & Livelihood' : currentLang === 'gu' ? '૨. કાર્યક્ષેત્ર, ધન-વૈભવ અને આજીવિકા' : '२. कार्यक्षेत्र, धन-वैभव एवं आजीविका';
+    const bento2Tag = currentLang === 'en' ? 'Karma & Wealth' : currentLang === 'gu' ? 'કર્મ અને અર્થ લાભ' : 'कर्म व अर्थ लाभ';
+    const bento2Lines = currentLang === 'en'
+      ? [
+          {
+            label: 'Career Direction',
+            text: careerArea?.finding ? `${careerArea.finding} (Reason: ${careerArea.why})` : 'Combinations of 10th house and ascendant lord bestow special renown in administrative, technical, business, or independent ventures.',
+          },
+          {
+            label: 'Wealth Accumulation',
+            text: financeArea?.finding || 'Combinations of 2nd (wealth) and 11th (gains) houses indicate strong financial stability and property accumulation.',
+          },
+          {
+            label: 'Timing & Caution',
+            text: careerArea?.caution || 'Take major commercial and financial decisions during auspicious transits with prayer.',
+          },
+        ]
+      : currentLang === 'gu'
+      ? [
+          {
+            label: 'આજીવિકા અને કારકિર્દી દિશા',
+            text: careerArea?.finding ? `${careerArea.finding} (કારણ: ${careerArea.why})` : 'દશમ ભાવ અને લગ્ન સ્વામીના પ્રભાવથી વહીવટી, ટેકનિકલ, વ્યાપારિક અથવા સ્વતંત્ર સાહસમાં વિશેષ ખ્યાતિ પ્રાપ્ત થશે.',
+          },
+          {
+            label: 'ધન સંચય અને આર્થિક યોગ',
+            text: financeArea?.finding ? financeArea.finding : 'દ્વિતીય (ધન) અને એકાદશ (લાભ) ભાવના યોગથી મધ્યમ આયુ પછી સુદૃઢ આર્થિક સ્થિરતા અને ભૂમિ-ભવન લાભના યોગ છે.',
+          },
+          {
+            label: 'સમય અને નિર્ણય સાવચેતી',
+            text: careerArea?.caution || 'મહત્વપૂર્ણ વ્યાવસાયિક અને નાણાકીય નિર્ણયો શુભ ગોચર અને ઇષ્ટ સ્મરણ સાથે લેવા.',
+          },
+        ]
+      : [
+          {
+            label: 'आजीविका व करियर दिशा',
+            text: careerArea?.finding ? `${careerArea.finding} (कारण: ${careerArea.why})` : 'दशम भाव व लग्न स्वामी के प्रभाव से प्रशासनिक, तकनीकी, व्यापारिक अथवा स्वतंत्र उद्यम में विशेष ख्याति प्राप्त होगी।',
+          },
+          {
+            label: 'धन संचय व आर्थिक योग',
+            text: financeArea?.finding ? financeArea.finding : 'द्वितीय (धन) एवं एकादश (आय) भाव के योग से मध्यम आयु के उपरांत सुदृढ़ आर्थिक स्थिरता एवं भूमि-भवन लाभ के योग हैं।',
+          },
+          {
+            label: 'समय व निर्णय सावधानी',
+            text: careerArea?.caution || 'महत्त्वपूर्ण व्यावसायिक व वित्तीय निर्णय सदैव शुभ गोचर व इष्ट स्मरण से लें।',
+          },
+        ];
+    drawBentoCard(bento2X, cursorY, bento2Title, bento2Tag, bento2Lines);
 
     // Row 2 of Bento Cards
     cursorY += bentoH + 16;
 
-    // Bento 3: दांपत्य जीवन, परिवार एवं भाग्य पक्ष
-    drawBentoCard(
-      bento1X,
-      cursorY,
-      '३. दांपत्य जीवन, परिवार एवं भाग्य पक्ष',
-      'सप्तम व नवम फल',
-      [
-        {
-          label: 'वैवाहिक व पारिवारिक सुख',
-          text: marriageArea?.finding
-            ? marriageArea.finding
-            : 'सप्तम भाव व नवमांश चक्र D-9 की अनुकूलता से योग्य एवं संस्कारी जीवनसाथी का सहयोग मिलेगा। पारस्परिक संवाद से सुख में वृद्धि होगी।',
-        },
-        {
-          label: 'मांगलिक व दोष विचार',
-          text: kundali.isManglik
-            ? 'कुंडली में मांगलिक प्रभाव उपस्थित है; अतः विवाह में कुंडली मिलान एवं मंगल शांति अनुष्ठान शास्त्रसम्मत श्रेयस्कर है।'
-            : 'कुंडली मांगलिक दोष से मुक्त है। पारिवारिक जीवन सामान्यतः सौहार्दपूर्ण व प्रीतिकर रहेगा।',
-        },
-        {
-          label: 'भाग्येश व भाग्य उदय',
-          text: `भाग्य भाव के स्वामी ${bhagyaLord} हैं। जातक का भाग्योदय कर्मठता, गुरुजनों के आशीर्वाद एवं तीर्थाटन से तीव्रता प्राप्त करेगा।`,
-        },
-      ]
-    );
+    // Bento 3: Marriage & Family
+    const bento3Title = currentLang === 'en' ? '3. Married Life, Family & Fortune' : currentLang === 'gu' ? '૩. દાંપત્ય જીવન, પરિવાર અને ભાગ્ય પક્ષ' : '३. दांपत्य जीवन, परिवार एवं भाग्य पक्ष';
+    const bento3Tag = currentLang === 'en' ? '7th & 9th Fruit' : currentLang === 'gu' ? 'સપ્તમ અને નવમ ફળ' : 'सप्तम व नवम फल';
+    const bento3Lines = currentLang === 'en'
+      ? [
+          {
+            label: 'Marital & Family Joy',
+            text: marriageArea?.finding || 'Favorable 7th house and Navamsha D-9 indicate cooperation from a cultured life partner. Open communication enhances harmony.',
+          },
+          {
+            label: 'Manglik & Dosha Analysis',
+            text: kundali.isManglik
+              ? 'Manglik influence is present; matching horoscopes and propitiation rituals are recommended.'
+              : 'Horoscope is free from Manglik dosha. Family life is peaceful and affectionate.',
+          },
+          {
+            label: 'Fortune Lord & Rise',
+            text: `Fortune house lord is ${trPlanet(bhagyaLord, 'en')}. Destiny strengthens through hard work, elders’ blessings, and righteous deeds.`,
+          },
+        ]
+      : currentLang === 'gu'
+      ? [
+          {
+            label: 'વૈવાહિક અને પારિવારિક સુખ',
+            text: marriageArea?.finding || 'સપ્તમ ભાવ અને નવમાંશ ચક્ર D-9 ની અનુકૂળતાથી યોગ્ય અને સંસ્કારી જીવનસાથીનો સહયોગ મળશે. પરસ્પર સંવાદથી સુખમાં વૃદ્ધિ થશે.',
+          },
+          {
+            label: 'માંગલિક અને દોષ વિચાર',
+            text: kundali.isManglik
+              ? 'કુંડળીમાં માંગલિક પ્રભાવ ઉપસ્થિત છે; તેથી વિવાહમાં કુંડળી મિલન અને મંગળ શાંતિ અનુષ્ઠાન શાસ્ત્રસંમત શ્રેયસ્કર છે.'
+              : 'કુંડળી માંગલિક દોષથી મુક્ત છે. પારિવારિક જીવન સામાન્ય રીતે સૌહાર્દપૂર્ણ અને સુખદ રહેશે.',
+          },
+          {
+            label: 'ભાગ્યેશ અને ભાગ્યોદય',
+            text: `ભાગ્ય ભાવના સ્વામી ${trPlanet(bhagyaLord, 'gu')} છે. જાતકનો ભાગ્યોદય કર્મઠતા, ગુરુજનોના આશીર્વાદ અને તીર્થયાત્રાથી તીવ્રતા પ્રાપ્ત કરશે.`,
+          },
+        ]
+      : [
+          {
+            label: 'वैवाहिक व पारिवारिक सुख',
+            text: marriageArea?.finding || 'सप्तम भाव व नवमांश चक्र D-9 की अनुकूलता से योग्य एवं संस्कारी जीवनसाथी का सहयोग मिलेगा। पारस्परिक संवाद से सुख में वृद्धि होगी।',
+          },
+          {
+            label: 'मांगलिक व दोष विचार',
+            text: kundali.isManglik
+              ? 'कुंडली में मांगलिक प्रभाव उपस्थित है; अतः विवाह में कुंडली मिलान एवं मंगल शांति अनुष्ठान शास्त्रसम्मत श्रेयस्कर है।'
+              : 'कुंडली मांगलिक दोष से मुक्त है। पारिवारिक जीवन सामान्यतः सौहार्दपूर्ण व प्रीतिकर रहेगा।',
+          },
+          {
+            label: 'भाग्येश व भाग्य उदय',
+            text: `भाग्य भाव के स्वामी ${bhagyaLord} हैं। जातक का भाग्योदय कर्मठता, गुरुजनों के आशीर्वाद एवं तीर्थाटन से तीव्रता प्राप्त करेगा।`,
+          },
+        ];
+    drawBentoCard(bento1X, cursorY, bento3Title, bento3Tag, bento3Lines);
 
-    // Bento 4: अचूक वैदिक उपाय, रत्न एवं इष्ट आराधना
-    drawBentoCard(
-      bento2X,
-      cursorY,
-      '४. अचूक वैदिक उपाय, रत्न एवं इष्ट आराधना',
-      'शास्त्रीय कल्याण सूत्र',
-      [
-        {
-          label: 'शुभ रत्न परामर्श',
-          text: `लग्न व भाग्य बल संवर्धन हेतु ${luckyGem} किसी योग्य ज्योतिर्विद के मार्गदर्शन में शुभ मुहूर्त में धारण करना कल्याणकारी रहेगा।`,
-        },
-        {
-          label: 'इष्ट देव व उपासना',
-          text: `प्रतिदिन ${ishtaDev} की आराधना, धूप-दीप दर्शन एवं गायत्री मंत्र अथवा ॐ नमः शिवाय का 1 माला नित्य जप करें।`,
-        },
-        {
-          label: 'दैनिक कल्याणकारी उपाय',
-          text: careerArea?.remedy || 'पक्षियों को अन्न-जल दें, माता-पिता के चरण स्पर्श कर दिन का आरम्भ करें एवं गौसेवा करें।',
-        },
-      ]
-    );
+    // Bento 4: Vedic Remedies
+    const bento4Title = currentLang === 'en' ? '4. Vedic Remedies, Gemstone & Worship' : currentLang === 'gu' ? '૪. અચૂક વૈદિક ઉપાય, રત્ન અને ઇષ્ટ આરાધના' : '४. अचूक वैदिक उपाय, रत्न एवं इष्ट आराधना';
+    const bento4Tag = currentLang === 'en' ? 'Classical Welfare Code' : currentLang === 'gu' ? 'શાસ્ત્રીય કલ્યાણ સૂત્ર' : 'शास्त्रीय कल्याण सूत्र';
+    const bento4Lines = currentLang === 'en'
+      ? [
+          {
+            label: 'Auspicious Gemstone',
+            text: `For strengthening ascendant and fortune, wearing ${luckyGem} under qualified astrological guidance in an auspicious muhurat is beneficial.`,
+          },
+          {
+            label: 'Ishta Devta & Prayer',
+            text: `Daily worship of ${ishtaDev}, lighting a ghee lamp, and regular chanting of Gayatri Mantra or Om Namah Shivaya (1 mala daily) brings peace.`,
+          },
+          {
+            label: 'Daily Benefic Deeds',
+            text: careerArea?.remedy || 'Feed birds and cows, seek elders’ blessings before beginning the day, and practice charity.',
+          },
+        ]
+      : currentLang === 'gu'
+      ? [
+          {
+            label: 'શુભ રત્ન પરામર્શ',
+            text: `લગ્ન અને ભાગ્ય બળ સંવર્ધન માટે ${luckyGem} કોઈ યોગ્ય જ્યોતિષીના માર્ગદર્શનમાં શુભ મુહૂર્તમાં ધારણ કરવું કલ્યાણકારી રહેશે.`,
+          },
+          {
+            label: 'ઇષ્ટ દેવ અને ઉપાસના',
+            text: `દરરોજ ${ishtaDev}ની આરાધના, ધૂપ-દીપ દર્શન અને ગાયત્રી મંત્ર અથવા ૐ નમઃ શિવાયનો ૧ માળા નિત્ય જપ કરવો.`,
+          },
+          {
+            label: 'દૈનિક કલ્યાણકારી ઉપાય',
+            text: careerArea?.remedy || 'પક્ષીઓને ચણ-પાણી આપવું, માતા-પિતાના ચરણ સ્પર્શ કરી દિવસની શરૂઆત કરવી અને ગૌસેવા કરવી.',
+          },
+        ]
+      : [
+          {
+            label: 'शुभ रत्न परामर्श',
+            text: `लग्न व भाग्य बल संवर्धन हेतु ${luckyGem} किसी योग्य ज्योतिर्विद के मार्गदर्शन में शुभ मुहूर्त में धारण करना कल्याणकारी रहेगा।`,
+          },
+          {
+            label: 'इष्ट देव व उपासना',
+            text: `प्रतिदिन ${ishtaDev} की आराधना, धूप-दीप दर्शन एवं गायत्री मंत्र अथवा ॐ नमः शिवाय का 1 माला नित्य जप करें।`,
+          },
+          {
+            label: 'दैनिक कल्याणकारी उपाय',
+            text: careerArea?.remedy || 'पक्षियों को अन्न-जल दें, माता-पिता के चरण स्पर्श कर दिन का आरम्भ करें एवं गौसेवा करें।',
+          },
+        ];
+    drawBentoCard(bento2X, cursorY, bento4Title, bento4Tag, bento4Lines);
 
     // 9. Sacred Vedic Blessings & Seal at Bottom
     const footerY = height - 88;
@@ -848,7 +1103,8 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     ctx.textAlign = 'center';
     ctx.fillText('ॐ', pBoxX + 42, footerY + 16);
     ctx.font = 'bold 8.5px "Tiro Devanagari Hindi", serif';
-    ctx.fillText('प्रमाणित', pBoxX + 42, footerY + 29);
+    const stampLabel = currentLang === 'en' ? 'Certified' : currentLang === 'gu' ? 'પ્રમાણિત' : 'प्रमाणित';
+    ctx.fillText(stampLabel, pBoxX + 42, footerY + 29);
     ctx.restore();
 
     ctx.fillStyle = '#8b1e1e';
@@ -858,11 +1114,12 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
 
     ctx.fillStyle = '#7a4b18';
     ctx.font = '12px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(
-      'श्री शक्ति पंचांग संस्थान • उमा दिव्य वैदिक ज्योतिष शोधपीठ द्वारा मुद्रित हस्तनिर्मित भोजपत्र जन्म-पत्रिका',
-      width / 2 + 25,
-      footerY + 32
-    );
+    const instFooter = currentLang === 'en'
+      ? 'Shri Shakti Panchang Sansthan • Handcrafted Bhojpatra Janma-Patrika by Uma Vedic Astrology Research'
+      : currentLang === 'gu'
+      ? 'શ્રી શક્તિ પંચાંગ સંસ્થાન • ઉમા દિવ્ય વૈદિક જ્યોતિષ શોધપીઠ દ્વારા મુદ્રિત હસ્તનિર્મિત ભોજપત્ર જન્મ-પત્રિકા'
+      : 'श्री शक्ति पंचांग संस्थान • उमा दिव्य वैदिक ज्योतिष शोधपीठ द्वारा मुद्रित हस्तनिर्मित भोजपत्र जन्म-पत्रिका';
+    ctx.fillText(instFooter, width / 2 + 25, footerY + 32);
   } else {
     // =========================================================================
     // GENERAL PANCHANG Q&A CONSULTATION LAYOUT (BACKWARD COMPATIBILITY)
@@ -877,12 +1134,28 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     cursorY += 42;
     ctx.fillStyle = '#4a2505';
     ctx.font = 'bold 36px "Rozha One", "Tiro Devanagari Hindi", serif';
-    ctx.fillText('॥ श्री शक्ति पंचांग - उमा दिव्य मार्गदर्शन पत्रिका ॥', width / 2, cursorY);
+    ctx.fillText(
+      currentLang === 'en'
+        ? 'Shakti Panchang — Uma Divine Guidance Scroll'
+        : currentLang === 'gu'
+        ? '॥ શ્રી શક્તિ પંચાંગ - ઉમા દિવ્ય માર્ગદર્શન પત્રિકા ॥'
+        : '॥ श्री शक्ति पंचांग - उमा दिव्य मार्गदर्शन पत्रिका ॥',
+      width / 2,
+      cursorY
+    );
 
     cursorY += 26;
     ctx.fillStyle = '#7a4b18';
     ctx.font = 'italic 18px "Tiro Devanagari Hindi", serif';
-    ctx.fillText('वैदिक ज्योतिष, पंचांग, शुभाशुभ मुहूर्त एवं सनातन पराविद्या परामर्श', width / 2, cursorY);
+    ctx.fillText(
+      currentLang === 'en'
+        ? 'Vedic Astrology, Panchang, Auspicious Muhurat & Sanatan Shastra Consultation'
+        : currentLang === 'gu'
+        ? 'વૈદિક જ્યોતિષ, પંચાંગ, શુભાશુભ મુહૂર્ત અને સનાતન પરાવિદ્યા પરામર્શ'
+        : 'वैदिक ज्योतिष, पंचांग, शुभाशुभ मुहूर्त एवं सनातन पराविद्या परामर्श',
+      width / 2,
+      cursorY
+    );
 
     cursorY += 28;
     ctx.strokeStyle = '#c58f27';
@@ -910,7 +1183,15 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     ctx.fillStyle = '#8b1e1e';
     ctx.font = 'bold 16px "Tiro Devanagari Hindi", serif';
     ctx.textAlign = 'left';
-    ctx.fillText('॥ दैनिक वैदिक पंचांग विवरण ॥', pBoxX + 16, cursorY + 26);
+    ctx.fillText(
+      currentLang === 'en'
+        ? 'Daily Vedic Panchang Details'
+        : currentLang === 'gu'
+        ? '॥ દૈનિક વૈદિક પંચાંગ વિગતો ॥'
+        : '॥ दैनिक वैदिक पंचांग विवरण ॥',
+      pBoxX + 16,
+      cursorY + 26
+    );
 
     ctx.fillStyle = '#3a1f0a';
     ctx.font = '15px "Tiro Devanagari Hindi", serif';
@@ -920,31 +1201,37 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     const col3X = pBoxX + 630;
     const col4X = pBoxX + 870;
 
-    const dateStr = date.toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-    const timeStr = date.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+    const dateLocale = currentLang === 'en' ? 'en-US' : currentLang === 'gu' ? 'gu-IN' : 'hi-IN';
+    const dateStr = date.toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
+    const timeStr = date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
+
+    const lbl = (hi: string, en: string, gu: string) =>
+      currentLang === 'en' ? en : currentLang === 'gu' ? gu : hi;
 
     let rY = cursorY + 54;
-    ctx.fillText(`दिनांक: ${dateStr} (${panchang.weekday})`, col1X, rY);
-    ctx.fillText(`तिथि: ${panchang.paksha} ${panchang.tithi}`, col2X, rY);
-    ctx.fillText(`नक्षत्र: ${panchang.nakshatra} (चरण ${panchang.pada})`, col3X, rY);
-    ctx.fillText(`स्थान: ${locationName || 'अयोध्या / दिल्ली'}`, col4X, rY);
+    ctx.fillText(`${lbl('दिनांक', 'Date', 'તારીખ')}: ${dateStr} (${trWeekday(panchang.weekday, currentLang)})`, col1X, rY);
+    ctx.fillText(`${lbl('तिथि', 'Tithi', 'તિથિ')}: ${trVedic(panchang.paksha, currentLang)} ${trVedic(panchang.tithi, currentLang)}`, col2X, rY);
+    ctx.fillText(`${lbl('नक्षत्र', 'Nakshatra', 'નક્ષત્ર')}: ${trVedic(panchang.nakshatra, currentLang)} (${lbl('चरण', 'Pada', 'ચરણ')} ${panchang.pada})`, col3X, rY);
+    ctx.fillText(`${lbl('स्थान', 'Location', 'સ્થળ')}: ${locationName || lbl('अयोध्या / दिल्ली', 'Ayodhya / Delhi', 'અયોધ્યા / દિલ્હી')}`, col4X, rY);
 
     rY += 28;
-    ctx.fillText(`योग: ${panchang.yoga}`, col1X, rY);
-    ctx.fillText(`करण: ${panchang.karana}`, col2X, rY);
-    ctx.fillText(`संवत्: ${panchang.samvat}`, col3X, rY);
-    ctx.fillText(`सूर्य राशि: ${panchang.solarRashi}`, col4X, rY);
+    ctx.fillText(`${lbl('योग', 'Yoga', 'યોગ')}: ${trVedic(panchang.yoga, currentLang)}`, col1X, rY);
+    ctx.fillText(`${lbl('करण', 'Karana', 'કરણ')}: ${trVedic(panchang.karana, currentLang)}`, col2X, rY);
+    ctx.fillText(`${lbl('संवत्', 'Samvat', 'સંવત')}: ${trVedic(panchang.samvat, currentLang)}`, col3X, rY);
+    ctx.fillText(`${lbl('सूर्य राशि', 'Sun Sign', 'સૂર્ય રાશિ')}: ${trRashi(panchang.solarRashi, currentLang)}`, col4X, rY);
 
     rY += 28;
-    const fmtT = (d: Date) => d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
-    ctx.fillText(`सूर्योदय: ${fmtT(panchang.solar.sunrise)} | सूर्यास्त: ${fmtT(panchang.solar.sunset)}`, col1X, rY);
-    ctx.fillText(`चंद्र राशि: ${panchang.lunarRashi}`, col2X, rY);
-    ctx.fillText(
-      `दिशाशूल: ${panchang.weekday === 'रविवार' ? 'पश्चिम' : panchang.weekday === 'सोमवार' ? 'पूर्व' : 'सम्बन्धित दिशा'}`,
-      col3X,
-      rY
-    );
-    ctx.fillText(`अंकन समय: ${timeStr}`, col4X, rY);
+    const fmtT = (d: Date) => d.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
+    ctx.fillText(`${lbl('सूर्योदय', 'Sunrise', 'સૂર્યોદય')}: ${fmtT(panchang.solar.sunrise)} | ${lbl('सूर्यास्त', 'Sunset', 'સૂર્યાસ્ત')}: ${fmtT(panchang.solar.sunset)}`, col1X, rY);
+    ctx.fillText(`${lbl('चंद्र राशि', 'Moon Sign', 'ચંદ્ર રાશિ')}: ${trRashi(panchang.lunarRashi, currentLang)}`, col2X, rY);
+    const dishaStr =
+      panchang.weekday === 'रविवार'
+        ? lbl('पश्चिम', 'West', 'પશ્ચિમ')
+        : panchang.weekday === 'सोमवार'
+        ? lbl('पूर्व', 'East', 'પૂર્વ')
+        : lbl('सम्बन्धित दिशा', 'As per day', 'દિવસ મુજબ');
+    ctx.fillText(`${lbl('दिशाशूल', 'Dishashool', 'દિશાશૂળ')}: ${dishaStr}`, col3X, rY);
+    ctx.fillText(`${lbl('अंकन समय', 'Issued', 'સમય')}: ${timeStr}`, col4X, rY);
 
     cursorY += pBoxH + 30;
 
@@ -952,7 +1239,11 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
       ctx.fillStyle = '#8b1e1e';
       ctx.font = 'bold 18px "Tiro Devanagari Hindi", serif';
       ctx.textAlign = 'left';
-      ctx.fillText('॥ जातक जिज्ञासा व प्रश्न ॥', pBoxX, cursorY);
+      ctx.fillText(
+        lbl('॥ जातक जिज्ञासा व प्रश्न ॥', 'Native Query & Question', '॥ જાતક જિજ્ઞાસા અને પ્રશ્ન ॥'),
+        pBoxX,
+        cursorY
+      );
 
       cursorY += 12;
       ctx.fillStyle = '#2d1403';
@@ -965,7 +1256,15 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
 
     ctx.fillStyle = '#8b1e1e';
     ctx.font = 'bold 20px "Tiro Devanagari Hindi", serif';
-    ctx.fillText('॥ उमा दिव्य मार्गदर्शन व शास्त्र-सम्मत निर्णय ॥', pBoxX, cursorY);
+    ctx.fillText(
+      lbl(
+        '॥ उमा दिव्य मार्गदर्शन व शास्त्र-सम्मत निर्णय ॥',
+        'Uma Divine Guidance & Scriptural Verdict',
+        '॥ ઉમા દિવ્ય માર્ગદર્શન અને શાસ્ત્ર-સંમત નિર્ણય ॥'
+      ),
+      pBoxX,
+      cursorY
+    );
 
     cursorY += 14;
     ctx.strokeStyle = '#c58f27';
@@ -1037,7 +1336,8 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
     ctx.textAlign = 'center';
     ctx.fillText('ॐ', pBoxX + 45, footerY + 15);
     ctx.font = '8px "Tiro Devanagari Hindi", serif';
-    ctx.fillText('प्रमाणित', pBoxX + 45, footerY + 30);
+    const stampLabel = lbl('प्रमाणित', 'Certified', 'પ્રમાણિત');
+    ctx.fillText(stampLabel, pBoxX + 45, footerY + 30);
     ctx.restore();
 
     ctx.fillStyle = '#8b1e1e';
@@ -1047,7 +1347,15 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
 
     ctx.fillStyle = '#7a4b18';
     ctx.font = '13px "Tiro Devanagari Hindi", serif';
-    ctx.fillText('श्री शक्ति पंचांग संस्थान | उमा एआई वैदिक ज्योतिष प्रणाली द्वारा मुद्रित भोजपत्र पत्रिका', width / 2 + 30, footerY + 32);
+    ctx.fillText(
+      lbl(
+        'श्री शक्ति पंचांग संस्थान | उमा एआई वैदिक ज्योतिष प्रणाली द्वारा मुद्रित भोजपत्र पत्रिका',
+        'Shri Shakti Panchang Sansthan | Handcrafted Bhojpatra Patrika via Uma Vedic System',
+        'શ્રી શક્તિ પંચાંગ સંસ્થાન | ઉમા વૈદિક જ્યોતિષ પ્રણાલી દ્વારા મુદ્રિત ભોજપત્ર પત્રિકા'
+      ),
+      width / 2 + 30,
+      footerY + 32
+    );
   }
 
   // 10. Compile Canvas to high-res PDF with jsPDF
@@ -1061,8 +1369,9 @@ export async function downloadBhojpatraPdf(options: BhojpatraPdfOptions): Promis
   pdf.addImage(imgData, 'JPEG', 0, 0, PDF_MM_W, PDF_MM_H, undefined, 'FAST');
   const dateObj = date instanceof Date ? date : new Date(date || Date.now());
   const dateIso = !isNaN(dateObj.getTime()) ? dateObj.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
-  const sanitizedTitle = (options.title || (kundali ? `वैदिक_जन्म_पत्रिका_${kundali.name}` : 'Bhojpatra_Patrika'))
-    .replace(/[^\w\u0900-\u097F\s-]/g, '')
+  const stampLabelDefault = currentLang === 'en' ? 'Vedic_Kundali' : currentLang === 'gu' ? 'વૈદિક_જન્મ_પત્રિકા' : 'वैदिक_जन्म_पत्रिका';
+  const sanitizedTitle = (options.title || (kundali ? `${stampLabelDefault}_${kundali.name}` : 'Bhojpatra_Patrika'))
+    .replace(/[^\w\u0900-\u097F\u0A80-\u0AFF\s-]/g, '')
     .trim()
     .replace(/\s+/g, '_');
   const fileName = `${sanitizedTitle}_${dateIso}.pdf`;
@@ -1104,11 +1413,13 @@ export interface MilanPdfOptions {
   girl: KundaliData;
   milan: any;
   date?: Date;
+  lang?: string;
 }
 
 export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promise<PdfResult> {
   await waitForPdfFonts();
   const { boy, girl, milan, date = new Date() } = options;
+  const currentLang = (options.lang || 'hi').slice(0, 2).toLowerCase();
   const width = PDF_PX_W;
   const height = PDF_PX_H;
 
@@ -1178,12 +1489,22 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   cursorY += 42;
   ctx.fillStyle = '#4a2505';
   ctx.font = 'bold 36px "Rozha One", "Tiro Devanagari Hindi", serif';
-  ctx.fillText('॥ श्री अष्टकूट गुण मिलान एवं वैवाहिक पत्रिका ॥', width / 2, cursorY);
+  const milanMainTitle = currentLang === 'en'
+    ? '॥ Sri Ashtakoot Guna Milan & Vivah Patrika ॥'
+    : currentLang === 'gu'
+    ? '॥ શ્રી અષ્ટકૂટ ગુણ મિલન અને વૈવાહિક પત્રિકા ॥'
+    : '॥ श्री अष्टकूट गुण मिलान एवं वैवाहिक पत्रिका ॥';
+  ctx.fillText(milanMainTitle, width / 2, cursorY);
 
   cursorY += 26;
   ctx.fillStyle = '#7a4b18';
   ctx.font = 'italic 18px "Tiro Devanagari Hindi", serif';
-  ctx.fillText('वर-कन्या कुण्डली मिलान, मांगलिक विचार, नाड़ी व भकूट दोष विश्लेषण', width / 2, cursorY);
+  const milanSubTitle = currentLang === 'en'
+    ? 'Bridegroom & Bride Horoscope Match, Manglik Analysis, Nadi & Bhakoot Investigation'
+    : currentLang === 'gu'
+    ? 'વર-કન્યા કુંડળી મિલન, માંગલિક વિચાર, નાડી અને ભકૂટ દોષ વિશ્લેષણ'
+    : 'वर-कन्या कुण्डली मिलान, मांगलिक विचार, नाड़ी व भकूट दोष विश्लेषण';
+  ctx.fillText(milanSubTitle, width / 2, cursorY);
 
   // Divider
   cursorY += 28;
@@ -1196,7 +1517,11 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
 
   ctx.fillStyle = '#8b1e1e';
   ctx.font = 'bold 18px serif';
-  ctx.fillText('❖  शुभ विवाह मंगलम्  ❖', width / 2, cursorY + 6);
+  ctx.fillText(
+    currentLang === 'en' ? '❖  Shubh Vivah Mangalam  ❖' : currentLang === 'gu' ? '❖  શુભ વિવાહ મંગલમ્  ❖' : '❖  शुभ विवाह मंगलम्  ❖',
+    width / 2,
+    cursorY + 6
+  );
 
   cursorY += 36;
   // Couple Profile Box
@@ -1213,30 +1538,48 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   ctx.fillStyle = '#8b1e1e';
   ctx.font = 'bold 16px "Tiro Devanagari Hindi", serif';
   ctx.textAlign = 'left';
-  ctx.fillText('॥ वर एवं कन्या जन्म विवरण ॥', pBoxX + 16, cursorY + 26);
+  const coupleProfileTitle = currentLang === 'en'
+    ? '॥ Bridegroom & Bride Birth Details ॥'
+    : currentLang === 'gu'
+    ? '॥ વર અને કન્યા જન્મ વિવરણ ॥'
+    : '॥ वर एवं कन्या जन्म विवरण ॥';
+  ctx.fillText(coupleProfileTitle, pBoxX + 16, cursorY + 26);
 
   ctx.fillStyle = '#3a1f0a';
   ctx.font = '14px "Tiro Devanagari Hindi", serif';
   const col1X = pBoxX + 24;
   const col2X = pBoxX + width / 2 - 40;
 
-  const fmtBDate = (d: Date) => d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const dateLocale = currentLang === 'en' ? 'en-US' : currentLang === 'gu' ? 'gu-IN' : 'hi-IN';
+  const fmtBDate = (d: Date) => d.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const lblBoy = currentLang === 'en' ? 'Groom (Boy)' : currentLang === 'gu' ? 'વર' : 'वर (Boy)';
+  const lblGirl = currentLang === 'en' ? 'Bride (Girl)' : currentLang === 'gu' ? 'કન્યા' : 'कन्या (Girl)';
+  const lblBirth = currentLang === 'en' ? 'Birth' : currentLang === 'gu' ? 'જન્મ' : 'जन्म';
+  const lblTime = currentLang === 'en' ? 'Time' : currentLang === 'gu' ? 'સમય' : 'समय';
+  const lblLagna = currentLang === 'en' ? 'Ascendant' : currentLang === 'gu' ? 'લગ્ન' : 'लग्न';
+  const lblMoon = currentLang === 'en' ? 'Moon' : currentLang === 'gu' ? 'ચંદ્ર' : 'चंद्र';
+  const lblNakshatra = currentLang === 'en' ? 'Nakshatra' : currentLang === 'gu' ? 'નક્ષત્ર' : 'नक्षत्र';
+  const lblGana = currentLang === 'en' ? 'Gana' : currentLang === 'gu' ? 'ગણ' : 'गण';
+  const lblYoni = currentLang === 'en' ? 'Yoni' : currentLang === 'gu' ? 'યોનિ' : 'योनि';
+  const lblNadi = currentLang === 'en' ? 'Nadi' : currentLang === 'gu' ? 'નાડી' : 'नाड़ी';
+  const lblVarna = currentLang === 'en' ? 'Varna' : currentLang === 'gu' ? 'વર્ણ' : 'वर्ण';
 
   let rY = cursorY + 52;
-  ctx.fillText(`वर (Boy): ${boy.name}`, col1X, rY);
-  ctx.fillText(`कन्या (Girl): ${girl.name}`, col2X, rY);
+  ctx.fillText(`${lblBoy}: ${boy.name}`, col1X, rY);
+  ctx.fillText(`${lblGirl}: ${girl.name}`, col2X, rY);
 
   rY += 24;
-  ctx.fillText(`जन्म: ${fmtBDate(boy.birthDate)} | समय: ${boy.birthTime} (${boy.birthPlace})`, col1X, rY);
-  ctx.fillText(`जन्म: ${fmtBDate(girl.birthDate)} | समय: ${girl.birthTime} (${girl.birthPlace})`, col2X, rY);
+  ctx.fillText(`${lblBirth}: ${fmtBDate(boy.birthDate)} | ${lblTime}: ${boy.birthTime} (${boy.birthPlace})`, col1X, rY);
+  ctx.fillText(`${lblBirth}: ${fmtBDate(girl.birthDate)} | ${lblTime}: ${girl.birthTime} (${girl.birthPlace})`, col2X, rY);
 
   rY += 24;
-  ctx.fillText(`लग्न: ${boy.lagnaRashi} | चंद्र: ${boy.moonRashi} | नक्षत्र: ${boy.nakshatra} (${boy.charan})`, col1X, rY);
-  ctx.fillText(`लग्न: ${girl.lagnaRashi} | चंद्र: ${girl.moonRashi} | नक्षत्र: ${girl.nakshatra} (${girl.charan})`, col2X, rY);
+  ctx.fillText(`${lblLagna}: ${trRashi(boy.lagnaRashi, currentLang)} | ${lblMoon}: ${trRashi(boy.moonRashi, currentLang)} | ${lblNakshatra}: ${trVedic(boy.nakshatra, currentLang)} (${boy.charan})`, col1X, rY);
+  ctx.fillText(`${lblLagna}: ${trRashi(girl.lagnaRashi, currentLang)} | ${lblMoon}: ${trRashi(girl.moonRashi, currentLang)} | ${lblNakshatra}: ${trVedic(girl.nakshatra, currentLang)} (${girl.charan})`, col2X, rY);
 
   rY += 24;
-  ctx.fillText(`गण: ${boy.gana} | योनि: ${boy.yoni} | नाड़ी: ${boy.nadi} | वर्ण: ${boy.varna}`, col1X, rY);
-  ctx.fillText(`गण: ${girl.gana} | योनि: ${girl.yoni} | नाड़ी: ${girl.nadi} | वर्ण: ${girl.varna}`, col2X, rY);
+  ctx.fillText(`${lblGana}: ${trVedic(boy.gana, currentLang)} | ${lblYoni}: ${trVedic(boy.yoni, currentLang)} | ${lblNadi}: ${trVedic(boy.nadi, currentLang)} | ${lblVarna}: ${trVedic(boy.varna, currentLang)}`, col1X, rY);
+  ctx.fillText(`${lblGana}: ${trVedic(girl.gana, currentLang)} | ${lblYoni}: ${trVedic(girl.yoni, currentLang)} | ${lblNadi}: ${trVedic(girl.nadi, currentLang)} | ${lblVarna}: ${trVedic(girl.varna, currentLang)}`, col2X, rY);
 
   cursorY += pBoxH + 24;
 
@@ -1251,7 +1594,12 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   ctx.fillStyle = '#8b1e1e';
   ctx.font = 'bold 24px "Tiro Devanagari Hindi", serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`कुल प्राप्तांक: ${milan.totalScore} / 36 गुण — ${milan.verdict}`, width / 2, cursorY + 42);
+  const totalScoreLabel = currentLang === 'en'
+    ? `Total Score: ${milan.totalScore} / 36 Gunas — ${milan.verdict}`
+    : currentLang === 'gu'
+    ? `કુલ ગુણાંક: ${milan.totalScore} / 36 ગુણ — ${milan.verdict}`
+    : `कुल प्राप्तांक: ${milan.totalScore} / 36 गुण — ${milan.verdict}`;
+  ctx.fillText(totalScoreLabel, width / 2, cursorY + 42);
 
   cursorY += sBoxH + 26;
 
@@ -1259,7 +1607,12 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   ctx.fillStyle = '#8b1e1e';
   ctx.font = 'bold 18px "Tiro Devanagari Hindi", serif';
   ctx.textAlign = 'left';
-  ctx.fillText('॥ अष्टकूट 8 घटकों का गुण विवरण ॥', pBoxX, cursorY);
+  const tableHeading = currentLang === 'en'
+    ? '॥ Ashtakoot 8 Components Guna Details ॥'
+    : currentLang === 'gu'
+    ? '॥ અષ્ટકૂટ ૮ ઘટકોનું ગુણ વિવરણ ॥'
+    : '॥ अष्टकूट 8 घटकों का गुण विवरण ॥';
+  ctx.fillText(tableHeading, pBoxX, cursorY);
 
   cursorY += 12;
   const thY = cursorY + 18;
@@ -1267,12 +1620,19 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   ctx.fillRect(pBoxX, cursorY, pBoxW, 26);
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
-  ctx.fillText('कूट का नाम', pBoxX + 16, thY);
-  ctx.fillText('प्राप्त', pBoxX + 200, thY);
-  ctx.fillText('अधिकतम', pBoxX + 280, thY);
-  ctx.fillText('वर मान', pBoxX + 370, thY);
-  ctx.fillText('कन्या मान', pBoxX + 500, thY);
-  ctx.fillText('शास्त्रीय फल व विश्लेषण', pBoxX + 640, thY);
+  const thKoot = currentLang === 'en' ? 'Koota Name' : currentLang === 'gu' ? 'કૂટનું નામ' : 'कूट का नाम';
+  const thObtained = currentLang === 'en' ? 'Score' : currentLang === 'gu' ? 'પ્રાપ્ત' : 'प्राप्त';
+  const thMax = currentLang === 'en' ? 'Max' : currentLang === 'gu' ? 'મહત્તમ' : 'अधिकतम';
+  const thBoy = currentLang === 'en' ? 'Groom Value' : currentLang === 'gu' ? 'વર મૂલ્ય' : 'वर मान';
+  const thGirl = currentLang === 'en' ? 'Bride Value' : currentLang === 'gu' ? 'કન્યા મૂલ્ય' : 'कन्या मान';
+  const thNote = currentLang === 'en' ? 'Classical Analysis & Guidance' : currentLang === 'gu' ? 'શાસ્ત્રીય ફળ અને વિશ્લેષણ' : 'शास्त्रीय फल व विश्लेषण';
+
+  ctx.fillText(thKoot, pBoxX + 16, thY);
+  ctx.fillText(thObtained, pBoxX + 200, thY);
+  ctx.fillText(thMax, pBoxX + 280, thY);
+  ctx.fillText(thBoy, pBoxX + 370, thY);
+  ctx.fillText(thGirl, pBoxX + 500, thY);
+  ctx.fillText(thNote, pBoxX + 640, thY);
 
   cursorY += 26;
   ctx.font = '13px "Tiro Devanagari Hindi", serif';
@@ -1283,15 +1643,15 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
     ctx.strokeRect(pBoxX, cursorY, pBoxW, 24);
 
     ctx.fillStyle = '#4a2505';
-    ctx.fillText(it.name, pBoxX + 16, cursorY + 16);
+    ctx.fillText(trVedic(it.name, currentLang), pBoxX + 16, cursorY + 16);
     ctx.fillStyle = '#8b1e1e';
     ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
     ctx.fillText(`${it.score}`, pBoxX + 210, cursorY + 16);
     ctx.font = '13px "Tiro Devanagari Hindi", serif';
     ctx.fillStyle = '#6b431e';
     ctx.fillText(`${it.max}`, pBoxX + 295, cursorY + 16);
-    ctx.fillText(it.boyValue, pBoxX + 370, cursorY + 16);
-    ctx.fillText(it.girlValue, pBoxX + 500, cursorY + 16);
+    ctx.fillText(trVedic(it.boyValue, currentLang), pBoxX + 370, cursorY + 16);
+    ctx.fillText(trVedic(it.girlValue, currentLang), pBoxX + 500, cursorY + 16);
     ctx.fillText(it.note, pBoxX + 640, cursorY + 16);
 
     cursorY += 24;
@@ -1302,7 +1662,12 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   // Manglik, Nadi & Bhakoot Section
   ctx.fillStyle = '#8b1e1e';
   ctx.font = 'bold 17px "Tiro Devanagari Hindi", serif';
-  ctx.fillText('॥ मांगलिक विचार एवं विशेष दोष परिहार ॥', pBoxX, cursorY);
+  const doshaHeading = currentLang === 'en'
+    ? '॥ Manglik Analysis & Special Dosha Remedies ॥'
+    : currentLang === 'gu'
+    ? '॥ માંગલિક વિચાર અને વિશેષ દોષ પરિહાર ॥'
+    : '॥ मांगलिक विचार एवं विशेष दोष परिहार ॥';
+  ctx.fillText(doshaHeading, pBoxX, cursorY);
 
   cursorY += 10;
   const dBoxH = 140;
@@ -1319,23 +1684,33 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
   if (milan.manglikAnalysis) {
     ctx.fillStyle = '#8b1e1e';
     ctx.font = 'bold 13px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(`• मांगलिक विचार: ${milan.manglikAnalysis.verdict}`, pBoxX + 16, dY);
+    const lblMglk = currentLang === 'en' ? '• Manglik Findings:' : currentLang === 'gu' ? '• માંગલિક વિચાર:' : '• मांगलिक विचार:';
+    ctx.fillText(`${lblMglk} ${milan.manglikAnalysis.verdict}`, pBoxX + 16, dY);
     ctx.fillStyle = '#2d1403';
     ctx.font = '13px "Tiro Devanagari Hindi", serif';
     dY += 20;
-    ctx.fillText(`  वर: ${milan.manglikAnalysis.boyNote} | कन्या: ${milan.manglikAnalysis.girlNote}`, pBoxX + 16, dY);
+    const groomNoteLbl = currentLang === 'en' ? 'Groom:' : currentLang === 'gu' ? 'વર:' : 'वर:';
+    const brideNoteLbl = currentLang === 'en' ? 'Bride:' : currentLang === 'gu' ? 'કન્યા:' : 'कन्या:';
+    ctx.fillText(`  ${groomNoteLbl} ${milan.manglikAnalysis.boyNote} | ${brideNoteLbl} ${milan.manglikAnalysis.girlNote}`, pBoxX + 16, dY);
     dY += 20;
-    ctx.fillText(`  परिहार: ${milan.manglikAnalysis.cancellationReason}`, pBoxX + 16, dY);
+    const cancelLbl = currentLang === 'en' ? 'Remedy/Cancellation:' : currentLang === 'gu' ? 'પરિહાર:' : 'परिहार:';
+    ctx.fillText(`  ${cancelLbl} ${milan.manglikAnalysis.cancellationReason}`, pBoxX + 16, dY);
     dY += 22;
   }
 
   if (milan.nadiDosha) {
-    ctx.fillText(`• नाड़ी विचार: वर नाड़ी (${milan.nadiDosha.boyNadi}) vs कन्या नाड़ी (${milan.nadiDosha.girlNadi}) — ${milan.nadiDosha.hasDosha ? milan.nadiDosha.remedy : 'निर्दोष नाड़ी'}`, pBoxX + 16, dY);
+    const nadiLbl = currentLang === 'en' ? '• Nadi Analysis:' : currentLang === 'gu' ? '• નાડી વિચાર:' : '• नाड़ी विचार:';
+    const groomNadiLbl = currentLang === 'en' ? 'Groom Nadi' : currentLang === 'gu' ? 'વર નાડી' : 'वर नाड़ी';
+    const brideNadiLbl = currentLang === 'en' ? 'Bride Nadi' : currentLang === 'gu' ? 'કન્યા નાડી' : 'कन्या नाड़ी';
+    const flawlessNadi = currentLang === 'en' ? 'Flawless Nadi Match' : currentLang === 'gu' ? 'નિર્દોષ નાડી' : 'निर्दोष नाड़ी';
+    ctx.fillText(`${nadiLbl} ${groomNadiLbl} (${trVedic(milan.nadiDosha.boyNadi, currentLang)}) vs ${brideNadiLbl} (${trVedic(milan.nadiDosha.girlNadi, currentLang)}) — ${milan.nadiDosha.hasDosha ? milan.nadiDosha.remedy : flawlessNadi}`, pBoxX + 16, dY);
     dY += 22;
   }
 
   if (milan.bhakootDosha) {
-    ctx.fillText(`• भकूट विचार: ${milan.bhakootDosha.hasDosha ? milan.bhakootDosha.remedy : 'निर्दोष भकूट संबंध'}`, pBoxX + 16, dY);
+    const bhakootLbl = currentLang === 'en' ? '• Bhakoot Analysis:' : currentLang === 'gu' ? '• ભકૂટ વિચાર:' : '• भकूट विचार:';
+    const flawlessBhakoot = currentLang === 'en' ? 'Flawless Bhakoot Relation' : currentLang === 'gu' ? 'નિર્દોષ ભકૂટ સંબંધ' : 'निर्दोष भकूट संबंध';
+    ctx.fillText(`${bhakootLbl} ${milan.bhakootDosha.hasDosha ? milan.bhakootDosha.remedy : flawlessBhakoot}`, pBoxX + 16, dY);
   }
 
   // Footer
@@ -1354,7 +1729,12 @@ export async function downloadMilanBhojpatraPdf(options: MilanPdfOptions): Promi
 
   ctx.fillStyle = '#7a4b18';
   ctx.font = '13px "Tiro Devanagari Hindi", serif';
-  ctx.fillText('श्री शक्ति पंचांग संस्थान | प्रमाणित अष्टकूट गुण मिलान भोजपत्र पत्रिका', width / 2, footerY + 30);
+  const milanFooterInst = currentLang === 'en'
+    ? 'Shri Shakti Panchang Sansthan | Certified Ashtakoot Guna Milan Bhojpatra Patrika'
+    : currentLang === 'gu'
+    ? 'શ્રી શક્તિ પંચાંગ સંસ્થાન | પ્રમાણિત અષ્ટકૂટ ગુણ મિલન ભોજપત્ર પત્રિકા'
+    : 'श्री शक्ति पंचांग संस्थान | प्रमाणित अष्टकूट गुण मिलान भोजपत्र पत्रिका';
+  ctx.fillText(milanFooterInst, width / 2, footerY + 30);
 
   const imgData = canvas.toDataURL('image/jpeg', 0.88);
   const pdf = new jsPDF({

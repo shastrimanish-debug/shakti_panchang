@@ -3,6 +3,7 @@ import { VedicPanchangData, SavedLocation } from '../types';
 import { PanchangStoryView } from './PanchangStoryView';
 import { DashboardView } from './DashboardView';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface PanchangViewProps {
   panchang: VedicPanchangData;
@@ -36,6 +37,10 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
   onPrevChapter,
   onNextChapter,
 }) => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const pickL = <T,>(hi: T, en: T, gu: T): T => (cLang === 'en' ? en : cLang === 'gu' ? gu : hi);
+
   const [viewMode, setViewMode] = useState<'bento' | 'story'>('bento');
 
   const locationObj: SavedLocation = {
@@ -49,13 +54,15 @@ export const PanchangView: React.FC<PanchangViewProps> = ({
     return (
       <div className="relative w-full h-full min-h-0 flex flex-col overflow-hidden">
         <div className="bg-[#FFFDF9] dark:bg-[#1E110A] border-b border-[#E8DCCB] dark:border-amber-900/30 px-4 py-2 flex justify-between items-center text-xs shadow-xs shrink-0 z-30">
-          <span className="font-bold text-[#8C4A00] dark:text-amber-300">📖 ग्रन्थ स्टोरी व्यू (Story Book)</span>
+          <span className="font-bold text-[#8C4A00] dark:text-amber-300">
+            {pickL('📖 ग्रन्थ स्टोरी व्यू (Story Book)', '📖 Granth Story Book View', '📖 ગ્રંથ સ્ટોરી વ્યૂ (Story Book)')}
+          </span>
           <button
             type="button"
             onClick={() => setViewMode('bento')}
             className="px-3 py-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white font-black rounded-xl shadow-xs hover:from-amber-700 hover:to-amber-800 transition cursor-pointer"
           >
-            📱 iOS Bento Mode
+            {pickL('📱 iOS Bento मोड', '📱 iOS Bento Mode', '📱 iOS Bento મોડ')}
           </button>
         </div>
         <div className="flex-1 min-h-0 w-full overflow-hidden">

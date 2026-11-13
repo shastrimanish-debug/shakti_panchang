@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../i18n';
 
 interface ShaktiLogoProps {
   className?: string;
@@ -17,6 +18,10 @@ export const ShaktiLogo: React.FC<ShaktiLogoProps> = ({
   subtitle,
   variant = 'emblem'
 }) => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const brandName = cLang === 'en' ? 'Shakti Panchang' : cLang === 'gu' ? 'શક્તિ પંચાંગ' : 'शक्ति पंचांग';
+
   return (
     <div className={`inline-flex items-center gap-2 select-none ${className}`}>
       {/* Sacred Solar-Omkara Vector Emblem */}
@@ -26,7 +31,7 @@ export const ShaktiLogo: React.FC<ShaktiLogoProps> = ({
         height={size}
         className="shrink-0 drop-shadow-sm transition-transform active:scale-95"
         xmlns="http://www.w3.org/2000/svg"
-        aria-label="शक्ति पंचांग प्रतीक"
+        aria-label={cLang === 'en' ? 'Shakti Panchang Emblem' : cLang === 'gu' ? 'શક્તિ પંચાંગ પ્રતીક' : 'शक्ति पंचांग प्रतीक'}
       >
         <defs>
           <radialGradient id="sl_bgGlow" cx="50%" cy="50%" r="50%">
@@ -146,7 +151,7 @@ export const ShaktiLogo: React.FC<ShaktiLogoProps> = ({
       {showText && (
         <div className="flex flex-col leading-tight">
           <span className={`font-granth tracking-wide ${textClassName}`}>
-            शक्ति पंचांग
+            {brandName}
           </span>
           {subtitle && (
             <span className="text-[10px] text-[#D9C4A9] tracking-wider">

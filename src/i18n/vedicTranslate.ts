@@ -40,6 +40,7 @@ export const RASHI_MAP_EN: Record<string, string> = {
   'धनु राशि': 'Sagittarius (Dhanu)',
   'मकर राशि': 'Capricorn (Makara)',
   'कुम्भ राशि': 'Aquarius (Kumbha)',
+  'कुंभ राशि': 'Aquarius (Kumbha)',
   'मीन राशि': 'Pisces (Meena)',
   'मेष': 'Aries (Mesha)',
   'वृषभ': 'Taurus (Vrishabha)',
@@ -52,6 +53,7 @@ export const RASHI_MAP_EN: Record<string, string> = {
   'धनु': 'Sagittarius (Dhanu)',
   'मकर': 'Capricorn (Makara)',
   'कुम्भ': 'Aquarius (Kumbha)',
+  'कुंभ': 'Aquarius (Kumbha)',
   'मीन': 'Pisces (Meena)',
 };
 
@@ -59,6 +61,8 @@ export const PLANET_MAP_EN: Record<string, string> = {
   'सूर्य देव': 'Sun',
   'सूर्य': 'Sun',
   'चन्द्र देव': 'Moon',
+  'चन्द्रमा': 'Moon',
+  'चंद्रमा': 'Moon',
   'चन्द्र': 'Moon',
   'चंद्र': 'Moon',
   'मंगल देव': 'Mars',
@@ -100,13 +104,16 @@ export const NAKSHATRA_MAP_EN: Record<string, string> = {
   'अश्विनी': 'Ashwini',
   'भरणी': 'Bharani',
   'कृत्तिका': 'Krittika',
+  'कृतिका': 'Krittika',
   'रोहिणी': 'Rohini',
+  'मृगशीर्ष': 'Mrigashira',
   'मृગશિરા': 'Mrigashira',
   'मृगशिरा': 'Mrigashira',
   'आर्द्रा': 'Ardra',
   'पुनर्वसु': 'Punarvasu',
   'पुष्य': 'Pushya',
   'आश्लेषा': 'Ashlesha',
+  'अश्लेषा': 'Ashlesha',
   'मघा': 'Magha',
   'पूर्वाफाल्गुनी': 'Purva Phalguni',
   'पूर्वा फाल्गुनी': 'Purva Phalguni',
@@ -114,6 +121,7 @@ export const NAKSHATRA_MAP_EN: Record<string, string> = {
   'उत्तरा फाल्गुनी': 'Uttara Phalguni',
   'हस्त': 'Hasta',
   'चित्रा': 'Chitra',
+  'स्वाती': 'Swati',
   'स्वाति': 'Swati',
   'विशाखा': 'Vishakha',
   'अनुराधा': 'Anuradha',
@@ -173,6 +181,7 @@ export const KARANA_MAP_EN: Record<string, string> = {
   'तैतिल': 'Taitila',
   'गर': 'Gara',
   'वणिज': 'Vanija',
+  'विष्टि (भद्रा)': 'Vishti (Bhadra)',
   'विष्टि': 'Vishti (Bhadra)',
   'शकुनि': 'Shakuni',
   'चतुष्पाद': 'Chatushpada',
@@ -252,6 +261,7 @@ export const RASHI_MAP_GU: Record<string, string> = {
   'धनु राशि': 'ધન રાશિ',
   'मकर राशि': 'મકર રાશિ',
   'कुम्भ राशि': 'કુંભ રાશિ',
+  'कुंभ राशि': 'કુંભ રાશિ',
   'मीन राशि': 'મીન રાશિ',
   'मेष': 'મેષ',
   'वृषभ': 'વૃષભ',
@@ -264,6 +274,7 @@ export const RASHI_MAP_GU: Record<string, string> = {
   'धनु': 'ધન',
   'मकर': 'મકર',
   'कुम्भ': 'કુંભ',
+  'कुंभ': 'કુંભ',
   'मीन': 'મીન',
 };
 
@@ -271,6 +282,8 @@ export const PLANET_MAP_GU: Record<string, string> = {
   'सूर्य देव': 'સૂર્ય દેવ',
   'सूर्य': 'સૂર્ય',
   'चन्द्र देव': 'ચંદ્ર દેવ',
+  'चन्द्रमा': 'ચંદ્ર',
+  'चंद्रमा': 'ચંદ્ર',
   'चन्द्र': 'ચંદ્ર',
   'चंद्र': 'ચંદ્ર',
   'मंगल देव': 'મંગળ દેવ',
@@ -312,12 +325,15 @@ export const NAKSHATRA_MAP_GU: Record<string, string> = {
   'अश्विनी': 'અશ્વિની',
   'भरणी': 'ભરણી',
   'कृत्तिका': 'કૃત્તિકા',
+  'कृतिका': 'કૃત્તિકા',
   'रोहिणी': 'રોહિણી',
+  'मृगशीर्ष': 'મૃગશિરા',
   'मृगशिरा': 'મૃગશિરા',
   'आर्द्रा': 'આર્દ્રા',
   'पुनर्वसु': 'પુનર્વસુ',
   'पुष्य': 'પુષ્ય',
   'आश्लेषा': 'આશ્લેષા',
+  'अश्लेषा': 'આશ્લેષા',
   'मघा': 'મઘા',
   'पूर्वाफाल्गुनी': 'પૂર્વા ફાલ્ગુની',
   'पूर्वा फाल्गुनी': 'પૂર્વા ફાલ્ગુની',
@@ -325,6 +341,7 @@ export const NAKSHATRA_MAP_GU: Record<string, string> = {
   'उत्तरा फाल्गुनी': 'ઉત્તરા ફાલ્ગુની',
   'हस्त': 'હસ્ત',
   'चित्रा': 'ચિત્રા',
+  'स्वाती': 'સ્વાતિ',
   'स्वाति': 'સ્વાતિ',
   'विशाखा': 'વિશાખા',
   'अनुराधा': 'અનુરાધા',
@@ -384,6 +401,7 @@ export const KARANA_MAP_GU: Record<string, string> = {
   'तैतिल': 'તૈતિલ',
   'गर': 'ગર',
   'वणिज': 'વણિજ',
+  'विष्टि (भद्रा)': 'વિષ્ટિ (ભદ્રા)',
   'विष्टि': 'વિષ્ટિ (ભદ્રા)',
   'शकुनि': 'શકુનિ',
   'चतुष्पाद': 'ચતુષ્પાદ',
@@ -520,6 +538,7 @@ export const GENERAL_PHRASES_EN: [RegExp, string][] = [
   [/मृग योनि/g, 'Mriga (Deer) Yoni'],
   [/वानर योनि/g, 'Vanara (Monkey) Yoni'],
   [/नकुल योनि/g, 'Nakula (Mongoose) Yoni'],
+  [/सिंह योनि/g, 'Simha (Lion) Yoni'],
   [/मांगलिक दोष मुक्त/g, 'Non-Manglik (Dosh-Free)'],
   [/मांगलिक/g, 'Manglik'],
   [/साढ़े साती नहीं है/g, 'No Sade Sati currently'],
@@ -655,6 +674,53 @@ export const GENERAL_PHRASES_GU: [RegExp, string][] = [
   [/मध्यम/g, 'મધ્યમ'],
 ];
 
+export const ATTR_EXACT_EN: Record<string, string> = {
+  'चतुष्पाद': 'Chatushpada (Quadruped)',
+  'मानव': 'Manava (Human)',
+  'द्विपद/मानव': 'Dwipada / Manava',
+  'जलचर': 'Jalachara (Aquatic)',
+  'वनचर': 'Vanachara (Wild)',
+  'कीट': 'Keeta (Insect)',
+  'अश्व': 'Ashwa (Horse)',
+  'गज': 'Gaja (Elephant)',
+  'मेढ़ा': 'Mesha (Ram)',
+  'मेष': 'Mesha (Sheep)',
+  'सर्प': 'Sarpa (Serpent)',
+  'श्वान': 'Shwan (Dog)',
+  'मार्जार': 'Marjara (Cat)',
+  'मूषक': 'Mushaka (Rat)',
+  'गौ': 'Gau (Cow)',
+  'महिष': 'Mahisha (Buffalo)',
+  'व्याघ्र': 'Vyaghra (Tiger)',
+  'मृग': 'Mriga (Deer)',
+  'वानर': 'Vanara (Monkey)',
+  'नकुल': 'Nakula (Mongoose)',
+  'त्रिकूट': 'Trikoot',
+};
+
+export const ATTR_EXACT_GU: Record<string, string> = {
+  'चतुष्पाद': 'ચતુષ્પાદ',
+  'मानव': 'માનવ',
+  'द्विपद/मानव': 'દ્વિપદ/માનવ',
+  'जलचर': 'જળચર',
+  'वनचर': 'વનચર',
+  'कीट': 'કીટ',
+  'अश्व': 'અશ્વ',
+  'गज': 'ગજ',
+  'मेढ़ा': 'મેઢા (મેષ)',
+  'सर्प': 'સર્પ',
+  'श्वान': 'શ્વાન',
+  'मार्जार': 'માર્જાર',
+  'मूषक': 'મૂષક',
+  'गौ': 'ગૌ',
+  'महिष': 'મહિષ',
+  'व्याघ्र': 'વ્યાઘ્ર',
+  'मृग': 'મૃગ',
+  'वानर': 'વાનર',
+  'नकुल': 'નકુલ',
+  'त्रिकूट': 'ત્રિકૂટ',
+};
+
 /**
  * Universal Vedic translator supporting English ('en'), Gujarati ('gu'), and Hindi ('hi')
  */
@@ -673,6 +739,7 @@ export function trVedic(term: string | undefined | null, langOverride?: string):
     if (YOGA_MAP_EN[result]) return YOGA_MAP_EN[result];
     if (KARANA_MAP_EN[result]) return KARANA_MAP_EN[result];
     if (MASA_MAP_EN[result]) return MASA_MAP_EN[result];
+    if (ATTR_EXACT_EN[result]) return ATTR_EXACT_EN[result];
 
     for (const [k, v] of Object.entries(MASA_MAP_EN)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
@@ -715,6 +782,7 @@ export function trVedic(term: string | undefined | null, langOverride?: string):
     if (YOGA_MAP_GU[result]) return YOGA_MAP_GU[result];
     if (KARANA_MAP_GU[result]) return KARANA_MAP_GU[result];
     if (MASA_MAP_GU[result]) return MASA_MAP_GU[result];
+    if (ATTR_EXACT_GU[result]) return ATTR_EXACT_GU[result];
 
     for (const [k, v] of Object.entries(MASA_MAP_GU)) {
       if (result.includes(k)) result = result.replace(new RegExp(k, 'g'), v);
@@ -837,7 +905,7 @@ export function trChoghadiyaMeaning(meaning: string, hindiName?: string, langOve
         return 'શુભ, પૂજા-પાઠ, વિદ્યા અને માંગલિક કાર્યો માટે ઉત્તમ';
       case 'लाभ':
         return 'લાભદાયી, વેપાર-વાણિજ્ય અને આર્થિક વૃદ્ધિ માટે અનુકૂળ';
-      case 'ચર':
+      case 'चर':
         return 'ગતિશીલ, યાત્રા, પ્રવાસ અને વાહન કાર્ય માટે શ્રેષ્ઠ';
       case 'चल':
         return 'મધ્યમ, રોજિંદા સામાન્ય કાર્યો માટે યોગ્ય';

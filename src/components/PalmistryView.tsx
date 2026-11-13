@@ -4,7 +4,8 @@ import {
   generatePalmAnalysis,
   PalmScanAnalysisResult,
 } from '../services/spiritualModules';
-import { useTranslation } from '../i18n';
+import { useTranslation, useLanguage } from '../i18n';
+import { trVedic } from '../i18n/vedicTranslate';
 import {
   Camera,
   Hand,
@@ -27,6 +28,10 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
   onNextChapter,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === 'en' ? en : cLang === 'gu' ? gu : hi);
+
   const [selectedHand, setSelectedHand] = useState<'right' | 'left'>('right');
   const [analysisResult, setAnalysisResult] = useState<PalmScanAnalysisResult>(() => generatePalmAnalysis('right'));
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
@@ -41,15 +46,24 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
   const headLine = analysisResult.lines.find((l) => l.nameKey.includes('head')) || analysisResult.lines[2];
   const fateLine = analysisResult.lines.find((l) => l.nameKey.includes('fate')) || analysisResult.lines[3];
 
+  const getMountLabel = (planetStr: string) => {
+    const pBase = planetStr.split(' ')[0];
+    return L(planetStr, `${trVedic(pBase, 'en')} Mount`, `${trVedic(pBase, 'gu')} પર્વત`);
+  };
+
   const slides: StorySlideItem[] = [
     // Slide 1: Scanner / Hand Overview
     {
       id: 'scan-overview',
-      title: 'सामुद्रिक हस्तरेखा शास्त्र',
-      subtitle: `${selectedHand === 'right' ? 'दक्षिण (दाहिना)' : 'वाम (बायां)'} हस्त विश्लेषण`,
-      badge: 'सामुद्रिक विज्ञान',
+      title: L('सामुद्रिक हस्तरेखा शास्त्र', 'Samudrik Palmistry Shastra', 'સામુદ્રિક હસ્તરેખા શાસ્ત્ર'),
+      subtitle: `${selectedHand === 'right' ? L('दक्षिण (दाहिना)', 'Right Hand', 'જમણો') : L('वाम (बायां)', 'Left Hand', 'ડાબો')} ${L('हस्त विश्लेषण', 'Palm Analysis', 'હસ્ત વિશ્લેષણ')}`,
+      badge: L('सामुद्रिक विज्ञान', 'Samudrik Shastra', 'સામુદ્રિક વિજ્ઞાન'),
       icon: '✋',
-      voiceText: 'सामुद्रिक हस्तरेखा शास्त्र। अपनी हथेली की मुख्य रेखाओं का फल देखें।',
+      voiceText: L(
+        'सामुद्रिक हस्तरेखा शास्त्र। अपनी हथेली की मुख्य रेखाओं का फल देखें।',
+        'Samudrik Palmistry Shastra. View predictions for the major lines on your palm.',
+        'સામુદ્રિક હસ્તરેખા શાસ્ત્ર. તમારી હથેળીની મુખ્ય રેખાઓનું ફળ જુઓ.'
+      ),
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-2">
           <div className="p-3.5 rounded-2xl bg-amber-50/90 border-2 border-amber-300 shadow-sm text-center my-auto space-y-2.5">
@@ -58,7 +72,7 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
             </div>
 
             <div className="text-sm font-black font-granth text-[#462B17]">
-              सामुद्रिक हस्तरेखा विश्लेषण
+              {L('सामुद्रिक हस्तरेखा विश्लेषण', 'Samudrik Palmistry Analysis', 'સામુદ્રિક હસ્તરેખા વિશ્લેષણ')}
             </div>
 
             <div className="flex items-center justify-center gap-2">
@@ -75,7 +89,7 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
                     : 'bg-white text-[#5C3A21] border border-amber-300'
                 }`}
               >
-                दाहिना हाथ (पुरुष/कर्म)
+                {L('दाहिना हाथ (पुरुष/कर्म)', 'Right Palm (Karma/Active)', 'જમણો હાથ (કર્મ)')}
               </button>
               <button
                 type="button"
@@ -90,7 +104,7 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
                     : 'bg-white text-[#5C3A21] border border-amber-300'
                 }`}
               >
-                बायां हाथ (स्त्री/प्रारब्ध)
+                {L('बायां हाथ (स्त्री/प्रारब्ध)', 'Left Palm (Prarabdha/Past)', 'ડાબો હાથ (પ્રારબ્ધ)')}
               </button>
             </div>
 
@@ -103,7 +117,7 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-500 text-stone-950 text-xs font-black transition flex items-center justify-center gap-1.5 mx-auto cursor-pointer shadow-sm"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>हथेली स्कैन / पुनः विश्लेषण</span>
+              <span>{L('हथेली स्कैन / पुनः विश्लेषण', 'Scan Palm / Re-analyze', 'હથેળી સ્કેન / ફરી વિશ્લેષણ')}</span>
             </button>
           </div>
           <div className="text-[10px] text-center text-[#8C6239]">
@@ -116,40 +130,60 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
     // Slide 2: Three Main Lines (Heart, Head, Life)
     {
       id: 'main-lines',
-      title: 'जीवन, मस्तिष्क एवं हृदय रेखा',
-      subtitle: 'आयु, विद्या व भावनात्मक संतुलन',
-      badge: 'त्रिवेणी रेखा',
+      title: L('जीवन, मस्तिष्क एवं हृदय रेखा', 'Life, Head & Heart Lines', 'જીવન, મસ્તિષ્ક અને હૃદય રેખા'),
+      subtitle: L('आयु, विद्या व भावनात्मक संतुलन', 'Longevity, Intellect & Emotional Balance', 'આયુષ્ય, વિદ્યા અને ભાવનાત્મક સંતુલન'),
+      badge: L('त्रिवेणी रेखा', 'Three Core Lines', 'ત્રિવેણી રેખા'),
       icon: '🧬',
-      voiceText: 'जीवन रेखा, मस्तिष्क रेखा और हृदय रेखा का फलित।',
+      voiceText: L(
+        'जीवन रेखा, मस्तिष्क रेखा और हृदय रेखा का फलित।',
+        'Interpretation of Life Line, Head Line, and Heart Line.',
+        'જીવન રેખા, મસ્તિષ્ક રેખા અને હૃદય રેખાનું ફળ.'
+      ),
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-1.5">
           <div className="space-y-1.5 my-auto text-xs">
             <div className="p-2 rounded-xl bg-rose-50 border border-rose-200">
               <div className="font-bold text-rose-950 flex items-center gap-1">
                 <Heart className="w-3.5 h-3.5 text-rose-600" />
-                <span>{heartLine?.sanskritName || 'हृदय रेखा'}: {t(heartLine?.qualityKey, 'स्पष्ट व सबल')}</span>
+                <span>
+                  {L('हृदय रेखा', 'Heart Line', 'હૃદય રેખા')}: {t(heartLine?.qualityKey, L('स्पष्ट व सबल', 'Clear & Strong', 'સ્પષ્ટ અને સબળ'))}
+                </span>
               </div>
-              <p className="text-[10px] text-rose-900 mt-0.5">{t(heartLine?.interpretationKey, 'सहानुभूति व भावनात्मक स्थिरता का सूचक।')}</p>
+              <p className="text-[10px] text-rose-900 mt-0.5">
+                {t(heartLine?.interpretationKey, L('सहानुभूति व भावनात्मक स्थिरता का सूचक।', 'Indicates empathy, warmth, and emotional stability.', 'સહાનુભૂતિ અને ભાવનાત્મક સ્થિરતાનું સૂચક.'))}
+              </p>
             </div>
 
             <div className="p-2 rounded-xl bg-sky-50 border border-sky-200">
               <div className="font-bold text-sky-950 flex items-center gap-1">
                 <Brain className="w-3.5 h-3.5 text-sky-600" />
-                <span>{headLine?.sanskritName || 'मस्तिष्क रेखा'}: {t(headLine?.qualityKey, 'दीर्घ व स्पष्ट')}</span>
+                <span>
+                  {L('मस्तिष्क रेखा', 'Head Line', 'મસ્તિષ્ક રેખા')}: {t(headLine?.qualityKey, L('दीर्घ व स्पष्ट', 'Long & Well-defined', 'દીર્ઘ અને સ્પષ્ટ'))}
+                </span>
               </div>
-              <p className="text-[10px] text-sky-900 mt-0.5">{t(headLine?.interpretationKey, 'तीक्ष्ण बुद्धि, निर्णय क्षमता व दूरदर्शिता।')}</p>
+              <p className="text-[10px] text-sky-900 mt-0.5">
+                {t(headLine?.interpretationKey, L('तीक्ष्ण बुद्धि, निर्णय क्षमता व दूरदर्शिता।', 'Reflects sharp intellect, clarity of thought, and foresight.', 'તીક્ષ્ણ બુદ્ધિ, નિર્ણય ક્ષમતા અને દૂરદર્શિતા.'))}
+              </p>
             </div>
 
             <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200">
               <div className="font-bold text-emerald-950 flex items-center gap-1">
                 <Activity className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{lifeLine?.sanskritName || 'जीवन रेखा'}: {t(lifeLine?.qualityKey, 'सुदृढ़ एवं अक्षुण्ण')}</span>
+                <span>
+                  {L('जीवन रेखा', 'Life Line', 'જીવન રેખા')}: {t(lifeLine?.qualityKey, L('सुदृढ़ एवं अक्षुण्ण', 'Deep & Unbroken', 'સુદૃઢ અને અખંડ'))}
+                </span>
               </div>
-              <p className="text-[10px] text-emerald-900 mt-0.5">{t(lifeLine?.interpretationKey, 'उत्तम आरोग्य, प्राणशक्ति एवं दीर्घायु का वरदान।')}</p>
+              <p className="text-[10px] text-emerald-900 mt-0.5">
+                {t(lifeLine?.interpretationKey, L('उत्तम आरोग्य, प्राणशक्ति एवं दीर्घायु का वरदान।', 'Signifies strong vitality, good health, and longevity.', 'ઉત્તમ આરોગ્ય, પ્રાણશક્તિ અને દીર્ઘાયુનું વરદાન.'))}
+              </p>
             </div>
           </div>
           <div className="text-[10px] text-center text-[#8C6239]">
-            स्पष्ट व निर्दोष रेखाएं जातक को दीर्घायु व सफलता प्रदान करती हैं।
+            {L(
+              'स्पष्ट व निर्दोष रेखाएं जातक को दीर्घायु व सफलता प्रदान करती हैं।',
+              'Clear, unbroken lines bless the native with longevity and steady success.',
+              'સ્પષ્ટ અને નિર્દોષ રેખાઓ જાતકને દીર્ઘાયુ અને સફળતા પ્રદાન કરે છે.'
+            )}
           </div>
         </div>
       ),
@@ -158,40 +192,50 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
     // Slide 3: Fate Line & Mounts
     {
       id: 'fate-sun-line',
-      title: 'भाग्य रेखा एवं प्रमुख पर्वत',
-      subtitle: 'आजीविका, पदोन्नति एवं मान-सम्मान',
-      badge: 'राजयोग रेखा',
+      title: L('भाग्य रेखा एवं प्रमुख पर्वत', 'Fate Line & Major Mounts', 'ભાગ્ય રેખા અને મુખ્ય પર્વત'),
+      subtitle: L('आजीविका, पदोन्नति एवं मान-सम्मान', 'Career, Growth & Social Honor', 'આજીવિકા, પ્રગતિ અને માન-સન્માન'),
+      badge: L('राजयोग रेखा', 'Fortune Lines', 'રાજયોગ રેખા'),
       icon: '👑',
-      voiceText: 'भाग्य रेखा और पर्वतों का विश्लेषण।',
+      voiceText: L(
+        'भाग्य रेखा और पर्वतों का विश्लेषण।',
+        'Analysis of the Fate Line and planetary mounts on the palm.',
+        'ભાગ્ય રેખા અને પર્વતોનું વિશ્લેષણ.'
+      ),
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-1.5">
           <div className="space-y-2 my-auto text-xs">
             <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-300">
               <div className="font-bold text-[#5C3A21] flex items-center gap-1 text-xs">
                 <Zap className="w-3.5 h-3.5 text-amber-600" />
-                <span>{fateLine?.sanskritName || 'भाग्य रेखा'}: {t(fateLine?.qualityKey, 'सक्रिय')}</span>
+                <span>
+                  {L('भाग्य रेखा', 'Fate Line', 'ભાગ્ય રેખા')}: {t(fateLine?.qualityKey, L('सक्रिय', 'Active', 'સક્રિય'))}
+                </span>
               </div>
               <p className="text-[11px] text-[#6E472A] mt-1 leading-snug">
-                {t(fateLine?.interpretationKey, 'स्वावलम्बन से भाग्य निर्माण एवं निरंतर कार्य सिद्धि।')}
+                {t(fateLine?.interpretationKey, L('स्वावलम्बन से भाग्य निर्माण एवं निरंतर कार्य सिद्धि।', 'Self-made fortune through dedication and steady progress.', 'સ્વાવલંબનથી ભાગ્ય નિર્માણ અને સતત કાર્ય સિદ્ધિ.'))}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-100/70 to-yellow-50 border border-amber-300">
               <div className="font-bold text-amber-950 flex items-center gap-1 text-xs">
-                <span>हथेली के प्रमुख पर्वत</span>
+                <span>{L('हथेली के प्रमुख पर्वत', 'Major Planetary Mounts', 'હથેળીના મુખ્ય પર્વતો')}</span>
               </div>
               <div className="grid grid-cols-2 gap-1.5 mt-1.5">
                 {analysisResult.mounts.slice(0, 4).map((m, idx) => (
                   <div key={idx} className="p-1.5 rounded-lg bg-white/80 border border-amber-200">
-                    <div className="font-bold text-[10px] text-[#5C3A21]">{m.planet}</div>
-                    <div className="text-[9px] text-[#735133]">बल: {m.strength}%</div>
+                    <div className="font-bold text-[10px] text-[#5C3A21]">{getMountLabel(m.planet)}</div>
+                    <div className="text-[9px] text-[#735133]">{L('बल:', 'Strength:', 'બળ:')} {m.strength}%</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
           <div className="text-[10px] text-center text-[#8C6239]">
-            शनि व सूर्य पर्वत की शुभता से समाज में प्रतिष्ठा प्राप्त होती है।
+            {L(
+              'शनि व सूर्य पर्वत की शुभता से समाज में प्रतिष्ठा प्राप्त होती है।',
+              'Well-developed Mounts of Saturn and Sun bestow social honor and leadership.',
+              'શનિ અને સૂર્ય પર્વતની શુભતાથી સમાજમાં પ્રતિષ્ઠા પ્રાપ્ત થાય છે.'
+            )}
           </div>
         </div>
       ),
@@ -203,12 +247,12 @@ export const PalmistryView: React.FC<PalmistryViewProps> = ({
       slides={slides}
       currentSlideIndex={activeSlideIndex}
       onSlideIndexChange={setActiveSlideIndex}
-      headerTitle="सामुद्रिक हस्तरेखा शास्त्र"
+      headerTitle={t('nav.palmistry', L('सामुद्रिक हस्तरेखा शास्त्र', 'Samudrik Palmistry', 'સામુદ્રિક હસ્તરેખા શાસ્ત્ર'))}
       headerIcon="✋"
       chapterNumber={11}
       onPrevChapter={onPrevChapter}
       onNextChapter={onNextChapter}
-      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery('हस्तरेखा फलित एवं सामुद्रिक परामर्श') : undefined}
+      onOpenUma={onOpenUmaWithQuery ? () => onOpenUmaWithQuery(L('हस्तरेखा फलित एवं सामुद्रिक परामर्श', 'Palmistry & Samudrik consultation', 'હસ્તરેખા ફળ અને સામુદ્રિક પરામર્શ')) : undefined}
     />
   );
 };

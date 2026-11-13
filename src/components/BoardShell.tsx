@@ -359,7 +359,7 @@ export function BoardHeader({
         }}
         className="bx-head-btn shrink-0"
         aria-label={t("common.language", "भाषा")}
-        title="भाषा बदलें"
+        title={t("common.changeLanguage", "भाषा बदलें")}
       >
         <Languages className="w-3.5 h-3.5" />
         <span className="text-[11px] font-semibold">{t("common.language", "भाषा")}</span>
@@ -823,7 +823,7 @@ export function TodayBoard({
               borderColor: "var(--bx-gold)",
             }}
             className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
-            title="शहर / स्थान बदलें"
+            title={t("common.changeCity", "शहर / स्थान बदलें")}
           >
             <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-mark-soft)" }} />
             <span className="truncate max-w-[130px] sm:max-w-[180px]">{formatPlaceDisplay(place.name, language)}</span>
@@ -1075,7 +1075,7 @@ export function TodayBoard({
                   setIsTithiNirnayaOpen(true);
                 }}
                 className="bx-fact bx-glass text-left cursor-pointer hover:border-amber-500 relative flex flex-col justify-between"
-                title={language === 'en' ? 'View Shastric Tithi & Festival Decision' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण देखें'}
+                title={language === 'en' ? 'View Shastric Tithi & Festival Decision' : language === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય જુઓ' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण देखें'}
               >
                 <div className="bx-kicker flex items-center justify-between gap-1">
                   <span>{k}</span>

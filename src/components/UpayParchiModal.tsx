@@ -10,7 +10,7 @@ import {
   UpayParchiDetailedItem,
   GrahanShantiDeepDive,
 } from '../services/umaMicroAstrology';
-import { GOTRA_LIST } from '../services/triveniGemology';
+import { GOTRA_LIST, getLocalizedGotra } from '../services/triveniGemology';
 import {
   getAstrologerBranding,
   saveAstrologerBranding,
@@ -20,6 +20,8 @@ import {
   AppFontSize,
 } from '../services/storage';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
+import { useLanguage } from '../i18n';
+import { trPlanet, trRashi, trVedic, trWeekday } from '../i18n/vedicTranslate';
 import {
   X,
   Download,
@@ -75,31 +77,90 @@ interface ParchiHeaderConfig {
   address: string;
 }
 
-const QUICK_REMEDY_PRESETS = [
-  'मोती + माणिक रत्न धारण करें।',
-  'पुखराज + माणिक रत्न धारण करें।',
-  'पन्ना + ओपल रत्न धारण करें।',
-  'मूंगा + पुखराज रत्न धारण करें।',
-  'रविवार का उपवास करें।',
-  'गुरुवार का उपवास करें।',
-  'मंगलवार का उपवास करें।',
-  'श्रीविष्णुसहस्रनाम का पाठ करें।',
-  'श्री आदित्यहृदय स्तोत्र का पाठ करें।',
-  'श्री सुन्दरकाण्ड का पाठ करें।',
-  'पीला कपड़ा, चने की दाल, गुड़, हल्दी, दक्षिणा (गुरुवार - 1 बार)',
-  'काला कपड़ा, काली उड़द, तिल, तेल, लोहा, दक्षिणा (शनिवार - 1 बार)',
-  'लाल कपड़ा, मसूर दाल, गुड़, तांबा, दक्षिणा (मंगलवार - 1 बार)',
-  'गाय और कुत्ते को रोटी खिलावें।',
-  'ग्रहण योग शान्ति करावें।',
-  'कालसर्प योग शान्ति करावें।',
-  'मंगल भात पूजा / मांगलिक शान्ति करावें।',
-  'गुरु-चाण्डाल योग शान्ति करावें।',
-  'पितृ दोष शान्ति एवं तर्पण करावें।',
-  'रुद्राभिषेक एवं महामृत्युंजय जप करावें।',
-];
+function getQuickRemedyPresets(lang: string = 'hi'): string[] {
+  const currentLang = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (currentLang === 'en') {
+    return [
+      'Wear Pearl + Ruby gemstone.',
+      'Wear Yellow Sapphire + Ruby gemstone.',
+      'Wear Emerald + Opal gemstone.',
+      'Wear Red Coral + Yellow Sapphire gemstone.',
+      'Observe Sunday Sattvic Fasting.',
+      'Observe Thursday Sattvic Fasting.',
+      'Observe Tuesday Sattvic Fasting.',
+      'Recite Sri Vishnu Sahasranama.',
+      'Recite Sri Aditya Hridaya Stotram.',
+      'Recite Sri Sundarkand.',
+      'Yellow cloth, chana dal, jaggery, turmeric, Dakshina (Thursday - 1 time)',
+      'Black cloth, black urad, sesame, mustard oil, iron, Dakshina (Saturday - 1 time)',
+      'Red cloth, masoor dal, jaggery, copper, Dakshina (Tuesday - 1 time)',
+      'Feed sacred cow and dog with roti.',
+      'Perform Grahan Yoga Shanti.',
+      'Perform Kaal Sarp Yoga Shanti.',
+      'Perform Mangal Bhaat Puja / Manglik Shanti.',
+      'Perform Guru-Chandal Yoga Shanti.',
+      'Perform Pitru Dosha Shanti & Tarpan.',
+      'Perform Rudrabhishek & Mahamrityunjaya Japa.',
+    ];
+  }
+  if (currentLang === 'gu') {
+    return [
+      'મોતી + માણેક રત્ન ધારણ કરો.',
+      'પોખરાજ + માણેક રત્ન ધારણ કરો.',
+      'પન્ના + ઓપલ રત્ન ધારણ કરો.',
+      'મૂંગા + પોખરાજ રત્ન ધારણ કરો.',
+      'રવિવારનું સાત્વિક ઉપવાસ કરો.',
+      'ગુરુવારનું સાત્વિક ઉપવાસ કરો.',
+      'મંગળવારનું સાત્વિક ઉપવાસ કરો.',
+      'શ્રીવિષ્ણુસહસ્રનામનો પાઠ કરો.',
+      'શ્રી આદિત્યહૃદય સ્તોત્રનો પાઠ કરો.',
+      'શ્રી સુંદરકાંડનો પાઠ કરો.',
+      'પીળું વસ્ત્ર, ચણાની દાળ, ગોળ, હળદર, દક્ષિણા (ગુરુવાર - ૧ વાર)',
+      'કાળું વસ્ત્ર, કાળા અડદ, તલ, તેલ, લોખંડ, દક્ષિણા (શનિવાર - ૧ વાર)',
+      'લાલ વસ્ત્ર, મસૂર દાળ, ગોળ, તાંબુ, દક્ષિણા (મંગળવાર - ૧ વાર)',
+      'ગાય અને કૂતરાને રોટલી ખવડાવો.',
+      'ગ્રહણ યોગ શાંતિ કરાવો.',
+      'કાલસર્પ યોગ શાંતિ કરાવો.',
+      'મંગળ ભાત પૂજા / માંગલિક શાંતિ કરાવો.',
+      'ગુરુ-ચાંડાલ યોગ શાંતિ કરાવો.',
+      'પિતૃ દોષ શાંતિ અને તર્પણ કરાવો.',
+      'રુદ્રાભિષેક અને મહામૃત્યુંજય જપ કરાવો.',
+    ];
+  }
+  return [
+    'मोती + माणिक रत्न धारण करें।',
+    'पुखराज + माणिक रत्न धारण करें।',
+    'पन्ना + ओपल रत्न धारण करें।',
+    'मूंगा + पुखराज रत्न धारण करें।',
+    'रविवार का उपवास करें।',
+    'गुरुवार का उपवास करें।',
+    'मंगलवार का उपवास करें।',
+    'श्रीविष्णुसहस्रनाम का पाठ करें।',
+    'श्री आदित्यहृदय स्तोत्र का पाठ करें।',
+    'श्री सुन्दरकाण्ड का पाठ करें।',
+    'पीला कपड़ा, चने की दाल, गुड़, हल्दी, दक्षिणा (गुरुवार - 1 बार)',
+    'काला कपड़ा, काली उड़द, तिल, तेल, लोहा, दक्षिणा (शनिवार - 1 बार)',
+    'लाल कपड़ा, मसूर दाल, गुड़, तांबा, दक्षिणा (मंगलवार - 1 बार)',
+    'गाय और कुत्ते को रोटी खिलावें।',
+    'ग्रहण योग शान्ति करावें।',
+    'कालसर्प योग शान्ति करावें।',
+    'मंगल भात पूजा / मांगलिक शान्ति करावें।',
+    'गुरु-चाण्डाल योग शान्ति करावें।',
+    'पितृ दोष शान्ति एवं तर्पण करावें।',
+    'रुद्राभिषेक एवं महामृत्युंजय जप करावें।',
+  ];
+}
 
-function loadParchiHeader(): ParchiHeaderConfig {
+function getDefaultDesignation(lang: string = 'hi'): string {
+  const l = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (l === 'en') return 'Vedic Astrologer & Vastu Consultant';
+  if (l === 'gu') return 'જ્યોતિષાચાર્ય અને વાસ્તુવિદ';
+  return 'ज्योतिषाचार्य एवं वास्तुविद';
+}
+
+function loadParchiHeader(lang: string = 'hi'): ParchiHeaderConfig {
   const branding = getAstrologerBranding();
+  const defDesig = getDefaultDesignation(lang);
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PARCHI_HEADER);
     if (raw) {
@@ -114,10 +175,13 @@ function loadParchiHeader(): ParchiHeaderConfig {
       const rawQual = (parsed.qualification || '').trim();
       const scrubbedQual = rawQual.includes('M.A., Ph.D (संस्कृत') ? '' : rawQual;
 
+      const rawDesig = (parsed.designation || '').trim();
+      const isDefaultDesig = !rawDesig || rawDesig === 'ज्योतिषाचार्य एवं वास्तुविद' || rawDesig === 'Vedic Astrologer & Vastu Consultant' || rawDesig === 'જ્યોતિષાચાર્ય અને વાસ્તુવિદ';
+
       return {
         astrologerName: scrubbedName || branding.name || '',
         qualification: scrubbedQual || '',
-        designation: parsed.designation || branding.title || 'ज्योतिषाचार्य एवं वास्तुविद',
+        designation: isDefaultDesig ? (branding.title || defDesig) : rawDesig,
         mobile: parsed.mobile ?? branding.phone ?? '',
         address: scrubbedAddress || branding.city || '',
       };
@@ -126,7 +190,7 @@ function loadParchiHeader(): ParchiHeaderConfig {
   return {
     astrologerName: branding.name || '',
     qualification: '',
-    designation: branding.title || 'ज्योतिषाचार्य एवं वास्तुविद',
+    designation: branding.title || defDesig,
     mobile: branding.phone || '',
     address: branding.city || '',
   };
@@ -142,10 +206,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const effectiveKundali =
     activeKundali || (typeof window !== 'undefined' ? getSavedKundaliProfiles()[0] || null : null);
 
-  const [header, setHeader] = useState<ParchiHeaderConfig>(() => loadParchiHeader());
+  const { language } = useLanguage();
+  const currentLang = (language || 'hi').slice(0, 2).toLowerCase();
+
+  const [header, setHeader] = useState<ParchiHeaderConfig>(() => loadParchiHeader(currentLang));
   const [isEditAstrologerModalOpen, setIsEditAstrologerModalOpen] = useState(false);
   const [parchiData, setParchiData] = useState<TraditionalUpayParchiData>(() =>
-    generateTraditionalUpayParchi(effectiveKundali, panchang)
+    generateTraditionalUpayParchi(effectiveKundali, panchang, currentLang)
   );
   const [salutation, setSalutation] = useState(parchiData.salutation);
   const [serialNo, setSerialNo] = useState(parchiData.serialNo);
@@ -238,21 +305,22 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       setSelectedGotra(g);
       const fresh = generateTraditionalUpayParchi(
         effectiveKundali ? { ...effectiveKundali, gotra: g } : null,
-        panchang
+        panchang,
+        currentLang
       );
       setParchiData(fresh);
       setSalutation(fresh.salutation);
       setSerialNo(fresh.serialNo);
       setDateStr(fresh.dateStr);
       setPoints(fresh.points);
-      setHeader(loadParchiHeader());
+      setHeader(loadParchiHeader(currentLang));
       setActiveTab('parchi');
       setHighlightedItemIndex(null);
       setIsChromeVisible(true);
       setIsZenMode(false);
       setFontSize(getStoredFontSize());
     }
-  }, [isOpen, activeKundali]);
+  }, [isOpen, activeKundali, currentLang]);
 
   useEffect(() => {
     return () => {
@@ -266,7 +334,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
   // Real-time recomputed detailed items based on active points
   const currentDetailedItems: UpayParchiDetailedItem[] = points.map((pt, idx) =>
-    getRemedyDeepDetail(pt, idx, effectiveKundali)
+    getRemedyDeepDetail(pt, idx, effectiveKundali, currentLang)
   );
   const currentShantiDeep: GrahanShantiDeepDive | undefined =
     currentDetailedItems.find((it) => it.shantiDeepDive)?.shantiDeepDive;
@@ -276,10 +344,11 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     serialNo,
     dateStr,
     effectiveKundali
-      ? `${effectiveKundali.lagnaRashi} लग्न • ${effectiveKundali.moonRashi} राशि • ${effectiveKundali.mahadasha} महादशा`
-      : 'तात्कालिक प्रश्न लग्न',
+      ? `${trRashi(effectiveKundali.lagnaRashi, currentLang)} ${currentLang === 'en' ? 'Ascendant' : currentLang === 'gu' ? 'લગ્ન' : 'लग्न'} • ${trRashi(effectiveKundali.moonRashi, currentLang)} ${currentLang === 'en' ? 'Sign' : currentLang === 'gu' ? 'રાશિ' : 'राशि'} • ${trPlanet(effectiveKundali.mahadasha, currentLang)} ${currentLang === 'en' ? 'Mahadasha' : currentLang === 'gu' ? 'મહાદશા' : 'महादशा'}`
+      : currentLang === 'en' ? 'Prashna Ascendant' : currentLang === 'gu' ? 'તાત્કાલિક પ્રશ્ન લગ્ન' : 'तात्कालिक प्रश्न लग्न',
     currentDetailedItems,
-    currentShantiDeep
+    currentShantiDeep,
+    currentLang
   );
 
   const handleCloseModal = () => {
@@ -306,7 +375,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   };
 
   const handleResetFromKundali = () => {
-    const fresh = generateTraditionalUpayParchi(effectiveKundali, panchang);
+    const fresh = generateTraditionalUpayParchi(effectiveKundali, panchang, currentLang);
     setParchiData(fresh);
     setSalutation(fresh.salutation);
     setDateStr(fresh.dateStr);
@@ -316,15 +385,25 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const buildPlainTextSlip = () => {
     const astroName = header.astrologerName?.trim();
     const subTitle = [header.qualification?.trim(), header.designation?.trim()].filter(Boolean).join(' • ');
-    const contactLine = [header.address ? `स्थान: ${header.address}` : '', header.mobile ? `Mo. ${header.mobile}` : ''].filter(Boolean).join(' | ');
+    const locPrefix = currentLang === 'en' ? 'Place: ' : currentLang === 'gu' ? 'સ્થળ: ' : 'स्थान: ';
+    const contactLine = [header.address ? `${locPrefix}${header.address}` : '', header.mobile ? `Mo. ${header.mobile}` : ''].filter(Boolean).join(' | ');
+
+    const defaultTitle = currentLang === 'en'
+      ? 'Vedic Astrology Consultation & Remedy Slip'
+      : currentLang === 'gu'
+      ? 'વૈદિક જ્યોતિષ પરામર્શ અને ઉપાય પર્ચી'
+      : 'वैदिक ज्योतिष परामर्श एवं उपाय पर्ची';
+
+    const srNoLabel = currentLang === 'en' ? 'No.: ' : currentLang === 'gu' ? 'ક્ર.: ' : 'क्र.: ';
+    const dateLabel = currentLang === 'en' ? 'Date: ' : currentLang === 'gu' ? 'તારીખ: ' : 'दिनांक: ';
 
     const lines = [
-      astroName ? `卐  *${astroName}*  卐` : `卐  *वैदिक ज्योतिष परामर्श एवं उपाय पर्ची*  卐`,
+      astroName ? `卐  *${astroName}*  卐` : `卐  *${defaultTitle}*  卐`,
       subTitle || undefined,
       contactLine || undefined,
       `────────────────────────`,
       `               *॥ श्री ॥*`,
-      `क्र.: ${serialNo}                  दिनांक: ${dateStr}`,
+      `${srNoLabel}${serialNo}                  ${dateLabel}${dateStr}`,
       ``,
       `*${salutation}*`,
       ``,
@@ -360,14 +439,29 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     try {
       setIsPlayingAudio(true);
       const pointsSpeech = points
-        .map((pt, idx) => `उपाय क्रमांक ${idx + 1}, ${pt.replace(/[\(\)\[\]\{\}]/g, '')}`)
-        .join('। ');
+        .map((pt, idx) =>
+          currentLang === 'en'
+            ? `Remedy number ${idx + 1}, ${pt.replace(/[\(\)\[\]\{\}]/g, '')}`
+            : currentLang === 'gu'
+            ? `ઉપાય ક્રમાંક ${idx + 1}, ${pt.replace(/[\(\)\[\]\{\}]/g, '')}`
+            : `उपाय क्रमांक ${idx + 1}, ${pt.replace(/[\(\)\[\]\{\}]/g, '')}`
+        )
+        .join(currentLang === 'en' ? '. ' : '। ');
 
-      const spokenSummary = `॥ ॐ श्री गणेशाय नमः ॥ ॥ ॐ नमो भगवते वासुदेवाय ॥ सदा कल्याण हो ${salutation}! आपकी जन्मपत्रिका के ग्रह दोषों की शांति और भाग्योदय हेतु, यह प्रामाणिक वैदिक उपाय पर्ची श्रवण करें। ${pointsSpeech}। ${
-        currentShantiDeep
-          ? `आपकी पत्रिका में ${currentShantiDeep.typeLabel || currentShantiDeep.grahanTypeLabel || currentShantiDeep.doshName} के निवारण हेतु संकल्प, नवग्रह पूजन, एकादशवार रुद्राभिषेक एवं वैदिक जप की छह चरणीय शांति अवश्य कराएं। `
-          : ''
-      } श्रद्धा और विश्वास के साथ इन उपायों का नित्य पालन करें। भगवान श्री हरि विष्णु एवं देवाधिदेव महादेव आपके सर्व मनोरथ पूर्ण करें। ॥ ॐ शान्तिः शान्तिः शान्तिः ॥`;
+      const shantiAddon = currentShantiDeep
+        ? currentLang === 'en'
+          ? `For the pacification of ${currentShantiDeep.typeLabel || currentShantiDeep.grahanTypeLabel || currentShantiDeep.doshName} in your chart, perform the six-step Vedic Shanti including Sankalpa, Navagraha Pujan, Rudrabhishek and Mantra Japa. `
+          : currentLang === 'gu'
+          ? `તમારી કુંડળીમાં ${currentShantiDeep.typeLabel || currentShantiDeep.grahanTypeLabel || currentShantiDeep.doshName}ના નિવારણ માટે સંકલ્પ, નવગ્રહ પૂજન, રુદ્રાભિષેક અને વૈદિક જપની છ ચરણીય શાંતિ અવશ્ય કરાવો. `
+          : `आपकी पत्रिका में ${currentShantiDeep.typeLabel || currentShantiDeep.grahanTypeLabel || currentShantiDeep.doshName} के निवारण हेतु संकल्प, नवग्रह पूजन, एकादशवार रुद्राभिषेक एवं वैदिक जप की छह चरणीय शांति अवश्य कराएं। `
+        : '';
+
+      const spokenSummary =
+        currentLang === 'en'
+          ? `॥ ॐ श्री गणेशाय नमः ॥ ॥ ॐ नमो भगवते वासुदेवाय ॥ May blessings be upon you, ${salutation}! Listen to this authentic Vedic remedy slip prepared for planetary peace and good fortune. ${pointsSpeech}. ${shantiAddon}Follow these remedies daily with faith and devotion. May Lord Sri Hari Vishnu and Mahadev fulfill all your wishes. ॥ ॐ शान्तिः शान्तिः शान्तिः ॥`
+          : currentLang === 'gu'
+          ? `॥ ॐ श्री गणेशाय नमः ॥ ॥ ॐ नमो भगवते वासुदेवाय ॥ સદા કલ્યાણ થાઓ ${salutation}! તમારી જન્મપત્રિકાના ગ્રહ દોષોની શાંતિ અને ભાગ્યોદય માટે આ પ્રામાણિક વૈદિક ઉપાય પર્ચી શ્રવણ કરો. ${pointsSpeech}. ${shantiAddon}શ્રદ્ધા અને વિશ્વાસ સાથે આ ઉપાયોનું નિત્ય પાલન કરો. ભગવાન શ્રી હરિ વિષ્ણુ અને દેવાધિદેવ મહાદેવ તમારા સર્વ મનોરથ પૂર્ણ કરે. ॥ ॐ शान्तिः शान्तिः शान्तिः ॥`
+          : `॥ ॐ श्री गणेशाय नमः ॥ ॥ ॐ नमो भगवते वासुदेवाय ॥ सदा कल्याण हो ${salutation}! आपकी जन्मपत्रिका के ग्रह दोषों की शांति और भाग्योदय हेतु, यह प्रामाणिक वैदिक उपाय पर्ची श्रवण करें। ${pointsSpeech}। ${shantiAddon}श्रद्धा और विश्वास के साथ इन उपायों का नित्य पालन करें। भगवान श्री हरि विष्णु एवं देवाधिदेव महादेव आपके सर्व मनोरथ पूर्ण करें। ॥ ॐ शान्तिः शान्तिः शान्तिः ॥`;
 
       await speakUma(spokenSummary, {
         rate: 0.82,
@@ -443,7 +537,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     ctx.textAlign = 'left';
     ctx.fillStyle = '#8B1E1E';
     ctx.font = 'bold 44px "Tiro Devanagari Hindi", "Noto Serif Devanagari", serif';
-    const displayAstroName = header.astrologerName?.trim() || 'पं. ..................................';
+    const displayAstroName =
+      header.astrologerName?.trim() ||
+      (currentLang === 'en'
+        ? 'Pt. ..................................'
+        : currentLang === 'gu'
+        ? 'પં. ..................................'
+        : 'पं. ..................................');
     ctx.fillText(displayAstroName, padX, 100);
 
     let nextLeftY = 145;
@@ -494,13 +594,16 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
     ctx.font = 'bold 34px "Tiro Devanagari Hindi", serif';
     ctx.fillText('|| श्री ||', width / 2, dividerY + 46);
 
+    const srNoCanvasLabel = currentLang === 'en' ? 'No. ' : currentLang === 'gu' ? 'ક્ર. ' : 'क्र. ';
+    const dateCanvasLabel = currentLang === 'en' ? 'Date ' : currentLang === 'gu' ? 'તારીખ ' : 'दिनांक ';
+
     ctx.textAlign = 'left';
     ctx.fillStyle = '#7A1C1C';
     ctx.font = 'bold 27px "Tiro Devanagari Hindi", serif';
-    ctx.fillText(`क्र.  ${serialNo}`, padX, dividerY + 92);
+    ctx.fillText(`${srNoCanvasLabel} ${serialNo}`, padX, dividerY + 92);
 
     ctx.textAlign = 'right';
-    ctx.fillText(`दिनांक  ${dateStr}`, width - padX, dividerY + 92);
+    ctx.fillText(`${dateCanvasLabel} ${dateStr}`, width - padX, dividerY + 92);
 
     // 7. Client Salutation in handwritten deep blue ink
     const salutationY = dividerY + 168;
@@ -555,11 +658,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       ctx.textAlign = 'left';
       ctx.fillStyle = 'rgba(122, 28, 28, 0.65)';
       ctx.font = '20px "Tiro Devanagari Hindi", serif';
-      ctx.fillText(
-        `जन्मपत्रिका आधार: ${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि • ${activeKundali.nakshatra} नक्षत्र • ${activeKundali.mahadasha} महादशा`,
-        padX,
-        height - 46
-      );
+      const kBasis = currentLang === 'en'
+        ? `Horoscope Basis: ${trRashi(activeKundali.lagnaRashi, 'en')} Ascendant • ${trRashi(activeKundali.moonRashi, 'en')} Sign • ${trVedic(activeKundali.nakshatra, 'en')} Nakshatra • ${trPlanet(activeKundali.mahadasha, 'en')} Mahadasha`
+        : currentLang === 'gu'
+        ? `જન્મકુંડળી આધાર: ${trRashi(activeKundali.lagnaRashi, 'gu')} લગ્ન • ${trRashi(activeKundali.moonRashi, 'gu')} રાશિ • ${trVedic(activeKundali.nakshatra, 'gu')} નક્ષત્ર • ${trPlanet(activeKundali.mahadasha, 'gu')} મહાદશા`
+        : `जन्मपत्रिका आधार: ${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि • ${activeKundali.nakshatra} नक्षत्र • ${activeKundali.mahadasha} महादशा`;
+      ctx.fillText(kBasis, padX, height - 46);
     }
 
     return canvas;
@@ -623,11 +727,23 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
   const handleShareOrSaveToGallery = async (dataUrl: string, name: string) => {
     try {
+      const shareTitle =
+        currentLang === 'en'
+          ? `Vedic Remedy Slip — ${salutation}`
+          : currentLang === 'gu'
+          ? `જ્યોતિષીય ઉપાય પર્ચી — ${salutation}`
+          : `ज्योतिषीय उपाय पर्ची — ${salutation}`;
+      const shareText =
+        currentLang === 'en'
+          ? `॥ श्री ॥ Uma Vedic Remedy Slip (${salutation})\n\n${buildPlainTextSlip()}`
+          : currentLang === 'gu'
+          ? `॥ श्री ॥ ઉમા જ્યોતિષીય ઉપાય પર્ચી (${salutation})\n\n${buildPlainTextSlip()}`
+          : `॥ श्री ॥ उमा ज्योतिषीय उपाय पर्ची (${salutation})\n\n${buildPlainTextSlip()}`;
       await shareImageFile({
         imageUri: dataUrl,
         fileName: name,
-        title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
-        text: `॥ श्री ॥ उमा ज्योतिषीय उपाय पर्ची (${salutation})\n\n${buildPlainTextSlip()}`,
+        title: shareTitle,
+        text: shareText,
       });
     } catch (err) {
       console.warn('Share image error:', err);
@@ -638,13 +754,19 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
   const handleDownloadImage = async () => {
     try {
       setIsDownloading(true);
-      setDownloadStatus('HD पर्ची तैयार हो रही है...');
+      setDownloadStatus(
+        currentLang === 'en'
+          ? 'Preparing HD Slip...'
+          : currentLang === 'gu'
+          ? 'HD પર્ચી તૈયાર થઈ રહી છે...'
+          : 'HD पर्ची तैयार हो रही है...'
+      );
       const canvas = await renderParchiCanvas();
 
       // Convert to Base64 DataURL and Blob File
       const dataUrl = canvas.toDataURL('image/png');
       const safeSalutation = (salutation || 'Yajaman')
-        .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+        .replace(/[^a-zA-Z0-9\u0900-\u097F\u0A80-\u0AFF]/g, '_')
         .substring(0, 25);
       const fileName = `Upay_Parchi_${safeSalutation}.png`;
 
@@ -667,7 +789,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       setDownloadStatus(null);
     } catch (err) {
       console.error('Failed to download Upay Parchi PNG:', err);
-      setDownloadStatus('डाउनलोड में समस्या आई। पुनः प्रयास करें।');
+      setDownloadStatus(
+        currentLang === 'en'
+          ? 'Download failed. Please try again.'
+          : currentLang === 'gu'
+          ? 'ડાઉનલોડમાં સમસ્યા આવી. ફરી પ્રયાસ કરો.'
+          : 'डाउनलोड में समस्या आई। पुनः प्रयास करें।'
+      );
     } finally {
       setIsDownloading(false);
     }
@@ -682,7 +810,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       );
 
       const safeSalutation = (salutation || 'Yajaman')
-        .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+        .replace(/[^a-zA-Z0-9\u0900-\u097F\u0A80-\u0AFF]/g, '_')
         .substring(0, 25);
       const fileName = `Upay_Parchi_${safeSalutation}.png`;
 
@@ -696,7 +824,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
       ) {
         const file = new File([blob], fileName, { type: 'image/png' });
         await navigator.share({
-          title: `ज्योतिषीय उपाय पर्ची — ${salutation}`,
+          title:
+            currentLang === 'en'
+              ? `Vedic Remedy Slip — ${salutation}`
+              : currentLang === 'gu'
+              ? `જ્યોતિષીય ઉપાય પર્ચી — ${salutation}`
+              : `ज्योतिषीय उपाय पर्ची — ${salutation}`,
           text: buildPlainTextSlip(),
           files: [file],
         });
@@ -733,11 +866,21 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               </div>
               <div className="min-w-0">
                 <h3 className="font-bold text-sm sm:text-lg font-granth text-[#FFD88A] truncate flex items-center gap-1.5">
-                  <span>📋 उमा ज्योतिषीय उपाय पर्ची</span>
+                  <span>
+                    {currentLang === 'en'
+                      ? '📋 Uma Astrological Remedy Slip'
+                      : currentLang === 'gu'
+                      ? '📋 ઉમા જ્યોતિષીય ઉપાય પર્ચી'
+                      : '📋 उमा ज्योतिषीय उपाय पर्ची'}
+                  </span>
                 </h3>
                 <p className="text-[10px] sm:text-[11px] text-[#E6C687] truncate">
                   {activeKundali
-                    ? `${activeKundali.name} • ${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि`
+                    ? `${activeKundali.name} • ${trRashi(activeKundali.lagnaRashi, currentLang)} ${currentLang === 'en' ? 'Ascendant' : currentLang === 'gu' ? 'લગ્ન' : 'लग्न'} • ${trRashi(activeKundali.moonRashi, currentLang)} ${currentLang === 'en' ? 'Sign' : currentLang === 'gu' ? 'રાશિ' : 'राशि'}`
+                    : currentLang === 'en'
+                    ? 'Traditional Letterhead Slip & Vedic Guidance'
+                    : currentLang === 'gu'
+                    ? 'પારંપરિક લેટરહેડ પર્ચી અને શાસ્ત્રીય માર્ગદર્શન'
                     : 'पारंपरिक लेटरहेड पर्ची एवं शास्त्रीय मार्गदर्शन'}
                 </p>
               </div>
@@ -747,7 +890,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               {/* Senior & Elder Friendly Font Sizing (अ / अ+ / अ++) */}
               <div
                 className="flex items-center bg-[#460E0E] rounded-lg p-0.5 border border-[#B58738]/50"
-                title="अक्षर आकार (बुजुर्गों एवं वृद्धजनों हेतु सुगम फॉन्ट)"
+                title={
+                  currentLang === 'en'
+                    ? 'Text Size (Accessible for elders)'
+                    : currentLang === 'gu'
+                    ? 'અક્ષર કદ (વડીલો માટે સુગમ)'
+                    : 'अक्षर आकार (बुजुर्गों एवं वृद्धजनों हेतु सुगम फॉन्ट)'
+                }
               >
                 {(['normal', 'large', 'xlarge'] as AppFontSize[]).map((sz) => (
                   <button
@@ -761,13 +910,17 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     }`}
                     title={
                       sz === 'normal'
-                        ? 'सामान्य आकार'
+                        ? (currentLang === 'en' ? 'Normal' : currentLang === 'gu' ? 'સામાન્ય' : 'सामान्य आकार')
                         : sz === 'large'
-                        ? 'बड़ा अक्षर (सुगम पाठ)'
-                        : 'अति बड़ा अक्षर (वृद्धजनों हेतु - बिना चश्मे के)'
+                        ? (currentLang === 'en' ? 'Large' : currentLang === 'gu' ? 'મોટું' : 'बड़ा अक्षर (सुगम पाठ)')
+                        : (currentLang === 'en' ? 'Extra Large' : currentLang === 'gu' ? 'અતિ મોટું' : 'अति बड़ा अक्षर (वृद्धजनों हेतु - बिना चश्मे के)')
                     }
                   >
-                    {sz === 'normal' ? 'अ' : sz === 'large' ? 'अ+' : 'अ++'}
+                    {currentLang === 'en'
+                      ? (sz === 'normal' ? 'A' : sz === 'large' ? 'A+' : 'A++')
+                      : currentLang === 'gu'
+                      ? (sz === 'normal' ? 'અ' : sz === 'large' ? 'અ+' : 'અ++')
+                      : (sz === 'normal' ? 'अ' : sz === 'large' ? 'अ+' : 'अ++')}
                   </button>
                 ))}
               </div>
@@ -784,10 +937,14 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     ? 'bg-[#FFD88A] text-[#5C1414] border-white'
                     : 'bg-[#5C1414] text-[#E6C687] border-[#B58738]/60 hover:text-white'
                 }`}
-                title={isZenMode ? 'सामान्य दृश्य पर लौटें' : 'पूर्ण स्क्रीन स्वाध्याय (पढ़ने हेतु अधिक स्थान)'}
+                title={isZenMode ? (currentLang === 'en' ? 'Normal View' : currentLang === 'gu' ? 'સામાન્ય મોડ' : 'सामान्य दृश्य पर लौटें') : (currentLang === 'en' ? 'Full Screen' : currentLang === 'gu' ? 'પૂર્ણ સ્ક્રીન' : 'पूर्ण स्क्रीन स्वाध्याय (पढ़ने हेतु अधिक स्थान)')}
               >
                 {isZenMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-                <span className="hidden md:inline">{isZenMode ? 'छोटा' : 'पूर्ण स्क्रीन'}</span>
+                <span className="hidden md:inline">
+                  {isZenMode
+                    ? (currentLang === 'en' ? 'Exit' : currentLang === 'gu' ? 'નાનું' : 'छोटा')
+                    : (currentLang === 'en' ? 'Full' : currentLang === 'gu' ? 'પૂર્ણ સ્ક્રીન' : 'पूर्ण स्क्रीन')}
+                </span>
               </button>
 
               {activeTab === 'parchi' && (
@@ -801,8 +958,16 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   }`}
                 >
                   {isEditing ? <Check className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
-                  <span className="hidden sm:inline">{isEditing ? 'पूर्वावलोकन' : '✏️ पर्ची संपादन'}</span>
-                  <span className="sm:hidden">{isEditing ? 'देखें' : 'संपादित'}</span>
+                  <span className="hidden sm:inline">
+                    {isEditing
+                      ? (currentLang === 'en' ? 'Preview' : currentLang === 'gu' ? 'પૂર્વાવલોકન' : 'पूर्वावलोकन')
+                      : (currentLang === 'en' ? '✏️ Edit Slip' : currentLang === 'gu' ? '✏️ પર્ચી સંપાદન' : '✏️ पर्ची संपादन')}
+                  </span>
+                  <span className="sm:hidden">
+                    {isEditing
+                      ? (currentLang === 'en' ? 'View' : currentLang === 'gu' ? 'જુઓ' : 'देखें')
+                      : (currentLang === 'en' ? 'Edit' : currentLang === 'gu' ? 'સંપાદિત' : 'संपादित')}
+                  </span>
                 </button>
               )}
 
@@ -810,7 +975,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 type="button"
                 onClick={handleCloseModal}
                 className="p-1 sm:p-1.5 rounded-lg text-[#E6C687] hover:text-white hover:bg-black/20 cursor-pointer"
-                title="पर्ची बंद करें"
+                title={currentLang === 'en' ? 'Close' : currentLang === 'gu' ? 'બંધ કરો' : 'पर्ची बंद करें'}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -846,7 +1011,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>📜 पारंपरिक उपाय पर्ची (Slip)</span>
+                <span>
+                  {currentLang === 'en'
+                    ? '📜 Traditional Remedy Slip'
+                    : currentLang === 'gu'
+                    ? '📜 પારંપરિક ઉપાય પર્ચી'
+                    : '📜 पारंपरिक उपाय पर्ची (Slip)'}
+                </span>
               </motion.button>
 
               <motion.button
@@ -866,8 +1037,14 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-[#B56A00]" />
-                <span>📖 यजमान विस्तृत मार्गदर्शन (क्यों व क्या लाभ?)</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="विस्तृत कारण व लाभ उपलब्ध" />
+                <span>
+                  {currentLang === 'en'
+                    ? '📖 Yajman Guide (Why & Benefits)'
+                    : currentLang === 'gu'
+                    ? '📖 યજમાન માર્ગદર્શન (શા માટે અને શું લાભ?)'
+                    : '📖 यजमान विस्तृत मार्गदर्शन (क्यों व क्या लाभ?)'}
+                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </motion.button>
             </div>
 
@@ -880,10 +1057,14 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     ? 'bg-rose-700 text-white border-rose-800 animate-pulse'
                     : 'bg-gradient-to-r from-amber-50 to-orange-50 text-[#7A1D1D] border-amber-400 hover:bg-amber-100'
                 }`}
-                title="विदुषी उमा जी के मधुर स्वर में लयबद्ध मंगलाचरण व उपाय पाठ सुनें"
+                title={currentLang === 'en' ? 'Listen to melodic recitation of remedies' : currentLang === 'gu' ? 'મધુર સ્વરમાં ઉપાય પાઠ સાંભળો' : 'विदुषी उमा जी के मधुर स्वर में लयबद्ध मंगलाचरण व उपाय पाठ सुनें'}
               >
                 {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-[#7A1D1D]" />}
-                <span>{isPlayingAudio ? 'स्वर पाठ रोकें' : '🎙️ सुरीला स्वर पाठ'}</span>
+                <span>
+                  {isPlayingAudio
+                    ? (currentLang === 'en' ? 'Stop Recitation' : currentLang === 'gu' ? 'પાઠ રોકો' : 'स्वर पाठ रोकें')
+                    : (currentLang === 'en' ? '🎙️ Audio Recitation' : currentLang === 'gu' ? '🎙️ સુરીલો સ્વર પાઠ' : '🎙️ सुरीला स्वर पाठ')}
+                </span>
               </button>
 
               <button
@@ -905,10 +1086,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   }
                 }}
                 className="px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-amber-100 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
-                title="श्री विष्णु सहस्रनाम सम्पूर्ण पाठ खोलें"
+                title={currentLang === 'en' ? 'Open Sri Vishnu Sahasranama Full Text' : currentLang === 'gu' ? 'શ્રી વિષ્ણુ સહસ્રનામ સંપૂર્ણ પાઠ ખોલો' : 'श्री विष्णु सहस्रनाम सम्पूर्ण पाठ खोलें'}
               >
                 <Sparkles className="w-3 h-3 text-amber-300" />
-                <span>सहस्रनाम पाठ</span>
+                <span>
+                  {currentLang === 'en' ? 'Sahasranama Path' : currentLang === 'gu' ? 'સહસ્રનામ પાઠ' : 'सहस्रनाम पाठ'}
+                </span>
               </button>
 
               {activeTab === 'guide' && (
@@ -917,7 +1100,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     type="button"
                     onClick={handleShareWhatsAppGuide}
                     className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
-                    title="WhatsApp पर विस्तृत विवरण भेजें"
+                    title={currentLang === 'en' ? 'Send Guide on WhatsApp' : currentLang === 'gu' ? 'WhatsApp પર મોકલો' : 'WhatsApp पर विस्तृत विवरण भेजें'}
                   >
                     <Share2 className="w-3 h-3" />
                     <span>WhatsApp</span>
@@ -927,10 +1110,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     type="button"
                     onClick={handleCopyDetailedGuide}
                     className="px-2 py-1 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-md text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition"
-                    title="मार्गदर्शन कॉपी करें"
+                    title={currentLang === 'en' ? 'Copy Guide' : currentLang === 'gu' ? 'માર્ગદર્શન કૉપી કરો' : 'मार्गदर्शन कॉपी करें'}
                   >
                     {copiedGuide ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedGuide ? 'कॉपी हुआ!' : 'कॉपी'}</span>
+                    <span>{copiedGuide ? (currentLang === 'en' ? 'Copied!' : currentLang === 'gu' ? 'કૉપી થયું!' : 'कॉपी हुआ!') : (currentLang === 'en' ? 'Copy' : currentLang === 'gu' ? 'કૉપી' : 'कॉपी')}</span>
                   </button>
                 </>
               )}
@@ -945,10 +1128,14 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   type="button"
                   onClick={() => setIsEditAstrologerModalOpen(true)}
                   className="px-2.5 py-1 bg-[#FFFDF8] text-[#7A1D1D] border border-[#8C6239]/40 rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#EBDCC0] transition shadow-2xs"
-                  title="लेटरहेड पर अपना नाम या विवरण लिखें"
+                  title={currentLang === 'en' ? 'Write your name or details on letterhead' : currentLang === 'gu' ? 'લેટરહેડ પર તમારું નામ લખો' : 'लेटरहेड पर अपना नाम या विवरण लिखें'}
                 >
                   <Edit3 className="w-3 h-3 text-[#B56A00]" />
-                  <span>{header.astrologerName?.trim() ? `नाम: ${header.astrologerName}` : '✏️ अपना / ज्योतिषी का नाम लिखें'}</span>
+                  <span>
+                    {header.astrologerName?.trim()
+                      ? `${currentLang === 'en' ? 'Name: ' : currentLang === 'gu' ? 'નામ: ' : 'नाम: '}${header.astrologerName}`
+                      : (currentLang === 'en' ? '✏️ Write your / astrologer\'s name' : currentLang === 'gu' ? '✏️ તમારું / જ્યોતિષીનું નામ લખો' : '✏️ अपना / ज्योतिषी का नाम लिखें')}
+                  </span>
                 </button>
 
                 <button
@@ -957,12 +1144,16 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   className="px-2.5 py-1 bg-[#7A1D1D] text-white rounded-md font-bold flex items-center gap-1 cursor-pointer hover:bg-[#5C1414] transition shadow-2xs"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  <span>कुण्डली अनुसार स्वतः उपाय रीसेट करें</span>
+                  <span>
+                    {currentLang === 'en' ? 'Reset by Kundali' : currentLang === 'gu' ? 'કુંડળી મુજબ રીસેટ કરો' : 'कुण्डली अनुसार स्वतः उपाय रीसेट करें'}
+                  </span>
                 </button>
               </div>
 
               <span className="text-[11px] text-[#7A1D1D] font-semibold">
-                {isEditing ? 'आप किसी भी पंक्ति या नाम को बदल सकते हैं' : 'पारंपरिक ज्योतिषाचार्य लेटरहेड प्रारूप'}
+                {isEditing
+                  ? (currentLang === 'en' ? 'You can edit any line or name' : currentLang === 'gu' ? 'તમે કોઈપણ પંક્તિ અથવા નામ બદલી શકો છો' : 'आप किसी भी पंक्ति या नाम को बदल सकते हैं')
+                  : (currentLang === 'en' ? 'Traditional Jyotishacharya Letterhead Format' : currentLang === 'gu' ? 'પારંપરિક જ્યોતિષાચાર્ય લેટરહેડ ફોર્મેટ' : 'पारंपरिक ज्योतिषाचार्य लेटरहेड प्रारूप')}
               </span>
             </div>
           )}
@@ -984,64 +1175,82 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   <div className="flex items-center justify-between border-b border-[#8C6239]/25 pb-2">
                     <h4 className="text-xs sm:text-sm font-bold text-[#7A1D1D] flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-[#B56A00]" />
-                      <span>१. ज्योतिषाचार्य लेटरहेड (शीर्षक) विवरण संपादित करें:</span>
+                      <span>
+                        {currentLang === 'en'
+                          ? '1. Edit Astrologer Letterhead (Header) Details:'
+                          : currentLang === 'gu'
+                          ? '૧. જ્યોતિષાચાર્ય લેટરહેડ (શીર્ષક) વિગતો સંપાદિત કરો:'
+                          : '१. ज्योतिषाचार्य लेटरहेड (शीर्षक) विवरण संपादित करें:'}
+                      </span>
                     </h4>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
                     <div>
-                      <label className="block font-bold text-[#5C3A21] mb-1">ज्योतिषी / आचार्य का नाम:</label>
+                      <label className="block font-bold text-[#5C3A21] mb-1">
+                        {currentLang === 'en' ? 'Astrologer / Acharya Name:' : currentLang === 'gu' ? 'જ્યોતિષી / આચાર્યનું નામ:' : 'ज्योतिषी / आचार्य का नाम:'}
+                      </label>
                       <input
                         type="text"
                         value={header.astrologerName}
                         onChange={(e) => saveHeaderChanges({ ...header, astrologerName: e.target.value })}
-                        placeholder="उदा. पं. शास्त्री जी / आपका शुभ नाम"
+                        placeholder={currentLang === 'en' ? 'e.g. Pt. Shastri Ji / Your Name' : currentLang === 'gu' ? 'દા.ત. પં. શાસ્ત્રી જી / તમારું નામ' : 'उदा. पं. शास्त्री जी / आपका शुभ नाम'}
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A] font-bold"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-[#5C3A21] mb-1">शैक्षणिक योग्यता (Degree):</label>
+                      <label className="block font-bold text-[#5C3A21] mb-1">
+                        {currentLang === 'en' ? 'Degree / Qualification:' : currentLang === 'gu' ? 'શૈક્ષણિક લાયકાત (Degree):' : 'शैक्षणिक योग्यता (Degree):'}
+                      </label>
                       <input
                         type="text"
                         value={header.qualification}
                         onChange={(e) => saveHeaderChanges({ ...header, qualification: e.target.value })}
-                        placeholder="उदा. M.A. (संस्कृत), ज्योतिषाचार्य"
+                        placeholder={currentLang === 'en' ? 'e.g. M.A. (Sanskrit), Jyotishacharya' : currentLang === 'gu' ? 'દા.ત. M.A. (સંસ્કૃત), જ્યોતિષાચાર્ય' : 'उदा. M.A. (संस्कृत), ज्योतिषाचार्य'}
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-[#5C3A21] mb-1">पदवी (Designation):</label>
+                      <label className="block font-bold text-[#5C3A21] mb-1">
+                        {currentLang === 'en' ? 'Title / Designation:' : currentLang === 'gu' ? 'પદવી (Designation):' : 'पदवी (Designation):'}
+                      </label>
                       <input
                         type="text"
                         value={header.designation}
                         onChange={(e) => saveHeaderChanges({ ...header, designation: e.target.value })}
-                        placeholder="उदा. ज्योतिषी, याज्ञिक एवं वास्तुविद"
+                        placeholder={currentLang === 'en' ? 'e.g. Astrologer, Vastu Expert & Yajnik' : currentLang === 'gu' ? 'દા.ત. જ્યોતિષી, વાસ્તુવિદ અને યાજ્ઞિક' : 'उदा. ज्योतिषी, याज्ञिक एवं वास्तुविद'}
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-[#5C3A21] mb-1">मोबाइल नंबर (Mo.):</label>
+                      <label className="block font-bold text-[#5C3A21] mb-1">
+                        {currentLang === 'en' ? 'Mobile Number (Mo.):' : currentLang === 'gu' ? 'મોબાઇલ નંબર (Mo.):' : 'मोबाइल नंबर (Mo.):'}
+                      </label>
                       <input
                         type="text"
                         value={header.mobile}
                         onChange={(e) => saveHeaderChanges({ ...header, mobile: e.target.value })}
-                        placeholder="उदा. 98XXXXXXXX"
+                        placeholder={currentLang === 'en' ? 'e.g. 98XXXXXXXX' : currentLang === 'gu' ? 'દા.ત. 98XXXXXXXX' : 'उदा. 98XXXXXXXX'}
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-[#5C3A21] mb-1">पता / नगर (Address):</label>
+                      <label className="block font-bold text-[#5C3A21] mb-1">
+                        {currentLang === 'en' ? 'Address / City:' : currentLang === 'gu' ? 'સરનામું / શહેર (Address):' : 'पता / नगर (Address):'}
+                      </label>
                       <input
                         type="text"
                         value={header.address}
                         onChange={(e) => saveHeaderChanges({ ...header, address: e.target.value })}
-                        placeholder="उदा. काशी / उज्जैन / आपका नगर"
+                        placeholder={currentLang === 'en' ? 'e.g. Kashi / Ujjain / Your City' : currentLang === 'gu' ? 'દા.ત. કાશી / ઉજ્જૈન / તમારું શહેર' : 'उदा. काशी / उज्जैन / आपका नगर'}
                         className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-[#2C0A0A]"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block font-bold text-[#5C3A21] mb-1">क्रमांक (क्र.):</label>
+                        <label className="block font-bold text-[#5C3A21] mb-1">
+                          {currentLang === 'en' ? 'Sr. No.:' : currentLang === 'gu' ? 'ક્રમાંક (ક્ર.):' : 'क्रमांक (क्र.):'}
+                        </label>
                         <input
                           type="text"
                           value={serialNo}
@@ -1050,7 +1259,9 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-[#5C3A21] mb-1">दिनांक:</label>
+                        <label className="block font-bold text-[#5C3A21] mb-1">
+                          {currentLang === 'en' ? 'Date:' : currentLang === 'gu' ? 'તારીખ:' : 'दिनांक:'}
+                        </label>
                         <input
                           type="text"
                           value={dateStr}
@@ -1065,21 +1276,29 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block font-bold text-[#7A1D1D] mb-1">
-                          २. यजमान / जातक का संबोधन (Salutation):
+                          {currentLang === 'en'
+                            ? '2. Yajman / Native Salutation:'
+                            : currentLang === 'gu'
+                            ? '૨. યજમાન સંબોધન (Salutation):'
+                            : '२. यजमान / जातक का संबोधन (Salutation):'}
                         </label>
                         <input
                           type="text"
                           value={salutation}
                           onChange={(e) => setSalutation(e.target.value)}
-                          placeholder="उदा. श्री यजमान जी"
+                          placeholder={currentLang === 'en' ? 'e.g. Shri Yajman' : currentLang === 'gu' ? 'દા.ત. શ્રી યજમાન જી' : 'उदा. श्री यजमान जी'}
                           className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-sm font-bold text-[#162C6A]"
                         />
                       </div>
 
                       <div>
                         <label className="block font-bold text-[#7A1D1D] mb-1 flex items-center justify-between">
-                          <span>जातक का गोत्र (Triveni Gotra):</span>
-                          <span className="text-[10px] text-[#8C6239] font-normal">रत्न व धातु निर्धारण</span>
+                          <span>
+                            {currentLang === 'en' ? 'Native Gotra (Triveni Gotra):' : currentLang === 'gu' ? 'જાતકનું ગોત્ર (ત્રિવેણી ગોત્ર):' : 'जातक का गोत्र (Triveni Gotra):'}
+                          </span>
+                          <span className="text-[10px] text-[#8C6239] font-normal">
+                            {currentLang === 'en' ? 'Gem & metal calculation' : currentLang === 'gu' ? 'રત્ન અને ધાતુ નિર્ધારણ' : 'रत्न व धातु निर्धारण'}
+                          </span>
                         </label>
                         <button
                           type="button"
@@ -1087,15 +1306,21 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                           className="w-full bg-[#FAF2E4] hover:bg-[#EBDBC0] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-[#162C6A] flex items-center justify-between transition text-left cursor-pointer"
                         >
                           <span className="truncate">
-                            🪷 {GOTRA_LIST.find((g) => g.id === selectedGotra)?.name || 'कश्यप (Kashyapa)'}
+                            🪷 {getLocalizedGotra(GOTRA_LIST.find((g) => g.id === selectedGotra) || GOTRA_LIST[0], currentLang).name}
                           </span>
-                          <span className="text-[10px] text-[#7A1D1D] underline ml-1 shrink-0">बदलें ▾</span>
+                          <span className="text-[10px] text-[#7A1D1D] underline ml-1 shrink-0">
+                            {currentLang === 'en' ? 'Change ▾' : currentLang === 'gu' ? 'બદલો ▾' : 'बदलें ▾'}
+                          </span>
                         </button>
                       </div>
                     </div>
 
                     <label className="block font-bold text-[#7A1D1D]">
-                      ३. उपाय बिंदु (① से ⑥) संपादित करें या नया जोड़ें:
+                      {currentLang === 'en'
+                        ? '3. Edit Remedy Points (① to ⑥) or Add New:'
+                        : currentLang === 'gu'
+                        ? '૩. ઉપાય મુદ્દાઓ (① થી ⑥) સંપાદિત કરો અથવા નવો ઉમેરો:'
+                        : '३. उपाय बिंदु (① से ⑥) संपादित करें या नया जोड़ें:'}
                     </label>
                     <div className="space-y-2">
                       {points.map((pt, i) => (
@@ -1118,7 +1343,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                               type="button"
                               onClick={() => setPoints(points.filter((_, idx) => idx !== i))}
                               className="p-1.5 text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer"
-                              title="हटाएं"
+                              title={currentLang === 'en' ? 'Remove' : currentLang === 'gu' ? 'દૂર કરો' : 'हटाएं'}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1130,21 +1355,25 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
                       <button
                         type="button"
-                        onClick={() => setPoints([...points, 'नया सात्विक उपाय यहाँ लिखें।'])}
+                        onClick={() => setPoints([...points, currentLang === 'en' ? 'Write new sattvic remedy here.' : currentLang === 'gu' ? 'નવો સાત્વિક ઉપાય અહીં લખો.' : 'नया सात्विक उपाय यहाँ लिखें।'])}
                         className="px-3 py-1.5 bg-[#F4E8D1] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>+ नया बिंदु जोड़ें</span>
+                        <span>{currentLang === 'en' ? '+ Add New Point' : currentLang === 'gu' ? '+ નવો મુદ્દો ઉમેરો' : '+ नया बिंदु जोड़ें'}</span>
                       </button>
                     </div>
 
                     {/* Quick Add Presets */}
                     <div className="pt-2">
                       <p className="text-[11px] font-bold text-[#5C3A21] mb-1.5">
-                        त्वरित शास्त्रीय उपाय जोड़ें (क्लिक करते ही पर्ची में जुड़ेगा):
+                        {currentLang === 'en'
+                          ? 'Add Quick Classical Remedies (Click to add to slip):'
+                          : currentLang === 'gu'
+                          ? 'ઝડપી શાસ્ત્રીય ઉપાય ઉમેરો (ક્લિક કરતા જ પર્ચીમાં ઉમેરાશે):'
+                          : 'त्वरित शास्त्रीय उपाय जोड़ें (क्लिक करते ही पर्ची में जुड़ेगा):'}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {QUICK_REMEDY_PRESETS.map((preset, idx) => (
+                        {getQuickRemedyPresets(currentLang).map((preset, idx) => (
                           <button
                             key={idx}
                             type="button"
@@ -1173,10 +1402,18 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   <span className="text-xl">🌟</span>
                   <div>
                     <h5 className="font-bold text-[#7A1D1D] text-xs sm:text-sm">
-                      यजमान को समझाने हेतु: प्रत्येक उपाय क्यों करना है और क्या लाभ होगा?
+                      {currentLang === 'en'
+                        ? 'For Yajman: Why perform each remedy and what benefits will be gained?'
+                        : currentLang === 'gu'
+                        ? 'યજમાન માટે માર્ગદર્શન: દરેક ઉપાય શા માટે કરવો અને શું લાભ મળશે?'
+                        : 'यजमान को समझाने हेतु: प्रत्येक उपाय क्यों करना है और क्या लाभ होगा?'}
                     </h5>
                     <p className="text-[11px] text-[#5C3A21]">
-                      {points[0] || 'रत्न धारण'}, दान सामग्री का प्रभाव व {parchiData.detectedDoshaYoga || 'ग्रह शान्ति'} की संपूर्ण शास्त्रीय विधि देखने के लिए यहाँ क्लिक करें।
+                      {currentLang === 'en'
+                        ? 'Click here to view complete Vedic guidance, gemstone rules, charity effects & shanti procedures.'
+                        : currentLang === 'gu'
+                        ? 'સંપૂર્ણ શાસ્ત્રીય વિધિ, રત્ન ધારણ, દાન સામગ્રી અને શાંતિ વિધાન જોવા અહીં ક્લિક કરો.'
+                        : `${points[0] || 'रत्न धारण'}, दान सामग्री का प्रभाव व ${parchiData.detectedDoshaYoga || 'ग्रह शान्ति'} की संपूर्ण शास्त्रीय विधि देखने के लिए यहाँ क्लिक करें।`}
                     </p>
                   </div>
                 </div>
@@ -1184,7 +1421,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   type="button"
                   className="px-2.5 py-1 bg-[#7A1D1D] text-[#FFD88A] rounded-lg text-xs font-bold shrink-0 flex items-center gap-1"
                 >
-                  <span>विस्तृत देखें</span>
+                  <span>{currentLang === 'en' ? 'View Details' : currentLang === 'gu' ? 'વિસ્તૃત જુઓ' : 'विस्तृत देखें'}</span>
                   <BookOpen className="w-3 h-3" />
                 </button>
               </div>
@@ -1195,18 +1432,34 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   <div className="flex items-center justify-between border-b border-[#8C6239]/20 pb-2 flex-wrap gap-1">
                     <span className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs sm:text-sm">
                       <Sparkles className="w-4 h-4 text-[#B56A00]" />
-                      <span>🔬 कुण्डली ग्रह गणना एवं ज्योतिषीय निर्णय आधार:</span>
+                      <span>
+                        {currentLang === 'en'
+                          ? '🔬 Planetary Calculations & Astrological Rationale:'
+                          : currentLang === 'gu'
+                          ? '🔬 કુંડળી ગ્રહ ગણતરી અને જ્યોતિષીય નિર્ણય આધાર:'
+                          : '🔬 कुण्डली ग्रह गणना एवं ज्योतिषीय निर्णय आधार:'}
+                      </span>
                     </span>
                     <span className="text-[10.5px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      ✓ ग्रह स्पष्ट, बलाबल व भाव स्थिति से प्रत्यक्ष निष्पादित
+                      {currentLang === 'en'
+                        ? '✓ Calculated directly from planetary dignity, strength & house placements'
+                        : currentLang === 'gu'
+                        ? '✓ ગ્રહ સ્પષ્ટ, બળાબળ અને ભાવ સ્થિતિ પરથી પ્રત્યક્ષ ગણતરી'
+                        : '✓ ग्रह स्पष्ट, बलाबल व भाव स्थिति से प्रत्यक्ष निष्पादित'}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11.5px] pt-1">
                     <div className="bg-[#FAF2E4]/80 p-2.5 rounded-lg border border-[#8C6239]/15">
-                      <div className="text-[10px] font-bold text-[#8B1E1E] uppercase">१. लग्नेश व शुभ कारक ग्रह (रत्न हेतु)</div>
+                      <div className="text-[10px] font-bold text-[#8B1E1E] uppercase">
+                        {currentLang === 'en'
+                          ? '1. Ascendant Lord & Benefic Planets (For Gemstone)'
+                          : currentLang === 'gu'
+                          ? '૧. લગ્નેશ અને શુભ કારક ગ્રહો (રત્ન માટે)'
+                          : '१. लग्नेश व शुभ कारक ग्रह (रत्न हेतु)'}
+                      </div>
                       <div className="font-bold text-[#3A1F0A] mt-0.5">
-                        {parchiData.astrologicalCalculationSummary.beneficPlanets.join(' • ') || 'लग्नेश बलवान'}
+                        {parchiData.astrologicalCalculationSummary.beneficPlanets.join(' • ') || (currentLang === 'en' ? 'Lagna Strong' : currentLang === 'gu' ? 'લગ્નેશ બળવાન' : 'लग्नेश बलवान')}
                       </div>
                       <p className="text-[10.5px] text-[#5C3A21] mt-1 leading-snug">
                         {parchiData.astrologicalCalculationSummary.reasons.gemstoneReason}
@@ -1214,9 +1467,15 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     </div>
 
                     <div className="bg-[#FAF2E4]/80 p-2.5 rounded-lg border border-[#8C6239]/15">
-                      <div className="text-[10px] font-bold text-[#8B1E1E] uppercase">२. बाधक व पीड़ित ग्रह (उपवास व दान हेतु)</div>
+                      <div className="text-[10px] font-bold text-[#8B1E1E] uppercase">
+                        {currentLang === 'en'
+                          ? '2. Afflicted & Obstructing Planets (For Fasting & Charity)'
+                          : currentLang === 'gu'
+                          ? '૨. બાધક અને પીડિત ગ્રહો (ઉપવાસ અને દાન માટે)'
+                          : '२. बाधक व पीड़ित ग्रह (उपवास व दान हेतु)'}
+                      </div>
                       <div className="font-bold text-[#3A1F0A] mt-0.5">
-                        {parchiData.astrologicalCalculationSummary.afflictedPlanets.join(' • ') || 'ग्रह स्थिति सामान्य'}
+                        {parchiData.astrologicalCalculationSummary.afflictedPlanets.join(' • ') || (currentLang === 'en' ? 'Planetary status normal' : currentLang === 'gu' ? 'ગ્રહ સ્થિતિ સામાન્ય' : 'ग्रह स्थिति सामान्य')}
                       </div>
                       <p className="text-[10.5px] text-[#5C3A21] mt-1 leading-snug">
                         {parchiData.astrologicalCalculationSummary.reasons.upvasReason}
@@ -1226,19 +1485,19 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
                   <div className="flex items-center justify-between text-[11px] text-[#7A1D1D] pt-1 border-t border-[#8C6239]/15 flex-wrap gap-2">
                     <span>
-                      <strong>दशा प्रभाव:</strong> {parchiData.astrologicalCalculationSummary.dashaSummary}
+                      <strong>{currentLang === 'en' ? 'Dasha Influence: ' : currentLang === 'gu' ? 'દશા પ્રભાવ: ' : 'दशा प्रभाव: '}</strong> {parchiData.astrologicalCalculationSummary.dashaSummary}
                     </span>
                     <span>
-                      <strong>प्रमुख योग/दोष:</strong> {parchiData.astrologicalCalculationSummary.keyYogaOrDosha}
+                      <strong>{currentLang === 'en' ? 'Key Yoga/Dosha: ' : currentLang === 'gu' ? 'મુખ્ય યોગ/દોષ: ' : 'प्रमुख योग/दोष: '}</strong> {parchiData.astrologicalCalculationSummary.keyYogaOrDosha}
                     </span>
                     {parchiData.astrologicalCalculationSummary.combustPlanets.length > 0 && (
                       <span className="text-amber-800 font-bold">
-                        अस्त: {parchiData.astrologicalCalculationSummary.combustPlanets.join(', ')}
+                        {currentLang === 'en' ? 'Combust: ' : currentLang === 'gu' ? 'અસ્ત: ' : 'अस्त: '} {parchiData.astrologicalCalculationSummary.combustPlanets.join(', ')}
                       </span>
                     )}
                     {parchiData.astrologicalCalculationSummary.debilitatedPlanets.length > 0 && (
                       <span className="text-rose-800 font-bold">
-                        नीच: {parchiData.astrologicalCalculationSummary.debilitatedPlanets.join(', ')}
+                        {currentLang === 'en' ? 'Debilitated: ' : currentLang === 'gu' ? 'નીચ: ' : 'नीच: '} {parchiData.astrologicalCalculationSummary.debilitatedPlanets.join(', ')}
                       </span>
                     )}
                   </div>
@@ -1260,10 +1519,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                           type="button"
                           onClick={() => setIsEditAstrologerModalOpen(true)}
                           className="px-1.5 py-0.5 text-[10px] sm:text-xs font-sans font-semibold bg-[#8B1E1E]/10 hover:bg-[#8B1E1E]/20 text-[#8B1E1E] rounded cursor-pointer transition inline-flex items-center gap-1"
-                          title="नाम व पदवी बदलें"
+                          title={currentLang === 'en' ? 'Change name and title' : currentLang === 'gu' ? 'નામ અને પદવી બદલો' : 'नाम व पदवी बदलें'}
                         >
                           <Edit3 className="w-3 h-3" />
-                          <span>बदलें</span>
+                          <span>{currentLang === 'en' ? 'Change' : currentLang === 'gu' ? 'બદલો' : 'बदलें'}</span>
                         </button>
                       </div>
                     ) : (
@@ -1271,10 +1530,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                         type="button"
                         onClick={() => setIsEditAstrologerModalOpen(true)}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#8B1E1E]/10 hover:bg-[#8B1E1E]/20 text-[#8B1E1E] border border-dashed border-[#8B1E1E]/50 rounded-lg text-xs sm:text-sm font-bold cursor-pointer transition group"
-                        title="यहाँ क्लिक कर अपना / ज्योतिषी का नाम लिखें"
+                        title={currentLang === 'en' ? 'Click here to write your or astrologer\'s name' : currentLang === 'gu' ? 'જ્યોતિષીનું નામ લખવા અહીં ક્લિક કરો' : 'यहाँ क्लिक कर अपना / ज्योतिषी का नाम लिखें'}
                       >
                         <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition" />
-                        <span>+ ज्योतिषी का नाम लिखें</span>
+                        <span>{currentLang === 'en' ? '+ Write Astrologer\'s Name' : currentLang === 'gu' ? '+ જ્યોતિષીનું નામ લખો' : '+ ज्योतिषी का नाम लिखें'}</span>
                       </button>
                     )}
 
@@ -1312,7 +1571,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                         onClick={() => setIsEditAstrologerModalOpen(true)}
                         className="text-[11px] text-[#8C6239] hover:underline cursor-pointer"
                       >
-                        + स्थान/शहर जोड़ें
+                        {currentLang === 'en' ? '+ Add Location/City' : currentLang === 'gu' ? '+ સ્થળ/શહેર ઉમેરો' : '+ स्थान/शहर जोड़ें'}
                       </button>
                     )}
                   </div>
@@ -1326,9 +1585,9 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-[#7A1C1C] font-serif mt-1">
-                    <span>क्र. {serialNo}</span>
+                    <span>{currentLang === 'en' ? 'No. ' : currentLang === 'gu' ? 'ક્ર. ' : 'क्र. '}{serialNo}</span>
                     <span>
-                      दिनांक{' '}
+                      {currentLang === 'en' ? 'Date ' : currentLang === 'gu' ? 'તારીખ ' : 'दिनांक '}
                       <span className="border-b border-dotted border-[#8B1E1E] px-2 pb-0.5">
                         {dateStr}
                       </span>
@@ -1346,7 +1605,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   {/* Numbered Remedies List */}
                   <div className="space-y-3.5 sm:space-y-4 pl-2 sm:pl-4">
                     {points.map((pt, index) => {
-                      const isVishnuRemedy = /विष्णु|सहस्रनाम/i.test(pt);
+                      const isVishnuRemedy = /विष्णु|सहस्रनाम|vishnu|sahasranama|વિષ્ણુ|સહસ્રનામ/i.test(pt);
                       return (
                         <div
                           key={index}
@@ -1378,10 +1637,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                                     }
                                   }}
                                   className="text-[11px] font-sans font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-400 rounded-md px-2 py-0.5 flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-2xs"
-                                  title="श्रीविष्णुसहस्रनाम सम्पूर्ण पाठ खोलें"
+                                  title={currentLang === 'en' ? 'Open Sri Vishnu Sahasranama full text' : currentLang === 'gu' ? 'શ્રી વિષ્ણુ સહસ્રનામ સંપૂર્ણ પાઠ ખોલો' : 'श्रीविष्णुसहस्रनाम सम्पूर्ण पाठ खोलें'}
                                 >
                                   <Sparkles className="w-3 h-3 text-amber-700" />
-                                  <span>पाठ खोलें</span>
+                                  <span>{currentLang === 'en' ? 'Open Text' : currentLang === 'gu' ? 'પાઠ ખોલો' : 'पाठ खोलें'}</span>
                                 </button>
                               )}
                               <button
@@ -1391,10 +1650,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                                   setActiveTab('guide');
                                 }}
                                 className="text-[11px] font-sans font-semibold text-[#8B1E1E] bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8B1E1E]/30 rounded px-2 py-0.5 flex items-center gap-1 cursor-pointer transition shrink-0"
-                                title="इस उपाय का कारण और लाभ जानें"
+                                title={currentLang === 'en' ? 'Learn the reason and benefits of this remedy' : currentLang === 'gu' ? 'આ ઉપાયનું કારણ અને લાભ જાણો' : 'इस उपाय का कारण और लाभ जानें'}
                               >
                                 <Info className="w-3 h-3 text-[#B56A00]" />
-                                <span className="text-[10px] font-semibold">कारण व लाभ</span>
+                                <span className="text-[10px] font-semibold">
+                                  {currentLang === 'en' ? 'Why & Benefits' : currentLang === 'gu' ? 'કારણ અને લાભ' : 'कारण व लाभ'}
+                                </span>
                               </button>
                             </div>
                           </div>
@@ -1415,10 +1676,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 {activeKundali && (
                   <div className="pt-2 border-t border-[#8B1E1E]/20 flex items-center justify-between text-[11px] text-[#7A1C1C]/80 font-serif">
                     <span>
-                      कुण्डली आधार: {activeKundali.lagnaRashi} लग्न • {activeKundali.moonRashi} राशि •{' '}
-                      {activeKundali.nakshatra} नक्षत्र
+                      {currentLang === 'en' ? 'Horoscope Basis: ' : currentLang === 'gu' ? 'કુંડળી આધાર: ' : 'कुण्डली आधार: '}
+                      {trRashi(activeKundali.lagnaRashi, currentLang)} {currentLang === 'en' ? 'Ascendant' : currentLang === 'gu' ? 'લગ્ન' : 'लग्न'} • {trRashi(activeKundali.moonRashi, currentLang)} {currentLang === 'en' ? 'Sign' : currentLang === 'gu' ? 'રાશિ' : 'राशि'} • {trVedic(activeKundali.nakshatra, currentLang)}
                     </span>
-                    <span>दशा: {activeKundali.mahadasha}–{activeKundali.antardasha}</span>
+                    <span>{currentLang === 'en' ? 'Dasha: ' : currentLang === 'gu' ? 'દશા: ' : 'दशा: '}{trPlanet(activeKundali.mahadasha, currentLang)}–{trPlanet(activeKundali.antardasha, currentLang)}</span>
                   </div>
                 )}
               </div>
@@ -1431,7 +1692,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   className="px-4 py-2 bg-[#FFFDF8] hover:bg-[#FAF2E4] text-[#7A1D1D] border-2 border-[#8C6239]/50 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer transition shadow-sm"
                 >
                   <BookOpen className="w-4 h-4 text-[#B56A00]" />
-                  <span>📖 सम्पूर्ण पर्ची का यजमान विस्तृत मार्गदर्शन देखें</span>
+                  <span>
+                    {currentLang === 'en'
+                      ? '📖 View Detailed Yajman Guide for all remedies'
+                      : currentLang === 'gu'
+                      ? '📖 સમગ્ર પર્ચીનું યજમાન માર્ગદર્શન જુઓ'
+                      : '📖 सम्पूर्ण पर्ची का यजमान विस्तृत मार्गदर्शन देखें'}
+                  </span>
                 </button>
 
                 <button
@@ -1455,7 +1722,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   className="px-4 py-2 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-[#FFF9E6] border-2 border-amber-500/60 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer transition shadow-sm active:scale-95"
                 >
                   <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>🙏 श्रीविष्णुसहस्रनाम सम्पूर्ण पाठ खोलें</span>
+                  <span>
+                    {currentLang === 'en'
+                      ? '🙏 Open Sri Vishnu Sahasranama Full Text'
+                      : currentLang === 'gu'
+                      ? '🙏 શ્રી વિષ્ણુ સહસ્રનામ સંપૂર્ણ પાઠ ખોલો'
+                      : '🙏 श्रीविष्णुसहस्रनाम सम्पूर्ण पाठ खोलें'}
+                  </span>
                 </button>
               </div>
             </>
@@ -1474,20 +1747,20 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-bold text-sm sm:text-base text-[#7A1D1D]">
-                          {header.astrologerName?.trim() || 'वैदिक ज्योतिष परामर्श'} — उपाय पर्ची विस्तृत मार्गदर्शन
+                          {header.astrologerName?.trim() || (currentLang === 'en' ? 'Vedic Astrology Consultation' : currentLang === 'gu' ? 'વૈદિક જ્યોતિષ પરામર્શ' : 'वैदिक ज्योतिष परामर्श')} — {currentLang === 'en' ? 'Detailed Remedy Guide' : currentLang === 'gu' ? 'વિસ્તૃત ઉપાય માર્ગદર્શન' : 'उपाय पर्ची विस्तृत मार्गदर्शन'}
                         </h4>
                         <button
                           type="button"
                           onClick={() => setIsEditAstrologerModalOpen(true)}
                           className="px-2 py-0.5 bg-[#FAF2E4] hover:bg-[#EBDCC0] border border-[#8C6239]/40 rounded text-[11px] text-[#7A1D1D] font-bold cursor-pointer inline-flex items-center gap-1"
-                          title="ज्योतिषी का नाम व पदवी बदलें"
+                          title={currentLang === 'en' ? 'Change astrologer name and title' : currentLang === 'gu' ? 'જ્યોતિષીનું નામ અને પદવી બદલો' : 'ज्योतिषी का नाम व पदवी बदलें'}
                         >
                           <Edit3 className="w-3 h-3" />
-                          <span>नाम बदलें</span>
+                          <span>{currentLang === 'en' ? 'Change Name' : currentLang === 'gu' ? 'નામ બદલો' : 'नाम बदलें'}</span>
                         </button>
                       </div>
                       <p className="text-[11px] text-[#7A1C1C]">
-                        {[header.qualification?.trim(), header.designation?.trim(), header.address?.trim()].filter(Boolean).join(' • ') || 'शास्त्रीय मार्गदर्शन एवं उपाय विवरण'}
+                        {[header.qualification?.trim(), header.designation?.trim(), header.address?.trim()].filter(Boolean).join(' • ') || (currentLang === 'en' ? 'Classical Guidance & Remedy Details' : currentLang === 'gu' ? 'શાસ્ત્રીય માર્ગદર્શન અને ઉપાય વિગતો' : 'शास्त्रीय मार्गदर्शन एवं उपाय विवरण')}
                       </p>
                     </div>
                   </div>
@@ -1496,19 +1769,19 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     onClick={() => setActiveTab('parchi')}
                     className="px-2.5 py-1 text-xs bg-[#FAF2E4] hover:bg-[#EBDCC0] border border-[#8C6239]/40 rounded-lg text-[#7A1D1D] font-bold cursor-pointer"
                   >
-                    📜 पर्ची देखें
+                    {currentLang === 'en' ? '📜 View Slip' : currentLang === 'gu' ? '📜 પર્ચી જુઓ' : '📜 पर्ची देखें'}
                   </button>
                 </div>
 
                 <div className="text-xs space-y-1">
                   <p>
-                    <strong>यजमान:</strong> <span className="text-[#162C6A] font-bold">{salutation}</span> | <strong>क्र.:</strong> {serialNo} | <strong>दिनांक:</strong> {dateStr}
+                    <strong>{currentLang === 'en' ? 'Yajman:' : currentLang === 'gu' ? 'યજમાન:' : 'यजमान:'}</strong> <span className="text-[#162C6A] font-bold">{salutation}</span> | <strong>{currentLang === 'en' ? 'Sr. No.:' : currentLang === 'gu' ? 'ક્ર.:' : 'क्र.:'}</strong> {serialNo} | <strong>{currentLang === 'en' ? 'Date:' : currentLang === 'gu' ? 'તારીખ:' : 'दिनांक:'}</strong> {dateStr}
                   </p>
                   <p className="text-[#5C3A21]">
-                    <strong>कुण्डली आधार:</strong> {activeKundali ? `${activeKundali.lagnaRashi} लग्न • ${activeKundali.moonRashi} राशि • ${activeKundali.nakshatra} नक्षत्र • ${activeKundali.mahadasha} महादशा` : 'तात्कालिक प्रश्न लग्न आधार'}
+                    <strong>{currentLang === 'en' ? 'Horoscope Basis: ' : currentLang === 'gu' ? 'કુંડળી આધાર: ' : 'कुण्डली आधार: '}</strong> {activeKundali ? `${trRashi(activeKundali.lagnaRashi, currentLang)} ${currentLang === 'en' ? 'Ascendant' : currentLang === 'gu' ? 'લગ્ન' : 'लग्न'} • ${trRashi(activeKundali.moonRashi, currentLang)} ${currentLang === 'en' ? 'Sign' : currentLang === 'gu' ? 'રાશિ' : 'राशि'} • ${trVedic(activeKundali.nakshatra, currentLang)} • ${trPlanet(activeKundali.mahadasha, currentLang)} ${currentLang === 'en' ? 'Mahadasha' : currentLang === 'gu' ? 'મહાદશા' : 'महादशा'}` : (currentLang === 'en' ? 'Prashna Ascendant Basis' : currentLang === 'gu' ? 'તાત્કાલિક પ્રશ્ન લગ્ન આધાર' : 'तात्कालिक प्रश्न लग्न आधार')}
                   </p>
                   <p className="text-[11px] text-amber-900 bg-amber-50 p-2 rounded-lg border border-amber-200">
-                    💡 <strong>यजमान के लिए शास्त्रीय निर्देश:</strong> नीचे आपकी पर्ची में लिखे प्रत्येक उपाय का वास्तविक ज्योतिषीय कारण (यह उपाय क्यों करना है), मिलने वाले प्रत्यक्ष लाभ, एवं धारण/दान/पूजा की प्रामाणिक शास्त्रीय विधि दी गई है।
+                    💡 <strong>{currentLang === 'en' ? 'Classical Instructions for Yajman:' : currentLang === 'gu' ? 'યજમાન માટે શાસ્ત્રીય નિર્દેશ:' : 'यजमान के लिए शास्त्रीय निर्देश:'}</strong> {currentLang === 'en' ? 'Below are the authentic astrological reasons (why perform this remedy), direct benefits, and procedure rules for each remedy prescribed on your slip.' : currentLang === 'gu' ? 'નીચે તમારી પર્ચીમાં લખેલ દરેક ઉપાયનું વાસ્તવિક જ્યોતિષીય કારણ (આ ઉપાય શા માટે કરવો), મળતા પ્રત્યક્ષ લાભ અને વિધિ નિયમો આપેલા છે.' : 'नीचे आपकी पर्ची में लिखे प्रत्येक उपाय का वास्तविक ज्योतिषीय कारण (यह उपाय क्यों करना है), मिलने वाले प्रत्यक्ष लाभ, एवं धारण/दान/पूजा की प्रामाणिक शास्त्रीय विधि दी गई है।'}
                   </p>
                 </div>
               </div>
@@ -1535,11 +1808,11 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                                 : 'bg-emerald-700 text-white'
                             }`}
                           >
-                            स्थिति: {currentShantiDeep.severity}
+                            {currentLang === 'en' ? 'Status: ' : currentLang === 'gu' ? 'સ્થિતિ: ' : 'स्थिति: '}{currentShantiDeep.severity === 'अत्यधिक तीव्र' ? (currentLang === 'en' ? 'Highly Critical' : currentLang === 'gu' ? 'અત્યંત તીવ્ર' : 'अत्यधिक तीव्र') : currentShantiDeep.severity === 'तीव्र' ? (currentLang === 'en' ? 'Critical' : currentLang === 'gu' ? 'તીવ્ર' : 'तीव्र') : currentShantiDeep.severity === 'सौम्य / अनुकूल' ? (currentLang === 'en' ? 'Mild / Favorable' : currentLang === 'gu' ? 'સૌમ્ય / અનુકૂળ' : 'सौम्य / अनुकूल') : (currentLang === 'en' ? 'Normal' : currentLang === 'gu' ? 'સામાન્ય' : 'सामान्य')}
                           </span>
                         </div>
                         <p className="text-xs text-[#5C3A21] font-semibold mt-0.5">
-                          {currentShantiDeep.houseName ? `${currentShantiDeep.houseName}${currentShantiDeep.rashi ? ` (${currentShantiDeep.rashi} राशि)` : ''} • ` : ''}
+                          {currentShantiDeep.houseName ? `${currentShantiDeep.houseName}${currentShantiDeep.rashi ? ` (${currentShantiDeep.rashi} ${currentLang === 'en' ? 'Sign' : currentLang === 'gu' ? 'રાશિ' : 'राशि'})` : ''} • ` : ''}
                           {currentShantiDeep.severityDesc}
                         </p>
                       </div>
@@ -1549,7 +1822,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   {/* Why this Shanti is needed */}
                   <div className="bg-white/80 rounded-xl p-3 border border-amber-300 text-xs sm:text-sm text-[#3E2714] space-y-1.5 shadow-2xs">
                     <h5 className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs sm:text-sm">
-                      <span>❓ यह शान्ति अनुष्ठान क्यों आवश्यक है? (ज्योतिषीय कारण):</span>
+                      <span>{currentLang === 'en' ? '❓ Why is this Shanti Ritual necessary? (Astrological Reason):' : currentLang === 'gu' ? '❓ આ શાંતિ અનુષ્ઠાન શા માટે જરૂરી છે? (જ્યોતિષીય કારણ):' : '❓ यह शान्ति अनुष्ठान क्यों आवश्यक है? (ज्योतिषीय कारण):'}</span>
                     </h5>
                     <p className="leading-relaxed whitespace-pre-line text-[#4A2610]">
                       {currentShantiDeep.whyReason}
@@ -1560,7 +1833,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   <div className="bg-white/80 rounded-xl p-3 border border-amber-300 text-xs sm:text-sm text-[#3E2714] space-y-2 shadow-2xs">
                     <h5 className="font-bold text-emerald-900 flex items-center gap-1.5 text-xs sm:text-sm">
                       <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                      <span>🌟 इस शान्ति अनुष्ठान से क्या-क्या प्रत्यक्ष लाभ होंगे?</span>
+                      <span>{currentLang === 'en' ? '🌟 What direct benefits will this Shanti Ritual provide?' : currentLang === 'gu' ? '🌟 આ શાંતિ અનુષ્ઠાનથી શું-શું પ્રત્યક્ષ લાભ થશે?' : '🌟 इस शान्ति अनुष्ठान से क्या-क्या प्रत्यक्ष लाभ होंगे?'}</span>
                     </h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {currentShantiDeep.whatBenefits.map((b, bIdx) => (
@@ -1576,7 +1849,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   <div className="bg-white/90 rounded-xl p-3 sm:p-4 border-2 border-amber-500/60 text-xs space-y-2.5 shadow-2xs">
                     <h5 className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs sm:text-sm border-b border-amber-200 pb-1">
                       <Flame className="w-4 h-4 text-orange-600" />
-                      <span>📿 प्रामाणिक ६-चरणीय वैदिक शान्ति विधान:</span>
+                      <span>{currentLang === 'en' ? '📿 Authentic 6-Step Vedic Shanti Procedure:' : currentLang === 'gu' ? '📿 પ્રામાણિક ૬-ચરણીય વૈદિક શાંતિ વિધાન:' : '📿 प्रामाणिक ६-चरणीय वैदिक शान्ति विधान:'}</span>
                     </h5>
                     <div className="space-y-2">
                       {currentShantiDeep.sixStepVidhi.map((step) => (
@@ -1598,7 +1871,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   {/* Kaliyuga Mantra Counts Table */}
                   <div className="bg-white/90 rounded-xl p-3 border border-amber-300 text-xs space-y-2 shadow-2xs">
                     <h5 className="font-bold text-[#7A1D1D] text-xs flex items-center gap-1">
-                      <span>📜 कलियुग चतुर्गुण शास्त्रीय जप संख्या तालिका (निर्णयसिंधु अनुसार):</span>
+                      <span>{currentLang === 'en' ? '📜 Kaliyuga 4x Classical Japa Count Table (As per Nirnayasindhu):' : currentLang === 'gu' ? '📜 કલિયુગ ચતુર્ગુણ શાસ્ત્રીય જપ સંખ્યા કોષ્ટક (નિર્ણયસિંધુ મુજબ):' : '📜 कलियुग चतुर्गुण शास्त्रीय जप संख्या तालिका (निर्णयसिंधु अनुसार):'}</span>
                     </h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {currentShantiDeep.recommendedJapa.map((rj, rjIdx) => (
@@ -1624,9 +1897,9 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 <div className="flex items-center justify-between px-1">
                   <h4 className="text-xs sm:text-sm font-bold text-[#7A1D1D] flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-[#B56A00]" />
-                    <span>पर्ची के प्रत्येक उपाय का पृथक विश्लेषण एवं लाभ:</span>
+                    <span>{currentLang === 'en' ? 'Individual Analysis & Benefits for Each Remedy:' : currentLang === 'gu' ? 'પર્ચીના દરેક ઉપાયનું વિશ્લેષણ અને લાભ:' : 'पर्ची के प्रत्येक उपाय का पृथक विश्लेषण एवं लाभ:'}</span>
                   </h4>
-                  <span className="text-[11px] text-[#5C3A21]">कुल {currentDetailedItems.length} उपाय</span>
+                  <span className="text-[11px] text-[#5C3A21]">{currentLang === 'en' ? `Total ${currentDetailedItems.length} remedies` : currentLang === 'gu' ? `કુલ ${currentDetailedItems.length} ઉપાય` : `कुल ${currentDetailedItems.length} उपाय`}</span>
                 </div>
 
                 {currentDetailedItems.map((item, idx) => {
@@ -1666,7 +1939,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] text-[#7A1D1D] font-semibold">
-                            {isExpanded ? 'संक्षिप्त करें' : 'विस्तार देखें'}
+                            {isExpanded ? (currentLang === 'en' ? 'Collapse' : currentLang === 'gu' ? 'સંક્ષિપ્ત કરો' : 'संक्षिप्त करें') : (currentLang === 'en' ? 'View Details' : currentLang === 'gu' ? 'વિગતો જુઓ' : 'विस्तार देखें')}
                           </span>
                           {isExpanded ? (
                             <ChevronUp className="w-4 h-4 text-[#7A1D1D]" />
@@ -1682,7 +1955,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                           {/* 1. Why Reason */}
                           <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 space-y-1">
                             <h6 className="font-bold text-[#7A1D1D] flex items-center gap-1.5 text-xs">
-                              <span>❓ यह उपाय क्यों करें? (शास्त्रीय व कुण्डली कारण):</span>
+                              <span>{currentLang === 'en' ? '❓ Why perform this remedy? (Astrological & Scriptural Reason):' : currentLang === 'gu' ? '❓ આ ઉપાય શા માટે કરવો? (શાસ્ત્રીય અને કુંડળી કારણ):' : '❓ यह उपाय क्यों करें? (शास्त्रीय व कुण्डली कारण):'}</span>
                             </h6>
                             <p className="text-xs sm:text-sm text-[#4A2610] leading-relaxed whitespace-pre-line">
                               {item.whyReason}
@@ -1693,7 +1966,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                           <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 space-y-1.5">
                             <h6 className="font-bold text-emerald-900 flex items-center gap-1.5 text-xs">
                               <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                              <span>🌟 इस उपाय से क्या-क्या प्रत्यक्ष लाभ होंगे?</span>
+                              <span>{currentLang === 'en' ? '🌟 What direct benefits will this remedy provide?' : currentLang === 'gu' ? '🌟 આ ઉપાયથી શું-શું પ્રત્યક્ષ લાભ થશે?' : '🌟 इस उपाय से क्या-क्या प्रत्यक्ष लाभ होंगे?'}</span>
                             </h6>
                             <div className="space-y-1 pl-1">
                               {item.benefits.map((b, bIdx) => (
@@ -1708,7 +1981,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                           {/* 3. Authentic Vidhi */}
                           <div className="bg-[#FAF2E4]/80 border border-[#8C6239]/30 rounded-xl p-3 space-y-1 text-xs">
                             <h6 className="font-bold text-[#7A1D1D] flex items-center gap-1.5">
-                              <span>📿 प्रामाणिक शास्त्रीय विधि एवं नियम:</span>
+                              <span>{currentLang === 'en' ? '📿 Authentic Classical Procedure & Rules:' : currentLang === 'gu' ? '📿 પ્રામાણિક શાસ્ત્રીય વિધિ અને નિયમો:' : '📿 प्रामाणिक शास्त्रीय विधि एवं नियम:'}</span>
                             </h6>
                             <p className="text-xs text-[#3E2714] leading-relaxed whitespace-pre-line">
                               {item.vidhi}
@@ -1716,20 +1989,20 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
                             {item.samagri && (
                               <p className="pt-1.5 text-[11px] text-[#5C3A21]">
-                                <strong>सामग्री:</strong> {item.samagri}
+                                <strong>{currentLang === 'en' ? 'Materials: ' : currentLang === 'gu' ? 'સામગ્રી: ' : 'सामग्री: '}</strong> {item.samagri}
                               </p>
                             )}
                             {item.precautions && (
                               <p className="text-[11px] text-amber-900 bg-amber-100/60 p-1.5 rounded mt-1 border border-amber-200">
-                                <strong>⚠️ विशेष सावधानी:</strong> {item.precautions}
+                                <strong>{currentLang === 'en' ? '⚠️ Special Precaution: ' : currentLang === 'gu' ? '⚠️ વિશેષ સાવધાની: ' : '⚠️ विशेष सावधानी: '}</strong> {item.precautions}
                               </p>
                             )}
 
-                            {/विष्णु|सहस्रनाम/i.test(`${item.title} ${item.vidhi} ${item.whyReason}`) && (
+                            {/विष्णु|सहस्रनाम|vishnu|sahasranama|વિષ્ણુ|સહસ્રનામ/i.test(`${item.title} ${item.vidhi} ${item.whyReason}`) && (
                               <div className="mt-3 p-3 bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 rounded-xl border border-amber-300 flex items-center justify-between gap-2.5 flex-wrap shadow-2xs">
                                 <div className="flex items-center gap-2 text-xs text-[#7A1D1D] font-bold">
                                   <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                                  <span>श्रीविष्णुसहस्रनाम स्तोत्रम् (पूर्वपीठिका, ध्यानम्, १०८ मूल श्लोक, १००० दिव्य नाम व फलश्रुति)</span>
+                                  <span>{currentLang === 'en' ? 'Sri Vishnu Sahasranama Stotram (Purvapithika, Dhyanam, 108 Shlokas, 1000 Divine Names & Phalasruti)' : currentLang === 'gu' ? 'શ્રીવિષ્ણુસહસ્રનામ સ્તોત્રમ્ (પૂર્વપીઠિકા, ધ્યાનમ્, ૧૦૮ મૂળ શ્લોક, ૧૦૦૦ દિવ્ય નામ અને ફળશ્રુતિ)' : 'श्रीविष्णुसहस्रनाम स्तोत्रम् (पूर्वपीठिका, ध्यानम्, १०८ मूल श्लोक, १००० दिव्य नाम व फलश्रुति)'}</span>
                                 </div>
                                 <button
                                   type="button"
@@ -1752,7 +2025,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                                   className="px-3.5 py-1.5 bg-[#7A1D1D] hover:bg-[#5C1414] text-[#FFD88A] rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shadow-xs active:scale-95"
                                 >
                                   <BookOpen className="w-3.5 h-3.5" />
-                                  <span>📖 संपूर्ण पाठ व श्रवण खोलें</span>
+                                  <span>{currentLang === 'en' ? '📖 Open Full Recitation' : currentLang === 'gu' ? '📖 સંપૂર્ણ પાઠ અને શ્રવણ ખોલો' : '📖 संपूर्ण पाठ व श्रवण खोलें'}</span>
                                 </button>
                               </div>
                             )}
@@ -1772,7 +2045,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition"
                 >
                   <Share2 className="w-4 h-4" />
-                  <span>📲 यजमान को WhatsApp पर विस्तृत विवरण भेजें</span>
+                  <span>{currentLang === 'en' ? '📲 Send Detailed Guide to Yajman on WhatsApp' : currentLang === 'gu' ? '📲 યજમાનને WhatsApp પર મોકલો' : '📲 यजमान को WhatsApp पर विस्तृत विवरण भेजें'}</span>
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -1782,7 +2055,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition"
                   >
                     {copiedGuide ? <Check className="w-4 h-4 text-emerald-700" /> : <Copy className="w-4 h-4" />}
-                    <span>{copiedGuide ? 'कॉपी हुआ!' : 'कॉपी करें'}</span>
+                    <span>{copiedGuide ? (currentLang === 'en' ? 'Copied!' : currentLang === 'gu' ? 'કૉપી થયું!' : 'कॉपी हुआ!') : (currentLang === 'en' ? 'Copy Guide' : currentLang === 'gu' ? 'કૉપી કરો' : 'कॉपी करें')}</span>
                   </button>
 
                   <button
@@ -1790,7 +2063,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     onClick={() => setActiveTab('parchi')}
                     className="px-3.5 py-2 bg-[#7A1D1D] hover:bg-[#5C1414] text-[#FFD88A] rounded-xl text-xs font-bold cursor-pointer transition shadow-2xs"
                   >
-                    📜 वापस पर्ची देखें
+                    {currentLang === 'en' ? '📜 Back to Slip' : currentLang === 'gu' ? '📜 પાછા પર્ચી પર' : '📜 वापस पर्ची देखें'}
                   </button>
                 </div>
               </div>
@@ -1810,12 +2083,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 {copied ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-700" />
-                    <span className="text-emerald-800">कॉपी हो गया!</span>
+                    <span className="text-emerald-800">{currentLang === 'en' ? 'Copied!' : currentLang === 'gu' ? 'કૉપી થયું!' : 'कॉपी हो गया!'}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4 text-[#7A1D1D]" />
-                    <span>पर्ची टेक्स्ट कॉपी</span>
+                    <span>{currentLang === 'en' ? 'Copy Slip Text' : currentLang === 'gu' ? 'પર્ચી ટેક્સ્ટ કૉપી' : 'पर्ची टेक्स्ट कॉपी'}</span>
                   </>
                 )}
               </button>
@@ -1832,7 +2105,11 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 className="px-3 py-2 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition active:scale-95"
               >
                 <BookOpen className="w-4 h-4 text-[#B56A00]" />
-                <span>{activeTab === 'parchi' ? '📖 यजमान विस्तृत मार्गदर्शन' : '📜 पारंपरिक पर्ची'}</span>
+                <span>
+                  {activeTab === 'parchi'
+                    ? (currentLang === 'en' ? '📖 Yajman Guide' : currentLang === 'gu' ? '📖 યજમાન માર્ગદર્શન' : '📖 यजमान विस्तृत मार्गदर्शन')
+                    : (currentLang === 'en' ? '📜 Traditional Slip' : currentLang === 'gu' ? '📜 પારંપરિક પર્ચી' : '📜 पारंपरिक पर्ची')}
+                </span>
               </button>
             </div>
 
@@ -1846,12 +2123,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 {isDownloading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
-                    <span>पर्ची बन रही है...</span>
+                    <span>{currentLang === 'en' ? 'Generating Slip...' : currentLang === 'gu' ? 'પર્ચી બની રહી છે...' : 'पर्ची बन रही है...'}</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-4 h-4" />
-                    <span>📥 HD पर्ची डाउनलोड (PNG)</span>
+                    <span>{currentLang === 'en' ? '📥 Download HD Slip (PNG)' : currentLang === 'gu' ? '📥 HD પર્ચી ડાઉનલોડ (PNG)' : '📥 HD पर्ची डाउनलोड (PNG)'}</span>
                   </>
                 )}
               </button>
@@ -1863,7 +2140,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition disabled:opacity-50 active:scale-95"
               >
                 <Share2 className="w-4 h-4" />
-                <span>📲 WhatsApp पर्ची</span>
+                <span>{currentLang === 'en' ? '📲 WhatsApp Slip' : currentLang === 'gu' ? '📲 WhatsApp પર્ચી' : '📲 WhatsApp पर्ची'}</span>
               </button>
             </div>
           </div>
@@ -1875,7 +2152,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
             type="button"
             onClick={() => setIsZenMode(false)}
             className="absolute top-3 right-3 z-50 p-2 rounded-full bg-black/75 text-white shadow-xl hover:bg-black cursor-pointer transition"
-            title="सामान्य मोड में वापस लौटें"
+            title={currentLang === 'en' ? 'Return to Normal Mode' : currentLang === 'gu' ? 'સામાન્ય મોડમાં પાછા જાઓ' : 'सामान्य मोड में वापस लौटें'}
           >
             <X className="w-5 h-5" />
           </button>
@@ -1892,10 +2169,18 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 <span className="text-xl">🎉</span>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-[#FFD88A]">
-                    आपकी HD उपाय पर्ची तैयार है!
+                    {currentLang === 'en'
+                      ? 'Your HD Remedy Slip is Ready!'
+                      : currentLang === 'gu'
+                      ? 'તમારી HD ઉપાય પર્ચી તૈયાર છે!'
+                      : 'आपकी HD उपाय पर्ची तैयार है!'}
                   </h3>
                   <p className="text-[11px] text-[#F3E2C4]/80">
-                    पारंपरिक लेटरहेड प्रारूप (1080×1360 HD PNG)
+                    {currentLang === 'en'
+                      ? 'Traditional Letterhead Format (1080×1360 HD PNG)'
+                      : currentLang === 'gu'
+                      ? 'પારંપરિક લેટરહેડ ફોર્મેટ (1080×1360 HD PNG)'
+                      : 'पारंपरिक लेटरहेड प्रारूप (1080×1360 HD PNG)'}
                   </p>
                 </div>
               </div>
@@ -1915,19 +2200,59 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 <div className="w-full bg-emerald-50 border border-emerald-400 rounded-xl p-2.5 mb-3 text-xs text-emerald-900 flex items-center gap-2 shadow-xs animate-in fade-in">
                   <Check className="w-4 h-4 text-emerald-700 shrink-0" />
                   <div>
-                    <strong>डाउनलोड प्रारंभ हो गया है!</strong> अपने फोन के 'Downloads' फोल्डर या नोटिफिकेशन बार में देखें।
+                    <strong>{currentLang === 'en' ? 'Download started!' : currentLang === 'gu' ? 'ડાઉનલોડ શરૂ થયું છે!' : 'डाउनलोड प्रारंभ हो गया है!'}</strong>{' '}
+                    {currentLang === 'en'
+                      ? "Check your phone's 'Downloads' folder or notification bar."
+                      : currentLang === 'gu'
+                      ? "તમારા ફોનના 'Downloads' ફોલ્ડર અથવા નોટિફિકેશન બારમાં જુઓ."
+                      : "अपने फोन के 'Downloads' फोल्डर या नोटिफिकेशन बार में देखें।"}
                   </div>
                 </div>
               ) : (
                 <div className="w-full bg-amber-50/95 border border-amber-300 rounded-xl p-2.5 mb-3 text-xs text-[#5C3A21] space-y-1 shadow-xs">
                   <div className="flex items-center gap-1.5 font-bold text-[#7A1D1D]">
                     <span>📱</span>
-                    <span>मोबाइल में सहेजने के आसान विकल्प:</span>
+                    <span>
+                      {currentLang === 'en'
+                        ? 'Easy Options to Save on Mobile:'
+                        : currentLang === 'gu'
+                        ? 'મોબાઈલમાં સેવ કરવાના સરળ વિકલ્પો:'
+                        : 'मोबाइल में सहेजने के आसान विकल्प:'}
+                    </span>
                   </div>
                   <ul className="text-[11px] space-y-0.5 pl-5 list-disc text-[#4A2610]">
-                    <li><strong>विकल्प १:</strong> नीचे '📥 फोन में सेव करें' बटन दबाएं।</li>
-                    <li><strong>विकल्प २:</strong> '📲 गैलरी / शेयर' दबाकर सीधे WhatsApp या Photos में सहेजें।</li>
-                    <li><strong>विकल्प ३:</strong> नीचे दिख रही पर्ची पर <strong>२ सेकंड उंगली दबाकर रखें (Long-press)</strong> और <strong>'Download image' (छवि डाउनलोड करें)</strong> चुनें।</li>
+                    <li>
+                      <strong>{currentLang === 'en' ? 'Option 1:' : currentLang === 'gu' ? 'વિકલ્પ ૧:' : 'विकल्प १:'}</strong>{' '}
+                      {currentLang === 'en'
+                        ? "Tap '📥 Save to Phone' below."
+                        : currentLang === 'gu'
+                        ? "નીચે '📥 ફોનમાં સેવ કરો' બટન દબાવો."
+                        : "नीचे '📥 फोन में सेव करें' बटन दबाएं।"}
+                    </li>
+                    <li>
+                      <strong>{currentLang === 'en' ? 'Option 2:' : currentLang === 'gu' ? 'વિકલ્પ ૨:' : 'विकल्प २:'}</strong>{' '}
+                      {currentLang === 'en'
+                        ? "Tap '📲 Gallery / Share' to send directly to WhatsApp or Photos."
+                        : currentLang === 'gu'
+                        ? "'📲 ગેલેરી / શેર' દબાવી સીધા WhatsApp અથવા Photosમાં સેવ કરો."
+                        : "'📲 गैलरी / शेयर' दबाकर सीधे WhatsApp या Photos में सहेजें।"}
+                    </li>
+                    <li>
+                      <strong>{currentLang === 'en' ? 'Option 3:' : currentLang === 'gu' ? 'વિકલ્પ ૩:' : 'विकल्प ३:'}</strong>{' '}
+                      {currentLang === 'en' ? (
+                        <>
+                          <strong>Long-press for 2 seconds</strong> on the slip below and choose <strong>'Download image'</strong>.
+                        </>
+                      ) : currentLang === 'gu' ? (
+                        <>
+                          નીચે દેખાતી પર્ચી પર <strong>૨ સેકન્ડ દબાવી રાખો (Long-press)</strong> અને <strong>'Download image'</strong> પસંદ કરો.
+                        </>
+                      ) : (
+                        <>
+                          नीचे दिख रही पर्ची पर <strong>२ सेकंड उंगली दबाकर रखें (Long-press)</strong> और <strong>'Download image' (छवि डाउनलोड करें)</strong> चुनें।
+                        </>
+                      )}
+                    </li>
                   </ul>
                 </div>
               )}
@@ -1939,7 +2264,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               >
                 <img
                   src={generatedImageUrl}
-                  alt="ज्योतिषीय उपाय पर्ची"
+                  alt={currentLang === 'en' ? 'Vedic Remedy Slip' : currentLang === 'gu' ? 'જ્યોતિષીય ઉપાય પર્ચી' : 'ज्योतिषीय उपाय पर्ची'}
                   draggable={true}
                   className="w-auto h-auto max-h-[50vh] max-w-full object-contain cursor-pointer select-auto"
                   style={{
@@ -1949,12 +2274,16 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                     touchAction: 'auto',
                     pointerEvents: 'auto',
                   }}
-                  title="लंबा दबाकर (Long-press) छवि सहेजें"
+                  title={currentLang === 'en' ? 'Long-press to save image' : currentLang === 'gu' ? 'લાંબુ દબાવી (Long-press) છબી સેવ કરો' : 'लंबा दबाकर (Long-press) छवि सहेजें'}
                 />
               </div>
 
               <p className="text-[10px] text-[#7A1D1D]/75 mt-2 text-center">
-                💡 पर्ची पर लंबा दबाकर (Long-press) सीधे अपने फोन में सेव कर सकते हैं।
+                {currentLang === 'en'
+                  ? '💡 Long-press on the slip to save it directly to your phone.'
+                  : currentLang === 'gu'
+                  ? '💡 પર્ચી પર લાંબુ દબાવી (Long-press) સીધા તમારા ફોનમાં સેવ કરી શકો છો.'
+                  : '💡 पर्ची पर लंबा दबाकर (Long-press) सीधे अपने फोन में सेव कर सकते हैं।'}
               </p>
             </div>
 
@@ -1965,7 +2294,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 type="button"
                 onClick={() => {
                   const safeSal = (salutation || 'Yajaman')
-                    .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+                    .replace(/[^a-zA-Z0-9\u0900-\u097F\u0A80-\u0AFF]/g, '_')
                     .substring(0, 25);
                   triggerNativeDownload(generatedImageUrl, `Upay_Parchi_${safeSal}.png`);
                 }}
@@ -1974,12 +2303,12 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 {downloadSuccess ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-400" />
-                    <span>सेव हो रहा है...</span>
+                    <span>{currentLang === 'en' ? 'Saving...' : currentLang === 'gu' ? 'સેવ થઈ રહ્યું છે...' : 'सेव हो रहा है...'}</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-4 h-4" />
-                    <span>📥 फोन में सेव करें</span>
+                    <span>{currentLang === 'en' ? '📥 Save to Phone' : currentLang === 'gu' ? '📥 ફોનમાં સેવ કરો' : '📥 फोन में सेव करें'}</span>
                   </>
                 )}
               </button>
@@ -1989,15 +2318,15 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 type="button"
                 onClick={() => {
                   const safeSal = (salutation || 'Yajaman')
-                    .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+                    .replace(/[^a-zA-Z0-9\u0900-\u097F\u0A80-\u0AFF]/g, '_')
                     .substring(0, 25);
                   handleShareOrSaveToGallery(generatedImageUrl, `Upay_Parchi_${safeSal}.png`);
                 }}
                 className="py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition"
-                title="फोन की गैलरी या WhatsApp पर भेजें"
+                title={currentLang === 'en' ? 'Send to Gallery or WhatsApp' : currentLang === 'gu' ? 'ફોનની ગેલેરી અથવા WhatsApp પર મોકલો' : 'फोन की गैलरी या WhatsApp पर भेजें'}
               >
                 <Share2 className="w-4 h-4" />
-                <span>📲 गैलरी / शेयर</span>
+                <span>{currentLang === 'en' ? '📲 Gallery / Share' : currentLang === 'gu' ? '📲 ગેલેરી / શેર' : '📲 गैलरी / शेयर'}</span>
               </button>
 
               {/* Button 3: In-app Fullscreen Lightbox Zoom */}
@@ -2005,10 +2334,10 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 type="button"
                 onClick={() => setIsZoomed(true)}
                 className="py-2.5 px-2.5 bg-[#FFFDF8] hover:bg-[#EBDCC0] text-[#7A1D1D] border border-[#8C6239]/40 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1 cursor-pointer transition"
-                title="पूरी स्क्रीन पर बड़ी छवि देखें"
+                title={currentLang === 'en' ? 'View large image fullscreen' : currentLang === 'gu' ? 'સંપૂર્ણ સ્ક્રીન પર મોટું ચિત્ર જુઓ' : 'पूरी स्क्रीन पर बड़ी छवि देखें'}
               >
                 <ZoomIn className="w-4 h-4" />
-                <span className="text-xs font-semibold">बड़ा रूप</span>
+                <span className="text-xs font-semibold">{currentLang === 'en' ? 'Zoom' : currentLang === 'gu' ? 'મોટું રૂપ' : 'बड़ा रूप'}</span>
               </button>
 
               {/* Button 4: Close Modal */}
@@ -2017,7 +2346,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 onClick={() => setPreviewModalOpen(false)}
                 className="py-2.5 px-3 bg-[#E6D7BC] hover:bg-[#D9C6A5] text-[#5C3A21] rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition"
               >
-                पूर्ण / बंद
+                {currentLang === 'en' ? 'Done / Close' : currentLang === 'gu' ? 'પૂર્ણ / બંધ' : 'पूर्ण / बंद'}
               </button>
             </div>
           </div>
@@ -2040,10 +2369,18 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 <span className="text-xl">卐</span>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-white">
-                    ज्योतिषी / आचार्य लेटरहेड विवरण
+                    {currentLang === 'en'
+                      ? 'Astrologer / Acharya Letterhead Details'
+                      : currentLang === 'gu'
+                      ? 'જ્યોતિષી / આચાર્ય લેટરહેડ વિગતો'
+                      : 'ज्योतिषी / आचार्य लेटरहेड विवरण'}
                   </h3>
                   <p className="text-[11px] text-[#F3E2C4]/80">
-                    यहाँ अपना नाम व परिचय लिखें, यह पर्ची में सहेजा जाएगा
+                    {currentLang === 'en'
+                      ? 'Enter your name & introduction here, it will be saved on the slip'
+                      : currentLang === 'gu'
+                      ? 'અહીં તમારું નામ અને પરિચય લખો, તે પર્ચીમાં સેવ થશે'
+                      : 'यहाँ अपना नाम व परिचय लिखें, यह पर्ची में सहेजा जाएगा'}
                   </p>
                 </div>
               </div>
@@ -2060,43 +2397,47 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
             <div className="p-4 space-y-3.5 text-xs overflow-y-auto max-h-[70vh]">
               <div>
                 <label className="block font-bold text-[#5C3A21] mb-1">
-                  ज्योतिषी / आचार्य का नाम:
+                  {currentLang === 'en' ? 'Astrologer / Acharya Name:' : currentLang === 'gu' ? 'જ્યોતિષી / આચાર્યનું નામ:' : 'ज्योतिषी / आचार्य का नाम:'}
                 </label>
                 <input
                   type="text"
                   value={header.astrologerName}
                   onChange={(e) => saveHeaderChanges({ ...header, astrologerName: e.target.value })}
-                  placeholder="उदा. पं. शास्त्री जी / आपका शुभ नाम"
+                  placeholder={currentLang === 'en' ? 'e.g. Pt. Shastri Ji / Your Name' : currentLang === 'gu' ? 'દા.ત. પં. શાસ્ત્રી જી / તમારું નામ' : 'उदा. पं. शास्त्री जी / आपका शुभ नाम'}
                   className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] font-bold text-sm focus:outline-[#8B1E1E]"
                   autoFocus
                 />
                 <p className="text-[10px] text-[#8C6239] mt-1">
-                  यदि नाम खाली रखेंगे तो पर्ची पर खाली डॉटेड लाइन (पं. ............................) रहेगी।
+                  {currentLang === 'en'
+                    ? 'If left blank, a dotted placeholder line (Pt. ............................) will appear on the slip.'
+                    : currentLang === 'gu'
+                    ? 'જો નામ ખાલી રાખશો તો પર્ચી પર ખાલી ટપકાંવાળી લાઇન (પં. ............................) રહેશે.'
+                    : 'यदि नाम खाली रखेंगे तो पर्ची पर खाली डॉटेड लाइन (पं. ............................) रहेगी।'}
                 </p>
               </div>
 
               <div>
                 <label className="block font-bold text-[#5C3A21] mb-1">
-                  उपाधि / पदवी (Designation):
+                  {currentLang === 'en' ? 'Title / Designation:' : currentLang === 'gu' ? 'ઉપાધિ / પદવી (Designation):' : 'उपाधि / पदवी (Designation):'}
                 </label>
                 <input
                   type="text"
                   value={header.designation}
                   onChange={(e) => saveHeaderChanges({ ...header, designation: e.target.value })}
-                  placeholder="उदा. ज्योतिषाचार्य, वास्तुविद एवं याज्ञिक"
+                  placeholder={currentLang === 'en' ? 'e.g. Jyotishacharya, Vastu Expert & Yajnik' : currentLang === 'gu' ? 'દા.ત. જ્યોતિષાચાર્ય, વાસ્તુવિદ અને યાજ્ઞિક' : 'उदा. ज्योतिषाचार्य, वास्तुविद एवं याज्ञिक'}
                   className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] focus:outline-[#8B1E1E]"
                 />
               </div>
 
               <div>
                 <label className="block font-bold text-[#5C3A21] mb-1">
-                  शैक्षणिक योग्यता (Degree / Qualification):
+                  {currentLang === 'en' ? 'Degree / Qualification:' : currentLang === 'gu' ? 'શૈક્ષણિક લાયકાત (Degree / Qualification):' : 'शैक्षणिक योग्यता (Degree / Qualification):'}
                 </label>
                 <input
                   type="text"
                   value={header.qualification}
                   onChange={(e) => saveHeaderChanges({ ...header, qualification: e.target.value })}
-                  placeholder="उदा. M.A. (संस्कृत), ज्योतिष अलंकार"
+                  placeholder={currentLang === 'en' ? 'e.g. M.A. (Sanskrit), Jyotish Alankar' : currentLang === 'gu' ? 'દા.ત. M.A. (સંસ્કૃત), જ્યોતિષ અલંકાર' : 'उदा. M.A. (संस्कृत), ज्योतिष अलंकार'}
                   className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] focus:outline-[#8B1E1E]"
                 />
               </div>
@@ -2104,25 +2445,25 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
                   <label className="block font-bold text-[#5C3A21] mb-1">
-                    मोबाइल नंबर (Mo.):
+                    {currentLang === 'en' ? 'Mobile Number (Mo.):' : currentLang === 'gu' ? 'મોબાઇલ નંબર (Mo.):' : 'मोबाइल नंबर (Mo.):'}
                   </label>
                   <input
                     type="text"
                     value={header.mobile}
                     onChange={(e) => saveHeaderChanges({ ...header, mobile: e.target.value })}
-                    placeholder="उदा. 98XXXXXXXX"
+                    placeholder={currentLang === 'en' ? 'e.g. 98XXXXXXXX' : currentLang === 'gu' ? 'દા.ત. 98XXXXXXXX' : 'उदा. 98XXXXXXXX'}
                     className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] focus:outline-[#8B1E1E]"
                   />
                 </div>
                 <div>
                   <label className="block font-bold text-[#5C3A21] mb-1">
-                    स्थान / नगर (Address):
+                    {currentLang === 'en' ? 'Location / City (Address):' : currentLang === 'gu' ? 'સ્થળ / શહેર (Address):' : 'स्थान / नगर (Address):'}
                   </label>
                   <input
                     type="text"
                     value={header.address}
                     onChange={(e) => saveHeaderChanges({ ...header, address: e.target.value })}
-                    placeholder="उदा. काशी / उज्जैन / आपका नगर"
+                    placeholder={currentLang === 'en' ? 'e.g. Kashi / Ujjain / Your City' : currentLang === 'gu' ? 'દા.ત. કાશી / ઉજ્જૈન / તમારું શહેર' : 'उदा. काशी / उज्जैन / आपका नगर'}
                     className="w-full bg-[#FAF2E4] border border-[#8C6239]/50 rounded-lg px-3 py-2 text-[#2C0A0A] focus:outline-[#8B1E1E]"
                   />
                 </div>
@@ -2143,7 +2484,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 }}
                 className="text-[11px] text-[#7A1D1D] hover:underline font-semibold cursor-pointer"
               >
-                नाम खाली करें
+                {currentLang === 'en' ? 'Clear Name' : currentLang === 'gu' ? 'નામ ખાલી કરો' : 'नाम खाली करें'}
               </button>
 
               <button
@@ -2152,7 +2493,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 className="px-4 py-2 bg-[#7A1D1D] hover:bg-[#5C1414] text-[#FFD88A] font-bold rounded-xl text-xs flex items-center gap-1.5 shadow cursor-pointer transition"
               >
                 <Check className="w-3.5 h-3.5" />
-                <span>विवरण सहेजें व लागू करें</span>
+                <span>{currentLang === 'en' ? 'Save & Apply Details' : currentLang === 'gu' ? 'વિગતો સેવ કરો અને લાગુ કરો' : 'विवरण सहेजें व लागू करें'}</span>
               </button>
             </div>
           </div>
@@ -2167,7 +2508,11 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
         >
           <div className="w-full max-w-lg flex items-center justify-between text-white p-2">
             <span className="text-xs text-amber-200">
-              📱 छवि पर २ सेकंड दबाकर रखें (Long-press) और 'Download image' चुनें
+              {currentLang === 'en'
+                ? "📱 Press and hold the image for 2 seconds (Long-press) and select 'Download image'"
+                : currentLang === 'gu'
+                ? "📱 છબી પર ૨ સેકન્ડ દબાવી રાખો (Long-press) અને 'Download image' પસંદ કરો"
+                : "📱 छवि पर २ सेकंड दबाकर रखें (Long-press) और 'Download image' चुनें"}
             </span>
             <button
               type="button"
@@ -2184,7 +2529,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
           >
             <img
               src={generatedImageUrl}
-              alt="ज्योतिषीय उपाय पर्ची"
+              alt={currentLang === 'en' ? 'Vedic Remedy Slip' : currentLang === 'gu' ? 'જ્યોતિષીય ઉપાય પર્ચી' : 'ज्योतिषीय उपाय पर्ची'}
               draggable={true}
               className="max-w-full max-h-[82vh] object-contain rounded-lg shadow-2xl select-auto"
               style={{
@@ -2203,21 +2548,21 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 const safeSal = (salutation || 'Yajaman')
-                  .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_')
+                  .replace(/[^a-zA-Z0-9\u0900-\u097F\u0A80-\u0AFF]/g, '_')
                   .substring(0, 25);
                 triggerNativeDownload(generatedImageUrl, `Upay_Parchi_${safeSal}.png`);
               }}
               className="px-4 py-2 bg-[#8C6239] hover:bg-[#6A4825] text-amber-100 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>डाउनलोड करें</span>
+              <span>{currentLang === 'en' ? 'Download' : currentLang === 'gu' ? 'ડાઉનલોડ કરો' : 'डाउनलोड करें'}</span>
             </button>
             <button
               type="button"
               onClick={() => setIsZoomed(false)}
               className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-semibold cursor-pointer"
             >
-              वापस जाएं
+              {currentLang === 'en' ? 'Go Back' : currentLang === 'gu' ? 'પાછા જાઓ' : 'वापस जाएं'}
             </button>
           </div>
         </div>
@@ -2233,10 +2578,18 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 <span className="text-xl">🪷</span>
                 <div>
                   <h3 className="font-bold text-base font-granth text-white leading-tight">
-                    उपाय पर्ची हेतु गोत्र चयन
+                    {currentLang === 'en'
+                      ? 'Select Gotra for Remedy Slip'
+                      : currentLang === 'gu'
+                      ? 'ઉપાય પર્ચી માટે ગોત્ર પસંદગી'
+                      : 'उपाय पर्ची हेतु गोत्र चयन'}
                   </h3>
                   <p className="text-[11px] text-[#E6C687]">
-                    रत्न व धातु त्रिवेणी गणना स्वतः अद्यतन होगी
+                    {currentLang === 'en'
+                      ? 'Triveni gemstone & metal calculation will update automatically'
+                      : currentLang === 'gu'
+                      ? 'રત્ન અને ધાતુ ત્રિવેણી ગણતરી આપમેળે અપડેટ થશે'
+                      : 'रत्न व धातु त्रिवेणी गणना स्वतः अद्यतन होगी'}
                   </p>
                 </div>
               </div>
@@ -2258,7 +2611,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 type="text"
                 value={parchiGotraSearch}
                 onChange={(e) => setParchiGotraSearch(e.target.value)}
-                placeholder="गोत्र खोजें (उदा. कश्यप, भारद्वाज, पुलस्त्य, भृगु...)"
+                placeholder={
+                  currentLang === 'en'
+                    ? 'Search Gotra (e.g. Kashyapa, Bharadwaja, Pulastya, Bhrigu...)'
+                    : currentLang === 'gu'
+                    ? 'ગોત્ર શોધો (દા.ત. કશ્યપ, ભારદ્વાજ, પુલસ્ત્ય, ભૃગુ...)'
+                    : 'गोत्र खोजें (उदा. कश्यप, भारद्वाज, पुलस्त्य, भृगु...)'
+                }
                 className="w-full bg-white border border-[#8C6239]/40 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[#5C3A21] placeholder-[#8C6239]/70 focus:ring-2 focus:ring-[#B56A00] outline-none"
                 autoFocus
               />
@@ -2266,13 +2625,19 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
             {/* Gotra List */}
             <div className="overflow-y-auto p-3 space-y-2 flex-1 divide-y divide-[#8C6239]/15">
-              {GOTRA_LIST.filter(
-                (g) =>
-                  !parchiGotraSearch.trim() ||
-                  g.name.toLowerCase().includes(parchiGotraSearch.trim().toLowerCase()) ||
-                  g.nameEn.toLowerCase().includes(parchiGotraSearch.trim().toLowerCase()) ||
-                  g.rishi.toLowerCase().includes(parchiGotraSearch.trim().toLowerCase())
-              ).map((g) => {
+              {GOTRA_LIST.map((rawG) => ({ raw: rawG, loc: getLocalizedGotra(rawG, currentLang) }))
+                .filter(({ raw: g, loc }) => {
+                  const q = parchiGotraSearch.trim().toLowerCase();
+                  if (!q) return true;
+                  return (
+                    g.name.toLowerCase().includes(q) ||
+                    g.nameEn.toLowerCase().includes(q) ||
+                    g.rishi.toLowerCase().includes(q) ||
+                    loc.name.toLowerCase().includes(q) ||
+                    loc.rishi.toLowerCase().includes(q)
+                  );
+                })
+                .map(({ raw: g, loc }) => {
                 const isSelected = selectedGotra === g.id;
                 return (
                   <button
@@ -2285,7 +2650,8 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                       }
                       const updated = generateTraditionalUpayParchi(
                         effectiveKundali ? { ...effectiveKundali, gotra: g.id } : null,
-                        panchang
+                        panchang,
+                        currentLang
                       );
                       setParchiData(updated);
                       if (updated.points && updated.points[0]) {
@@ -2306,21 +2672,28 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-[#5C3A21]">{g.name}</span>
+                        <span className="text-sm font-black text-[#5C3A21]">
+                          {loc.name}
+                        </span>
                         {isSelected && (
                           <span className="text-[10px] bg-[#7A1D1D] text-[#FFD88A] px-2 py-0.5 rounded-full font-bold">
-                            चयनित ✓
+                            {currentLang === 'en' ? 'Selected ✓' : currentLang === 'gu' ? 'પસંદ કરેલ ✓' : 'चयनित ✓'}
                           </span>
                         )}
                       </div>
                       <div className="text-xs text-[#7A1D1D] font-bold">
-                        {g.rishi} • <span className="text-[#8C6239] font-normal">तत्व: {g.element}</span>
+                        {loc.rishi} •{' '}
+                        <span className="text-[#8C6239] font-normal">
+                          {currentLang === 'en' ? 'Element: ' : currentLang === 'gu' ? 'તત્વ: ' : 'तत्व: '}
+                          {loc.element}
+                        </span>
                       </div>
                       <div className="text-[11px] text-[#5C3A21]/80 leading-relaxed">
-                        अनुकूल धातु: <span className="font-bold text-[#5C3A21]">{g.favoredMetals.join(', ')}</span>
+                        {currentLang === 'en' ? 'Favored Metals: ' : currentLang === 'gu' ? 'અનુકૂળ ધાતુ: ' : 'अनुकूल धातु: '}
+                        <span className="font-bold text-[#5C3A21]">{loc.favoredMetals.join(', ')}</span>
                       </div>
                       <div className="text-[10px] text-[#8C6239] leading-snug">
-                        {g.description}
+                        {loc.description}
                       </div>
                     </div>
 
@@ -2342,7 +2715,13 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
 
             {/* Footer */}
             <div className="p-3 bg-[#F4E8D1] border-t border-[#8C6239]/20 flex items-center justify-between text-xs text-[#8C6239] shrink-0">
-              <span>कुल १३ प्रामाणिक वैदिक गोत्र उपलब्ध</span>
+              <span>
+                {currentLang === 'en'
+                  ? 'Total 13 authentic Vedic Gotras available'
+                  : currentLang === 'gu'
+                  ? 'કુલ ૧૩ પ્રામાણિક વૈદિક ગોત્ર ઉપલબ્ધ'
+                  : 'कुल १३ प्रामाणिक वैदिक गोत्र उपलब्ध'}
+              </span>
               <button
                 type="button"
                 onClick={() => {
@@ -2351,7 +2730,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                 }}
                 className="px-4 py-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] font-bold rounded-lg cursor-pointer"
               >
-                बंद करें
+                {currentLang === 'en' ? 'Close' : currentLang === 'gu' ? 'બંધ કરો' : 'बंद करें'}
               </button>
             </div>
           </div>

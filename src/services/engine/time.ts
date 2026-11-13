@@ -1,4 +1,11 @@
 /** Global local civil time engine. Solar events are stored as true UTC instants. */
+import i18n from '../../i18n';
+
+function resolveLocale(lang?: string): { c: string; locale: string } {
+  const c = (lang || i18n?.language || 'hi').slice(0, 2).toLowerCase();
+  const locale = c === 'en' ? 'en-US' : c === 'gu' ? 'gu-IN' : 'hi-IN';
+  return { c, locale };
+}
 
 export function timezoneHoursFor(lat: number, lon: number): number {
   // Nepal (UTC+5:45)
@@ -63,10 +70,11 @@ export function localMidnightUtc(date: Date, tzHours: number): Date {
   return new Date(Date.UTC(y, m, d) - tzHours * 3600000);
 }
 
-export function formatPlaceTime(d: Date, lat = 23.1765, lon = 75.7885, tzHoursParam?: number): string {
+export function formatPlaceTime(d: Date, lat = 23.1765, lon = 75.7885, tzHoursParam?: number, lang?: string): string {
   const tz = tzHoursParam ?? timezoneHoursFor(lat, lon);
+  const { c, locale } = resolveLocale(lang);
   if (tz === 5.5) {
-    return d.toLocaleTimeString("hi-IN", {
+    return d.toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -76,22 +84,28 @@ export function formatPlaceTime(d: Date, lat = 23.1765, lon = 75.7885, tzHoursPa
   const shifted = new Date(d.getTime() + tz * 3600000);
   const hh = shifted.getUTCHours();
   const mm = shifted.getUTCMinutes();
-  const am = hh >= 12 ? "अपराह्न" : "पूर्वाह्न";
+  const am =
+    c === "en"
+      ? hh >= 12 ? "PM" : "AM"
+      : c === "gu"
+      ? hh >= 12 ? "બપોર" : "સવાર"
+      : hh >= 12 ? "अपराह्न" : "पूर्वाह्न";
   const h12 = ((hh + 11) % 12) + 1;
   return `${h12}:${String(mm).padStart(2, "0")} ${am} (UTC${tz >= 0 ? `+${tz}` : tz})`;
 }
 
-export function formatPlaceDateTime(d: Date, lat = 23.1765, lon = 75.7885, tzHoursParam?: number): string {
+export function formatPlaceDateTime(d: Date, lat = 23.1765, lon = 75.7885, tzHoursParam?: number, lang?: string): string {
   const tz = tzHoursParam ?? timezoneHoursFor(lat, lon);
+  const { locale } = resolveLocale(lang);
   const datePart =
     tz === 5.5
-      ? d.toLocaleDateString("hi-IN", {
+      ? d.toLocaleDateString(locale, {
           day: "numeric",
           month: "short",
           timeZone: "Asia/Kolkata",
         })
       : `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
-  return `${datePart}, ${formatPlaceTime(d, lat, lon, tz)}`;
+  return `${datePart}, ${formatPlaceTime(d, lat, lon, tz, lang)}`;
 }
 
 export function normalize360(deg: number): number {

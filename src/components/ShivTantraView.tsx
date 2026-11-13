@@ -3,12 +3,9 @@ import {
   SHIV_TANTRA_DATA,
   DharanaSutra,
   ChakraData,
-  UpayaPath,
 } from '../data/shivTantraData';
 import {
-  Flame,
   Sparkles,
-  BookOpen,
   Search,
   Share2,
   Copy,
@@ -18,21 +15,14 @@ import {
   Play,
   Pause,
   RotateCcw,
-  Sun,
-  Moon,
   Wind,
   ShieldAlert,
-  ChevronRight,
-  Info,
-  HelpCircle,
-  Clock,
-  Compass,
-  Heart,
-  Eye,
   CheckCircle2,
 } from 'lucide-react';
 import { triggerHapticSelection } from '../utils/haptics';
 import { umaVoice } from '../services/UmaVoiceService';
+import { useLanguage } from '../i18n';
+import { openWhatsAppShare } from '../services/umaConsultationPdf';
 
 interface ShivTantraViewProps {
   onOpenUmaWithQuery?: (query: string) => void;
@@ -47,6 +37,10 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
   onPrevChapter,
   onNextChapter,
 }) => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === 'en' ? en : cLang === 'gu' ? gu : hi);
+
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedChakraId, setSelectedChakraId] = useState<string>('muladhara');
@@ -130,9 +124,8 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
   // WhatsApp Share
   const handleWhatsAppShare = (title: string, content: string) => {
     triggerHapticSelection();
-    const shareText = `🔱 *${title}* — *शिव तंत्र विद्या (कश्मीर शैव दर्शन)*\n\n${content}\n\n🕉️ _साभार: शक्ति पंचांग - शिव तंत्र विद्या_`;
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-    window.open(url, '_blank');
+    const shareText = `🔱 *${title}* — *${L('शिव तंत्र विद्या (कश्मीर शैव दर्शन)', 'Shiva Tantra Vidya (Kashmir Shaivism)', 'શિવ તંત્ર વિદ્યા (કાશ્મીર શૈવ દર્શન)')}*\n\n${content}\n\n🕉️ _${L('साभार: शक्ति पंचांग - शिव तंत्र विद्या', 'Shared from Shakti Panchang', 'સાભાર: શક્તિ પંચાંગ - શિવ તંત્ર વિદ્યા')}_`;
+    openWhatsAppShare(shareText);
   };
 
   // Meditation Timer Lifecycle
@@ -144,7 +137,13 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
             clearInterval(timerIntervalRef.current);
             setIsTimerRunning(false);
             if (activeTimerSutra) {
-              umaVoice.speak("साधना पूर्ण हुई। शांत बैठें और अंतरंग शिव चेतना में विश्राम करें। ॐ नमः शिवाय।");
+              umaVoice.speak(
+                L(
+                  'साधना पूर्ण हुई। शांत बैठें और अंतरंग शिव चेतना में विश्राम करें। ॐ नमः शिवाय।',
+                  'Meditation complete. Sit peacefully and rest in inner Shiva consciousness. Om Namah Shivaya.',
+                  'સાધના પૂર્ણ થઈ. શાંત બેસો અને અંતરંગ શિવ ચેતનામાં વિશ્રામ કરો. ૐ નમઃ શિવાય.'
+                )
+              );
             }
             return 0;
           }
@@ -181,7 +180,11 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
     setTimerPhase('inhale');
     setIsTimerRunning(true);
     umaVoice.speak(
-      `${sutra.sutraName} साधना प्रारंभ। अपनी रीढ़ सीधी करें, आंखें कोमलता से बंद करें और श्वास के ठहराव में शिव का अनुभव करें।`
+      L(
+        `${sutra.sutraName} साधना प्रारंभ। अपनी रीढ़ सीधी करें, आंखें कोमलता से बंद करें और श्वास के ठहराव में शिव का अनुभव करें।`,
+        `Starting ${sutra.sutraName} meditation. Keep your spine upright, gently close your eyes, and experience Shiva in the stillness of breath.`,
+        `${sutra.sutraName} સાધના પ્રારંભ. કરોડરજ્જુ સીધી રાખો, આંખો કોમળતાથી બંધ કરો અને શ્વાસના ઠહેરાવમાં શિવનો અનુભવ કરો.`
+      )
     );
   };
 
@@ -241,7 +244,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   }}
                   className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-xs"
                 >
-                  आगम शास्त्र v2.1 • Complete Edition
+                  {L('आगम शास्त्र v2.1 • Complete Edition', 'Agama Shastra v2.1 • Complete Edition', 'આગમ શાસ્ત્ર v2.1 • સંપૂર્ણ આવૃત્તિ')}
                 </span>
                 <span
                   style={{ color: "var(--bx-header)" }}
@@ -254,14 +257,18 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 style={{ color: "var(--bx-header)" }}
                 className="text-xl sm:text-2xl font-black font-granth tracking-wide flex items-center gap-2"
               >
-                <span>शिव तंत्र विद्या</span>
+                <span>{L('शिव तंत्र विद्या', 'Shiva Tantra Vidya', 'શિવ તંત્ર વિદ્યા')}</span>
                 <span className="text-base">🔱</span>
               </h1>
               <p
                 style={{ color: "var(--bx-ink)" }}
                 className="text-xs sm:text-[13px] font-medium leading-relaxed mt-1"
               >
-                कश्मीर शैव दर्शन • विज्ञान भैरव तंत्र ११२ ध्यान धारणाएं • त्रिक दर्शन, ४ उपाय व कुण्डलिनी नाड़ी विज्ञान
+                {L(
+                  'कश्मीर शैव दर्शन • विज्ञान भैरव तंत्र ११२ ध्यान धारणाएं • त्रिक दर्शन, ४ उपाय व कुण्डलिनी नाड़ी विज्ञान',
+                  'Kashmir Shaivism • Vigyan Bhairav Tantra 112 Dharanas • Trika Philosophy, 4 Upayas & Kundalini Science',
+                  'કાશ્મીર શૈવ દર્શન • વિજ્ઞાન ભૈરવ તંત્ર ૧૧૨ ધ્યાન ધારણાઓ • ત્રિક દર્શન, ૪ ઉપાય અને કુંડલિની નાડી વિજ્ઞાન'
+                )}
               </p>
             </div>
 
@@ -272,7 +279,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 onClick={() =>
                   handleToggleSpeech(
                     'hero_shloka',
-                    `${overview.invocation_mantra} अर्थ: ${overview.invocation_meaning}`
+                    `${overview.invocation_mantra} ${L('अर्थ:', 'Meaning:', 'અર્થ:')} ${overview.invocation_meaning}`
                   )
                 }
                 style={{
@@ -283,18 +290,18 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 className={`p-2.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs ${
                   speakingId === 'hero_shloka' ? 'animate-pulse' : 'hover:opacity-90'
                 }`}
-                title="मंगलाचरण सुनें"
+                title={L('मंगलाचरण सुनें', 'Listen to Invocation', 'મંગલાચરણ સાંભળો')}
               >
                 {speakingId === 'hero_shloka' ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                <span className="hidden sm:inline">मंगलाचरण</span>
+                <span className="hidden sm:inline">{L('मंगलाचरण', 'Invocation', 'મંગલાચરણ')}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() =>
                   handleWhatsAppShare(
-                    'शिव तंत्र विद्या मंगलाचरण',
-                    `${overview.invocation_mantra}\n\nअर्थ: ${overview.invocation_meaning}\n\n${overview.core_philosophy}`
+                    L('शिव तंत्र विद्या मंगलाचरण', 'Shiva Tantra Invocation', 'શિવ તંત્ર વિદ્યા મંગલાચરણ'),
+                    `${overview.invocation_mantra}\n\n${L('अर्थ:', 'Meaning:', 'અર્થ:')} ${overview.invocation_meaning}\n\n${overview.core_philosophy}`
                   )
                 }
                 style={{
@@ -303,10 +310,10 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   borderColor: "var(--bx-line)",
                 }}
                 className="p-2.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition cursor-pointer active:scale-95 hover:opacity-90 shadow-xs"
-                title="व्हाट्सएप पर शेयर करें"
+                title={L('व्हाट्सएप पर शेयर करें', 'Share on WhatsApp', 'WhatsApp પર શેર કરો')}
               >
                 <Share2 className="w-4 h-4" />
-                <span className="hidden sm:inline">शेयर</span>
+                <span className="hidden sm:inline">{L('शेयर', 'Share', 'શેર')}</span>
               </button>
 
               {onOpenUmaWithQuery && (
@@ -315,7 +322,11 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   onClick={() => {
                     triggerHapticSelection();
                     onOpenUmaWithQuery(
-                      'प्रणाम उमा जी! शिव तंत्र विद्या और विज्ञान भैरव तंत्र के अनुसार मेरी आध्यात्मिक साधना के लिए कौन सी ध्यान विधि और उपाय सर्वोत्तम है?'
+                      L(
+                        'प्रणाम उमा जी! शिव तंत्र विद्या और विज्ञान भैरव तंत्र के अनुसार मेरी आध्यात्मिक साधना के लिए कौन सी ध्यान विधि और उपाय सर्वोत्तम है?',
+                        'Pranam Uma Ji! Based on Shiva Tantra Vidya and Vigyan Bhairav Tantra, which meditation method and Upaya is best suited for my spiritual sadhana?',
+                        'પ્રણામ ઉમા જી! શિવ તંત્ર વિદ્યા અને વિજ્ઞાન ભૈરવ તંત્ર મુજબ મારી આધ્યાત્મિક સાધના માટે કઈ ધ્યાન વિધિ અને ઉપાય શ્રેષ્ઠ છે?'
+                      )
                     );
                   }}
                   style={{
@@ -326,7 +337,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   className="px-3.5 py-2 rounded-xl font-black text-xs flex items-center gap-1.5 shadow-md border transition cursor-pointer active:scale-95 hover:opacity-90"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>उमा परामर्श</span>
+                  <span>{L('उमा परामर्श', 'Ask Uma', 'ઉમા પરામર્શ')}</span>
                 </button>
               )}
             </div>
@@ -362,7 +373,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
               }}
               className="text-[10px] font-bold border px-2.5 py-1 rounded-lg shrink-0 shadow-2xs"
             >
-              यजुर्वेद रुद्राध्याय
+              {L('यजुर्वेद रुद्राध्याय', 'Yajurveda Rudradhyaya', 'યજુર્વેદ રુદ્રાધ્યાય')}
             </span>
           </div>
         </div>
@@ -370,11 +381,11 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
         {/* Horizontal Navigation Sub-Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
           {[
-            { id: 'overview', label: 'मूल दर्शन व ३ स्तम्भ', icon: '🔱' },
-            { id: 'trika_upaya', label: 'त्रिक दर्शन व ४ उपाय', icon: '✨' },
-            { id: 'vigyan_bhairav', label: 'विज्ञान भैरव ११२ सूत्र', icon: '🌬️' },
-            { id: 'chakras_nadis', label: '७ चक्र व ३ नाड़ी विज्ञान', icon: '🌀' },
-            { id: 'scriptures_myths', label: 'शास्त्र व भ्रांति निवारण', icon: '📜' },
+            { id: 'overview', label: L('मूल दर्शन व ३ स्तम्भ', 'Philosophy & 3 Pillars', 'મૂળ દર્શન અને ૩ સ્તંભ'), icon: '🔱' },
+            { id: 'trika_upaya', label: L('त्रिक दर्शन व ४ उपाय', 'Trika & 4 Upayas', 'ત્રિક દર્શન અને ૪ ઉપાય'), icon: '✨' },
+            { id: 'vigyan_bhairav', label: L('विज्ञान भैरव ११२ सूत्र', 'Vigyan Bhairav 112', 'વિજ્ઞાન ભૈરવ ૧૧૨ સૂત્ર'), icon: '🌬️' },
+            { id: 'chakras_nadis', label: L('७ चक्र व ३ नाड़ी विज्ञान', '7 Chakras & 3 Nadis', '૭ ચક્ર અને ૩ નાડી વિજ્ઞાન'), icon: '🌀' },
+            { id: 'scriptures_myths', label: L('शास्त्र व भ्रांति निवारण', 'Scriptures & Truths', 'શાસ્ત્ર અને ભ્રાંતિ નિવારણ'), icon: '📜' },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -410,10 +421,10 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-base">🔱</span>
                 <div>
                   <h2 className="text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                    तंत्र का वास्तविक अर्थ एवं मूल दर्शन
+                    {L('तंत्र का वास्तविक अर्थ एवं मूल दर्शन', 'True Meaning of Tantra & Core Philosophy', 'તંત્રનો વાસ્તવિક અર્થ અને મૂળ દર્શન')}
                   </h2>
                   <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
-                    आगम परंपरा एवं आदि-शैव सिद्धांत
+                    {L('आगम परंपरा एवं आदि-शैव सिद्धांत', 'Agama Tradition & Adi-Shaiva Principles', 'આગમ પરંપરા અને આદિ-શૈવ સિદ્ધાંત')}
                   </p>
                 </div>
               </div>
@@ -421,7 +432,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="p-3 bg-[#FFFDF9] dark:bg-[#381F14] rounded-2xl border border-[#DFCBB5] dark:border-[#5C3A21]/50 space-y-1">
                   <div className="text-xs font-black text-[#7A1D1D] dark:text-[#FFD88A] flex items-center gap-1.5">
-                    <span>📖 शाब्दिक अर्थ</span>
+                    <span>{L('📖 शाब्दिक अर्थ', '📖 Etymology', '📖 શાબ્દિક અર્થ')}</span>
                   </div>
                   <p className="text-xs text-[#5C3A21] dark:text-[#E8DCCB] leading-relaxed">
                     {overview.meaning}
@@ -430,7 +441,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
 
                 <div className="p-3 bg-[#FFFDF9] dark:bg-[#381F14] rounded-2xl border border-[#DFCBB5] dark:border-[#5C3A21]/50 space-y-1">
                   <div className="text-xs font-black text-[#7A1D1D] dark:text-[#FFD88A] flex items-center gap-1.5">
-                    <span>🌌 आगम उत्पत्ति</span>
+                    <span>{L('🌌 आगम उत्पत्ति', '🌌 Agama Origin', '🌌 આગમ ઉત્પત્તિ')}</span>
                   </div>
                   <p className="text-xs text-[#5C3A21] dark:text-[#E8DCCB] leading-relaxed">
                     {overview.origin}
@@ -439,7 +450,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
 
                 <div className="p-3 bg-[#FFFDF9] dark:bg-[#381F14] rounded-2xl border border-[#DFCBB5] dark:border-[#5C3A21]/50 space-y-1">
                   <div className="text-xs font-black text-[#7A1D1D] dark:text-[#FFD88A] flex items-center gap-1.5">
-                    <span>🕉️ शिव-शक्ति अद्वैत</span>
+                    <span>{L('🕉️ शिव-शक्ति अद्वैत', '🕉️ Shiva-Shakti Non-Duality', '🕉️ શિવ-શક્તિ અદ્વૈત')}</span>
                   </div>
                   <p className="text-xs text-[#5C3A21] dark:text-[#E8DCCB] leading-relaxed">
                     {overview.core_philosophy}
@@ -452,9 +463,9 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
             <div className="space-y-2.5">
               <div className="flex items-center justify-between px-1">
                 <h3 className="text-sm font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1.5">
-                  <span>त्रि-स्तम्भ: मंत्र, यंत्र एवं तंत्र</span>
+                  <span>{L('त्रि-स्तम्भ: मंत्र, यंत्र एवं तंत्र', 'Three Pillars: Mantra, Yantra & Tantra', 'ત્રિ-સ્તંભ: મંત્ર, યંત્ર અને તંત્ર')}</span>
                   <span className="text-xs text-[#8C6239] dark:text-amber-300 font-normal">
-                    (The 3 Pillars of Tantric Science)
+                    {L('(तत्व त्रयी)', '(The 3 Pillars of Tantric Science)', '(તંત્ર વિજ્ઞાનના ૩ સ્તંભ)')}
                   </span>
                 </h3>
               </div>
@@ -481,7 +492,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     </div>
 
                     <div className="pt-2.5 border-t border-[#DFCBB5] dark:border-[#5C3A21]/50 text-[11px] text-[#8C6239] dark:text-amber-200/90 font-medium">
-                      <span className="font-bold text-[#5C3A21] dark:text-amber-300">दैनिक साधना: </span>
+                      <span className="font-bold text-[#5C3A21] dark:text-amber-300">{L('दैनिक साधना: ', 'Daily Practice: ', 'દૈનિક સાધના: ')}</span>
                       {pillar.practicalApplication}
                     </div>
                   </div>
@@ -496,10 +507,10 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-sm">🕉️</span>
                   <div>
                     <h3 className="text-sm sm:text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                      शिव तंत्र के सिद्ध महामंत्र एवं स्तोत्र
+                      {L('शिव तंत्र के सिद्ध महामंत्र एवं स्तोत्र', 'Sacred Shiva Tantra Mantras & Stotras', 'શિવ તંત્રના સિદ્ધ મહામંત્ર અને સ્તોત્ર')}
                     </h3>
                     <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
-                      ध्वनि स्पंदन द्वारा ऊर्जा शोधन व चक्र जागरण
+                      {L('ध्वनि स्पंदन द्वारा ऊर्जा शोधन व चक्र जागरण', 'Energy purification & chakra awakening via sacred sound', 'ધ્વનિ સ્પંદન દ્વારા ઊર્જા શોધન અને ચક્ર જાગરણ')}
                     </p>
                   </div>
                 </div>
@@ -524,7 +535,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                         {item.mantra}
                       </div>
                       <p className="text-[11px] text-[#5C3A21] dark:text-[#D9C4A9] leading-relaxed mt-2">
-                        <span className="font-bold">अर्थ: </span>
+                        <span className="font-bold">{L('अर्थ: ', 'Meaning: ', 'અર્થ: ')}</span>
                         {item.meaning}
                       </p>
                     </div>
@@ -542,15 +553,15 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                               ? 'bg-amber-500 text-stone-950 border-amber-400 animate-pulse'
                               : 'bg-white dark:bg-stone-800 text-[#5C3A21] dark:text-[#FAF2E4] border-[#8C6239]/30'
                           }`}
-                          title="मंत्र सुनें"
+                          title={L('मंत्र सुनें', 'Listen to Mantra', 'મંત્ર સાંભળો')}
                         >
                           {speakingId === `mantra_${idx}` ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleCopy(`mantra_${idx}`, `${item.title}\n${item.mantra}\n\nअर्थ: ${item.meaning}`)}
+                          onClick={() => handleCopy(`mantra_${idx}`, `${item.title}\n${item.mantra}\n\n${L('अर्थ:', 'Meaning:', 'અર્થ:')} ${item.meaning}`)}
                           className="p-1.5 rounded-lg border border-[#8C6239]/30 bg-white dark:bg-stone-800 text-[#5C3A21] dark:text-[#FAF2E4] text-xs cursor-pointer"
-                          title="कॉपी करें"
+                          title={L('कॉपी करें', 'Copy', 'કૉપી કરો')}
                         >
                           {copiedId === `mantra_${idx}` ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
@@ -574,7 +585,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-base">🔺</span>
                 <div>
                   <h2 className="text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                    त्रिक दर्शन — शिव, शक्ति एवं अणु
+                    {L('त्रिक दर्शन — शिव, शक्ति एवं अणु', 'Trika Philosophy — Shiva, Shakti & Anu', 'ત્રિક દર્શન — શિવ, શક્તિ અને અણુ')}
                   </h2>
                   <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
                     {trika_philosophy.meaning}
@@ -610,9 +621,9 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
               <div className="flex items-center justify-between px-1">
                 <div>
                   <h3 className="text-sm sm:text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A] flex items-center gap-1.5">
-                    <span>मोक्ष के ४ सोपान (The 4 Upayas)</span>
+                    <span>{L('मोक्ष के ४ सोपान (The 4 Upayas)', 'The 4 Upayas (Steps to Liberation)', 'મોક્ષના ૪ સોપાન (The 4 Upayas)')}</span>
                     <span className="text-xs bg-[#7A1D1D] text-amber-200 px-2 py-0.5 rounded-full font-sans font-bold">
-                      क्रमिक से अक्रमिक
+                      {L('क्रमिक से अक्रमिक', 'Gradual to Direct', 'ક્રમિક થી અક્રમિક')}
                     </span>
                   </h3>
                   <p className="text-xs text-[#8C6239] dark:text-amber-200/70 mt-0.5">
@@ -630,7 +641,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-200 dark:bg-stone-800 text-[#5C3A21] dark:text-[#FFD88A]">
-                          स्तर {idx + 1}: {upaya.level}
+                          {L('स्तर', 'Level', 'સ્તર')} {idx + 1}: {upaya.level}
                         </span>
                         <span className="text-[11px] text-[#8C6239] dark:text-amber-300 font-bold">
                           {upaya.subtitle}
@@ -642,13 +653,13 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                       </h4>
 
                       <p className="text-xs text-[#5C3A21] dark:text-[#D9C4A9] leading-relaxed mb-2">
-                        <span className="font-bold">साधना विधि: </span>
+                        <span className="font-bold">{L('साधना विधि: ', 'Method: ', 'સાધના વિધિ: ')}</span>
                         {upaya.method}
                       </p>
 
                       <div className="p-2.5 bg-[#FFFDF9] dark:bg-[#381F14] rounded-xl border border-amber-300/40 text-xs text-[#7A1D1D] dark:text-amber-200">
                         <span className="font-bold block mb-0.5 text-stone-900 dark:text-stone-100">
-                          🧘 व्यावहारिक अभ्यास:
+                          {L('🧘 व्यावहारिक अभ्यास:', '🧘 Practical Sadhana:', '🧘 વ્યાવહારિક અભ્યાસ:')}
                         </span>
                         {upaya.sadhanaPractice}
                       </div>
@@ -671,7 +682,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                             ? 'bg-amber-500 text-stone-950 border-amber-400 animate-pulse'
                             : 'bg-white dark:bg-stone-800 text-[#5C3A21] dark:text-[#FAF2E4] border-[#8C6239]/30'
                         }`}
-                        title="व्याख्या सुनें"
+                        title={L('व्याख्या सुनें', 'Listen to Explanation', 'વ્યાખ્યા સાંભળો')}
                       >
                         {speakingId === upaya.id ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                       </button>
@@ -687,10 +698,10 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-base">👁️</span>
                 <div>
                   <h3 className="text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                    चेतना की ५ अवस्थाएं (5 States of Consciousness)
+                    {L('चेतना की ५ अवस्थाएं (5 States of Consciousness)', '5 States of Consciousness', 'ચેતનાની ૫ અવસ્થાઓ')}
                   </h3>
                   <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
-                    जाग्रत से तुरीयातीत शिव-अवस्था तक का आत्म-रूपांतरण
+                    {L('जाग्रत से तुरीयातीत शिव-अवस्था तक का आत्म-रूपांतरण', 'Self-transformation from Waking state to Turiyatita Shiva-state', 'જાગ્રતથી તુરીયાતીત શિવ-અવસ્થા સુધીનું આત્મ-રૂપાંતરણ')}
                   </p>
                 </div>
               </div>
@@ -721,7 +732,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     <div className="sm:text-right pl-8 sm:pl-0 shrink-0">
                       <div className="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1 sm:justify-end">
                         <Sparkles className="w-3 h-3 text-amber-500" />
-                        <span>साधना सूत्र:</span>
+                        <span>{L('साधना सूत्र:', 'Sadhana Key:', 'સાધના સૂત્ર:')}</span>
                       </div>
                       <p className="text-[11px] text-[#735133] dark:text-[#C5B39B] italic font-medium max-w-xs">
                         {st.meditativeKey}
@@ -746,15 +757,15 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-base">🌬️</span>
                   <div>
                     <h2 className="text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                      विज्ञान भैरव तंत्र — ११२ ध्यान धारणाएं
+                      {L('विज्ञान भैरव तंत्र — ११२ ध्यान धारणाएं', 'Vigyan Bhairav Tantra — 112 Dharanas', 'વિજ્ઞાન ભૈરવ તંત્ર — ૧૧૨ ધ્યાન ધારણાઓ')}
                     </h2>
                     <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
-                      भगवान शिव और देवी भैरवी का परम संवाद
+                      {L('भगवान शिव और देवी भैरवी का परम संवाद', 'Sacred Dialogue of Lord Shiva & Devi Bhairavi', 'ભગવાન શિવ અને દેવી ભૈરવીનો પરમ સંવાદ')}
                     </p>
                   </div>
                 </div>
                 <span className="text-xs bg-[#7A1D1D] text-amber-200 px-2.5 py-1 rounded-full font-bold">
-                  ११२ मार्ग
+                  {L('११२ मार्ग', '112 Paths', '૧૧૨ માર્ગ')}
                 </span>
               </div>
 
@@ -795,12 +806,12 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm sm:text-base font-bold font-granth text-[#FFD88A]">
-                      साधना अभ्यास टाइमर (Guided Dhyana Sadhana)
+                      {L('साधना अभ्यास टाइमर (Guided Dhyana Sadhana)', 'Guided Dhyana Sadhana Timer', 'સાધના અભ્યાસ ટાઈમર (Guided Dhyana)')}
                     </h3>
                     <p className="text-[11px] text-amber-200/80">
                       {activeTimerSutra
                         ? `${activeTimerSutra.sutraName}`
-                        : 'श्वास-प्रश्वास विसर्ग धारणा (The Breath Gap)'}
+                        : L('श्वास-प्रश्वास विसर्ग धारणा (The Breath Gap)', 'The Breath Gap Dharana', 'શ્વાસ-પ્રશ્વાસ વિસર્ગ ધારણા')}
                     </p>
                   </div>
                 </div>
@@ -848,13 +859,15 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                         {formatTimer(timerSecondsLeft)}
                       </div>
                       <div className="text-[11px] font-black uppercase tracking-wider text-amber-300">
-                        {timerPhase === 'inhale' && 'श्वास लें (Inhale)'}
-                        {timerPhase === 'hold' && 'ठहराव / शून्य (Inner Pause)'}
-                        {timerPhase === 'exhale' && 'श्वास छोड़ें (Exhale)'}
-                        {timerPhase === 'pause' && 'बाहरी शून्य (Outer Void)'}
+                        {timerPhase === 'inhale' && L('श्वास लें (Inhale)', 'Inhale', 'શ્વાસ લો (Inhale)')}
+                        {timerPhase === 'hold' && L('ठहराव / शून्य (Inner Pause)', 'Inner Pause', 'ઠહેરાવ / શૂન્ય (Inner Pause)')}
+                        {timerPhase === 'exhale' && L('श्वास छोड़ें (Exhale)', 'Exhale', 'શ્વાસ છોડો (Exhale)')}
+                        {timerPhase === 'pause' && L('बाहरी शून्य (Outer Void)', 'Outer Void', 'બાહ્ય શૂન્ય (Outer Void)')}
                       </div>
                       <div className="text-[10px] text-stone-300 font-sans">
-                        {timerPhase === 'hold' || timerPhase === 'pause' ? '✨ यही शिव है' : 'सजगता बनाए रखें'}
+                        {timerPhase === 'hold' || timerPhase === 'pause'
+                          ? L('✨ यही शिव है', '✨ This is Shiva', '✨ આ જ શિવ છે')
+                          : L('सजगता बनाए रखें', 'Stay Mindful', 'સજાગતા જાળવો')}
                       </div>
                     </div>
                   </div>
@@ -868,7 +881,13 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                       triggerHapticSelection();
                       setIsTimerRunning(!isTimerRunning);
                       if (!isTimerRunning) {
-                        umaVoice.speak("श्वास को स्वाभाविक रूप से बहने दें। ठहराव में शिव की अनुभूति करें।");
+                        umaVoice.speak(
+                          L(
+                            'श्वास को स्वाभाविक रूप से बहने दें। ठहराव में शिव की अनुभूति करें।',
+                            'Let your breath flow naturally. Experience Shiva in the stillness between breaths.',
+                            'શ્વાસને સ્વાભાવિક રીતે વહેવા દો. ઠહેરાવમાં શિવની અનુભૂતિ કરો.'
+                          )
+                        );
                       }
                     }}
                     className={`px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg transition cursor-pointer active:scale-95 ${
@@ -878,14 +897,14 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     }`}
                   >
                     {isTimerRunning ? <Pause className="w-4 h-4 fill-stone-950" /> : <Play className="w-4 h-4 fill-stone-950" />}
-                    <span>{isTimerRunning ? 'ठहराव (Pause)' : 'साधना आरंभ करें (Start)'}</span>
+                    <span>{isTimerRunning ? L('ठहराव (Pause)', 'Pause', 'થોભો (Pause)') : L('साधना आरंभ करें (Start)', 'Start Meditation', 'સાધના શરૂ કરો (Start)')}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={resetMeditationTimer}
                     className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition cursor-pointer active:scale-95"
-                    title="रीसेट करें"
+                    title={L('रीसेट करें', 'Reset', 'રીસેટ કરો')}
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
@@ -901,7 +920,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="धारणा सूत्र, संस्कृत श्लोक, लाभ या विधि खोजें..."
+                  placeholder={L('धारणा सूत्र, संस्कृत श्लोक, लाभ या विधि खोजें...', 'Search dharana sutra, sanskrit verse, benefit or method...', 'ધારણા સૂત્ર, સંસ્કૃત શ્લોક, લાભ અથવા વિધિ શોધો...')}
                   className="w-full pl-9 pr-3 py-2 bg-[#FAF5ED] dark:bg-[#2C1810] border border-[#DFCBB5] dark:border-[#5C3A21] rounded-2xl text-xs sm:text-sm text-[#3E2714] dark:text-[#FAF2E4] focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
@@ -912,7 +931,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   onClick={() => setSelectedCategory('all')}
                   className="px-3 py-2 bg-[#7A1D1D] text-amber-200 rounded-2xl text-xs font-bold shrink-0 cursor-pointer"
                 >
-                  सभी श्रेणियां दिखाएं ✕
+                  {L('सभी श्रेणियां दिखाएं ✕', 'Show All Categories ✕', 'બધી શ્રેણીઓ બતાવો ✕')}
                 </button>
               )}
             </div>
@@ -934,7 +953,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                           {sutra.sutraName}
                         </h4>
                         <span className="text-[10px] text-[#8C6239] dark:text-amber-300 font-semibold">
-                          श्रेणी: {sutra.category} • अवधि: {sutra.durationMinutes} मिनट
+                          {L('श्रेणी:', 'Category:', 'શ્રેણી:')} {sutra.category} • {L('अवधि:', 'Duration:', 'સમય:')} {sutra.durationMinutes} {L('मिनट', 'min', 'મિનિટ')}
                         </span>
                       </div>
                     </div>
@@ -946,7 +965,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                         className="px-2.5 py-1 rounded-xl bg-amber-500 text-stone-950 font-black text-xs flex items-center gap-1 hover:bg-amber-400 transition cursor-pointer active:scale-95 shadow-xs"
                       >
                         <Play className="w-3 h-3 fill-stone-950" />
-                        <span>साधना टाइमर</span>
+                        <span>{L('साधना टाइमर', 'Start Timer', 'સાધના ટાઈમર')}</span>
                       </button>
 
                       <button
@@ -962,7 +981,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                             ? 'bg-amber-500 text-stone-950 border-amber-400 animate-pulse'
                             : 'bg-white dark:bg-stone-800 text-[#5C3A21] dark:text-[#FAF2E4] border-[#8C6239]/30'
                         }`}
-                        title="श्लोक व विधि सुनें"
+                        title={L('श्लोक व विधि सुनें', 'Listen to Verse & Method', 'શ્લોક અને વિધિ સાંભળો')}
                       >
                         {speakingId === `sutra_${sutra.id}` ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                       </button>
@@ -976,7 +995,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                           )
                         }
                         className="p-1.5 rounded-xl border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs cursor-pointer"
-                        title="व्हाट्सएप शेयर"
+                        title={L('व्हाट्सएप शेयर', 'Share on WhatsApp', 'WhatsApp શેર')}
                       >
                         <Share2 className="w-3.5 h-3.5" />
                       </button>
@@ -991,11 +1010,11 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   {/* Hindi Translation & Core Technique */}
                   <div className="space-y-1.5 text-xs text-[#5C3A21] dark:text-[#E8DCCB] leading-relaxed">
                     <p>
-                      <strong className="text-[#7A1D1D] dark:text-amber-300">भावार्थ: </strong>
+                      <strong className="text-[#7A1D1D] dark:text-amber-300">{L('भावार्थ: ', 'Meaning: ', 'ભાવાર્થ: ')}</strong>
                       {sutra.translation}
                     </p>
                     <p className="p-2 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-200/60 dark:border-amber-800/40">
-                      <strong className="text-[#8C4A00] dark:text-amber-300">ध्यान तकनीक: </strong>
+                      <strong className="text-[#8C4A00] dark:text-amber-300">{L('ध्यान तकनीक: ', 'Meditation Technique: ', 'ધ્યાન તકનીક: ')}</strong>
                       {sutra.technique}
                     </p>
                   </div>
@@ -1003,7 +1022,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   {/* Step by Step Sadhana Guide */}
                   <div className="space-y-1 pt-1">
                     <span className="text-[11px] font-bold text-[#8C6239] dark:text-amber-300 uppercase tracking-wider block">
-                      चरणबद्ध साधना अभ्यास:
+                      {L('चरणबद्ध साधना अभ्यास:', 'Step-by-Step Sadhana:', 'ક્રમબદ્ધ સાધના અભ્યાસ:')}
                     </span>
                     <ol className="list-decimal list-inside space-y-1 text-xs text-[#5C3A21] dark:text-[#D9C4A9]">
                       {sutra.stepByStep.map((step, sIdx) => (
@@ -1017,7 +1036,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   {/* Benefits */}
                   <div className="pt-2 border-t border-[#DFCBB5] dark:border-[#5C3A21]/50 text-xs text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>लाभ: {sutra.benefits}</span>
+                    <span>{L('लाभ:', 'Benefits:', 'લાભ:')} {sutra.benefits}</span>
                   </div>
                 </div>
               ))}
@@ -1036,10 +1055,10 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-base">🌀</span>
                 <div>
                   <h2 className="text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                    कुंडलिनी शक्ति एवं सप्त चक्र विज्ञान
+                    {L('कुंडलिनी शक्ति एवं सप्त चक्र विज्ञान', 'Kundalini Shakti & Seven Chakras Science', 'કુંડલિની શક્તિ અને સપ્ત ચક્ર વિજ્ઞાન')}
                   </h2>
                   <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
-                    मूलाधार से सहस्रार तक चेतना का ऊर्ध्वगमन
+                    {L('मूलाधार से सहस्रार तक चेतना का ऊर्ध्वगमन', 'Ascent of consciousness from Muladhara to Sahasrara', 'મૂલાધારથી સહસ્રાર સુધી ચેતનાનું ઊર્ધ્વગમન')}
                   </p>
                 </div>
               </div>
@@ -1051,7 +1070,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
             {/* 7 Chakra Interactive Selector Buttons */}
             <div className="space-y-1.5">
               <span className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] px-1 block">
-                चक्र का चयन करें (मूलाधार से सहस्रार):
+                {L('चक्र का चयन करें (मूलाधार से सहस्रार):', 'Select Chakra (Muladhara to Sahasrara):', 'ચક્ર પસંદ કરો (મૂલાધારથી સહસ્રાર):')}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-7 gap-1.5">
                 {kundalini_and_chakras.the_7_stages.map((chk, idx) => {
@@ -1100,11 +1119,11 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                         {activeChakra.sanskritName}
                       </h3>
                       <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200 px-2 py-0.5 rounded-full font-bold">
-                        {activeChakra.petals} दल (Petals)
+                        {activeChakra.petals} {L('दल (Petals)', 'Petals', 'દળ (Petals)')}
                       </span>
                     </div>
                     <p className="text-xs text-[#8C6239] dark:text-amber-200/80">
-                      स्थान: {activeChakra.location} • तत्व: {activeChakra.element}
+                      {L('स्थान:', 'Location:', 'સ્થાન:')} {activeChakra.location} • {L('तत्व:', 'Element:', 'તત્વ:')} {activeChakra.element}
                     </p>
                   </div>
                 </div>
@@ -1121,14 +1140,14 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     className="px-3 py-1.5 rounded-xl bg-amber-500 text-stone-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
-                    <span>बीज मंत्र सुनें</span>
+                    <span>{L('बीज मंत्र सुनें', 'Listen Beej Mantra', 'બીજ મંત્ર સાંભળો')}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() =>
                       handleWhatsAppShare(
-                        `${activeChakra.name} जागरण विधि`,
-                        `बीज मंत्र: ${activeChakra.seedMantra}\nस्थान: ${activeChakra.location}\nतत्व: ${activeChakra.element}\n\nध्यान विधि: ${activeChakra.meditationInstruction}\n\nजाग्रति के लक्षण: ${activeChakra.balancedSigns}`
+                        `${activeChakra.name} ${L('जागरण विधि', 'Awakening Method', 'જાગરણ વિધિ')}`,
+                        `${L('बीज मंत्र:', 'Beej Mantra:', 'બીજ મંત્ર:')} ${activeChakra.seedMantra}\n${L('स्थान:', 'Location:', 'સ્થાન:')} ${activeChakra.location}\n${L('तत्व:', 'Element:', 'તત્વ:')} ${activeChakra.element}\n\n${L('ध्यान विधि:', 'Meditation:', 'ધ્યાન વિધિ:')} ${activeChakra.meditationInstruction}\n\n${L('जाग्रति के लक्षण:', 'Awakening Signs:', 'જાગૃતિના લક્ષણો:')} ${activeChakra.balancedSigns}`
                       )
                     }
                     className="p-1.5 rounded-xl border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs cursor-pointer"
@@ -1142,7 +1161,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="p-3 bg-[#FFFDF9] dark:bg-[#381F14] rounded-2xl border border-[#DFCBB5] dark:border-[#5C3A21]/50 space-y-1">
                   <span className="font-bold text-[#7A1D1D] dark:text-amber-300 block">
-                    🎯 आध्यात्मिक प्रभाव व केंद्र:
+                    {L('🎯 आध्यात्मिक प्रभाव व केंद्र:', '🎯 Spiritual Focus & Center:', '🎯 આધ્યાત્મિક પ્રભાવ અને કેન્દ્ર:')}
                   </span>
                   <p className="text-[#5C3A21] dark:text-[#E8DCCB] leading-relaxed">
                     {activeChakra.focus}
@@ -1154,7 +1173,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
 
                 <div className="p-3 bg-[#FFFDF9] dark:bg-[#381F14] rounded-2xl border border-[#DFCBB5] dark:border-[#5C3A21]/50 space-y-1">
                   <span className="font-bold text-emerald-700 dark:text-emerald-400 block">
-                    ✨ चक्र संतुलन व जाग्रति के लक्षण:
+                    {L('✨ चक्र संतुलन व जाग्रति के लक्षण:', '✨ Balanced & Awakening Signs:', '✨ ચક્ર સંતુલન અને જાગૃતિના લક્ષણો:')}
                   </span>
                   <p className="text-[#5C3A21] dark:text-[#E8DCCB] leading-relaxed">
                     {activeChakra.balancedSigns}
@@ -1166,7 +1185,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
               <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 rounded-2xl border border-amber-400/40 text-xs space-y-1">
                 <span className="font-black text-[#8C4A00] dark:text-amber-300 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>दैनिक चक्र ध्यान निर्देश (Daily Chakra Meditation):</span>
+                  <span>{L('दैनिक चक्र ध्यान निर्देश (Daily Chakra Meditation):', 'Daily Chakra Meditation Guide:', 'દૈનિક ચક્ર ધ્યાન નિર્દેશ:')}</span>
                 </span>
                 <p className="text-[#5C3A21] dark:text-[#FAF2E4] leading-relaxed font-medium">
                   {activeChakra.meditationInstruction}
@@ -1180,7 +1199,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-base">⚡</span>
                 <div>
                   <h3 className="text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                    सूक्ष्म नाड़ी विज्ञान (७२,००० नाड़ियां व ३ प्रमुख स्वर)
+                    {L('सूक्ष्म नाड़ी विज्ञान (७२,००० नाड़ियां व ३ प्रमुख स्वर)', 'Subtle Nadi Science (72,000 Nadis & 3 Swaras)', 'સૂક્ષ્મ નાડી વિજ્ઞાન (૭૨,૦૦૦ નાડીઓ અને ૩ સ્વર)')}
                   </h3>
                   <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
                     {subtle_anatomy.nadis}
@@ -1210,12 +1229,12 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                         {nadi.principle}
                       </p>
                       <div className="text-[11px] text-[#735133] dark:text-[#C5B39B] leading-snug">
-                        <span className="font-semibold">कार्य: </span>{nadi.function}
+                        <span className="font-semibold">{L('कार्य: ', 'Function: ', 'કાર્ય: ')}</span>{nadi.function}
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-[#DFCBB5] dark:border-[#5C3A21]/50 text-[11px] text-amber-900 dark:text-amber-200 font-medium">
-                      <span className="font-bold">संतुलन विधि: </span>{nadi.balancingMethod}
+                      <span className="font-bold">{L('संतुलन विधि: ', 'Balancing Method: ', 'સંતુલન વિધિ: ')}</span>{nadi.balancingMethod}
                     </div>
                   </div>
                 ))}
@@ -1225,7 +1244,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
               <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl border border-emerald-500/30 text-xs text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
                 <Wind className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <p className="leading-relaxed">
-                  <strong className="font-bold">नाड़ी शोधन प्राणायाम विधि: </strong>
+                  <strong className="font-bold">{L('नाड़ी शोधन प्राणायाम विधि: ', 'Nadi Shodhana Pranayama Guide: ', 'નાડી શોધન પ્રાણાયામ વિધિ: ')}</strong>
                   {subtle_anatomy.nadi_shodhana_guide}
                 </p>
               </div>
@@ -1244,10 +1263,10 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-base">📚</span>
                 <div>
                   <h2 className="text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                    शिव तंत्र के प्रमुख आधार ग्रन्थ
+                    {L('शिव तंत्र के प्रमुख आधार ग्रन्थ', 'Foundational Scriptures of Shiva Tantra', 'શિવ તંત્રના મુખ્ય આધાર ગ્રંથો')}
                   </h2>
                   <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
-                    कश्मीर शैव आगम एवं आचार्य अभिनवगुप्त की अमूल्य धरोहर
+                    {L('कश्मीर शैव आगम एवं आचार्य अभिनवगुप्त की अमूल्य धरोहर', 'Kashmir Shaiva Agamas & Legacy of Acharya Abhinavagupta', 'કાશ્મીર શૈવ આગમ અને આચાર્ય અભિનવગુપ્તનો વારસો')}
                   </p>
                 </div>
               </div>
@@ -1263,8 +1282,8 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                         {scr.title}
                       </h4>
                       <div className="flex items-center gap-1.5 text-[10px] text-[#8C6239] dark:text-amber-300 font-bold">
-                        {scr.author && <span>रचयिता: {scr.author}</span>}
-                        {scr.period && <span>• काल: {scr.period}</span>}
+                        {scr.author && <span>{L('रचयिता:', 'Author:', 'રચયિતા:')} {scr.author}</span>}
+                        {scr.period && <span>• {L('काल:', 'Period:', 'કાળ:')} {scr.period}</span>}
                       </div>
                     </div>
 
@@ -1274,7 +1293,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
 
                     <div className="pt-2 border-t border-[#DFCBB5] dark:border-[#5C3A21]/40">
                       <span className="text-[11px] font-bold text-[#8C6239] dark:text-amber-300 block mb-1">
-                        प्रमुख शिक्षाएं:
+                        {L('प्रमुख शिक्षाएं:', 'Key Teachings:', 'મુખ્ય શિક્ષાઓ:')}
                       </span>
                       <ul className="list-disc list-inside space-y-0.5 text-xs text-[#5C3A21] dark:text-[#D9C4A9]">
                         {scr.keyTeachings.map((kt, kIdx) => (
@@ -1293,10 +1312,10 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 <span className="p-1.5 bg-[#7A1D1D] text-amber-300 rounded-xl text-base">🛡️</span>
                 <div>
                   <h3 className="text-base font-bold font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                    तंत्र से जुड़ी भ्रांतियां एवं प्रामाणिक सत्य
+                    {L('तंत्र से जुड़ी भ्रांतियां एवं प्रामाणिक सत्य', 'Tantra Misconceptions & Authentic Truths', 'તંત્ર અંગેની ભ્રાંતિઓ અને પ્રામાણિક સત્ય')}
                   </h3>
                   <p className="text-[11px] text-[#8C6239] dark:text-amber-200/70">
-                    काला जादू बनाम आत्म-साक्षात्कार का सर्वोच्च विज्ञान
+                    {L('काला जादू बनाम आत्म-साक्षात्कार का सर्वोच्च विज्ञान', 'Superstition vs Supreme Science of Self-Realization', 'અંધશ્રદ્ધા વિરુદ્ધ આત્મ-સાક્ષાત્કારનું સર્વોચ્ચ વિજ્ઞાન')}
                   </p>
                 </div>
               </div>
@@ -1317,7 +1336,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                     </div>
 
                     <div className="pl-6 pt-1 text-[11px] text-amber-800 dark:text-amber-300 font-semibold italic">
-                      📜 शास्त्रीय प्रमाण: {item.scripturalBasis}
+                      {L('📜 शास्त्रीय प्रमाण:', '📜 Scriptural Basis:', '📜 શાસ્ત્રીય પ્રમાણ:')} {item.scripturalBasis}
                     </div>
                   </div>
                 ))}
@@ -1334,10 +1353,14 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
             </div>
             <div>
               <div className="text-sm font-black font-granth text-[#5C3A21] dark:text-[#FFD88A]">
-                शिव तंत्र साधना व प्रश्न विचार
+                {L('शिव तंत्र साधना व प्रश्न विचार', 'Shiva Tantra Sadhana & Guidance', 'શિવ તંત્ર સાધના અને પ્રશ્ન વિચાર')}
               </div>
               <div className="text-xs text-[#8C6239] dark:text-[#D9C4A9]">
-                उमा वैदिक दैवज्ञ से अपनी राशि, लग्न व चक्र अनुसार ध्यान मार्गदर्शन प्राप्त करें
+                {L(
+                  'उमा वैदिक दैवज्ञ से अपनी राशि, लग्न व चक्र अनुसार ध्यान मार्गदर्शन प्राप्त करें',
+                  'Receive personalized meditation guidance based on your Rashi, Lagna & Chakras from Uma',
+                  'ઉમા વૈદિક દૈવજ્ઞ પાસેથી તમારી રાશિ, લગ્ન અને ચક્ર મુજબ ધ્યાન માર્ગદર્શન મેળવો'
+                )}
               </div>
             </div>
           </div>
@@ -1349,7 +1372,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 onClick={onPrevChapter}
                 className="px-3 py-2 bg-white dark:bg-stone-800 text-[#5C3A21] dark:text-[#FAF2E4] border border-[#8C6239]/30 rounded-xl text-xs font-bold transition cursor-pointer"
               >
-                ← पूर्व अध्याय
+                {L('← पूर्व अध्याय', '← Prev Chapter', '← પૂર્વ અધ્યાય')}
               </button>
             )}
 
@@ -1359,13 +1382,17 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 onClick={() => {
                   triggerHapticSelection();
                   onOpenUmaWithQuery(
-                    'उमा जी! कृपया मुझे विज्ञान भैरव तंत्र के अनुसार श्वास-प्रश्वास विसर्ग धारणा का अभ्यास दैनिक जीवन में कैसे करना चाहिए, विस्तार से बताएं।'
+                    L(
+                      'उमा जी! कृपया मुझे विज्ञान भैरव तंत्र के अनुसार श्वास-प्रश्वास विसर्ग धारणा का अभ्यास दैनिक जीवन में कैसे करना चाहिए, विस्तार से बताएं।',
+                      'Uma Ji! Please explain in detail how I should practice the breath-gap Dharana from Vigyan Bhairav Tantra in daily life.',
+                      'ઉમા જી! કૃપા કરીને વિજ્ઞાન ભૈરવ તંત્ર મુજબ શ્વાસ-પ્રશ્વાસ વિસર્ગ ધારણાનો અભ્યાસ દૈનિક જીવનમાં કેવી રીતે કરવો તે વિસ્તારથી જણાવો.'
+                    )
                   );
                 }}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 font-black text-xs flex items-center gap-1.5 shadow-md border border-amber-300 transition cursor-pointer active:scale-95"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>उमा से पूछें</span>
+                <span>{L('उमा से पूछें', 'Ask Uma', 'ઉમાને પૂછો')}</span>
               </button>
             )}
 
@@ -1375,7 +1402,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                 onClick={onNextChapter}
                 className="px-3 py-2 bg-[#7A1D1D] text-amber-100 rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
               >
-                अगला अध्याय →
+                {L('अगला अध्याय →', 'Next Chapter →', 'આગળનો અધ્યાય →')}
               </button>
             )}
           </div>

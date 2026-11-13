@@ -24,12 +24,19 @@ import {
 } from 'lucide-react';
 import { openWhatsAppShare } from '../services/umaConsultationPdf';
 import { getStoredLocation } from '../services/storage';
-import { buildDailyRashifal, RASHI_META, RashiMetaItem, DailyRashifal } from '../services/dailyRashifal';
+import {
+  buildDailyRashifal,
+  RASHI_META,
+  RashiMetaItem,
+  DailyRashifal,
+  getTranslatedRashiMeta,
+} from '../services/dailyRashifal';
 import { generateHdRashifalCardDataUrl } from '../services/rashifalHdCard';
 import { saveImageNative } from '../lib/device';
 import { shareImageFile } from '../lib/shareHelper';
 import { speakUma, stopUmaSpeech } from '../lib/umaSpeech';
 import { triggerHapticSelection } from '../utils/haptics';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface DailyRashifalViewProps {
   personName?: string;
@@ -262,6 +269,10 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
   lagnaRashi,
   onOpenUmaModal,
 }) => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const pickL = <T,>(hi: T, en: T, gu: T): T => (cLang === 'en' ? en : cLang === 'gu' ? gu : hi);
+
   const [selectedRashiIdx, setSelectedRashiIdx] = useState<number>(() => {
     if (!lagnaRashi) return 0;
     const idx = RASHI_META.findIndex(
@@ -302,38 +313,45 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
   }, [selectedRashiIdx]);
 
   const location = getStoredLocation();
-  const activeMeta: RashiMetaItem = RASHI_META[selectedRashiIdx] || RASHI_META[0];
-  const elemTheme = getElementTheme(activeMeta.element);
+  const rawActiveMeta: RashiMetaItem = RASHI_META[selectedRashiIdx] || RASHI_META[0];
+  const activeMeta: RashiMetaItem = getTranslatedRashiMeta(rawActiveMeta, cLang);
+  const elemTheme = getElementTheme(rawActiveMeta.element);
 
   const live = buildDailyRashifal(
-    activeMeta.id,
+    rawActiveMeta.id,
     new Date(),
     location.latitude,
-    location.longitude
+    location.longitude,
+    5.5,
+    cLang
   );
 
   // Compute all 12 Rashis dynamically for the 'Sort by Rashi' grouped view
   const allRashifalData = useMemo(() => {
-    return RASHI_META.map((meta, index) => {
+    return RASHI_META.map((rawMeta, index) => {
+      const meta = getTranslatedRashiMeta(rawMeta, cLang);
       const data = buildDailyRashifal(
-        meta.id,
+        rawMeta.id,
         new Date(),
         location.latitude,
-        location.longitude
+        location.longitude,
+        5.5,
+        cLang
       );
       return {
+        rawMeta,
         meta,
         index,
         data,
       };
     });
-  }, [location.latitude, location.longitude]);
+  }, [location.latitude, location.longitude, cLang]);
 
   // Dynamic sorting and grouping of Rashi items
   const sortedGroupedRashis = useMemo(() => {
     const list = [...allRashifalData];
     if (groupSortFilter === 'zodiac') {
-      return list; // 1 to 12 Mesh to Meen
+      return list;
     }
     if (groupSortFilter === 'element') {
       const elementOrder: Record<string, number> = {
@@ -343,22 +361,14 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
         'जल तत्व': 3,
       };
       return list.sort((a, b) => {
-        const ea = elementOrder[a.meta.element] ?? 4;
-        const eb = elementOrder[b.meta.element] ?? 4;
+        const ea = elementOrder[a.rawMeta.element] ?? 4;
+        const eb = elementOrder[b.rawMeta.element] ?? 4;
         if (ea !== eb) return ea - eb;
         return a.index - b.index;
       });
     }
     if (groupSortFilter === 'chandraBal') {
-      // Sort by Chandra Bal (Best / Shubh moon transit first)
-      const balRank = (bal: string) => {
-        if (bal.includes('श्रेष्ठ') || bal.includes('अति शुभ')) return 1;
-        if (bal.includes('लाभकारी') || bal.includes('कार्यसिद्धि') || bal.includes('विजयकारी')) return 2;
-        if (bal.includes('शुभ')) return 3;
-        if (bal.includes('धर्म-कर्म') || bal.includes('विचारशील') || bal.includes('मध्यम')) return 4;
-        return 5;
-      };
-      return list.sort((a, b) => balRank(a.data.chandraBal) - balRank(b.data.chandraBal));
+      return list.sort((a, b) => a.data.chandraBalRank - b.data.chandraBalRank);
     }
     return list;
   }, [allRashifalData, groupSortFilter]);
@@ -404,7 +414,11 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
     }
     const voiceScript =
       customScript ||
-      `${activeMeta.name} राशि का आज का दैनिक राशिफल। ${live.chandraBal}। ${live.general} कार्यक्षेत्र में: ${live.career} धन एवं लाभ: ${live.wealth} परिवार एवं प्रेम: ${live.love} आज का विशेष वैदिक उपाय: ${live.remedy}`;
+      pickL(
+        `${activeMeta.name} राशि का आज का दैनिक राशिफल। ${live.chandraBal}। ${live.general} कार्यक्षेत्र में: ${live.career} धन एवं लाभ: ${live.wealth} परिवार एवं प्रेम: ${live.love} आज का विशेष वैदिक उपाय: ${live.remedy}`,
+        `Today's Daily Horoscope for ${activeMeta.name}. ${live.chandraBal}. ${live.general} Career: ${live.career} Wealth and Gains: ${live.wealth} Family and Love: ${live.love} Today's Vedic Remedy: ${live.remedy}`,
+        `${activeMeta.name} રાશિનું આજનું દૈનિક રાશિફળ. ${live.chandraBal}. ${live.general} કાર્યક્ષેત્ર: ${live.career} ધન અને લાભ: ${live.wealth} પરિવાર અને પ્રેમ: ${live.love} આજનો વિશેષ વૈદિક ઉપાય: ${live.remedy}`
+      );
     setIsSpeaking(true);
     try {
       await speakUma(voiceScript);
@@ -415,18 +429,11 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
 
   const handleTextShare = (meta = activeMeta, data = live) => {
     triggerHapticSelection();
-    const text =
-      `🌸 *दैनिक राशिफल - ${meta.name} राशि (${meta.symbol})* 🌸\n` +
-      `📅 ${data.dateLabel} | ${data.chandraBal}\n` +
-      `🪐 ${data.rashiLordStatus}\n\n` +
-      `✨ *गोचर फलादेश:* ${data.general}\n\n` +
-      `💼 *कार्यक्षेत्र:* ${data.career}\n\n` +
-      `💰 *धन व लाभ:* ${data.wealth}\n\n` +
-      `❤️ *परिवार व प्रेम:* ${data.love}\n\n` +
-      `🌿 *स्वास्थ्य:* ${data.health}\n\n` +
-      `🎨 *शुभ रंग:* ${data.luckyColor} | 🔢 *शुभ अंक:* ${data.luckyNumber}\n` +
-      `🪔 *अचूक उपाय:* ${data.remedy}\n\n` +
-      `📖 *शक्ति पंचांग - वैदिक मार्गदर्शन*`;
+    const text = pickL(
+      `🌸 *दैनिक राशिफल - ${meta.name} राशि (${meta.symbol})* 🌸\n📅 ${data.dateLabel} | ${data.chandraBal}\n🪐 ${data.rashiLordStatus}\n\n✨ *गोचर फलादेश:* ${data.general}\n\n💼 *कार्यक्षेत्र:* ${data.career}\n\n💰 *धन व लाभ:* ${data.wealth}\n\n❤️ *परिवार व प्रेम:* ${data.love}\n\n🌿 *स्वास्थ्य:* ${data.health}\n\n🎨 *शुभ रंग:* ${data.luckyColor} | 🔢 *शुभ अंक:* ${data.luckyNumber}\n🪔 *अचूक उपाय:* ${data.remedy}\n\n📖 *शक्ति पंचांग - वैदिक मार्गदर्शन*`,
+      `🌸 *Daily Horoscope - ${meta.name} (${meta.symbol})* 🌸\n📅 ${data.dateLabel} | ${data.chandraBal}\n🪐 ${data.rashiLordStatus}\n\n✨ *Transit Forecast:* ${data.general}\n\n💼 *Career:* ${data.career}\n\n💰 *Wealth & Gains:* ${data.wealth}\n\n❤️ *Family & Love:* ${data.love}\n\n🌿 *Health:* ${data.health}\n\n🎨 *Lucky Color:* ${data.luckyColor} | 🔢 *Lucky No:* ${data.luckyNumber}\n🪔 *Vedic Remedy:* ${data.remedy}\n\n📖 *Shakti Panchang - Vedic Guidance*`,
+      `🌸 *દૈનિક રાશિફળ - ${meta.name} રાશિ (${meta.symbol})* 🌸\n📅 ${data.dateLabel} | ${data.chandraBal}\n🪐 ${data.rashiLordStatus}\n\n✨ *ગોચર ફળાદેશ:* ${data.general}\n\n💼 *કાર્યક્ષેત્ર:* ${data.career}\n\n💰 *ધન અને લાભ:* ${data.wealth}\n\n❤️ *પરિવાર અને પ્રેમ:* ${data.love}\n\n🌿 *સ્વાસ્થ્ય:* ${data.health}\n\n🎨 *શુભ રંગ:* ${data.luckyColor} | 🔢 *શુભ અંક:* ${data.luckyNumber}\n🪔 *સચોટ ઉપાય:* ${data.remedy}\n\n📖 *શક્તિ પંચાંગ - વૈદિક માર્ગદર્શન*`
+    );
     openWhatsAppShare(text);
   };
 
@@ -437,12 +444,11 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
     setHdNotice(null);
 
     try {
-      const dataUri = await generateHdRashifalCardDataUrl(meta, data, location.name);
+      const dataUri = await generateHdRashifalCardDataUrl(meta, data, location.name, cLang);
       const fileName = `shakti-rashifal-${meta.id}-${new Date().toISOString().slice(0, 10)}.png`;
 
       const savedNative = await saveImageNative(dataUri, fileName);
       if (!savedNative) {
-        // Web fallback download
         const res = await fetch(dataUri);
         const blob = await res.blob();
         const blobUrl = URL.createObjectURL(blob);
@@ -457,10 +463,22 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
         }, 1500);
       }
 
-      setHdNotice(`✓ ${meta.name} राशि का Full HD कार्ड सेव हो गया!`);
+      setHdNotice(
+        pickL(
+          `✓ ${meta.name} राशि का Full HD कार्ड सेव हो गया!`,
+          `✓ Full HD Horoscope Card saved for ${meta.name}!`,
+          `✓ ${meta.name} રાશિનું Full HD કાર્ડ સેવ થઈ ગયું!`
+        )
+      );
       setTimeout(() => setHdNotice(null), 4000);
     } catch {
-      setHdNotice('HD कार्ड सेव करने में त्रुटि हुई, पुनः प्रयास करें।');
+      setHdNotice(
+        pickL(
+          'HD कार्ड सेव करने में त्रुटि हुई, पुनः प्रयास करें।',
+          'Error saving HD card, please try again.',
+          'HD કાર્ડ સેવ કરવામાં ભૂલ આવી, ફરી પ્રયાસ કરો.'
+        )
+      );
     } finally {
       setIsSavingHd(false);
     }
@@ -473,24 +491,52 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
     setHdNotice(null);
 
     try {
-      const dataUri = await generateHdRashifalCardDataUrl(meta, data, location.name);
+      const dataUri = await generateHdRashifalCardDataUrl(meta, data, location.name, cLang);
       const fileName = `shakti-rashifal-${meta.id}-${new Date().toISOString().slice(0, 10)}.png`;
-      const shareCaption = [
-        `🌸 *दैनिक राशिफल - ${meta.name} राशि (${meta.symbol})* 🌸`,
-        `📅 ${data.dateLabel} | ${data.chandraBal}`,
-        `🪐 ${data.rashiLordStatus}`,
-        `✨ *सामान्य फल:* ${data.general}`,
-        `💼 *कार्यक्षेत्र:* ${data.career}`,
-        `💰 *धन व लाभ:* ${data.wealth}`,
-        `🪔 *उपाय:* ${data.remedy}`,
-        `🎨 शुभ रंग: ${data.luckyColor} | 🔢 शुभ अंक: ${data.luckyNumber}`,
-        `📖 शक्ति सनातन पंचांग`,
-      ].join('\n\n');
+      const shareCaption = pickL(
+        [
+          `🌸 *दैनिक राशिफल - ${meta.name} राशि (${meta.symbol})* 🌸`,
+          `📅 ${data.dateLabel} | ${data.chandraBal}`,
+          `🪐 ${data.rashiLordStatus}`,
+          `✨ *सामान्य फल:* ${data.general}`,
+          `💼 *कार्यक्षेत्र:* ${data.career}`,
+          `💰 *धन व लाभ:* ${data.wealth}`,
+          `🪔 *उपाय:* ${data.remedy}`,
+          `🎨 शुभ रंग: ${data.luckyColor} | 🔢 शुभ अंक: ${data.luckyNumber}`,
+          `📖 शक्ति सनातन पंचांग`,
+        ],
+        [
+          `🌸 *Daily Horoscope - ${meta.name} (${meta.symbol})* 🌸`,
+          `📅 ${data.dateLabel} | ${data.chandraBal}`,
+          `🪐 ${data.rashiLordStatus}`,
+          `✨ *General:* ${data.general}`,
+          `💼 *Career:* ${data.career}`,
+          `💰 *Wealth:* ${data.wealth}`,
+          `🪔 *Remedy:* ${data.remedy}`,
+          `🎨 Lucky Color: ${data.luckyColor} | 🔢 Lucky No: ${data.luckyNumber}`,
+          `📖 Shakti Sanatan Panchang`,
+        ],
+        [
+          `🌸 *દૈનિક રાશિફળ - ${meta.name} રાશિ (${meta.symbol})* 🌸`,
+          `📅 ${data.dateLabel} | ${data.chandraBal}`,
+          `🪐 ${data.rashiLordStatus}`,
+          `✨ *સામાન્ય ફળ:* ${data.general}`,
+          `💼 *કાર્યક્ષેત્ર:* ${data.career}`,
+          `💰 *ધન અને લાભ:* ${data.wealth}`,
+          `🪔 *ઉપાય:* ${data.remedy}`,
+          `🎨 શુભ રંગ: ${data.luckyColor} | 🔢 શુભ અંક: ${data.luckyNumber}`,
+          `📖 શક્તિ સનાતન પંચાંગ`,
+        ]
+      ).join('\n\n');
 
       await shareImageFile({
         imageUri: dataUri,
         fileName,
-        title: `${meta.name} दैनिक राशिफल (Full HD)`,
+        title: pickL(
+          `${meta.name} दैनिक राशिफल (Full HD)`,
+          `${meta.name} Daily Horoscope (Full HD)`,
+          `${meta.name} દૈનિક રાશિફળ (Full HD)`
+        ),
         text: shareCaption,
       });
     } catch {
@@ -505,7 +551,6 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
       {/* 1. Top Compact Control & Navigation Bar */}
       <header className="shrink-0 z-30 bg-[#FAF2E4]/95 border-b border-[#8C6239]/35 px-2.5 py-2 flex items-center justify-between gap-2 shadow-xs backdrop-blur-xs flex-wrap">
         <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Left Sidebar Toggle Button */}
           <button
             type="button"
             onClick={() => {
@@ -513,17 +558,16 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
               setIsSidebarOpen((p) => !p);
             }}
             className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#8B1E1E] to-[#6E1409] text-white text-xs font-black flex items-center gap-1.5 shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
-            title="सभी १२ राशियाँ मेनू देखें"
-            aria-label="१२ राशियाँ मेनू खोलें"
+            title={pickL('सभी १२ राशियाँ मेनू देखें', 'View all 12 Zodiac Signs menu', 'બધી ૧૨ રાશિઓનું મેનુ જુઓ')}
+            aria-label={pickL('१२ राशियाँ मेनू खोलें', 'Open 12 Zodiac Signs menu', '૧૨ રાશિઓનું મેનુ ખોલો')}
           >
             <Menu className="w-3.5 h-3.5 text-[#FFD88A]" />
-            <span>१२ राशियाँ</span>
+            <span>{pickL('१२ राशियाँ', '12 Signs', '૧૨ રાશિઓ')}</span>
             <span className="px-1.5 py-0.2 rounded-md bg-[#FFE599] text-[#5C3A21] text-[10px] font-black">
               {activeMeta.symbol}
             </span>
           </button>
 
-          {/* 'Sort by Rashi' / Dynamic Grouping Mode Toggle Button */}
           <button
             type="button"
             onClick={() => {
@@ -535,19 +579,23 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                 ? 'bg-[#8B1E1E] text-[#FFE599] border-[#E6A145] ring-2 ring-amber-400/30'
                 : 'bg-[#F4E8D1] hover:bg-[#EAD8B8] text-[#5C3A21] border-[#8C6239]/40'
             }`}
-            title="राशिवार समूहीकरण बदलें (Sort by Rashi)"
+            title={pickL('राशिवार समूहीकरण बदलें (Sort by Rashi)', 'Toggle Grouped Rashi View', 'રાશિવાર જૂથ બદલો')}
             aria-pressed={isGroupedByRashi}
           >
             <ArrowUpDown className="w-3.5 h-3.5 text-[#B56A00]" />
             <span className="whitespace-nowrap font-bold">
-              {isGroupedByRashi ? 'एकल राशि दृश्य' : 'Sort by Rashi'}
+              {isGroupedByRashi
+                ? pickL('एकल राशि दृश्य', 'Single Sign View', 'એકલ રાશિ દૃશ્ય')
+                : pickL('राशिवार सूची', 'All 12 Signs', 'રાશિવાર યાદી')}
             </span>
             <span
               className={`px-1.5 py-0.2 rounded text-[9.5px] font-black ${
                 isGroupedByRashi ? 'bg-amber-400/25 text-[#FFE599]' : 'bg-[#5C3A21]/15 text-[#5C3A21]'
               }`}
             >
-              {isGroupedByRashi ? 'समूह चालू' : 'राशिवार'}
+              {isGroupedByRashi
+                ? pickL('समूह चालू', 'Grouped', 'જૂથ ચાલુ')
+                : pickL('राशिवार', 'By Sign', 'રાશિવાર')}
             </span>
           </button>
         </div>
@@ -555,14 +603,13 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
         {/* Center/Right Actions */}
         <div className="flex items-center gap-1.5">
           {!isGroupedByRashi && (
-            /* Prev / Current Rashi / Next Switcher (Single View Mode) */
             <div className="flex items-center gap-1 bg-[#F4E8D1] px-1.5 py-0.5 rounded-xl border border-[#8C6239]/35">
               <button
                 type="button"
                 onClick={handlePrevRashi}
                 className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
-                title="पिछली राशि"
-                aria-label="पिछली राशि"
+                title={pickL('पिछली राशि', 'Previous Sign', 'પાછલી રાશિ')}
+                aria-label={pickL('पिछली राशि', 'Previous Sign', 'પાછલી રાશિ')}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -574,7 +621,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                   setIsSidebarOpen((p) => !p);
                 }}
                 className="flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-[#E5D2B8] cursor-pointer"
-                title="राशि बदलने हेतु क्लिक करें"
+                title={pickL('राशि बदलने हेतु क्लिक करें', 'Click to switch Zodiac Sign', 'રાશિ બદલવા ક્લિક કરો')}
               >
                 <span className="text-xs font-black text-[#4A0E0E]">
                   {activeMeta.name} ({activeMeta.symbol})
@@ -585,44 +632,42 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                 type="button"
                 onClick={handleNextRashi}
                 className="p-1 rounded-lg hover:bg-[#E5D2B8] text-[#5C3A21] cursor-pointer"
-                title="अगली राशि"
-                aria-label="अगली राशि"
+                title={pickL('अगली राशि', 'Next Sign', 'આગળની રાશિ')}
+                aria-label={pickL('अगली राशि', 'Next Sign', 'આગળની રાશિ')}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* HD Card Save Button */}
           <button
             type="button"
             onClick={() => handleSaveHd()}
             disabled={isSavingHd}
             className="px-2.5 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-[11px] font-bold flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer"
-            title="Full HD (1080p) राशिफल कार्ड सेव करें"
+            title={pickL('Full HD (1080p) राशिफल कार्ड सेव करें', 'Save Full HD (1080p) Horoscope Card', 'Full HD (1080p) રાશિફળ કાર્ડ સેવ કરો')}
           >
             {isSavingHd ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFD88A]" />
             ) : (
               <Download className="w-3.5 h-3.5 text-[#FFD88A]" />
             )}
-            <span className="hidden sm:inline">HD सेव</span>
+            <span className="hidden sm:inline">{pickL('HD सेव', 'Save HD', 'HD સેવ')}</span>
           </button>
 
-          {/* HD Card Share Button */}
           <button
             type="button"
             onClick={() => handleShareHd()}
             disabled={isSharingHd}
             className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer"
-            title="Full HD (1080p) राशिफल कार्ड शेयर करें"
+            title={pickL('Full HD (1080p) राशिफल कार्ड शेयर करें', 'Share Full HD (1080p) Horoscope Card', 'Full HD (1080p) રાશિફળ કાર્ડ શેર કરો')}
           >
             {isSharingHd ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-200" />
             ) : (
               <Share2 className="w-3.5 h-3.5 text-amber-200" />
             )}
-            <span>HD शेयर</span>
+            <span>{pickL('HD शेयर', 'Share HD', 'HD શેર')}</span>
           </button>
         </div>
       </header>
@@ -641,34 +686,35 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
           <aside
             className="relative w-[280px] sm:w-[320px] max-w-[85vw] h-full bg-[#FAF2E4] border-r-2 border-[#8C6239]/50 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200"
             role="dialog"
-            aria-label="१२ राशियाँ सूची"
+            aria-label={pickL('१२ राशियाँ सूची', '12 Zodiac Signs List', '૧૨ રાશિઓની યાદી')}
           >
-            {/* Drawer Header */}
             <div className="p-3 bg-[#5C3A21] text-[#FAF2E4] flex items-center justify-between border-b border-[#8C6239]">
               <div className="flex items-center gap-2">
                 <span className="text-lg">♈</span>
                 <div>
                   <h3 className="font-granth font-black text-sm text-[#FFD88A] leading-tight">
-                    द्वादश राशियाँ (१२ राशियाँ)
+                    {pickL('द्वादश राशियाँ (१२ राशियाँ)', '12 Zodiac Signs (Rashis)', 'દ્વાદશ રાશિઓ (૧૨ રાશિઓ)')}
                   </h3>
-                  <p className="text-[10px] text-[#E5D2B8]">अपनी राशि पर टैप करें</p>
+                  <p className="text-[10px] text-[#E5D2B8]">
+                    {pickL('अपनी राशि पर टैप करें', 'Tap on your Moon/Sun sign', 'તમારી રાશિ પર ટેપ કરો')}
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(false)}
                 className="p-1 rounded-lg hover:bg-white/10 text-white cursor-pointer"
-                aria-label="बंद करें"
+                aria-label={pickL('बंद करें', 'Close', 'બંધ કરો')}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* 12 Rashis Scrollable List */}
             <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5 overscroll-contain">
-              {RASHI_META.map((r, idx) => {
+              {RASHI_META.map((rawR, idx) => {
+                const r = getTranslatedRashiMeta(rawR, cLang);
                 const isSelected = idx === selectedRashiIdx;
-                const rTheme = getElementTheme(r.element);
+                const rTheme = getElementTheme(rawR.element);
                 return (
                   <button
                     key={r.id}
@@ -698,14 +744,14 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                             isSelected ? 'text-[#FFE599]' : 'text-[#4A0E0E]'
                           }`}
                         >
-                          {r.name} राशि ({r.symbol})
+                          {pickL(`${r.name} राशि (${r.symbol})`, `${r.name} (${r.symbol})`, `${r.name} રાશિ (${r.symbol})`)}
                         </span>
                         <span
                           className={`text-[9.5px] px-1.5 py-0.2 rounded font-bold ${
                             isSelected ? 'bg-amber-400/20 text-amber-200' : 'bg-amber-200/60 text-[#5C3A21]'
                           }`}
                         >
-                          {r.element.replace(' तत्व', '')}
+                          {r.element.replace(' तत्व', '').replace(' Element', '').replace(' તત્વ', '')}
                         </span>
                       </div>
                       <p
@@ -713,7 +759,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                           isSelected ? 'text-amber-100/80' : 'text-[#8C6239]'
                         }`}
                       >
-                        स्वामी: {r.lord} • {r.nature}
+                        {pickL('स्वामी:', 'Lord:', 'સ્વામી:')} {r.lord} • {r.nature}
                       </p>
                     </div>
 
@@ -725,7 +771,6 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
               })}
             </div>
 
-            {/* Drawer Footer */}
             <div className="p-2.5 border-t border-[#8C6239]/35 bg-[#F4E8D1]/90 text-[10.5px] text-center text-[#5C3A21] font-bold">
               📅 {live.dateLabel}
             </div>
@@ -739,7 +784,6 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
         onScroll={handleScroll}
         className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain p-2.5 sm:p-3 space-y-3 pb-24"
       >
-        {/* HD Notice Toast */}
         {hdNotice && (
           <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2 shadow-xs animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
@@ -747,26 +791,21 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
           </div>
         )}
 
-        {/* ------------------------------------------------------------- */}
-        {/* MODE A: 'Sort by Rashi' / Dynamic Grouping by Individual Rashi Signs */}
-        {/* ------------------------------------------------------------- */}
         {isGroupedByRashi ? (
           <div className="space-y-3 animate-in fade-in duration-200">
-            {/* Sorting & Grouping Options Sub-bar */}
             <div className="bg-[#FAF2E4] border border-[#8C6239]/35 rounded-2xl p-2.5 shadow-xs space-y-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <Layers className="w-4 h-4 text-[#8B1E1E]" />
                   <span className="text-xs font-black text-[#4A0E0E]">
-                    राशिवार समूहीकरण (Sort by Rashi):
+                    {pickL('राशिवार समूहीकरण:', 'Group & Sort by Sign:', 'રાશિવાર વર્ગીકરણ:')}
                   </span>
                 </div>
                 <span className="text-[10.5px] text-[#8C6239] font-bold">
-                  कुल १२ राशियाँ • {live.dateLabel}
+                  {pickL(`कुल १२ राशियाँ • ${live.dateLabel}`, `All 12 Signs • ${live.dateLabel}`, `કુલ ૧૨ રાશિઓ • ${live.dateLabel}`)}
                 </span>
               </div>
 
-              {/* Filter Pills */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
                   type="button"
@@ -780,7 +819,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                       : 'bg-[#F4E8D1] text-[#5C3A21] border-[#8C6239]/30 hover:bg-[#EAD8B8]'
                   }`}
                 >
-                  १२ राशियाँ (१-१२ मेष से मीन)
+                  {pickL('१२ राशियाँ (१-१२ मेष से मीन)', '12 Signs (Aries to Pisces)', '૧૨ રાશિઓ (મેષ થી મીન)')}
                 </button>
 
                 <button
@@ -795,7 +834,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                       : 'bg-[#F4E8D1] text-[#5C3A21] border-[#8C6239]/30 hover:bg-[#EAD8B8]'
                   }`}
                 >
-                  तत्व अनुसार समूह (अग्नि, पृथ्वी, वायु, जल)
+                  {pickL('तत्व अनुसार (अग्नि, पृथ्वी, वायु, जल)', 'By Element (Fire, Earth, Air, Water)', 'તત્વ અનુસાર (અગ્નિ, પૃથ્વી, વાયુ, જળ)')}
                 </button>
 
                 <button
@@ -810,36 +849,37 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                       : 'bg-[#F4E8D1] text-[#5C3A21] border-[#8C6239]/30 hover:bg-[#EAD8B8]'
                   }`}
                 >
-                  🌙 शुभ चंद्र बल अनुसार (Best First)
+                  {pickL('🌙 शुभ चंद्र बल अनुसार', '🌙 By Moon Strength (Best First)', '🌙 શુભ ચંદ્ર બળ અનુસાર')}
                 </button>
               </div>
 
-              {/* Quick Jump 12 Rashi Chips */}
               <div className="flex items-center gap-1 overflow-x-auto py-1 overscroll-contain">
-                {RASHI_META.map((r, rIdx) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => {
-                      triggerHapticSelection();
-                      const el = document.getElementById(`rashi-card-${r.id}`);
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }}
-                    className="px-2 py-0.5 rounded-lg bg-[#F4E8D1] border border-[#8C6239]/30 text-[10.5px] font-bold text-[#5C3A21] hover:bg-[#EAD8B8] shrink-0 cursor-pointer flex items-center gap-1"
-                  >
-                    <span>{r.symbol}</span>
-                    <span>{r.name}</span>
-                  </button>
-                ))}
+                {RASHI_META.map((rawR) => {
+                  const r = getTranslatedRashiMeta(rawR, cLang);
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => {
+                        triggerHapticSelection();
+                        const el = document.getElementById(`rashi-card-${r.id}`);
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }}
+                      className="px-2 py-0.5 rounded-lg bg-[#F4E8D1] border border-[#8C6239]/30 text-[10.5px] font-bold text-[#5C3A21] hover:bg-[#EAD8B8] shrink-0 cursor-pointer flex items-center gap-1"
+                    >
+                      <span>{r.symbol}</span>
+                      <span>{r.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Render Each Individual Rashi Group Card */}
             <div className="space-y-3.5">
-              {sortedGroupedRashis.map(({ meta, index, data }) => {
-                const rTheme = getElementTheme(meta.element);
+              {sortedGroupedRashis.map(({ rawMeta, meta, index, data }) => {
+                const rTheme = getElementTheme(rawMeta.element);
                 return (
                   <article
                     key={meta.id}
@@ -851,7 +891,6 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                     }}
                     className="rounded-2xl p-3 sm:p-4 space-y-3 transition-all"
                   >
-                    {/* Header Strip with Rashi Medallion & Actions */}
                     <div className="flex items-center justify-between gap-2.5 flex-wrap">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
@@ -871,7 +910,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <h2 className="font-granth font-black text-base sm:text-lg text-[#4A0E0E] leading-tight">
-                              {meta.name} राशि ({meta.symbol})
+                              {pickL(`${meta.name} राशि (${meta.symbol})`, `${meta.name} (${meta.symbol})`, `${meta.name} રાશિ (${meta.symbol})`)}
                             </h2>
                             <span
                               className={`text-[9.5px] px-1.5 py-0.2 rounded border font-bold ${rTheme.badgeBg} ${rTheme.badgeText}`}
@@ -879,7 +918,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                               {meta.element} • {meta.nature}
                             </span>
                             <span className="text-[10px] text-[#6B421B] font-bold">
-                              स्वामी: {meta.lord}
+                              {pickL('स्वामी:', 'Lord:', 'સ્વામી:')} {meta.lord}
                             </span>
                           </div>
 
@@ -891,13 +930,12 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                               🎨 {data.luckyColor}
                             </span>
                             <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100/90 border border-purple-300 text-purple-950 font-bold">
-                              🔢 अंक: {data.luckyNumber}
+                              🔢 {pickL('अंक:', 'No:', 'અંક:')} {data.luckyNumber}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Right Quick Actions */}
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
@@ -909,16 +947,24 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                             }
                           }}
                           className="px-2 py-1 rounded-lg bg-[#FAF2E4] hover:bg-[#F4E8D1] border border-[#8C6239]/40 text-[#5C3A21] text-[10.5px] font-bold cursor-pointer"
-                          title="इस राशि को एकल विस्तृत दृश्य में देखें"
+                          title={pickL('इस राशि को एकल विस्तृत दृश्य में देखें', 'Open detailed view', 'વિગતવાર દૃશ્ય ખોલો')}
                         >
-                          एकल दृश्य ↗
+                          {pickL('एकल दृश्य ↗', 'Details ↗', 'વિગતવાર ↗')}
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => handleToggleVoice(`${meta.name} राशि का राशिफल। ${data.general}`)}
+                          onClick={() =>
+                            handleToggleVoice(
+                              pickL(
+                                `${meta.name} राशि का राशिफल। ${data.general}`,
+                                `Horoscope for ${meta.name}. ${data.general}`,
+                                `${meta.name} રાશિનું રાશિફળ. ${data.general}`
+                              )
+                            )
+                          }
                           className="p-1.5 rounded-lg bg-[#5C3A21] text-[#FAF2E4] hover:bg-[#462B17] cursor-pointer"
-                          title="सुनें"
+                          title={pickL('सुनें', 'Listen', 'સાંભળો')}
                         >
                           <Volume2 className="w-3.5 h-3.5 text-amber-200" />
                         </button>
@@ -927,7 +973,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                           type="button"
                           onClick={() => handleSaveHd(meta, data)}
                           className="p-1.5 rounded-lg bg-[#5C3A21] text-[#FAF2E4] hover:bg-[#462B17] cursor-pointer"
-                          title="HD कार्ड सेव करें"
+                          title={pickL('HD कार्ड सेव करें', 'Save HD Card', 'HD કાર્ડ સેવ કરો')}
                         >
                           <Download className="w-3.5 h-3.5 text-[#FFD88A]" />
                         </button>
@@ -936,30 +982,28 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                           type="button"
                           onClick={() => handleShareHd(meta, data)}
                           className="p-1.5 rounded-lg bg-emerald-800 text-white hover:bg-emerald-900 cursor-pointer"
-                          title="HD कार्ड शेयर करें"
+                          title={pickL('HD कार्ड शेयर करें', 'Share HD Card', 'HD કાર્ડ શેર કરો')}
                         >
                           <Share2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* General Transit Forecast for this Rashi */}
                     <div className="p-2.5 rounded-xl bg-[#FAF2E4]/90 border border-[#8C6239]/25 text-xs">
                       <div className="flex items-center gap-1 text-[#6E1409] font-bold text-[11px] mb-0.5">
                         <Sun className="w-3 h-3 text-[#B56A00]" />
-                        <span>गोचर फलादेश:</span>
+                        <span>{pickL('गोचर फलादेश:', 'Transit Forecast:', 'ગોચર ફળાદેશ:')}</span>
                       </div>
                       <p className="text-[#3A2210] leading-snug font-medium text-[11.5px]">
                         {data.general}
                       </p>
                     </div>
 
-                    {/* Career & Wealth 2-Column Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <div className="p-2 rounded-xl bg-emerald-50/90 border border-emerald-200">
                         <div className="text-[10.5px] font-bold text-emerald-900 flex items-center gap-1">
                           <Briefcase className="w-3 h-3 text-emerald-700" />
-                          <span>कार्यक्षेत्र (Career)</span>
+                          <span>{pickL('कार्यक्षेत्र (Career)', 'Career', 'કાર્યક્ષેત્ર (Career)')}</span>
                         </div>
                         <p className="text-[11px] text-[#243324] mt-0.5 leading-snug">
                           {data.career}
@@ -969,7 +1013,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                       <div className="p-2 rounded-xl bg-amber-50/90 border border-amber-200">
                         <div className="text-[10.5px] font-bold text-amber-900 flex items-center gap-1">
                           <Coins className="w-3 h-3 text-amber-700" />
-                          <span>धन व लाभ (Wealth)</span>
+                          <span>{pickL('धन व लाभ (Wealth)', 'Wealth & Gains', 'ધન અને લાભ (Wealth)')}</span>
                         </div>
                         <p className="text-[11px] text-[#3d2f1f] mt-0.5 leading-snug">
                           {data.wealth}
@@ -977,11 +1021,10 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Remedy Strip */}
                     <div className="p-2 rounded-xl bg-purple-50/90 border border-purple-200 text-xs">
                       <div className="text-[10.5px] font-bold text-[#6E1409] flex items-center gap-1">
                         <Flame className="w-3 h-3 text-purple-700" />
-                        <span>{meta.name} राशि अचूक उपाय:</span>
+                        <span>{pickL(`${meta.name} राशि अचूक उपाय:`, `${meta.name} Vedic Remedy:`, `${meta.name} રાશિ સચોટ ઉપાય:`)}</span>
                       </div>
                       <p className="text-[11px] text-[#2F1E38] font-semibold mt-0.5 leading-snug">
                         {data.remedy}
@@ -993,11 +1036,8 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
             </div>
           </div>
         ) : (
-          /* ------------------------------------------------------------- */
-          /* MODE B: Single Focused Rashi View (Spacious & Detailed) */
-          /* ------------------------------------------------------------- */
           <>
-            {/* 4. Selected Rashi Hero Header Card (Spacious, No Text Clipping) */}
+            {/* 4. Selected Rashi Hero Header Card */}
             <section
               style={{
                 background: 'linear-gradient(180deg, #FFFDF9 0%, #FAEDDB 100%)',
@@ -1007,7 +1047,6 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
               className="rounded-2xl p-3 sm:p-4 space-y-3"
             >
               <div className="flex items-center gap-3">
-                {/* Hero 3D Rashi Medallion */}
                 <div
                   style={{
                     boxShadow: `0 6px 16px ${elemTheme.glowColor}, inset 0 1px 1px rgba(255,255,255,0.45)`,
@@ -1022,11 +1061,10 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                   />
                 </div>
 
-                {/* Rashi Title and Meta (Spacious leading-normal so NO letters ever cut off!) */}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <h1 className="font-granth font-black text-lg sm:text-xl text-[#4A0E0E] leading-normal py-0.5">
-                      {activeMeta.name} राशिफल ({activeMeta.symbol})
+                      {pickL(`${activeMeta.name} राशिफल (${activeMeta.symbol})`, `${activeMeta.name} Horoscope (${activeMeta.symbol})`, `${activeMeta.name} રાશિફળ (${activeMeta.symbol})`)}
                     </h1>
                     <span
                       className={`text-[10.5px] px-2 py-0.5 rounded-md border font-extrabold ${elemTheme.badgeBg} ${elemTheme.badgeText}`}
@@ -1044,23 +1082,22 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                       🌙 {live.chandraBal}
                     </span>
                     <span className="text-[10.5px] px-2 py-0.5 rounded-md bg-emerald-100/90 border border-emerald-300 text-emerald-950 font-bold">
-                      🎨 शुभ रंग: {live.luckyColor}
+                      🎨 {pickL('शुभ रंग:', 'Lucky Color:', 'શુભ રંગ:')} {live.luckyColor}
                     </span>
                     <span className="text-[10.5px] px-2 py-0.5 rounded-md bg-purple-100/90 border border-purple-300 text-purple-950 font-bold">
-                      🔢 शुभ अंक: {live.luckyNumber}
+                      🔢 {pickL('शुभ अंक:', 'Lucky No:', 'શુભ અંક:')} {live.luckyNumber}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Action Ribbon: HD Save, HD Share, Voice, Ask Uma */}
               <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#8C6239]/25">
                 <div className="text-[11px] text-[#6B421B] font-semibold">
-                  चंद्र गोचर: <strong className="text-[#4A0E0E]">{live.moonTransit}</strong>
+                  {pickL('चंद्र गोचर:', 'Moon Transit:', 'ચંદ્ર ગોચર:')}{' '}
+                  <strong className="text-[#4A0E0E]">{live.moonTransit}</strong>
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  {/* Voice Narration Button */}
                   <button
                     type="button"
                     onClick={() => handleToggleVoice()}
@@ -1069,42 +1106,44 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                     {isSpeaking ? (
                       <>
                         <VolumeX className="w-3.5 h-3.5 text-amber-300" />
-                        <span>रोकें</span>
+                        <span>{pickL('रोकें', 'Stop', 'રોકો')}</span>
                       </>
                     ) : (
                       <>
                         <Volume2 className="w-3.5 h-3.5 text-amber-300" />
-                        <span>उमा के स्वर में सुनें</span>
+                        <span>{pickL('उमा के स्वर में सुनें', 'Listen (Uma Voice)', 'ઉમાના સ્વરમાં સાંભળો')}</span>
                       </>
                     )}
                   </button>
 
-                  {/* Ask Uma Modal Button */}
                   {onOpenUmaModal && (
                     <button
                       type="button"
                       onClick={() => {
                         triggerHapticSelection();
                         onOpenUmaModal(
-                          `आज ${activeMeta.name} राशि के गोचर (${live.chandraBal}) और मेरे करियर व धन के लिए विशेष मार्गदर्शन दें।`
+                          pickL(
+                            `आज ${activeMeta.name} राशि के गोचर (${live.chandraBal}) और मेरे करियर व धन के लिए विशेष मार्गदर्शन दें।`,
+                            `Please give Vedic guidance for ${activeMeta.name} today (${live.chandraBal}) regarding my career and finances.`,
+                            `આજે ${activeMeta.name} રાશિના ગોચર (${live.chandraBal}) અને મારી કારકિર્દી તથા ધન માટે વિશેષ માર્ગદર્શન આપો.`
+                          )
                         );
                       }}
                       className="px-2.5 py-1.5 rounded-xl bg-[#8B1E1E] hover:bg-[#6E1409] text-[#FAF2E4] text-[11px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-xs"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                      <span>उमा से पूछें</span>
+                      <span>{pickL('उमा से पूछें', 'Ask Uma', 'ઉમાને પૂછો')}</span>
                     </button>
                   )}
 
-                  {/* Text Share */}
                   <button
                     type="button"
                     onClick={() => handleTextShare()}
                     className="px-2.5 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-xs"
-                    title="व्हाट्सएप पर टेक्स्ट शेयर करें"
+                    title={pickL('व्हाट्सएप पर टेक्स्ट शेयर करें', 'Share text on WhatsApp', 'વોટ્સએપ પર શેર કરો')}
                   >
                     <Share2 className="w-3.5 h-3.5" />
-                    <span>शेयर</span>
+                    <span>{pickL('शेयर', 'Share', 'શેર')}</span>
                   </button>
                 </div>
               </div>
@@ -1112,15 +1151,20 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
 
             {/* 5. Detailed Gochar Predictions Bento Cards */}
             <section className="space-y-2.5">
-              {/* General Transit Forecast Card */}
               <div className="bx-fact bx-glass p-3.5 space-y-1.5">
                 <div className="flex items-center justify-between gap-2 border-b border-[#8C6239]/20 pb-1.5">
                   <div className="flex items-center gap-1.5 font-extrabold text-xs text-[#4A0E0E]">
                     <Sun className="w-4 h-4 text-[#B56A00] shrink-0" />
-                    <span>{activeMeta.name} राशि — आज का ग्रह गोचर फलादेश</span>
+                    <span>
+                      {pickL(
+                        `${activeMeta.name} राशि — आज का ग्रह गोचर फलादेश`,
+                        `${activeMeta.name} — Today's Planetary Transit Forecast`,
+                        `${activeMeta.name} રાશિ — આજનું ગ્રહ ગોચર ફળાદેશ`
+                      )}
+                    </span>
                   </div>
                   <span className="text-[10.5px] font-bold text-[#8C6239]">
-                    इष्ट: {activeMeta.ishtaDevta}
+                    {pickL('इष्ट:', 'Deity:', 'ઇષ્ટ:')} {activeMeta.ishtaDevta}
                   </span>
                 </div>
                 <p className="text-xs text-[#3A2210] leading-relaxed font-medium pt-0.5">
@@ -1128,12 +1172,11 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                 </p>
               </div>
 
-              {/* Career & Wealth 2-Column Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div className="bx-fact bx-glass p-3 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-900 border-b border-emerald-200/60 pb-1">
                     <Briefcase className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                    <span>कार्यक्षेत्र एवं आजीविका (Career)</span>
+                    <span>{pickL('कार्यक्षेत्र एवं आजीविका (Career)', 'Career & Profession', 'કાર્યક્ષેત્ર અને આજીવિકા')}</span>
                   </div>
                   <p className="text-[11.5px] text-[#3A2210] leading-relaxed font-medium pt-0.5">
                     {live.career}
@@ -1143,7 +1186,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                 <div className="bx-fact bx-glass p-3 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-extrabold text-amber-900 border-b border-amber-200/60 pb-1">
                     <Coins className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                    <span>धन, व्यापार एवं लाभ (Wealth)</span>
+                    <span>{pickL('धन, व्यापार एवं लाभ (Wealth)', 'Wealth & Business Gains', 'ધન, વેપાર અને લાભ')}</span>
                   </div>
                   <p className="text-[11.5px] text-[#3A2210] leading-relaxed font-medium pt-0.5">
                     {live.wealth}
@@ -1151,12 +1194,11 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                 </div>
               </div>
 
-              {/* Family/Love & Health 2-Column Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div className="bx-fact bx-glass p-3 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-extrabold text-rose-900 border-b border-rose-200/60 pb-1">
                     <HeartHandshake className="w-3.5 h-3.5 text-rose-700 shrink-0" />
-                    <span>परिवार, दांपत्य एवं प्रेम (Family & Love)</span>
+                    <span>{pickL('परिवार, दांपत्य एवं प्रेम (Family & Love)', 'Family, Marriage & Love', 'પરિવાર, દાંપત્ય અને પ્રેમ')}</span>
                   </div>
                   <p className="text-[11.5px] text-[#3A2210] leading-relaxed font-medium pt-0.5">
                     {live.love}
@@ -1166,7 +1208,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                 <div className="bx-fact bx-glass p-3 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-extrabold text-sky-900 border-b border-sky-200/60 pb-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-sky-700 shrink-0" />
-                    <span>स्वास्थ्य एवं प्राण-ऊर्जा (Health)</span>
+                    <span>{pickL('स्वास्थ्य एवं प्राण-ऊर्जा (Health)', 'Health & Vitality', 'સ્વાસ્થ્ય અને પ્રાણ-ઊર્જા')}</span>
                   </div>
                   <p className="text-[11.5px] text-[#3A2210] leading-relaxed font-medium pt-0.5">
                     {live.health}
@@ -1174,21 +1216,29 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                 </div>
               </div>
 
-              {/* Rashi-Specific Vedic Upay Card */}
               <div className="bx-fact bx-glass p-3.5 space-y-1.5 border border-[#C89D66]">
                 <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#6E1409] border-b border-[#8C6239]/20 pb-1">
                   <Flame className="w-4 h-4 text-[#B56A00] shrink-0" />
-                  <span>{activeMeta.name} राशि विशेष अचूक वैदिक उपाय</span>
+                  <span>
+                    {pickL(
+                      `${activeMeta.name} राशि विशेष अचूक वैदिक उपाय`,
+                      `${activeMeta.name} — Special Daily Vedic Remedy`,
+                      `${activeMeta.name} રાશિ વિશેષ સચોટ વૈદિક ઉપાય`
+                    )}
+                  </span>
                 </div>
                 <p className="text-xs text-[#3A2210] leading-relaxed font-semibold pt-0.5">
                   {live.remedy}
                 </p>
               </div>
 
-              {/* Planetary Transits from Selected Rashi (Gochar Chakra) */}
               <div className="bx-fact bx-glass p-3 space-y-2">
                 <div className="text-[11px] font-extrabold text-[#5C3A21]">
-                  🪐 आज {activeMeta.name} राशि से नवग्रहों की भाव स्थिति (Gochar Chakra):
+                  {pickL(
+                    `🪐 आज ${activeMeta.name} राशि से नवग्रहों की भाव स्थिति (Gochar Chakra):`,
+                    `🪐 Today's Planetary Houses from ${activeMeta.name} (Gochar Chakra):`,
+                    `🪐 આજે ${activeMeta.name} રાશિથી નવગ્રહોની ભાવ સ્થિતિ (ગોચર ચક્ર):`
+                  )}
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-1.5">
                   {live.rows.map((row) => (
@@ -1197,10 +1247,10 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                       className="px-1.5 py-1 rounded-lg bg-[#F4E8D1]/90 border border-[#8C6239]/30 text-center"
                     >
                       <div className="text-[10px] font-black text-[#4A0E0E]">
-                        {row.planet} {row.retrograde ? '(व)' : ''}
+                        {row.planet} {row.retrograde ? pickL('(व)', '(R)', '(વ)') : ''}
                       </div>
                       <div className="text-[9.5px] font-bold text-[#6B421B]">
-                        {row.house}वाँ भाव
+                        {pickL(`${row.house}वाँ भाव`, `House ${row.house}`, `${row.house}મો ભાવ`)}
                       </div>
                       <div className="text-[9px] text-[#8C6239] truncate">{row.rashi}</div>
                     </div>
@@ -1208,14 +1258,21 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                 </div>
               </div>
 
-              {/* Bottom HD Save & Share Full Banner */}
               <div className="p-3 rounded-2xl bg-[#FAF2E4] border border-[#8C6239]/40 flex flex-wrap items-center justify-between gap-2 shadow-xs">
                 <div>
                   <div className="text-xs font-black text-[#5C3A21]">
-                    {activeMeta.name} राशि का सुंदर HD पंचांग कार्ड
+                    {pickL(
+                      `${activeMeta.name} राशि का सुंदर HD पंचांग कार्ड`,
+                      `${activeMeta.name} Full HD Horoscope Card`,
+                      `${activeMeta.name} રાશિનું સુંદર HD પંચાંગ કાર્ડ`
+                    )}
                   </div>
                   <p className="text-[10px] text-[#8C6239] mt-0.5">
-                    व्हाट्सएप स्टेटस, गैलरी में 1080p फोटो सेव व शेयर करें
+                    {pickL(
+                      'व्हाट्सएप स्टेटस, गैलरी में 1080p फोटो सेव व शेयर करें',
+                      'Save or share a 1080p PNG card for WhatsApp Status & Gallery',
+                      'વોટ્સએપ સ્ટેટસ અને ગેલેરીમાં 1080p ફોટો સેવ અને શેર કરો'
+                    )}
                   </p>
                 </div>
 
@@ -1231,7 +1288,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                     ) : (
                       <Download className="w-3.5 h-3.5 text-[#FFD88A]" />
                     )}
-                    <span>HD में सेव करें</span>
+                    <span>{pickL('HD में सेव करें', 'Save in HD', 'HD માં સેવ કરો')}</span>
                   </button>
 
                   <button
@@ -1245,7 +1302,7 @@ export const DailyRashifalView: React.FC<DailyRashifalViewProps> = ({
                     ) : (
                       <Share2 className="w-3.5 h-3.5 text-amber-200" />
                     )}
-                    <span>HD कार्ड शेयर</span>
+                    <span>{pickL('HD कार्ड शेयर', 'Share HD Card', 'HD કાર્ડ શેર')}</span>
                   </button>
                 </div>
               </div>

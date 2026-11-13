@@ -19,6 +19,15 @@ import { PdfSuccessModal, PdfSuccessInfo } from './PdfSuccessModal';
 import { UpayParchiModal } from './UpayParchiModal';
 import { calculateKundali } from '../services/kundali';
 import { searchGlobalCities } from '../services/globalCities';
+import { useLanguage } from '../i18n';
+import { trPlanet, trRashi, trVedic, trWeekday } from '../i18n/vedicTranslate';
+
+function pickL<T>(lang: string, hi: T, en: T, gu: T): T {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (c === 'en') return en;
+  if (c === 'gu') return gu;
+  return hi;
+}
 import {
   X,
   Send,
@@ -79,83 +88,115 @@ interface UmaAssistantModalProps {
   onSelectKundali?: (kundali: KundaliData) => void;
 }
 
-const CATEGORY_TABS = [
-  { id: 'all', label: 'समस्त प्रश्न' },
-  { id: 'numerology', label: '🔢 अंक ज्योतिष' },
-  { id: 'kundali', label: 'कुंडली व फलादेश' },
-  { id: 'upay', label: 'सात्विक उपाय' },
-  { id: 'career', label: 'करियर व धन' },
-  { id: 'vivah', label: 'विवाह व दांपत्य' },
-  { id: 'muhurat', label: 'मुहूर्त व राहुकाल' },
-  { id: 'yatra', label: 'यात्रा व दिशाशूल' },
+const getCategoryTabs = (lang: string) => [
+  { id: 'all', label: pickL(lang, 'समस्त प्रश्न', 'All Topics', 'બધા પ્રશ્નો') },
+  { id: 'numerology', label: pickL(lang, '🔢 अंक ज्योतिष', '🔢 Numerology', '🔢 અંક જ્યોતિષ') },
+  { id: 'kundali', label: pickL(lang, 'कुंडली व फलादेश', 'Horoscope & Reading', 'કુંડળી અને ફળાદેશ') },
+  { id: 'upay', label: pickL(lang, 'सात्विक उपाय', 'Vedic Remedies', 'સાત્વિક ઉપાય') },
+  { id: 'career', label: pickL(lang, 'करियर व धन', 'Career & Wealth', 'કારકિર્દી અને ધન') },
+  { id: 'vivah', label: pickL(lang, 'विवाह व दांपत्य', 'Marriage & Love', 'લગ્ન અને દામ્પત્ય') },
+  { id: 'muhurat', label: pickL(lang, 'मुहूर्त व राहुकाल', 'Muhurat & Rahu Kaal', 'મુહૂર્ત અને રાહુકાળ') },
+  { id: 'yatra', label: pickL(lang, 'यात्रा व दिशाशूल', 'Travel & Dishashool', 'યાત્રા અને દિશાશૂળ') },
 ];
 
-const BOT_QUICK_TOPICS = [
-  { id: 'numerology', label: '🔢 मूलांक, भाग्यांक व नाम सुधार', prompt: 'मेरे मूलांक, भाग्यांक, नामांक स्पेलिंग व लो-शू चक्र का सम्पूर्ण फलादेश और उपाय बताएं' },
-  { id: 'vivah', label: '💍 विवाह व मांगलिक विचार', prompt: 'मेरी कुंडली में विवाह योग, दांपत्य सुख व मांगलिक परिहार' },
-  { id: 'career', label: '💼 नौकरी व पदोन्नति योग', prompt: 'दशम भाव, नौकरी में पदोन्नति, स्थानांतरण व कार्यक्षेत्र फलादेश' },
-  { id: 'dhan', label: '💰 व्यापार, धन लाभ व ऋण मुक्ति', prompt: 'धन भाव, व्यापार में समृद्धि व आर्थिक उन्नति के सात्विक उपाय' },
-  { id: 'health', label: '🩺 स्वास्थ्य रक्षा व महामृत्युंजय', prompt: 'स्वास्थ्य रक्षा, अरिष्ट निवारण एवं महामृत्युंजय जप विधान' },
-  { id: 'sadesati', label: '🪐 शनि साढ़ेसाती व ढैया फल', prompt: 'शनि की साढ़ेसाती का प्रभाव, चरण व कष्ट निवारण के अचूक उपाय' },
-  { id: 'ratna', label: '💎 भाग्य रत्न व रुद्राक्ष परामर्श', prompt: 'मेरी कुंडली व मूलांक के अनुसार सर्वोत्तम भाग्य रत्न, धातु व रुद्राक्ष' },
-  { id: 'muhurat', label: '⏰ आज का शुभ मुहूर्त व चौघड़िया', prompt: 'आज का अमृत चौघड़िया, अभिजित मुहूर्त व शुभ कार्य समय' },
+const getBotQuickTopics = (lang: string) => [
+  {
+    id: 'numerology',
+    label: pickL(lang, '🔢 मूलांक, भाग्यांक व नाम सुधार', '🔢 Mulank, Bhagyank & Name Spelling', '🔢 મૂલાંક, ભાગ્યાંક અને નામ સુધારણા'),
+    prompt: pickL(lang, 'मेरे मूलांक, भाग्यांक, नामांक स्पेलिंग व लो-शू चक्र का सम्पूर्ण फलादेश और उपाय बताएं', 'Analyze my Mulank, Bhagyank, Chaldean name spelling, Lo Shu Grid Rajyogas, and remedies', 'મારા મૂલાંક, ભાગ્યાંક, નામાંક સ્પેલિંગ અને લો-શૂ ચક્રનું સંપૂર્ણ ફળાદેશ અને ઉપાય જણાવો'),
+  },
+  {
+    id: 'vivah',
+    label: pickL(lang, '💍 विवाह व मांगलिक विचार', '💍 Marriage & Manglik Check', '💍 લગ્ન અને માંગલિક વિચાર'),
+    prompt: pickL(lang, 'मेरी कुंडली में विवाह योग, दांपत्य सुख व मांगलिक परिहार', 'Check marriage yogas, married life harmony, and Manglik remedies in my chart', 'મારી કુંડળીમાં લગ્ન યોગ, દામ્પત્ય સુખ અને માંગલિક પરિહાર'),
+  },
+  {
+    id: 'career',
+    label: pickL(lang, '💼 नौकरी व पदोन्नति योग', '💼 Job & Promotion Yogas', '💼 નોકરી અને બઢતી યોગ'),
+    prompt: pickL(lang, 'दशम भाव, नौकरी में पदोन्नति, स्थानांतरण व कार्यक्षेत्र फलादेश', 'Analyze 10th house career, job promotion, transfer, and work growth in my chart', 'દશમ ભાવ, નોકરીમાં બઢતી, બદલી અને કાર્યક્ષેત્ર ફળાદેશ'),
+  },
+  {
+    id: 'dhan',
+    label: pickL(lang, '💰 व्यापार, धन लाभ व ऋण मुक्ति', '💰 Business, Wealth & Debt Relief', '💰 વેપાર, ધન લાભ અને દેવા મુક્તિ'),
+    prompt: pickL(lang, 'धन भाव, व्यापार में समृद्धि व आर्थिक उन्नति के सात्विक उपाय', 'Analyze wealth houses, business prosperity, debt relief, and sattvic remedies', 'ધન ભાવ, વેપારમાં સમૃદ્ધિ અને આર્થિક ઉન્નતિના સાત્વિક ઉપાય'),
+  },
+  {
+    id: 'health',
+    label: pickL(lang, '🩺 स्वास्थ्य रक्षा व महामृत्युंजय', '🩺 Health & Mahamrityunjaya', '🩺 સ્વાસ્થ્ય રક્ષા અને મહામૃત્યુંજય'),
+    prompt: pickL(lang, 'स्वास्थ्य रक्षा, अरिष्ट निवारण एवं महामृत्युंजय जप विधान', 'Health protection, planetary affliction relief, and Mahamrityunjaya mantra guidance', 'સ્વાસ્થ્ય રક્ષા, અરિષ્ટ નિવારણ અને મહામૃત્યુંજય જપ વિધાન'),
+  },
+  {
+    id: 'sadesati',
+    label: pickL(lang, '🪐 शनि साढ़ेसाती व ढैया फल', '🪐 Shani Sade Sati & Dhaiya', '🪐 શનિ સાડાસાતી અને ઢૈયા ફળ'),
+    prompt: pickL(lang, 'शनि की साढ़ेसाती का प्रभाव, चरण व कष्ट निवारण के अचूक उपाय', 'Analyze Shani Sade Sati phase impact and authentic remedies for relief', 'શનિની સાડાસાતીનો પ્રભાવ, ચરણ અને કષ્ટ નિવારણના અચૂક ઉપાય'),
+  },
+  {
+    id: 'ratna',
+    label: pickL(lang, '💎 भाग्य रत्न व रुद्राक्ष परामर्श', '💎 Lucky Gemstone & Rudraksha', '💎 ભાગ્ય રત્ન અને રુદ્રાક્ષ પરામર્શ'),
+    prompt: pickL(lang, 'मेरी कुंडली व मूलांक के अनुसार सर्वोत्तम भाग्य रत्न, धातु व रुद्राक्ष', 'Recommend the best gemstone, metal, and Rudraksha per my horoscope and Mulank', 'મારી કુંડળી અને મૂલાંક મુજબ શ્રેષ્ઠ ભાગ્ય રત્ન, ધાતુ અને રુદ્રાક્ષ'),
+  },
+  {
+    id: 'muhurat',
+    label: pickL(lang, '⏰ आज का शुभ मुहूर्त व चौघड़िया', '⏰ Today’s Muhurat & Choghadiya', '⏰ આજનું શુભ મુહૂર્ત અને ચોઘડિયા'),
+    prompt: pickL(lang, 'आज का अमृत चौघड़िया, अभिजित मुहूर्त व शुभ कार्य समय', 'Show today’s Amrit Choghadiya, Abhijit Muhurat, and auspicious timings', 'આજનું અમૃત ચોઘડિયું, અભિજિત મુહૂર્ત અને શુભ કાર્ય સમય'),
+  },
 ];
 
-const SUGGESTIONS_MAP: Record<string, string[]> = {
+const getSuggestionsMap = (lang: string): Record<string, string[]> => ({
   all: [
-    'मेरे मूलांक, भाग्यांक व नामांक का सम्पूर्ण फलादेश व लो-शू राजयोग बताओ',
-    'मेरी सम्पूर्ण कुंडली चेक करके फलादेश व उपाय बताओ',
-    'मेरे नाम की स्पेलिंग और मोबाइल नंबर को भाग्यशाली कैसे बनाएं?',
-    'करियर व नौकरी में उन्नति के शास्त्रोक्त उपाय बताओ',
-    'आज का राहुकाल और शुभ चौघड़िया समय बताओ',
-    'कष्ट निवारण व ग्रह शांति के सिद्ध मंत्र व दान',
+    pickL(lang, 'मेरे मूलांक, भाग्यांक व नामांक का सम्पूर्ण फलादेश व लो-शू राजयोग बताओ', 'Show my complete Mulank, Bhagyank, Namank & Lo Shu Rajyoga reading', 'મારા મૂલાંક, ભાગ્યાંક અને નામાંકનું સંપૂર્ણ ફળાદેશ અને લો-શૂ રાજયોગ જણાવો'),
+    pickL(lang, 'मेरी सम्पूर्ण कुंडली चेक करके फलादेश व उपाय बताओ', 'Analyze my complete birth chart with predictions and remedies', 'મારી સંપૂર્ણ કુંડળી તપાસીને ફળાદેશ અને ઉપાય જણાવો'),
+    pickL(lang, 'मेरे नाम की स्पेलिंग और मोबाइल नंबर को भाग्यशाली कैसे बनाएं?', 'How to make my name spelling and mobile number lucky?', 'મારા નામની સ્પેલિંગ અને મોબાઇલ નંબરને ભાગ્યશાળી કેવી રીતે બનાવવા?'),
+    pickL(lang, 'करियर व नौकरी में उन्नति के शास्त्रोक्त उपाय बताओ', 'Vedic remedies for career and job growth', 'કારકિર્દી અને નોકરીમાં ઉન્નતિ માટે શાસ્ત્રોક્ત ઉપાય જણાવો'),
+    pickL(lang, 'आज का राहुकाल और शुभ चौघड़िया समय बताओ', 'Tell me today’s Rahu Kaal and auspicious Choghadiya timings', 'આજનો રાહુકાળ અને શુભ ચોઘડિયા સમય જણાવો'),
+    pickL(lang, 'कष्ट निवारण व ग्रह शांति के सिद्ध मंत्र व दान', 'Mantras and charity remedies for planetary peace and relief', 'કષ્ટ નિવારણ અને ગ્રહ શાંતિના સિદ્ધ મંત્ર અને દાન'),
   ],
   numerology: [
-    'मेरे मूलांक, भाग्यांक व नामांक का सम्पूर्ण फलादेश और उपाय बताओ',
-    'कीरो/कॉल्डियन पद्धति से मेरे नाम की स्पेलिंग शुभ है या सुधार करें?',
-    'मेरे लो-शू ग्रिड (3x3) में कौन से राजयोग हैं और अनुपस्थित अंकों के उपाय क्या हैं?',
-    'मेरे मूलांक के अनुसार कौन सा मोबाइल नंबर और वाहन नंबर सबसे लकी रहेगा?',
-    'इस वर्ष (Personal Year) मेरा करियर, धन और भाग्योदय कैसा रहेगा?',
+    pickL(lang, 'मेरे मूलांक, भाग्यांक व नामांक का सम्पूर्ण फलादेश और उपाय बताओ', 'Complete Mulank, Bhagyank & Namank reading with remedies', 'મારા મૂલાંક, ભાગ્યાંક અને નામાંકનું સંપૂર્ણ ફળાદેશ અને ઉપાય જણાવો'),
+    pickL(lang, 'कीरो/कॉल्डियन पद्धति से मेरे नाम की स्पेलिंग शुभ है या सुधार करें?', 'Is my name spelling lucky in Chaldean numerology or should I adjust it?', 'કોલ્ડિયન પદ્ધતિથી મારા નામની સ્પેલિંગ શુભ છે કે સુધારો કરવો?'),
+    pickL(lang, 'मेरे लो-शू ग्रिड (3x3) में कौन से राजयोग हैं और अनुपस्थित अंकों के उपाय क्या हैं?', 'Which Rajyogas exist in my Lo Shu Grid and what are missing number remedies?', 'મારા લો-શૂ ગ્રિડમાં કયા રાજયોગ છે અને ખૂટતા અંકોના ઉપાય શું છે?'),
+    pickL(lang, 'मेरे मूलांक के अनुसार कौन सा मोबाइल नंबर और वाहन नंबर सबसे लकी रहेगा?', 'Which mobile and vehicle numbers are luckiest for my Mulank?', 'મારા મૂલાંક મુજબ કયો મોબાઇલ અને વાહન નંબર સૌથી ભાગ્યશાળી રહેશે?'),
+    pickL(lang, 'इस वर्ष (Personal Year) मेरा करियर, धन और भाग्योदय कैसा रहेगा?', 'How will my career, wealth & fortune be in this Personal Year?', 'આ વર્ષે (Personal Year) મારી કારકિર્દી, ધન અને ભાગ્યોદય કેવું રહેશે?'),
   ],
   kundali: [
-    'मेरी सम्पूर्ण कुंडली चेक करके फलादेश व उपाय बताओ',
-    'मेरी कुंडली के मुख्य राजयोग और ग्रह स्थिति बताओ',
-    'मेरी लग्न व चंद्र राशि के अनुसार इष्टदेव कौन हैं?',
-    'वर्तमान विंशोत्तरी महादशा और अंतर्दशा का फल',
-    'कुंडली में कौन से ग्रह बलवान अथवा कमजोर हैं?',
+    pickL(lang, 'मेरी सम्पूर्ण कुंडली चेक करके फलादेश व उपाय बताओ', 'Analyze my complete birth chart with predictions and remedies', 'મારી સંપૂર્ણ કુંડળી તપાસીને ફળાદેશ અને ઉપાય જણાવો'),
+    pickL(lang, 'मेरी कुंडली के मुख्य राजयोग और ग्रह स्थिति बताओ', 'Explain major Rajyogas and planetary strengths in my chart', 'મારી કુંડળીના મુખ્ય રાજયોગ અને ગ્રહ સ્થિતિ જણાવો'),
+    pickL(lang, 'मेरी लग्न व चंद्र राशि के अनुसार इष्टदेव कौन हैं?', 'Who is my Ishta Devta based on my Lagna and Moon sign?', 'મારા લગ્ન અને ચંદ્ર રાશિ મુજબ ઇષ્ટદેવ કોણ છે?'),
+    pickL(lang, 'वर्तमान विंशोत्तरी महादशा और अंतर्दशा का फल', 'Results of my current Vimshottari Mahadasha and Antardasha', 'વર્તમાન વિંશોત્તરી મહાદશા અને અંતર્દશાનું ફળ'),
+    pickL(lang, 'कुंडली में कौन से ग्रह बलवान अथवा कमजोर हैं?', 'Which planets are strong or weak in my birth chart?', 'કુંડળીમાં કયા ગ્રહો બળવાન કે નબળા છે?'),
   ],
   upay: [
-    'मेरी कुंडली की ६-सूत्रीय पारंपरिक उपाय पर्ची (रत्न, उपवास, पाठ, दान, दोष शान्ति) बनाओ',
-    'वर्तमान महादशा शांति हेतु सिद्ध मंत्र व दान के नियम',
-    'शनि की साढ़ेसाती व ढैय्या से मुक्ति के सात्विक उपाय',
-    'सूर्य देव को अर्घ्य देने और आदित्य हृदय स्तोत्र की विधि',
-    'व्यापार वृद्धि, धन लाभ और ऋण मुक्ति के वैदिक उपाय',
-    'मानसिक शांति व स्वास्थ्य रक्षा हेतु महामृत्युंजय जप',
+    pickL(lang, 'मेरी कुंडली की ६-सूत्रीय पारंपरिक उपाय पर्ची (रत्न, उपवास, पाठ, दान, दोष शान्ति) बनाओ', 'Generate my 6-point traditional Remedy Slip (Gem, Fast, Path, Daan, Shanti)', 'મારી કુંડળીની ૬-સૂત્રીય પારંપરિક ઉપાય પર્ચી બનાવો'),
+    pickL(lang, 'वर्तमान महादशा शांति हेतु सिद्ध मंत्र व दान के नियम', 'Mantras and charity rules for current Mahadasha peace', 'વર્તમાન મહાદશા શાંતિ માટે સિદ્ધ મંત્ર અને દાનના નિયમો'),
+    pickL(lang, 'शनि की साढ़ेसाती व ढैय्या से मुक्ति के सात्विक उपाय', 'Sattvic remedies for Shani Sade Sati & Dhaiya relief', 'શનિની સાડાસાતી અને ઢૈયાથી મુક્તિના સાત્વિક ઉપાય'),
+    pickL(lang, 'सूर्य देव को अर्घ्य देने और आदित्य हृदय स्तोत्र की विधि', 'Method for Surya Arghya and Aditya Hridaya Stotram', 'સૂર્યદેવને અર્ઘ્ય અર્પણ અને આદિત્ય હૃદય સ્તોત્રની વિધિ'),
+    pickL(lang, 'व्यापार वृद्धि, धन लाभ और ऋण मुक्ति के वैदिक उपाय', 'Vedic remedies for business growth, wealth & debt relief', 'વેપાર વૃદ્ધિ, ધન લાભ અને દેવા મુક્તિના વૈદિક ઉપાય'),
+    pickL(lang, 'मानसिक शांति व स्वास्थ्य रक्षा हेतु महामृत्युंजय जप', 'Mahamrityunjaya chanting for mental peace and health', 'માનસિક શાંતિ અને સ્વાસ્થ્ય રક્ષા માટે મહામૃત્યુંજય જપ'),
   ],
   career: [
-    'मेरी कुंडली में दशम भाव और करियर के योग कैसे हैं?',
-    'नौकरी में पदोन्नति या स्थानांतरण के क्या योग हैं?',
-    'मेरे लिए नौकरी उत्तम है या स्वतंत्र व्यापार?',
-    'धन संचय और आय में वृद्धि हेतु कौन से उपाय करें?',
+    pickL(lang, 'मेरी कुंडली में दशम भाव और करियर के योग कैसे हैं?', 'How are the 10th house and career yogas in my chart?', 'મારી કુંડળીમાં દશમ ભાવ અને કારકિર્દીના યોગ કેવા છે?'),
+    pickL(lang, 'नौकरी में पदोन्नति या स्थानांतरण के क्या योग हैं?', 'What are the yogas for job promotion or transfer?', 'નોકરીમાં બઢતી કે બદલીના શું યોગ છે?'),
+    pickL(lang, 'मेरे लिए नौकरी उत्तम है या स्वतंत्र व्यापार?', 'Is a job or independent business better for me?', 'મારા માટે નોકરી ઉત્તમ છે કે સ્વતંત્ર વેપાર?'),
+    pickL(lang, 'धन संचय और आय में वृद्धि हेतु कौन से उपाय करें?', 'What remedies help increase savings and income?', 'ધન સંચય અને આવક વધારવા માટે કયા ઉપાય કરવા?'),
   ],
   vivah: [
-    'मेरी कुंडली में विवाह व दांपत्य जीवन के योग बताओ',
-    'सप्तम भाव में कौन से ग्रह हैं और उनका क्या प्रभाव है?',
-    'क्या मेरी कुंडली मांगलिक है? इसका परिहार क्या है?',
-    'शीघ्र विवाह और सुयोग्य जीवनसाथी प्राप्ति के उपाय',
+    pickL(lang, 'मेरी कुंडली में विवाह व दांपत्य जीवन के योग बताओ', 'Explain marriage & married life yogas in my chart', 'મારી કુંડળીમાં લગ્ન અને દામ્પત્ય જીવનના યોગ જણાવો'),
+    pickL(lang, 'सप्तम भाव में कौन से ग्रह हैं और उनका क्या प्रभाव है?', 'Which planets are in the 7th house and what is their effect?', 'સપ્તમ ભાવમાં કયા ગ્રહો છે અને તેમની શી અસર છે?'),
+    pickL(lang, 'क्या मेरी कुंडली मांगलिक है? इसका परिहार क्या है?', 'Is my chart Manglik and what is the remedy?', 'શું મારી કુંડળી માંગલિક છે? તેનો પરિહાર શું છે?'),
+    pickL(lang, 'शीघ्र विवाह और सुयोग्य जीवनसाथी प्राप्ति के उपाय', 'Remedies for timely marriage and a compatible partner', 'શીઘ્ર લગ્ન અને સુયોગ્ય જીવનસાથી પ્રાપ્તિના ઉપાય'),
   ],
   muhurat: [
-    'आज का राहुकाल कब से कब तक है?',
-    'आज के अमृत और शुभ चौघड़िया समय',
-    'आज कोई नया कार्य प्रारंभ करने हेतु श्रेष्ठ काल',
-    'आज का अभिजित मुहूर्त कब है?',
+    pickL(lang, 'आज का राहुकाल कब से कब तक है?', 'What are today’s Rahu Kaal timings?', 'આજનો રાહુકાળ ક્યારે છે?'),
+    pickL(lang, 'आज के अमृत और शुभ चौघड़िया समय', 'Today’s Amrit and Shubh Choghadiya timings', 'આજના અમૃત અને શુભ ચોઘડિયા સમય'),
+    pickL(lang, 'आज कोई नया कार्य प्रारंभ करने हेतु श्रेष्ठ काल', 'Best time today to start a new venture or task', 'આજે કોઈ નવું કાર્ય શરૂ કરવા માટે શ્રેષ્ઠ સમય'),
+    pickL(lang, 'आज का अभिजित मुहूर्त कब है?', 'When is today’s Abhijit Muhurat?', 'આજનું અભિજિત મુહૂર્ત ક્યારે છે?'),
   ],
   yatra: [
-    'आज किस दिशा में दिशाशूल है?',
-    'दिशाशूल का सात्विक परिहार क्या है?',
-    'आज यात्रा प्रारंभ करने का सबसे शुभ समय',
+    pickL(lang, 'आज किस दिशा में दिशाशूल है?', 'Which direction has Dishashool today?', 'આજે કઈ દિશામાં દિશાશૂળ છે?'),
+    pickL(lang, 'दिशाशूल का सात्विक परिहार क्या है?', 'What is the sattvic remedy for Dishashool?', 'દિશાશૂળનો સાત્વિક પરિહાર શું છે?'),
+    pickL(lang, 'आज यात्रा प्रारंभ करने का सबसे शुभ समय', 'Most auspicious time to begin travel today', 'આજે યાત્રા શરૂ કરવાનો સૌથી શુભ સમય'),
   ],
-};
+});
 
 /**
  * उमा दैवज्ञ - प्रकांड वैदिक ज्योतिष एवं अंक-शास्त्र आचार्य (५० वर्षों का पराशारी, जैमिनी, नाड़ी व लो-शू अनुभव)
@@ -211,16 +252,16 @@ At the very end of your response, output 3 relevant, highly helpful follow-up qu
 • मेरी कुण्डली के अनुसार इष्टदेव और भाग्योदय वर्ष बताएं।`;
 
 export const POPULAR_BIRTH_CITIES = [
-  { name: 'नई दिल्ली', lat: 28.6139, lon: 77.2090, tz: 5.5 },
-  { name: 'वाराणसी', lat: 25.3176, lon: 82.9739, tz: 5.5 },
-  { name: 'उज्जैन', lat: 23.1765, lon: 75.7885, tz: 5.5 },
-  { name: 'जयपुर', lat: 26.9124, lon: 75.7873, tz: 5.5 },
-  { name: 'मुंबई', lat: 19.0760, lon: 72.8777, tz: 5.5 },
-  { name: 'लखनऊ', lat: 26.8467, lon: 80.9462, tz: 5.5 },
-  { name: 'पटना', lat: 25.5941, lon: 85.1376, tz: 5.5 },
-  { name: 'अहमदाबाद', lat: 23.0225, lon: 72.5714, tz: 5.5 },
-  { name: 'कोलकाता', lat: 22.5726, lon: 88.3639, tz: 5.5 },
-  { name: 'इंदौर', lat: 22.7196, lon: 75.8577, tz: 5.5 },
+  { name: 'नई दिल्ली', nameEn: 'New Delhi', nameGu: 'નવી દિલ્હી', lat: 28.6139, lon: 77.2090, tz: 5.5 },
+  { name: 'वाराणसी', nameEn: 'Varanasi', nameGu: 'વારાણસી', lat: 25.3176, lon: 82.9739, tz: 5.5 },
+  { name: 'उज्जैन', nameEn: 'Ujjain', nameGu: 'ઉજ્જૈન', lat: 23.1765, lon: 75.7885, tz: 5.5 },
+  { name: 'जयपुर', nameEn: 'Jaipur', nameGu: 'જયપુર', lat: 26.9124, lon: 75.7873, tz: 5.5 },
+  { name: 'मुंबई', nameEn: 'Mumbai', nameGu: 'મુંબઈ', lat: 19.0760, lon: 72.8777, tz: 5.5 },
+  { name: 'लखनऊ', nameEn: 'Lucknow', nameGu: 'લખનૌ', lat: 26.8467, lon: 80.9462, tz: 5.5 },
+  { name: 'पटना', nameEn: 'Patna', nameGu: 'પટના', lat: 25.5941, lon: 85.1376, tz: 5.5 },
+  { name: 'अहमदाबाद', nameEn: 'Ahmedabad', nameGu: 'અમદાવાદ', lat: 23.0225, lon: 72.5714, tz: 5.5 },
+  { name: 'कोलकाता', nameEn: 'Kolkata', nameGu: 'કોલકાતા', lat: 22.5726, lon: 88.3639, tz: 5.5 },
+  { name: 'इंदौर', nameEn: 'Indore', nameGu: 'ઇન્દોર', lat: 22.7196, lon: 75.8577, tz: 5.5 },
 ];
 
 export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
@@ -234,6 +275,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   initialPrompt,
   onSelectKundali,
 }) => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const dateLocale = cLang === 'en' ? 'en-US' : cLang === 'gu' ? 'gu-IN' : 'hi-IN';
+
   if (!isOpen) return null;
 
   const savedProfilesList = getSavedKundaliProfiles();
@@ -259,17 +304,27 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const [birthHour, setBirthHour] = useState('10');
   const [birthMinute, setBirthMinute] = useState('30');
   const [birthAmPm, setBirthAmPm] = useState<'AM' | 'PM'>('AM');
-  const [birthPlace, setBirthPlace] = useState('नई दिल्ली');
+  const [birthPlace, setBirthPlace] = useState(() => pickL(cLang, 'नई दिल्ली', 'New Delhi', 'નવી દિલ્હી'));
   const [isCreatingKundali, setIsCreatingKundali] = useState(false);
   const autoSubmittedPromptRef = useRef<string | null>(null);
 
   const yajamanDisplayName = currentKundali?.name?.trim()
-    ? `**${currentKundali.name.trim()}** जी`
-    : 'प्रिय यजमान';
+    ? pickL(cLang, `**${currentKundali.name.trim()}** जी`, `**${currentKundali.name.trim()}**`, `**${currentKundali.name.trim()}** જી`)
+    : pickL(cLang, 'प्रिय यजमान', 'Dear Yajman', 'પ્રિય યજમાન');
 
   const initialGreeting = currentKundali && liveMicroProfile
-    ? `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${yajamanDisplayName}! मैंने आपकी जन्मपत्रिका का सूक्ष्म अवलोकन किया है।\n\nआपकी पत्रिका में आपका लग्न **${liveMicroProfile.lagnaRashi}** है और आपकी राशि **${liveMicroProfile.moonRashi}** (नक्षत्र: **${liveMicroProfile.moonNakshatra}**) है। वर्तमान समय में आपकी पत्रिका में **${liveMicroProfile.mahadasha}** की महादशा में **${liveMicroProfile.antardasha}** की अंतर्दशा और **${liveMicroProfile.pratyantardasha}** का विशेष प्रभाव सक्रिय है।\n\nविगत २-३ वर्षों के उतार-चढ़ाव, वर्तमान स्थिति और आने वाले समय की सटीक माह-दर-माह समय-सारणी के आधार पर आप करियर, धन, व्यापार, विवाह, परिवार अथवा स्वास्थ्य से जुड़ा कोई भी प्रश्न पूछें — मैं आपके साथ एक मार्गदर्शक की तरह हर पहलू पर विस्तार से बात करूँगी।`
-    : `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैंने आपकी जन्मपत्रिका का सूक्ष्म अवलोकन किया है।\n\nआप अपने जीवन, करियर, आर्थिक स्थिति, विवाह, परिवार अथवा स्वास्थ्य से जुड़ा कोई भी प्रश्न पूछें — मैं आपकी पत्रिका के आधार पर अतीत की स्थिति और आने वाले महीनों की सटीक समय-सारणी के साथ मार्गदर्शन करूँगी।`;
+    ? pickL(
+        cLang,
+        `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, ${yajamanDisplayName}! मैंने आपकी जन्मपत्रिका का सूक्ष्म अवलोकन किया है।\n\nआपकी पत्रिका में आपका लग्न **${liveMicroProfile.lagnaRashi}** है और आपकी राशि **${liveMicroProfile.moonRashi}** (नक्षत्र: **${liveMicroProfile.moonNakshatra}**) है। वर्तमान समय में आपकी पत्रिका में **${liveMicroProfile.mahadasha}** की महादशा में **${liveMicroProfile.antardasha}** की अंतर्दशा और **${liveMicroProfile.pratyantardasha}** का विशेष प्रभाव सक्रिय है।\n\nविगत २-३ वर्षों के उतार-चढ़ाव, वर्तमान स्थिति और आने वाले समय की सटीक माह-दर-माह समय-सारणी के आधार पर आप करियर, धन, व्यापार, विवाह, परिवार अथवा स्वास्थ्य से जुड़ा कोई भी प्रश्न पूछें — मैं आपके साथ एक मार्गदर्शक की तरह हर पहलू पर विस्तार से बात करूँगी।`,
+        `॥ ॐ श्री गणेशाय नमः ॥\n\nBlessings, ${yajamanDisplayName}! I have carefully examined your birth chart.\n\nYour Ascendant (Lagna) is **${trRashi(liveMicroProfile.lagnaRashi, 'en')}** and your Moon Sign is **${trRashi(liveMicroProfile.moonRashi, 'en')}** (Nakshatra: **${trVedic(liveMicroProfile.moonNakshatra, 'en')}**). Currently, your **${trPlanet(liveMicroProfile.mahadasha, 'en')}** Mahadasha, **${trPlanet(liveMicroProfile.antardasha, 'en')}** Antardasha, and **${trPlanet(liveMicroProfile.pratyantardasha, 'en')}** Pratyantardasha are active.\n\nAsk any question regarding your career, wealth, business, marriage, family, or health — I will guide you step-by-step with month-by-month timelines and Vedic remedies.`,
+        `॥ ॐ श्री गणेशाय नमः ॥\n\nસદા કલ્યાણ થાઓ, ${yajamanDisplayName}! મેં તમારી જન્મપત્રિકાનું સૂક્ષ્મ અવલોકન કર્યું છે.\n\nતમારી પત્રિકામાં તમારું લગ્ન **${trRashi(liveMicroProfile.lagnaRashi, 'gu')}** છે અને તમારી રાશિ **${trRashi(liveMicroProfile.moonRashi, 'gu')}** (નક્ષત્ર: **${trVedic(liveMicroProfile.moonNakshatra, 'gu')}**) છે. હાલમાં તમારી **${trPlanet(liveMicroProfile.mahadasha, 'gu')}** ની મહાદશામાં **${trPlanet(liveMicroProfile.antardasha, 'gu')}** ની અંતર્દશા અને **${trPlanet(liveMicroProfile.pratyantardasha, 'gu')}** નો વિશેષ પ્રભાવ સક્રિય છે.\n\nતમે કારકિર્દી, ધન, વેપાર, લગ્ન, પરિવાર અથવા સ્વાસ્થ્ય સંબંધિત કોઈપણ પ્રશ્ન પૂછી શકો છો — હું સચોટ સમય-સારણી અને ઉપાયો સાથે માર્ગદર્શન આપીશ.`
+      )
+    : pickL(
+        cLang,
+        `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, प्रिय यजमान! मैंने आपकी जन्मपत्रिका का सूक्ष्म अवलोकन किया है।\n\nआप अपने जीवन, करियर, आर्थिक स्थिति, विवाह, परिवार अथवा स्वास्थ्य से जुड़ा कोई भी प्रश्न पूछें — मैं आपकी पत्रिका के आधार पर अतीत की स्थिति और आने वाले महीनों की सटीक समय-सारणी के साथ मार्गदर्शन करूँगी।`,
+        `॥ ॐ श्री गणेशाय नमः ॥\n\nBlessings, Dear Yajman! I am Uma, your Vedic Astrology and Numerology guide.\n\nAsk any question about your life, career, finances, marriage, family, or health — I will guide you using live Prashna Lagna, Numerology, and exact astronomical calculations.`,
+        `॥ ॐ श्री गणेशाय नमः ॥\n\nસદા કલ્યાણ થાઓ, પ્રિય યજમાન! હું ઉમા છું — તમારી વૈદિક જ્યોતિષ અને અંક-શાસ્ત્ર માર્ગદર્શક.\n\nતમે તમારા જીવન, કારકિર્દી, આર્થિક સ્થિતિ, લગ્ન, પરિવાર અથવા સ્વાસ્થ્ય સંબંધિત કોઈપણ પ્રશ્ન પૂછો — હું તાત્કાલિક પ્રશ્ન-કુંડળી અને સચોટ ગણિત સાથે માર્ગદર્શન આપીશ.`
+      );
 
   // When an initialPrompt (like Ank Shastra) is passed, start with an empty message list so the prediction is right at the top
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
@@ -443,7 +498,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         return;
       }
       setIsListening(true);
-      setVoiceTranscript('उमा सुन रही हैं... (बोलें)');
+      setVoiceTranscript(pickL(cLang, 'उमा सुन रही हैं... (बोलें)', 'Uma is listening... (Speak now)', 'ઉમા સાંભળી રહ્યા છે... (બોલો)'));
       try {
         const result = await UmaVoice.listen();
         const text = (result?.text || '').trim();
@@ -457,7 +512,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       } catch {
         setIsListening(false);
         setVoiceTranscript('');
-        alert('माइक्रोफोन की अनुमति दें, फिर दोबारा माइक दबाकर बोलें।');
+        alert(pickL(cLang, 'माइक्रोफोन की अनुमति दें, फिर दोबारा माइक दबाकर बोलें।', 'Please grant microphone permission, then tap the mic to speak.', 'કૃપા કરીને માઇક્રોફોનની પરવાનગી આપો અને ફરીથી માઇક દબાવીને બોલો.'));
       }
       return;
     }
@@ -474,7 +529,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('माइक्रोफोन (Voice Typing): कृपया अपने कीबोर्ड (Gboard) पर दिए गए माइक 🎤 आइकॉन को दबाकर बोलकर टाइप करें।');
+      alert(pickL(cLang, 'माइक्रोफोन (Voice Typing): कृपया अपने कीबोर्ड (Gboard) पर दिए गए माइक 🎤 आइकॉन को दबाकर बोलकर टाइप करें।', 'Voice Typing: Please use the mic 🎤 icon on your keyboard to dictate.', 'વૉઇસ ટાઇપિંગ: કૃપા કરીને તમારા કીબોર્ડ પરના માઇક 🎤 આઇકનથી બોલીને ટાઇપ કરો.'));
       const inputEl = document.getElementById('uma-query-input') as HTMLInputElement;
       if (inputEl) inputEl.focus();
       return;
@@ -488,13 +543,13 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
     try {
       const rec = new SpeechRecognition();
-      rec.lang = 'hi-IN';
+      rec.lang = cLang === 'en' ? 'en-IN' : cLang === 'gu' ? 'gu-IN' : 'hi-IN';
       rec.interimResults = true;
       rec.maxAlternatives = 1;
 
       rec.onstart = () => {
         setIsListening(true);
-        setVoiceTranscript('उमा सुन रही हैं... (बोलें)');
+        setVoiceTranscript(pickL(cLang, 'उमा सुन रही हैं... (बोलें)', 'Uma is listening... (Speak now)', 'ઉમા સાંભળી રહ્યા છે... (બોલો)'));
       };
 
       rec.onresult = (e: any) => {
@@ -548,9 +603,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const handleWhatsAppShare = (msgText: string, queryText?: string) => {
     const formatted = formatWhatsAppConsultationMessage({
       activeKundali: currentKundali,
-      query: queryText || 'ज्योतिषीय जिज्ञासा',
+      query: queryText || pickL(cLang, 'ज्योतिषीय जिज्ञासा', 'Astrological Inquiry', 'જ્યોતિષીય જિજ્ઞાસા'),
       answer: msgText,
       panchang,
+      lang: cLang,
     });
     openWhatsAppShare(formatted);
   };
@@ -561,11 +617,16 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       setIsGeneratingPdf(true);
       const res = await downloadUmaConsultationPdf({
         panchang,
-        query: queryText || (currentKundali ? `${currentKundali.name} जी की कुण्डली विश्लेषण` : 'पंचांग एवं ज्योतिषीय परामर्श'),
+        query:
+          queryText ||
+          (currentKundali
+            ? pickL(cLang, `${currentKundali.name} जी की कुण्डली विश्लेषण`, `${currentKundali.name}'s Kundali Analysis`, `${currentKundali.name} જી નું કુંડળી વિશ્લેષણ`)
+            : pickL(cLang, 'पंचांग एवं ज्योतिषीय परामर्श', 'Panchang & Astrological Consultation', 'પંચાંગ અને જ્યોતિષીય પરામર્શ')),
         answer: msgText,
         activeKundali: currentKundali,
         locationName,
         consultationDate: new Date(),
+        lang: cLang,
       });
       setPdfSuccessInfo({
         isOpen: true,
@@ -573,11 +634,11 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         blobUrl: res.blobUrl,
         blob: res.blob,
         pageCount: res.pageCount,
-        title: `ज्योतिषीय परामर्श रिपोर्ट • ${currentKundali?.name || 'जातक'}`,
+        title: `${pickL(cLang, 'ज्योतिषीय परामर्श रिपोर्ट', 'Astrology Consultation Report', 'જ્યોતિષીય પરામર્શ રિપોર્ટ')} • ${currentKundali?.name || pickL(cLang, 'जातक', 'Native', 'જાતક')}`,
       });
     } catch (err) {
       console.error('Error generating Consultation PDF:', err);
-      alert('PDF तैयार करने में त्रुटि आई। कृपया पुनः प्रयास करें।');
+      alert(pickL(cLang, 'PDF तैयार करने में त्रुटि आई। कृपया पुनः प्रयास करें।', 'Error generating PDF. Please try again.', 'PDF બનાવવામાં ભૂલ આવી. કૃપા કરીને ફરી પ્રયાસ કરો.'));
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -588,15 +649,17 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     const umaMessages = messages.filter((m) => m.sender === 'uma');
     if (umaMessages.length === 0) return;
 
-    const fullAnswer = umaMessages.map((m, idx) => `[परामर्श भाग ${idx + 1}]\n${m.text}`).join('\n\n══════════════════\n\n');
-    await handleDownloadPdfReport(fullAnswer, 'सम्पूर्ण उमा ज्योतिषीय परामर्श संवाद');
+    const partLabel = pickL(cLang, 'परामर्श भाग', 'Consultation Part', 'પરામર્શ ભાગ');
+    const fullAnswer = umaMessages.map((m, idx) => `[${partLabel} ${idx + 1}]\n${m.id === 'init_1' ? initialGreeting : m.text}`).join('\n\n══════════════════\n\n');
+    await handleDownloadPdfReport(fullAnswer, pickL(cLang, 'सम्पूर्ण उमा ज्योतिषीय परामर्श संवाद', 'Complete Uma Astrology Consultation Session', 'સંપૂર્ણ ઉમા જ્યોતિષીય પરામર્શ સંવાદ'));
   };
 
   // WhatsApp Client Bot Generator Function
   const handleGenerateBotMessage = async (topicPrompt: string) => {
     setIsGeneratingBotMsg(true);
     try {
-      const q = `${topicPrompt} (यजमान: ${clientBotName || 'यजमान'})`;
+      const yLabel = pickL(cLang, 'यजमान', 'Yajman', 'યજમાન');
+      const q = `${topicPrompt} (${yLabel}: ${clientBotName || yLabel})`;
       const panchangCtx = buildPanchangContext(panchang);
       const kundaliCtx = currentKundali ? buildKundaliContext(currentKundali) : undefined;
 
@@ -607,6 +670,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         panchang,
         activeKundali: currentKundali,
         systemPrompt: UMA_ASTROLOGER_SYSTEM_PROMPT,
+        lang: cLang,
       });
 
       const formatted = formatWhatsAppConsultationMessage({
@@ -614,6 +678,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         query: topicPrompt,
         answer: res.text,
         panchang,
+        lang: cLang,
       });
 
       setClientBotGeneratedMsg(formatted);
@@ -627,11 +692,15 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   // Quick Smart Birth Details Kundali Creator
   const handleCreateQuickKundali = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const nameTrimmed = birthName.trim() || 'यजमान';
+    const nameTrimmed = birthName.trim() || pickL(cLang, 'यजमान', 'Yajman', 'યજમાન');
     setIsCreatingKundali(true);
     try {
+      const bp = birthPlace.trim().toLowerCase();
       const cityMatch = POPULAR_BIRTH_CITIES.find(
-        (c) => c.name.toLowerCase() === birthPlace.trim().toLowerCase()
+        (c) =>
+          c.name.toLowerCase() === bp ||
+          c.nameEn.toLowerCase() === bp ||
+          c.nameGu.toLowerCase() === bp
       );
       let lat = cityMatch ? cityMatch.lat : 28.6139;
       let lon = cityMatch ? cityMatch.lon : 77.2090;
@@ -654,7 +723,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         nameTrimmed,
         d,
         timeStr,
-        birthPlace.trim() || 'नई दिल्ली',
+        birthPlace.trim() || pickL(cLang, 'नई दिल्ली', 'New Delhi', 'નવી દિલ્હી'),
         lat,
         lon,
         tz
@@ -670,10 +739,18 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       const welcomeMsg: ChatMessage = {
         id: `kundali_welcome_${Date.now()}`,
         sender: 'uma',
-        text: `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान **${newKundali.name}** जी! आपकी जन्मपत्रिका सफलता पूर्वक स्थापित हो गई है:\n• **लग्न राशि:** ${newKundali.lagnaRashi} (लग्नेश: ${SIGN_LORDS[newKundali.lagnaRashi] || 'गुरु'})\n• **जन्म चंद्र राशि:** ${newKundali.moonRashi} (नक्षत्र: ${newKundali.nakshatra})\n• **सक्रिय विंशोत्तरी दशा:** महादशा **${newKundali.mahadasha}** • अंतर्दशा **${newKundali.antardasha}**\n\nअब आपकी कुण्डली का D-1, D-9 नवमांश, D-10 दशमांश एवं गोचर स्तर पर सूक्ष्म विश्लेषण सक्रिय है। आप करियर, धन, विवाह, स्वास्थ्य या ग्रह शांति से संबंधित अपना कोई भी प्रश्न पूछें।`,
+        text: pickL(
+          cLang,
+          `॥ ॐ श्री गणेशाय नमः ॥\n\nसदा कल्याण हो, यजमान **${newKundali.name}** जी! आपकी जन्मपत्रिका सफलता पूर्वक स्थापित हो गई है:\n• **लग्न राशि:** ${newKundali.lagnaRashi} (लग्नेश: ${SIGN_LORDS[newKundali.lagnaRashi] || 'गुरु'})\n• **जन्म चंद्र राशि:** ${newKundali.moonRashi} (नक्षत्र: ${newKundali.nakshatra})\n• **सक्रिय विंशोत्तरी दशा:** महादशा **${newKundali.mahadasha}** • अंतर्दशा **${newKundali.antardasha}**\n\nअब आपकी कुण्डली का D-1, D-9 नवमांश, D-10 दशमांश एवं गोचर स्तर पर सूक्ष्म विश्लेषण सक्रिय है। आप करियर, धन, विवाह, स्वास्थ्य या ग्रह शांति से संबंधित अपना कोई भी प्रश्न पूछें।`,
+          `॥ ॐ श्री गणेशाय नमः ॥\n\nBlessings, **${newKundali.name}**! Your birth chart has been created:\n• **Lagna (Ascendant):** ${trRashi(newKundali.lagnaRashi, 'en')} (Lord: ${trPlanet(SIGN_LORDS[newKundali.lagnaRashi] || 'गुरु', 'en')})\n• **Birth Moon Sign:** ${trRashi(newKundali.moonRashi, 'en')} (Nakshatra: ${trVedic(newKundali.nakshatra, 'en')})\n• **Active Vimshottari Dasha:** Mahadasha **${trPlanet(newKundali.mahadasha, 'en')}** • Antardasha **${trPlanet(newKundali.antardasha, 'en')}**\n\nDeep analysis across D-1, D-9, D-10 and transits is now active. Ask any question about career, wealth, marriage, health, or planetary remedies.`,
+          `॥ ॐ श्री गणेशाय नमः ॥\n\nસદા કલ્યાણ થાઓ, યજમાન **${newKundali.name}** જી! તમારી જન્મપત્રિકા સફળતાપૂર્વક સ્થાપિત થઈ ગઈ છે:\n• **લગ્ન રાશિ:** ${trRashi(newKundali.lagnaRashi, 'gu')} (લગ્નેશ: ${trPlanet(SIGN_LORDS[newKundali.lagnaRashi] || 'गुरु', 'gu')})\n• **જન્મ ચંદ્ર રાશિ:** ${trRashi(newKundali.moonRashi, 'gu')} (નક્ષત્ર: ${trVedic(newKundali.nakshatra, 'gu')})\n• **સક્રિય વિંશોત્તરી દશા:** મહાદશા **${trPlanet(newKundali.mahadasha, 'gu')}** • અંતર્દશા **${trPlanet(newKundali.antardasha, 'gu')}**\n\nહવે તમારી કુંડળીનું D-1, D-9, D-10 અને ગોચર સ્તરે સૂક્ષ્મ વિશ્લેષણ સક્રિય છે. તમે કારકિર્દી, ધન, લગ્ન, સ્વાસ્થ્ય કે ગ્રહ શાંતિ સંબંધિત કોઈપણ પ્રશ્ન પૂછી શકો છો.`
+        ),
         timestamp: new Date(),
         source: 'local_vedic',
-        actionPayload: { type: 'open_kundali', label: 'सम्पूर्ण जन्मकुंडली चार्ट देखें' },
+        actionPayload: {
+          type: 'open_kundali',
+          label: pickL(cLang, 'सम्पूर्ण जन्मकुंडली चार्ट देखें', 'View Complete Birth Chart', 'સંપૂર્ણ જન્મકુંડળી ચાર્ટ જુઓ'),
+        },
       };
 
       setMessages((prev) => [...prev, welcomeMsg]);
@@ -687,7 +764,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
       }
     } catch (err) {
       console.error('Failed to create quick kundali:', err);
-      alert('कुंडली गणना में त्रुटि आई। कृपया जन्म विवरण पुनः जाँचें।');
+      alert(pickL(cLang, 'कुंडली गणना में त्रुटि आई। कृपया जन्म विवरण पुनः जाँचें।', 'Error calculating chart. Please check birth details.', 'કુંડળી ગણતરીમાં ભૂલ આવી. કૃપા કરીને જન્મ વિગતો ફરીથી તપાસો.'));
     } finally {
       setIsCreatingKundali(false);
     }
@@ -697,10 +774,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
   const buildKundaliContext = (k: KundaliData): string => {
     try {
       const microPrompt = buildMicroAstrologyContextPrompt(k);
-      const analysis = analyzeKundali(k);
-      const yogasStr = analysis.yogas.join('; ') || 'सामान्य शुभ योग';
+      const analysis = analyzeKundali(k, cLang);
+      const yogasStr = analysis.yogas.join('; ') || pickL(cLang, 'सामान्य शुभ योग', 'Standard auspicious yogas', 'સામાન્ય શુભ યોગ');
 
-      return `${microPrompt}\n\n[अतिरिक्त योग व क्षेत्र विश्लेषण]:\nप्रमुख योग: ${yogasStr}`;
+      return `${microPrompt}\n\n[Additional Yogas]:\n${yogasStr}`;
     } catch {
       return buildMicroAstrologyContextPrompt(k);
     }
@@ -708,24 +785,24 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
   const buildPanchangContext = (p: VedicPanchangData): string => {
     const formatT = (d: Date) =>
-      d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+      d.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
     const weekday = p.date.getDay();
     const inauspicious = getInauspiciousWindows(p.solar, weekday);
     const auspicious = getAuspiciousWindows(p.solar);
     const rahu = inauspicious.find((w) => w.title === 'राहु काल');
     const abhijit = auspicious.find((w) => w.title.includes('अभिजित'));
-    const shoolDir = DISHASHOOL_MAP[weekday];
+    const shoolDir = trVedic(DISHASHOOL_MAP[weekday], cLang);
     const shoolRemedy = TRAVEL_REMEDIES[weekday];
 
-    return `दिनांक: ${p.date.toLocaleDateString('hi-IN')}, वार: ${p.weekday}, पक्ष: ${
-      p.paksha
-    }, तिथि: ${p.tithi}
-नक्षत्र: ${p.nakshatra}, योग: ${p.yoga}, करण: ${p.karana}
-सूर्योदय: ${formatT(p.solar.sunrise)}, सूर्यास्त: ${formatT(p.solar.sunset)}, चंद्र राशि: ${p.lunarRashi}
-राहु काल: ${rahu ? `${formatT(rahu.start)} से ${formatT(rahu.end)}` : 'प्रभावी'}
-अभिजित मुहूर्त: ${abhijit ? `${formatT(abhijit.start)} से ${formatT(abhijit.end)}` : 'उपलब्ध नहीं'}
-दिशाशूल: ${shoolDir}, परिहार: ${shoolRemedy}
-स्थान: ${locationName}`;
+    return `Date: ${p.date.toLocaleDateString(dateLocale)}, Weekday: ${trWeekday(p.weekday, cLang)}, Paksha: ${
+      trVedic(p.paksha, cLang)
+    }, Tithi: ${trVedic(p.tithi, cLang)}
+Nakshatra: ${trVedic(p.nakshatra, cLang)}, Yoga: ${trVedic(p.yoga, cLang)}, Karana: ${trVedic(p.karana, cLang)}
+Sunrise: ${formatT(p.solar.sunrise)}, Sunset: ${formatT(p.solar.sunset)}, Moon Sign: ${trRashi(p.lunarRashi, cLang)}
+Rahu Kaal: ${rahu ? `${formatT(rahu.start)} – ${formatT(rahu.end)}` : 'Active'}
+Abhijit Muhurat: ${abhijit ? `${formatT(abhijit.start)} – ${formatT(abhijit.end)}` : 'N/A'}
+Dishashool: ${shoolDir}, Remedy: ${shoolRemedy}
+Location: ${locationName}`;
   };
 
   const handleSubmit = async (queryText: string, overrideKundali?: KundaliData | null) => {
@@ -740,7 +817,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     }
 
     const isAnkQuery = isNumerologyQuery(text) || activeCategory === 'numerology';
-    if (isNumerologyQuery(text) && (text.includes('जन्म') || text.includes('मूलांक') || text.includes('नाम'))) {
+    if (isNumerologyQuery(text) && (text.includes('जन्म') || text.includes('मूलांक') || text.includes('नाम') || text.toLowerCase().includes('mulank') || text.toLowerCase().includes('dob'))) {
       setNumerologyContext(text);
       setActiveCategory('numerology');
     }
@@ -766,7 +843,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
       const chatHistory = messages.slice(-12).map((m) => ({
         sender: m.sender,
-        text: m.text,
+        text: m.id === 'init_1' ? initialGreeting : m.text,
       }));
 
       const res: AskUmaResponse = await askUma({
@@ -779,6 +856,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         panchang,
         activeKundali: targetKundali,
         systemPrompt: UMA_ASTROLOGER_SYSTEM_PROMPT,
+        lang: cLang,
       });
 
       const umaMsgId = `uma_${Date.now()}`;
@@ -829,23 +907,45 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
     }
   }, [isOpen, initialPrompt]);
 
-  const suggestions = SUGGESTIONS_MAP[activeCategory] || SUGGESTIONS_MAP.all;
+  const categoryTabs = getCategoryTabs(cLang);
+  const botQuickTopics = getBotQuickTopics(cLang);
+  const suggestionsMap = getSuggestionsMap(cLang);
+  const suggestions = suggestionsMap[activeCategory] || suggestionsMap.all;
 
   // Extract concise Ank Shastra summary for the top context bar when in numerology mode
   const ankSummaryText = (() => {
     const src = numerologyContext || (initialPrompt && isNumerologyQuery(initialPrompt) ? initialPrompt : '');
-    if (!src) return 'मूलांक • भाग्यांक • नामांक • लो-शू राजयोग फलादेश सक्रिय';
+    if (!src) {
+      return pickL(
+        cLang,
+        'मूलांक • भाग्यांक • नामांक • लो-शू राजयोग फलादेश सक्रिय',
+        'Mulank • Bhagyank • Namank • Lo Shu Rajyoga Active',
+        'મૂલાંક • ભાગ્યાંક • નામાંક • લો-શૂ રાજયોગ સક્રિય'
+      );
+    }
     const nameM = src.match(/(?:मेरा\s+)?नाम[:\s-]+([A-Za-z\u0900-\u097F\s]{2,28}?)(?:,|है|जन्म|\.|;|$)/i);
     const dobM = src.match(/\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})\b/);
     const mulM = src.match(/मूलांक\s*([1-9१-९])/);
     const bhagM = src.match(/भाग्यांक\s*([1-9१-९])/);
     const parts: string[] = [];
     if (nameM?.[1]) parts.push(nameM[1].trim());
-    if (dobM?.[1]) parts.push(`जन्म: ${dobM[1]}`);
-    if (mulM?.[1]) parts.push(`मूलांक ${mulM[1]}`);
-    if (bhagM?.[1]) parts.push(`भाग्यांक ${bhagM[1]}`);
-    return parts.length > 0 ? parts.join(' • ') : 'मूलांक • भाग्यांक • नामांक • लो-शू राजयोग सक्रिय';
+    if (dobM?.[1]) parts.push(`${pickL(cLang, 'जन्म:', 'DOB:', 'જન્મ:')} ${dobM[1]}`);
+    if (mulM?.[1]) parts.push(`${pickL(cLang, 'मूलांक', 'Mulank', 'મૂલાંક')} ${mulM[1]}`);
+    if (bhagM?.[1]) parts.push(`${pickL(cLang, 'भाग्यांक', 'Bhagyank', 'ભાગ્યાંક')} ${bhagM[1]}`);
+    return parts.length > 0
+      ? parts.join(' • ')
+      : pickL(
+          cLang,
+          'मूलांक • भाग्यांक • नामांक • लो-शू राजयोग सक्रिय',
+          'Mulank • Bhagyank • Namank • Lo Shu Rajyoga Active',
+          'મૂલાંક • ભાગ્યાંક • નામાંક • લો-શૂ રાજયોગ સક્રિય'
+        );
   })();
+
+  const getToneDisplayLabel = (t: ToneConfig) => {
+    if (cLang === 'en') return t.label;
+    return t.labelHindi;
+  };
 
   return createPortal(
     <div
@@ -874,26 +974,30 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm sm:text-lg font-bold font-granth tracking-wide text-[#FFD88A] truncate">
-                  विदुषी उमा जी
+                  {pickL(cLang, 'विदुषी उमा जी', 'Vidushi Uma Ji', 'વિદુષી ઉમા જી')}
                 </span>
                 <button
                   type="button"
                   onClick={() => void refreshUmaLink()}
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/25 text-[10px] text-[#E6C687] shrink-0 cursor-pointer"
-                  title="संपर्क स्थिति रिफ्रेश करें"
+                  title={pickL(cLang, 'संपर्क स्थिति रिफ्रेश करें', 'Refresh connection status', 'કનેક્શન સ્થિતિ રિફ્રેશ કરો')}
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
                       umaLink === 'online' || umaLink === 'nokey' ? 'bg-emerald-400' : 'bg-amber-400'
                     }`}
                   />
-                  <span>{umaLink === 'online' || umaLink === 'nokey' ? 'ऑनलाइन' : 'सूक्ष्म गणित'}</span>
+                  <span>
+                    {umaLink === 'online' || umaLink === 'nokey'
+                      ? pickL(cLang, 'ऑनलाइन', 'Online', 'ઓનલાઇન')
+                      : pickL(cLang, 'सूक्ष्म गणित', 'Vedic Engine', 'સૂક્ષ્મ ગણિત')}
+                  </span>
                 </button>
               </div>
               <p className="text-[10px] text-[#E6C687] truncate">
                 {activeCategory === 'numerology'
-                  ? '🔢 वैदिक एवं कॉल्डियन अंक-शास्त्र फलादेश'
-                  : 'काशी-उज्जैन परंपरा • सूक्ष्म वैदिक ज्योतिषाचार्य'}
+                  ? pickL(cLang, '🔢 वैदिक एवं कॉल्डियन अंक-शास्त्र फलादेश', '🔢 Vedic & Chaldean Numerology Predictions', '🔢 વૈદિક અને કોલ્ડિયન અંક-શાસ્ત્ર ફળાદેશ')
+                  : pickL(cLang, 'काशी-उज्जैन परंपरा • सूक्ष्म वैदिक ज्योतिषाचार्य', 'Kashi–Ujjain Tradition • Vedic Jyotishacharya', 'કાશી-ઉજ્જૈન પરંપરા • સૂક્ષ્મ વૈદિક જ્યોતિષાચાર્ય')}
               </p>
             </div>
           </div>
@@ -907,10 +1011,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   setPlayingVoiceId(null);
                 }}
                 className="px-2 py-1 rounded-lg bg-amber-300 text-[#4A1010] text-[11px] font-black flex items-center gap-1 cursor-pointer animate-pulse"
-                title="वाणी रोकें"
+                title={pickL(cLang, 'वाणी रोकें', 'Stop Voice', 'વાણી રોકો')}
               >
                 <VolumeX className="w-3.5 h-3.5" />
-                <span>रोकें</span>
+                <span>{pickL(cLang, 'रोकें', 'Stop', 'રોકો')}</span>
               </button>
             )}
 
@@ -918,20 +1022,20 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             <button
               onClick={() => setIsUpayParchiOpen(true)}
               className="px-2 py-1 rounded-lg bg-[#FAF2E4] hover:bg-white text-[#7A1D1D] text-[11px] font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#B58738]"
-              title="६-सूत्रीय उपाय पर्ची"
+              title={pickL(cLang, '६-सूत्रीय उपाय पर्ची', '6-Point Remedy Slip', '૬-સૂત્રીય ઉપાય પર્ચી')}
             >
               <FileText className="w-3 h-3 text-[#7A1D1D]" />
-              <span>पर्ची</span>
+              <span>{pickL(cLang, 'पर्ची', 'Slip', 'પર્ચી')}</span>
             </button>
 
             {/* WhatsApp Client Bot Trigger */}
             <button
               onClick={() => setIsWhatsAppBotOpen(true)}
               className="px-2 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-emerald-500/50"
-              title="यजमान व्हाट्सएप बॉट"
+              title={pickL(cLang, 'यजमान व्हाट्सएप बॉट', 'Yajman WhatsApp Bot', 'યજમાન વોટ્સએપ બોટ')}
             >
               <MessageSquare className="w-3 h-3 text-emerald-200" />
-              <span className="text-[11px] font-bold">यजमान बॉट</span>
+              <span className="text-[11px] font-bold">{pickL(cLang, 'यजमान बॉट', 'Client Bot', 'યજમાન બોટ')}</span>
             </button>
 
             {/* Full Session PDF Export */}
@@ -939,7 +1043,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               onClick={handleExportFullSessionPdf}
               disabled={isGeneratingPdf}
               className="px-2 py-1 rounded-lg bg-[#B58738] hover:bg-[#9B7028] text-[#2C0A0A] text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer border border-[#FAF2E4]/40 disabled:opacity-50"
-              title="सम्पूर्ण संवाद की PDF डाउनलोड करें"
+              title={pickL(cLang, 'सम्पूर्ण संवाद की PDF डाउनलोड करें', 'Download Full Consultation PDF', 'સંપૂર્ણ સંવાદની PDF ડાઉનલોડ કરો')}
             >
               {isGeneratingPdf ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -961,10 +1065,18 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   ? 'bg-[#FAF2E4] text-[#7A1D1D] border-[#FAF2E4] font-bold'
                   : 'bg-[#5C1414] text-[#E6C687] border-[#B58738]/50'
               }`}
-              title={autoSpeak ? 'ऑटो वॉइस चालू है' : 'ऑटो वॉइस बंद है'}
+              title={
+                autoSpeak
+                  ? pickL(cLang, 'ऑटो वॉइस चालू है', 'Auto voice is ON', 'ઓટો વૉઇસ ચાલુ છે')
+                  : pickL(cLang, 'ऑटो वॉइस बंद है', 'Auto voice is OFF', 'ઓટો વૉઇસ બંધ છે')
+              }
             >
               {autoSpeak ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-              <span className="text-[11px] font-semibold">{autoSpeak ? 'स्वर चालू' : 'स्वर'}</span>
+              <span className="text-[11px] font-semibold">
+                {autoSpeak
+                  ? pickL(cLang, 'स्वर चालू', 'Voice On', 'સ્વર ચાલુ')
+                  : pickL(cLang, 'स्वर', 'Voice', 'સ્વર')}
+              </span>
             </button>
 
             {/* Tone Selector Button with Dropdown */}
@@ -973,17 +1085,21 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 type="button"
                 onClick={() => setIsToneMenuOpen((prev) => !prev)}
                 className="px-2 py-1 rounded-lg bg-[#5C1414] hover:bg-[#6D1B1B] text-[#FFD88A] border border-[#B58738]/60 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-xs"
-                title="वाणी शैली (Tone) बदलें"
+                title={pickL(cLang, 'वाणी शैली (Tone) बदलें', 'Change Voice Tone', 'વાણી શૈલી (Tone) બદલો')}
               >
                 <span>{UMA_TONES[selectedTone]?.badge || '🧘'}</span>
-                <span className="text-[11px] font-semibold">{UMA_TONES[selectedTone]?.labelHindi.split(' ')[0] || 'शांत'}</span>
+                <span className="text-[11px] font-semibold">
+                  {cLang === 'en'
+                    ? UMA_TONES[selectedTone]?.label || 'Calm'
+                    : UMA_TONES[selectedTone]?.labelHindi.split(' ')[0] || 'शांत'}
+                </span>
                 <ChevronDown className="w-3 h-3 text-[#FFD88A]/80" />
               </button>
 
               {isToneMenuOpen && (
                 <div className="absolute right-0 top-full mt-1.5 w-64 bg-[#FFFDF9] border border-[#8C6239]/40 rounded-xl shadow-2xl z-50 p-2 space-y-1 animate-in fade-in zoom-in-95">
                   <div className="px-2 py-1 border-b border-[#E2D2BE]/60 text-[10.5px] font-bold text-[#5C3A21] flex items-center justify-between">
-                    <span>उमा वाणी शैली (Voice Tone)</span>
+                    <span>{pickL(cLang, 'उमा वाणी शैली (Voice Tone)', 'Uma Voice Tone', 'ઉમા વાણી શૈલી (Voice Tone)')}</span>
                     <span className="text-[9.5px] text-[#B58738]">Neural2 • SSML</span>
                   </div>
                   {(Object.values(UMA_TONES) as ToneConfig[]).map((t) => (
@@ -1000,13 +1116,13 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                       <span className="text-sm shrink-0">{t.badge}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11.5px]">{t.labelHindi}</span>
+                          <span className="text-[11.5px]">{getToneDisplayLabel(t)}</span>
                           <span className={`text-[9.5px] ${selectedTone === t.id ? 'text-[#FFD88A]' : 'text-stone-500'}`}>
                             {t.label}
                           </span>
                         </div>
                         <p className={`text-[10px] leading-tight line-clamp-1 ${selectedTone === t.id ? 'text-[#FFEEC9]' : 'text-[#7D5A3C]'}`}>
-                          {t.description}
+                          {cLang === 'en' ? t.stylePrompt : t.description}
                         </p>
                       </div>
                     </button>
@@ -1018,7 +1134,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             <button
               onClick={onClose}
               className="p-1.5 text-[#FFD88A] hover:text-white rounded-lg cursor-pointer transition hover:bg-black/20"
-              aria-label="बंद करें"
+              aria-label={pickL(cLang, 'बंद करें', 'Close', 'બંધ કરો')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -1029,7 +1145,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         <div className="bg-[#FAF2E4] px-3 py-1 border-b border-[#E2D2BE] flex items-center justify-between gap-1 text-xs shrink-0">
           <div className="flex items-center gap-1.5 text-[11px] text-[#5C3A21] font-semibold shrink-0">
             <Volume2 className="w-3.5 h-3.5 text-[#B58738]" />
-            <span className="text-[11px] font-bold">वाणी शैली:</span>
+            <span className="text-[11px] font-bold">{pickL(cLang, 'वाणी शैली:', 'Voice Tone:', 'વાણી શૈલી:')}</span>
           </div>
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
             {(Object.values(UMA_TONES) as ToneConfig[]).map((t) => (
@@ -1042,10 +1158,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     ? 'bg-[#7A1D1D] text-[#FFD88A] shadow-xs ring-1 ring-amber-400 font-black'
                     : 'bg-white/80 hover:bg-white text-[#5C3A21] border border-[#B58738]/30'
                 }`}
-                title={`${t.label}: ${t.description}`}
+                title={`${t.label}: ${cLang === 'en' ? t.stylePrompt : t.description}`}
               >
                 <span>{t.badge}</span>
-                <span>{t.labelHindi}</span>
+                <span>{getToneDisplayLabel(t)}</span>
               </button>
             ))}
           </div>
@@ -1057,7 +1173,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             <>
               <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#5C3A21] min-w-0 truncate">
                 <span className="bg-[#7A1D1D] text-[#FFD88A] px-2 py-0.5 rounded text-[10px] font-bold shrink-0">
-                  🔢 अंक-शास्त्र
+                  {pickL(cLang, '🔢 अंक-शास्त्र', '🔢 Numerology', '🔢 અંક-શાસ્ત્ર')}
                 </span>
                 <span className="font-bold text-[#3E2714] truncate">{ankSummaryText}</span>
               </div>
@@ -1067,19 +1183,24 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   onClick={() =>
                     handleSubmit(
                       numerologyContext ||
-                        'मेरे मूलांक, भाग्यांक, नामांक स्पेलिंग सुधार व लो-शू चक्र राजयोग का सम्पूर्ण फलादेश और उपाय बताएं'
+                        pickL(
+                          cLang,
+                          'मेरे मूलांक, भाग्यांक, नामांक स्पेलिंग सुधार व लो-शू चक्र राजयोग का सम्पूर्ण फलादेश और उपाय बताएं',
+                          'Give a complete Mulank, Bhagyank, Name spelling & Lo Shu Rajyoga reading with remedies',
+                          'મારા મૂલાંક, ભાગ્યાંક, નામાંક સ્પેલિંગ સુધારણા અને લો-શૂ ચક્ર રાજયોગનું સંપૂર્ણ ફળાદેશ અને ઉપાય જણાવો'
+                        )
                     )
                   }
                   className="px-2 py-0.5 bg-[#7A1D1D] text-[#FFD88A] rounded text-[10px] font-bold cursor-pointer hover:bg-[#5C1414]"
                 >
-                  ✨ अंक फलादेश
+                  {pickL(cLang, '✨ अंक फलादेश', '✨ Ank Reading', '✨ અંક ફળાદેશ')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveCategory('kundali')}
                   className="px-2 py-0.5 bg-white text-[#5C3A21] border border-[#8C6239]/40 rounded text-[10px] font-bold cursor-pointer hover:bg-[#FAF2E4]"
                 >
-                  कुण्डली मोड
+                  {pickL(cLang, 'कुण्डली मोड', 'Kundali Mode', 'કુંડળી મોડ')}
                 </button>
               </div>
             </>
@@ -1099,11 +1220,11 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                       }
                     }}
                     className="bg-[#7A1D1D] text-[#FFD88A] rounded px-1.5 py-0.5 text-[11px] font-bold max-w-[140px] truncate cursor-pointer"
-                    title="अन्य सहेजी गई कुण्डली चुनें"
+                    title={pickL(cLang, 'अन्य सहेजी गई कुण्डली चुनें', 'Select saved Kundali', 'અન્ય સાચવેલ કુંડળી પસંદ કરો')}
                   >
                     {savedProfilesList.map((p, idx) => (
                       <option key={`${p.name}_${p.birthTime}_${idx}`} value={`${p.name}_${p.birthTime}`} className="bg-white text-[#3E2714]">
-                        {p.name} ({p.lagnaRashi})
+                        {p.name} ({trRashi(p.lagnaRashi, cLang)})
                       </option>
                     ))}
                   </select>
@@ -1113,9 +1234,12 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   </span>
                 )}
                 <span className="truncate font-semibold text-[11px]">
-                  लग्न: <strong className="text-[#7A1D1D]">{liveMicroProfile.lagnaRashi}</strong> • चंद्र:{' '}
-                  <strong className="text-[#7A1D1D]">{liveMicroProfile.moonRashi}</strong> • दशा:{' '}
-                  <strong className="text-[#7A1D1D]">{liveMicroProfile.mahadasha}-{liveMicroProfile.antardasha}</strong>
+                  {pickL(cLang, 'लग्न:', 'Lagna:', 'લગ્ન:')}{' '}
+                  <strong className="text-[#7A1D1D]">{trRashi(liveMicroProfile.lagnaRashi, cLang)}</strong> •{' '}
+                  {pickL(cLang, 'चंद्र:', 'Moon:', 'ચંદ્ર:')}{' '}
+                  <strong className="text-[#7A1D1D]">{trRashi(liveMicroProfile.moonRashi, cLang)}</strong> •{' '}
+                  {pickL(cLang, 'दशा:', 'Dasha:', 'દશા:')}{' '}
+                  <strong className="text-[#7A1D1D]">{trPlanet(liveMicroProfile.mahadasha, cLang)}-{trPlanet(liveMicroProfile.antardasha, cLang)}</strong>
                 </span>
               </div>
 
@@ -1123,33 +1247,51 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 <button
                   onClick={() =>
                     handleSubmit(
-                      'मेरी सम्पूर्ण जन्म कुंडली का गहन विश्लेषण करें: प्रमुख राजयोग, ग्रह स्थिति, वर्तमान महादशा का फल और कष्ट निवारण हेतु सटीक सात्विक उपाय बताएं।'
+                      pickL(
+                        cLang,
+                        'मेरी सम्पूर्ण जन्म कुंडली का गहन विश्लेषण करें: प्रमुख राजयोग, ग्रह स्थिति, वर्तमान महादशा का फल और कष्ट निवारण हेतु सटीक सात्विक उपाय बताएं।',
+                        'Analyze my complete birth chart in depth: key Rajyogas, planetary strengths, current Mahadasha results, and sattvic remedies.',
+                        'મારી સંપૂર્ણ જન્મ કુંડળીનું ઊંડાણપૂર્વક વિશ્લેષણ કરો: મુખ્ય રાજયોગ, ગ્રહ સ્થિતિ, વર્તમાન મહાદશાનું ફળ અને સાત્વિક ઉપાયો જણાવો.'
+                      )
                     )
                   }
                   className="px-2 py-0.5 bg-gradient-to-r from-[#B56A00] to-[#8C6239] text-white rounded text-[10px] font-bold shadow-2xs cursor-pointer shrink-0"
                 >
-                  ✨ फलादेश
+                  {pickL(cLang, '✨ फलादेश', '✨ Reading', '✨ ફળાદેશ')}
                 </button>
                 <button
                   onClick={() => setIsBirthFormOpen((prev) => !prev)}
                   className="px-2 py-0.5 bg-white text-[#7A1D1D] border border-[#8C6239]/40 rounded text-[10px] font-bold cursor-pointer shrink-0 flex items-center gap-0.5"
                 >
                   <UserPlus className="w-3 h-3" />
-                  <span>{isBirthFormOpen ? 'बंद करें' : 'जातक बदलें'}</span>
+                  <span>
+                    {isBirthFormOpen
+                      ? pickL(cLang, 'बंद करें', 'Close', 'બંધ કરો')
+                      : pickL(cLang, 'जातक बदलें', 'Switch Native', 'જાતક બદલો')}
+                  </span>
                 </button>
               </div>
             </>
           ) : (
             <div className="flex items-center justify-between w-full gap-2">
               <span className="text-[11px] font-serif font-semibold text-[#7A1D1D] truncate">
-                🔮 तात्कालिक प्रश्न-कुण्डली एवं अंक-ज्योतिष सूक्ष्म गणित सक्रिय
+                {pickL(
+                  cLang,
+                  '🔮 तात्कालिक प्रश्न-कुण्डली एवं अंक-ज्योतिष सूक्ष्म गणित सक्रिय',
+                  '🔮 Live Prashna Horary & Numerology Calculations Active',
+                  '🔮 તાત્કાલિક પ્રશ્ન-કુંડળી અને અંક-જ્યોતિષ ગણિત સક્રિય'
+                )}
               </span>
               <button
                 onClick={() => setIsBirthFormOpen((prev) => !prev)}
                 className="px-2 py-0.5 bg-[#7A1D1D] text-white rounded text-[10px] font-bold cursor-pointer shrink-0 flex items-center gap-1"
               >
                 <UserPlus className="w-3 h-3" />
-                <span>{isBirthFormOpen ? 'बंद करें' : '➕ जन्म विवरण'}</span>
+                <span>
+                  {isBirthFormOpen
+                    ? pickL(cLang, 'बंद करें', 'Close', 'બંધ કરો')
+                    : pickL(cLang, '➕ जन्म विवरण', '➕ Birth Details', '➕ જન્મ વિગત')}
+                </span>
               </button>
             </div>
           )}
@@ -1165,10 +1307,20 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 </span>
                 <div>
                   <h4 className="font-serif font-bold text-sm text-[#7A1D1D]">
-                    स्मार्ट जन्म विवरण इनपुट — उमा सटीक कुंडली फलादेश
+                    {pickL(
+                      cLang,
+                      'स्मार्ट जन्म विवरण इनपुट — उमा सटीक कुंडली फलादेश',
+                      'Smart Birth Details Input — Accurate Kundali Reading',
+                      'સ્માર્ટ જન્મ વિગત ઇનપુટ — સચોટ કુંડળી ફળાદેશ'
+                    )}
                   </h4>
                   <p className="text-[11px] text-[#5C3A21]">
-                    अपना या किसी भी जातक का जन्म विवरण भरें। उमा तुरंत D-1, D-9, D-10 व विंशोत्तरी दशा स्तर पर सूक्ष्म गणित स्थापित कर लेंगी।
+                    {pickL(
+                      cLang,
+                      'अपना या किसी भी जातक का जन्म विवरण भरें। उमा तुरंत D-1, D-9, D-10 व विंशोत्तरी दशा स्तर पर सूक्ष्म गणित स्थापित कर लेंगी।',
+                      'Enter your or any native’s birth details. Uma will immediately compute D-1, D-9, D-10 & Vimshottari Dasha calculations.',
+                      'તમારી અથવા કોઈપણ જાતકની જન્મ વિગતો ભરો. ઉમા તરત જ D-1, D-9, D-10 અને વિંશોત્તરી દશાની ગણતરી સ્થાપિત કરશે.'
+                    )}
                   </p>
                 </div>
               </div>
@@ -1176,7 +1328,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 type="button"
                 onClick={() => setIsBirthFormOpen(false)}
                 className="text-[#8C6239] hover:text-[#5C1414] p-1 rounded-full cursor-pointer"
-                title="बंद करें"
+                title={pickL(cLang, 'बंद करें', 'Close', 'બંધ કરો')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1188,13 +1340,13 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 <div>
                   <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 flex items-center gap-1 font-serif">
                     <User className="w-3 h-3 text-[#B56A00]" />
-                    <span>जातक का नाम *</span>
+                    <span>{pickL(cLang, 'जातक का नाम *', 'Native Name *', 'જાતકનું નામ *')}</span>
                   </label>
                   <input
                     type="text"
                     value={birthName}
                     onChange={(e) => setBirthName(e.target.value)}
-                    placeholder="उदा. राहुल शर्मा"
+                    placeholder={pickL(cLang, 'उदा. राहुल शर्मा', 'e.g. Rahul Sharma', 'દા.ત. રાહુલ શર્મા')}
                     required
                     className="w-full bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-xs text-[#3E2714] focus:outline-none focus:ring-1 focus:ring-[#7A1D1D]"
                   />
@@ -1204,7 +1356,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 <div>
                   <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 flex items-center gap-1 font-serif">
                     <Calendar className="w-3 h-3 text-[#B56A00]" />
-                    <span>जन्म तिथि *</span>
+                    <span>{pickL(cLang, 'जन्म तिथि *', 'Birth Date *', 'જન્મ તારીખ *')}</span>
                   </label>
                   <input
                     type="date"
@@ -1219,7 +1371,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 <div>
                   <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 flex items-center gap-1 font-serif">
                     <Clock className="w-3 h-3 text-[#B56A00]" />
-                    <span>जन्म समय *</span>
+                    <span>{pickL(cLang, 'जन्म समय *', 'Birth Time *', 'જન્મ સમય *')}</span>
                   </label>
                   <div className="flex items-center gap-1">
                     <input
@@ -1229,7 +1381,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                       value={birthHour}
                       onChange={(e) => setBirthHour(e.target.value.padStart(2, '0'))}
                       className="w-12 text-center bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg py-1.5 text-xs text-[#3E2714]"
-                      title="घंटे (1-12)"
+                      title={pickL(cLang, 'घंटे (1-12)', 'Hours (1-12)', 'કલાક (1-12)')}
                     />
                     <span className="text-[#8C6239] font-bold">:</span>
                     <input
@@ -1239,7 +1391,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                       value={birthMinute}
                       onChange={(e) => setBirthMinute(e.target.value.padStart(2, '0'))}
                       className="w-12 text-center bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg py-1.5 text-xs text-[#3E2714]"
-                      title="मिनट (0-59)"
+                      title={pickL(cLang, 'मिनट (0-59)', 'Minutes (0-59)', 'મિનિટ (0-59)')}
                     />
                     <div className="flex rounded-lg overflow-hidden border border-[#8C6239]/40 text-[11px]">
                       <button
@@ -1272,13 +1424,13 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 <div>
                   <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 flex items-center gap-1 font-serif">
                     <MapPin className="w-3 h-3 text-[#B56A00]" />
-                    <span>जन्म स्थान / शहर *</span>
+                    <span>{pickL(cLang, 'जन्म स्थान / शहर *', 'Birth Place / City *', 'જન્મ સ્થળ / શહેર *')}</span>
                   </label>
                   <input
                     type="text"
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
-                    placeholder="उदा. नई दिल्ली, वाराणसी, जयपुर"
+                    placeholder={pickL(cLang, 'उदा. नई दिल्ली, वाराणसी, जयपुर', 'e.g. New Delhi, Varanasi, Jaipur', 'દા.ત. અમદાવાદ, વડોદરા, સુરત')}
                     required
                     className="w-full bg-[#FFFDF8] border border-[#8C6239]/40 rounded-lg px-2.5 py-1.5 text-xs text-[#3E2714] focus:outline-none focus:ring-1 focus:ring-[#7A1D1D]"
                   />
@@ -1287,21 +1439,26 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
 
               {/* Quick Popular City Selector Pills */}
               <div className="flex items-center gap-1 overflow-x-auto py-1 text-[11px]">
-                <span className="text-[#8C6239] font-serif shrink-0">लोकप्रिय शहर:</span>
-                {POPULAR_BIRTH_CITIES.map((c) => (
-                  <button
-                    key={c.name}
-                    type="button"
-                    onClick={() => setBirthPlace(c.name)}
-                    className={`px-2 py-0.5 rounded-full border transition cursor-pointer shrink-0 font-serif ${
-                      birthPlace === c.name
-                        ? 'bg-[#7A1D1D] text-white border-[#7A1D1D]'
-                        : 'bg-[#FFFDF8] text-[#5C3A21] hover:bg-[#FAF2E4] border-[#8C6239]/30'
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                ))}
+                <span className="text-[#8C6239] font-serif shrink-0">
+                  {pickL(cLang, 'लोकप्रिय शहर:', 'Popular Cities:', 'લોકપ્રિય શહેરો:')}
+                </span>
+                {POPULAR_BIRTH_CITIES.map((c) => {
+                  const cityLabel = cLang === 'en' ? c.nameEn : cLang === 'gu' ? c.nameGu : c.name;
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => setBirthPlace(cityLabel)}
+                      className={`px-2 py-0.5 rounded-full border transition cursor-pointer shrink-0 font-serif ${
+                        birthPlace === cityLabel || birthPlace === c.name
+                          ? 'bg-[#7A1D1D] text-white border-[#7A1D1D]'
+                          : 'bg-[#FFFDF8] text-[#5C3A21] hover:bg-[#FAF2E4] border-[#8C6239]/30'
+                      }`}
+                    >
+                      {cityLabel}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Submit Buttons */}
@@ -1311,7 +1468,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   onClick={() => setIsBirthFormOpen(false)}
                   className="px-3 py-1.5 bg-[#FAF2E4] hover:bg-[#EBDCC0] text-[#5C3A21] border border-[#8C6239]/30 rounded-lg text-xs font-serif cursor-pointer"
                 >
-                  रद्द करें
+                  {pickL(cLang, 'रद्द करें', 'Cancel', 'રદ કરો')}
                 </button>
                 <button
                   type="submit"
@@ -1321,12 +1478,12 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   {isCreatingKundali ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>कुंडली गणना जारी है...</span>
+                      <span>{pickL(cLang, 'कुंडली गणना जारी है...', 'Calculating chart...', 'કુંડળી ગણતરી ચાલુ છે...')}</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-3.5 h-3.5 text-[#FFD88A]" />
-                      <span>✨ कुंडली तैयार करें व उमा से परामर्श लें</span>
+                      <span>{pickL(cLang, '✨ कुंडली तैयार करें व उमा से परामर्श लें', '✨ Generate Chart & Consult Uma', '✨ કુંડળી બનાવો અને ઉમા પાસેથી પરામર્શ લો')}</span>
                     </>
                   )}
                 </button>
@@ -1340,20 +1497,28 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           <div className="bg-rose-100 border-b border-rose-300 px-4 py-2 flex items-center justify-between text-rose-800 text-xs font-bold animate-pulse">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-rose-600 animate-spin" />
-              <span>{voiceTranscript || 'उमा सुन रही हैं... (कृपया स्पष्ट हिन्दी में बोलें)'}</span>
+              <span>
+                {voiceTranscript ||
+                  pickL(
+                    cLang,
+                    'उमा सुन रही हैं... (कृपया स्पष्ट हिन्दी में बोलें)',
+                    'Uma is listening... (Please speak clearly)',
+                    'ઉમા સાંભળી રહ્યા છે... (કૃપા કરીને સ્પષ્ટ બોલો)'
+                  )}
+              </span>
             </div>
             <button
               onClick={handleVoiceInput}
               className="px-2 py-0.5 bg-rose-600 text-white rounded text-[11px] cursor-pointer"
             >
-              रोकें
+              {pickL(cLang, 'रोकें', 'Stop', 'રોકો')}
             </button>
           </div>
         )}
 
         {/* Category Tabs */}
         <div className="bg-[#EBDCC0] px-2.5 py-1 overflow-x-auto no-scrollbar flex items-center gap-1 border-b border-[#8C6239]/30 shrink-0">
-          {CATEGORY_TABS.map((tab) => (
+          {categoryTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => {
@@ -1374,11 +1539,13 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
             onClick={() => setShowSuggestionsBar((prev) => !prev)}
             className="px-2 py-1 rounded-full text-[10px] font-bold bg-[#FAF2E4] text-[#7A1D1D] border border-[#8C6239]/30 whitespace-nowrap cursor-pointer ml-auto shrink-0"
           >
-            {showSuggestionsBar ? 'सुझाव छुपाएं ▲' : '💡 प्रश्न सुझाव ▼'}
+            {showSuggestionsBar
+              ? pickL(cLang, 'सुझाव छुपाएं ▲', 'Hide Prompts ▲', 'સૂચનો છુપાવો ▲')
+              : pickL(cLang, '💡 प्रश्न सुझाव ▼', '💡 Prompts ▼', '💡 પ્રશ્ન સૂચનો ▼')}
           </button>
         </div>
 
-        {/* Suggested Question Chips (Auto-collapsed during active predictions to maximize prediction screen height) */}
+        {/* Suggested Question Chips */}
         {(showSuggestionsBar || messages.length <= 1) && (
           <div className="bg-[#FAF2E4] px-2.5 py-1.5 overflow-x-auto no-scrollbar flex items-center gap-1.5 border-b border-[#8C6239]/20 shrink-0">
             {suggestions.map((sug, idx) => (
@@ -1394,7 +1561,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
           </div>
         )}
 
-        {/* Messages List Container — Maximized Prediction Screen */}
+        {/* Messages List Container */}
         <div className="flex-1 sm:p-4 p-2.5 bg-[#FAF2E4] overflow-y-auto overscroll-contain min-h-0 space-y-3">
           {messages.map((msg, msgIndex) => {
             const isUma = msg.sender === 'uma';
@@ -1402,15 +1569,17 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               isUma &&
               msgIndex === messages.map((m) => m.sender).lastIndexOf('uma');
 
+            const displayRawText = msg.id === 'init_1' ? initialGreeting : msg.text;
+
             // Extract follow-up question chips if present
-            let mainText = msg.text;
+            let mainText = displayRawText;
             let followUpChips: string[] = [];
             if (isUma) {
               const marker = '[अगले प्रश्न]:';
-              const pos = msg.text.indexOf(marker);
+              const pos = displayRawText.indexOf(marker);
               if (pos !== -1) {
-                mainText = msg.text.substring(0, pos).trim();
-                const rawChips = msg.text.substring(pos + marker.length).trim();
+                mainText = displayRawText.substring(0, pos).trim();
+                const rawChips = displayRawText.substring(pos + marker.length).trim();
                 followUpChips = rawChips
                   .split('\n')
                   .map((s) => s.replace(/^[•\-\*\d\.\s]+/, '').trim())
@@ -1440,11 +1609,11 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-[#8C6239]/20 text-xs text-[#735133]">
                       <div className="flex items-center gap-1.5 font-serif font-bold text-[#8F2121]">
                         <span>॥</span>
-                        <span>उमा ज्योतिषाचार्य निर्णय</span>
+                        <span>{pickL(cLang, 'उमा ज्योतिषाचार्य निर्णय', 'Uma Jyotishacharya Verdict', 'ઉમા જ્યોતિષાચાર્ય નિર્ણય')}</span>
                         <span>॥</span>
                       </div>
                       <span className="text-[11px] text-[#8C6239]">
-                        {msg.timestamp.toLocaleTimeString('hi-IN', {
+                        {msg.timestamp.toLocaleTimeString(dateLocale, {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
@@ -1461,7 +1630,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     <div className="mt-3.5 pt-3 border-t border-[#8C6239]/25 space-y-2">
                       <p className="text-[11px] font-bold text-[#8F2121] flex items-center gap-1 font-serif">
                         <Sparkles className="w-3.5 h-3.5 text-[#B58738]" />
-                        <span>त्वरित अनुवर्ती प्रश्न (एक क्लिक में पूछें):</span>
+                        <span>{pickL(cLang, 'त्वरित अनुवर्ती प्रश्न (एक क्लिक में पूछें):', 'Quick Follow-up Questions (Tap to ask):', 'ત્વરિત અનુવર્તી પ્રશ્નો (એક ક્લિકમાં પૂછો):')}</span>
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {followUpChips.map((chip, idx) => (
@@ -1487,7 +1656,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                         className="text-xs font-bold text-[#7A1D1D] hover:bg-[#FAF2E4] flex items-center gap-1.5 bg-[#F4E8D1] px-3 py-1.5 rounded-lg border border-[#B58738] cursor-pointer shadow-xs transition hover:scale-[1.01]"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-[#B56A00]" />
-                        <span>✨ यहीं जन्म विवरण भरें (सटीक कुंडली फलादेश)</span>
+                        <span>{pickL(cLang, '✨ यहीं जन्म विवरण भरें (सटीक कुंडली फलादेश)', '✨ Enter Birth Details Here (Personalized Reading)', '✨ અહીં જન્મ વિગતો ભરો (સચોટ કુંડળી ફળાદેશ)')}</span>
                       </button>
                     </div>
                   )}
@@ -1522,18 +1691,18 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {/* 1. Voice Play/Stop */}
                         <button
-                          onClick={() => speakHindi(msg.text, msg.id)}
+                          onClick={() => speakHindi(displayRawText, msg.id)}
                           className={`px-2.5 py-1 rounded-md border flex items-center gap-1.5 transition cursor-pointer font-medium ${
                             playingVoiceId === msg.id
                               ? 'bg-[#7A1D1D] text-white border-[#7A1D1D] shadow-sm'
                               : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EBDCC0] border-[#8C6239]/40'
                           }`}
-                          title="हिन्दी व संस्कृत श्लोक में सुनें"
+                          title={pickL(cLang, 'हिन्दी व संस्कृत श्लोक में सुनें', 'Listen to audio', 'વાણી શ્રવણ કરો')}
                         >
                           {playingVoiceId === msg.id ? (
                             <>
                               <VolumeX className="w-3.5 h-3.5 text-amber-200" />
-                              <span>वाणी बंद</span>
+                              <span>{pickL(cLang, 'वाणी बंद', 'Stop Audio', 'વાણી બંધ')}</span>
                               <span className="flex items-center gap-0.5 ml-0.5" aria-hidden="true">
                                 <span className="w-1 h-2 bg-amber-200 rounded-full animate-bounce" />
                                 <span className="w-1 h-3 bg-amber-200 rounded-full animate-bounce [animation-delay:150ms]" />
@@ -1543,7 +1712,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                           ) : (
                             <>
                               <Volume2 className="w-3.5 h-3.5 text-[#7A1D1D]" />
-                              <span>वाणी श्रवण</span>
+                              <span>{pickL(cLang, 'वाणी श्रवण', 'Listen', 'વાણી શ્રવણ')}</span>
                             </>
                           )}
                         </button>
@@ -1556,13 +1725,13 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                               idx > 0 && messages[idx - 1].sender === 'user'
                                 ? messages[idx - 1].text
                                 : undefined;
-                            handleWhatsAppShare(msg.text, userQuery);
+                            handleWhatsAppShare(displayRawText, userQuery);
                           }}
                           className="px-2.5 py-1 rounded-md border border-emerald-600/50 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 flex items-center gap-1 transition cursor-pointer font-medium"
-                          title="यजमान को सीधे व्हाट्सएप पर भेजें"
+                          title={pickL(cLang, 'यजमान को सीधे व्हाट्सएप पर भेजें', 'Send directly via WhatsApp', 'યજમાનને સીધા વોટ્સએપ પર મોકલો')}
                         >
                           <Share2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>WhatsApp शेयर</span>
+                          <span>{pickL(cLang, 'WhatsApp शेयर', 'WhatsApp Share', 'WhatsApp શેર')}</span>
                         </button>
 
                         {/* 3. Direct PDF Generator */}
@@ -1573,35 +1742,35 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                               idx > 0 && messages[idx - 1].sender === 'user'
                                 ? messages[idx - 1].text
                                 : undefined;
-                            void handleDownloadPdfReport(msg.text, userQuery);
+                            void handleDownloadPdfReport(displayRawText, userQuery);
                           }}
                           disabled={isGeneratingPdf}
                           className="px-2.5 py-1 rounded-md border border-amber-600/50 bg-amber-50 text-amber-900 hover:bg-amber-100 flex items-center gap-1 transition cursor-pointer font-medium disabled:opacity-50"
-                          title="जातक के नाम की औपचारिक ज्योतिषीय परामर्श रिपोर्ट (PDF)"
+                          title={pickL(cLang, 'जातक के नाम की औपचारिक ज्योतिषीय परामर्श रिपोर्ट (PDF)', 'Download Official Astrology Consultation PDF', 'સત્તાવાર જ્યોતિષીય પરામર્શ રિપોર્ટ (PDF) ડાઉનલોડ કરો')}
                         >
                           {isGeneratingPdf ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-700" />
                           ) : (
                             <FileText className="w-3.5 h-3.5 text-amber-700" />
                           )}
-                          <span>PDF रिपोर्ट</span>
+                          <span>{pickL(cLang, 'PDF रिपोर्ट', 'PDF Report', 'PDF રિપોર્ટ')}</span>
                         </button>
 
                         {/* 3b. Traditional 6-Point Upay Parchi Slip */}
                         <button
                           onClick={() => setIsUpayParchiOpen(true)}
                           className="px-2.5 py-1 rounded-md border border-[#7A1D1D]/50 bg-[#FFFDF8] text-[#7A1D1D] hover:bg-[#FAF2E4] flex items-center gap-1 transition cursor-pointer font-bold shadow-2xs"
-                          title="पारंपरिक ज्योतिषीय लेटरहेड पर ६-सूत्रीय उपाय पर्ची खोलें व डाउनलोड करें"
+                          title={pickL(cLang, 'पारंपरिक ज्योतिषीय लेटरहेड पर ६-सूत्रीय उपाय पर्ची खोलें व डाउनलोड करें', 'Open & download traditional 6-point Upay Remedy Slip', 'પારંપરિક લેટરહેડ પર ૬-સૂત્રીય ઉપાય પર્ચી ખોલો અને ડાઉનલોડ કરો')}
                         >
                           <FileText className="w-3.5 h-3.5 text-[#7A1D1D]" />
-                          <span>📋 उपाय पर्ची</span>
+                          <span>{pickL(cLang, '📋 उपाय पर्ची', '📋 Upay Slip', '📋 ઉપાય પર્ચી')}</span>
                         </button>
 
                         {/* 4. Copy */}
                         <button
-                          onClick={() => handleCopy(msg.text, msg.id)}
+                          onClick={() => handleCopy(displayRawText, msg.id)}
                           className="p-1 text-[#8C6239] hover:text-[#5C3A21] rounded transition cursor-pointer"
-                          title="प्रतिलिपि बनाएँ (Copy)"
+                          title={pickL(cLang, 'प्रतिलिपि बनाएँ (Copy)', 'Copy text', 'કૉપી કરો')}
                         >
                           {copiedId === msg.id ? (
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -1628,7 +1797,12 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 <div className="w-5 h-5 border-2 border-[#7A1D1D] border-t-transparent rounded-full animate-spin shrink-0" />
                 <div>
                   <p className="text-xs sm:text-sm font-serif font-bold text-[#7A1D1D]">
-                    उमा कुण्डली के भावों, ग्रहों व दशा का सूक्ष्म विश्लेषण कर रही हैं...
+                    {pickL(
+                      cLang,
+                      'उमा कुण्डली के भावों, ग्रहों व दशा का सूक्ष्म विश्लेषण कर रही हैं...',
+                      'Uma is performing deep house, planetary & dasha calculations...',
+                      'ઉમા કુંડળીના ભાવ, ગ્રહો અને દશાનું સૂક્ષ્મ વિશ્લેષણ કરી રહ્યા છે...'
+                    )}
                   </p>
                   <p className="text-[11px] text-[#735133] font-serif">
                     ॥ ॐ सूर्याय नमः • ॐ गुरवे नमः • ॐ नमः शिवाय ॥
@@ -1658,7 +1832,11 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-300'
                   : 'bg-[#FAF2E4] text-[#5C3A21] hover:bg-[#EBDCC0] border border-[#8C6239]/40'
               }`}
-              title={isListening ? 'बोलना बंद करें' : 'उमा से बोलकर पूछें (Alexa Voice)'}
+              title={
+                isListening
+                  ? pickL(cLang, 'बोलना बंद करें', 'Stop listening', 'બોલવાનું બંધ કરો')
+                  : pickL(cLang, 'उमा से बोलकर पूछें (Alexa Voice)', 'Speak to ask Uma', 'ઉમાને બોલીને પૂછો')
+              }
             >
               {isListening ? (
                 <MicOff className="w-5 h-5 text-white" />
@@ -1674,10 +1852,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               onChange={(e) => setInputQuery(e.target.value)}
               placeholder={
                 activeCategory === 'numerology'
-                  ? 'अंक ज्योतिष, नाम स्पेलिंग, मूलांक, लकी नंबर या उपाय पूछें...'
+                  ? pickL(cLang, 'अंक ज्योतिष, नाम स्पेलिंग, मूलांक, लकी नंबर या उपाय पूछें...', 'Ask about numerology, name spelling, Mulank, lucky numbers or remedies...', 'અંક જ્યોતિષ, નામ સ્પેલિંગ, મૂલાંક, લકી નંબર કે ઉપાય પૂછો...')
                   : currentKundali
-                  ? `उमा से ${currentKundali.name} जी की कुंडली, करियर, विवाह, दशा या उपाय पूछें...`
-                  : 'उमा से कोई भी ज्योतिषीय प्रश्न, करियर, विवाह, व्यापार या उपाय पूछें...'
+                  ? pickL(cLang, `उमा से ${currentKundali.name} जी की कुंडली, करियर, विवाह, दशा या उपाय पूछें...`, `Ask Uma about ${currentKundali.name}'s chart, career, marriage, dasha or remedies...`, `ઉમાને ${currentKundali.name} જી ની કુંડળી, કારકિર્દી, લગ્ન, દશા કે ઉપાય પૂછો...`)
+                  : pickL(cLang, 'उमा से कोई भी ज्योतिषीय प्रश्न, करियर, विवाह, व्यापार या उपाय पूछें...', 'Ask Uma any astrology question about career, marriage, business or remedies...', 'ઉમાને કોઈપણ જ્યોતિષીય પ્રશ્ન, કારકિર્દી, લગ્ન, વેપાર કે ઉપાય પૂછો...')
               }
               className="flex-1 bg-[#FFFDF8] border-2 border-[#8C6239]/40 focus:border-[#7A1D1D] rounded-xl px-3 py-2 text-xs sm:text-base font-serif text-[#3E2714] placeholder:text-[#8C6239]/70 outline-none shadow-inner"
             />
@@ -1687,7 +1865,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
               disabled={!inputQuery.trim() || isLoading}
               className="px-3.5 py-2 bg-gradient-to-r from-[#7A1D1D] to-[#5C1414] disabled:opacity-40 hover:from-[#5C1414] hover:to-[#4A1010] text-[#FAF2E4] font-bold rounded-xl transition shadow-md flex items-center gap-1.5 text-xs sm:text-sm font-serif cursor-pointer shrink-0"
             >
-              <span>पूछें</span>
+              <span>{pickL(cLang, 'पूछें', 'Ask', 'પૂછો')}</span>
               <Send className="w-4 h-4" />
             </button>
           </form>
@@ -1705,13 +1883,18 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   </div>
                   <div>
                     <h3 className="font-bold text-base sm:text-lg font-granth text-emerald-100 flex items-center gap-1.5">
-                      <span>यजमान व्हाट्सएप बॉट</span>
+                      <span>{pickL(cLang, 'यजमान व्हाट्सएप बॉट', 'Yajman WhatsApp Bot', 'યજમાન વોટ્સએપ બોટ')}</span>
                       <span className="text-[10px] bg-emerald-600 px-2 py-0.5 rounded text-white font-mono uppercase tracking-wider">
                         BOT AI
                       </span>
                     </h3>
                     <p className="text-xs text-emerald-200">
-                      यजमानों के प्रश्नों के सीधे व्हाट्सएप पर स्वचालित शास्त्रीय उत्तर व उपाय
+                      {pickL(
+                        cLang,
+                        'यजमानों के प्रश्नों के सीधे व्हाट्सएप पर स्वचालित शास्त्रीय उत्तर व उपाय',
+                        'Automated scriptural guidance & remedies for clients directly on WhatsApp',
+                        'યજમાનોના પ્રશ્નોના સીધા વોટ્સએપ પર શાસ્ત્રીય ઉત્તર અને ઉપાય'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -1729,25 +1912,25 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#FFFDF8] p-3 rounded-xl border border-[#8C6239]/30 shadow-xs">
                   <div>
                     <label className="block text-xs font-bold text-[#5C3A21] mb-1">
-                      यजमान / जातक का नाम:
+                      {pickL(cLang, 'यजमान / जातक का नाम:', 'Client / Native Name:', 'યજમાન / જાતકનું નામ:')}
                     </label>
                     <input
                       type="text"
                       value={clientBotName}
                       onChange={(e) => setClientBotName(e.target.value)}
-                      placeholder="यजमान का नाम लिखें"
+                      placeholder={pickL(cLang, 'यजमान का नाम लिखें', 'Enter client name', 'યજમાનનું નામ લખો')}
                       className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs text-[#3E2714] focus:outline-[#7A1D1D]"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#5C3A21] mb-1">
-                      व्हाट्सएप मोबाइल नंबर (वैकल्पिक):
+                      {pickL(cLang, 'व्हाट्सएप मोबाइल नंबर (वैकल्पिक):', 'WhatsApp Mobile Number (Optional):', 'વોટ્સએપ મોબાઇલ નંબર (વૈકલ્પિક):')}
                     </label>
                     <input
                       type="text"
                       value={clientBotPhone}
                       onChange={(e) => setClientBotPhone(e.target.value)}
-                      placeholder="उदा. 9876543210"
+                      placeholder={pickL(cLang, 'उदा. 9876543210', 'e.g. 9876543210', 'દા.ત. 9876543210')}
                       className="w-full bg-[#FAF2E4] border border-[#8C6239]/40 rounded-lg px-3 py-1.5 text-xs text-[#3E2714] focus:outline-[#7A1D1D]"
                     />
                   </div>
@@ -1756,10 +1939,10 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 {/* Quick Topic Selection */}
                 <div>
                   <label className="block text-xs font-bold text-[#7A1D1D] mb-2">
-                    १. त्वरित शास्त्रीय परामर्श विषय चुनें (Topic Select):
+                    {pickL(cLang, '१. त्वरित शास्त्रीय परामर्श विषय चुनें (Topic Select):', '1. Select a Quick Consultation Topic:', '૧. ત્વરિત શાસ્ત્રીય પરામર્શ વિષય પસંદ કરો:')}
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {BOT_QUICK_TOPICS.map((item) => (
+                    {botQuickTopics.map((item) => (
                       <button
                         key={item.id}
                         onClick={() => handleGenerateBotMessage(item.prompt)}
@@ -1777,7 +1960,14 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                 {isGeneratingBotMsg && (
                   <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center gap-2.5 text-emerald-800 text-xs shadow-inner">
                     <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
-                    <span>उमा यजमान हेतु संस्कृत श्लोक सहित शास्त्रोक्त परामर्श संदेश तैयार कर रही हैं...</span>
+                    <span>
+                      {pickL(
+                        cLang,
+                        'उमा यजमान हेतु संस्कृत श्लोक सहित शास्त्रोक्त परामर्श संदेश तैयार कर रही हैं...',
+                        'Uma is drafting the consultation message with Sanskrit verses...',
+                        'ઉમા યજમાન માટે સંસ્કૃત શ્લોક સાથે શાસ્ત્રોક્ત પરામર્શ સંદેશ તૈયાર કરી રહ્યા છે...'
+                      )}
+                    </span>
                   </div>
                 )}
 
@@ -1786,16 +1976,16 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-xs font-bold text-[#5C3A21]">
-                        २. व्हाट्सएप संदेश पूर्वावलोकन (संपादन योग्य):
+                        {pickL(cLang, '२. व्हाट्सएप संदेश पूर्वावलोकन (संपादन योग्य):', '2. WhatsApp Message Preview (Editable):', '૨. વોટ્સએપ સંદેશ પૂર્વાવલોકન (સંપાદન યોગ્ય):')}
                       </label>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(clientBotGeneratedMsg);
-                          alert('संदेश कॉपी कर लिया गया!');
+                          alert(pickL(cLang, 'संदेश कॉपी कर लिया गया!', 'Message copied!', 'સંદેશ કૉપી થઈ ગયો!'));
                         }}
                         className="text-[11px] text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer font-bold"
                       >
-                        <Copy className="w-3 h-3" /> प्रतिलिपि (Copy)
+                        <Copy className="w-3 h-3" /> {pickL(cLang, 'प्रतिलिपि (Copy)', 'Copy', 'કૉપી કરો')}
                       </button>
                     </div>
                     <textarea
@@ -1814,7 +2004,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                   onClick={() => setIsWhatsAppBotOpen(false)}
                   className="px-3 py-1.5 border border-[#8C6239]/50 rounded-lg text-xs text-[#5C3A21] hover:bg-[#EBDCC0] cursor-pointer"
                 >
-                  बंद करें
+                  {pickL(cLang, 'बंद करें', 'Close', 'બંધ કરો')}
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -1823,7 +2013,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                       onClick={() =>
                         handleDownloadPdfReport(
                           clientBotGeneratedMsg,
-                          `${clientBotName || 'यजमान'} जी का परामर्श`
+                          `${clientBotName || pickL(cLang, 'यजमान', 'Yajman', 'યજમાન')} ${pickL(cLang, 'जी का परामर्श', 'Consultation', 'જી નું પરામર્શ')}`
                         )
                       }
                       disabled={isGeneratingPdf}
@@ -1834,14 +2024,14 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                       ) : (
                         <FileText className="w-3.5 h-3.5" />
                       )}
-                      <span>PDF बनाएं</span>
+                      <span>{pickL(cLang, 'PDF बनाएं', 'Create PDF', 'PDF બનાવો')}</span>
                     </button>
                   )}
 
                   <button
                     onClick={() => {
                       if (!clientBotGeneratedMsg) {
-                        alert('कृपया पहले कोई विषय चुनकर संदेश तैयार करें।');
+                        alert(pickL(cLang, 'कृपया पहले कोई विषय चुनकर संदेश तैयार करें।', 'Please select a topic to generate a message first.', 'કૃપા કરીને પહેલા કોઈ વિષય પસંદ કરીને સંદેશ તૈયાર કરો.'));
                         return;
                       }
                       openWhatsAppShare(clientBotGeneratedMsg, clientBotPhone);
@@ -1850,7 +2040,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
                     className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
                   >
                     <Share2 className="w-3.5 h-3.5" />
-                    <span>📲 सीधे व्हाट्सएप पर भेजें</span>
+                    <span>{pickL(cLang, '📲 सीधे व्हाट्सएप पर भेजें', '📲 Send on WhatsApp', '📲 સીધા વોટ્સએપ પર મોકલો')}</span>
                   </button>
                 </div>
               </div>

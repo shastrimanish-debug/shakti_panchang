@@ -59,24 +59,30 @@ const DailyGocharView = React.lazy(() => import('./components/DailyGocharView').
 const JapaMalaModal = React.lazy(() => import('./components/JapaMalaModal').then((m) => ({ default: m.JapaMalaModal })));
 
 const HanumanChalisaPathView = React.lazy(async () => {
-  const [{ ScripturePathView }, { HANUMAN_CHALISA }] = await Promise.all([
+  const [{ ScripturePathView }, { HANUMAN_CHALISA }, { default: i18nInstance }] = await Promise.all([
     import('./components/ScripturePathView'),
     import('./data/hanumanChalisa'),
+    import('./i18n'),
   ]);
+  const L = (i18nInstance.language || 'hi').slice(0, 2);
+  const title = L === 'en' ? 'Sri Hanuman Chalisa' : L === 'gu' ? 'શ્રી હનુમાન ચાલીસા' : 'श्री हनुमान चालीसा';
   return {
-    default: () => <ScripturePathView title="श्री हनुमान चालीसा" verses={HANUMAN_CHALISA} />,
+    default: () => <ScripturePathView title={title} verses={HANUMAN_CHALISA} />,
   };
 });
 
 const SundarkandPathView = React.lazy(async () => {
-  const [{ ScripturePathView }, { default: sundarkandRaw }] = await Promise.all([
+  const [{ ScripturePathView }, { default: sundarkandRaw }, { default: i18nInstance }] = await Promise.all([
     import('./components/ScripturePathView'),
     import('./data/sundarkand.json'),
+    import('./i18n'),
   ]);
+  const L = (i18nInstance.language || 'hi').slice(0, 2);
+  const title = L === 'en' ? 'Sri Ramcharitmanas · Complete Sundarkand' : L === 'gu' ? 'શ્રી રામચરિતમાનસ · સંપૂર્ણ સુંદરકાંડ' : 'श्री रामचरितमानस · संपूर्ण सुंदरकांड';
   return {
     default: () => (
       <ScripturePathView
-        title="श्री रामचरितमानस · संपूर्ण सुंदरकांड"
+        title={title}
         verses={sundarkandRaw as { n: number; kind?: string; text: string }[]}
       />
     ),
@@ -84,14 +90,17 @@ const SundarkandPathView = React.lazy(async () => {
 });
 
 const VishnuSahasranamaPathView = React.lazy(async () => {
-  const [{ ScripturePathView }, { VISHNU_SAHASRANAMA_VERSES }] = await Promise.all([
+  const [{ ScripturePathView }, { VISHNU_SAHASRANAMA_VERSES }, { default: i18nInstance }] = await Promise.all([
     import('./components/ScripturePathView'),
     import('./data/vishnuSahasranama'),
+    import('./i18n'),
   ]);
+  const L = (i18nInstance.language || 'hi').slice(0, 2);
+  const title = L === 'en' ? 'Sri Vishnu Sahasranama Stotram' : L === 'gu' ? 'શ્રી વિષ્ણુ સહસ્રનામ સ્તોત્રમ્ સંપૂર્ણ પાઠ' : 'श्री विष्णु सहस्रनाम स्तोत्रम् सम्पूर्ण पाठ';
   return {
     default: () => (
       <ScripturePathView
-        title="श्री विष्णु सहस्रनाम स्तोत्रम् सम्पूर्ण पाठ"
+        title={title}
         verses={VISHNU_SAHASRANAMA_VERSES}
       />
     ),
@@ -223,12 +232,14 @@ export function App() {
   const isEntitled = licenseStatus.entitled;
 
   const triggerSubscriptionModal = useCallback((reason?: string) => {
-    setSubscriptionReason(
-      reason ||
-        "७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। अब केवल पंचांग का मुख्य पृष्ठ निःशुल्क उपलब्ध है। अन्य सुविधाओं के लिए कृपया वार्षिक सदस्यता सक्रिय करें।"
-    );
+    const defaultReason = currentLang === 'en'
+      ? 'Your 7-day free trial has ended. Only the main Panchang page is free. Activate lifetime subscription to unlock all features.'
+      : currentLang === 'gu'
+      ? '૭ દિવસનું મફત પરીક્ષણ પૂર્ણ થયું છે. હવે માત્ર પંચાંગનું મુખ્ય પૃષ્ઠ મફત છે. અન્ય સુવિધાઓ માટે સભ્યપદ સક્રિય કરો.'
+      : "७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। अब केवल पंचांग का मुख्य पृष्ठ निःशुल्क उपलब्ध है। अन्य सुविधाओं के लिए कृपया वार्षिक सदस्यता सक्रिय करें।";
+    setSubscriptionReason(reason || defaultReason);
     setIsSubscriptionModalOpen(true);
-  }, []);
+  }, [currentLang]);
 
   useEffect(() => {
     const open = () => triggerSubscriptionModal();
@@ -360,7 +371,7 @@ export function App() {
   // Navigate to previous page
   const handlePrevPage = useCallback(() => {
     if (!isEntitled) {
-      triggerSubscriptionModal("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग का मुख्य पृष्ठ उपलब्ध है।");
+      triggerSubscriptionModal();
       return;
     }
     triggerHapticSelection();
@@ -374,7 +385,7 @@ export function App() {
   // Navigate to next page
   const handleNextPage = useCallback(() => {
     if (!isEntitled) {
-      triggerSubscriptionModal("७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग का मुख्य पृष्ठ उपलब्ध है।");
+      triggerSubscriptionModal();
       return;
     }
     triggerHapticSelection();
@@ -393,48 +404,16 @@ export function App() {
       // STRICT ANTI-MOD & SUBSCRIPTION ENFORCEMENT:
       // If trial has expired and user is not subscribed, ONLY 'panchang' and 'services' tabs are accessible!
       if (!isEntitled && tabId !== 'panchang' && tabId !== 'services') {
-        const featureNames: Record<string, string> = {
-          choghadiya: 'चौघड़िया चक्र',
-          muhurat: 'शुभ मुहूर्त',
-          yatra: 'यात्रा दिशाशूल',
-          kundali: 'जन्म कुण्डली व फलादेश',
-          milan: 'अष्टकूट गुण मिलान',
-          festivals: 'पर्व व त्योहार सूची',
-          reminders: 'दैनिक स्मृति व संकल्प',
-          vratkatha: 'व्रत कथा व आरती',
-          durga: 'श्री दुर्गा सप्तशती',
-          kalnirnay: 'मासिक सनातन पंचांग',
-          audio_player: 'सुरीला भक्ति संगीत व स्वर पाठ',
-          upay: 'ग्रह शांति व चमत्कारी उपाय',
-          lal_kitab: 'लाल किताब के 501 उपाय',
-          ravan_sanhita: 'रावण संहिता धन प्राप्ति महा-उपाय',
-          vastu: 'वैदिक वास्तु शास्त्र',
-          rashifal: 'दैनिक राशिफल',
-          gita: 'श्रीमद्भगवद्गीता श्लोक',
-          vishnu_sahasranama: 'श्री विष्णु सहस्रनाम स्तोत्रम्',
-          granth_puran: 'प्राचीन ग्रन्थ, उपनिषद् एवं महापुराण स्वाध्याय',
-          hanuman: 'श्री हनुमान चालीसा',
-          sundarkand: 'संपूर्ण सुंदरकांड पाठ',
-          sabar: '501 शाबर मंत्र',
-          jain_mantras: '201 जैन पाठ',
-          saral: '501 सरल उपाय',
-          shastrokt: '501 मंत्र और विस्तृत विधि',
-          numerology: 'वैदिक अंक ज्योतिष एवं लो-शू चक्र',
-          palmistry: 'सामुद्रिक हस्तरेखा शास्त्र',
-          tarot: 'दिव्य टैरो कार्ड मार्गदर्शन',
-          gemology: 'वैदिक रत्न विज्ञान',
-          face_reading: 'समुद्रशास्त्र मुख आकृति विज्ञान',
-          iching: 'प्राचीन आई-चिंग दिव्य प्रश्न',
-          devta_arpan: 'देवता अर्पण फल व पूजन सामग्री',
-          shiv_tantra: 'शिव तंत्र विद्या (कश्मीर शैव दर्शन)',
-          sadesati: 'शनि साढ़े साती एवं ढैया विचार',
-          gochar: 'दैनिक ग्रह गोचर चक्र',
-          japamala: '१०८ रुद्राक्ष डिजिटल जप माला',
-        };
-        const name = featureNames[tabId] || 'यह अध्याय';
-        triggerSubscriptionModal(
-          `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग मुख्य पृष्ठ फ्री है। ${name} देखने के लिए आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।`
-        );
+        const matchedPage = BOOK_PAGES.find((p) => p.id === tabId);
+        const localizedLabel = matchedPage
+          ? getLocalizedBookPage(matchedPage, currentLang).label
+          : (currentLang === 'en' ? 'this chapter' : currentLang === 'gu' ? 'આ પ્રકરણ' : 'यह अध्याय');
+        const msg = currentLang === 'en'
+          ? `7-day free trial ended. Only Panchang home is free. Activate Lifetime VIP (₹99 / $1) to unlock ${localizedLabel}.`
+          : currentLang === 'gu'
+          ? `૭-દિવસનું મફત પરીક્ષણ પૂર્ણ થયું છે. ${localizedLabel} જોવા માટે આજીવન VIP સભ્યપદ (₹99 / $1) સક્રિય કરો.`
+          : `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग मुख्य पृष्ठ फ्री है। ${localizedLabel} देखने के लिए आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।`;
+        triggerSubscriptionModal(msg);
         return;
       }
 
@@ -449,7 +428,7 @@ export function App() {
         setActiveTab(tabId);
       } else if (targetIdx !== -1) {
         setTurnDirection(targetIdx >= (currentIndex === -1 ? 0 : currentIndex) ? 'forward' : 'backward');
-        const target = BOOK_PAGES[targetIdx];
+        const target = getLocalizedBookPage(BOOK_PAGES[targetIdx], currentLang);
         setActiveTab(target.id);
         if (isAudioEnabled) playTactilePageTurnSound();
         notifyPageTurn(target.label, target.pageNumber);
@@ -458,7 +437,7 @@ export function App() {
         setActiveTab(tabId);
       }
     },
-    [currentIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal]
+    [currentIndex, isAudioEnabled, notifyPageTurn, isEntitled, triggerSubscriptionModal, currentLang]
   );
 
   // Global tab navigation event listener for deep links & modals
@@ -543,7 +522,13 @@ export function App() {
           }}
           onEnter={() => {
             if (!isEntitled) {
-              triggerSubscriptionModal("सात दिन का निःशुल्क परीक्षण समाप्त। ₹99 आजीवन या $1 सदस्यता के बिना ऐप बंद है।");
+              triggerSubscriptionModal(
+                currentLang === 'en'
+                  ? '7-day free trial expired. Activate ₹99 / $1 lifetime subscription to unlock the app.'
+                  : currentLang === 'gu'
+                  ? '૭ દિવસનું મફત પરીક્ષણ પૂર્ણ થયું છે. ₹99 / $1 આજીવન સભ્યપદ સક્રિય કરો.'
+                  : "सात दिन का निःशुल्क परीक्षण समाप्त। ₹99 आजीवन या $1 सदस्यता के बिना ऐप बंद है।"
+              );
               return;
             }
             setEntered(true);
@@ -714,7 +699,9 @@ export function App() {
             fallback={
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-2">
                 <div className="text-2xl">🕉️</div>
-                <div className="text-sm font-bold text-[#5C3A21]">अध्याय खुल रहा है...</div>
+                <div className="text-sm font-bold text-[#5C3A21]">
+                  {currentLang === 'en' ? 'Opening chapter...' : currentLang === 'gu' ? 'પ્રકરણ ખૂલી રહ્યું છે...' : 'अध्याय खुल रहा है...'}
+                </div>
               </div>
             }
           >
@@ -932,7 +919,9 @@ export function App() {
 
             {activeTab === 'saral' && (
               <div className="flex-1 min-h-0 h-full flex flex-col w-full overflow-y-auto overscroll-y-contain p-2 pb-24" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
-                <div className="shrink-0 px-1 pb-2 text-[13px] font-semibold text-[#5C3A21]">सरल उपाय · 501 पाठ</div>
+                <div className="shrink-0 px-1 pb-2 text-[13px] font-semibold text-[#5C3A21]">
+                  {currentLang === 'en' ? 'Simple Remedies · 501 Verses' : currentLang === 'gu' ? 'સરળ ઉપાય · 501 પાઠ' : 'सरल उपाय · 501 पाठ'}
+                </div>
                 <SaralUpayPanel />
               </div>
             )}
@@ -1132,7 +1121,13 @@ export function App() {
             onToggleBookCover={() => setIsBookOpen(false)}
             onOpenWhatsAppPanchang={() => {
               if (!isEntitled) {
-                triggerSubscriptionModal("व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।");
+                triggerSubscriptionModal(
+                  currentLang === 'en'
+                    ? 'Activate Lifetime VIP (₹99 / $1) to share WhatsApp Morning Panchang Cards.'
+                    : currentLang === 'gu'
+                    ? 'WhatsApp સુપ્રભાત પંચાંગ કાર્ડ માટે આજીવન VIP સભ્યપદ (₹99 / $1) સક્રિય કરો.'
+                    : "व्हाट्सएप सुप्रभात पंचांग कार्ड हेतु आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।"
+                );
                 return;
               }
               setIsWhatsAppPanchangOpen(true);

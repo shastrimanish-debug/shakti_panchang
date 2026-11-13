@@ -3,22 +3,16 @@ import { KundaliData } from '../types';
 import { calculateVedicPanchang, RASHIS, calculateVargaSign } from '../services/astronomy';
 import { analyzeKundali } from '../services/predictions';
 import { KundaliChart } from './KundaliChart';
+import { useLanguage } from '../i18n';
+import { trPlanet, trRashi, trVedic } from '../i18n/vedicTranslate';
 import {
   Sparkles,
   Compass,
-  RotateCw,
   Pause,
   Play,
-  Layers,
-  Code2,
-  Copy,
-  Check,
   ShieldCheck,
   Sun,
-  Moon,
   Flame,
-  Zap,
-  ChevronRight,
   Sliders,
 } from 'lucide-react';
 
@@ -185,8 +179,8 @@ function buildVedicChartData(k: KundaliData): VedicChartData {
       mahadashaLord: k.mahadasha,
       antardashaLord: k.antardasha,
       pratyantardashaLord: k.pratyantardasha || 'गुरु',
-      startDate: activeMaha?.startDate ? new Date(activeMaha.startDate).toLocaleDateString('hi-IN') : '2024',
-      endDate: activeMaha?.endDate ? new Date(activeMaha.endDate).toLocaleDateString('hi-IN') : '2031',
+      startDate: activeMaha?.startDate ? new Date(activeMaha.startDate).toISOString() : '2024',
+      endDate: activeMaha?.endDate ? new Date(activeMaha.endDate).toISOString() : '2031',
       remainingYears: activeMaha?.years || 7,
       progressPercent: 64,
     },
@@ -201,10 +195,15 @@ export const Vedic3DKundaliView: React.FC<{
   longitude?: number;
 }> = ({
   kundali,
-  currentLocationName = 'उज्जैन (Ujjain)',
+  currentLocationName,
   latitude = 23.1765,
   longitude = 75.7885,
 }) => {
+  const { language } = useLanguage();
+  const lang = (language || 'hi').slice(0, 2).toLowerCase();
+  const pick = (hi: string, en: string, gu: string) => (lang === 'en' ? en : lang === 'gu' ? gu : hi);
+  const dateLocale = lang === 'en' ? 'en-IN' : lang === 'gu' ? 'gu-IN' : 'hi-IN';
+  const locLabel = currentLocationName || pick('उज्जैन (Ujjain)', 'Ujjain', 'ઉજ્જૈન');
   // 1. SavedStateHandle Zero-Data-Loss Hydration & Persistence
   const [vedicState, setVedicState] = useState<VedicChartData>(() => {
     try {
@@ -293,14 +292,14 @@ export const Vedic3DKundaliView: React.FC<{
     return calculateVedicPanchang(new Date(), latitude, longitude);
   }, [latitude, longitude]);
 
-  const analysis = useMemo(() => analyzeKundali(kundali), [kundali]);
+  const analysis = useMemo(() => analyzeKundali(kundali, lang), [kundali, lang]);
 
   const activeGrid = activeChartDivision === 'D1' ? vedicState.d1ChartGrid : vedicState.d9ChartGrid;
 
-  const handleCopyKotlinCode = () => {
-    navigator.clipboard.writeText(ANDROID_COMPOSE_COMPLETE_CODE);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2500);
+  const formatCellPlanet = (raw: string) => {
+    const parts = raw.split(' ');
+    const pName = trPlanet(parts[0], lang);
+    return parts.length > 1 ? `${pName} ${parts.slice(1).join(' ')}` : pName;
   };
 
   return (
@@ -337,7 +336,11 @@ export const Vedic3DKundaliView: React.FC<{
                 className="font-granth font-black text-base sm:text-lg"
                 style={{ color: '#FFE8A3' }}
               >
-                3D वैदिक स्वर्ण-यंत्र कुण्डली एवं UMA ज्योतिष सिंक
+                {pick(
+                  '3D वैदिक स्वर्ण-यंत्र कुण्डली एवं UMA ज्योतिष सिंक',
+                  '3D Vedic Swarna-Yantra Horoscope & UMA Sync',
+                  '3D વૈદિક સ્વર્ણ-યંત્ર કુંડળી અને UMA જ્યોતિષ સિંક'
+                )}
               </h3>
               <span
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border"
@@ -347,18 +350,18 @@ export const Vedic3DKundaliView: React.FC<{
                   borderColor: 'rgba(52, 211, 153, 0.45)',
                 }}
               >
-                <ShieldCheck className="w-3 h-3" /> सुरक्षित कुण्डली स्मृति
+                <ShieldCheck className="w-3 h-3" /> {pick('सुरक्षित कुण्डली स्मृति', 'Synced Memory', 'સુરક્ષિત કુંડળી સ્મૃતિ')}
               </span>
             </div>
             <p className="text-[11px]" style={{ color: '#FDE68A' }}>
-              जातक: <strong style={{ color: '#FFFFFF' }}>{vedicState.nativeName}</strong> • लग्न:{' '}
+              {pick('जातक:', 'Native:', 'જાતક:')} <strong style={{ color: '#FFFFFF' }}>{vedicState.nativeName}</strong> • {pick('लग्न:', 'Ascendant:', 'લગ્ન:')}{' '}
               <strong style={{ color: '#FFFFFF' }}>
-                {vedicState.lagnaRashi} ({vedicState.lagnaDegree.toFixed(1)}°)
+                {trRashi(vedicState.lagnaRashi, lang)} ({vedicState.lagnaDegree.toFixed(1)}°)
               </strong>{' '}
-              • महादशा:{' '}
+              • {pick('महादशा:', 'Mahadasha:', 'મહાદશા:')}{' '}
               <strong style={{ color: '#FDBA74' }}>
-                {vedicState.currentMahadasha.mahadashaLord}/
-                {vedicState.currentMahadasha.antardashaLord}
+                {trPlanet(vedicState.currentMahadasha.mahadashaLord, lang)}/
+                {trPlanet(vedicState.currentMahadasha.antardashaLord, lang)}
               </strong>
             </p>
           </div>
@@ -381,7 +384,7 @@ export const Vedic3DKundaliView: React.FC<{
                   : { color: '#FFF3C4' }
               }
             >
-              D-1 लग्न
+              {pick('D-1 लग्न', 'D-1 Lagna', 'D-1 લગ્ન')}
             </button>
             <button
               type="button"
@@ -393,7 +396,7 @@ export const Vedic3DKundaliView: React.FC<{
                   : { color: '#FFF3C4' }
               }
             >
-              D-9 नवमांश
+              {pick('D-9 नवमांश', 'D-9 Navamsha', 'D-9 નવમાંશ')}
             </button>
           </div>
 
@@ -405,7 +408,7 @@ export const Vedic3DKundaliView: React.FC<{
             style={{ backgroundColor: '#2A1205', color: '#FFF3C4' }}
           >
             {isSpinning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span>{isSpinning ? 'चक्र रोकें' : '3D चक्र घुमाएँ'}</span>
+            <span>{isSpinning ? pick('चक्र रोकें', 'Pause Spin', 'ચક્ર રોકો') : pick('3D चक्र घुमाएँ', 'Rotate 3D', '3D ચક્ર ફેરવો')}</span>
           </button>
 
           {/* Toggle UMA Assistant Sync Drawer */}
@@ -429,7 +432,7 @@ export const Vedic3DKundaliView: React.FC<{
             }
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>UMA ज्योतिष सिंक {isUmaOpen ? 'सक्रिय' : 'खोलें'}</span>
+            <span>{pick('UMA ज्योतिष सिंक', 'UMA Sync', 'UMA જ્યોતિષ સિંક')} {isUmaOpen ? pick('सक्रिय', 'On', 'સક્રિય') : pick('खोलें', 'Open', 'ખોલો')}</span>
           </button>
         </div>
       </div>
@@ -447,14 +450,14 @@ export const Vedic3DKundaliView: React.FC<{
               <div className="flex items-center gap-2">
                 <Sun className="w-4 h-4 text-[#B45309]" />
                 <h4 className="font-granth font-black text-sm text-[#4A200A]">
-                  तात्कालिक पंचांग
+                  {pick('तात्कालिक पंचांग', 'Live Panchang', 'તાત્કાલિક પંચાંગ')}
                 </h4>
               </div>
               <span
                 className="text-[10px] px-2 py-0.5 rounded font-bold"
                 style={{ backgroundColor: '#5C2D0C', color: '#FFF3C4' }}
               >
-                {currentLocationName.split(' ')[0]}
+                {locLabel.split(' ')[0]}
               </span>
             </div>
 
@@ -463,45 +466,45 @@ export const Vedic3DKundaliView: React.FC<{
                 className="p-2 rounded-lg border border-[#C88A2B]/40"
                 style={{ backgroundColor: '#FAF2E4' }}
               >
-                <div className="text-[10px] font-bold text-[#7C2D12]">तिथि (Tithi)</div>
+                <div className="text-[10px] font-bold text-[#7C2D12]">{pick('तिथि (Tithi)', 'Tithi', 'તિથિ')}</div>
                 <div className="font-black text-[#2A1205] truncate">
-                  {livePanchang.paksha} {livePanchang.tithi}
+                  {trVedic(livePanchang.paksha, lang)} {trVedic(livePanchang.tithi, lang)}
                 </div>
               </div>
               <div
                 className="p-2 rounded-lg border border-[#C88A2B]/40"
                 style={{ backgroundColor: '#FAF2E4' }}
               >
-                <div className="text-[10px] font-bold text-[#7C2D12]">नक्षत्र (Nakshatra)</div>
-                <div className="font-black text-[#2A1205] truncate">{livePanchang.nakshatra}</div>
+                <div className="text-[10px] font-bold text-[#7C2D12]">{pick('नक्षत्र (Nakshatra)', 'Nakshatra', 'નક્ષત્ર')}</div>
+                <div className="font-black text-[#2A1205] truncate">{trVedic(livePanchang.nakshatra, lang)}</div>
               </div>
               <div
                 className="p-2 rounded-lg border border-[#C88A2B]/40"
                 style={{ backgroundColor: '#FAF2E4' }}
               >
-                <div className="text-[10px] font-bold text-[#7C2D12]">योग (Yoga)</div>
-                <div className="font-black text-[#2A1205] truncate">{livePanchang.yoga}</div>
+                <div className="text-[10px] font-bold text-[#7C2D12]">{pick('योग (Yoga)', 'Yoga', 'યોગ')}</div>
+                <div className="font-black text-[#2A1205] truncate">{trVedic(livePanchang.yoga, lang)}</div>
               </div>
               <div
                 className="p-2 rounded-lg border border-[#C88A2B]/40"
                 style={{ backgroundColor: '#FAF2E4' }}
               >
-                <div className="text-[10px] font-bold text-[#7C2D12]">करण (Karana)</div>
-                <div className="font-black text-[#2A1205] truncate">{livePanchang.karana}</div>
+                <div className="text-[10px] font-bold text-[#7C2D12]">{pick('करण (Karana)', 'Karana', 'કરણ')}</div>
+                <div className="font-black text-[#2A1205] truncate">{trVedic(livePanchang.karana, lang)}</div>
               </div>
             </div>
 
             <div className="flex items-center justify-between text-[11px] font-bold text-[#5C3A21] pt-1">
               <span>
-                🌅 सूर्योदय:{' '}
-                {livePanchang.solar.sunrise.toLocaleTimeString('hi-IN', {
+                🌅 {pick('सूर्योदय:', 'Sunrise:', 'સૂર્યોદય:')}{' '}
+                {livePanchang.solar.sunrise.toLocaleTimeString(dateLocale, {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
               </span>
               <span>
-                🌇 सूर्यास्त:{' '}
-                {livePanchang.solar.sunset.toLocaleTimeString('hi-IN', {
+                🌇 {pick('सूर्यास्त:', 'Sunset:', 'સૂર્યાસ્ત:')}{' '}
+                {livePanchang.solar.sunset.toLocaleTimeString(dateLocale, {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
@@ -518,10 +521,10 @@ export const Vedic3DKundaliView: React.FC<{
               <div className="flex items-center gap-2">
                 <Flame className="w-4 h-4 text-[#B91C1C]" />
                 <h4 className="font-granth font-black text-sm text-[#4A200A]">
-                  ग्रह स्पष्ट एवं भाव स्थिति
+                  {pick('ग्रह स्पष्ट एवं भाव स्थिति', 'Planetary Positions', 'ગ્રહ સ્પષ્ટ અને ભાવ સ્થિતિ')}
                 </h4>
               </div>
-              <span className="text-[10px] text-[#7C2D12] font-bold">स्पष्ट अंश</span>
+              <span className="text-[10px] text-[#7C2D12] font-bold">{pick('स्पष्ट अंश', 'Degrees', 'સ્પષ્ટ અંશ')}</span>
             </div>
 
             <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
@@ -553,13 +556,13 @@ export const Vedic3DKundaliView: React.FC<{
                         className="w-3 h-3 rounded-full shrink-0 border border-white/60"
                         style={{ backgroundColor: color }}
                       />
-                      <span className="font-black text-xs sm:text-sm">{p.planetName}</span>
+                      <span className="font-black text-xs sm:text-sm">{trPlanet(p.planetName, lang)}</span>
                       {p.isRetrograde && (
                         <span
                           className="text-[10px] px-1.5 py-0.5 rounded font-black"
                           style={{ backgroundColor: '#FEE2E2', color: '#991B1B' }}
                         >
-                          वक्री
+                          {pick('वक्री', 'R', 'વક્રી')}
                         </span>
                       )}
                     </div>
@@ -568,13 +571,13 @@ export const Vedic3DKundaliView: React.FC<{
                         className="font-black"
                         style={{ color: isSelected ? '#FDE68A' : '#7C2D12' }}
                       >
-                        {p.rashiName}
+                        {trRashi(p.rashiName, lang)}
                       </span>{' '}
                       <span
                         className="text-[11px] font-bold"
                         style={{ color: isSelected ? '#FFF3C4' : '#5C3A21' }}
                       >
-                        {p.degreeInSign.toFixed(1)}° (भाव {p.houseNumber})
+                        {p.degreeInSign.toFixed(1)}° ({pick(`भाव ${p.houseNumber}`, `H${p.houseNumber}`, `ભાવ ${p.houseNumber}`)})
                       </span>
                     </div>
                   </button>
@@ -590,19 +593,19 @@ export const Vedic3DKundaliView: React.FC<{
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-[#4A200A] flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-[#B45309]" /> 3D झुकाव नियंत्रक (Tilt)
+                <Sliders className="w-3.5 h-3.5 text-[#B45309]" /> {pick('3D झुकाव नियंत्रक (Tilt)', '3D Perspective Tilt', '3D ઝુકાવ નિયંત્રક (Tilt)')}
               </span>
               <button
                 type="button"
                 onClick={handleResetParallax}
                 className="text-[11px] font-bold text-[#9A3412] hover:underline cursor-pointer"
               >
-                रीसेट करें
+                {pick('रीसेट करें', 'Reset', 'રીસેટ કરો')}
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2 text-[11px] font-bold text-[#5C3A21]">
               <label className="space-y-1">
-                <span>झुकाव X: {rotationX.toFixed(0)}°</span>
+                <span>{pick('झुकाव X:', 'Tilt X:', 'ઝુકાવ X:')} {rotationX.toFixed(0)}°</span>
                 <input
                   type="range"
                   min={-35}
@@ -613,7 +616,7 @@ export const Vedic3DKundaliView: React.FC<{
                 />
               </label>
               <label className="space-y-1">
-                <span>झुकाव Y: {rotationY.toFixed(0)}°</span>
+                <span>{pick('झुकाव Y:', 'Tilt Y:', 'ઝુકાવ Y:')} {rotationY.toFixed(0)}°</span>
                 <input
                   type="range"
                   min={-30}
@@ -724,6 +727,7 @@ export const Vedic3DKundaliView: React.FC<{
                   const hy = 250 + 168 * Math.sin(midRad);
 
                   const houseCell = activeGrid[idx];
+                  const cellSignName = trRashi(houseCell?.rashiName || z.hi, lang);
 
                   return (
                     <g key={z.num}>
@@ -747,7 +751,7 @@ export const Vedic3DKundaliView: React.FC<{
                           fontSize="14.5"
                           fontWeight="900"
                         >
-                          {z.sym} {z.hi}
+                          {z.sym} {trRashi(z.hi, lang)}
                         </text>
                       </g>
 
@@ -765,7 +769,7 @@ export const Vedic3DKundaliView: React.FC<{
                             strokeWidth: '3px',
                           }}
                         >
-                          भाव {idx + 1} ({houseCell?.rashiName || z.hi})
+                          {pick(`भाव ${idx + 1}`, `H${idx + 1}`, `ભાવ ${idx + 1}`)} ({cellSignName})
                         </text>
                       </g>
                     </g>
@@ -819,7 +823,7 @@ export const Vedic3DKundaliView: React.FC<{
                             strokeWidth: '2.5px',
                           }}
                         >
-                          {p.planetName}
+                          {trPlanet(p.planetName, lang)}
                         </text>
                       </g>
                     </g>
@@ -863,7 +867,7 @@ export const Vedic3DKundaliView: React.FC<{
                 fontSize="12"
                 fontWeight="900"
               >
-                {activeChartDivision} लग्न: {vedicState.lagnaRashi}
+                {activeChartDivision} {pick('लग्न:', 'Lagna:', 'લગ્ન:')} {trRashi(vedicState.lagnaRashi, lang)}
               </text>
               <text
                 x="250"
@@ -888,7 +892,7 @@ export const Vedic3DKundaliView: React.FC<{
                 color: '#FFF3C4',
               }}
             >
-              चक्र कोण: <strong>{rotationZ.toFixed(0)}°</strong>
+              {pick('चक्र कोण:', 'Angle:', 'ચક્ર કોણ:')} <strong>{rotationZ.toFixed(0)}°</strong>
             </span>
             <span
               className="px-2.5 py-1 rounded-lg border font-bold"
@@ -898,7 +902,7 @@ export const Vedic3DKundaliView: React.FC<{
                 color: '#FFF3C4',
               }}
             >
-              3D झुकाव: <strong>X:{rotationX.toFixed(0)}° / Y:{rotationY.toFixed(0)}°</strong>
+              {pick('3D झुकाव:', '3D Tilt:', '3D ઝુકાવ:')} <strong>X:{rotationX.toFixed(0)}° / Y:{rotationY.toFixed(0)}°</strong>
             </span>
             {selectedPlanet && (
               <span
@@ -909,8 +913,8 @@ export const Vedic3DKundaliView: React.FC<{
                   color: '#2A1205',
                 }}
               >
-                चयनित ग्रह: {selectedPlanet.planetName} — {selectedPlanet.rashiName}{' '}
-                {selectedPlanet.degreeInSign.toFixed(2)}° (भाव {selectedPlanet.houseNumber})
+                {pick('चयनित ग्रह:', 'Selected:', 'પસંદ કરેલ ગ્રહ:')} {trPlanet(selectedPlanet.planetName, lang)} — {trRashi(selectedPlanet.rashiName, lang)}{' '}
+                {selectedPlanet.degreeInSign.toFixed(2)}° ({pick(`भाव ${selectedPlanet.houseNumber}`, `House ${selectedPlanet.houseNumber}`, `ભાવ ${selectedPlanet.houseNumber}`)})
               </span>
             )}
           </div>
@@ -921,7 +925,7 @@ export const Vedic3DKundaliView: React.FC<{
               lagnaDegree={kundali.lagnaDegree}
               planets={kundali.planets}
               vargaDivision={activeChartDivision === 'D9' ? 9 : 1}
-              chartTitle={`${kundali.name} — 3D ${activeChartDivision} कुण्डली चक्र`}
+              chartTitle={`${kundali.name} — 3D ${activeChartDivision} ${pick('कुण्डली चक्र', 'Horoscope Chart', 'કુંડળી ચક્ર')}`}
             />
           </div>
         </div>
@@ -941,17 +945,17 @@ export const Vedic3DKundaliView: React.FC<{
                     color: '#FFF3C4',
                   }}
                 >
-                  उमा
+                  {pick('उमा', 'UMA', 'ઉમા')}
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h4 className="font-granth font-black text-sm sm:text-base text-[#4A200A]">
-                      UMA ज्योतिष विश्लेषण सिंक
+                      {pick('UMA ज्योतिष विश्लेषण सिंक', 'UMA Astro Analysis Sync', 'UMA જ્યોતિષ વિશ્લેષણ સિંક')}
                     </h4>
                     <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
                   </div>
                   <p className="text-[10px] font-bold text-[#7C2D12]">
-                    3D कुण्डली एवं दशा लाइव समन्वय
+                    {pick('3D कुण्डली एवं दशा लाइव समन्वय', '3D Chart & Dasha Live Sync', '3D કુંડળી અને દશા લાઇવ સિંક')}
                   </p>
                 </div>
               </div>
@@ -959,7 +963,7 @@ export const Vedic3DKundaliView: React.FC<{
                 className="text-[10px] px-2 py-0.5 rounded-md font-bold"
                 style={{ backgroundColor: '#5C2D0C', color: '#FFF3C4' }}
               >
-                सक्रिय
+                {pick('सक्रिय', 'Active', 'સક્રિય')}
               </span>
             </div>
 
@@ -969,10 +973,10 @@ export const Vedic3DKundaliView: React.FC<{
               style={{ backgroundColor: '#F4E8D1' }}
             >
               {[
-                { id: 'summary', label: 'सार' },
-                { id: 'dasha', label: 'महादशा' },
-                { id: 'gochar', label: 'गोचर' },
-                { id: 'varga', label: 'D1/D9 वर्ग' },
+                { id: 'summary', label: pick('सार', 'Summary', 'સાર') },
+                { id: 'dasha', label: pick('महादशा', 'Dasha', 'મહાદશા') },
+                { id: 'gochar', label: pick('गोचर', 'Transit', 'ગોચર') },
+                { id: 'varga', label: pick('D1/D9 वर्ग', 'D1/D9', 'D1/D9 વર્ગ') },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -999,7 +1003,7 @@ export const Vedic3DKundaliView: React.FC<{
                     style={{ backgroundColor: '#FAF2E4' }}
                   >
                     <div className="text-[#7C2D12] font-black flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-[#B45309]" /> जातक का 3D लग्न विश्लेषण
+                      <Sparkles className="w-3.5 h-3.5 text-[#B45309]" /> {pick('जातक का 3D लग्न विश्लेषण', '3D Ascendant Analysis', 'જાતકનું 3D લગ્ન વિશ્લેષણ')}
                     </div>
                     {analysis.summaryLines.map((line, idx) => (
                       <p key={idx} className="text-xs font-medium text-[#2A1205]">
@@ -1023,7 +1027,7 @@ export const Vedic3DKundaliView: React.FC<{
                         </span>
                       </div>
                       <p className="text-[#3E1F0D] font-medium">{area.finding}</p>
-                      <p className="text-[11px] font-bold text-[#9A3412]">उपाय: {area.remedy}</p>
+                      <p className="text-[11px] font-bold text-[#9A3412]">{pick('उपाय:', 'Remedy:', 'ઉપાય:')} {area.remedy}</p>
                     </div>
                   ))}
                 </>
@@ -1036,12 +1040,12 @@ export const Vedic3DKundaliView: React.FC<{
                     style={{ backgroundColor: '#FAF2E4' }}
                   >
                     <div className="text-[11px] text-[#7C2D12] font-black uppercase tracking-wider">
-                      वर्तमान विंशोत्तरी महादशा
+                      {pick('वर्तमान विंशोत्तरी महादशा', 'Current Vimshottari Mahadasha', 'વર્તમાન વિંશોત્તરી મહાદશા')}
                     </div>
                     <div className="text-sm font-black text-[#2A1205]">
-                      {vedicState.currentMahadasha.mahadashaLord} महादशा →{' '}
-                      {vedicState.currentMahadasha.antardashaLord} अंतर्दशा →{' '}
-                      {vedicState.currentMahadasha.pratyantardashaLord} प्रत्यंतर
+                      {trPlanet(vedicState.currentMahadasha.mahadashaLord, lang)} {pick('महादशा', 'Mahadasha', 'મહાદશા')} →{' '}
+                      {trPlanet(vedicState.currentMahadasha.antardashaLord, lang)} {pick('अंतर्दशा', 'Antardasha', 'અંતર્દશા')} →{' '}
+                      {trPlanet(vedicState.currentMahadasha.pratyantardashaLord, lang)} {pick('प्रत्यंतर', 'Pratyantardasha', 'પ્રત્યંતર')}
                     </div>
                     <div className="w-full h-2.5 rounded-full bg-[#E5D2B8] overflow-hidden">
                       <div
@@ -1061,14 +1065,18 @@ export const Vedic3DKundaliView: React.FC<{
                     style={{ backgroundColor: '#FAF2E4' }}
                   >
                     <div className="font-black text-[#7C2D12] mb-1">
-                      तात्कालिक पंचांग एवं गोचर प्रभाव
+                      {pick('तात्कालिक पंचांग एवं गोचर प्रभाव', 'Live Panchang & Transit Impact', 'તાત્કાલિક પંચાંગ અને ગોચર પ્રભાવ')}
                     </div>
                     <p className="text-[#2A1205] font-medium">
-                      आज {livePanchang.paksha} {livePanchang.tithi} तथा{' '}
-                      {livePanchang.nakshatra} नक्षत्र के संयोग में आपकी जन्म राशि{' '}
-                      <strong>{kundali.moonRashi}</strong> पर{' '}
-                      <strong>{vedicState.currentMahadasha.mahadashaLord}</strong> का सूक्ष्म प्रभाव
-                      सक्रिय है।
+                      {pick(
+                        `आज ${livePanchang.paksha} ${livePanchang.tithi} तथा ${livePanchang.nakshatra} नक्षत्र के संयोग में आपकी जन्म राशि `,
+                        `Today on ${trVedic(livePanchang.paksha, 'en')} ${trVedic(livePanchang.tithi, 'en')} with ${trVedic(livePanchang.nakshatra, 'en')} Nakshatra, your Moon sign `,
+                        `આજે ${trVedic(livePanchang.paksha, 'gu')} ${trVedic(livePanchang.tithi, 'gu')} અને ${trVedic(livePanchang.nakshatra, 'gu')} નક્ષત્રમાં તમારી જન્મ રાશિ `
+                      )}
+                      <strong>{trRashi(kundali.moonRashi, lang)}</strong>{' '}
+                      {pick('पर', 'is influenced by', 'પર')}{' '}
+                      <strong>{trPlanet(vedicState.currentMahadasha.mahadashaLord, lang)}</strong>{' '}
+                      {pick('का सूक्ष्म प्रभाव सक्रिय है।', 'sub-period energy.', 'નો સૂક્ષ્મ પ્રભાવ સક્રિય છે.')}
                     </p>
                   </div>
                   {analysis.yogas.slice(0, 3).map((y, idx) => (
@@ -1086,7 +1094,7 @@ export const Vedic3DKundaliView: React.FC<{
               {umaSelectedTopic === 'varga' && (
                 <div className="space-y-2">
                   <div className="text-xs font-black text-[#4A200A]">
-                    D-1 एवं D-9 भाव सारणी:
+                    {pick('D-1 एवं D-9 भाव सारणी:', 'D-1 & D-9 House Grid:', 'D-1 અને D-9 ભાવ કોષ્ટક:')}
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
                     {activeGrid.map((cell) => (
@@ -1096,10 +1104,10 @@ export const Vedic3DKundaliView: React.FC<{
                         style={{ backgroundColor: '#FAF2E4' }}
                       >
                         <div className="text-[10px] text-[#7C2D12] font-black">
-                          भाव {cell.houseNumber} ({cell.rashiName})
+                          {pick(`भाव ${cell.houseNumber}`, `House ${cell.houseNumber}`, `ભાવ ${cell.houseNumber}`)} ({trRashi(cell.rashiName, lang)})
                         </div>
                         <div className="text-[11px] font-bold text-[#2A1205] truncate">
-                          {cell.planets.length > 0 ? cell.planets.join(', ') : '— शांत भाव —'}
+                          {cell.planets.length > 0 ? cell.planets.map(formatCellPlanet).join(', ') : pick('— शांत भाव —', '— Empty —', '— ખાલી ભાવ —')}
                         </div>
                       </div>
                     ))}

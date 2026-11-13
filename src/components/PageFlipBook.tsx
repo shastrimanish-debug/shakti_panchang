@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "../i18n";
 
 interface PageFlipBookProps {
   pages: React.ReactNode[];
@@ -15,6 +16,8 @@ type FlipState = {
 };
 
 export function PageFlipBook({ pages, index, onIndexChange, onTurn }: PageFlipBookProps) {
+  const { language } = useLanguage();
+  const cLang = (language || "hi").slice(0, 2).toLowerCase();
   const stageRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ x: number; dir: "next" | "prev" | null } | null>(null);
   const [flip, setFlip] = useState<FlipState | null>(null);
@@ -204,19 +207,19 @@ export function PageFlipBook({ pages, index, onIndexChange, onTurn }: PageFlipBo
           onClick={goPrev}
           disabled={!canPrev}
           className="min-h-11 min-w-11 rounded-full bg-[#FAF2E4] border border-[#8C6239]/40 text-[#5C3A21] disabled:opacity-30 flex items-center justify-center"
-          aria-label="पिछला पन्ना"
+          aria-label={cLang === "en" ? "Previous page" : cLang === "gu" ? "પાછલું પૃષ્ઠ" : "पिछला पन्ना"}
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
         <div className="font-black text-[#5C3A21] text-sm">
-          पन्ना {index + 1} / {pages.length}
+          {cLang === "en" ? `Page ${index + 1} / ${pages.length}` : cLang === "gu" ? `પૃષ્ઠ ${index + 1} / ${pages.length}` : `पन्ना ${index + 1} / ${pages.length}`}
         </div>
         <button
           type="button"
           onClick={goNext}
           disabled={!canNext}
           className="min-h-11 min-w-11 rounded-full bg-[#5C3A21] text-[#FAF2E4] disabled:opacity-30 flex items-center justify-center"
-          aria-label="अगला पन्ना"
+          aria-label={cLang === "en" ? "Next page" : cLang === "gu" ? "આગલું પૃષ્ઠ" : "अगला पन्ना"}
         >
           <ChevronRight className="w-6 h-6" />
         </button>

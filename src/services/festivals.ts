@@ -719,3 +719,92 @@ export const MAJOR_FESTIVALS_2025_2026: FestivalItem[] = [
   ...getFestivalsForYear(2026),
 ];
 
+const FESTIVAL_META_LOC: Record<string, { guTitle?: string; enDesc: string; guDesc: string }> = {
+  'lohri': { guTitle: 'લોહડી', enDesc: 'Harvest bonfire festival celebrated on the eve of Makar Sankranti.', guDesc: 'મકર સંક્રાંતિ પૂર્વેનો પવિત્ર અગ્નિ પૂજન અને લણણી ઉત્સવ.' },
+  'makar-sankranti': { guTitle: 'મકર સંક્રાંતિ (ઉત્તરાયણ)', enDesc: 'Sun enters Capricorn (Uttarayana); sacred river bathing, til-gud & charity.', guDesc: 'સૂર્યનો મકર રાશિમાં પ્રવેશ, ઉત્તરાયણ પુણ્ય કાળ અને તલ-ગોળ દાનનું મહાપર્વ.' },
+  'baisakhi': { guTitle: 'વૈશાખી (મેષ સંક્રાંતિ)', enDesc: 'Solar New Year as Sun enters Aries; harvest celebration.', guDesc: 'સૌર નવવર્ષ અને સૂર્યનો મેષ રાશિમાં પ્રવેશ.' },
+  'mauni-amavasya': { guTitle: 'મૌની અમાસ', enDesc: 'Magha Krishna Amavasya; silent vow, sacred bathing & charity.', guDesc: 'મહા કૃષ્ણ અમાસ, મૌન વ્રત અને પવિત્ર નદી સ્નાનનો મહાપુણ્યકારી દિવસ.' },
+  'vasant-panchami': { guTitle: 'વસંત પંચમી (સરસ્વતી પૂજન)', enDesc: 'Magha Shukla Panchami dedicated to Goddess Saraswati, wisdom, arts & spring.', guDesc: 'મહા સુદ પંચમી, વિદ્યા અને વાણીની અધિષ્ઠાત્રી મા સરસ્વતીનું પૂજન અને વસંતોત્સવ.' },
+  'maha-shivratri': { guTitle: 'મહાશિવરાત્રિ', enDesc: 'Falgun Krishna Chaturdashi; sacred wedding night of Lord Shiva & Maa Parvati with four-prahar Rudrabhishek.', guDesc: 'ફાગણ વદ ચૌદસ, ભગવાન શિવ અને મા પાર્વતીનું મહાપર્વ અને ચાર પ્રહર રુદ્રાભિષેક.' },
+  'holika-dahan': { guTitle: 'હોલિકા દહન', enDesc: 'Falgun Purnima evening; sacred bonfire symbolizing victory of devotion.', guDesc: 'ફાગણ પૂર્ણિમાની સાંજે ભક્ત પ્રહલાદની રક્ષા અને અગ્નિ પૂજનનું પર્વ.' },
+  'holi': { guTitle: 'હોળી / ધુળેટી (રંગોત્સવ)', enDesc: 'Festival of colors celebrating joy, spring and harmony.', guDesc: 'રંગો, વસંત અને પરસ્પર પ્રેમ-સદ્ભાવનો મહાઉત્સવ.' },
+  'chaitra-navratri-start': { guTitle: 'ચૈત્ર નવરાત્રિ / હિન્દુ નવવર્ષ', enDesc: 'Hindu New Year (Vikram Samvat), Gudi Padwa, Ugadi & 9-day Maa Durga worship.', guDesc: 'વિક્રમ સંવત નવવર્ષ પ્રારંભ, ઘટસ્થાપન અને મા દુર્ગાની નવદિવસીય ઉપાસના.' },
+  'ram-navami': { guTitle: 'શ્રી રામ નવમી', enDesc: 'Chaitra Shukla Navami; sacred noon birth celebration of Lord Shri Rama.', guDesc: 'ચૈત્ર સુદ નોમ, મર્યાદા પુરુષોત્તમ ભગવાન શ્રી રામનો પાવન પ્રાગટ્ય દિવસ.' },
+  'hanuman-jayanti': { guTitle: 'શ્રી હનુમાન જયંતિ', enDesc: 'Chaitra Purnima celebration of Lord Hanuman’s divine birth.', guDesc: 'ચૈત્ર પૂર્ણિમાના રોજ સંકટમોચન શ્રી હનુમાનજીનો જન્મોત્સવ.' },
+  'akshaya-tritiya': { guTitle: 'અક્ષય તૃતીયા (અખાત્રીજ)', enDesc: 'Vaishakha Shukla Tritiya; self-auspicious Abujh Muhurat for charity & sacred starts.', guDesc: 'વૈશાખ સુદ ત્રીજ, સ્વયંસિદ્ધ અબૂઝ મુહૂર્ત, પરશુરામ જયંતિ અને અક્ષય પુણ્ય દાન.' },
+  'buddha-purnima': { guTitle: 'બુદ્ધ પૂર્ણિમા (વૈશાખ પૂર્ણિમા)', enDesc: 'Vaishakha Purnima commemorating Lord Buddha, Satyanarayan Vrat & charity.', guDesc: 'ભગવાન બુદ્ધ જયંતિ, સત્યનારાયણ વ્રત અને જળ દાન.' },
+  'ganga-dussehra': { guTitle: 'ગંગા દશેરા', enDesc: 'Jyeshtha Shukla Dashami celebrating Goddess Ganga’s descent to Earth.', guDesc: 'જેઠ સુદ દશમ, પતિતપાવની મા ગંગાનો પૃથ્વી પર અવતરણ દિવસ.' },
+  'nirjala-ekadashi': { guTitle: 'નિર્જળા એકાદશી (ભીમસેની અગિયારસ)', enDesc: 'Jyeshtha Shukla Ekadashi; supreme waterless fast bestowing fruit of all 24 Ekadashis.', guDesc: 'જેઠ સુદ અગિયારસ, બધી ૨૪ એકાદશીઓનું ફળ આપનારું મહાવ્રત.' },
+  'jagannath-rath-yatra': { guTitle: 'જગન્નાથ રથયાત્રા', enDesc: 'Ashadha Shukla Dwitiya; grand chariot festival of Lord Jagannath, Balabhadra & Subhadra.', guDesc: 'અષાઢ સુદ બીજ, મહાપ્રભુ શ્રી જગન્નાથ, બલભદ્ર અને સુભદ્રાજીની ભવ્ય રથયાત્રા.' },
+  'devshayani-ekadashi': { guTitle: 'દેવશયની એકાદશી (અષાઢી અગિયારસ)', enDesc: 'Ashadha Shukla Ekadashi marking Lord Vishnu’s cosmic rest and Chaturmas start.', guDesc: 'અષાઢ સુદ અગિયારસ, ભગવાન વિષ્ણુનું યોગનિદ્રા શયન અને ચાતુર્માસ પ્રારંભ.' },
+  'guru-purnima': { guTitle: 'ગુરુ પૂર્ણિમા (વ્યાસ પૂર્ણિમા)', enDesc: 'Ashadha Purnima honoring Maharishi Ved Vyasa and spiritual teachers.', guDesc: 'અષાઢ પૂર્ણિમા, મહર્ષિ વેદવ્યાસ જયંતિ અને ગુરુજનોના પૂજનનો પાવન દિવસ.' },
+  'hariyali-teej': { guTitle: 'હરિયાળી ત્રીજ', enDesc: 'Shravan Shukla Tritiya; Shiv-Parvati worship for marital bliss.', guDesc: 'શ્રાવણ સુદ ત્રીજ, શિવ-પાર્વતી પૂજન અને અખંડ સૌભાગ્યનું વ્રત.' },
+  'nag-panchami': { guTitle: 'નાગ પંચમી', enDesc: 'Shravan Shukla Panchami dedicated to Serpent Deities and Kaal Sarp remedy.', guDesc: 'શ્રાવણ સુદ પાંચમ, નાગ દેવતાનું પૂજન અને કાલસર્પ દોષ નિવારણ.' },
+  'raksha-bandhan': { guTitle: 'રક્ષાબંધન', enDesc: 'Shravan Purnima celebrating the sacred bond of protection between siblings.', guDesc: 'શ્રાવણ પૂર્ણિમા, ભાઈ-બહેનના પવિત્ર સ્નેહ અને રક્ષાસૂત્રનું મહાપર્વ.' },
+  'krishna-janmashtami': { guTitle: 'શ્રીકૃષ્ણ જન્માષ્ટમી', enDesc: 'Bhadrapada Krishna Ashtami Nishita Kaal celebration of Lord Krishna’s birth.', guDesc: 'ભાદરવા વદ આઠમ, નિશીથ કાળમાં ભગવાન શ્રીકૃષ્ણનો પાવન પ્રાગટ્યોત્સવ.' },
+  'hartalika-teej': { guTitle: 'હરતાલિકા ત્રીજ', enDesc: 'Bhadrapada Shukla Tritiya; strict fast worshipping Maa Parvati & Lord Shiva.', guDesc: 'ભાદરવા સુદ ત્રીજ, મા પાર્વતી અને શિવજીનું નિર્જળા સૌભાગ્ય વ્રત.' },
+  'ganesh-chaturthi': { guTitle: 'ગણેશ ચતુર્થી', enDesc: 'Bhadrapada Shukla Chaturthi; birth & installation of Lord Ganesha.', guDesc: 'ભાદરવા સુદ ચોથ, વિઘ્નહર્તા શ્રી ગણેશજીનો જન્મોત્સવ અને સ્થાપના.' },
+  'anant-chaturdashi': { guTitle: 'અનંત ચતુર્દશી (ગણેશ વિસર્જન)', enDesc: 'Bhadrapada Shukla Chaturdashi; Anant Vishnu puja and Ganesh Visarjan.', guDesc: 'ભાદરવા સુદ ચૌદસ, અનંત સ્વરૂપ વિષ્ણુ પૂજન અને ગણેશ વિસર્જન.' },
+  'pitru-paksha-start': { guTitle: 'પિતૃ પક્ષ (શ્રાદ્ધ પક્ષ) પ્રારંભ', enDesc: '16-day sacred period of Tarpan and Shraddha honoring ancestors.', guDesc: 'પૂર્વજો પ્રત્યે કૃતજ્ઞતા, તર્પણ અને શ્રાદ્ધનો ૧૬ દિવસીય પવિત્ર કાળ.' },
+  'sarva-pitru-amavasya': { guTitle: 'સર્વપિતૃ અમાસ', enDesc: 'Ashwin Amavasya; concluding Shraddha & Tarpan for all ancestors.', guDesc: 'આસો વદ અમાસ, સમસ્ત જ્ઞાત-અજ્ઞાત પિતૃઓના તર્પણ અને વિદાયનો પાવન દિવસ.' },
+  'shardiya-navratri-start': { guTitle: 'શારદીય નવરાત્રિ ઘટસ્થાપના', enDesc: 'Ashwin Shukla Pratipada; Kalash Sthapana & 9-night Goddess Durga worship.', guDesc: 'આસો સુદ એકમ, ઘટસ્થાપના અને નવદુર્ગાની ભક્તિ-ઉપાસનાનો મહાપર્વ.' },
+  'durga-ashtami': { guTitle: 'દુર્ગા મહાષ્ટમી', enDesc: 'Ashwin Shukla Ashtami; Maa Mahagauri worship, Kanya Puja & Sandhi Puja.', guDesc: 'આસો સુદ આઠમ, મા મહાગૌરી પૂજન, કન્યા પૂજન અને હવન.' },
+  'maha-navami': { guTitle: 'મહાનવમી (સિદ્ધિદાત્રી પૂજન)', enDesc: 'Ashwin Shukla Navami; Maa Siddhidatri puja and Navratri Purnahuti.', guDesc: 'આસો સુદ નોમ, મા સિદ્ધિદાત્રી પૂજન અને નવરાત્રિ પૂર્ણાહુતિ.' },
+  'dussehra': { guTitle: 'દશેરા / વિજયાદશમી', enDesc: 'Victory of Dharma over Adharma; Lord Rama’s triumph & Shastra Puja.', guDesc: 'અધર્મ પર ધર્મ અને શ્રી રામના વિજયનું મહાપર્વ, શસ્ત્ર અને અપરાજિતા પૂજન.' },
+  'sharad-purnima': { guTitle: 'શરદ પૂર્ણિમા (કોજાગરી / રાસ પૂર્ણિમા)', enDesc: 'Ashwin Purnima; nectarous moonlight of 16 Kalas, kheer offering & Maa Lakshmi.', guDesc: 'આસો પૂર્ણિમા, ૧૬ કળાઓથી યુક્ત અમૃતમય ચંદ્રકિરણો અને દૂધ-પૌંઆનો ભોગ.' },
+  'karwa-chauth': { guTitle: 'કરવા ચોથ', enDesc: 'Kartik Krishna Chaturthi; marital fast observed till Moonrise.', guDesc: 'કારતક વદ ચોથ, સૌભાગ્યવતી મહિલાઓ દ્વારા ચંદ્રોદય સુધી નિર્જળા વ્રત.' },
+  'ahoi-ashtami': { guTitle: 'અહોઈ અષ્ટમી', enDesc: 'Kartik Krishna Ashtami; mothers’ fast for children’s longevity and well-being.', guDesc: 'કારતક વદ આઠમ, સંતાનોના દીર્ઘાયુ અને કલ્યાણ માટેનું માતૃ વ્રત.' },
+  'dhanteras': { guTitle: 'ધનતેરસ (ધન્વંતરિ જયંતિ)', enDesc: 'Kartik Krishna Trayodashi; Lord Dhanvantari Jayanti, Kubera puja & Yama Deepdan.', guDesc: 'કારતક વદ તેરસ, આરોગ્યના દેવ ધન્વંતરિ જયંતિ, કુબેર પૂજન અને યમ દીપદાન.' },
+  'narak-chaturdashi': { guTitle: 'કાળી ચૌદશ / રૂપ ચૌદશ', enDesc: 'Kartik Krishna Chaturdashi (Chhoti Diwali / Kali Chaudas).', guDesc: 'કારતક વદ ચૌદસ (કાળી ચૌદશ / રૂપ ચૌદશ).' },
+  'diwali': { guTitle: 'દીપાવલી (મહાલક્ષ્મી પૂજન)', enDesc: 'Kartik Amavasya; Festival of Lights & evening Mahalakshmi-Ganesh worship.', guDesc: 'કારતક અમાસ, પ્રકાશનું મહાપર્વ અને મહાલક્ષ્મી-ગણેશ મહાપૂજન.' },
+  'govardhan-puja': { guTitle: 'ગોવર્ધન પૂજા / બેસતું વર્ષ (અન્નકૂટ)', enDesc: 'Kartik Shukla Pratipada; Annakut Mahotsav & Govardhan worship.', guDesc: 'કારતક સુદ એકમ, અન્નકૂટ મહોત્સવ અને ગોવર્ધન પૂજન.' },
+  'bhai-dooj': { guTitle: 'ભાઈ બીજ (યમ દ્વિતીયા)', enDesc: 'Kartik Shukla Dwitiya celebrating siblings’ bond and long life.', guDesc: 'કારતક સુદ બીજ, ભાઈ-બહેનના સ્નેહ અને દીર્ઘાયુ તિલકનું પર્વ.' },
+  'chhath-puja': { guTitle: 'છઠ પૂજા (સૂર્ય ષષ્ઠી)', enDesc: 'Kartik Shukla Shashthi; 36-hour fast and Arghya to Surya Dev.', guDesc: 'કારતક સુદ છઠ, ભગવાન ભાસ્કર અને છઠી મૈયાનું મહાવ્રત અને અર્ઘ્ય.' },
+  'dev-uthani-ekadashi': { guTitle: 'દેવઉઠની એકાદશી / તુલસી વિવાહ', enDesc: 'Kartik Shukla Ekadashi; Lord Vishnu’s awakening, Chaturmas end & Tulsi Vivah.', guDesc: 'કારતક સુદ અગિયારસ, શ્રી હરિ વિષ્ણુનું જાગરણ, ચાતુર્માસ સમાપન અને તુલસી વિવાહ.' },
+  'kartik-purnima': { guTitle: 'કાર્તિક પૂર્ણિમા (દેવ દિવાળી)', enDesc: 'Kartik Purnima, Dev Diwali, sacred river bath & Deepdan.', guDesc: 'કારતક પૂર્ણિમા, દેવ દિવાળી, ત્રિપુરારી પૂર્ણિમા અને પવિત્ર દીપદાન.' },
+  'gita-jayanti': { guTitle: 'ગીતા જયંતિ / મોક્ષદા એકાદશી', enDesc: 'Margashirsha Shukla Ekadashi celebrating Shrimad Bhagavad Gita discourse.', guDesc: 'માગશર સુદ અગિયારસ, શ્રીમદ્ ભગવદ્ ગીતા ઉપદેશ અને મોક્ષદા એકાદશી.' },
+  'paush-purnima': { guTitle: 'પોષ પૂર્ણિમા', enDesc: 'Pausha Purnima marking Magh Mela bathing and charity.', guDesc: 'પોષ પૂર્ણિમા, માઘ મેળા સ્નાન અને પવિત્ર દાનનું પર્વ.' },
+};
+
+export function getLocalizedFestival(
+  fest: FestivalItem,
+  lang: string = 'hi'
+): { title: string; type: string; description: string } {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (c === 'hi') {
+    return {
+      title: fest.hindiName || fest.name,
+      type: fest.type || '',
+      description: fest.description || '',
+    };
+  }
+  const key = fest.id.replace(/^fest-\d{4}-/, '');
+  const meta = FESTIVAL_META_LOC[key];
+  const typeMapEn: Record<string, string> = {
+    'पर्व': 'Festival',
+    'व्रत': 'Vrat',
+    'एकादशी': 'Ekadashi',
+    'अमावस्या': 'Amavasya',
+    'पूर्णिमा': 'Purnima',
+  };
+  const typeMapGu: Record<string, string> = {
+    'पर्व': 'પર્વ',
+    'व्रत': 'વ્રત',
+    'एकादशी': 'એકાદશી',
+    'अमावस्या': 'અમાસ',
+    'पूर्णिमा': 'પૂર્ણિમા',
+  };
+  if (c === 'en') {
+    return {
+      title: fest.name,
+      type: typeMapEn[fest.type || ''] || fest.type || '',
+      description: meta?.enDesc || fest.description || '',
+    };
+  }
+  return {
+    title: meta?.guTitle || fest.hindiName || fest.name,
+    type: typeMapGu[fest.type || ''] || fest.type || '',
+    description: meta?.guDesc || fest.description || '',
+  };
+}
+

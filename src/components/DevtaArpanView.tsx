@@ -14,38 +14,41 @@ import {
   Volume2,
   VolumeX,
   BookOpen,
-  HelpCircle,
   Clock,
   ShieldAlert,
-  ChevronRight,
   Filter,
   X,
-  Heart,
-  ExternalLink,
 } from 'lucide-react';
 import { triggerHapticSelection } from '../utils/haptics';
 import { umaVoice } from '../services/UmaVoiceService';
+import { useLanguage } from '../i18n';
+import { trPlanet, trVedic } from '../i18n/vedicTranslate';
+import { openWhatsAppShare } from '../services/umaConsultationPdf';
 
 interface DevtaArpanViewProps {
   onSelectTab?: (tabId: string) => void;
   onOpenUmaWithPrompt?: (prompt: string) => void;
 }
 
-const CATEGORY_TABS = [
-  { id: 'all', label: 'समस्त अर्पण', icon: '✨' },
-  { id: 'wealth', label: 'धन व व्यापार', icon: '💰' },
-  { id: 'health', label: 'आरोग्य व रोग-मुक्ति', icon: '🩺' },
-  { id: 'marriage', label: 'विवाह व दांपत्य', icon: '💍' },
-  { id: 'protection', label: 'संकट व शत्रु नाश', icon: '🛡️' },
-  { id: 'education', label: 'विद्या व परीक्षा', icon: '📚' },
-  { id: 'graha', label: 'ग्रह शांति व साढ़ेसाती', icon: '🪐' },
-  { id: 'career', label: 'नौकरी व पदोन्नति', icon: '💼' },
-];
-
 export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
   onSelectTab,
   onOpenUmaWithPrompt,
 }) => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === 'en' ? en : cLang === 'gu' ? gu : hi);
+
+  const CATEGORY_TABS = useMemo(() => [
+    { id: 'all', label: L('समस्त अर्पण', 'All Offerings', 'સમસ્ત અર્પણ'), icon: '✨' },
+    { id: 'wealth', label: L('धन व व्यापार', 'Wealth & Business', 'ધન અને વેપાર'), icon: '💰' },
+    { id: 'health', label: L('आरोग्य व रोग-मुक्ति', 'Health & Healing', 'આરોગ્ય અને રોગમુક્તિ'), icon: '🩺' },
+    { id: 'marriage', label: L('विवाह व दांपत्य', 'Marriage & Harmony', 'વિવાહ અને દામ્પત્ય'), icon: '💍' },
+    { id: 'protection', label: L('संकट व शत्रु नाश', 'Protection & Strength', 'સંકટ અને શત્રુ નાશ'), icon: '🛡️' },
+    { id: 'education', label: L('विद्या व परीक्षा', 'Wisdom & Study', 'વિદ્યા અને પરીક્ષા'), icon: '📚' },
+    { id: 'graha', label: L('ग्रह शांति व साढ़ेसाती', 'Planetary Peace', 'ગ્રહ શાંતિ અને સાડાસાતી'), icon: '🪐' },
+    { id: 'career', label: L('नौकरी व पदोन्नति', 'Career & Growth', 'નોકરી અને પ્રગતિ'), icon: '💼' },
+  ], [cLang]);
+
   const [selectedDeityId, setSelectedDeityId] = useState<string>('ganesh');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -125,13 +128,17 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
   };
 
   const handleShareWhatsApp = (deityName: string, item: DevtaOfferingItem) => {
-    const text = `🪔 *${deityName} — देवता अर्पण फल* 🪔\n\n📌 *सामग्री:* ${item.action_text}\n✨ *प्राप्त फल:* ${item.highlighted_benefit}\n${item.mantra ? `ॐ *मंत्र:* ${item.mantra}\n` : ''}${item.best_time ? `⏰ *श्रेष्ठ काल:* ${item.best_time}\n` : ''}\n✨ *सनातन शक्ति पंचांग*`;
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const dName = trVedic(deityName, cLang);
+    const text = `🪔 *${dName} — ${L('देवता अर्पण फल', 'Deity Offering & Fruit', 'દેવતા અર્પણ ફળ')}* 🪔\n\n📌 *${L('सामग्री:', 'Offering:', 'સામગ્રી:')}* ${item.action_text}\n✨ *${L('प्राप्त फल:', 'Fruit / Benefit:', 'પ્રાપ્ત ફળ:')}* ${item.highlighted_benefit}\n${item.mantra ? `ॐ *${L('मंत्र:', 'Mantra:', 'મંત્ર:')}* ${item.mantra}\n` : ''}${item.best_time ? `⏰ *${L('श्रेष्ठ काल:', 'Best Time:', 'શ્રેષ્ઠ સમય:')}* ${item.best_time}\n` : ''}\n✨ *${L('सनातन शक्ति पंचांग', 'Sanatan Shakti Panchang', 'સનાતન શક્તિ પંચાંગ')}*`;
+    openWhatsAppShare(text);
   };
 
   const handleConsultUma = (deityName: string, item: DevtaOfferingItem) => {
-    const prompt = `मुझे ${deityName} पर "${item.action_text.replace(/[–-]/g, '').trim()}" अर्पण करना है। इससे "${item.highlighted_benefit}" हेतु शास्त्रोक्त अर्पण विधि, संकल्प मंत्र, श्रेष्ठ वार व दिशा और मेरी कुंडली के अनुसार इसका फल विस्तार से बताएं।`;
+    const prompt = cLang === 'en'
+      ? `I want to offer "${item.action_text.replace(/[–-]/g, '').trim()}" to ${trVedic(deityName, 'en')}. For "${item.highlighted_benefit}", please explain the classical offering method, sankalpa mantra, best weekday/direction, and effects according to my Kundali.`
+      : cLang === 'gu'
+      ? `મારે ${trVedic(deityName, 'gu')} ને "${item.action_text.replace(/[–-]/g, '').trim()}" અર્પણ કરવું છે. "${item.highlighted_benefit}" માટે શાસ્ત્રોક્ત અર્પણ વિધિ, સંકલ્પ મંત્ર, શ્રેષ્ઠ વાર-દિશા અને મારી કુંડળી મુજબ તેનું ફળ વિસ્તારથી જણાવો.`
+      : `मुझे ${deityName} पर "${item.action_text.replace(/[–-]/g, '').trim()}" अर्पण करना है। इससे "${item.highlighted_benefit}" हेतु शास्त्रोक्त अर्पण विधि, संकल्प मंत्र, श्रेष्ठ वार व दिशा और मेरी कुंडली के अनुसार इसका फल विस्तार से बताएं।`;
     if (onOpenUmaWithPrompt) {
       onOpenUmaWithPrompt(prompt);
     } else if (onSelectTab) {
@@ -151,18 +158,21 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D4AF37] text-[#2C0A0A] shadow-xs">
-                卐 नवम अध्याय · प्रामाणिक शास्त्रोक्त विधान
+                {L('卐 नवम अध्याय · प्रामाणिक शास्त्रोक्त विधान', '卐 Chapter IX · Authentic Shastric Vidhi', '卐 નવમો અધ્યાય · પ્રામાણિક શાસ્ત્રોક્ત વિધાન')}
               </span>
               <span className="text-xs text-amber-200 font-serif">
-                १४+ देवता · ५०+ अर्पण सामग्री
+                {L('१४+ देवता · ५०+ अर्पण सामग्री', '14+ Deities · 50+ Sacred Offerings', '૧૪+ દેવતા · ૫૦+ અર્પણ સામગ્રી')}
               </span>
             </div>
             <h1 className="font-granth text-2xl sm:text-3xl font-black text-[#FFD88A] tracking-wide">
-              देवता अर्पण फल व पूजन सामग्री
+              {L('देवता अर्पण फल व पूजन सामग्री', 'Deity Offerings, Benefits & Puja Vidhi', 'દેવતા અર્પણ ફળ અને પૂજન સામગ્રી')}
             </h1>
             <p className="text-xs sm:text-sm text-[#F5ECE0]/90 font-serif max-w-2xl leading-relaxed">
-              किस देवी-देवता पर क्या सामग्री चढ़ाने से क्या अभीष्ट फल प्राप्त होता है?
-              मंत्र, वर्जित नियम (क्या न चढ़ाएं), श्रेष्ठ वार व मनोकामना पूर्ति का संपूर्ण सार।
+              {L(
+                'किस देवी-देवता पर क्या सामग्री चढ़ाने से क्या अभीष्ट फल प्राप्त होता है? मंत्र, वर्जित नियम (क्या न चढ़ाएं), श्रेष्ठ वार व मनोकामना पूर्ति का संपूर्ण सार।',
+                'Discover sacred offerings for each deity, their classical benefits, Vedic mantras, prohibited items, auspicious days, and fulfillment of wishes.',
+                'કયા દેવી-દેવતા પર કઈ સામગ્રી ચઢાવવાથી શું ઇચ્છિત ફળ મળે છે? મંત્ર, વર્જિત નિયમો, શ્રેષ્ઠ વાર અને મનોકામના પૂર્તિનો સંપૂર્ણ સાર.'
+              )}
             </p>
           </div>
 
@@ -175,7 +185,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
               className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[#FFD88A] text-xs font-bold border border-[#D4AF37]/50 flex items-center gap-1.5 transition cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>सामान्य अर्पण नियम</span>
+              <span>{L('सामान्य अर्पण नियम', 'General Puja Rules', 'સામાન્ય અર્પણ નિયમો')}</span>
             </button>
             <button
               onClick={() => {
@@ -189,7 +199,11 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
               }`}
             >
               <ShieldAlert className="w-3.5 h-3.5 text-rose-300" />
-              <span>{showProhibitionView ? 'सामग्री देखें' : 'वर्जित अर्पण (निषेध)'}</span>
+              <span>
+                {showProhibitionView
+                  ? L('सामग्री देखें', 'View Offerings', 'સામગ્રી જુઓ')
+                  : L('वर्जित अर्पण (निषेध)', 'Prohibited Items', 'વર્જિત અર્પણ (નિષેધ)')}
+              </span>
             </button>
           </div>
         </div>
@@ -200,10 +214,10 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
         <div>
           <div className="flex items-center justify-between pb-1.5">
             <span className="text-xs font-bold text-[#8C6239] uppercase tracking-wider">
-              देवी-देवता चुनें
+              {L('देवी-देवता चुनें', 'Select Deity', 'દેવી-દેવતા પસંદ કરો')}
             </span>
             <span className="text-[11px] text-[#A67C52]">
-              {deities.length} जाग्रत विग्रह उपलब्ध
+              {L(`${deities.length} जाग्रत विग्रह उपलब्ध`, `${deities.length} Sacred Deities`, `${deities.length} જાગ્રત વિગ્રહ ઉપલબ્ધ`)}
             </span>
           </div>
 
@@ -227,14 +241,14 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                   <span className="text-base leading-none">{d.avatar_icon}</span>
                   <div className="text-left">
                     <div className="text-xs font-black truncate max-w-[120px]">
-                      {d.deity}
+                      {trVedic(d.deity, cLang)}
                     </div>
                     <div
                       className={`text-[10px] font-medium leading-none ${
                         isSelected ? 'text-amber-200' : 'text-[#8C6239]'
                       }`}
                     >
-                      {d.holy_symbol} {d.offerings.length} सामग्री
+                      {d.holy_symbol} {d.offerings.length} {L('सामग्री', 'Items', 'સામગ્રી')}
                     </div>
                   </div>
                 </button>
@@ -251,7 +265,11 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="सामग्री (उदा. बेलपत्र, नींबू, सिंदूर, लौंग) या फल (उदा. रोग मुक्ति, धन, विवाह) खोजें..."
+              placeholder={L(
+                'सामग्री (उदा. बेलपत्र, नींबू, सिंदूर, लौंग) या फल (उदा. रोग मुक्ति, धन, विवाह) खोजें...',
+                'Search offering (e.g. Belpatra, Sindoor, Cloves) or fruit (wealth, health, marriage)...',
+                'સામગ્રી (દા.ત. બિલ્વપત્ર, સિંદૂર, લવિંગ) અથવા ફળ (ધન, આરોગ્ય, વિવાહ) શોધો...'
+              )}
               className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FFFDF9] border border-[#DFCBB5] text-xs sm:text-sm text-[#3E2714] placeholder-[#A67C52] focus:outline-none focus:ring-2 focus:ring-[#B58738]"
             />
             {searchQuery && (
@@ -271,7 +289,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
             <span className="text-[11px] font-bold text-[#8C6239] shrink-0 flex items-center gap-1 pr-1">
               <Filter className="w-3 h-3" />
-              मनोकामना:
+              {L('मनोकामना:', 'Intention:', 'મનોકામના:')}
             </span>
             {CATEGORY_TABS.map((cat) => (
               <button
@@ -322,7 +340,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                 )}
                 {currentDeity.ruling_planet && (
                   <span className="px-2 py-0.5 rounded-md bg-[#7A1D1D]/10 text-[#7A1D1D] text-[11px] font-bold border border-[#7A1D1D]/20">
-                    ग्रह: {currentDeity.ruling_planet}
+                    {L('ग्रह:', 'Planet:', 'ગ્રહ:')} {trPlanet(currentDeity.ruling_planet, cLang)}
                   </span>
                 )}
               </div>
@@ -333,7 +351,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
               <div className="space-y-0.5 min-w-0">
                 <div className="text-[10px] font-black text-[#8C4A00] uppercase tracking-wider flex items-center gap-1">
                   <span>ॐ</span>
-                  <span>मूल अर्पण व स्तुति मंत्र</span>
+                  <span>{L('मूल अर्पण व स्तुति मंत्र', 'Primary Offering Mantra', 'મૂળ અર્પણ અને સ્તુતિ મંત્ર')}</span>
                 </div>
                 <div className="font-serif text-xs sm:text-sm font-bold text-[#462B17] italic">
                   {currentDeity.main_arpan_mantra}
@@ -350,7 +368,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                       ? 'bg-[#7A1D1D] text-white border-[#7A1D1D]'
                       : 'bg-white text-[#7A1D1D] border-[#DFCBB5] hover:bg-[#FAF2E4]'
                   }`}
-                  title="मंत्र का मधुर वाचन सुनें"
+                  title={L('मंत्र का मधुर वाचन सुनें', 'Listen to Mantra', 'મંત્રનું મધુર વાંચન સાંભળો')}
                 >
                   {speakingId === `main_${currentDeity.deity_id}` ? (
                     <VolumeX className="w-3.5 h-3.5" />
@@ -358,7 +376,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                     <Volume2 className="w-3.5 h-3.5" />
                   )}
                   <span className="text-[11px]">
-                    {speakingId === `main_${currentDeity.deity_id}` ? 'रोकें' : 'श्रवण'}
+                    {speakingId === `main_${currentDeity.deity_id}` ? L('रोकें', 'Stop', 'રોકો') : L('श्रवण', 'Listen', 'સાંભળો')}
                   </span>
                 </button>
 
@@ -367,7 +385,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                     handleCopyMantra(`main_${currentDeity.deity_id}`, currentDeity.main_arpan_mantra)
                   }
                   className="p-1.5 rounded-lg bg-white hover:bg-[#FAF2E4] text-[#5C3A21] border border-[#DFCBB5] text-xs font-bold flex items-center gap-1 transition cursor-pointer"
-                  title="मंत्र कॉपी करें"
+                  title={L('मंत्र कॉपी करें', 'Copy Mantra', 'મંત્ર કૉપી કરો')}
                 >
                   {copiedMantraId === `main_${currentDeity.deity_id}` ? (
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -375,7 +393,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                     <Copy className="w-3.5 h-3.5" />
                   )}
                   <span className="text-[11px]">
-                    {copiedMantraId === `main_${currentDeity.deity_id}` ? 'कॉपी हुआ' : 'कॉपी'}
+                    {copiedMantraId === `main_${currentDeity.deity_id}` ? L('कॉपी हुआ', 'Copied', 'કૉપી થયું') : L('कॉपी', 'Copy', 'કૉપી')}
                   </span>
                 </button>
               </div>
@@ -387,7 +405,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                 <ShieldAlert className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <span className="font-bold text-rose-950">
-                    सावधानी — क्या कभी न चढ़ाएं (वर्जित):{' '}
+                    {L('सावधानी — क्या कभी न चढ़ाएं (वर्जित):', 'Caution — Never Offer (Prohibited):', 'સાવચેતી — ક્યારેય ન ચઢાવો (વર્જિત):')}{' '}
                   </span>
                   <span>{currentDeity.prohibited_items.join(' • ')}</span>
                 </div>
@@ -400,13 +418,17 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
         {filteredOfferings.isGlobalSearch && (
           <div className="bg-amber-100/80 border border-amber-300 rounded-xl px-4 py-2 flex items-center justify-between text-xs text-amber-900 font-bold">
             <span>
-              "{searchQuery}" हेतु {filteredOfferings.results.length} अर्पण परिणाम मिले:
+              {L(
+                `"${searchQuery}" हेतु ${filteredOfferings.results.length} अर्पण परिणाम मिले:`,
+                `Found ${filteredOfferings.results.length} offerings matching "${searchQuery}":`,
+                `"${searchQuery}" માટે ${filteredOfferings.results.length} અર્પણ પરિણામો મળ્યા:`
+              )}
             </span>
             <button
               onClick={() => setSearchQuery('')}
               className="text-amber-800 underline text-[11px] cursor-pointer"
             >
-              खोज रद्द करें
+              {L('खोज रद्द करें', 'Clear Search', 'શોધ રદ કરો')}
             </button>
           </div>
         )}
@@ -418,11 +440,15 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
               <span className="flex items-center gap-1.5">
                 <span className="text-base">🌿</span>
                 <span className="font-granth text-sm font-black text-[#5C1414]">
-                  {currentDeity.deity} की मुख्य अर्पण सामग्रियां ({currentDeity.offerings.length}):
+                  {L(
+                    `${currentDeity.deity} की मुख्य अर्पण सामग्रियां (${currentDeity.offerings.length}):`,
+                    `Key Offerings for ${trVedic(currentDeity.deity, 'en')} (${currentDeity.offerings.length}):`,
+                    `${trVedic(currentDeity.deity, 'gu')} ની મુખ્ય અર્પણ સામગ્રી (${currentDeity.offerings.length}):`
+                  )}
                 </span>
               </span>
               <span className="text-[11px] text-[#A67C52] font-medium hidden sm:inline">
-                सामग्री पर टैप करें 👇
+                {L('सामग्री पर टैप करें 👇', 'Tap any item 👇', 'સામગ્રી પર ટૅપ કરો 👇')}
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -449,8 +475,16 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
             <span className="w-2.5 h-2.5 rounded-full bg-[#B64D18] animate-pulse" />
             <h3 className="font-granth text-base sm:text-lg font-black text-[#5C1414]">
               {filteredOfferings.isGlobalSearch
-                ? `खोज परिणाम: अर्पण सामग्री व फल (${filteredOfferings.results.length})`
-                : `${currentDeity.deity} — क्या अर्पण करें व क्या फल मिलेगा (${filteredOfferings.results.length} सामग्री)`}
+                ? L(
+                    `खोज परिणाम: अर्पण सामग्री व फल (${filteredOfferings.results.length})`,
+                    `Search Results: Offerings & Fruits (${filteredOfferings.results.length})`,
+                    `શોધ પરિણામ: અર્પણ સામગ્રી અને ફળ (${filteredOfferings.results.length})`
+                  )
+                : L(
+                    `${currentDeity.deity} — क्या अर्पण करें व क्या फल मिलेगा (${filteredOfferings.results.length} सामग्री)`,
+                    `${trVedic(currentDeity.deity, 'en')} — What to Offer & Its Fruits (${filteredOfferings.results.length} items)`,
+                    `${trVedic(currentDeity.deity, 'gu')} — શું અર્પણ કરવું અને શું ફળ મળશે (${filteredOfferings.results.length} સામગ્રી)`
+                  )}
             </h3>
           </div>
         </div>
@@ -460,10 +494,10 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
           <div className="bg-white/80 rounded-2xl p-8 text-center space-y-2 border border-dashed border-[#DFCBB5]">
             <div className="text-3xl">🪔</div>
             <h3 className="font-granth text-base font-bold text-[#5C3A21]">
-              कोई अर्पण सामग्री नहीं मिली
+              {L('कोई अर्पण सामग्री नहीं मिली', 'No Offerings Found', 'કોઈ અર્પણ સામગ્રી મળી નથી')}
             </h3>
             <p className="text-xs text-[#8C6239]">
-              कृपया अन्य शब्द खोजें अथवा मनोकामना फ़िल्टर बदलकर पुनः प्रयास करें।
+              {L('कृपया अन्य शब्द खोजें अथवा मनोकामना फ़िल्टर बदलकर पुनः प्रयास करें।', 'Please try a different keyword or change the intention filter.', 'કૃપા કરીને અન્ય શબ્દ શોધો અથવા મનોકામના ફિલ્ટર બદલો.')}
             </p>
             <button
               onClick={() => {
@@ -472,7 +506,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
               }}
               className="px-3 py-1.5 bg-[#7A1D1D] text-white rounded-lg text-xs font-bold mt-2 cursor-pointer"
             >
-              फ़िल्टर रीसेट करें
+              {L('फ़िल्टर रीसेट करें', 'Reset Filters', 'ફિલ્ટર રીસેટ કરો')}
             </button>
           </div>
         ) : (
@@ -493,11 +527,11 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-2xl leading-none">{item.item_icon}</span>
                         <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-[#7A1D1D] text-[#FFD88A]">
-                          अर्पण सामग्री
+                          {L('अर्पण सामग्री', 'Sacred Offering', 'અર્પણ સામગ્રી')}
                         </span>
                         {filteredOfferings.isGlobalSearch && (
                           <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#FAF2E4] text-[#7A1D1D] border border-[#DFCBB5] truncate">
-                            {deity.avatar_icon} {deity.deity}
+                            {deity.avatar_icon} {trVedic(deity.deity, cLang)}
                           </span>
                         )}
                       </div>
@@ -519,7 +553,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                     {/* Highlighted Benefit Badge */}
                     <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-l-4 border-[#B64D18] p-2.5 rounded-r-xl">
                       <div className="text-[10px] font-bold text-[#8C4A00] uppercase tracking-wider">
-                        ✨ प्रत्यक्ष शास्त्रीय फल
+                        {L('✨ प्रत्यक्ष शास्त्रीय फल', '✨ Classical Spiritual Fruit', '✨ પ્રત્યક્ષ શાસ્ત્રીય ફળ')}
                       </div>
                       <div className="font-serif text-sm font-black text-[#7A1D1D] mt-0.5 leading-snug">
                         {item.highlighted_benefit}
@@ -532,7 +566,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-bold text-[#8C6239] flex items-center gap-1">
                             <span>ॐ</span>
-                            <span>अर्पण करते समय जपें:</span>
+                            <span>{L('अर्पण करते समय जपें:', 'Chant while offering:', 'અર્પણ કરતી વખતે જપો:')}</span>
                           </span>
 
                           <div className="flex items-center gap-1">
@@ -543,7 +577,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                                   ? 'bg-[#7A1D1D] text-white'
                                   : 'text-[#8C6239] hover:text-[#7A1D1D] hover:bg-stone-100'
                               }`}
-                              title="मंत्र उच्चारण सुनें"
+                              title={L('मंत्र उच्चारण सुनें', 'Listen to Mantra', 'મંત્ર ઉચ્ચારણ સાંભળો')}
                             >
                               {isSpeaking ? (
                                 <VolumeX className="w-3.5 h-3.5" />
@@ -555,7 +589,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                             <button
                               onClick={() => handleCopyMantra(item.id, item.mantra!)}
                               className="p-1 rounded text-xs text-[#8C6239] hover:text-[#7A1D1D] hover:bg-stone-100 transition cursor-pointer"
-                              title="मंत्र कॉपी करें"
+                              title={L('मंत्र कॉपी करें', 'Copy Mantra', 'મંત્ર કૉપી કરો')}
                             >
                               {isCopied ? (
                                 <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -579,7 +613,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                           <div className="flex items-center gap-1 text-[#8C6239]">
                             <Clock className="w-3 h-3 text-[#B58738] shrink-0" />
                             <span>
-                              <strong>श्रेष्ठ काल:</strong> {item.best_time}
+                              <strong>{L('श्रेष्ठ काल:', 'Best Time:', 'શ્રેષ્ઠ સમય:')}</strong> {item.best_time}
                             </span>
                           </div>
                         )}
@@ -587,7 +621,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                           <div className="flex items-start gap-1 text-[#7A1D1D] bg-[#FAF2E4]/60 p-1.5 rounded-lg border border-[#DFCBB5]/50">
                             <AlertTriangle className="w-3 h-3 text-[#B64D18] shrink-0 mt-0.5" />
                             <span>
-                              <strong>विधि संकेत:</strong> {item.rules_note}
+                              <strong>{L('विधि संकेत:', 'Vidhi Note:', 'વિધિ સંકેત:')}</strong> {item.rules_note}
                             </span>
                           </div>
                         )}
@@ -600,19 +634,19 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                     <button
                       onClick={() => handleConsultUma(deity.deity, item)}
                       className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-[#B58738]/20 to-amber-500/20 hover:from-[#B58738]/30 hover:to-amber-500/30 text-[#5C1414] text-xs font-bold border border-[#B58738]/40 flex items-center gap-1 transition cursor-pointer"
-                      title="उमा दैवज्ञ से इस अर्पण का व्यक्तिगत मुहूर्त व संकल्प पूछें"
+                      title={L('उमा दैवज्ञ से इस अर्पण का व्यक्तिगत मुहूर्त व संकल्प पूछें', 'Ask Uma Daivagya for personalized muhurat & sankalpa', 'ઉમા દૈવજ્ઞ પાસેથી આ અર્પણનું મુહૂર્ત અને સંકલ્પ પૂછો')}
                     >
                       <Sparkles className="w-3 h-3 text-[#B58738]" />
-                      <span>उमा से पूछें</span>
+                      <span>{L('उमा से पूछें', 'Ask Uma', 'ઉમાને પૂછો')}</span>
                     </button>
 
                     <button
                       onClick={() => handleShareWhatsApp(deity.deity, item)}
                       className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300 flex items-center gap-1 transition cursor-pointer"
-                      title="व्हाट्सएप पर शेयर करें"
+                      title={L('व्हाट्सएप पर शेयर करें', 'Share on WhatsApp', 'WhatsApp પર શેર કરો')}
                     >
                       <Share2 className="w-3 h-3 text-emerald-600" />
-                      <span>शेयर</span>
+                      <span>{L('शेयर', 'Share', 'શેર')}</span>
                     </button>
                   </div>
                 </div>
@@ -628,7 +662,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-rose-700" />
                 <h3 className="font-granth text-base sm:text-lg font-black text-rose-950">
-                  समस्त देवी-देवताओं पर वर्जित अर्पण (निषेध नियम)
+                  {L('समस्त देवी-देवताओं पर वर्जित अर्पण (निषेध नियम)', 'Prohibited Offerings Across Deities (Nishedh Rules)', 'સમસ્ત દેવી-દેવતાઓ પર વર્જિત અર્પણ (નિષેધ નિયમ)')}
                 </h3>
               </div>
               <button
@@ -640,8 +674,11 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
             </div>
 
             <p className="text-xs text-rose-900 font-serif">
-              शास्त्रों में स्पष्ट वर्णन है कि अनजाने में वर्जित वस्तु चढ़ाने से पुण्य के स्थान पर
-              दोष लगता है। इन निषेधों का कड़ाई से पालन करें:
+              {L(
+                'शास्त्रों में स्पष्ट वर्णन है कि अनजाने में वर्जित वस्तु चढ़ाने से पुण्य के स्थान पर दोष लगता है। इन निषेधों का कड़ाई से पालन करें:',
+                'Scriptures clearly state that offering prohibited items unknowingly can incur dosha instead of merit. Observe these rules carefully:',
+                'શાસ્ત્રોમાં સ્પષ્ટ વર્ણન છે કે અજાણતા વર્જિત વસ્તુ ચઢાવવાથી પુણ્યને બદલે દોષ લાગે છે. આ નિષેધોનું પાલન કરો:'
+              )}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
@@ -654,7 +691,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                   >
                     <div className="text-xs font-bold text-rose-950 flex items-center gap-1.5">
                       <span>{d.avatar_icon}</span>
-                      <span>{d.deity}</span>
+                      <span>{trVedic(d.deity, cLang)}</span>
                     </div>
                     <ul className="text-[11px] text-rose-900 list-disc list-inside space-y-0.5">
                       {d.prohibited_items.map((pi, idx) => (
@@ -677,7 +714,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🪔</span>
                   <h3 className="font-granth text-lg font-bold text-[#5C1414]">
-                    शास्त्रोक्त पूजन व अर्पण सामान्य नियम
+                    {L('शास्त्रोक्त पूजन व अर्पण सामान्य नियम', 'General Shastric Puja & Offering Rules', 'શાસ્ત્રોક્ત પૂજન અને અર્પણ સામાન્ય નિયમ')}
                   </h3>
                 </div>
                 <button
@@ -701,7 +738,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
               </div>
 
               <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-1">
-                <strong>धार्मिक मान्यता:</strong> {DEVTA_ARPAN_DATA.religious_disclaimer}
+                <strong>{L('धार्मिक मान्यता:', 'Religious Note:', 'ધાર્મિક માન્યતા:')}</strong> {DEVTA_ARPAN_DATA.religious_disclaimer}
               </div>
 
               <div className="flex justify-end pt-1">
@@ -709,7 +746,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                   onClick={() => setShowRulesModal(false)}
                   className="px-4 py-2 rounded-xl bg-[#7A1D1D] text-white text-xs font-bold hover:bg-[#5C1414] transition cursor-pointer"
                 >
-                  समझ गया / बंद करें
+                  {L('समझ गया / बंद करें', 'Understood / Close', 'સમજી ગયો / બંધ કરો')}
                 </button>
               </div>
             </div>

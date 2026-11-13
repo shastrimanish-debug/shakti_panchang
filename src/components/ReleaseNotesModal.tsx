@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { APP_RELEASE_NOTES, CURRENT_RELEASE } from '../constants/releaseNotes';
-import { Sparkles, X, CheckCircle2, ChevronRight, ChevronDown, BookOpen, MessageSquare, Award } from 'lucide-react';
+import { Sparkles, X, CheckCircle2, ChevronRight, ChevronDown, BookOpen, MessageSquare } from 'lucide-react';
+import { useLanguage } from '../i18n';
+
+function pickL<T>(lang: string, hi: T, en: T, gu: T): T {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (c === 'en') return en;
+  if (c === 'gu') return gu;
+  return hi;
+}
 
 interface ReleaseNotesModalProps {
   isOpen: boolean;
@@ -15,9 +23,17 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
   onNavigateTab,
   onOpenUma,
 }) => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
   const [expandedVersion, setExpandedVersion] = useState<string>(CURRENT_RELEASE.version);
 
   if (!isOpen) return null;
+
+  const formatNoteDate = (d: string) => {
+    if (cLang === 'en') return d.replace('नवंबर', 'November').replace('अक्टूबर', 'October').replace('दिसंबर', 'December');
+    if (cLang === 'gu') return d.replace('नवंबर', 'નવેમ્બર').replace('अक्टूबर', 'ઓક્ટોબર').replace('दिसंबर', 'ડિસેમ્બર');
+    return d;
+  };
 
   return (
     <div
@@ -37,14 +53,19 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-granth text-base sm:text-lg font-black text-[#FFD88A]">
-                  नवीनतम अपडेट्स व रिलीज़ नोट्स
+                  {pickL(cLang, 'नवीनतम अपडेट्स व रिलीज़ नोट्स', 'Latest Updates & Release Notes', 'નવીનતમ અપડેટ્સ અને રિલીઝ નોટ્સ')}
                 </h3>
                 <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-[#D4AF37] text-[#2C0A0A]">
                   v{CURRENT_RELEASE.version} (Code {CURRENT_RELEASE.versionCode})
                 </span>
               </div>
               <p className="text-[11px] text-[#F5ECE0]/90 font-serif">
-                सनातन शक्ति पंचांग का नवीनतम संस्करण विवरण
+                {pickL(
+                  cLang,
+                  'सनातन शक्ति पंचांग का नवीनतम संस्करण विवरण',
+                  'Changelog & Version Details — Sanatan Shakti Panchang',
+                  'સનાતન શક્તિ પંચાંગની નવીનતમ આવૃત્તિ વિગતો'
+                )}
               </p>
             </div>
           </div>
@@ -92,15 +113,15 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-granth font-black text-sm sm:text-base text-[#462B17]">
-                          संस्करण v{note.version}
+                          {pickL(cLang, `संस्करण v${note.version}`, `Version v${note.version}`, `આવૃત્તિ v${note.version}`)}
                         </span>
                         {isCurrent && (
                           <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-700 text-white">
-                            नवीनतम सक्रिय
+                            {pickL(cLang, 'नवीनतम सक्रिय', 'Latest Active', 'નવીનતમ સક્રિય')}
                           </span>
                         )}
                         <span className="text-[11px] text-[#8C6239]">
-                          ({note.date})
+                          ({formatNoteDate(note.date)})
                         </span>
                       </div>
                       <div className="text-xs font-bold text-[#7A1D1D] truncate mt-0.5">
@@ -125,7 +146,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                     <div className="space-y-1.5">
                       <div className="text-[11px] font-bold text-[#8C4A00] uppercase tracking-wider flex items-center gap-1">
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>मुख्य विशेषताएं</span>
+                        <span>{pickL(cLang, 'मुख्य विशेषताएं', 'Key Highlights', 'મુખ્ય વિશેષતાઓ')}</span>
                       </div>
                       <div className="space-y-1">
                         {note.highlights.map((h, i) => (
@@ -172,7 +193,9 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                             className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#7A1D1D] to-[#942626] text-white text-xs font-bold hover:from-[#5C1414] hover:to-[#7A1D1D] transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                           >
                             <BookOpen className="w-3.5 h-3.5" />
-                            <span>नया मॉड्यूल खोलें: देवता अर्पण फल</span>
+                            <span>
+                              {pickL(cLang, 'नया मॉड्यूल खोलें: देवता अर्पण फल', 'Open Module: Devta Arpan Phal', 'નવું મોડ્યુલ ખોલો: દેવતા અર્પણ ફળ')}
+                            </span>
                           </button>
                         )}
 
@@ -185,7 +208,9 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                             className="px-3 py-1.5 rounded-xl bg-[#FAF2E4] text-[#7A1D1D] hover:bg-[#EBDCC0] border border-[#8C6239]/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                           >
                             <MessageSquare className="w-3.5 h-3.5 text-amber-600" />
-                            <span>उमा दैवज्ञ से परामर्श</span>
+                            <span>
+                              {pickL(cLang, 'उमा दैवज्ञ से परामर्श', 'Consult Uma Daivagya', 'ઉમા દૈવજ્ઞ સાથે પરામર્શ')}
+                            </span>
                           </button>
                         )}
                       </div>
@@ -200,13 +225,13 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
         {/* Footer */}
         <div className="bg-[#FAF2E4] px-5 py-3 border-t border-[#DFCBB5] flex items-center justify-between">
           <div className="text-[11px] text-[#8C6239] font-serif">
-            सनातन शक्ति पंचांग · v{CURRENT_RELEASE.version} (Code {CURRENT_RELEASE.versionCode})
+            {pickL(cLang, 'सनातन शक्ति पंचांग', 'Sanatan Shakti Panchang', 'સનાતન શક્તિ પંચાંગ')} · v{CURRENT_RELEASE.version} (Code {CURRENT_RELEASE.versionCode})
           </div>
           <button
             onClick={onClose}
             className="px-4 py-1.5 rounded-xl bg-[#7A1D1D] hover:bg-[#5C1414] text-white text-xs font-bold transition cursor-pointer"
           >
-            बंद करें
+            {pickL(cLang, 'बंद करें', 'Close', 'બંધ કરો')}
           </button>
         </div>
       </div>

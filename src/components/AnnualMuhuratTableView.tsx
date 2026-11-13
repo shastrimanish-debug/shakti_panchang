@@ -59,7 +59,11 @@ export const AnnualMuhuratTableView: React.FC = () => {
     text += `🪔 *${t('footer.tagline', 'સચોટ વૈદિક પંચાંગ અને મુહૂર્ત')}:* ${t('common.appName', 'શક્તિ પંચાંગ')}\n`;
 
     const encoded = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+    const link = document.createElement('a');
+    link.href = `https://api.whatsapp.com/send?text=${encoded}`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.click();
   };
 
   const handleCopyList = () => {

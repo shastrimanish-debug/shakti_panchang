@@ -12,6 +12,28 @@ export interface ReleaseNote {
 
 export const APP_RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "1.0.70",
+    versionCode: 70,
+    date: "नवंबर 2026",
+    title: "संस्करण ७० (v1.0.70) - शत-प्रतिशत पूर्ण बहुभाषी रूपांतरण (100% Complete hi/en/gu Localization), कुण्डली-उपाय पर्ची एवं शास्त्र पाठ सुधार",
+    highlights: [
+      "संपूर्ण ऐप में शेष बचे सभी हिंदी UI लेबल्स, कार्ड्स, बटन, खोज बॉक्स व शेयर सारांश का पूर्ण अंग्रेजी (en) एवं गुजराती (gu) अनुवाद — भाषा बदलते ही OS-स्तरीय त्वरित परिवर्तन।",
+      "संस्कृत मंत्र, श्लोक, स्तोत्र, बीज मंत्र एवं अवधी चौपाइयों को पूर्ण श्रद्धा के साथ मूल पावन लिपि में यथावत सुरक्षित रखा गया।",
+      "कुण्डली चक्र (2D/3D), उपाय पर्ची मॉडल, पीडीएफ/कार्ड निर्यात, रावण संहिता, शास्त्रोक्त उपाय, देव अर्पण, शिव तंत्र एवं भक्ति ऑडियो प्लेयर का पूर्ण बहुभाषी एकीकरण।",
+      "TypeScript एवं बिल्ड सुरक्षा सुधार — शून्य त्रुटि के साथ प्रोडक्शन रिलीज़।"
+    ],
+    details: [
+      {
+        category: "बहुभाषी एवं तकनीकी सुधार",
+        items: [
+          "ScripturePathView, DevtaArpanView, DevotionalAudioPlayerView, ShivTantraView एवं DailyShlokaCard में पूर्ण i18n समर्थन।",
+          "UpayParchiModal, KundaliChart, FaceReadingView, Bhojpatra PDF एवं Rashifal HD Card भाषा परिवर्तन पर स्वतः अपडेट।",
+          "मोबाइल-अनुकूल व्हाट्सएप शेयर फ्लो (openWhatsAppShare) एवं TypeScript बिल्ड सत्यापन।"
+        ]
+      }
+    ]
+  },
+  {
     version: "1.0.67",
     versionCode: 67,
     date: "नवंबर 2026",

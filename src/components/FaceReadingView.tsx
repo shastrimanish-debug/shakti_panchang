@@ -3,38 +3,30 @@ import {
   Camera,
   Upload,
   Sparkles,
-  Eye,
-  Smile,
   CheckCircle2,
   RefreshCw,
   Volume2,
   VolumeX,
   Share2,
-  HelpCircle,
-  Zap,
   ShieldCheck,
   Flame,
   Award,
   RotateCw,
-  RotateCcw,
   FlipHorizontal,
   ZoomIn,
-  ZoomOut,
-  Move,
   MapPin,
   Sliders,
   Grid,
   Crop,
-  Download,
   UserCheck,
   X,
-  Play,
-  Check,
+  Smile,
 } from "lucide-react";
 import { umaVoice } from "../services/UmaVoiceService";
 import { openWhatsAppShare } from "../services/umaConsultationPdf";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
+import { useLanguage } from "../i18n";
 
 interface FeatureDetail {
   part: string;
@@ -53,113 +45,341 @@ interface FaceAnalysisData {
   remedy: string;
 }
 
-// Preset Face Types for quick selection
-const PRESET_FACES = [
-  {
-    id: "oval_m",
-    name: "अंडाकार (पुरुष)",
-    shape: "अंडाकार (Oval)",
-    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "oval_f",
-    name: "अंडाकार (महिला)",
-    shape: "अंडाकार (Oval)",
-    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "square_m",
-    name: "वर्गाकार (दृढ़ स्वभाव)",
-    shape: "वर्गाकार (Square)",
-    imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "round_f",
-    name: "गोलाकार (सौम्य स्वभाव)",
-    shape: "गोलाकार (Round)",
-    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",
-  },
-];
+function getPresetFaces(cLang: string) {
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === "en" ? en : cLang === "gu" ? gu : hi);
+  return [
+    {
+      id: "oval_m",
+      name: L("अंडाकार (पुरुष)", "Oval (Male)", "અંડાકાર (પુરુષ)"),
+      shape: L("अंडाकार (Oval)", "Oval", "અંડાકાર (Oval)"),
+      imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
+    },
+    {
+      id: "oval_f",
+      name: L("अंडाकार (महिला)", "Oval (Female)", "અંડાકાર (મહિલા)"),
+      shape: L("अंडाकार (Oval)", "Oval", "અંડાકાર (Oval)"),
+      imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+    },
+    {
+      id: "square_m",
+      name: L("वर्गाकार (दृढ़ स्वभाव)", "Square (Strong Will)", "ચોરસ (દૃઢ સ્વભાવ)"),
+      shape: L("वर्गाकार (Square)", "Square", "ચોરસ (Square)"),
+      imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
+    },
+    {
+      id: "round_f",
+      name: L("गोलाकार (सौम्य स्वभाव)", "Round (Gentle Nature)", "ગોળાકાર (સૌમ્ય સ્વભાવ)"),
+      shape: L("गोलाकार (Round)", "Round", "ગોળાકાર (Round)"),
+      imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",
+    },
+  ];
+}
 
-// Facial Moles Dataset with default coordinate targets (% from top-left)
-const FACE_MOLES = [
-  {
-    id: "forehead_center",
-    location: "ललाट के मध्य में (Center Forehead)",
-    meaning: "तीक्ष्ण बुद्धिमत्ता, उच्च पद प्रतिष्ठा एवं अकस्मात भाग्योदय का संकेत।",
-    nature: "शुभ",
-    x: 50,
-    y: 25,
-  },
-  {
-    id: "trikuti",
-    location: "त्रिकुटी (Between Eyebrows)",
-    meaning: "गहरी अंतर्दृष्टि, आध्यात्मिक चेतना तथा समाज में उच्च नेतृत्व योग।",
-    nature: "अति शुभ",
-    x: 50,
-    y: 35,
-  },
-  {
-    id: "right_cheek",
-    location: "दाहिनी गाल पर (Right Cheek)",
-    meaning: "व्यापारिक कुशलता, धन-समृद्धि एवं सुखी पारिवारिक जीवन का सूचक।",
-    nature: "अति शुभ",
-    x: 32,
-    y: 55,
-  },
-  {
-    id: "left_cheek",
-    location: "बाएँ गाल पर (Left Cheek)",
-    meaning: "कलात्मक दृष्टिकोण, भावुकता तथा सीमित लेकिन सच्चे मित्र।",
-    nature: "मध्यम",
-    x: 68,
-    y: 55,
-  },
-  {
-    id: "upper_lip",
-    location: "ऊपरी होंठ पर (Upper Lip)",
-    meaning: "मधुर सम्भाषण कला, आकर्षक व्यक्तित्व व भौतिक सुख-साधनों की प्राप्ति।",
-    nature: "अति शुभ",
-    x: 50,
-    y: 70,
-  },
-  {
-    id: "chin",
-    location: "ठोड़ी पर (Chin)",
-    meaning: "दृढ़ संकल्प शक्ति, यात्राओं का योग तथा उत्तरार्ध में अपार प्रतिष्ठा।",
-    nature: "शुभ",
-    x: 50,
-    y: 84,
-  },
-  {
-    id: "nose_tip",
-    location: "नासिका के अग्रभाग पर (Nose Tip)",
-    meaning: "शीघ्र निर्णय क्षमता, स्वाभिमान तथा त्वरित धन लाभ की सम्भावना।",
-    nature: "शुभ",
-    x: 50,
-    y: 52,
-  },
-];
+function getFaceMoles(cLang: string) {
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === "en" ? en : cLang === "gu" ? gu : hi);
+  return [
+    {
+      id: "forehead_center",
+      location: L("ललाट के मध्य में (Center Forehead)", "Center Forehead", "લલાટના મધ્યમાં (Center Forehead)"),
+      meaning: L(
+        "तीक्ष्ण बुद्धिमत्ता, उच्च पद प्रतिष्ठा एवं अकस्मात भाग्योदय का संकेत।",
+        "Indicates sharp intellect, high status, and sudden rise in fortune.",
+        "તીક્ષ્ણ બુદ્ધિમત્તા, ઉચ્ચ પદ-પ્રતિષ્ઠા અને અચાનક ભાગ્યોદયનો સંકેત."
+      ),
+      nature: L("शुभ", "Auspicious", "શુભ"),
+      x: 50,
+      y: 25,
+    },
+    {
+      id: "trikuti",
+      location: L("त्रिकुटी (Between Eyebrows)", "Trikuti (Between Eyebrows)", "ત્રિકુટી (ભ્રમર વચ્ચે)"),
+      meaning: L(
+        "गहरी अंतर्दृष्टि, आध्यात्मिक चेतना तथा समाज में उच्च नेतृत्व योग।",
+        "Signifies deep intuition, spiritual awareness, and natural leadership.",
+        "ઊંડી અંતર્દૃષ્ટિ, આધ્યાત્મિક ચેતના અને સમાજમાં ઉચ્ચ નેતૃત્વ યોગ."
+      ),
+      nature: L("अति शुभ", "Highly Auspicious", "અતિ શુભ"),
+      x: 50,
+      y: 35,
+    },
+    {
+      id: "right_cheek",
+      location: L("दाहिनी गाल पर (Right Cheek)", "Right Cheek", "જમણા ગાલ પર (Right Cheek)"),
+      meaning: L(
+        "व्यापारिक कुशलता, धन-समृद्धि एवं सुखी पारिवारिक जीवन का सूचक।",
+        "Denotes business acumen, financial abundance, and harmonious family life.",
+        "વ્યાપારિક કુશળતા, ધન-સમૃદ્ધિ અને સુખી પારિવારિક જીવનનો સૂચક."
+      ),
+      nature: L("अति शुभ", "Highly Auspicious", "અતિ શુભ"),
+      x: 32,
+      y: 55,
+    },
+    {
+      id: "left_cheek",
+      location: L("बाएँ गाल पर (Left Cheek)", "Left Cheek", "ડાબા ગાલ પર (Left Cheek)"),
+      meaning: L(
+        "कलात्मक दृष्टिकोण, भावुकता तथा सीमित लेकिन सच्चे मित्र।",
+        "Reflects artistic sensitivity, emotional depth, and loyal close friends.",
+        "કલાત્મક દૃષ્ટિકોણ, ભાવુકતા અને મર્યાદિત પરંતુ સાચા મિત્રો."
+      ),
+      nature: L("मध्यम", "Moderate", "મધ્યમ"),
+      x: 68,
+      y: 55,
+    },
+    {
+      id: "upper_lip",
+      location: L("ऊपरी होंठ पर (Upper Lip)", "Upper Lip", "ઉપલા હોઠ પર (Upper Lip)"),
+      meaning: L(
+        "मधुर सम्भाषण कला, आकर्षक व्यक्तित्व व भौतिक सुख-साधनों की प्राप्ति।",
+        "Bestows sweet eloquence, magnetic charm, and material comforts.",
+        "મધુર વાણી, આકર્ષક વ્યક્તિત્વ અને ભૌતિક સુખ-સાધનોની પ્રાપ્તિ."
+      ),
+      nature: L("अति शुभ", "Highly Auspicious", "અતિ શુભ"),
+      x: 50,
+      y: 70,
+    },
+    {
+      id: "chin",
+      location: L("ठोड़ी पर (Chin)", "Chin", "હડપચી પર (Chin)"),
+      meaning: L(
+        "दृढ़ संकल्प शक्ति, यात्राओं का योग तथा उत्तरार्ध में अपार प्रतिष्ठा।",
+        "Shows strong determination, travel opportunities, and lasting fame later in life.",
+        "દૃઢ સંકલ્પ શક્તિ, યાત્રાઓનો યોગ અને ઉત્તરાર્ધમાં અપાર પ્રતિષ્ઠા."
+      ),
+      nature: L("शुभ", "Auspicious", "શુભ"),
+      x: 50,
+      y: 84,
+    },
+    {
+      id: "nose_tip",
+      location: L("नासिका के अग्रभाग पर (Nose Tip)", "Tip of Nose", "નાસિકાના અગ્રભાગ પર (Nose Tip)"),
+      meaning: L(
+        "शीघ्र निर्णय क्षमता, स्वाभिमान तथा त्वरित धन लाभ की सम्भावना।",
+        "Indicates swift decision-making, self-respect, and timely financial gains.",
+        "ઝડપી નિર્ણય ક્ષમતા, સ્વાભિમાન અને ત્વરિત ધન લાભની સંભાવના."
+      ),
+      nature: L("शुभ", "Auspicious", "શુભ"),
+      x: 50,
+      y: 52,
+    },
+  ];
+}
 
-// Helper to determine region description from relative X,Y coordinates
-function getMoleMeaningByCoords(xPct: number, yPct: number): { location: string; meaning: string; nature: string } {
+function getMoleMeaningByCoords(xPct: number, yPct: number, cLang: string): { location: string; meaning: string; nature: string } {
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === "en" ? en : cLang === "gu" ? gu : hi);
   if (yPct < 32) {
-    if (xPct < 40) return { location: "ललाट का दायाँ भाग (Right Forehead)", meaning: "व्यापार में अभूतपूर्व उन्नति, प्रशासनिक क्षमता व विदेश यात्रा का योग।", nature: "शुभ" };
-    if (xPct > 60) return { location: "ललाट का बायाँ भाग (Left Forehead)", meaning: "रचनात्मक कला, संगीत व विचारशीलता में विशेष रुचि का प्रतीक।", nature: "शुभ" };
-    return { location: "ललाट का मध्य भाग (Center Forehead)", meaning: "अत्यधिक तीक्ष्ण बुद्धि, समाज में प्रतिष्ठा व नेतृत्व क्षमता का सूचक।", nature: "अति शुभ" };
+    if (xPct < 40) {
+      return {
+        location: L("ललाट का दायाँ भाग (Right Forehead)", "Right Forehead", "લલાટનો જમણો ભાગ (Right Forehead)"),
+        meaning: L(
+          "व्यापार में अभूतपूर्व उन्नति, प्रशासनिक क्षमता व विदेश यात्रा का योग।",
+          "Strong growth in business, administrative authority, and foreign travel prospects.",
+          "વ્યાપારમાં અપૂર્વ પ્રગતિ, વહીવટી ક્ષમતા અને વિદેશ યાત્રાનો યોગ."
+        ),
+        nature: L("शुभ", "Auspicious", "શુભ"),
+      };
+    }
+    if (xPct > 60) {
+      return {
+        location: L("ललाट का बायाँ भाग (Left Forehead)", "Left Forehead", "લલાટનો ડાબો ભાગ (Left Forehead)"),
+        meaning: L(
+          "रचनात्मक कला, संगीत व विचारशीलता में विशेष रुचि का प्रतीक।",
+          "Symbol of creative arts, music, and reflective wisdom.",
+          "રચનાત્મક કલા, સંગીત અને વિચારશીલતામાં વિશેષ રુચિનું પ્રતીક."
+        ),
+        nature: L("शुभ", "Auspicious", "શુભ"),
+      };
+    }
+    return {
+      location: L("ललाट का मध्य भाग (Center Forehead)", "Center Forehead", "લલાટનો મધ્ય ભાગ (Center Forehead)"),
+      meaning: L(
+        "अत्यधिक तीक्ष्ण बुद्धि, समाज में प्रतिष्ठा व नेतृत्व क्षमता का सूचक।",
+        "Indicates high intellect, social honor, and leadership capacity.",
+        "અત્યંત તીક્ષ્ણ બુદ્ધિ, સમાજમાં પ્રતિષ્ઠા અને નેતૃત્વ ક્ષમતાનો સૂચક."
+      ),
+      nature: L("अति शुभ", "Highly Auspicious", "અતિ શુભ"),
+    };
   } else if (yPct < 45) {
-    if (xPct < 45) return { location: "दाहिनी भौंह / नेत्र (Right Eyebrow)", meaning: "सुखी दाम्पत्य जीवन, धन की निरंतर प्राप्ति व धार्मिक प्रवृत्ति।", nature: "शुभ" };
-    if (xPct > 55) return { location: "बाएँ भौंह / नेत्र (Left Eyebrow)", meaning: "संघर्ष के बाद भारी सफलता व दूरदर्शी निर्णय क्षमता।", nature: "मध्यम-शुभ" };
-    return { location: "त्रिकुटी - भौंहों के मध्य (Trikuti)", meaning: "आध्यात्मिक ऊर्जा, अंतर्ज्ञान तथा समाज में पूजनीय स्थिति।", nature: "अति शुभ" };
+    if (xPct < 45) {
+      return {
+        location: L("दाहिनी भौंह / नेत्र (Right Eyebrow)", "Right Eyebrow / Eye", "જમણી ભ્રમર / નેત્ર (Right Eyebrow)"),
+        meaning: L(
+          "सुखी दाम्पत्य जीवन, धन की निरंतर प्राप्ति व धार्मिक प्रवृत्ति।",
+          "Harmonious marriage, steady wealth, and dharmic inclination.",
+          "સુખી દાંપત્ય જીવન, ધનની નિરંતર પ્રાપ્તિ અને ધાર્મિક વૃત્તિ."
+        ),
+        nature: L("शुभ", "Auspicious", "શુભ"),
+      };
+    }
+    if (xPct > 55) {
+      return {
+        location: L("बाएँ भौंह / नेत्र (Left Eyebrow)", "Left Eyebrow / Eye", "ડાબી ભ્રમર / નેત્ર (Left Eyebrow)"),
+        meaning: L(
+          "संघर्ष के बाद भारी सफलता व दूरदर्शी निर्णय क्षमता।",
+          "Major triumph after perseverance and far-sighted judgment.",
+          "સંઘર્ષ બાદ મોટી સફળતા અને દૂરદર્શી નિર્ણય ક્ષમતા."
+        ),
+        nature: L("मध्यम-शुभ", "Moderately Auspicious", "મધ્યમ-શુભ"),
+      };
+    }
+    return {
+      location: L("त्रिकुटी - भौंहों के मध्य (Trikuti)", "Trikuti (Between Eyebrows)", "ત્રિકુટી - ભ્રમર વચ્ચે"),
+      meaning: L(
+        "आध्यात्मिक ऊर्जा, अंतर्ज्ञान तथा समाज में पूजनीय स्थिति।",
+        "Spiritual vitality, intuition, and respected standing in society.",
+        "આધ્યાત્મિક ઊર્જા, અંતર્જ્ઞાન અને સમાજમાં પૂજનીય સ્થિતિ."
+      ),
+      nature: L("अति शुभ", "Highly Auspicious", "અતિ શુભ"),
+    };
   } else if (yPct < 62) {
-    if (xPct < 42) return { location: "दायाँ गाल (Right Cheek)", meaning: "अकस्मात धन लाभ, सुदृढ़ पारिवारिक जीवन व व्यापारिक सफलता।", nature: "अति शुभ" };
-    if (xPct > 58) return { location: "बायाँ गाल (Left Cheek)", meaning: "कलात्मक सौंदर्य, भावुक मन व साहित्य-संगीत में सफलता।", nature: "शुभ" };
-    return { location: "नासिका (Nose Bridge/Tip)", meaning: "स्वाभिमान, तीक्ष्ण निर्णय शक्ति व आर्थिक स्थिरता।", nature: "शुभ" };
+    if (xPct < 42) {
+      return {
+        location: L("दायाँ गाल (Right Cheek)", "Right Cheek", "જમણો ગાલ (Right Cheek)"),
+        meaning: L(
+          "अकस्मात धन लाभ, सुदृढ़ पारिवारिक जीवन व व्यापारिक सफलता।",
+          "Unexpected financial gains, strong family bond, and commercial success.",
+          "અચાનક ધન લાભ, સુદૃઢ પારિવારિક જીવન અને વ્યાપારિક સફળતા."
+        ),
+        nature: L("अति शुभ", "Highly Auspicious", "અતિ શુભ"),
+      };
+    }
+    if (xPct > 58) {
+      return {
+        location: L("बायाँ गाल (Left Cheek)", "Left Cheek", "ડાબો ગાલ (Left Cheek)"),
+        meaning: L(
+          "कलात्मक सौंदर्य, भावुक मन व साहित्य-संगीत में सफलता।",
+          "Artistic grace, compassionate heart, and success in literature or music.",
+          "કલાત્મક સૌંદર્ય, ભાવુક મન અને સાહિત્ય-સંગીતમાં સફળતા."
+        ),
+        nature: L("शुभ", "Auspicious", "શુભ"),
+      };
+    }
+    return {
+      location: L("नासिका (Nose Bridge/Tip)", "Nose Bridge / Tip", "નાસિકા (Nose Bridge/Tip)"),
+      meaning: L(
+        "स्वाभिमान, तीक्ष्ण निर्णय शक्ति व आर्थिक स्थिरता।",
+        "Self-dignity, sharp decisiveness, and long-term financial stability.",
+        "સ્વાભિમાન, તીક્ષ્ણ નિર્ણય શક્તિ અને આર્થિક સ્થિરતા."
+      ),
+      nature: L("शुभ", "Auspicious", "શુભ"),
+    };
   } else if (yPct < 76) {
-    return { location: "ओष्ठ क्षेत्र (Lips Region)", meaning: "मधुर वाक्पटुता, सम्मोहन शक्ति व भौतिक एशो-आराम।", nature: "अति शुभ" };
+    return {
+      location: L("ओष्ठ क्षेत्र (Lips Region)", "Lips Region", "હોઠ ક્ષેત્ર (Lips Region)"),
+      meaning: L(
+        "मधुर वाक्पटुता, सम्मोहन शक्ति व भौतिक एशो-आराम।",
+        "Eloquent speech, magnetic charisma, and material prosperity.",
+        "મધુર વાક્પટુતા, આકર્ષણ શક્તિ અને ભૌતિક સુખ-સમૃદ્ધિ."
+      ),
+      nature: L("अति शुभ", "Highly Auspicious", "અતિ શુભ"),
+    };
   } else {
-    return { location: "चिबुक / चिबुक रेखा (Chin & Jawline)", meaning: "दृढ़ इच्छाशक्ति, अचल संपत्ति का लाभ व दीर्घायु जीवन।", nature: "शुभ" };
+    return {
+      location: L("चिबुक / चिबुक रेखा (Chin & Jawline)", "Chin & Jawline", "હડપચી / ચિબુક રેખા (Chin & Jawline)"),
+      meaning: L(
+        "दृढ़ इच्छाशक्ति, अचल संपत्ति का लाभ व दीर्घायु जीवन।",
+        "Steadfast willpower, real-estate fortune, and longevity.",
+        "દૃઢ ઇચ્છાશક્તિ, સ્થાવર મિલકતનો લાભ અને દીર્ઘાયુ જીવન."
+      ),
+      nature: L("शुभ", "Auspicious", "શુભ"),
+    };
   }
+}
+
+function getDefaultFaceAnalysis(cLang: string): FaceAnalysisData {
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === "en" ? en : cLang === "gu" ? gu : hi);
+  return {
+    faceShape: L("अंडाकार (Oval)", "Oval", "અંડાકાર (Oval)"),
+    faceShapeDesc: L(
+      "सामुद्रिक शास्त्र के अनुसार अंडाकार मुखाकृति उत्तम संतुलन, तीक्ष्ण बुद्धि और धैर्य की प्रतीक है। आप निर्णय लेने में कुशल, व्यवहारिक और सौम्य स्वभाव के धनी हैं। समाज में आपका आदर एवं यश निरंतर बढ़ता है।",
+      "According to Samudrika Shastra, an oval face symbolizes harmony, sharp intellect, and patience. You are practical, composed, and skilled in balanced decision-making, earning steady respect in society.",
+      "સામુદ્રિક શાસ્ત્ર અનુસાર અંડાકાર મુખાકૃતિ ઉત્તમ સંતુલન, તીક્ષ્ણ બુદ્ધિ અને ધૈર્યનું પ્રતીક છે. તમે નિર્ણય લેવામાં કુશળ, વ્યવહારુ અને સૌમ્ય સ્વભાવના ધની છો."
+    ),
+    vitalityScore: 94,
+    temperament: L("सात्त्विक व सांतुलित", "Sattvic & Balanced", "સાત્વિક અને સંતુલિત"),
+    careerGuidance: L(
+      "प्रशासनिक सेवा, परामर्श, शिक्षा, सूचना प्रौद्योगिकी, बैंकिंग एवं रचनात्मक क्षेत्रों में सर्वोच्च सफलता प्राप्त होगी। आपकी तार्किक क्षमता दूसरों को प्रभावित करती है।",
+      "High success awaits in administration, advisory roles, education, technology, finance, and creative fields. Your analytical clarity inspires trust.",
+      "વહીવટી સેવા, પરામર્શ, શિક્ષણ, આઇટી, બેંકિંગ અને રચનાત્મક ક્ષેત્રોમાં શ્રેષ્ઠ સફળતા પ્રાપ્ત થશે."
+    ),
+    remedy: L(
+      "प्रतिदिन सूर्य देव को अर्घ्य दें। ललाट पर चन्दन व कुंकुम का तिलक लगाएं। तर्जनी या अनामिका अंगुली में पीला पुखराज या माणिक्य धारण करना अति शुभ रहेगा।",
+      "Offer water (Arghya) to Lord Surya daily. Apply sandalwood and kumkum tilak on your forehead. Following a qualified astrologer's advice on Yellow Sapphire or Ruby brings auspicious clarity.",
+      "દરરોજ સૂર્યદેવને અર્ઘ્ય અર્પણ કરો. કપાળ પર ચંદન અને કુમકુમનું તિલક લગાવો. શુભ મુહૂર્તે ગુરુ અથવા સૂર્યનું રત્ન ધારણ કરવું ઉત્તમ રહેશે."
+    ),
+    features: [
+      {
+        part: L("ललाट (Forehead)", "Forehead", "લલાટ (Forehead)"),
+        type: L("उन्नत एवं चौड़ा", "Broad & Elevated", "ઉન્નત અને પહોળું"),
+        traits: L(
+          "तीक्ष्ण स्मरणशक्ति, दूरगामी सोच व नेतृत्व क्षमता।",
+          "Sharp memory, visionary foresight, and leadership ability.",
+          "તીક્ષ્ણ સ્મરણશક્તિ, દૂરગામી વિચારસરણી અને નેતૃત્વ ક્ષમતા."
+        ),
+        wisdom: L(
+          "महर्षि वराहमिहिर के अनुसार चौड़ा ललाट उच्च पद एवं दूरदर्शिता का सूचक है।",
+          "Maharshi Varahamihira states that a well-proportioned broad forehead signifies authority and foresight.",
+          "મહર્ષિ વરાહમિહિર અનુસાર પહોળું લલાટ ઉચ્ચ પદ અને દૂરદર્શિતાનો સૂચક છે."
+        ),
+      },
+      {
+        part: L("नेत्र (Eyes)", "Eyes", "નેત્ર (Eyes)"),
+        type: L("तेजस्वी व सौम्य", "Lustrous & Serene", "તેજસ્વી અને સૌમ્ય"),
+        traits: L(
+          "सहानुभूति, गहरी अंतर्दृष्टि, सत्यनिष्ठा एवं एकाग्रता।",
+          "Empathy, deep insight, integrity, and focused concentration.",
+          "સહાનુભૂતિ, ઊંડી અંતર્દૃષ્ટિ, સત્યનિષ્ઠા અને એકાગ્રતા."
+        ),
+        wisdom: L(
+          "चमकदार एवं विशाल नेत्र अंतरात्मा की पवित्रता व अंतर्ज्ञान प्रकट करते हैं।",
+          "Clear, luminous eyes reveal inner purity and heightened intuition.",
+          "ચમકદાર અને વિશાળ નેત્ર અંતરાત્માની પવિત્રતા અને અંતર્જ્ઞાન પ્રગટ કરે છે."
+        ),
+      },
+      {
+        part: L("नासिका (Nose)", "Nose", "નાસિકા (Nose)"),
+        type: L("सरल एवं उन्नत", "Straight & Well-Formed", "સરળ અને ઉન્નત"),
+        traits: L(
+          "स्वाभिमान, आर्थिक समृद्धि, दृढ संकल्प व ईमानदारी।",
+          "Self-respect, steady prosperity, determination, and honesty.",
+          "સ્વાભિમાન, આર્થિક સમૃદ્ધિ, દૃઢ સંકલ્પ અને પ્રામાણિકતા."
+        ),
+        wisdom: L(
+          "सीधी नासिका धन-धान्य की स्थिरता एवं स्वाभिमान दर्शाती है।",
+          "A balanced straight nose indicates financial stability and dignity.",
+          "સીધી નાસિકા ધન-ધાન્યની સ્થિરતા અને સ્વાભિમાન દર્શાવે છે."
+        ),
+      },
+      {
+        part: L("ओष्ठ व दंत (Lips & Teeth)", "Lips & Teeth", "હોઠ અને દાંત (Lips & Teeth)"),
+        type: L("सुगठित व मधुर", "Well-Shaped & Graceful", "સુગઠિત અને મધુર"),
+        traits: L(
+          "मधुर वाणी, सम्मोहन क्षमता, कलाप्रियता व सम्भाषण कला।",
+          "Sweet speech, persuasive charm, artistic taste, and diplomacy.",
+          "મધુર વાણી, આકર્ષણ ક્ષમતા, કલાપ્રેમ અને સંભાષણ કલા."
+        ),
+        wisdom: L(
+          "रक्तवर्ण ओष्ठ सम्भाषण में सफलता एवं लोकप्रियता प्रदान करते हैं।",
+          "Naturally proportioned lips grant eloquence and social popularity.",
+          "સુગઠિત હોઠ વાણીમાં સફળતા અને લોકપ્રિયતા પ્રદાન કરે છે."
+        ),
+      },
+      {
+        part: L("चिबुक (Chin)", "Chin", "હડપચી (Chin)"),
+        type: L("दृढ़ व सुडौल", "Firm & Balanced", "દૃઢ અને સુડોળ"),
+        traits: L(
+          "दृढ़ इच्छाशक्ति, अनुशासन, स्थायित्व व दीर्घायु।",
+          "Strong willpower, discipline, stability, and longevity.",
+          "દૃઢ ઇચ્છાશક્તિ, અનુશાસન, સ્થિરતા અને દીર્ઘાયુ."
+        ),
+        wisdom: L(
+          "सुडौल चिबुक जीवन के उत्तरार्ध में अपार सुख व सम्पति की प्रतीक है।",
+          "A well-defined chin symbolizes comfort and prosperity in later life.",
+          "સુડોળ હડપચી જીવનના ઉત્તરાર્ધમાં અપાર સુખ અને સંપત્તિનું પ્રતીક છે."
+        ),
+      },
+    ],
+  };
 }
 
 export const FaceReadingView: React.FC<{
@@ -167,16 +387,23 @@ export const FaceReadingView: React.FC<{
   onPrevChapter?: () => void;
   onNextChapter?: () => void;
 }> = ({ onOpenUmaWithQuery }) => {
+  const { language } = useLanguage();
+  const cLang = (language || "hi").slice(0, 2).toLowerCase();
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === "en" ? en : cLang === "gu" ? gu : hi);
+
+  const presetFaces = getPresetFaces(cLang);
+  const faceMoles = getFaceMoles(cLang);
+
   // Image & Adjustment States
-  const [originalImage, setOriginalImage] = useState<string | null>(PRESET_FACES[0].imageUrl);
-  const [adjustedImage, setAdjustedImage] = useState<string | null>(PRESET_FACES[0].imageUrl);
+  const [originalImage, setOriginalImage] = useState<string | null>(presetFaces[0].imageUrl);
+  const [adjustedImage, setAdjustedImage] = useState<string | null>(presetFaces[0].imageUrl);
   const [gender, setGender] = useState<"male" | "female" | "other">("male");
   const [ageGroup, setAgeGroup] = useState<"young" | "adult" | "senior">("adult");
 
   // Adjustment Tool Controls
   const [isAdjustMode, setIsAdjustMode] = useState<boolean>(false);
   const [scale, setScale] = useState<number>(1.0);
-  const [rotation, setRotation] = useState<number>(0); // in degrees
+  const [rotation, setRotation] = useState<number>(0);
   const [panX, setPanX] = useState<number>(0);
   const [panY, setPanY] = useState<number>(0);
   const [flipH, setFlipH] = useState<boolean>(false);
@@ -203,53 +430,26 @@ export const FaceReadingView: React.FC<{
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraCaptureInputRef = useRef<HTMLInputElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const hasCustomScanRef = useRef<boolean>(false);
 
-  // Default Analysis Data
-  const [analysis, setAnalysis] = useState<FaceAnalysisData>({
-    faceShape: "अंडाकार (Oval)",
-    faceShapeDesc:
-      "सामुद्रिक शास्त्र के अनुसार अंडाकार मुखाकृति उत्तम संतुलन, तीक्ष्ण बुद्धि और धैर्य की प्रतीक है। आप निर्णय लेने में कुशल, व्यवहारिक और सौम्य स्वभाव के धनी हैं। समाज में आपका आदर एवं यश निरंतर बढ़ता है।",
-    vitalityScore: 94,
-    temperament: "सात्त्विक व सांतुलित",
-    careerGuidance:
-      "प्रशासनिक सेवा, परामर्श, शिक्षा, सूचना प्रौद्योगिकी, बैंकिंग एवं रचनात्मक क्षेत्रों में सर्वोच्च सफलता प्राप्त होगी। आपकी तार्किक क्षमता दूसरों को प्रभावित करती है।",
-    remedy:
-      "प्रतिदिन सूर्य देव को अर्घ्य दें। ललाट पर चन्दन व कुंकुम का तिलक लगाएं। तर्जनी या अनामिका अंगुली में पीला पुखराज या माणिक्य धारण करना अति शुभ रहेगा।",
-    features: [
-      {
-        part: "ललाट (Forehead)",
-        type: "उन्नत एवं चौड़ा",
-        traits: "तीक्ष्ण स्मरणशक्ति, दूरगामी सोच व नेतृत्व क्षमता।",
-        wisdom: "महर्षि वराहमिहिर के अनुसार चौड़ा ललाट उच्च पद एवं दूरदर्शिता का सूचक है।",
-      },
-      {
-        part: "नेत्र (Eyes)",
-        type: "तेजस्वी व सौम्य",
-        traits: "सहानुभूति, गहरी अंतर्दृष्टि, सत्यनिष्ठा एवं एकाग्रता।",
-        wisdom: "चमकदार एवं विशाल नेत्र अंतरात्मा की पवित्रता व अंतर्ज्ञान प्रकट करते हैं।",
-      },
-      {
-        part: "नासिका (Nose)",
-        type: "सरल एवं उन्नत",
-        traits: "स्वाभिमान, आर्थिक समृद्धि, दृढ संकल्प व ईमानदारी।",
-        wisdom: "सीधी नासिका धन-धान्य की स्थिरता एवं स्वाभिमान दर्शाती है।",
-      },
-      {
-        part: "ओष्ठ व दंत (Lips & Teeth)",
-        type: "सुगठित व मधुर",
-        traits: "मधुर वाणी, सम्मोहन क्षमता, कलाप्रियता व सम्भाषण कला।",
-        wisdom: "रक्तवर्ण ओष्ठ सम्भाषण में सफलता एवं लोकप्रियता प्रदान करते हैं।",
-      },
-      {
-        part: "चिबुक (Chin)",
-        type: "दृढ़ व सुडौल",
-        traits: "दृढ़ इच्छाशक्ति, अनुशासन, स्थायित्व व दीर्घायु।",
-        wisdom: "सुडौल चिबुक जीवन के उत्तरार्ध में अपार सुख व सम्पति की प्रतीक है।",
-      },
-    ],
-  });
+  const [analysis, setAnalysis] = useState<FaceAnalysisData>(() => getDefaultFaceAnalysis(cLang));
 
-  // Handle File Upload
+  // Sync default analysis & pinned coords when language switches (and if custom scan was done, re-fetch in new language)
+  useEffect(() => {
+    setCustomPins((prev) =>
+      prev.map((pin) => ({
+        ...pin,
+        info: getMoleMeaningByCoords(pin.x, pin.y, cLang),
+      }))
+    );
+    if (!hasCustomScanRef.current) {
+      setAnalysis(getDefaultFaceAnalysis(cLang));
+    } else if (adjustedImage) {
+      void runFacialAnalysis(adjustedImage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cLang]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -260,12 +460,11 @@ export const FaceReadingView: React.FC<{
       setOriginalImage(base64Img);
       setAdjustedImage(base64Img);
       resetAdjustments();
-      setIsAdjustMode(true); // Open adjustment tool immediately for perfect framing
+      setIsAdjustMode(true);
     };
     reader.readAsDataURL(file);
   };
 
-  // Reset Adjustment Sliders
   const resetAdjustments = () => {
     setScale(1.0);
     setRotation(0);
@@ -274,7 +473,6 @@ export const FaceReadingView: React.FC<{
     setFlipH(false);
   };
 
-  // Start Camera - Native Capacitor Camera with smooth web capture fallback
   const startCamera = async () => {
     try {
       if (Capacitor.isPluginAvailable("Camera")) {
@@ -283,8 +481,8 @@ export const FaceReadingView: React.FC<{
           allowEditing: false,
           resultType: CameraResultType.DataUrl,
           source: CameraSource.Camera,
-          promptLabelHeader: "सामुद्रिक मुख लक्षण कैमरा",
-          promptLabelPicture: "फोटो खींचें",
+          promptLabelHeader: L("सामुद्रिक मुख लक्षण कैमरा", "Samudrika Face Scan Camera", "સામુદ્રિક મુખ લક્ષણ કેમેરા"),
+          promptLabelPicture: L("फोटो खींचें", "Capture Photo", "ફોટો ખેંચો"),
         });
 
         if (photo?.dataUrl) {
@@ -305,13 +503,11 @@ export const FaceReadingView: React.FC<{
       }
     }
 
-    // Direct camera capture on mobile browser (does not fail permissions)
     if (cameraCaptureInputRef.current) {
       cameraCaptureInputRef.current.click();
       return;
     }
 
-    // WebRTC live camera stream for desktop
     if (navigator?.mediaDevices?.getUserMedia) {
       setIsLiveCamera(true);
       try {
@@ -332,7 +528,6 @@ export const FaceReadingView: React.FC<{
     }
   };
 
-  // Stop WebCam Stream
   const stopCamera = () => {
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -341,7 +536,6 @@ export const FaceReadingView: React.FC<{
     setIsLiveCamera(false);
   };
 
-  // Snap Photo from Camera Stream
   const captureCameraPhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
@@ -360,7 +554,6 @@ export const FaceReadingView: React.FC<{
     }
   };
 
-  // Render & Crop Adjusted Canvas to output clean image
   const renderCroppedImage = useCallback((): Promise<string> => {
     return new Promise((resolve) => {
       if (!originalImage) {
@@ -384,19 +577,13 @@ export const FaceReadingView: React.FC<{
           return;
         }
 
-        // Background fill
         ctx.fillStyle = "#1c1917";
         ctx.fillRect(0, 0, cropWidth, cropHeight);
 
         ctx.save();
-        // Move to center of canvas
         ctx.translate(cropWidth / 2 + panX, cropHeight / 2 + panY);
-        // Rotate
         ctx.rotate((rotation * Math.PI) / 180);
-        // Scale & Flip
         ctx.scale(scale * (flipH ? -1 : 1), scale);
-
-        // Draw image centered
         ctx.drawImage(img, -cropWidth / 2, -cropHeight / 2, cropWidth, cropHeight);
         ctx.restore();
 
@@ -408,7 +595,6 @@ export const FaceReadingView: React.FC<{
     });
   }, [originalImage, adjustedImage, panX, panY, rotation, scale, flipH]);
 
-  // Apply Adjustment and Run Analysis
   const applyAdjustmentAndScan = async () => {
     const finalCropped = await renderCroppedImage();
     setAdjustedImage(finalCropped);
@@ -416,14 +602,37 @@ export const FaceReadingView: React.FC<{
     runFacialAnalysis(finalCropped);
   };
 
-  // Run AI Facial Analysis
   const runFacialAnalysis = async (imgData: string) => {
     setIsScanning(true);
-    setScanStep("मुखाकृति स्कैन व संरेखण जाँच चालू है...");
+    setScanStep(L(
+      "मुखाकृति स्कैन व संरेखण जाँच चालू है...",
+      "Scanning facial structure & alignment...",
+      "મુખાકૃતિ સ્કેન અને સંરેખણ તપાસ ચાલુ છે..."
+    ));
 
     try {
-      setTimeout(() => setScanStep("ललाट, नेत्र, नासिका व चिमुख कोण मापन..."), 800);
-      setTimeout(() => setScanStep("महर्षि गर्ग व वराहमिहिर सामुद्रिक ग्रंथों से मिलान..."), 1600);
+      setTimeout(
+        () =>
+          setScanStep(
+            L(
+              "ललाट, नेत्र, नासिका व चिबुक कोण मापन...",
+              "Measuring forehead, eye, nose & chin proportions...",
+              "લલાટ, નેત્ર, નાસિકા અને હડપચીના કોણ માપન..."
+            )
+          ),
+        800
+      );
+      setTimeout(
+        () =>
+          setScanStep(
+            L(
+              "महर्षि गर्ग व वराहमिहिर सामुद्रिक ग्रंथों से मिलान...",
+              "Matching with Maharshi Garga & Varahamihira Samudrika texts...",
+              "મહર્ષિ ગર્ગ અને વરાહમિહિર સામુદ્રિક ગ્રંથો સાથે મિલન..."
+            )
+          ),
+        1600
+      );
 
       const response = await fetch("/api/face-reading/analyze", {
         method: "POST",
@@ -433,23 +642,26 @@ export const FaceReadingView: React.FC<{
           imageMimeType: "image/jpeg",
           gender,
           ageGroup,
+          lang: cLang,
         }),
       });
 
       const json = await response.json();
+      const fallback = getDefaultFaceAnalysis(cLang);
       if (json.ok && json.data) {
+        hasCustomScanRef.current = true;
         setAnalysis({
-          faceShape: json.data.faceShape || "अंडाकार (Oval)",
-          faceShapeDesc: json.data.faceShapeDesc || analysis.faceShapeDesc,
+          faceShape: json.data.faceShape || fallback.faceShape,
+          faceShapeDesc: json.data.faceShapeDesc || fallback.faceShapeDesc,
           vitalityScore: json.data.vitalityScore || 92,
-          temperament: json.data.temperament || "सात्त्विक",
-          features: Array.isArray(json.data.features) ? json.data.features : analysis.features,
-          careerGuidance: json.data.careerGuidance || analysis.careerGuidance,
-          remedy: json.data.remedy || analysis.remedy,
+          temperament: json.data.temperament || fallback.temperament,
+          features: Array.isArray(json.data.features) ? json.data.features : fallback.features,
+          careerGuidance: json.data.careerGuidance || fallback.careerGuidance,
+          remedy: json.data.remedy || fallback.remedy,
         });
       }
     } catch {
-      // Offline fallback
+      setAnalysis(getDefaultFaceAnalysis(cLang));
     } finally {
       setTimeout(() => {
         setIsScanning(false);
@@ -458,7 +670,6 @@ export const FaceReadingView: React.FC<{
     }
   };
 
-  // Pan / Dragging Logic
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
@@ -485,21 +696,19 @@ export const FaceReadingView: React.FC<{
     setPanY(e.touches[0].clientY - dragStart.y);
   };
 
-  // Click on Face Image to place custom pin
   const handleImagePinClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isAdjustMode) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const xPct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
     const yPct = Math.round(((e.clientY - rect.top) / rect.height) * 100);
 
-    const info = getMoleMeaningByCoords(xPct, yPct);
+    const info = getMoleMeaningByCoords(xPct, yPct, cLang);
     const newPin = { x: xPct, y: yPct, info };
     setCustomPins((prev) => [...prev, newPin]);
     setSelectedPinIndex(customPins.length);
     setActiveTab("moles");
   };
 
-  // Audio Speech Readout
   const handleAudioSpeech = async () => {
     if (isSpeaking) {
       umaVoice.stop();
@@ -508,7 +717,11 @@ export const FaceReadingView: React.FC<{
     }
 
     setIsSpeaking(true);
-    const speechText = `सामुद्रिक मुखाकृति विश्लेषण। आपकी मुखाकृति स्वरूप ${analysis.faceShape} है। ${analysis.faceShapeDesc} आपका सामुद्रिक भाग्य सूचकांक ${analysis.vitalityScore} प्रतिशत है।`;
+    const speechText = L(
+      `सामुद्रिक मुखाकृति विश्लेषण। आपकी मुखाकृति स्वरूप ${analysis.faceShape} है। ${analysis.faceShapeDesc} आपका सामुद्रिक भाग्य सूचकांक ${analysis.vitalityScore} प्रतिशत है।`,
+      `Samudrika Face Reading Analysis. Your face shape is ${analysis.faceShape}. ${analysis.faceShapeDesc} Your vitality score is ${analysis.vitalityScore} percent.`,
+      `સામુદ્રિક મુખાકૃતિ વિશ્લેષણ. તમારી મુખાકૃતિ ${analysis.faceShape} છે. ${analysis.faceShapeDesc} તમારો સામુદ્રિક ભાગ્ય સૂચકાંક ${analysis.vitalityScore} ટકા છે.`
+    );
 
     await umaVoice.speak(speechText, {
       voiceStyle: "uma",
@@ -520,13 +733,15 @@ export const FaceReadingView: React.FC<{
     });
   };
 
-  // Share Result on WhatsApp
   const handleShareResult = () => {
-    const text = `*👤 सामुद्रिक मुखाकृति विज्ञान (Face Reading)*\n\n*मुखाकृति:* ${analysis.faceShape}\n*सामुद्रिक सूचकांक:* ${analysis.vitalityScore}%\n*प्रकृति:* ${analysis.temperament}\n\n*फलादेश:* ${analysis.faceShapeDesc}\n\n*करियर व धन संकेत:* ${analysis.careerGuidance}\n\n📲 *शक्ति पंचांग* से अपना चेहरा स्कैन एवं एडजस्ट करें!`;
+    const text = L(
+      `*👤 सामुद्रिक मुखाकृति विज्ञान (Face Reading)*\n\n*मुखाकृति:* ${analysis.faceShape}\n*सामुद्रिक सूचकांक:* ${analysis.vitalityScore}%\n*प्रकृति:* ${analysis.temperament}\n\n*फलादेश:* ${analysis.faceShapeDesc}\n\n*करियर व धन संकेत:* ${analysis.careerGuidance}\n\n📲 *शक्ति पंचांग* से अपना चेहरा स्कैन एवं एडजस्ट करें!`,
+      `*👤 Samudrika Face Reading Analysis*\n\n*Face Shape:* ${analysis.faceShape}\n*Vitality Index:* ${analysis.vitalityScore}%\n*Temperament:* ${analysis.temperament}\n\n*Reading:* ${analysis.faceShapeDesc}\n\n*Career & Wealth:* ${analysis.careerGuidance}\n\n📲 Scan & align your face on *Shakti Panchang*!`,
+      `*👤 સામુદ્રિક મુખાકૃતિ વિજ્ઞાન (Face Reading)*\n\n*મુખાકૃતિ:* ${analysis.faceShape}\n*સામુદ્રિક સૂચકાંક:* ${analysis.vitalityScore}%\n*પ્રકૃતિ:* ${analysis.temperament}\n\n*ફળાદેશ:* ${analysis.faceShapeDesc}\n\n*કારકિર્દી અને ધન સંકેત:* ${analysis.careerGuidance}\n\n📲 *શક્તિ પંચાંગ* પર તમારો ચહેરો સ્કેન કરો!`
+    );
     openWhatsAppShare(text);
   };
 
-  // Cleanup Camera on Unmount
   useEffect(() => {
     return () => {
       stopCamera();
@@ -542,10 +757,18 @@ export const FaceReadingView: React.FC<{
             <span className="text-2xl">👤</span>
             <div>
               <h1 className="text-base font-black font-granth text-amber-200">
-                सामुद्रिक मुखाकृति विज्ञान (Face Reading & Alignment)
+                {L(
+                  "सामुद्रिक मुखाकृति विज्ञान (Face Reading & Alignment)",
+                  "Samudrika Shastra (Face Reading & Alignment)",
+                  "સામુદ્રિક મુખાકૃતિ વિજ્ઞાન (Face Reading & Alignment)"
+                )}
               </h1>
               <p className="text-[11px] text-amber-300/80">
-                महर्षि गर्ग व वराहमिहिर कृत चेहरा समायोजन एवं भाग्य विश्लेषण
+                {L(
+                  "महर्षि गर्ग व वराहमिहिर कृत चेहरा समायोजन एवं भाग्य विश्लेषण",
+                  "Facial proportion alignment & destiny reading per Maharshi Garga & Varahamihira",
+                  "મહર્ષિ ગર્ગ અને વરાહમિહિર કૃત ચહેરા સમાયોજન અને ભાગ્ય વિશ્લેષણ"
+                )}
               </p>
             </div>
           </div>
@@ -559,7 +782,7 @@ export const FaceReadingView: React.FC<{
                   ? "bg-amber-500 text-stone-950 border-amber-300 animate-pulse"
                   : "bg-amber-900/60 text-amber-200 border-amber-700/60 hover:bg-amber-800"
               }`}
-              title="फलादेश सुनें"
+              title={L("फलादेश सुनें", "Listen to Analysis", "ફળાદેશ સાંભળો")}
             >
               {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
@@ -568,7 +791,7 @@ export const FaceReadingView: React.FC<{
               type="button"
               onClick={handleShareResult}
               className="p-1.5 rounded-xl bg-amber-900/60 text-amber-200 border border-amber-700/60 hover:bg-amber-800 transition"
-              title="व्हाट्सएप शेयर"
+              title={L("व्हाट्सएप शेयर", "Share on WhatsApp", "WhatsApp પર શેર કરો")}
             >
               <Share2 className="w-4 h-4" />
             </button>
@@ -582,7 +805,7 @@ export const FaceReadingView: React.FC<{
         <div className="p-2.5 rounded-xl bg-white border border-amber-200/90 shadow-2xs flex items-center justify-between gap-2 flex-wrap text-xs">
           <div className="flex items-center gap-1.5 font-bold text-amber-950">
             <UserCheck className="w-4 h-4 text-amber-600" />
-            <span>व्यक्तिगत विवरण:</span>
+            <span>{L("व्यक्तिगत विवरण:", "Personal Details:", "વ્યક્તિગત વિગતો:")}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -595,7 +818,7 @@ export const FaceReadingView: React.FC<{
                   gender === "male" ? "bg-amber-700 text-amber-50 shadow-xs" : "text-amber-900 hover:bg-amber-200/50"
                 }`}
               >
-                पुरुष
+                {L("पुरुष", "Male", "પુરુષ")}
               </button>
               <button
                 type="button"
@@ -604,7 +827,7 @@ export const FaceReadingView: React.FC<{
                   gender === "female" ? "bg-amber-700 text-amber-50 shadow-xs" : "text-amber-900 hover:bg-amber-200/50"
                 }`}
               >
-                महिला
+                {L("महिला", "Female", "મહિલા")}
               </button>
             </div>
 
@@ -614,9 +837,9 @@ export const FaceReadingView: React.FC<{
               onChange={(e) => setAgeGroup(e.target.value as any)}
               className="px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-300 font-bold text-[11px] text-amber-900 outline-none"
             >
-              <option value="young">आयु: 18 - 30 वर्ष</option>
-              <option value="adult">आयु: 30 - 50 वर्ष</option>
-              <option value="senior">आयु: 50+ वर्ष</option>
+              <option value="young">{L("आयु: 18 - 30 वर्ष", "Age: 18 - 30 yrs", "ઉંમર: ૧૮ - ૩૦ વર્ષ")}</option>
+              <option value="adult">{L("आयु: 30 - 50 वर्ष", "Age: 30 - 50 yrs", "ઉંમર: ૩૦ - ૫૦ વર્ષ")}</option>
+              <option value="senior">{L("आयु: 50+ वर्ष", "Age: 50+ yrs", "ઉંમર: ૫૦+ વર્ષ")}</option>
             </select>
           </div>
         </div>
@@ -627,7 +850,11 @@ export const FaceReadingView: React.FC<{
             <div className="flex items-center justify-between text-xs font-bold text-amber-300">
               <span className="flex items-center gap-1.5">
                 <Camera className="w-4 h-4 text-amber-400 animate-pulse" />
-                लाइव कैमरा स्कैन (Align Face in Oval)
+                {L(
+                  "लाइव कैमरा स्कैन (अंडाकार फ्रेम में चेहरा रखें)",
+                  "Live Camera Scan (Align Face in Oval)",
+                  "લાઇવ કેમેરા સ્કેન (ગોળ ફ્રેમમાં ચહેરો રાખો)"
+                )}
               </span>
               <button
                 type="button"
@@ -644,11 +871,17 @@ export const FaceReadingView: React.FC<{
               {/* Live Oval Frame Overlay */}
               <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
                 <div className="w-48 h-64 border-2 border-dashed border-amber-400/90 rounded-[50%] shadow-[0_0_20px_rgba(245,158,11,0.5)] flex flex-col justify-between p-3">
-                  <span className="text-[9px] text-amber-300 text-center font-mono">ललाट (FOREHEAD)</span>
+                  <span className="text-[9px] text-amber-300 text-center font-mono">
+                    {L("ललाट (FOREHEAD)", "FOREHEAD", "લલાટ (FOREHEAD)")}
+                  </span>
                   <div className="w-full border-t border-amber-400/40" />
-                  <span className="text-[9px] text-amber-300 text-center font-mono">नेत्र (EYE LEVEL)</span>
+                  <span className="text-[9px] text-amber-300 text-center font-mono">
+                    {L("नेत्र (EYE LEVEL)", "EYE LEVEL", "નેત્ર (EYE LEVEL)")}
+                  </span>
                   <div className="w-full border-t border-amber-400/40" />
-                  <span className="text-[9px] text-amber-300 text-center font-mono">चिबुक (CHIN)</span>
+                  <span className="text-[9px] text-amber-300 text-center font-mono">
+                    {L("चिबुक (CHIN)", "CHIN", "હડપચી (CHIN)")}
+                  </span>
                 </div>
               </div>
             </div>
@@ -660,7 +893,7 @@ export const FaceReadingView: React.FC<{
                 className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black text-xs shadow-md hover:from-amber-400 hover:to-amber-500 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Camera className="w-4 h-4" />
-                <span>फोटो खींचें एवं फ्रेम करें</span>
+                <span>{L("फोटो खींचें एवं फ्रेम करें", "Capture & Frame Photo", "ફોટો ખેંચો અને ફ્રેમ કરો")}</span>
               </button>
             </div>
           </div>
@@ -670,7 +903,7 @@ export const FaceReadingView: React.FC<{
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-black text-[#5C3A21]">
                 <Sparkles className="w-4 h-4 text-amber-600" />
-                <span>मुखाकृति समायोजन एवं स्कैनिंग</span>
+                <span>{L("मुखाकृति समायोजन एवं स्कैनिंग", "Face Alignment & Scanning", "મુખાકૃતિ સમાયોજન અને સ્કેનિંગ")}</span>
               </div>
 
               <div className="flex items-center gap-1.5">
@@ -684,7 +917,11 @@ export const FaceReadingView: React.FC<{
                   }`}
                 >
                   <Sliders className="w-3.5 h-3.5" />
-                  <span>{isAdjustMode ? "एडजस्ट मोड ऑन" : "चेहरा एडजस्ट करें"}</span>
+                  <span>
+                    {isAdjustMode
+                      ? L("एडजस्ट मोड ऑन", "Adjust Mode On", "એડજસ્ટ મોડ ચાલુ")
+                      : L("चेहरा एडजस्ट करें", "Adjust Face", "ચહેરો એડજસ્ટ કરો")}
+                  </span>
                 </button>
               </div>
             </div>
@@ -705,7 +942,6 @@ export const FaceReadingView: React.FC<{
                   isAdjustMode ? "cursor-grab active:cursor-grabbing" : "cursor-crosshair"
                 }`}
               >
-                {/* Background Image with Transform applied */}
                 {adjustedImage || originalImage ? (
                   <div
                     style={{
@@ -725,7 +961,7 @@ export const FaceReadingView: React.FC<{
                 ) : (
                   <div className="text-center text-amber-200/70 p-4">
                     <Smile className="w-10 h-10 mx-auto mb-1 opacity-50" />
-                    <p className="text-xs font-bold">कोई फोटो उपलब्ध नहीं</p>
+                    <p className="text-xs font-bold">{L("कोई फोटो उपलब्ध नहीं", "No photo available", "કોઈ ફોટો ઉપલબ્ધ નથી")}</p>
                   </div>
                 )}
 
@@ -733,23 +969,25 @@ export const FaceReadingView: React.FC<{
                 {showGridOverlay && (
                   <div className="absolute inset-0 pointer-events-none border-2 border-amber-400/40 rounded-2xl flex flex-col justify-between p-3 m-2">
                     <div className="flex justify-between text-[8px] text-amber-300 font-mono tracking-wider">
-                      <span>[LALAT: FOREHEAD]</span>
+                      <span>{L("[LALAT: ललाट]", "[LALAT: FOREHEAD]", "[LALAT: લલાટ]")}</span>
                       <span>[TRILOK: OVAL]</span>
                     </div>
 
                     {/* Central Alignment Target */}
                     <div className="w-40 h-52 border-2 border-dashed border-amber-400/80 rounded-[50%] mx-auto flex flex-col justify-between p-2 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                       <div className="w-full border-b border-amber-400/30 text-[8px] text-amber-300 text-center">
-                        ललाट रेखा
+                        {L("ललाट रेखा", "Forehead Line", "લલાટ રેખા")}
                       </div>
                       <div className="w-full border-b border-amber-400/40 flex justify-between px-2 text-[8px] text-amber-300">
-                        <span>दायाँ नेत्र</span>
-                        <span>बायाँ नेत्र</span>
+                        <span>{L("दायाँ नेत्र", "Right Eye", "જમણું નેત્ર")}</span>
+                        <span>{L("बायाँ नेत्र", "Left Eye", "ડાબું નેત્ર")}</span>
                       </div>
                       <div className="w-full border-b border-amber-400/30 text-[8px] text-amber-300 text-center">
-                        नासिका रेखा
+                        {L("नासिका रेखा", "Nose Line", "નાસિકા રેખા")}
                       </div>
-                      <div className="text-[8px] text-amber-300 text-center">चिमुख</div>
+                      <div className="text-[8px] text-amber-300 text-center">
+                        {L("चिबुक", "Chin", "હડપચી")}
+                      </div>
                     </div>
 
                     <div className="flex justify-between text-[8px] text-amber-300 font-mono tracking-wider">
@@ -793,7 +1031,11 @@ export const FaceReadingView: React.FC<{
                 {/* Instruction Tag */}
                 {!isAdjustMode && !isScanning && (
                   <div className="absolute bottom-2 left-2 right-2 py-1 px-2 rounded-lg bg-stone-900/80 backdrop-blur-xs text-[10px] text-amber-200 font-bold text-center border border-amber-500/30 pointer-events-none">
-                    👆 चेहरे पर किसी भी स्थान पर क्लिक करके तिल / चिह्न फलादेश देखें
+                    {L(
+                      "👆 चेहरे पर किसी भी स्थान पर क्लिक करके तिल / चिह्न फलादेश देखें",
+                      "👆 Tap anywhere on the face to inspect mole & mark significance",
+                      "👆 ચહેરા પર કોઈપણ સ્થાન પર ક્લિક કરીને તલ / ચિહ્ન ફળાદેશ જુઓ"
+                    )}
                   </div>
                 )}
               </div>
@@ -804,14 +1046,14 @@ export const FaceReadingView: React.FC<{
                   <div className="text-xs font-black text-amber-950 flex items-center justify-between">
                     <span className="flex items-center gap-1">
                       <Crop className="w-4 h-4 text-amber-700" />
-                      चेहरा संरेखण व एडजस्टमेंट
+                      {L("चेहरा संरेखण व एडजस्टमेंट", "Face Alignment & Adjustment", "ચહેરો સંરેખણ અને એડજસ્ટમેન્ટ")}
                     </span>
                     <button
                       type="button"
                       onClick={resetAdjustments}
                       className="text-[10px] text-amber-800 font-bold underline hover:text-amber-950"
                     >
-                      रीसेट करें
+                      {L("रीसेट करें", "Reset", "રીસેટ કરો")}
                     </button>
                   </div>
 
@@ -819,7 +1061,7 @@ export const FaceReadingView: React.FC<{
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px] font-bold text-amber-900">
                       <span className="flex items-center gap-1">
-                        <ZoomIn className="w-3.5 h-3.5" /> ज़ूम (Zoom)
+                        <ZoomIn className="w-3.5 h-3.5" /> {L("ज़ूम (Zoom)", "Zoom", "ઝૂમ (Zoom)")}
                       </span>
                       <span>{Math.round(scale * 100)}%</span>
                     </div>
@@ -838,7 +1080,7 @@ export const FaceReadingView: React.FC<{
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px] font-bold text-amber-900">
                       <span className="flex items-center gap-1">
-                        <RotateCw className="w-3.5 h-3.5" /> कोण घूर्णन (Rotation)
+                        <RotateCw className="w-3.5 h-3.5" /> {L("कोण घूर्णन (Rotation)", "Rotation", "કોણ પરિભ્રમણ (Rotation)")}
                       </span>
                       <span>{rotation}°</span>
                     </div>
@@ -863,7 +1105,11 @@ export const FaceReadingView: React.FC<{
                       }`}
                     >
                       <FlipHorizontal className="w-3.5 h-3.5" />
-                      <span>{flipH ? "फ्लिप सक्रिय" : "क्षैतिज फ्लिप"}</span>
+                      <span>
+                        {flipH
+                          ? L("फ्लिप सक्रिय", "Flip Active", "ફ્લિપ સક્રિય")
+                          : L("क्षैतिज फ्लिप", "Flip Horizontal", "આડી ફ્લિપ")}
+                      </span>
                     </button>
 
                     <button
@@ -874,7 +1120,11 @@ export const FaceReadingView: React.FC<{
                       }`}
                     >
                       <Grid className="w-3.5 h-3.5" />
-                      <span>{showGridOverlay ? "ग्रिड दृश्यमान" : "ग्रिड छिपाएँ"}</span>
+                      <span>
+                        {showGridOverlay
+                          ? L("ग्रिड दृश्यमान", "Grid Visible", "ગ્રિડ દૃશ્યમાન")
+                          : L("ग्रिड छिपाएँ", "Hide Grid", "ગ્રિડ છુપાવો")}
+                      </span>
                     </button>
                   </div>
 
@@ -885,7 +1135,9 @@ export const FaceReadingView: React.FC<{
                     className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-800 text-amber-50 font-black text-xs shadow-md hover:from-emerald-800 hover:to-teal-900 transition flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-500/40"
                   >
                     <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                    <span>एडजस्टमेंट लागू करें एवं स्कैन करें</span>
+                    <span>
+                      {L("एडजस्टमेंट लागू करें एवं स्कैन करें", "Apply Alignment & Scan", "એડજસ્ટમેન્ટ લાગુ કરો અને સ્કેન કરો")}
+                    </span>
                   </button>
                 </div>
               ) : (
@@ -915,7 +1167,7 @@ export const FaceReadingView: React.FC<{
                       className="py-2.5 px-2 rounded-xl bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 text-[11px] font-bold shadow-md hover:from-amber-800 hover:to-amber-900 transition flex items-center justify-center gap-1 cursor-pointer border border-amber-500/40"
                     >
                       <Upload className="w-3.5 h-3.5 text-amber-300" />
-                      <span>गैलरी फोटो</span>
+                      <span>{L("गैलरी फोटो", "Gallery Photo", "ગેલેરી ફોટો")}</span>
                     </button>
 
                     <button
@@ -925,16 +1177,16 @@ export const FaceReadingView: React.FC<{
                       className="py-2.5 px-2 rounded-xl bg-gradient-to-r from-stone-800 to-stone-900 text-amber-200 text-[11px] font-bold shadow-md hover:from-stone-900 hover:to-black transition flex items-center justify-center gap-1 cursor-pointer border border-amber-600/40"
                     >
                       <Camera className="w-3.5 h-3.5 text-amber-400" />
-                      <span>लाइव कैमरा</span>
+                      <span>{L("लाइव कैमरा", "Live Camera", "લાઇવ કેમેરા")}</span>
                     </button>
                   </div>
 
                   <div className="text-[11px] font-bold text-[#8C6239] pt-1">
-                    या मुख्य मुखाकृति सैंपल चुनें:
+                    {L("या मुख्य मुखाकृति सैंपल चुनें:", "Or select a sample face archetype:", "અથવા મુખ્ય મુખાકૃતિ નમૂનો પસંદ કરો:")}
                   </div>
 
                   <div className="grid grid-cols-2 gap-1.5">
-                    {PRESET_FACES.map((preset) => (
+                    {presetFaces.map((preset) => (
                       <button
                         key={preset.id}
                         type="button"
@@ -971,7 +1223,7 @@ export const FaceReadingView: React.FC<{
                 : "text-stone-600 hover:text-amber-800"
             }`}
           >
-            👤 मुख्य फलादेश
+            {L("👤 मुख्य फलादेश", "👤 Main Reading", "👤 મુખ્ય ફળાદેશ")}
           </button>
 
           <button
@@ -983,7 +1235,7 @@ export const FaceReadingView: React.FC<{
                 : "text-stone-600 hover:text-amber-800"
             }`}
           >
-            👁️ अंगवार लक्षण
+            {L("👁️ अंगवार लक्षण", "👁️ Feature Traits", "👁️ અંગવાર લક્ષણો")}
           </button>
 
           <button
@@ -995,7 +1247,7 @@ export const FaceReadingView: React.FC<{
                 : "text-stone-600 hover:text-amber-800"
             }`}
           >
-            💼 धन व करियर
+            {L("💼 धन व करियर", "💼 Wealth & Career", "💼 ધન અને કારકિર્દી")}
           </button>
 
           <button
@@ -1007,7 +1259,11 @@ export const FaceReadingView: React.FC<{
                 : "text-stone-600 hover:text-amber-800"
             }`}
           >
-            📍 तिल व लक्षण चिह्नीकरण ({FACE_MOLES.length + customPins.length})
+            {L(
+              `📍 तिल व लक्षण चिह्नीकरण (${faceMoles.length + customPins.length})`,
+              `📍 Moles & Marks (${faceMoles.length + customPins.length})`,
+              `📍 તલ અને લક્ષણ ચિહ્નીકરણ (${faceMoles.length + customPins.length})`
+            )}
           </button>
 
           <button
@@ -1019,7 +1275,7 @@ export const FaceReadingView: React.FC<{
                 : "text-stone-600 hover:text-amber-800"
             }`}
           >
-            ✨ सात्विक उपाय
+            {L("✨ सात्विक उपाय", "✨ Sattvic Remedies", "✨ સાત્વિક ઉપાયો")}
           </button>
         </div>
 
@@ -1030,19 +1286,21 @@ export const FaceReadingView: React.FC<{
             <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-yellow-600 text-stone-950 shadow-md relative overflow-hidden flex items-center justify-between">
               <div className="space-y-1 relative z-10 max-w-[70%]">
                 <span className="px-2 py-0.5 rounded-full bg-stone-950/20 text-stone-950 text-[10px] font-black uppercase tracking-wider">
-                  सामुद्रिक सूचकांक
+                  {L("सामुद्रिक सूचकांक", "Samudrika Index", "સામુદ્રિક સૂચકાંક")}
                 </span>
                 <div className="text-xl font-black font-granth">
-                  मुखाकृति स्वरूप: {analysis.faceShape}
+                  {L("मुखाकृति स्वरूप:", "Face Archetype:", "મુખાકૃતિ સ્વરૂપ:")} {analysis.faceShape}
                 </div>
                 <p className="text-xs font-medium opacity-90">
-                  प्रकृति: <strong>{analysis.temperament}</strong>
+                  {L("प्रकृति:", "Temperament:", "પ્રકૃતિ:")} <strong>{analysis.temperament}</strong>
                 </p>
               </div>
 
               <div className="text-center bg-stone-950/15 p-2.5 rounded-2xl border border-amber-300/40 shrink-0">
                 <div className="text-2xl font-black">{analysis.vitalityScore}%</div>
-                <div className="text-[9px] font-bold uppercase">भाग्य ऊर्जा</div>
+                <div className="text-[9px] font-bold uppercase">
+                  {L("भाग्य ऊर्जा", "Vitality", "ભાગ્ય ઊર્જા")}
+                </div>
               </div>
             </div>
 
@@ -1050,7 +1308,7 @@ export const FaceReadingView: React.FC<{
             <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs space-y-2 font-sans">
               <h3 className="text-xs font-black text-amber-900 flex items-center gap-1.5">
                 <Award className="w-4 h-4 text-amber-600" />
-                <span>मुखाकृति विस्तृत विश्लेषण व गुणधर्म</span>
+                <span>{L("मुखाकृति विस्तृत विश्लेषण व गुणधर्म", "Detailed Facial Analysis & Qualities", "મુખાકૃતિ વિસ્તૃત વિશ્લેષણ અને ગુણધર્મો")}</span>
               </h3>
               <p className="text-xs text-[#3E2714] leading-relaxed font-medium">
                 {analysis.faceShapeDesc}
@@ -1063,14 +1321,24 @@ export const FaceReadingView: React.FC<{
                 type="button"
                 onClick={() =>
                   onOpenUmaWithQuery(
-                    `मेरी मुखाकृति (${analysis.faceShape}) के आधार पर संपूर्ण जीवन का भाग्य फलादेश बताएं।`
+                    L(
+                      `मेरी मुखाकृति (${analysis.faceShape}) के आधार पर संपूर्ण जीवन का भाग्य फलादेश बताएं।`,
+                      `Give me a complete destiny reading based on my face shape (${analysis.faceShape}).`,
+                      `મારી મુખાકૃતિ (${analysis.faceShape}) ના આધારે સંપૂર્ણ જીવનનું ભાગ્ય ફળાદેશ જણાવો.`
+                    )
                   )
                 }
                 className="w-full p-3 rounded-2xl bg-amber-100/90 border border-amber-300 text-amber-950 font-bold text-xs flex items-center justify-between hover:bg-amber-200 transition cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-lg">🔮</span>
-                  <span>उमा AI से मुखाकृति संबंधी व्यक्तिगत प्रश्न पूछें</span>
+                  <span>
+                    {L(
+                      "उमा AI से मुखाकृति संबंधी व्यक्तिगत प्रश्न पूछें",
+                      "Ask Uma for Personalized Face-Reading Guidance",
+                      "ઉમા પાસેથી મુખાકૃતિ સંબંધી વ્યક્તિગત માર્ગદર્શન મેળવો"
+                    )}
+                  </span>
                 </div>
                 <span className="text-amber-800">→</span>
               </button>
@@ -1094,7 +1362,7 @@ export const FaceReadingView: React.FC<{
                     </span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-bold">
-                    सामुद्रिक लक्षण
+                    {L("सामुद्रिक लक्षण", "Samudrika Trait", "સામુદ્રિક લક્ષણ")}
                   </span>
                 </div>
 
@@ -1116,7 +1384,7 @@ export const FaceReadingView: React.FC<{
             <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs space-y-2">
               <h3 className="text-xs font-black text-amber-950 flex items-center gap-1.5">
                 <Flame className="w-4 h-4 text-amber-600" />
-                <span>धन, वैभव व करियर संभावनाएँ</span>
+                <span>{L("धन, वैभव व करियर संभावनाएँ", "Wealth, Prosperity & Career Prospects", "ધન, વૈભવ અને કારકિર્દી સંભાવનાઓ")}</span>
               </h3>
               <p className="text-xs text-[#3E2714] leading-relaxed font-medium">
                 {analysis.careerGuidance}
@@ -1131,7 +1399,13 @@ export const FaceReadingView: React.FC<{
             <div className="flex items-center justify-between border-b border-amber-100 pb-2">
               <div className="text-xs font-black text-amber-950 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-amber-600" />
-                <span>चेहरे के प्रमुख तिलों व कस्टम पॉइंट्स का फलादेश</span>
+                <span>
+                  {L(
+                    "चेहरे के प्रमुख तिलों व कस्टम पॉइंट्स का फलादेश",
+                    "Facial Moles & Custom Tapped Marks Reading",
+                    "ચહેરાના મુખ્ય તલ અને કસ્ટમ પોઇન્ટ્સનું ફળાદેશ"
+                  )}
+                </span>
               </div>
             </div>
 
@@ -1139,7 +1413,11 @@ export const FaceReadingView: React.FC<{
             {customPins.length > 0 && (
               <div className="p-2.5 rounded-xl bg-amber-50/90 border border-amber-300/80 space-y-2">
                 <div className="text-xs font-bold text-amber-950">
-                  📍 आपके द्वारा फोटो पर अंकित किए गए स्थान ({customPins.length}):
+                  {L(
+                    `📍 आपके द्वारा फोटो पर अंकित किए गए स्थान (${customPins.length}):`,
+                    `📍 Points Marked by You on Photo (${customPins.length}):`,
+                    `📍 તમારા દ્વારા ફોટો પર અંકિત કરાયેલા સ્થાન (${customPins.length}):`
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -1155,7 +1433,7 @@ export const FaceReadingView: React.FC<{
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-bold">
-                          बिंदु #{pinIdx + 1}: {p.info.location}
+                          {L("बिंदु", "Point", "બિંદુ")} #{pinIdx + 1}: {p.info.location}
                         </span>
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-300/70 text-amber-900 font-bold">
                           {p.info.nature}
@@ -1172,9 +1450,9 @@ export const FaceReadingView: React.FC<{
 
             {/* Standard Face Moles Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              {FACE_MOLES.map((mole, mIdx) => (
+              {faceMoles.map((mole, mIdx) => (
                 <button
-                  key={mIdx}
+                  key={mole.id}
                   type="button"
                   onClick={() => setSelectedMoleIndex(mIdx)}
                   className={`p-2.5 rounded-xl text-left text-xs transition border cursor-pointer ${
@@ -1197,13 +1475,13 @@ export const FaceReadingView: React.FC<{
             </div>
 
             {/* Selected Mole Highlight Details */}
-            {FACE_MOLES[selectedMoleIndex] && (
+            {faceMoles[selectedMoleIndex] && (
               <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 space-y-1">
                 <div className="text-xs font-black text-amber-950">
-                  🎯 विस्तृत प्रभाव: {FACE_MOLES[selectedMoleIndex].location}
+                  {L("🎯 विस्तृत प्रभाव:", "🎯 Detailed Effect:", "🎯 વિસ્તૃત પ્રભાવ:")} {faceMoles[selectedMoleIndex].location}
                 </div>
                 <p className="text-xs text-amber-900 leading-relaxed font-medium">
-                  {FACE_MOLES[selectedMoleIndex].meaning}
+                  {faceMoles[selectedMoleIndex].meaning}
                 </p>
               </div>
             )}
@@ -1215,7 +1493,7 @@ export const FaceReadingView: React.FC<{
           <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs space-y-2.5">
             <h3 className="text-xs font-black text-amber-950 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>शास्त्रोक्त सात्विक उपाय व रत्नोपचार</span>
+              <span>{L("शास्त्रोक्त सात्विक उपाय व रत्नोपचार", "Authentic Sattvic Remedies & Gem Guidance", "શાસ્ત્રોક્ત સાત્વિક ઉપાયો અને રત્નોપચાર")}</span>
             </h3>
             <p className="text-xs text-[#3E2714] leading-relaxed font-medium bg-emerald-50/80 p-3 rounded-xl border border-emerald-200">
               {analysis.remedy}
@@ -1228,3 +1506,4 @@ export const FaceReadingView: React.FC<{
 };
 
 export default FaceReadingView;
+

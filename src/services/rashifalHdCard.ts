@@ -1,4 +1,5 @@
-import { RashiMetaItem, DailyRashifal } from './dailyRashifal';
+import { RashiMetaItem, DailyRashifal, getTranslatedRashiMeta } from './dailyRashifal';
+import i18n from '../i18n';
 
 /**
  * Generates an SVG string representation of the 12 Vedic Rashi emblems
@@ -148,8 +149,13 @@ function wrapText(
 export async function generateHdRashifalCardDataUrl(
   rashiMeta: RashiMetaItem,
   rashifal: DailyRashifal,
-  locationName = 'उज्जैन'
+  locationName = 'उज्जैन',
+  lang?: string
 ): Promise<string> {
+  const cLang = (lang || i18n.language || 'hi').slice(0, 2).toLowerCase();
+  const locMeta = getTranslatedRashiMeta(rashiMeta, cLang);
+  const pickL = <T,>(hi: T, en: T, gu: T): T => (cLang === 'en' ? en : cLang === 'gu' ? gu : hi);
+
   const canvas = document.createElement('canvas');
   const W = 1080;
   const H = 1920;
@@ -160,9 +166,9 @@ export async function generateHdRashifalCardDataUrl(
 
   // 1. Royal Background Gradient (Deep Vedic Saffron & Rich Parchment)
   const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-  bgGrad.addColorStop(0, '#2D0A0A'); // Deep Royal Crimson
-  bgGrad.addColorStop(0.24, '#4A110D'); // Vedic Maroon
-  bgGrad.addColorStop(0.42, '#FAF2E4'); // Royal Gold Parchment
+  bgGrad.addColorStop(0, '#2D0A0A');
+  bgGrad.addColorStop(0.24, '#4A110D');
+  bgGrad.addColorStop(0.42, '#FAF2E4');
   bgGrad.addColorStop(0.85, '#F5E6CC');
   bgGrad.addColorStop(1, '#E6CFAB');
   ctx.fillStyle = bgGrad;
@@ -202,16 +208,36 @@ export async function generateHdRashifalCardDataUrl(
   ctx.textAlign = 'center';
   ctx.fillStyle = '#FFD88A';
   ctx.font = 'bold 30px serif';
-  ctx.fillText('॥ ॐ श्री गणेशाय नमः • शक्ति सनातन दैनिक राशिफल ॥', W / 2, 95);
+  ctx.fillText(
+    pickL(
+      '॥ ॐ श्री गणेशाय नमः • शक्ति सनातन दैनिक राशिफल ॥',
+      '॥ Om Shri Ganeshaya Namah • Shakti Sanatan Daily Horoscope ॥',
+      '॥ ॐ શ્રી ગણેશાય નમઃ • શક્તિ સનાતન દૈનિક રાશિફળ ॥'
+    ),
+    W / 2,
+    95
+  );
 
   ctx.fillStyle = '#FFF8EB';
-  ctx.font = '900 52px serif';
-  ctx.fillText(`${rashiMeta.name} राशि (${rashiMeta.symbol}) दैनिक राशिफल`, W / 2, 160);
+  ctx.font = '900 48px serif';
+  ctx.fillText(
+    pickL(
+      `${locMeta.name} राशि (${locMeta.symbol}) दैनिक राशिफल`,
+      `${locMeta.name} (${locMeta.symbol}) Daily Horoscope`,
+      `${locMeta.name} રાશિ (${locMeta.symbol}) દૈનિક રાશિફળ`
+    ),
+    W / 2,
+    160
+  );
 
   ctx.fillStyle = '#FAD089';
-  ctx.font = 'bold 26px sans-serif';
+  ctx.font = 'bold 25px sans-serif';
   ctx.fillText(
-    `📅 ${rashifal.dateLabel}  •  ${rashiMeta.element}  •  स्वामी: ${rashiMeta.lord}  •  📍 ${locationName}`,
+    pickL(
+      `📅 ${rashifal.dateLabel}  •  ${locMeta.element}  •  स्वामी: ${locMeta.lord}  •  📍 ${locationName}`,
+      `📅 ${rashifal.dateLabel}  •  ${locMeta.element}  •  Lord: ${locMeta.lord}  •  📍 ${locationName}`,
+      `📅 ${rashifal.dateLabel}  •  ${locMeta.element}  •  સ્વામી: ${locMeta.lord}  •  📍 ${locationName}`
+    ),
     W / 2,
     205
   );
@@ -221,7 +247,6 @@ export async function generateHdRashifalCardDataUrl(
   const medY = 330;
   const medR = 86;
 
-  // Medallion Glow
   const glow = ctx.createRadialGradient(medX, medY, medR * 0.4, medX, medY, medR * 1.4);
   glow.addColorStop(0, 'rgba(230, 161, 69, 0.55)');
   glow.addColorStop(1, 'rgba(230, 161, 69, 0)');
@@ -230,7 +255,6 @@ export async function generateHdRashifalCardDataUrl(
   ctx.arc(medX, medY, medR * 1.4, 0, Math.PI * 2);
   ctx.fill();
 
-  // Medallion Disc
   const medGrad = ctx.createLinearGradient(medX - medR, medY - medR, medX + medR, medY + medR);
   medGrad.addColorStop(0, '#7A1616');
   medGrad.addColorStop(0.5, '#A8281C');
@@ -243,7 +267,6 @@ export async function generateHdRashifalCardDataUrl(
   ctx.lineWidth = 5;
   ctx.stroke();
 
-  // Draw SVG emblem into canvas
   try {
     const svgMarkup = getRashiSvgMarkup(rashiMeta.id, '#FFF3C4', '#FFB347');
     const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
@@ -255,22 +278,24 @@ export async function generateHdRashifalCardDataUrl(
     });
     ctx.drawImage(img, medX - medR * 0.75, medY - medR * 0.75, medR * 1.5, medR * 1.5);
   } catch {
-    // Fallback glyph
     ctx.fillStyle = '#FFE599';
     ctx.font = 'bold 74px serif';
-    ctx.fillText(rashiMeta.symbol, medX, medY + 26);
+    ctx.fillText(locMeta.symbol, medX, medY + 26);
   }
 
   // 5. Hero Badges Banner (Chandra Bal & Lord status)
   ctx.fillStyle = '#5C3A21';
-  ctx.font = 'bold 28px sans-serif';
+  ctx.font = 'bold 26px sans-serif';
   ctx.fillText(`🌙 ${rashifal.chandraBal}  •  🪐 ${rashifal.rashiLordStatus}`, W / 2, 455);
 
-  // Quick Lucky Ribbon (Lucky Color, Lucky Number, Ishta)
   ctx.fillStyle = '#8B1E1E';
-  ctx.font = 'bold 24px sans-serif';
+  ctx.font = 'bold 23px sans-serif';
   ctx.fillText(
-    `🎨 शुभ रंग: ${rashifal.luckyColor}   |   🔢 शुभ अंक: ${rashifal.luckyNumber}   |   🕉️ इष्ट: ${rashiMeta.ishtaDevta}`,
+    pickL(
+      `🎨 शुभ रंग: ${rashifal.luckyColor}   |   🔢 शुभ अंक: ${rashifal.luckyNumber}   |   🕉️ इष्ट: ${locMeta.ishtaDevta}`,
+      `🎨 Lucky Color: ${rashifal.luckyColor}   |   🔢 Lucky No: ${rashifal.luckyNumber}   |   🕉️ Ishta: ${locMeta.ishtaDevta}`,
+      `🎨 શુભ રંગ: ${rashifal.luckyColor}   |   🔢 શુભ અંક: ${rashifal.luckyNumber}   |   🕉️ ઇષ્ટ: ${locMeta.ishtaDevta}`
+    ),
     W / 2,
     495
   );
@@ -288,13 +313,11 @@ export async function generateHdRashifalCardDataUrl(
     borderColor: string,
     boxBg: string
   ) => {
-    // Card background
     ctx.save();
     ctx.fillStyle = boxBg;
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = 2.5;
 
-    // Rounded rectangle
     const r = 20;
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -310,13 +333,11 @@ export async function generateHdRashifalCardDataUrl(
     ctx.fill();
     ctx.stroke();
 
-    // Title
     ctx.textAlign = 'left';
     ctx.fillStyle = titleColor;
     ctx.font = 'bold 28px sans-serif';
     ctx.fillText(`${titleIcon} ${title}`, x + 24, y + 42);
 
-    // Divider
     ctx.strokeStyle = 'rgba(140, 98, 57, 0.25)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -324,7 +345,6 @@ export async function generateHdRashifalCardDataUrl(
     ctx.lineTo(x + w - 20, y + 56);
     ctx.stroke();
 
-    // Body Text
     ctx.fillStyle = '#2D1606';
     ctx.font = '500 23px sans-serif';
     const lines = wrapText(ctx, content, w - 48);
@@ -336,13 +356,17 @@ export async function generateHdRashifalCardDataUrl(
     ctx.restore();
   };
 
-  // 6. Section 1: ग्रह गोचर सामान्य फलादेश (Full Width Card)
+  // 6. Section 1: General Transit
   drawCard(
     70,
     530,
     W - 140,
     270,
-    'ग्रह गोचर सामान्य फलादेश (General Transit)',
+    pickL(
+      'ग्रह गोचर सामान्य फलादेश (General Transit)',
+      'General Planetary Transit Forecast',
+      'ગ્રહ ગોચર સામાન્ય ફળાદેશ'
+    ),
     '🌟',
     rashifal.general,
     '#6E1409',
@@ -350,14 +374,14 @@ export async function generateHdRashifalCardDataUrl(
     '#FFFDF9'
   );
 
-  // 7. Section 2 & 3: कार्यक्षेत्र एवं धन (Two-Column Bento Grid)
+  // 7. Section 2 & 3: Career & Wealth
   const colW = (W - 140 - 24) / 2;
   drawCard(
     70,
     825,
     colW,
     330,
-    'कार्यक्षेत्र व आजीविका',
+    pickL('कार्यक्षेत्र व आजीविका', 'Career & Profession', 'કાર્યક્ષેત્ર અને આજીવિકા'),
     '💼',
     rashifal.career,
     '#1B4D3E',
@@ -369,7 +393,7 @@ export async function generateHdRashifalCardDataUrl(
     825,
     colW,
     330,
-    'धन, व्यापार व लाभ',
+    pickL('धन, व्यापार व लाभ', 'Wealth & Gains', 'ધન, વેપાર અને લાભ'),
     '💰',
     rashifal.wealth,
     '#7A4E2D',
@@ -377,13 +401,13 @@ export async function generateHdRashifalCardDataUrl(
     '#FFFDF5'
   );
 
-  // 8. Section 4 & 5: परिवार व स्वास्थ्य (Two-Column Bento Grid)
+  // 8. Section 4 & 5: Family/Love & Health
   drawCard(
     70,
     1180,
     colW,
     300,
-    'परिवार, प्रेम व दांपत्य',
+    pickL('परिवार, प्रेम व दांपत्य', 'Family, Love & Harmony', 'પરિવાર, પ્રેમ અને દાંપત્ય'),
     '❤️',
     rashifal.love,
     '#9E1B32',
@@ -395,7 +419,7 @@ export async function generateHdRashifalCardDataUrl(
     1180,
     colW,
     300,
-    'स्वास्थ्य एवं प्राण-ऊर्जा',
+    pickL('स्वास्थ्य एवं प्राण-ऊर्जा', 'Health & Vitality', 'સ્વાસ્થ્ય અને પ્રાણ-ઊર્જા'),
     '🌿',
     rashifal.health,
     '#1E3A5F',
@@ -403,13 +427,17 @@ export async function generateHdRashifalCardDataUrl(
     '#F6FAFF'
   );
 
-  // 9. Section 6: अचूक दैनिक वैदिक उपाय (Special Remedy Card)
+  // 9. Section 6: Daily Vedic Remedy
   drawCard(
     70,
     1505,
     W - 140,
     260,
-    `${rashiMeta.name} राशि — आज का अचूक वैदिक उपाय`,
+    pickL(
+      `${locMeta.name} राशि — आज का अचूक वैदिक उपाय`,
+      `${locMeta.name} — Today's Vedic Remedy`,
+      `${locMeta.name} રાશિ — આજનો સચોટ વૈદિક ઉપાય`
+    ),
     '🪔',
     rashifal.remedy,
     '#6E1409',
@@ -421,11 +449,27 @@ export async function generateHdRashifalCardDataUrl(
   ctx.textAlign = 'center';
   ctx.fillStyle = '#6E4119';
   ctx.font = 'bold 24px serif';
-  ctx.fillText('॥ शुभम् भवतु • कल्याणमस्तु • शक्ति सनातन वैदिक पंचांग ॥', W / 2, 1815);
+  ctx.fillText(
+    pickL(
+      '॥ शुभम् भवतु • कल्याणमस्तु • शक्ति सनातन वैदिक पंचांग ॥',
+      '॥ Shubham Bhavatu • Shakti Sanatan Vedic Panchang ॥',
+      '॥ શુભમ્ ભવતુ • કલ્યાણમસ્તુ • શક્તિ સનાતન વૈદિક પંચાંગ ॥'
+    ),
+    W / 2,
+    1815
+  );
 
   ctx.fillStyle = '#8C6239';
   ctx.font = '500 20px sans-serif';
-  ctx.fillText(`चंद्र गोचर: ${rashifal.moonTransit}  •  प्रतिदिन प्रातःकाल नवीन गोचर अपडेट`, W / 2, 1850);
+  ctx.fillText(
+    pickL(
+      `चंद्र गोचर: ${rashifal.moonTransit}  •  प्रतिदिन प्रातःकाल नवीन गोचर अपडेट`,
+      `Moon Transit: ${rashifal.moonTransit}  •  Daily Morning Vedic Transit Update`,
+      `ચંદ્ર ગોચર: ${rashifal.moonTransit}  •  દરરોજ સવારે નવીન ગોચર અપડેટ`
+    ),
+    W / 2,
+    1850
+  );
 
   return canvas.toDataURL('image/png', 0.98);
 }

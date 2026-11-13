@@ -4,8 +4,8 @@ import { PlanetPosition } from '../types';
 import { RASHIS, calculateVargaSign } from '../services/astronomy';
 import { triggerHapticSelection } from '../utils/haptics';
 import { ThreeKundaliCanvas, ThreeFormattedPlanet } from './ThreeKundaliCanvas';
-import { useTranslation } from '../i18n';
-import { trPlanet, trRashi, trVedic } from '../i18n/vedicTranslate';
+import { useLanguage } from '../i18n';
+import { trPlanet, trRashi } from '../i18n/vedicTranslate';
 
 export interface KundaliChartProps {
   lagnaDegree: number;
@@ -64,8 +64,8 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
   allowToggleStyle = true,
   defaultRenderMode,
 }) => {
-  const { i18n } = useTranslation();
-  const lang = i18n?.language?.slice(0, 2).toLowerCase() || 'hi';
+  const { language } = useLanguage();
+  const lang = (language || 'hi').slice(0, 2).toLowerCase();
   const uid = useId().replace(/:/g, '');
   const [chartStyle, setChartStyle] = useState<'north' | 'south'>('north');
   const [showDegrees, setShowDegrees] = useState(true);
@@ -324,13 +324,13 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
           {renderMode === 'relief3d' && (
             <div
               className="inline-flex items-center rounded-lg border border-[#C88A2B] bg-[#F4E8D1] overflow-hidden"
-              title="चुटकी से ज़ूम करें (Pinch-to-Zoom)"
+              title={lang === 'en' ? 'Pinch to Zoom' : lang === 'gu' ? 'પિંચ-ટુ-ઝૂમ' : 'चुटकी से ज़ूम करें (Pinch-to-Zoom)'}
             >
               <button
                 type="button"
                 onClick={handleZoomOut}
                 disabled={zoomScale <= MIN_ZOOM}
-                aria-label="ज़ूम कम करें"
+                aria-label={lang === 'en' ? 'Zoom out' : lang === 'gu' ? 'ઝૂમ ઓછું કરો' : 'ज़ूम कम करें'}
                 className="px-1.5 py-1 text-[#5C2D0C] hover:bg-[#EBDCC0] disabled:opacity-40 transition cursor-pointer"
               >
                 <ZoomOut className="w-3 h-3" />
@@ -339,7 +339,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                 type="button"
                 onClick={handleZoomReset}
                 className="px-1.5 py-0.5 text-[10px] font-black text-[#5C2D0C] border-x border-[#C88A2B]/50 cursor-pointer"
-                title="ज़ूम 100% पर रीसेट करें"
+                title={lang === 'en' ? 'Reset zoom to 100%' : lang === 'gu' ? 'ઝૂમ 100% પર રીસેટ કરો' : 'ज़ूम 100% पर रीसेट करें'}
               >
                 {Math.round(zoomScale * 100)}%
               </button>
@@ -347,7 +347,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                 type="button"
                 onClick={handleZoomIn}
                 disabled={zoomScale >= MAX_ZOOM}
-                aria-label="ज़ूम बढ़ाएँ"
+                aria-label={lang === 'en' ? 'Zoom in' : lang === 'gu' ? 'ઝૂમ વધારો' : 'ज़ूम बढ़ाएँ'}
                 className="px-1.5 py-1 text-[#5C2D0C] hover:bg-[#EBDCC0] disabled:opacity-40 transition cursor-pointer"
               >
                 <ZoomIn className="w-3 h-3" />
@@ -388,7 +388,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
               style={{ backgroundColor: 'rgba(62, 31, 13, 0.92)', color: '#FFF3C4' }}
             >
               <RotateCcw className="w-2.5 h-2.5" />
-              <span>{Math.round(zoomScale * 100)}% • रीसेट</span>
+              <span>{Math.round(zoomScale * 100)}% • {lang === 'en' ? 'Reset' : lang === 'gu' ? 'રીસેટ' : 'रीसेट'}</span>
             </button>
           )}
           <div
@@ -805,7 +805,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                   fontWeight="900"
                   fontFamily="'Tiro Devanagari Hindi', serif"
                 >
-                  3D दक्षिण भारतीय चक्र
+                  {lang === 'en' ? '3D South Indian Chart' : lang === 'gu' ? '3D દક્ષિણ ભારતીય ચક્ર' : '3D दक्षिण भारतीय चक्र'}
                 </text>
                 <text
                   x="180"
@@ -815,7 +815,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                   fontSize="14"
                   fontWeight="900"
                 >
-                  लग्न: {RASHIS[ascSignIdx]}
+                  {lang === 'en' ? 'Lagna' : lang === 'gu' ? 'લગ્ન' : 'लग्न'}: {trRashi(RASHIS[ascSignIdx], lang)}
                 </text>
 
                 {SOUTH_SIGNS.map(({ signIdx, row, col, name }) => {
@@ -836,7 +836,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                         fontWeight="900"
                         fontFamily="'Tiro Devanagari Hindi', serif"
                       >
-                        {name}
+                        {trRashi(name, lang)}
                       </text>
                       {isLagna && (
                         <>
@@ -856,7 +856,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                             fontSize="12"
                             fontWeight="900"
                           >
-                            [लग्न]
+                            {lang === 'en' ? '[Asc]' : lang === 'gu' ? '[લગ્ન]' : '[लग्न]'}
                           </text>
                         </>
                       )}
@@ -899,7 +899,7 @@ export const KundaliChart: React.FC<KundaliChartProps> = ({
                                 }}
                               >
                                 {p.name}
-                                {p.isRetro && <tspan fill="#DC2626">(व)</tspan>}
+                                {p.isRetro && <tspan fill="#DC2626">{lang === 'en' ? '(R)' : lang === 'gu' ? '(વ)' : '(व)'}</tspan>}
                                 {showDegrees && (
                                   <tspan
                                     fill="#7C2D12"

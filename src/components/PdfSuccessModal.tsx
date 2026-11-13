@@ -14,6 +14,14 @@ import {
   Send,
 } from 'lucide-react';
 import { ZeroScrollPager } from './ZeroScrollPager';
+import { useLanguage } from '../i18n';
+
+function pickL<T>(lang: string, hi: T, en: T, gu: T): T {
+  const l = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (l === 'en') return en;
+  if (l === 'gu') return gu;
+  return hi;
+}
 
 export interface PdfSuccessInfo {
   isOpen: boolean;
@@ -30,14 +38,13 @@ interface PdfSuccessModalProps {
 }
 
 export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose }) => {
+  const { language } = useLanguage();
   const [viewMode, setViewMode] = useState<'info' | 'reader'>('info');
   const [downloadSuccessMsg, setDownloadSuccessMsg] = useState<string | null>(null);
 
   if (!info || !info.isOpen) return null;
 
-  const isMobile =
-    typeof navigator !== 'undefined' &&
-    /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+  const brandName = pickL(language, 'श्री शक्ति पंचांग', 'Shakti Sanatan Panchang', 'શ્રી શક્તિ પંચાંગ');
 
   // 1. Native Mobile Share / Save to Files
   const handleSaveToMobileDevice = async () => {
@@ -52,15 +59,17 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
         await navigator.share({
           files: [file],
           title: info.title,
-          text: `श्री शक्ति पंचांग • ${info.title}`,
+          text: `${brandName} • ${info.title}`,
         });
-        setDownloadSuccessMsg('सफलतापूर्वक सहेजा / शेयर किया गया!');
+        setDownloadSuccessMsg(
+          pickL(language, 'सफलतापूर्वक सहेजा / शेयर किया गया!', 'Saved / shared successfully!', 'સફળતાપૂર્વક સેવ / શેર કરવામાં આવ્યું!')
+        );
         setTimeout(() => setDownloadSuccessMsg(null), 5000);
         return;
       } else if (navigator.share) {
         await navigator.share({
           title: info.title,
-          text: `श्री शक्ति पंचांग • ${info.title}`,
+          text: `${brandName} • ${info.title}`,
           url: info.blobUrl,
         });
         return;
@@ -91,7 +100,14 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
         }
       }, 600);
 
-      setDownloadSuccessMsg('डाउनलोड शुरू हो गया है! आपके "Downloads" फ़ोल्डर में सहेजी जा रही है।');
+      setDownloadSuccessMsg(
+        pickL(
+          language,
+          'डाउनलोड शुरू हो गया है! आपके "Downloads" फ़ोल्डर में सहेजी जा रही है।',
+          'Download started! Saving to your "Downloads" folder.',
+          'ડાઉનલોડ શરૂ થઈ ગયું છે! તમારા "Downloads" ફોલ્ડરમાં સેવ થઈ રહ્યું છે.'
+        )
+      );
       setTimeout(() => setDownloadSuccessMsg(null), 5000);
     } catch {
       // If direct download fails on mobile, open in tab
@@ -124,10 +140,15 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <div>
               <h3 className="font-bold font-granth text-sm sm:text-base text-[#FAF2E4]">
-                ॥ PDF महा-पत्रिका सफलतापूर्वक तैयार है ॥
+                {pickL(
+                  language,
+                  '॥ PDF महा-पत्रिका सफलतापूर्वक तैयार है ॥',
+                  'PDF Report Generated Successfully',
+                  '॥ PDF મહા-પત્રિકા સફળતાપૂર્વક તૈયાર છે ॥'
+                )}
               </h3>
               <p className="text-[11px] text-[#D9C4A9]">
-                {info.title} • {info.pageCount} पृष्ठ • {fileSizeMb} MB
+                {info.title} • {info.pageCount} {pickL(language, 'पृष्ठ', 'pages', 'પાના')} • {fileSizeMb} MB
               </p>
             </div>
           </div>
@@ -141,7 +162,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                   viewMode === 'info' ? 'bg-[#8C6239] text-white shadow-xs' : 'text-[#D9C4A9] hover:text-white'
                 }`}
               >
-                डाउनलोड विवरण
+                {pickL(language, 'डाउनलोड विवरण', 'Details', 'ડાઉનલોડ વિગત')}
               </button>
               <button
                 type="button"
@@ -151,14 +172,14 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>ऐप में पढ़ें</span>
+                <span>{pickL(language, 'ऐप में पढ़ें', 'Read in App', 'એપમાં વાંચો')}</span>
               </button>
             </div>
 
             <button
               onClick={onClose}
               className="p-1 rounded-full hover:bg-[#462B17] text-[#D9C4A9] hover:text-white transition cursor-pointer"
-              title="बंद करें"
+              title={pickL(language, 'बंद करें', 'Close', 'બંધ કરો')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -172,7 +193,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
             <div className="flex items-center justify-between p-2 bg-[#FAF2E4] rounded-t-lg border-b border-[#8C6239] text-xs font-bold text-[#5C3A21]">
               <span className="flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-[#B56A00]" />
-                अन्तर्निहित ग्रन्थ पत्रिका पाठक (In-App PDF Granth Reader)
+                {pickL(language, 'अन्तर्निहित ग्रन्थ पत्रिका पाठक (In-App PDF Reader)', 'In-App PDF Reader', 'ઇન-એપ PDF ગ્રંથ વાચક')}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -180,7 +201,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                   className="px-2.5 py-1 bg-[#25D366] hover:bg-[#1EBE5D] text-white rounded font-bold flex items-center gap-1 cursor-pointer text-[11px]"
                 >
                   <Share2 className="w-3 h-3" />
-                  <span>फ़ोन में सहेजें / शेयर</span>
+                  <span>{pickL(language, 'फ़ोन में सहेजें / शेयर', 'Save / Share', 'ફોનમાં સેવ / શેર')}</span>
                 </button>
                 <a
                   href={info.blobUrl}
@@ -188,7 +209,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                   className="px-2.5 py-1 bg-[#8B1E1E] hover:bg-[#721818] text-white rounded font-bold flex items-center gap-1 cursor-pointer text-[11px]"
                 >
                   <Download className="w-3 h-3" />
-                  <span>डाउनलोड</span>
+                  <span>{pickL(language, 'डाउनलोड', 'Download', 'ડાઉનલોડ')}</span>
                 </a>
               </div>
             </div>
@@ -224,11 +245,17 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                   {info.fileName}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-emerald-700 font-bold">
-                  <span>पृष्ठ संख्या: {info.pageCount} पृष्ठ</span>
+                  <span>
+                    {pickL(language, `पृष्ठ संख्या: ${info.pageCount} पृष्ठ`, `Pages: ${info.pageCount}`, `પાના સંખ્યા: ${info.pageCount} પાના`)}
+                  </span>
                   <span>•</span>
-                  <span>आकार: ~{fileSizeMb} MB</span>
+                  <span>
+                    {pickL(language, `आकार: ~${fileSizeMb} MB`, `Size: ~${fileSizeMb} MB`, `કદ: ~${fileSizeMb} MB`)}
+                  </span>
                   <span>•</span>
-                  <span>फॉर्मेट: मोबाइल-फिट पत्रिका</span>
+                  <span>
+                    {pickL(language, 'फॉर्मेट: मोबाइल-फिट पत्रिका', 'Format: Mobile-Fit PDF', 'ફોર્મેટ: મોબાઈલ-ફિટ પત્રિકા')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -242,7 +269,14 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                 className="w-full py-3.5 px-4 bg-gradient-to-r from-[#1E7E34] via-[#28A745] to-[#1E7E34] hover:brightness-110 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg transition transform active:scale-98 cursor-pointer"
               >
                 <Share2 className="w-4 h-4" />
-                <span>📲 फ़ोन में सेव करें (Save to Files / WhatsApp)</span>
+                <span>
+                  {pickL(
+                    language,
+                    '📲 फ़ोन में सेव करें (Save to Files / WhatsApp)',
+                    '📲 Save / Share on Device (Files / WhatsApp)',
+                    '📲 ફોનમાં સેવ કરો (Files / WhatsApp)'
+                  )}
+                </span>
               </button>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -252,13 +286,15 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                   download={info.fileName}
                   target="_self"
                   onClick={() => {
-                    setDownloadSuccessMsg('डाउनलोड आरंभ हो गया है!');
+                    setDownloadSuccessMsg(
+                      pickL(language, 'डाउनलोड आरंभ हो गया है!', 'Download started!', 'ડાઉનલોડ શરૂ થઈ ગયું છે!')
+                    );
                     setTimeout(() => setDownloadSuccessMsg(null), 5000);
                   }}
                   className="py-2.5 px-3 bg-gradient-to-r from-[#8B1E1E] to-[#B56A00] hover:brightness-110 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-md transition transform active:scale-98 text-center"
                 >
                   <Download className="w-4 h-4" />
-                  <span>📥 सीधा डाउनलोड</span>
+                  <span>{pickL(language, '📥 सीधा डाउनलोड', '📥 Direct Download', '📥 સીધું ડાઉનલોડ')}</span>
                 </a>
 
                 {/* Open In New Browser Tab (Native PDF viewer with download/print) */}
@@ -268,7 +304,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                   className="py-2.5 px-3 bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-md transition transform active:scale-98 cursor-pointer text-center"
                 >
                   <ExternalLink className="w-4 h-4 text-amber-300" />
-                  <span>🌐 नए टैब में खोलें</span>
+                  <span>{pickL(language, '🌐 नए टैब में खोलें', '🌐 Open in Tab', '🌐 નવા ટેબમાં ખોલો')}</span>
                 </button>
 
                 {/* In-App Reader */}
@@ -278,7 +314,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                   className="py-2.5 px-3 bg-[#462B17] hover:bg-[#382010] text-[#FFD88A] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-md transition transform active:scale-98 cursor-pointer text-center"
                 >
                   <Eye className="w-4 h-4" />
-                  <span>📖 यहीं ऐप में पढ़ें</span>
+                  <span>{pickL(language, '📖 यहीं ऐप में पढ़ें', '📖 Read in App', '📖 અહીં એપમાં વાંચો')}</span>
                 </button>
               </div>
             </div>
@@ -287,10 +323,15 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
             <div className="p-3 bg-amber-50 border border-amber-300/80 rounded-xl text-xs text-amber-900 space-y-1">
               <div className="font-bold flex items-center gap-1.5 text-amber-950">
                 <Smartphone className="w-4 h-4 text-[#B56A00]" />
-                <span>फ़ोन में PDF सेव करने के लिए:</span>
+                <span>{pickL(language, 'फ़ोन में PDF सेव करने के लिए:', 'To save PDF on your phone:', 'ફોનમાં PDF સેવ કરવા માટે:')}</span>
               </div>
               <p className="text-[11px] leading-relaxed text-[#735133]">
-                ऊपर दिए गए हरे बटन <strong>&quot;फ़ोन में सेव करें&quot;</strong> पर क्लिक करें। Android व iPhone आपको सीधे <strong>&quot;Save to Files&quot;</strong>, <strong>&quot;Drive&quot;</strong> या <strong>&quot;WhatsApp&quot;</strong> में भेजने का विकल्प देंगे।
+                {pickL(
+                  language,
+                  <>ऊपर दिए गए हरे बटन <strong>&quot;फ़ोन में सेव करें&quot;</strong> पर क्लिक करें। Android व iPhone आपको सीधे <strong>&quot;Save to Files&quot;</strong>, <strong>&quot;Drive&quot;</strong> या <strong>&quot;WhatsApp&quot;</strong> में भेजने का विकल्प देंगे।</>,
+                  <>Tap the green <strong>&quot;Save / Share on Device&quot;</strong> button above. Android &amp; iPhone will let you send it directly to <strong>&quot;Save to Files&quot;</strong>, <strong>&quot;Drive&quot;</strong> or <strong>&quot;WhatsApp&quot;</strong>.</>,
+                  <>ઉપર આપેલા લીલા બટન <strong>&quot;ફોનમાં સેવ કરો&quot;</strong> પર ક્લિક કરો. Android અને iPhone તમને સીધા <strong>&quot;Save to Files&quot;</strong>, <strong>&quot;Drive&quot;</strong> અથવા <strong>&quot;WhatsApp&quot;</strong> માં મોકલવાનો વિકલ્પ આપશે.</>
+                )}
               </p>
             </div>
 
@@ -302,7 +343,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                 className="text-xs font-bold text-[#8C6239] hover:text-[#5C3A21] flex items-center gap-1 cursor-pointer"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                <span>ब्राउज़र के नए टैब में खोलें</span>
+                <span>{pickL(language, 'ब्राउज़र के नए टैब में खोलें', 'Open in new browser tab', 'બ્રાઉઝરના નવા ટેબમાં ખોલો')}</span>
               </button>
 
               <button
@@ -310,7 +351,7 @@ export const PdfSuccessModal: React.FC<PdfSuccessModalProps> = ({ info, onClose 
                 onClick={onClose}
                 className="px-4 py-1.5 bg-[#E5D2B8] hover:bg-[#D9C4A9] text-[#5C3A21] rounded-lg text-xs font-bold transition cursor-pointer"
               >
-                सम्पन्न (बंद करें)
+                {pickL(language, 'सम्पन्न (बंद करें)', 'Done (Close)', 'પૂર્ણ (બંધ કરો)')}
               </button>
             </div>
           </ZeroScrollPager>

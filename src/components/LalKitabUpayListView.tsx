@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { lalKitabRepository, LAL_KITAB_COUNT, LalKitabRemedy } from '../data/lalKitabRepository';
+import { useLanguage } from '../i18n';
+import { trPlanet } from '../i18n/vedicTranslate';
 import {
   Search,
   X,
@@ -15,6 +17,10 @@ import {
 export const LalKitabUpayListView: React.FC<{
   onAskUma?: (query: string) => void;
 }> = ({ onAskUma }) => {
+  const { language } = useLanguage();
+  const lang = (language || 'hi').slice(0, 2).toLowerCase();
+  const pick = (hi: string, en: string, gu: string) => (lang === 'en' ? en : lang === 'gu' ? gu : hi);
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('सभी (All)');
   const [selectedPlanet, setSelectedPlanet] = useState<string>('सभी ग्रह');
@@ -28,14 +34,30 @@ export const LalKitabUpayListView: React.FC<{
     return lalKitabRepository.searchRemedies(searchQuery, selectedCategory, selectedPlanet);
   }, [searchQuery, selectedCategory, selectedPlanet]);
 
+  const trCat = (cat: string) => {
+    if (cat === 'सभी (All)') return pick('सभी (All)', 'All Categories', 'બધું (All)');
+    if (cat === 'सर्वग्रह उपाय') return pick('सर्वग्रह उपाय', 'All Planets Remedies', 'સર્વગ્રહ ઉપાય');
+    if (cat.endsWith(' उपाय')) {
+      const pl = cat.replace(' उपाय', '').trim();
+      return `${trPlanet(pl, lang)} ${pick('उपाय', 'Remedies', 'ઉપાય')}`;
+    }
+    return cat;
+  };
+
+  const trPlFilter = (pl: string) => {
+    if (pl === 'सभी ग्रह') return pick('सभी ग्रह', 'All Planets', 'બધા ગ્રહો');
+    if (pl === 'सर्वग्रह') return pick('सर्वग्रह', 'All Planets', 'સર્વગ્રહ');
+    return trPlanet(pl, lang);
+  };
+
   const handleCopyRemedy = (e: React.MouseEvent, r: LalKitabRemedy) => {
     e.stopPropagation();
-    let text = `📕 लाल किताब उपाय (${r.code}): ${r.title}\n• ग्रह: ${r.planet}\n• समस्या: ${r.problemStatement}\n• उपाय विधि: ${r.remedyProcedure}\n• सामग्री: ${r.materialsRequired.join(', ')}\n• अवधि: ${r.durationDays} (${r.bestDayAndTime})\n• सावधानी: ${r.precaution}`;
+    let text = `${pick('📕 लाल किताब उपाय', '📕 Lal Kitab Remedy', '📕 લાલ કિતાબ ઉપાય')} (${r.code}): ${r.title}\n• ${pick('ग्रह:', 'Planet:', 'ગ્રહ:')} ${trPlFilter(r.planet)}\n• ${pick('समस्या:', 'Problem:', 'સમસ્યા:')} ${r.problemStatement}\n• ${pick('उपाय विधि:', 'Procedure:', 'ઉપાય વિધિ:')} ${r.remedyProcedure}\n• ${pick('सामग्री:', 'Materials:', 'સામગ્રી:')} ${r.materialsRequired.join(', ')}\n• ${pick('अवधि:', 'Duration:', 'સમયગાળો:')} ${r.durationDays} (${r.bestDayAndTime})\n• ${pick('सावधानी:', 'Precaution:', 'સાવધાની:')} ${r.precaution}`;
     if (r.mantra) {
-      text += `\n• मंत्र/प्रार्थना: ${r.mantra}`;
+      text += `\n• ${pick('मंत्र/प्रार्थना:', 'Mantra/Prayer:', 'મંત્ર/પ્રાર્થના:')} ${r.mantra}`;
     }
     if (r.sourceNote) {
-      text += `\n• संदर्भ: ${r.sourceNote}`;
+      text += `\n• ${pick('संदर्भ:', 'Reference:', 'સંદર્ભ:')} ${r.sourceNote}`;
     }
     navigator.clipboard.writeText(text);
     setCopiedId(r.id);
@@ -53,15 +75,23 @@ export const LalKitabUpayListView: React.FC<{
             </div>
             <div>
               <h3 className="font-granth font-black text-base sm:text-lg text-amber-200">
-                लाल किताब 501 प्रामाणिक एवं पारंपरिक उपाय
+                {pick(
+                  'लाल किताब 501 प्रामाणिक एवं पारंपरिक उपाय',
+                  'Lal Kitab 501 Authentic Traditional Remedies',
+                  'લાલ કિતાબ ૫૦૧ પ્રામાણિક અને પરંપરાગત ઉપાયો'
+                )}
               </h3>
               <p className="text-xs text-amber-100/80">
-                मूल परंपरा (1939-1952) पर आधारित 501 प्रामाणिक, परखे हुए एवं अहानिकर उपाय।
+                {pick(
+                  'मूल परंपरा (1939-1952) पर आधारित 501 प्रामाणिक, परखे हुए एवं अहानिकर उपाय।',
+                  '501 time-tested, non-harmful traditional remedies rooted in the classical (1939–1952) tradition.',
+                  'મૂળ પરંપરા (૧૯૩૯-૧૯૫૨) પર આધારિત ૫૦૧ પ્રામાણિક, અનુભૂત અને અહાનિકારક ઉપાયો.'
+                )}
               </p>
             </div>
           </div>
           <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-300/40 text-xs font-bold text-amber-200">
-            {filteredRemedies.length} / {LAL_KITAB_COUNT} उपाय उपलब्ध
+            {filteredRemedies.length} / {LAL_KITAB_COUNT} {pick('उपाय उपलब्ध', 'Remedies', 'ઉપાય ઉપલબ્ધ')}
           </span>
         </div>
       </div>
@@ -74,7 +104,11 @@ export const LalKitabUpayListView: React.FC<{
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ग्रह, खाना नंबर, समस्या या उपाय खोजें (जैसे: शनि, कर्ज, खाना 8, तांबा)..."
+            placeholder={pick(
+              'ग्रह, खाना नंबर, समस्या या उपाय खोजें (जैसे: शनि, कर्ज, खाना 8, तांबा)...',
+              'Search by planet, house number, issue or remedy...',
+              'ગ્રહ, ખાના નંબર, સમસ્યા કે ઉપાય શોધો...'
+            )}
             className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white border border-[#8C6239]/40 text-xs sm:text-sm font-semibold text-[#3E2714] outline-none focus:border-[#7F1D1D]"
           />
           {searchQuery && (
@@ -103,7 +137,7 @@ export const LalKitabUpayListView: React.FC<{
                     : 'bg-[#F4E8D1] text-[#5C3A21] hover:bg-[#EAD8B8]'
                 }`}
               >
-                {cat}
+                {trCat(cat)}
               </button>
             );
           })}
@@ -124,7 +158,7 @@ export const LalKitabUpayListView: React.FC<{
                     : 'bg-white text-[#5C3A21] border-[#8C6239]/30 hover:bg-[#F4E8D1]'
                 }`}
               >
-                {pl}
+                {trPlFilter(pl)}
               </button>
             );
           })}
@@ -149,13 +183,13 @@ export const LalKitabUpayListView: React.FC<{
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="px-2 py-0.5 rounded-md bg-[#7F1D1D] text-amber-200 text-[10px] font-extrabold">
-                      #{remedy.id}{remedy.houseNumber ? ` • खाना नं. ${remedy.houseNumber}` : ""} • {remedy.code}
+                      #{remedy.id}{remedy.houseNumber ? ` • ${pick('खाना नं.', 'House #', 'ખાના નં.')} ${remedy.houseNumber}` : ""} • {remedy.code}
                     </span>
                     <span className="px-2 py-0.5 rounded-md bg-amber-100 border border-amber-400/50 text-[#5C3A21] text-[10px] font-bold">
-                      {remedy.planet}
+                      {trPlFilter(remedy.planet)}
                     </span>
                     <span className="px-2 py-0.5 rounded-md bg-[#F4E8D1] text-[#8C6239] text-[10px] font-bold">
-                      {remedy.category}
+                      {trCat(remedy.category)}
                     </span>
                   </div>
                   <h4 className="font-granth font-bold text-sm sm:text-base text-[#3E2714] pt-0.5">
@@ -168,7 +202,7 @@ export const LalKitabUpayListView: React.FC<{
                     type="button"
                     onClick={(e) => handleCopyRemedy(e, remedy)}
                     className="p-1.5 rounded-lg bg-[#F4E8D1] hover:bg-[#EAD8B8] text-[#5C3A21] cursor-pointer"
-                    title="उपाय कॉपी करें"
+                    title={pick('उपाय कॉपी करें', 'Copy Remedy', 'ઉપાય કોપી કરો')}
                   >
                     {copiedId === remedy.id ? (
                       <Check className="w-3.5 h-3.5 text-emerald-700" />
@@ -185,7 +219,7 @@ export const LalKitabUpayListView: React.FC<{
               </div>
 
               <p className="text-xs text-[#5C3A21] mt-1.5 leading-relaxed">
-                <strong className="text-[#7F1D1D]">समस्या / लक्षण: </strong>
+                <strong className="text-[#7F1D1D]">{pick('समस्या / लक्षण: ', 'Problem / Symptoms: ', 'સમસ્યા / લક્ષણો: ')}</strong>
                 {remedy.problemStatement}
               </p>
 
@@ -194,7 +228,7 @@ export const LalKitabUpayListView: React.FC<{
                   <div className="p-3 rounded-xl bg-rose-50/90 border border-rose-200 space-y-1">
                     <div className="font-bold text-[#7F1D1D] flex items-center gap-1.5">
                       <BookOpen className="w-3.5 h-3.5" />
-                      <span>लाल किताब उपाय विधि (Procedure):</span>
+                      <span>{pick('लाल किताब उपाय विधि (Procedure):', 'Lal Kitab Remedy Procedure:', 'લાલ કિતાબ ઉપાય વિધિ:')}</span>
                     </div>
                     <p className="text-[#3E2714] leading-relaxed">{remedy.remedyProcedure}</p>
                   </div>
@@ -203,7 +237,7 @@ export const LalKitabUpayListView: React.FC<{
                     <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/40 space-y-0.5">
                       <div className="text-[10px] font-bold text-[#8C6239] flex items-center gap-1">
                         <Sparkles className="w-3 h-3 text-amber-600" />
-                        <span>मंत्र / प्रार्थना / जप:</span>
+                        <span>{pick('मंत्र / प्रार्थना / जप:', 'Mantra / Prayer:', 'મંત્ર / પ્રાર્થના / જપ:')}</span>
                       </div>
                       <p className="text-xs font-semibold text-[#7F1D1D]">{remedy.mantra}</p>
                     </div>
@@ -211,13 +245,13 @@ export const LalKitabUpayListView: React.FC<{
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div className="p-2.5 rounded-xl bg-[#F4E8D1] border border-[#8C6239]/25">
-                      <div className="text-[10px] font-bold text-[#8C6239]">आवश्यक सामग्री</div>
+                      <div className="text-[10px] font-bold text-[#8C6239]">{pick('आवश्यक सामग्री', 'Materials Required', 'આવશ્યક સામગ્રી')}</div>
                       <div className="font-bold text-[#3E2714] mt-0.5">
                         {remedy.materialsRequired.join(' • ')}
                       </div>
                     </div>
                     <div className="p-2.5 rounded-xl bg-[#F4E8D1] border border-[#8C6239]/25">
-                      <div className="text-[10px] font-bold text-[#8C6239]">अवधि एवं श्रेष्ठ समय</div>
+                      <div className="text-[10px] font-bold text-[#8C6239]">{pick('अवधि एवं श्रेष्ठ समय', 'Duration & Best Timing', 'સમયગાળો અને શ્રેષ્ઠ સમય')}</div>
                       <div className="font-bold text-[#3E2714] mt-0.5">
                         {remedy.durationDays} ({remedy.bestDayAndTime})
                       </div>
@@ -228,7 +262,7 @@ export const LalKitabUpayListView: React.FC<{
                     <div className="flex items-start gap-1.5">
                       <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                       <span>
-                        <strong>विशेष सावधानी / परहेज: </strong>
+                        <strong>{pick('विशेष सावधानी / परहेज: ', 'Precaution: ', 'વિશેષ સાવધાની / પરેજી: ')}</strong>
                         {remedy.precaution}
                       </span>
                     </div>
@@ -237,18 +271,24 @@ export const LalKitabUpayListView: React.FC<{
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onAskUma(`लाल किताब उपाय: ${remedy.title} मेरे लिए कैसा रहेगा?`);
+                          onAskUma(
+                            pick(
+                              `लाल किताब उपाय: ${remedy.title} मेरे लिए कैसा रहेगा?`,
+                              `How suitable is this Lal Kitab remedy for me: ${remedy.title}?`,
+                              `લાલ કિતાબ ઉપાય: ${remedy.title} મારા માટે કેવો રહેશે?`
+                            )
+                          );
                         }}
                         className="px-2.5 py-1 rounded-lg bg-[#7F1D1D] text-amber-100 text-[11px] font-bold shrink-0 flex items-center gap-1 cursor-pointer"
                       >
-                        <Sparkles className="w-3 h-3" /> उमा से पूछें
+                        <Sparkles className="w-3 h-3" /> {pick('उमा से पूछें', 'Ask Uma', 'ઉમાને પૂછો')}
                       </button>
                     )}
                   </div>
 
                   {remedy.sourceNote && (
                     <div className="text-[10px] text-[#8C6239] px-1 italic">
-                      स्रोत / संदर्भ: {remedy.sourceNote}
+                      {pick('स्रोत / संदर्भ:', 'Source / Reference:', 'સંદર્ભ:')} {remedy.sourceNote}
                     </div>
                   )}
                 </div>

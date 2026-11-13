@@ -18,7 +18,14 @@ import { saveImageNative } from '../lib/device';
 import { shareImageFile } from '../lib/shareHelper';
 import { triggerHapticSelection } from '../utils/haptics';
 import { trVedic, trRashi } from '../i18n/vedicTranslate';
-import { useLanguage } from '../i18n';
+import i18n, { useLanguage } from '../i18n';
+
+function pickL<T>(lang: string, hi: T, en: T, gu: T): T {
+  const l = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (l === 'en') return en;
+  if (l === 'gu') return gu;
+  return hi;
+}
 
 interface MoonPhaseChartProps {
   panchang: VedicPanchangData;
@@ -26,9 +33,11 @@ interface MoonPhaseChartProps {
   onWhatsApp?: () => void;
 }
 
-function formatClock(d?: Date): string {
+function formatClock(d?: Date, lang: string = 'hi'): string {
   if (!d) return '—';
-  return d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+  const l = (lang || 'hi').slice(0, 2).toLowerCase();
+  const locale = l === 'en' ? 'en-US' : l === 'gu' ? 'gu-IN' : 'hi-IN';
+  return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
 /**
@@ -37,8 +46,11 @@ function formatClock(d?: Date): string {
  */
 export async function generateHdMoonPanchangDataUrl(
   panchang: VedicPanchangData,
-  placeName: string = 'उज्जैन'
+  placeName: string = 'उज्जैन',
+  lang?: string
 ): Promise<string> {
+  const currentLang = ((lang || i18n.language || 'hi') as string).slice(0, 2).toLowerCase();
+  const locale = currentLang === 'en' ? 'en-US' : currentLang === 'gu' ? 'gu-IN' : 'hi-IN';
   const canvas = document.createElement('canvas');
   const W = 1080;
   const H = 1760;
@@ -76,20 +88,33 @@ export async function generateHdMoonPanchangDataUrl(
   ctx.textAlign = 'center';
   ctx.fillStyle = '#FFD88A';
   ctx.font = 'bold 28px sans-serif';
-  ctx.fillText('॥ श्री गणेशाय नमः • शक्ति सनातन पंचांग ॥', W / 2, 82);
+  ctx.fillText(
+    pickL(
+      currentLang,
+      '॥ श्री गणेशाय नमः • शक्ति सनातन पंचांग ॥',
+      '॥ ॐ श्री गणेशाय नमः • Shakti Sanatan Panchang ॥',
+      '॥ શ્રી ગણેશાય નમઃ • શક્તિ સનાતન પંચાંગ ॥'
+    ),
+    W / 2,
+    82
+  );
 
   ctx.fillStyle = '#FFF8EB';
   ctx.font = '900 44px sans-serif';
-  ctx.fillText('चन्द्र कला एवं तिथि प्रगति चक्र (HD)', W / 2, 138);
+  ctx.fillText(
+    pickL(currentLang, 'चन्द्र कला एवं तिथि प्रगति चक्र (HD)', 'Lunar Phase & Tithi Progress Wheel (HD)', 'ચંદ્ર કલા અને તિથિ પ્રગતિ ચક્ર (HD)'),
+    W / 2,
+    138
+  );
 
-  const dateStr = (panchang.solar.sunrise || new Date()).toLocaleDateString('hi-IN', {
+  const dateStr = (panchang.solar.sunrise || new Date()).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
   ctx.fillStyle = '#E5B869';
   ctx.font = 'bold 26px sans-serif';
-  ctx.fillText(`📅 ${dateStr}  •  ${trVedic(panchang.weekday)}  •  📍 ${placeName}`, W / 2, 182);
+  ctx.fillText(`📅 ${dateStr}  •  ${trVedic(panchang.weekday, currentLang)}  •  📍 ${placeName}`, W / 2, 182);
 
   // 3. Celestial Moon Phase & Orbit Box (Top Half)
   const mCx = 320;
@@ -219,11 +244,17 @@ export async function generateHdMoonPanchangDataUrl(
   const statX = 560;
   ctx.fillStyle = '#FFD88A';
   ctx.font = 'bold 26px sans-serif';
-  ctx.fillText(isWaxing ? '▲ शुक्ल पक्ष (वर्धमान चन्द्र)' : '▼ कृष्ण पक्ष (क्षीयमान चन्द्र)', statX, 265);
+  ctx.fillText(
+    isWaxing
+      ? pickL(currentLang, '▲ शुक्ल पक्ष (वर्धमान चन्द्र)', '▲ Shukla Paksha (Waxing Moon)', '▲ શુક્લ પક્ષ (વર્ધમાન ચંદ્ર)')
+      : pickL(currentLang, '▼ कृष्ण पक्ष (क्षीयमान चन्द्र)', '▼ Krishna Paksha (Waning Moon)', '▼ કૃષ્ણ પક્ષ (ક્ષીયમાણ ચંદ્ર)'),
+    statX,
+    265
+  );
 
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '900 40px sans-serif';
-  ctx.fillText(`${trVedic(panchang.paksha)} • ${trVedic(panchang.tithi)}`, statX, 322);
+  ctx.fillText(`${trVedic(panchang.paksha, currentLang)} • ${trVedic(panchang.tithi, currentLang)}`, statX, 322);
 
   // Stat Box 1: Illumination & Elongation
   ctx.fillStyle = 'rgba(255, 248, 231, 0.12)';
@@ -236,8 +267,8 @@ export async function generateHdMoonPanchangDataUrl(
 
   ctx.fillStyle = '#E5B869';
   ctx.font = 'bold 22px sans-serif';
-  ctx.fillText('चन्द्र प्रकाश (Illumination)', statX + 22, 388);
-  ctx.fillText('सूर्य-चन्द्र अंतर', statX + 275, 388);
+  ctx.fillText(pickL(currentLang, 'चन्द्र प्रकाश (Illumination)', 'Moon Illumination', 'ચંદ્ર પ્રકાશ (Illumination)'), statX + 22, 388);
+  ctx.fillText(pickL(currentLang, 'सूर्य-चन्द्र अंतर', 'Sun-Moon Angle', 'સૂર્ય-ચંદ્ર અંતર'), statX + 275, 388);
 
   ctx.fillStyle = '#FFFDF4';
   ctx.font = '900 38px sans-serif';
@@ -253,15 +284,33 @@ export async function generateHdMoonPanchangDataUrl(
 
   ctx.fillStyle = '#FFD88A';
   ctx.font = 'bold 24px sans-serif';
-  ctx.fillText(`तिथि प्रगति: ${tithiProgressPct}% व्यतीत (तिथि ${tNum}/30)`, statX + 22, 524);
+  ctx.fillText(
+    pickL(
+      currentLang,
+      `तिथि प्रगति: ${tithiProgressPct}% व्यतीत (तिथि ${tNum}/30)`,
+      `Tithi Progress: ${tithiProgressPct}% elapsed (${tNum}/30)`,
+      `તિથિ પ્રગતિ: ${tithiProgressPct}% વ્યતીત (તિથિ ${tNum}/30)`
+    ),
+    statX + 22,
+    524
+  );
   ctx.fillStyle = '#FFF8EB';
   ctx.font = 'bold 24px sans-serif';
-  ctx.fillText(`चन्द्र राशि: ${trVedic(panchang.lunarRashi)} • ${trVedic(panchang.nakshatra)}`, statX + 22, 564);
+  ctx.fillText(
+    `${pickL(currentLang, 'चन्द्र राशि:', 'Moon Sign:', 'ચંદ્ર રાશિ:')} ${trVedic(panchang.lunarRashi, currentLang)} • ${trVedic(panchang.nakshatra, currentLang)}`,
+    statX + 22,
+    564
+  );
   if (panchang.tithiSpan) {
     ctx.fillStyle = '#E5B869';
     ctx.font = '600 21px sans-serif';
     ctx.fillText(
-      `समाप्ति: ${formatClock(panchang.tithiSpan.end)} तक (आगे: ${trVedic(panchang.tithiSpan.nextName)})`,
+      pickL(
+        currentLang,
+        `समाप्ति: ${formatClock(panchang.tithiSpan.end, currentLang)} तक (आगे: ${trVedic(panchang.tithiSpan.nextName, currentLang)})`,
+        `Ends: ${formatClock(panchang.tithiSpan.end, currentLang)} (Next: ${trVedic(panchang.tithiSpan.nextName, currentLang)})`,
+        `સમાપ્તિ: ${formatClock(panchang.tithiSpan.end, currentLang)} સુધી (આગળ: ${trVedic(panchang.tithiSpan.nextName, currentLang)})`
+      ),
       statX + 22,
       596
     );
@@ -271,23 +320,28 @@ export async function generateHdMoonPanchangDataUrl(
   ctx.textAlign = 'center';
   ctx.fillStyle = '#5C3A21';
   ctx.font = '900 36px sans-serif';
-  ctx.fillText('॥ आज का सम्पूर्ण वैदिक पंचांग विवरण ॥', W / 2, 742);
+  ctx.fillText(
+    pickL(currentLang, '॥ आज का सम्पूर्ण वैदिक पंचांग विवरण ॥', "Today's Complete Vedic Panchang Summary", '॥ આજનું સંપૂર્ણ વૈદિક પંચાંગ વિવરણ ॥'),
+    W / 2,
+    742
+  );
 
+  const padaLabel = pickL(currentLang, 'चरण', 'Pada', 'ચરણ');
   const facts: [string, string][] = [
-    ['तिथि (Tithi)', trVedic(panchang.tithi)],
-    ['पक्ष (Paksha)', trVedic(panchang.paksha)],
-    ['नक्षत्र व चरण', `${trVedic(panchang.nakshatra)} · चरण ${panchang.pada}`],
-    ['योग (Yoga)', trVedic(panchang.yoga)],
-    ['करण (Karana)', trVedic(panchang.karana)],
-    ['वार (Weekday)', trVedic(panchang.weekday)],
-    ['मास (Lunar Month)', trVedic(panchang.masa)],
-    ['विक्रम संवत्', panchang.samvat],
-    ['शक संवत्', panchang.sakaSamvat],
-    ['सूर्योदय / सूर्यास्त', `${formatClock(panchang.solar.sunrise)} / ${formatClock(panchang.solar.sunset)}`],
-    ['सूर्य राशि', trVedic(panchang.solarRashi)],
-    ['चन्द्र राशि', trVedic(panchang.lunarRashi)],
-    ['अयनांश (Ayanamsha)', `${panchang.ayanamshaName} (${panchang.ayanamsha.toFixed(2)}°)`],
-    ['पंचांग स्थान', placeName],
+    [pickL(currentLang, 'तिथि (Tithi)', 'Tithi', 'તિથિ (Tithi)'), trVedic(panchang.tithi, currentLang)],
+    [pickL(currentLang, 'पक्ष (Paksha)', 'Paksha', 'પક્ષ (Paksha)'), trVedic(panchang.paksha, currentLang)],
+    [pickL(currentLang, 'नक्षत्र व चरण', 'Nakshatra & Pada', 'નક્ષત્ર અને ચરણ'), `${trVedic(panchang.nakshatra, currentLang)} · ${padaLabel} ${panchang.pada}`],
+    [pickL(currentLang, 'योग (Yoga)', 'Yoga', 'યોગ (Yoga)'), trVedic(panchang.yoga, currentLang)],
+    [pickL(currentLang, 'करण (Karana)', 'Karana', 'કરણ (Karana)'), trVedic(panchang.karana, currentLang)],
+    [pickL(currentLang, 'वार (Weekday)', 'Weekday', 'વાર (Weekday)'), trVedic(panchang.weekday, currentLang)],
+    [pickL(currentLang, 'मास (Lunar Month)', 'Lunar Month', 'માસ (ચંદ્ર માસ)'), trVedic(panchang.masa, currentLang)],
+    [pickL(currentLang, 'विक्रम संवत्', 'Vikram Samvat', 'વિક્રમ સંવત'), panchang.samvat],
+    [pickL(currentLang, 'शक संवत्', 'Shaka Samvat', 'શક સંવત'), panchang.sakaSamvat],
+    [pickL(currentLang, 'सूर्योदय / सूर्यास्त', 'Sunrise / Sunset', 'સૂર્યોદય / સૂર્યાસ્ત'), `${formatClock(panchang.solar.sunrise, currentLang)} / ${formatClock(panchang.solar.sunset, currentLang)}`],
+    [pickL(currentLang, 'सूर्य राशि', 'Sun Sign', 'સૂર્ય રાશિ'), trVedic(panchang.solarRashi, currentLang)],
+    [pickL(currentLang, 'चन्द्र राशि', 'Moon Sign', 'ચંદ્ર રાશિ'), trVedic(panchang.lunarRashi, currentLang)],
+    [pickL(currentLang, 'अयनांश (Ayanamsha)', 'Ayanamsha', 'અયનાંશ (Ayanamsha)'), `${trVedic(panchang.ayanamshaName, currentLang)} (${panchang.ayanamsha.toFixed(2)}°)`],
+    [pickL(currentLang, 'पंचांग स्थान', 'Panchang Location', 'પંચાંગ સ્થળ'), placeName],
   ];
 
   const startY = 778;
@@ -321,7 +375,16 @@ export async function generateHdMoonPanchangDataUrl(
   ctx.textAlign = 'center';
   ctx.fillStyle = '#5C3A21';
   ctx.font = 'bold 24px sans-serif';
-  ctx.fillText('🕉️ शक्ति पंचांग (Shakti Panchang) • दृक-सिद्ध वैदिक गणना • Full HD 1080p', W / 2, H - 54);
+  ctx.fillText(
+    pickL(
+      currentLang,
+      '🕉️ शक्ति पंचांग (Shakti Panchang) • दृक-सिद्ध वैदिक गणना • Full HD 1080p',
+      '🕉️ Shakti Panchang • Precision Drik Vedic Astronomy • Full HD 1080p',
+      '🕉️ શક્તિ પંચાંગ (Shakti Panchang) • દૃક્-સિદ્ધ વૈદિક ગણના • Full HD 1080p'
+    ),
+    W / 2,
+    H - 54
+  );
 
   return canvas.toDataURL('image/png', 1.0);
 }
@@ -380,14 +443,28 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
     setIsSavingHd(true);
     setStatusNotice(null);
     try {
-      const dataUrl = await generateHdMoonPanchangDataUrl(panchang, placeName);
+      const dataUrl = await generateHdMoonPanchangDataUrl(panchang, placeName, language);
       const dateSlug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
       const fileName = `shakti-panchang-hd-${dateSlug}.png`;
       await saveImageNative(dataUrl, fileName);
-      setStatusNotice('✓ Full HD (1080p) पंचांग व चन्द्र कला चित्र सफलतापूर्वक सेव हो गया!');
+      setStatusNotice(
+        pickL(
+          language,
+          '✓ Full HD (1080p) पंचांग व चन्द्र कला चित्र सफलतापूर्वक सेव हो गया!',
+          '✓ Full HD (1080p) Panchang & Lunar Phase image saved successfully!',
+          '✓ Full HD (1080p) પંચાંગ અને ચંદ્ર કલા ચિત્ર સફળતાપૂર્વક સેવ થઈ ગયું!'
+        )
+      );
       setTimeout(() => setStatusNotice(null), 4000);
     } catch {
-      setStatusNotice('HD चित्र सेव करने में त्रुटि हुई, कृपया पुनः प्रयास करें।');
+      setStatusNotice(
+        pickL(
+          language,
+          'HD चित्र सेव करने में त्रुटि हुई, कृपया पुनः प्रयास करें।',
+          'Could not save HD image, please try again.',
+          'HD ચિત્ર સેવ કરવામાં ભૂલ આવી, કૃપા કરીને ફરી પ્રયાસ કરો.'
+        )
+      );
     } finally {
       setIsSavingHd(false);
     }
@@ -399,25 +476,32 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
     setIsSharingHd(true);
     setStatusNotice(null);
     try {
-      const dataUrl = await generateHdMoonPanchangDataUrl(panchang, placeName);
+      const dataUrl = await generateHdMoonPanchangDataUrl(panchang, placeName, language);
       const dateSlug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
       const fileName = `shakti-panchang-hd-${dateSlug}.png`;
+      const sRise = formatClock(panchang.solar.sunrise, language);
+      const sSet = formatClock(panchang.solar.sunset, language);
       const shareText = [
-        `🌙 *चन्द्र कला एवं आज का पंचांग (${placeName})*`,
-        `• तिथि: ${trVedic(panchang.paksha)} ${trVedic(panchang.tithi)} (${tithiProgressPct}% व्यतीत)`,
-        `• चन्द्र प्रकाश: ${illuminationPct.toFixed(1)}% (${elongationDeg.toFixed(1)}° रेखांश)`,
-        `• नक्षत्र: ${trVedic(panchang.nakshatra)} (चरण ${panchang.pada})`,
-        `• योग: ${trVedic(panchang.yoga)} | करण: ${trVedic(panchang.karana)}`,
-        `• वार: ${trVedic(panchang.weekday)} | मास: ${trVedic(panchang.masa)}`,
-        `• सूर्योदय: ${formatClock(panchang.solar.sunrise)} | सूर्यास्त: ${formatClock(panchang.solar.sunset)}`,
-        `• सूर्य राशि: ${trVedic(panchang.solarRashi)} | चन्द्र राशि: ${trVedic(panchang.lunarRashi)}`,
-        `🕉️ *शक्ति सनातन पंचांग*`,
+        pickL(
+          language,
+          `🌙 *चन्द्र कला एवं आज का पंचांग (${placeName})*`,
+          `🌙 *Lunar Phase & Today's Panchang (${placeName})*`,
+          `🌙 *ચંદ્ર કલા અને આજનું પંચાંગ (${placeName})*`
+        ),
+        `• ${pickL(language, 'तिथि:', 'Tithi:', 'તિથિ:')} ${trVedic(panchang.paksha, language)} ${trVedic(panchang.tithi, language)} (${tithiProgressPct}% ${pickL(language, 'व्यतीत', 'elapsed', 'વ્યતીત')})`,
+        `• ${pickL(language, 'चन्द्र प्रकाश:', 'Illumination:', 'ચંદ્ર પ્રકાશ:')} ${illuminationPct.toFixed(1)}% (${elongationDeg.toFixed(1)}°)`,
+        `• ${pickL(language, 'नक्षत्र:', 'Nakshatra:', 'નક્ષત્ર:')} ${trVedic(panchang.nakshatra, language)} (${pickL(language, 'चरण', 'Pada', 'ચરણ')} ${panchang.pada})`,
+        `• ${pickL(language, 'योग:', 'Yoga:', 'યોગ:')} ${trVedic(panchang.yoga, language)} | ${pickL(language, 'करण:', 'Karana:', 'કરણ:')} ${trVedic(panchang.karana, language)}`,
+        `• ${pickL(language, 'वार:', 'Weekday:', 'વાર:')} ${trVedic(panchang.weekday, language)} | ${pickL(language, 'मास:', 'Month:', 'માસ:')} ${trVedic(panchang.masa, language)}`,
+        `• ${pickL(language, 'सूर्योदय:', 'Sunrise:', 'સૂર્યોદય:')} ${sRise} | ${pickL(language, 'सूर्यास्त:', 'Sunset:', 'સૂર્યાસ્ત:')} ${sSet}`,
+        `• ${pickL(language, 'सूर्य राशि:', 'Sun Sign:', 'સૂર્ય રાશિ:')} ${trVedic(panchang.solarRashi, language)} | ${pickL(language, 'चन्द्र राशि:', 'Moon Sign:', 'ચંદ્ર રાશિ:')} ${trVedic(panchang.lunarRashi, language)}`,
+        pickL(language, '🕉️ *शक्ति सनातन पंचांग*', '🕉️ *Shakti Sanatan Panchang*', '🕉️ *શક્તિ સનાતન પંચાંગ*'),
       ].join('\n');
 
       await shareImageFile({
         imageUri: dataUrl,
         fileName,
-        title: 'आज का वैदिक पंचांग एवं चन्द्र कला (HD)',
+        title: pickL(language, 'आज का वैदिक पंचांग एवं चन्द्र कला (HD)', "Today's Vedic Panchang & Moon Phase (HD)", 'આજનું વૈદિક પંચાંગ અને ચંદ્ર કલા (HD)'),
         text: shareText,
       });
     } catch {

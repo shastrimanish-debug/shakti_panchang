@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RASHIS } from '../services/astronomy';
 import { triggerHapticSelection } from '../utils/haptics';
-import { useTranslation } from '../i18n';
+import { useLanguage } from '../i18n';
 import { trRashi } from '../i18n/vedicTranslate';
 
 export interface ThreeFormattedPlanet {
@@ -65,14 +65,23 @@ const SOUTH_3D_CELLS = [
 
 const PLANET_3D_COLORS: Record<string, number> = {
   सूर्य: 0xea580c,
+  Sun: 0xea580c,
   चंद्र: 0x0284c7,
+  Moon: 0x0284c7,
   मंगल: 0xdc2626,
+  Mars: 0xdc2626,
   बुध: 0x16a34a,
+  Mercury: 0x16a34a,
   गुरु: 0xd97706,
+  Jupiter: 0xd97706,
   शुक्र: 0xdb2777,
+  Venus: 0xdb2777,
   शनि: 0x4f46e5,
+  Saturn: 0x4f46e5,
   राहु: 0x7e22ce,
+  Rahu: 0x7e22ce,
   केतु: 0xc2410c,
+  Ketu: 0xc2410c,
 };
 
 // Pre-allocated math helpers at module scope (zero GC in render loop)
@@ -230,8 +239,8 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
   fontScale: initialFontScale = 'xlarge',
   onFallback,
 }) => {
-  const { i18n } = useTranslation();
-  const lang = i18n?.language?.slice(0, 2).toLowerCase() || 'hi';
+  const { language } = useLanguage();
+  const lang = (language || 'hi').slice(0, 2).toLowerCase();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [cameraPreset, setCameraPreset] = useState<'perspective' | 'deep' | 'top'>('perspective');
   const [fontScale, setFontScale] = useState<'large' | 'xlarge'>(initialFontScale);
@@ -249,6 +258,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
     signPlanets,
     showDegrees,
     fontScale,
+    lang,
   });
   latestPropsRef.current = {
     chartStyle,
@@ -257,6 +267,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
     signPlanets,
     showDegrees,
     fontScale,
+    lang,
   };
 
   useEffect(() => {
@@ -415,6 +426,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         signPlanets: sPlanets,
         showDegrees: degOn,
         fontScale: fScale,
+        lang: activeLang,
       } = latestPropsRef.current;
 
       // Royal Vedic Bhojpatra, Kumkum & Swarna Gold Materials
@@ -551,7 +563,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
         chartRootGroup.add(medMesh);
 
         // High-Contrast Rashi Sign Label Sprite
-        const rashiTex = createRashiMedallionTexture(signNum, rashiName, isLagna, maxAnisotropy, lang);
+        const rashiTex = createRashiMedallionTexture(signNum, rashiName, isLagna, maxAnisotropy, activeLang);
         disposableTextures.push(rashiTex);
         const rashiSpriteMat = new THREE.SpriteMaterial({
           map: rashiTex,
@@ -580,7 +592,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
           const orbX = px + Math.cos(theta) * spreadRadius;
           const orbZ = pz + Math.sin(theta) * spreadRadius;
 
-          const pColor = PLANET_3D_COLORS[p.name] || 0xd97706;
+          const pColor = PLANET_3D_COLORS[p.name] || PLANET_3D_COLORS[p.english] || 0xd97706;
           const planetMat = new THREE.MeshStandardMaterial({
             color: pColor,
             roughness: 0.25,
@@ -617,7 +629,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
           fScale,
           maxAnisotropy,
           stackVertically,
-          lang
+          activeLang
         );
         disposableTextures.push(badgeTex);
 
@@ -807,10 +819,10 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
     };
   }, []);
 
-  // Rebuild 3D meshes & high-contrast labels whenever chart props change
+  // Rebuild 3D meshes & high-contrast labels whenever chart props or language change
   useEffect(() => {
     rebuildContentRef.current?.();
-  }, [chartStyle, ascSignIdx, housePlanets, signPlanets, showDegrees, fontScale]);
+  }, [chartStyle, ascSignIdx, housePlanets, signPlanets, showDegrees, fontScale, lang]);
 
   return (
     <div
@@ -888,7 +900,7 @@ export const ThreeKundaliCanvas: React.FC<ThreeKundaliCanvasProps> = ({
               }}
               className="px-2 py-1 rounded-lg text-[10px] font-black border border-[#F59E0B]/60 cursor-pointer"
               style={{ backgroundColor: '#FFF3C4', color: '#3E1F0D' }}
-              title={lang === 'en' ? 'Toggle Planet Font Size' : 'ग्रहों के फ़ॉन्ट का आकार बदलें'}
+              title={lang === 'en' ? 'Toggle Planet Font Size' : lang === 'gu' ? 'ગ્રહોના ફોન્ટનું કદ બદલો' : 'ग्रहों के फ़ॉन्ट का आकार बदलें'}
             >
               {fontScale === 'xlarge'
                 ? (lang === 'en' ? 'Font: XL' : lang === 'gu' ? 'ફોન્ટ: મોટો (XL)' : 'फ़ॉन्ट: अति-बड़ा (XL)')

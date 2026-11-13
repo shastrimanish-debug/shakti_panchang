@@ -2,8 +2,6 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Search,
   ZoomIn,
-  ZoomOut,
-  BookOpen,
   Volume2,
   VolumeX,
   Share2,
@@ -13,13 +11,12 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  ListFilter,
   Layers,
-  Sparkles,
 } from "lucide-react";
 import { prefetchUmaSpeech, speakUma, stopUmaSpeech, unlockUmaSpeech } from "../lib/umaSpeech";
 import { openWhatsAppShare } from "../services/umaConsultationPdf";
 import { ShlokaPosterModal, ShlokaPosterData } from "./ShlokaPosterModal";
+import { useLanguage } from "../i18n";
 
 export type PathVerse = { n: number; kind?: string; text: string; meaning?: string };
 
@@ -43,11 +40,38 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [activeSpeakingIndex, setActiveSpeakingIndex] = useState<number | null>(null);
 
+  const { language } = useLanguage();
+  const cLang = (language || "hi").slice(0, 2).toLowerCase();
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === "en" ? en : cLang === "gu" ? gu : hi);
+
+  const trKind = (kind?: string) => {
+    if (!kind) return L("पद", "Verse", "પદ");
+    if (cLang === "hi") return kind;
+    if (cLang === "gu") {
+      return kind
+        .replace(/दोहा/g, "દોહા")
+        .replace(/चौपाई/g, "ચોપાઈ")
+        .replace(/सोरठा/g, "સોરઠા")
+        .replace(/श्लोक/g, "શ્લોક")
+        .replace(/छन्द/g, "છંદ")
+        .replace(/अध्याय/g, "અધ્યાય")
+        .replace(/पद/g, "પદ");
+    }
+    return kind
+      .replace(/दोहा/g, "Doha")
+      .replace(/चौपाई/g, "Chaupai")
+      .replace(/सोरठा/g, "Sortha")
+      .replace(/श्लोक/g, "Shloka")
+      .replace(/छन्द/g, "Chhand")
+      .replace(/अध्याय/g, "Chapter")
+      .replace(/पद/g, "Verse");
+  };
+
   const containerRef = useRef<HTMLDivElement>(null);
   const verseRefs = useRef<Record<number, HTMLElement | null>>({});
 
   const fontClasses = ["text-sm leading-relaxed", "text-base leading-relaxed", "text-lg leading-loose", "text-xl leading-loose"];
-  const fontLabels = ["छोटा", "सामान्य", "बड़ा", "अति बड़ा"];
+  const fontLabels = [L("छोटा", "Small", "નાનું"), L("सामान्य", "Normal", "સામાન્ય"), L("बड़ा", "Large", "મોટું"), L("अति बड़ा", "X-Large", "અતિ મોટું")];
 
   // Extract dohas for quick jump dropdown
   const dohaMilestones = useMemo(() => {
@@ -56,9 +80,9 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
       .map((v) => {
         const match = v.text.match(/॥(\d+)॥/);
         const num = match ? match[1] : `${v.n}`;
-        return { index: v.n, label: `${v.kind || "पद"} ${num}` };
+        return { index: v.n, label: `${trKind(v.kind)} ${num}` };
       });
-  }, [verses]);
+  }, [verses, cLang]);
 
   // Filtered verses according to search query or doha jump
   const filteredVerses = useMemo(() => {
@@ -100,14 +124,14 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
   };
 
   const handleCopy = (verse: PathVerse) => {
-    const shareText = `॥ ${title} ॥\n${verse.kind || "पद"} #${verse.n}\n\n${verse.text}\n\n— शक्ति पंचांग`;
+    const shareText = `॥ ${title} ॥\n${trKind(verse.kind)} #${verse.n}\n\n${verse.text}\n\n— ${L("शक्ति पंचांग", "Shakti Panchang", "શક્તિ પંચાંગ")}`;
     navigator.clipboard.writeText(shareText);
     setCopiedIndex(verse.n);
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   const handleShare = (verse: PathVerse) => {
-    const shareText = `*॥ ${title} ॥*\n\n*${verse.kind || "पद"} #${verse.n}*\n${verse.text}\n\n📲 *शक्ति पंचांग* से पठन करें।`;
+    const shareText = `*॥ ${title} ॥*\n\n*${trKind(verse.kind)} #${verse.n}*\n${verse.text}\n\n📲 *${L("शक्ति पंचांग", "Shakti Panchang", "શક્તિ પંચાંગ")}* ${L("से पठन करें।", "— Read daily.", "પર વાંચો.")}`;
     openWhatsAppShare(shareText);
   };
 
@@ -217,7 +241,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                 {title}
               </h1>
               <p className="text-[10px] text-amber-800 font-medium truncate">
-                कुल {verses.length} श्लोक/चौपाई • प्रामाणिक पाठ
+                {L(`कुल ${verses.length} श्लोक/चौपाई • प्रामाणिक पाठ`, `Total ${verses.length} Verses • Authentic Scripture`, `કુલ ${verses.length} શ્લોક/ચોપાઈ • પ્રામાણિક પાઠ`)}
               </p>
             </div>
           </div>
@@ -232,10 +256,10 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                   ? "bg-amber-600 text-amber-50 border-amber-700 shadow-xs animate-pulse"
                   : "bg-amber-100/80 text-amber-900 border-amber-300 hover:bg-amber-200"
               }`}
-              title="सस्वर पाठ चालू / बंद करें"
+              title={L("सस्वर पाठ चालू / बंद करें", "Play / Stop Melodic Recitation", "સસ્વર પાઠ ચાલુ / બંધ કરો")}
             >
               {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-              <span>{isSpeaking ? "पाठ रोकें" : "सस्वर गान"}</span>
+              <span>{isSpeaking ? L("पाठ रोकें", "Stop", "પાઠ રોકો") : L("सस्वर गान", "Recite", "સસ્વર ગાન")}</span>
             </button>
 
             {/* View Mode Switcher */}
@@ -243,10 +267,10 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
               type="button"
               onClick={() => setViewMode(viewMode === "continuous" ? "paged" : "continuous")}
               className="px-2 py-1 rounded-lg bg-amber-50 border border-amber-300 text-[#5C3A21] hover:bg-amber-100 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-              title="पठन मोड बदलें"
+              title={L("पठन मोड बदलें", "Switch Reading Mode", "વાંચન મોડ બદલો")}
             >
               <Layers className="w-3.5 h-3.5 text-amber-700" />
-              <span className="text-[11px] font-bold">{viewMode === "continuous" ? "निरंतर" : "पृष्ठ वार"}</span>
+              <span className="text-[11px] font-bold">{viewMode === "continuous" ? L("निरंतर", "Continuous", "સળંગ") : L("पृष्ठ वार", "Paged", "પૃષ્ઠ વાર")}</span>
             </button>
 
             {/* Font Size Adjuster */}
@@ -254,7 +278,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
               type="button"
               onClick={() => setFontSizeIndex((prev) => (prev + 1) % fontClasses.length)}
               className="px-2 py-1 rounded-lg bg-amber-50 border border-amber-300 text-[#5C3A21] hover:bg-amber-100 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-              title="अक्षर आकार"
+              title={L("अक्षर आकार", "Text Size", "અક્ષરનું કદ")}
             >
               <ZoomIn className="w-3.5 h-3.5 text-amber-700" />
               <span>{fontLabels[fontSizeIndex]}</span>
@@ -270,7 +294,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="चौपाई या शब्द खोजें (उदा: हनुमान, सीता, अशोक, सिंधु)..."
+              placeholder={L("चौपाई या शब्द खोजें (उदा: हनुमान, सीता, अशोक, सिंधु)...", "Search verse or keyword (e.g. Hanuman, Sita, Ram)...", "ચોપાઈ અથવા શબ્દ શોધો (દા.ત. હનુમાન, સીતા, અશોક)...")}
               className="w-full pl-8 pr-7 py-1 text-xs rounded-lg border border-amber-300 bg-amber-50/50 text-[#3E2714] focus:outline-none focus:ring-1 focus:ring-amber-500 font-sans"
             />
             {searchQuery && (
@@ -290,7 +314,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
               onChange={(e) => handleJumpToVerse(parseInt(e.target.value, 10))}
               className="text-xs py-1 px-2 rounded-lg border border-amber-300 bg-white text-[#5C3A21] font-bold focus:outline-none cursor-pointer max-w-[130px]"
             >
-              <option value="">जाएं (दोहा)...</option>
+              <option value="">{L("जाएं (दोहा)...", "Jump (Doha)...", "જાઓ (દોહા)...")}</option>
               {dohaMilestones.map((m) => (
                 <option key={m.index} value={m.index}>
                   {m.label}
@@ -304,7 +328,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
         {(searchQuery || selectedDohaJump) && (
           <div className="flex items-center justify-between text-[11px] text-[#8C6239] pt-0.5 border-t border-amber-100">
             <span>
-              परिणाम: <strong>{filteredVerses.length}</strong> / {verses.length}
+              {L("परिणाम:", "Results:", "પરિણામ:")} <strong>{filteredVerses.length}</strong> / {verses.length}
             </span>
             <button
               type="button"
@@ -314,7 +338,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
               }}
               className="text-amber-800 underline font-bold"
             >
-              सभी देखें
+              {L("सभी देखें", "View All", "બધું જુઓ")}
             </button>
           </div>
         )}
@@ -327,8 +351,8 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
       >
         {currentPagedVerses.length === 0 ? (
           <div className="p-8 text-center text-[#8C6239] my-auto">
-            <p className="text-sm font-bold">कोई चौपाई या दोहा नहीं मिला।</p>
-            <p className="text-xs mt-1 text-stone-500">कृपया अन्य खोज शब्द या दोहा चुनें।</p>
+            <p className="text-sm font-bold">{L("कोई चौपाई या दोहा नहीं मिला।", "No matching verse or doha found.", "કોઈ ચોપાઈ કે દોહા મળ્યા નથી.")}</p>
+            <p className="text-xs mt-1 text-stone-500">{L("कृपया अन्य खोज शब्द या दोहा चुनें।", "Please try another search word or doha.", "કૃપા કરીને અન્ય શબ્દ અથવા દોહા પસંદ કરો.")}</p>
             <button
               type="button"
               onClick={() => {
@@ -337,7 +361,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
               }}
               className="mt-3 px-3 py-1.5 rounded-xl bg-amber-800 text-amber-50 text-xs font-bold"
             >
-              संपूर्ण पाठ देखें
+              {L("संपूर्ण पाठ देखें", "View Complete Path", "સંપૂર્ણ પાઠ જુઓ")}
             </button>
           </div>
         ) : (
@@ -361,11 +385,11 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                 <div className="flex items-center justify-between text-[11px] font-bold text-amber-900 border-b border-amber-100/80 pb-1.5">
                   <div className="flex items-center gap-1.5">
                     <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-mono">
-                      {verse.kind || "पद"} #{verse.n}
+                      {trKind(verse.kind)} #{verse.n}
                     </span>
                     {verse.kind?.includes("दोहा") && (
                       <span className="px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 text-[10px]">
-                        ✦ मुख्य दोहा
+                        {L("✦ मुख्य दोहा", "✦ Main Doha", "✦ મુખ્ય દોહા")}
                       </span>
                     )}
                   </div>
@@ -378,7 +402,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                       className={`p-1 rounded-md transition ${
                         isBookmarked ? "text-amber-600 fill-amber-500" : "hover:bg-amber-100 text-stone-400"
                       }`}
-                      title="बुकमार्क"
+                      title={L("बुकमार्क", "Bookmark", "બુકમાર્ક")}
                     >
                       <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? "fill-amber-600 text-amber-600" : ""}`} />
                     </button>
@@ -389,17 +413,17 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                       onClick={() =>
                         setPosterData({
                           title,
-                          reference: `${verse.kind || "पद"} #${verse.n}`,
+                          reference: `${trKind(verse.kind)} #${verse.n}`,
                           sanskrit: verse.text,
-                          meaning: verse.meaning || `${title} — प्रामाणिक सनातन पाठ एवं नित्य स्वाध्याय।`,
+                          meaning: verse.meaning || `${title} — ${L("प्रामाणिक सनातन पाठ एवं नित्य स्वाध्याय।", "Authentic Sanatan scripture & daily recitation.", "પ્રામાણિક સનાતન પાઠ અને નિત્ય સ્વાધ્યાય.")}`,
                           accentTag: `📖 ${title}`,
                         })
                       }
                       style={{ backgroundColor: "#6E1409", color: "#FFFFFF" }}
                       className="px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer"
-                      title="HD स्टेटस कार्ड डाउनलोड/शेयर करें"
+                      title={L("HD स्टेटस कार्ड डाउनलोड/शेयर करें", "Download / Share HD Status Card", "HD સ્ટેટસ કાર્ડ ડાઉનલોડ/શેર કરો")}
                     >
-                      📸 स्टेटस
+                      {L("📸 स्टेटस", "📸 Status", "📸 સ્ટેટસ")}
                     </button>
 
                     {/* Copy */}
@@ -407,7 +431,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                       type="button"
                       onClick={() => handleCopy(verse)}
                       className="p-1 rounded-md hover:bg-amber-100 text-amber-800 transition"
-                      title="कॉपी करें"
+                      title={L("कॉपी करें", "Copy", "કૉપી કરો")}
                     >
                       {copiedIndex === verse.n ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
@@ -417,7 +441,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                       type="button"
                       onClick={() => handleShare(verse)}
                       className="p-1 rounded-md hover:bg-amber-100 text-amber-800 transition"
-                      title="शेयर करें"
+                      title={L("शेयर करें", "Share", "શેર કરો")}
                     >
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
@@ -438,7 +462,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                     style={{ backgroundColor: "#FAF2E4", color: "#241004", borderColor: "#D6B892" }}
                     className="pt-1.5 text-xs sm:text-sm font-semibold p-2.5 rounded-xl border font-sans leading-relaxed"
                   >
-                    <span className="font-black" style={{ color: "#6E1409" }}>भावार्थ: </span>
+                    <span className="font-black" style={{ color: "#6E1409" }}>{L("भावार्थ: ", "Meaning: ", "ભાવાર્થ: ")}</span>
                     {verse.meaning}
                   </div>
                 )}
@@ -458,11 +482,11 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
             className="px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-300 disabled:opacity-40 flex items-center gap-1"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span>पिछला</span>
+            <span>{L("पिछला", "Prev", "પાછળ")}</span>
           </button>
 
           <span>
-            पृष्ठ {currentPage} / {totalPages} ({filteredVerses.length} कुल)
+            {L(`पृष्ठ ${currentPage} / ${totalPages} (${filteredVerses.length} कुल)`, `Page ${currentPage} / ${totalPages} (${filteredVerses.length} total)`, `પૃષ્ઠ ${currentPage} / ${totalPages} (કુલ ${filteredVerses.length})`)}
           </span>
 
           <button
@@ -471,7 +495,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
             disabled={currentPage === totalPages}
             className="px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-300 disabled:opacity-40 flex items-center gap-1"
           >
-            <span>अगला</span>
+            <span>{L("अगला", "Next", "આગળ")}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -486,10 +510,10 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
             </span>
             <div className="min-w-0">
               <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider truncate">
-                सस्वर पाठ चालू है
+                {L("सस्वर पाठ चालू है", "Recitation Active", "સસ્વર પાઠ ચાલુ છે")}
               </div>
               <div className="text-xs font-black text-amber-100 font-granth truncate">
-                {title} — पद #{activeSpeakingIndex}
+                {title} — {L("पद", "Verse", "પદ")} #{activeSpeakingIndex}
               </div>
             </div>
           </div>
@@ -502,7 +526,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                 if (curPos > 0) speakVerseFromIndex(curPos - 1);
               }}
               className="p-1.5 rounded-lg bg-stone-800 text-amber-200 hover:bg-stone-700 active:scale-95 transition"
-              title="पिछला पद"
+              title={L("पिछला पद", "Previous Verse", "પાછલું પદ")}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -511,10 +535,10 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
               type="button"
               onClick={stopAllSpeech}
               className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white font-black text-xs shadow-md flex items-center gap-1 border border-red-400/50 cursor-pointer"
-              title="पाठ रोकें (Stop Audio)"
+              title={L("पाठ रोकें (Stop Audio)", "Stop Recitation", "પાઠ રોકો")}
             >
               <X className="w-4 h-4" />
-              <span>स्टॉप (STOP)</span>
+              <span>{L("स्टॉप (STOP)", "STOP", "સ્ટોપ")}</span>
             </button>
 
             <button
@@ -524,7 +548,7 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                 if (curPos < filteredVerses.length - 1) speakVerseFromIndex(curPos + 1);
               }}
               className="p-1.5 rounded-lg bg-stone-800 text-amber-200 hover:bg-stone-700 active:scale-95 transition"
-              title="अगला पद"
+              title={L("अगला पद", "Next Verse", "આગળનું પદ")}
             >
               <ChevronRight className="w-4 h-4" />
             </button>

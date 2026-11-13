@@ -520,9 +520,16 @@ export function calculateKundali(
   };
 }
 
-export function checkManglik(kundali: KundaliData): { isManglik: boolean; houses: number[]; note: string } {
+export function checkManglik(kundali: KundaliData, lang: string = 'hi'): { isManglik: boolean; houses: number[]; note: string } {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
   const mars = kundali.planets.find((p) => p.planet === 'मंगल');
-  if (!mars) return { isManglik: false, houses: [], note: 'मंगल स्थिति सामान्य' };
+  if (!mars) {
+    return {
+      isManglik: false,
+      houses: [],
+      note: c === 'en' ? 'Mars placement is normal' : c === 'gu' ? 'મંગળની સ્થિતિ સામાન્ય છે' : 'मंगल स्थिति सामान्य',
+    };
+  }
 
   const manglikHouses = [1, 4, 7, 8, 12];
   const lagnaHouse = mars.house;
@@ -539,9 +546,19 @@ export function checkManglik(kundali: KundaliData): { isManglik: boolean; houses
   const isManglik = isLagnaManglik || isMoonManglik;
   let note = '';
   if (isManglik) {
-    note = `लग्न/चंद्र से ${houses.join(', ')} भाव में मंगल स्थित होने से मांगलिक योग।`;
+    note =
+      c === 'en'
+        ? `Mars placed in house(s) ${houses.join(', ')} from Lagna/Moon forms Manglik Yoga.`
+        : c === 'gu'
+          ? `લગ્ન/ચંદ્રથી ${houses.join(', ')} ભાવમાં મંગળ સ્થિત હોવાથી માંગલિક યોગ.`
+          : `लग्न/चंद्र से ${houses.join(', ')} भाव में मंगल स्थित होने से मांगलिक योग।`;
   } else {
-    note = 'मांगलिक दोष रहित कुंडली।';
+    note =
+      c === 'en'
+        ? 'Horoscope is free from Manglik Dosha.'
+        : c === 'gu'
+          ? 'માંગલિક દોષ રહિત કુંડળી.'
+          : 'मांगलिक दोष रहित कुंडली।';
   }
 
   return { isManglik, houses, note };
@@ -549,26 +566,31 @@ export function checkManglik(kundali: KundaliData): { isManglik: boolean; houses
 
 import { evaluateKundaliMilan } from './milan';
 
-export function calculateAshtakootMilan(boy: KundaliData, girl: KundaliData) {
-  return evaluateKundaliMilan(boy, girl);
+export function calculateAshtakootMilan(boy: KundaliData, girl: KundaliData, lang: string = 'hi') {
+  return evaluateKundaliMilan(boy, girl, lang);
 }
 
 export function generatePrashnaKundali(
   question: string,
   latitude: number = 23.1765,
-  longitude: number = 75.7885
+  longitude: number = 75.7885,
+  lang: string = 'hi'
 ): KundaliData {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  const placeName = c === 'en' ? 'Current Location' : c === 'gu' ? 'તાત્કાલિક સ્થાન' : 'तात्कालिक स्थान';
   const locNow = getSyncedLocationDateTime({
-    name: 'तात्कालिक स्थान',
+    name: placeName,
     latitude,
     longitude,
   });
-  const title = question ? `प्रश्न: ${question}` : 'प्रश्न चक्र';
+  const prefix = c === 'en' ? 'Prashna' : c === 'gu' ? 'પ્રશ્ન' : 'प्रश्न';
+  const fallbackTitle = c === 'en' ? 'Prashna Chart' : c === 'gu' ? 'પ્રશ્ન ચક્ર' : 'प्रश्न चक्र';
+  const title = question ? `${prefix}: ${question}` : fallbackTitle;
   return calculateKundali(
     title,
     locNow.localNoonDate,
     locNow.timeStr,
-    'तात्कालिक स्थान',
+    placeName,
     latitude,
     longitude,
     locNow.timezoneHours
@@ -719,14 +741,263 @@ export const VEDIC_REMEDIES_BY_RASHI: Record<
   },
 };
 
-export function getVedicRemedies(kundali: KundaliData) {
+const VEDIC_REMEDIES_EN: Record<string, { gemstone: string; devata: string; color: string; remedies: string[] }> = {
+  मेष: {
+    gemstone: 'Red Coral (Moonga)',
+    devata: 'Lord Shri Hanuman Ji',
+    color: 'Red & Vermilion',
+    remedies: [
+      'Recite Hanuman Chalisa on Tuesdays.',
+      'Drink water from a copper vessel and offer red flowers.',
+      'Donate red lentils (masoor dal) and jaggery.',
+    ],
+  },
+  वृषभ: {
+    gemstone: 'Diamond or Opal (Heera)',
+    devata: 'Goddess Mahalakshmi Ji',
+    color: 'White & Luminous Pearl',
+    remedies: [
+      'Recite Shri Sukta or Kanakadhara Stotra on Fridays.',
+      'Donate white sandalwood, rock sugar, or kheer.',
+      'Serve cows and feed them green fodder.',
+    ],
+  },
+  मिथुन: {
+    gemstone: 'Emerald (Panna)',
+    devata: 'Lord Shri Ganesha Ji',
+    color: 'Green',
+    remedies: [
+      'Offer 21 Durva grass blades to Lord Ganesha on Wednesdays.',
+      'Donate green moong lentils or fresh green vegetables.',
+      'Offer water daily to a sacred Tulsi plant.',
+    ],
+  },
+  कर्क: {
+    gemstone: 'Pearl (Moti)',
+    devata: 'Lord Mahadeva Shiva',
+    color: 'Milk White',
+    remedies: [
+      'Perform Abhisheka on Shivalinga with raw milk and water on Mondays.',
+      'Offer Arghya and gaze at the Moon on Purnima.',
+      'Seek blessings by touching your mother’s feet daily.',
+    ],
+  },
+  सिंह: {
+    gemstone: 'Ruby (Manikya)',
+    devata: 'Lord Surya Narayana',
+    color: 'Saffron & Gold/Orange',
+    remedies: [
+      'Offer Arghya to the rising Sun using a copper vessel with water, roli, and rice.',
+      'Recite Aditya Hridayam Stotra daily.',
+      'Respect your father and donate wheat and jaggery.',
+    ],
+  },
+  कन्या: {
+    gemstone: 'Emerald (Panna)',
+    devata: 'Lord Vishnu & Lord Ganesha',
+    color: 'Green & Light Yellow',
+    remedies: [
+      'Recite Ganapati Atharvashirsha on Wednesdays.',
+      'Feed grains to birds and green fodder to cows.',
+      'Listen to or recite Vishnu Sahasranama.',
+    ],
+  },
+  तुला: {
+    gemstone: 'Diamond or Opal (Heera)',
+    devata: 'Maa Durga & Maa Mahalakshmi',
+    color: 'White, Pink & Cream',
+    remedies: [
+      'Serve sweet meals or donate fruits to young girls on Fridays.',
+      'Use natural sandalwood and gentle fragrances.',
+      'Recite Argala Stotra from Durga Saptashati.',
+    ],
+  },
+  वृश्चिक: {
+    gemstone: 'Red Coral (Moonga)',
+    devata: 'Lord Kartikeya & Shri Hanuman Ji',
+    color: 'Deep Red & Orange',
+    remedies: [
+      'Offer sindoor and jasmine oil to Hanuman Ji on Tuesdays.',
+      'Recite Rinamochaka Mangala Stotra.',
+      'Support and maintain harmony with younger siblings.',
+    ],
+  },
+  धनु: {
+    gemstone: 'Yellow Sapphire (Pukhraj)',
+    devata: 'Lord Shri Hari Vishnu',
+    color: 'Yellow',
+    remedies: [
+      'Donate chana dal, besan sweets, and turmeric on Thursdays.',
+      'Water the roots of a banana tree and light a ghee lamp.',
+      'Honor gurus, teachers, and learned scholars.',
+    ],
+  },
+  मकर: {
+    gemstone: 'Blue Sapphire (Neelam) or Amethyst',
+    devata: 'Lord Shanideva & Lord Shiva',
+    color: 'Blue & Black',
+    remedies: [
+      'Light a mustard oil lamp beneath a Peepal tree on Saturday evenings.',
+      'Recite Shani Chalisa or Dasharatha-krita Shani Stotra.',
+      'Donate black sesame seeds, urad dal, or blankets.',
+    ],
+  },
+  कुंभ: {
+    gemstone: 'Blue Sapphire (Neelam) or Amethyst',
+    devata: 'Lord Rudra & Lord Shanideva',
+    color: 'Sky Blue & Deep Blue',
+    remedies: [
+      'Perform Chhaya-daan (see reflection in mustard oil in a bowl and donate it) on Saturdays.',
+      'Recite Hanuman Bahuka.',
+      'Serve laborers and those in need with humility.',
+    ],
+  },
+  मीन: {
+    gemstone: 'Yellow Sapphire (Pukhraj)',
+    devata: 'Lord Shri Narayana & Dattatreya',
+    color: 'Turmeric Yellow & Saffron',
+    remedies: [
+      'Listen to Satyanarayana Katha or recite Vishnu Sahasranama on Thursdays.',
+      'Apply saffron tilak and wear sacred gold ornaments.',
+      'Gift books or study materials to deserving students.',
+    ],
+  },
+};
+
+const VEDIC_REMEDIES_GU: Record<string, { gemstone: string; devata: string; color: string; remedies: string[] }> = {
+  मेष: {
+    gemstone: 'પરવાળું / મૂંગા (Red Coral)',
+    devata: 'ભગવાન શ્રી હનુમાનજી',
+    color: 'લાલ અને સિંદૂરી',
+    remedies: [
+      'મંગળવારે હનુમાન ચાલીસાનો પાઠ કરો.',
+      'તાંબાના પાત્રમાં જળ પીઓ અને લાલ પુષ્પ અર્પણ કરો.',
+      'મસૂર દાળ અને ગોળનું દાન કરો.',
+    ],
+  },
+  वृषभ: {
+    gemstone: 'હીરો અથવા ઓપલ (Diamond / Opal)',
+    devata: 'ભગવતી મહાલક્ષ્મીજી',
+    color: 'શ્વેત અને ચમકીલો',
+    remedies: [
+      'શુક્રવારે શ્રીસૂક્ત અથવા કનકધારા સ્તોત્રનો પાઠ કરો.',
+      'સફેદ ચંદન, સાકર અથવા ખીરનું દાન કરો.',
+      'ગૌમાતાની સેવા કરો અને લીલો ચારો ખવડાવો.',
+    ],
+  },
+  मिथुन: {
+    gemstone: 'પન્ના (Emerald)',
+    devata: 'ભગવાન શ્રી ગણેશજી',
+    color: 'લીલો (Green)',
+    remedies: [
+      'બુધવારે ગણેશજીને ૨૧ દૂર્વા દળ અર્પણ કરો.',
+      'મગની દાળ અથવા લીલા શાકભાજીનું દાન કરો.',
+      'તુલસીજીના છોડને નિત્ય જળ અર્પણ કરો.',
+    ],
+  },
+  कर्क: {
+    gemstone: 'મોતી (Pearl)',
+    devata: 'દેવાધિદેવ મહાદેવ શિવ',
+    color: 'દૂધિયા સફેદ',
+    remedies: [
+      'સોમવારે શિવલિંગ પર કાચું દૂધ અને જળથી અભિષેક કરો.',
+      'પૂનમના દિવસે ચંદ્ર દર્શન અને અર્ઘ્ય આપો.',
+      'માતાજીના ચરણ સ્પર્શ કરી આશીર્વાદ લો.',
+    ],
+  },
+  सिंह: {
+    gemstone: 'માણેક (Ruby)',
+    devata: 'ભગવાન ભુવન ભાસ્કર સૂર્યનારાયણ',
+    color: 'કેસરી અને સોનેરી',
+    remedies: [
+      'સવારે તાંબાના લોટામાં જળ, રોલી અને અક્ષત નાખી સૂર્યને અર્ઘ્ય આપો.',
+      'આદિત્ય હૃદય સ્તોત્રનો નિત્ય પાઠ કરો.',
+      'પિતાનું સન્માન કરો અને ઘઉં-ગોળનું દાન કરો.',
+    ],
+  },
+  कन्या: {
+    gemstone: 'પન્ના (Emerald)',
+    devata: 'ભગવાન શ્રી વિષ્ણુ અને ગણેશજી',
+    color: 'લીલો અને આછો પીળો',
+    remedies: [
+      'બુધવારે ગણપતિ અથર્વશીર્ષનો પાઠ કરો.',
+      'પક્ષીઓને ચણ નાખો અને ગાયને લીલો ચારો ખવડાવો.',
+      'વિષ્ણુ સહસ્રનામનું શ્રવણ અથવા પાઠ કરો.',
+    ],
+  },
+  तुला: {
+    gemstone: 'હીરો અથવા ઓપલ (Diamond / Opal)',
+    devata: 'માતા દુર્ગા અને મહાલક્ષ્મી',
+    color: 'સફેદ, ગુલાબી અને ક્રીમ',
+    remedies: [
+      'શુક્રવારે કન્યાઓને મીઠું ભોજન અથવા ફળ દાન કરો.',
+      'સુગંધિત અત્તર અને ચંદનનો ઉપયોગ કરો.',
+      'દુર્ગા સપ્તશતીનો અર્ગલા સ્તોત્ર પાઠ કરો.',
+    ],
+  },
+  वृश्चिक: {
+    gemstone: 'પરવાળું / મૂંગા (Red Coral)',
+    devata: 'શ્રી કાર્તિકેય અને હનુમાનજી',
+    color: 'ઘેરો લાલ અને નારંગી',
+    remedies: [
+      'મંગળવારે હનુમાનજીને સિંદૂર અને ચમેલીનું તેલ અર્પણ કરો.',
+      'ઋણમોચક મંગળ સ્તોત્રનો પાઠ કરો.',
+      'નાના ભાઈઓને સહયોગ કરો.',
+    ],
+  },
+  धनु: {
+    gemstone: 'પોખરાજ (Yellow Sapphire)',
+    devata: 'ભગવાન શ્રી હરિ વિષ્ણુ',
+    color: 'પીળો (Yellow)',
+    remedies: [
+      'ગુરુવારે ચણાની દાળ, બેસનના લાડુ અને હળદરનું દાન કરો.',
+      'કેળાના વૃક્ષના મૂળમાં જળ અર્પણ કરી દીવો પ્રગટાવો.',
+      'ગુરુજનો અને બ્રાહ્મણોનો આદર-સત્કાર કરો.',
+    ],
+  },
+  मकर: {
+    gemstone: 'નીલમ (Blue Sapphire) અથવા જમુનિયા',
+    devata: 'ભગવાન શનિદેવ અને શિવજી',
+    color: 'વાદળી અને કાળો',
+    remedies: [
+      'શનિવારે પીપળાના વૃક્ષ નીચે સરસવના તેલનો દીવો પ્રગટાવો.',
+      'શનિ ચાલીસા અથવા દશરથકૃત શનિ સ્તોત્રનો પાઠ કરો.',
+      'કાળા તલ, અડદની દાળ અથવા ધાબળાનું દાન કરો.',
+    ],
+  },
+  कुंभ: {
+    gemstone: 'નીલમ (Blue Sapphire) અથવા કટૈલા',
+    devata: 'ભગવાન રુદ્ર અને શનિદેવ',
+    color: 'આસમાની અને ઘેરો વાદળી',
+    remedies: [
+      'શનિવારે છાયા દાન (વાટકીમાં તેલ લઈ પોતાનો ચહેરો જોઈને દાન) કરો.',
+      'હનુમાન બાહુકનો પાઠ કરો.',
+      'શ્રમિકો અને જરૂરિયાતમંદોની સેવા કરો.',
+    ],
+  },
+  मीन: {
+    gemstone: 'પોખરાજ (Yellow Sapphire)',
+    devata: 'ભગવાન શ્રી નારાયણ અને દત્તાત્રેય',
+    color: 'હળદર પીળો અને કેસરી',
+    remedies: [
+      'ગુરુવારે સત્યનારાયણ કથા અથવા વિષ્ણુ સહસ્રનામ પાઠ કરો.',
+      'કેસરનું તિલક લગાવો અને સોનાના આભૂષણ ધારણ કરો.',
+      'વિદ્યાર્થીઓને પુસ્તકો કે અભ્યાસ સામગ્રી ભેટ આપો.',
+    ],
+  },
+};
+
+export function getVedicRemedies(kundali: KundaliData, lang: string = 'hi') {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
   const rashi = kundali.moonRashi || 'मेष';
-  const data = VEDIC_REMEDIES_BY_RASHI[rashi] || VEDIC_REMEDIES_BY_RASHI['मेष'];
+  const hiData = VEDIC_REMEDIES_BY_RASHI[rashi] || VEDIC_REMEDIES_BY_RASHI['मेष'];
+  const loc = c === 'en' ? VEDIC_REMEDIES_EN[rashi] || VEDIC_REMEDIES_EN['मेष'] : c === 'gu' ? VEDIC_REMEDIES_GU[rashi] || VEDIC_REMEDIES_GU['मेष'] : null;
+
   return {
-    luckyGemstone: data.gemstone,
-    ishtaDevata: data.devata,
-    luckyColor: data.color,
-    mantra: data.mantra,
-    remedies: data.remedies,
+    luckyGemstone: loc ? loc.gemstone : hiData.gemstone,
+    ishtaDevata: loc ? loc.devata : hiData.devata,
+    luckyColor: loc ? loc.color : hiData.color,
+    mantra: hiData.mantra, // Keep authentic Sanskrit mantra verbatim
+    remedies: loc ? loc.remedies : hiData.remedies,
   };
 }

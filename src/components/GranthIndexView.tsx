@@ -12,8 +12,10 @@ interface GranthIndexViewProps {
 export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
   onSelectTab,
 }) => {
-  const { t, i18n } = useTranslation();
-  const currentLang = i18n.language || 'hi';
+  const { i18n } = useTranslation();
+  const currentLang = (i18n.language || 'hi').slice(0, 2).toLowerCase();
+  const L = <T,>(hi: T, en: T, gu: T): T =>
+    currentLang === 'en' ? en : currentLang === 'gu' ? gu : hi;
   const localizedPages = getLocalizedBookPages(BOOK_PAGES, currentLang);
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
 
@@ -24,13 +26,27 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
 
   for (let i = 0; i < chunkCount; i++) {
     const chunk = localizedPages.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+    const startCh = i * CHUNK_SIZE + 1;
+    const endCh = Math.min((i + 1) * CHUNK_SIZE, localizedPages.length);
     slides.push({
       id: `index-chunk-${i}`,
-      title: `सनातन शक्ति पंचांग अनुक्रमणिका (${i + 1}/${chunkCount})`,
-      subtitle: `अध्याय ${i * CHUNK_SIZE + 1} से ${Math.min((i + 1) * CHUNK_SIZE, localizedPages.length)}`,
-      badge: 'ग्रन्थ सूची',
+      title: L(
+        `सनातन शक्ति पंचांग अनुक्रमणिका (${i + 1}/${chunkCount})`,
+        `Shakti Panchang Sacred Index (${i + 1}/${chunkCount})`,
+        `સનાતન શક્તિ પંચાંગ અનુક્રમણિકા (${i + 1}/${chunkCount})`
+      ),
+      subtitle: L(
+        `अध्याय ${startCh} से ${endCh}`,
+        `Chapters ${startCh} to ${endCh}`,
+        `અધ્યાય ${startCh} થી ${endCh}`
+      ),
+      badge: L('ग्रन्थ सूची', 'Book Index', 'ગ્રંથ સૂચિ'),
       icon: '📖',
-      voiceText: `ग्रन्थ अनुक्रमणिका भाग ${i + 1}। अपने इच्छित अध्याय पर टैप करें।`,
+      voiceText: L(
+        `ग्रन्थ अनुक्रमणिका भाग ${i + 1}। अपने इच्छित अध्याय पर टैप करें।`,
+        `Book index part ${i + 1}. Tap any chapter to open it.`,
+        `ગ્રંથ અનુક્રમણિકા ભાગ ${i + 1}. તમારા ઇચ્છિત અધ્યાય પર ટેપ કરો.`
+      ),
       content: (
         <div className="h-full flex flex-col justify-between py-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 my-auto">
@@ -65,7 +81,11 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
             })}
           </div>
           <div className="text-[10px] text-center text-[#8C6239]">
-            किसी भी अध्याय पर टैप करके सीधे उस पृष्ठ पर जाएं।
+            {L(
+              'किसी भी अध्याय पर टैप करके सीधे उस पृष्ठ पर जाएं।',
+              'Tap any chapter to jump directly to that section.',
+              'કોઈ પણ અધ્યાય પર ટેપ કરીને સીધા તે પૃષ્ઠ પર જાઓ.'
+            )}
           </div>
         </div>
       ),
@@ -77,9 +97,9 @@ export const GranthIndexView: React.FC<GranthIndexViewProps> = ({
       slides={slides}
       currentSlideIndex={activeSlideIndex}
       onSlideIndexChange={setActiveSlideIndex}
-      headerTitle="ग्रन्थ अनुक्रमणिका"
+      headerTitle={L('ग्रन्थ अनुक्रमणिका', 'Book Index', 'ગ્રંથ અનુક્રમણિકા')}
       headerIcon="📖"
-      chapterNumber="विषय-सूची"
+      chapterNumber={L('विषय-सूची', 'Contents', 'વિષય-સૂચિ')}
     />
   );
 };

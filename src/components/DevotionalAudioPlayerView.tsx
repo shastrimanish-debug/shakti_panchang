@@ -22,6 +22,8 @@ import {
   unlockUmaSpeech,
 } from '../lib/umaSpeech';
 import { formatPadacchedaGuide } from '../lib/sanskritPhonetics';
+import { useLanguage } from '../i18n';
+import { trVedic } from '../i18n/vedicTranslate';
 
 /**
  * Formats any Sanskrit/Hindi verse paragraph so every चरण (half-verse ending in ।)
@@ -41,6 +43,10 @@ export const DevotionalAudioPlayerView: React.FC<{
   onOpenUmaModal?: (query?: string) => void;
   onBackToPanchang?: () => void;
 }> = () => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const L = <T,>(hi: T, en: T, gu: T): T => (cLang === 'en' ? en : cLang === 'gu' ? gu : hi);
+
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -301,12 +307,12 @@ export const DevotionalAudioPlayerView: React.FC<{
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
             {[
-              { id: 'all', label: '🌸 सभी' },
-              { id: 'stotra', label: '🔱 स्तोत्र' },
-              { id: 'saptashati', label: '🔱 सप्तशती' },
-              { id: 'bhajan', label: '🙏 चालीसा' },
-              { id: 'mantra', label: '☸ महामंत्र' },
-              { id: 'aarti', label: '🪔 आरती' },
+              { id: 'all', label: L('🌸 सभी', '🌸 All', '🌸 બધા') },
+              { id: 'stotra', label: L('🔱 स्तोत्र', '🔱 Stotra', '🔱 સ્તોત્ર') },
+              { id: 'saptashati', label: L('🔱 सप्तशती', '🔱 Saptashati', '🔱 સપ્તશતી') },
+              { id: 'bhajan', label: L('🙏 चालीसा', '🙏 Chalisa', '🙏 ચાલીસા') },
+              { id: 'mantra', label: L('☸ महामंत्र', '☸ Mahamantra', '☸ મહામંત્ર') },
+              { id: 'aarti', label: L('🪔 आरती', '🪔 Aarti', '🪔 આરતી') },
             ].map((cat) => (
               <button
                 key={cat.id}
@@ -330,16 +336,16 @@ export const DevotionalAudioPlayerView: React.FC<{
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="hidden md:inline-flex items-center gap-1 bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold">
               <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>Copyright-Free</span>
+              <span>{L('शुद्ध वैदिक पाठ', 'Authentic Vedic Audio', 'શુદ્ધ વૈદિક પાઠ')}</span>
             </span>
 
             {/* Compact Font Size Toggle */}
             <div className="flex items-center bg-[#23140C] border border-[#8C6239]/60 rounded-lg p-0.5 text-[11px]">
               {(
                 [
-                  ['normal', 'अ'],
-                  ['xl', 'अ+'],
-                  ['xxl', 'अ++'],
+                  ['normal', cLang === 'en' ? 'A' : cLang === 'gu' ? 'અ' : 'अ'],
+                  ['xl', cLang === 'en' ? 'A+' : cLang === 'gu' ? 'અ+' : 'अ+'],
+                  ['xxl', cLang === 'en' ? 'A++' : cLang === 'gu' ? 'અ++' : 'अ++'],
                 ] as const
               ).map(([sz, lbl]) => (
                 <button
@@ -393,7 +399,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                 )
               }
               className="p-1.5 rounded-lg bg-[#2B180D] text-amber-200 hover:bg-[#3E2714] cursor-pointer shrink-0"
-              title="पिछला पाठ"
+              title={L('पिछला पाठ', 'Previous Track', 'પાછલો પાઠ')}
             >
               <SkipBack className="w-3.5 h-3.5" />
             </button>
@@ -406,12 +412,12 @@ export const DevotionalAudioPlayerView: React.FC<{
               {isPlaying ? (
                 <>
                   <Pause className="w-4 h-4 fill-stone-950" />
-                  <span>रोकें</span>
+                  <span>{L('रोकें', 'Pause', 'રોકો')}</span>
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4 fill-stone-950" />
-                  <span>सुनें (Play)</span>
+                  <span>{L('सुनें (Play)', 'Play Audio', 'સાંભળો (Play)')}</span>
                 </>
               )}
             </button>
@@ -422,7 +428,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                 handleSelectTrack((selectedTrackIndex + 1) % filteredTracks.length)
               }
               className="p-1.5 rounded-lg bg-[#2B180D] text-amber-200 hover:bg-[#3E2714] cursor-pointer shrink-0"
-              title="अगला पाठ"
+              title={L('अगला पाठ', 'Next Track', 'આગળનો પાઠ')}
             >
               <SkipForward className="w-3.5 h-3.5" />
             </button>
@@ -434,9 +440,17 @@ export const DevotionalAudioPlayerView: React.FC<{
               <div className="text-[10px] text-[#D9C4A9] truncate">
                 {isPlaying
                   ? activeVerseIndex >= 0
-                    ? `🔊 श्लोक ${activeVerseIndex + 1} / ${verses.length} • NTTS दिव्य महिला स्वर (शुद्ध संस्कृत)...`
-                    : '🔊 NTTS दिव्य महिला स्वर गायन चल रहा है...'
-                  : `${verses.length} श्लोक / छन्द • ${currentTrack.deity} • NTTS महिला स्वर`}
+                    ? L(
+                        `🔊 श्लोक ${activeVerseIndex + 1} / ${verses.length} • NTTS दिव्य महिला स्वर (शुद्ध संस्कृत)...`,
+                        `🔊 Verse ${activeVerseIndex + 1} / ${verses.length} • NTTS Divine Female Voice (Pure Sanskrit)...`,
+                        `🔊 શ્લોક ${activeVerseIndex + 1} / ${verses.length} • NTTS દિવ્ય મહિલા સ્વર (શુદ્ધ સંસ્કૃત)...`
+                      )
+                    : L('🔊 NTTS दिव्य महिला स्वर गायन चल रहा है...', '🔊 NTTS Divine Chanting active...', '🔊 NTTS દિવ્ય મહિલા સ્વર ગાયન ચાલુ છે...')
+                  : L(
+                      `${verses.length} श्लोक / छन्द • ${currentTrack.deity} • NTTS महिला स्वर`,
+                      `${verses.length} Verses • ${trVedic(currentTrack.deity, 'en')} • NTTS Vedic Voice`,
+                      `${verses.length} શ્લોક / છંદ • ${trVedic(currentTrack.deity, 'gu')} • NTTS મહિલા સ્વર`
+                    )}
               </div>
             </div>
           </div>
@@ -456,9 +470,9 @@ export const DevotionalAudioPlayerView: React.FC<{
                       ? 'bg-[#B56A00] text-white'
                       : 'text-[#D9C4A9]'
                   }`}
-                  title="पारंपरिक वैदिक गायन (Original Chanting)"
+                  title={L('पारंपरिक वैदिक गायन (Original Chanting)', 'Traditional Vedic Chanting', 'પારંપરિક વૈદિક ગાયન')}
                 >
-                  🎵 वैदिक गायन
+                  {L('🎵 वैदिक गायन', '🎵 Vedic Chanting', '🎵 વૈદિક ગાયન')}
                 </button>
               )}
               <button
@@ -472,9 +486,9 @@ export const DevotionalAudioPlayerView: React.FC<{
                     ? 'bg-[#B56A00] text-white'
                     : 'text-[#D9C4A9]'
                 }`}
-                title="NTTS न्यूरल दिव्य महिला स्वर + शुद्ध संस्कृत पदच्छेद उच्चारण + तानपुरा"
+                title={L('NTTS न्यूरल दिव्य महिला स्वर + शुद्ध संस्कृत पदच्छेद उच्चारण + तानपुरा', 'NTTS Neural Female Voice + Pure Sanskrit + Tanpura', 'NTTS ન્યૂરલ દિવ્ય મહિલા સ્વર + શુદ્ધ સંસ્કૃત + તાનપુરા')}
               >
-                🎙️ NTTS • महिला स्वर (शुद्ध संस्कृत)
+                {L('🎙️ NTTS • महिला स्वर (शुद्ध संस्कृत)', '🎙️ NTTS • Vedic Female Voice', '🎙️ NTTS • મહિલા સ્વર (શુદ્ધ સંસ્કૃત)')}
               </button>
             </div>
 
@@ -486,9 +500,9 @@ export const DevotionalAudioPlayerView: React.FC<{
                   ? 'bg-amber-500/20 text-amber-200 border-amber-400/50'
                   : 'bg-[#23140C] text-[#D9C4A9] border-[#8C6239]/40'
               }`}
-              title="केवल मूल संस्कृत श्लोक बोलें या हिंदी भावार्थ सहित"
+              title={L('केवल मूल संस्कृत श्लोक बोलें या हिंदी भावार्थ सहित', 'Recite Sanskrit only or include meaning', 'ફક્ત મૂળ સંસ્કૃત શ્લોક બોલો અથવા ભાવાર્થ સાથે')}
             >
-              {sanskritOnly ? '🕉 केवल श्लोक' : '📖 श्लोक + अर्थ'}
+              {sanskritOnly ? L('🕉 केवल श्लोक', '🕉 Sanskrit Only', '🕉 ફક્ત શ્લોક') : L('📖 श्लोक + अर्थ', '📖 With Meaning', '📖 શ્લોક + અર્થ')}
             </button>
 
             <button
@@ -499,9 +513,9 @@ export const DevotionalAudioPlayerView: React.FC<{
                   ? 'bg-emerald-900/60 text-emerald-200 border-emerald-500/50'
                   : 'bg-[#23140C] text-[#D9C4A9] border-[#8C6239]/40'
               }`}
-              title="कठिन संस्कृत शब्दों को तोड़कर (पदच्छेद) सरल उच्चारण दिखाएं"
+              title={L('कठिन संस्कृत शब्दों को तोड़कर (पदच्छेद) सरल उच्चारण दिखाएं', 'Show Padaccheda (word-split pronunciation guide)', 'સરળ ઉચ્ચારણ માટે પદચ્છેદ બતાવો')}
             >
-              पदच्छेद {showPadaccheda ? 'ON' : 'OFF'}
+              {L('पदच्छेद', 'Word Split', 'પદચ્છેદ')} {showPadaccheda ? 'ON' : 'OFF'}
             </button>
 
             <div className="hidden sm:flex items-center gap-0.5 bg-[#23140C] rounded-lg p-0.5 border border-[#8C6239]/40">
@@ -525,7 +539,7 @@ export const DevotionalAudioPlayerView: React.FC<{
               type="button"
               onClick={() => devotionalAudioEngine.playTempleBell(880)}
               className="p-1.5 bg-[#5C3A21] hover:bg-[#462B17] text-[#FFD88A] rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer border border-amber-500/30"
-              title="मन्दिर घण्टी बजाएं"
+              title={L('मन्दिर घण्टी बजाएं', 'Ring Temple Bell', 'મંદિરની ઘંટડી વગાડો')}
             >
               <Bell className="w-3.5 h-3.5 text-amber-300" />
             </button>
@@ -565,7 +579,7 @@ export const DevotionalAudioPlayerView: React.FC<{
           {/* Meaning / Intro Header Card */}
           {currentTrack.meaningText && (
             <div className="px-3.5 py-2.5 bg-[#F4E8D1] border-l-4 border-[#B56A00] rounded-r-xl text-xs sm:text-sm text-[#4A2E1B] font-medium leading-relaxed">
-              <strong className="text-[#7F1D1D]">महात्म्य: </strong>
+              <strong className="text-[#7F1D1D]">{L('महात्म्य: ', 'Significance: ', 'મહાત્મ્ય: ')}</strong>
               {currentTrack.meaningText}
             </div>
           )}
@@ -591,11 +605,11 @@ export const DevotionalAudioPlayerView: React.FC<{
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="px-2 py-0.5 rounded-md bg-[#5C3A21] text-[#FFD88A] text-[10px] font-bold">
-                        श्लोक / छन्द {pIdx + 1}
+                        {L(`श्लोक / छन्द ${pIdx + 1}`, `Verse ${pIdx + 1}`, `શ્લોક / છંદ ${pIdx + 1}`)}
                       </span>
                       {isActive && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-black text-[#B56A00] bg-amber-200 px-2 py-0.5 rounded-full animate-pulse">
-                          <Volume2 className="w-3 h-3" /> शुद्ध उच्चारण चल रहा है
+                          <Volume2 className="w-3 h-3" /> {L('शुद्ध उच्चारण चल रहा है', 'Chanting Active', 'શુદ્ધ ઉચ્ચારણ ચાલુ છે')}
                         </span>
                       )}
                     </div>
@@ -631,7 +645,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                     {showPadaccheda && padacchedaText && (
                       <div className="mt-2 pt-2 border-t border-amber-700/15 bg-[#FAF3E6] rounded-xl px-2.5 py-1.5 text-xs text-[#5C3A21]">
                         <span className="font-black text-[#B56A00] text-[10px] uppercase tracking-wider block mb-0.5">
-                          🔱 पदच्छेद (सरल शुद्ध उच्चारण):
+                          {L('🔱 पदच्छेद (सरल शुद्ध उच्चारण):', '🔱 Padaccheda (Easy Pronunciation Split):', '🔱 પદચ્છેદ (સરળ શુદ્ધ ઉચ્ચારણ):')}
                         </span>
                         <span className="font-medium leading-relaxed whitespace-pre-line">
                           {padacchedaText}
@@ -651,7 +665,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                         ? 'bg-[#B56A00] text-white'
                         : 'bg-[#F4E8D1] hover:bg-[#EAD8B8] text-[#5C3A21]'
                     }`}
-                    title="यह श्लोक शुद्ध उच्चारण में सुनें"
+                    title={L('यह श्लोक शुद्ध उच्चारण में सुनें', 'Listen to this verse', 'આ શ્લોક શુદ્ધ ઉચ્ચારણમાં સાંભળો')}
                   >
                     <Volume2 className="w-4 h-4" />
                   </button>

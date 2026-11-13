@@ -252,7 +252,8 @@ async function startServer() {
   // UMA AI Vedic Astrologer Chat Endpoint
   app.post("/api/uma/chat", async (req: Request, res: Response) => {
     try {
-      const { query, panchangContext, kundaliContext, chatHistory, systemPrompt } = req.body;
+      const { query, panchangContext, kundaliContext, chatHistory, lang } = req.body;
+      const c = String(lang || "hi").slice(0, 2).toLowerCase();
       const licenseToken = (req.headers["x-license-token"] as string) || req.body.licenseToken;
 
       // Server-side anti-piracy validation: Reject expired trial or unauthorized bot calls
@@ -260,7 +261,12 @@ async function startServer() {
         return res.status(403).json({
           ok: false,
           error: "TRIAL_EXPIRED",
-          message: "७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। उमा AI परामर्श के लिए वार्षिक सदस्यता आवश्यक है।",
+          message:
+            c === "en"
+              ? "Your 7-day free trial has ended. An annual or lifetime plan is required for Uma AI consultation."
+              : c === "gu"
+              ? "૭-દિવસીય મફત ટ્રાયલ પૂર્ણ થઈ ગઈ છે. ઉમા AI પરામર્શ માટે સભ્યપદ આવશ્યક છે."
+              : "७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। उमा AI परामर्श के लिए वार्षिक सदस्यता आवश्यक है।",
         });
       }
 
@@ -270,59 +276,70 @@ async function startServer() {
 
       const ai = getGeminiClient();
 
+      const languageRule =
+        c === "en"
+          ? "CRITICAL LANGUAGE RULE: Respond strictly in clear, natural English (while keeping any sacred Sanskrit shlokas or mantras in original Devanagari followed by an English translation/meaning)."
+          : c === "gu"
+          ? "CRITICAL LANGUAGE RULE: Respond strictly in natural, pure Gujarati script (ગુજરાતી લિપિ), while keeping any sacred Sanskrit shlokas or mantras in original Devanagari followed by their Gujarati meaning."
+          : "CRITICAL LANGUAGE RULE: Respond strictly in natural, warm Devanagari Hindi, keeping authentic Sanskrit shlokas in Devanagari.";
+
       const defaultSystemInstruction = `ROLE & PERSONA:
-You are "UMA" (उमा) — an experienced, deeply empathetic, living Vedic Astrologer and wise friend speaking naturally in Hindi.
+You are "UMA" (उमा) — an experienced, deeply empathetic, living Vedic Astrologer and wise guide.
+${languageRule}
 
 CRITICAL CONVERSATION RULES:
-1. REPLY LIKE A NORMAL HUMAN CHAT (सामान्य बातचीत की तरह उत्तर दें):
+1. REPLY LIKE A NORMAL HUMAN CHAT:
    - Read what the user ACTUALLY asked and answer that specific question directly, warmly, and naturally in 2 to 3 conversational paragraphs!
-   - Do NOT dump a rigid 5-heading report ("१. पिछले २-३ वर्षों का यथार्थ...", "२. वर्तमान स्थिति...", etc.) unless the user explicitly asks for a full Kundali report or past-present-future analysis.
-   - If the user asks a specific or practical question (e.g., "Maine ye app banai hai successful hogi ya nahi", "मेरा काम चलेगा या नहीं", "कैसे हो", "शादी कब होगी"), talk directly about their question using their actual Lagna, Moon Rashi, and active Dasha naturally woven into the conversation.
+   - Do NOT dump a rigid 5-heading report unless the user explicitly asks for a full Kundali report or past-present-future analysis.
+   - If the user asks a specific or practical question, talk directly about their question using their actual Lagna, Moon Rashi, and active Dasha naturally woven into the conversation.
 2. NO RAW MARKDOWN ASTERISKS:
-   - Do NOT wrap words in **bold** or *italic* asterisks, because the chat displays plain text. Write clean, readable Devanagari Hindi.
+   - Do NOT wrap words in **bold** or *italic* asterisks, because the chat displays plain text.
 3. USE REAL CHART DATA NATURALLY:
    - Mention the native's real Lagna, Rashi, and active Mahadasha/Antardasha from the provided context naturally (never use placeholders like XYZ).
    - Give clear, encouraging, realistic timeframes and 1–2 simple daily remedies relevant to their question.
 
-At the end, include 3 natural follow-up questions in this exact format:
+At the end, include 3 natural follow-up questions in the user's selected language (${c === "en" ? "English" : c === "gu" ? "Gujarati" : "Hindi"}) in this exact format:
 ---
 [अगले प्रश्न]:
-• प्रश्न १
-• प्रश्न २
-• प्रश्न ३`;
+• Question 1
+• Question 2
+• Question 3`;
 
       const activeSystemInstruction = defaultSystemInstruction;
 
       const currentDateObj = new Date();
-      const hindiMonthNames = [
-        "जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून",
-        "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"
-      ];
+      const dateLocale = c === "en" ? "en-US" : c === "gu" ? "gu-IN" : "hi-IN";
+      const monthNamesMap: Record<string, string[]> = {
+        hi: ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"],
+        en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        gu: ["જાન્યુઆરી", "ફેબ્રુઆરી", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઓગસ્ટ", "સપ્ટેમ્બર", "ઓક્ટોબર", "નવેમ્બર", "ડિસેમ્બર"],
+      };
       const currentYear = currentDateObj.getFullYear();
-      const currentMonthName = hindiMonthNames[currentDateObj.getMonth()];
+      const currentMonthName = (monthNamesMap[c] || monthNamesMap.hi)[currentDateObj.getMonth()];
 
       const promptParts = [
-        `उपयोगकर्ता का प्रश्न (User Query): "${query}"`,
-        `[वर्तमान संदर्भ समय (Real-time Reference Date)]: ${currentDateObj.toLocaleDateString("hi-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} (वर्ष: ${currentYear}, मास: ${currentMonthName})`,
+        `User Query: "${query}"`,
+        `[Real-time Reference Date]: ${currentDateObj.toLocaleDateString(dateLocale, { weekday: "long", year: "numeric", month: "long", day: "numeric" })} (Year: ${currentYear}, Month: ${currentMonthName})`,
       ];
 
       if (panchangContext) {
-        promptParts.push(`\n[वर्तमान पंचांग संदर्भ]:\n${panchangContext}`);
+        promptParts.push(`\n[Current Panchang Context]:\n${panchangContext}`);
       }
 
       if (kundaliContext) {
-        promptParts.push(`\n[उपयोगकर्ता की जन्म कुंडली व दशा संदर्भ]:\n${kundaliContext}`);
+        promptParts.push(`\n[Native Horoscope & Dasha Context]:\n${kundaliContext}`);
       }
 
       if (Array.isArray(chatHistory) && chatHistory.length > 0) {
         const historyText = chatHistory
           .slice(-6)
-          .map((m: any) => `${m.sender === "user" ? "यजमान" : "उमा"}: ${m.text}`)
+          .map((m: any) => `${m.sender === "user" ? "Yajman" : "Uma"}: ${m.text}`)
           .join("\n");
-        promptParts.push(`\n[पूर्व संवाद (Recent Chat Context)]:\n${historyText}`);
+        promptParts.push(`\n[Recent Chat Context]:\n${historyText}`);
       }
 
-      promptParts.push(`\nयजमान के प्रश्न ("${query}") का सीधा, आत्मीय और सामान्य बातचीत (Normal Chat) जैसा उत्तर दें। बिना पूछे लंबी ५-सूत्रीय रिपोर्ट या पिछले २-३ साल का रटा-रटाया टेम्पलेट न लिखें, और किसी भी शब्द के आगे-पीछे ** (स्टार) न लगाएं।`);
+      const replyLangLabel = c === "en" ? "English" : c === "gu" ? "Gujarati" : "Hindi";
+      promptParts.push(`\nRespond to the Yajman's query ("${query}") warmly and directly in ${replyLangLabel} like a natural conversation. Avoid rigid report templates unless requested, keep Sanskrit mantras intact in Devanagari, and never wrap text in ** asterisks.`);
 
       const fullPrompt = promptParts.join("\n\n");
 
@@ -375,7 +392,9 @@ At the end, include 3 natural follow-up questions in this exact format:
   // AI Samudrik Shastra Face Analysis Endpoint
   app.post("/api/face-reading/analyze", async (req: Request, res: Response) => {
     try {
-      const { imageBase64, imageMimeType } = req.body;
+      const { imageBase64, imageMimeType, lang } = req.body;
+      const cLang = String(lang || "hi").slice(0, 2).toLowerCase();
+      const targetLanguage = cLang === "en" ? "English" : cLang === "gu" ? "Gujarati" : "Hindi";
       const ai = getGeminiClient();
 
       if (!ai || !imageBase64) {
@@ -386,47 +405,48 @@ At the end, include 3 natural follow-up questions in this exact format:
         });
       }
 
-      const prompt = `Analyze this face photo according to authentic Vedic Samudrik Shastra (महर्षि गर्ग व वराहमिहिर कृत सामुद्रिक लक्षण शास्त्र).
+      const prompt = `Analyze this face photo according to authentic Vedic Samudrik Shastra (Maharshi Garga & Varahamihira Samudrika Lakshana Shastra).
+CRITICAL: Write EVERY JSON string value strictly in ${targetLanguage} (except standard Sanskrit/Shastric terms written cleanly in ${targetLanguage} script/transliteration).
 Return ONLY a valid JSON object with the following structure:
 {
-  "faceShape": "Oval / Round / Square / Heart / Diamond (in Hindi)",
-  "faceShapeDesc": "3-4 sentence detailed Hindi personality and destiny prediction based on face shape",
+  "faceShape": "Oval / Round / Square / Heart / Diamond (written in ${targetLanguage})",
+  "faceShapeDesc": "3-4 sentence detailed personality and destiny prediction in ${targetLanguage} based on face shape",
   "vitalityScore": 92,
-  "temperament": "सात्त्विक / राजसिक / तामसिक",
+  "temperament": "${cLang === "en" ? "Sattvic / Rajasic / Tamasic" : cLang === "gu" ? "સાત્ત્વિક / રાજસિક / તામસિક" : "सात्त्विक / राजसिक / तामसिक"}",
   "features": [
     {
-      "part": "ललाट (Forehead)",
-      "type": "उन्नत व चौड़ा",
-      "traits": "तीक्ष्ण बुद्धिमत्ता, नेतृत्व क्षमता व भाग्योदय के लक्षण",
-      "wisdom": "उन्नत ललाट सौम्यता व प्रशासनिक सफलता का सूचक है।"
+      "part": "${cLang === "en" ? "Forehead (Lalat)" : cLang === "gu" ? "લલાટ (કપાળ)" : "ललाट (Forehead)"}",
+      "type": "Short 2-3 word physical trait description in ${targetLanguage}",
+      "traits": "Key Samudrik traits in ${targetLanguage}",
+      "wisdom": "Classical Samudrik Shastra wisdom sentence in ${targetLanguage}"
     },
     {
-      "part": "नेत्र (Eyes)",
-      "type": "तेजस्वी व सौम्य",
-      "traits": "गहरी अंतर्दृष्टि, सत्यनिष्ठा व एकाग्रता",
-      "wisdom": "विशाल व स्निग्ध नेत्र ऐश्वर्य तथा आत्मीयता का संकेत देते हैं।"
+      "part": "${cLang === "en" ? "Eyes (Netra)" : cLang === "gu" ? "નેત્ર (આંખો)" : "नेत्र (Eyes)"}",
+      "type": "...",
+      "traits": "...",
+      "wisdom": "..."
     },
     {
-      "part": "नासिका (Nose)",
-      "type": "सरल व उन्नत",
-      "traits": "स्वाभिमान, आर्थिक समृद्धि व दृढ संकल्प",
-      "wisdom": "सीधी नासिका धन-धान्य तथा सुदृढ़ चरित्र का प्रतीक है।"
+      "part": "${cLang === "en" ? "Nose (Nasika)" : cLang === "gu" ? "નાસિકા (નાક)" : "नासिका (Nose)"}",
+      "type": "...",
+      "traits": "...",
+      "wisdom": "..."
     },
     {
-      "part": "ओष्ठ व दंत (Lips & Teeth)",
-      "type": "सुगठित व सम्मोहक",
-      "traits": "मधुर वाणी, सम्मोहन क्षमता व कलाप्रियता",
-      "wisdom": "रक्तवर्ण ओष्ठ सम्भाषण कला व सौभाग्यशाली जीवन के लक्षण हैं।"
+      "part": "${cLang === "en" ? "Lips & Teeth (Oshtha)" : cLang === "gu" ? "ઓષ્ઠ અને દંત (હોઠ)" : "ओष्ठ व दंत (Lips & Teeth)"}",
+      "type": "...",
+      "traits": "...",
+      "wisdom": "..."
     },
     {
-      "part": "चिबुक (Chin)",
-      "type": "दृढ़ व सुडौल",
-      "traits": "दृढ़ इच्छाशक्ति, अनुशासन व दीर्घायु",
-      "wisdom": "सुडौल चिबुक निर्णय क्षमता व स्थायित्व दर्शाती है।"
+      "part": "${cLang === "en" ? "Chin (Chibuka)" : cLang === "gu" ? "ચિબુક (હડપચી)" : "चिबुक (Chin)"}",
+      "type": "...",
+      "traits": "...",
+      "wisdom": "..."
     }
   ],
-  "careerGuidance": "Detailed career and wealth prediction in Hindi based on face traits",
-  "remedy": "Vedic remedy and lucky gemstone based on facial traits"
+  "careerGuidance": "Detailed career and wealth prediction in ${targetLanguage} based on face traits",
+  "remedy": "Vedic remedy and lucky gemstone recommendation in ${targetLanguage} based on facial traits"
 }`;
 
       const modelsToTry = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];

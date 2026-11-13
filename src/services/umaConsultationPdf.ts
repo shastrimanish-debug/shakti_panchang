@@ -4,6 +4,13 @@ import { getAstrologerBranding, AstrologerBranding } from './storage';
 import { waitForPdfFonts, type PdfResult } from './pdfFonts';
 import { PDF_MM_H, PDF_MM_W, PDF_PX_H, PDF_PX_W } from './pdfPage';
 import { deliverPdf, openExternal } from '../lib/device';
+import { trPlanet, trRashi, trVedic, trWeekday } from '../i18n/vedicTranslate';
+
+function pickL<T>(lang: string, hi: T, en: T, gu: T): T {
+  if (lang === 'en') return en;
+  if (lang === 'gu') return gu;
+  return hi;
+}
 
 export interface UmaConsultationPdfOptions {
   panchang: VedicPanchangData;
@@ -13,6 +20,7 @@ export interface UmaConsultationPdfOptions {
   locationName?: string;
   consultationDate?: Date;
   branding?: AstrologerBranding;
+  lang?: string;
 }
 
 /**
@@ -29,10 +37,14 @@ export async function downloadUmaConsultationPdf(
     query,
     answer,
     activeKundali,
-    locationName = 'भारत',
+    locationName,
     consultationDate = new Date(),
     branding = getAstrologerBranding(),
+    lang = 'hi',
   } = options;
+  const currentLang = (lang || 'hi').slice(0, 2).toLowerCase();
+  const resolvedLocation = locationName || pickL(currentLang, 'भारत', 'India', 'ભારત');
+  const dateLocale = currentLang === 'en' ? 'en-US' : currentLang === 'gu' ? 'gu-IN' : 'hi-IN';
 
   const width = PDF_PX_W;
   const height = PDF_PX_H;
@@ -122,13 +134,27 @@ export async function downloadUmaConsultationPdf(
     cursorY += 38;
     ctx.fillStyle = '#3E2714';
     ctx.font = 'bold 32px "Rozha One", "Tiro Devanagari Hindi", serif';
-    ctx.fillText('॥ श्री शक्ति वैदिक ज्योतिष परामर्श रिपोर्ट ॥', width / 2, cursorY);
+    ctx.fillText(
+      pickL(
+        currentLang,
+        '॥ श्री शक्ति वैदिक ज्योतिष परामर्श रिपोर्ट ॥',
+        'Shri Shakti Vedic Astrology Consultation Report',
+        '॥ શ્રી શક્તિ વૈદિક જ્યોતિષ પરામર્શ રિપોર્ટ ॥'
+      ),
+      width / 2,
+      cursorY
+    );
 
     cursorY += 24;
     ctx.fillStyle = '#735133';
     ctx.font = 'italic 16px "Tiro Devanagari Hindi", serif';
     ctx.fillText(
-      'उमा (UMA) एआई वैदिक ज्योतिषाचार्य एवं प्रामाणिक शास्त्रोक्त मार्गदर्शन',
+      pickL(
+        currentLang,
+        'उमा (UMA) एआई वैदिक ज्योतिषाचार्य एवं प्रामाणिक शास्त्रोक्त मार्गदर्शन',
+        'UMA Vedic Jyotishacharya & Authentic Shastrokt Guidance',
+        'ઉમા (UMA) વૈદિક જ્યોતિષાચાર્ય અને પ્રામાણિક શાસ્ત્રોક્ત માર્ગદર્શન'
+      ),
       width / 2,
       cursorY
     );
@@ -167,7 +193,19 @@ export async function downloadUmaConsultationPdf(
   ctx.font = 'bold 16px "Tiro Devanagari Hindi", serif';
   ctx.textAlign = 'left';
   ctx.fillText(
-    activeKundali ? '॥ जातक परिचय एवं जन्म कुण्डली विवरण ॥' : '॥ परामर्श कालीन पंचांग विवरण ॥',
+    activeKundali
+      ? pickL(
+          currentLang,
+          '॥ जातक परिचय एवं जन्म कुण्डली विवरण ॥',
+          'Native Profile & Birth Kundali Details',
+          '॥ જાતક પરિચય અને જન્મ કુંડળી વિગત ॥'
+        )
+      : pickL(
+          currentLang,
+          '॥ परामर्श कालीन पंचांग विवरण ॥',
+          'Consultation Moment Panchang Details',
+          '॥ પરામર્શ સમયની પંચાંગ વિગત ॥'
+        ),
     pBoxX + 16,
     cursorY + 24
   );
@@ -180,59 +218,83 @@ export async function downloadUmaConsultationPdf(
   const col3 = pBoxX + 610;
   const col4 = pBoxX + 850;
 
-  const consultDateStr = consultationDate.toLocaleDateString('hi-IN', {
+  const consultDateStr = consultationDate.toLocaleDateString(dateLocale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-  const consultTimeStr = consultationDate.toLocaleTimeString('hi-IN', {
+  const consultTimeStr = consultationDate.toLocaleTimeString(dateLocale, {
     hour: '2-digit',
     minute: '2-digit',
   });
 
   if (activeKundali) {
     let rY = cursorY + 52;
-    ctx.fillText(`जातक नाम: ${activeKundali.name}`, col1, rY);
+    ctx.fillText(`${pickL(currentLang, 'जातक नाम:', 'Name:', 'જાતક નામ:')} ${activeKundali.name}`, col1, rY);
     ctx.fillText(
-      `जन्म दिनांक: ${new Date(activeKundali.birthDate).toLocaleDateString('hi-IN')}`,
+      `${pickL(currentLang, 'जन्म दिनांक:', 'Birth Date:', 'જન્મ તારીખ:')} ${new Date(activeKundali.birthDate).toLocaleDateString(dateLocale)}`,
       col2,
       rY
     );
-    ctx.fillText(`जन्म समय: ${activeKundali.birthTime || 'सटीक'}`, col3, rY);
-    ctx.fillText(`जन्म स्थान: ${activeKundali.birthPlace}`, col4, rY);
+    ctx.fillText(
+      `${pickL(currentLang, 'जन्म समय:', 'Birth Time:', 'જન્મ સમય:')} ${activeKundali.birthTime || pickL(currentLang, 'सटीक', 'Accurate', 'સચોટ')}`,
+      col3,
+      rY
+    );
+    ctx.fillText(`${pickL(currentLang, 'जन्म स्थान:', 'Birth Place:', 'જન્મ સ્થળ:')} ${activeKundali.birthPlace}`, col4, rY);
 
     rY += 26;
-    ctx.fillText(`लग्न: ${activeKundali.lagnaRashi}`, col1, rY);
-    ctx.fillText(`चंद्र राशि: ${activeKundali.moonRashi}`, col2, rY);
-    ctx.fillText(`नक्षत्र: ${activeKundali.nakshatra} (चरण ${activeKundali.charan || 1})`, col3, rY);
-    ctx.fillText(`सूर्य राशि: ${activeKundali.sunRashi || 'शुभ'}`, col4, rY);
+    ctx.fillText(`${pickL(currentLang, 'लग्न:', 'Lagna:', 'લગ્ન:')} ${trRashi(activeKundali.lagnaRashi, currentLang)}`, col1, rY);
+    ctx.fillText(`${pickL(currentLang, 'चंद्र राशि:', 'Moon Sign:', 'ચંદ્ર રાશિ:')} ${trRashi(activeKundali.moonRashi, currentLang)}`, col2, rY);
+    ctx.fillText(
+      `${pickL(currentLang, 'नक्षत्र:', 'Nakshatra:', 'નક્ષત્ર:')} ${trVedic(activeKundali.nakshatra, currentLang)} (${pickL(currentLang, 'चरण', 'Pada', 'ચરણ')} ${activeKundali.charan || 1})`,
+      col3,
+      rY
+    );
+    ctx.fillText(
+      `${pickL(currentLang, 'सूर्य राशि:', 'Sun Sign:', 'સૂર્ય રાશિ:')} ${activeKundali.sunRashi ? trRashi(activeKundali.sunRashi, currentLang) : pickL(currentLang, 'शुभ', 'Auspicious', 'શુભ')}`,
+      col4,
+      rY
+    );
 
     rY += 26;
-    ctx.fillText(`विंशोत्तरी महादशा: ${activeKundali.mahadasha}`, col1, rY);
-    ctx.fillText(`मांगलिक विचार: ${activeKundali.isManglik ? 'हाँ (मांगलिक)' : 'निर्दोष (अमंगल)'}`, col2, rY);
-    ctx.fillText(`परामर्श दिनांक: ${consultDateStr}`, col3, rY);
-    ctx.fillText(`परामर्श समय: ${consultTimeStr}`, col4, rY);
+    ctx.fillText(`${pickL(currentLang, 'विंशोत्तरी महादशा:', 'Mahadasha:', 'વિંશોત્તરી મહાદશા:')} ${trPlanet(activeKundali.mahadasha, currentLang)}`, col1, rY);
+    ctx.fillText(
+      `${pickL(currentLang, 'मांगलिक विचार:', 'Manglik:', 'માંગલિક વિચાર:')} ${
+        activeKundali.isManglik
+          ? pickL(currentLang, 'हाँ (मांगलिक)', 'Yes (Manglik)', 'હા (માંગલિક)')
+          : pickL(currentLang, 'निर्दोष (अमंगल)', 'Non-Manglik', 'નિર્દોષ (અમંગળ)')
+      }`,
+      col2,
+      rY
+    );
+    ctx.fillText(`${pickL(currentLang, 'परामर्श दिनांक:', 'Date:', 'પરામર્શ તારીખ:')} ${consultDateStr}`, col3, rY);
+    ctx.fillText(`${pickL(currentLang, 'परामर्श समय:', 'Time:', 'પરામર્શ સમય:')} ${consultTimeStr}`, col4, rY);
   } else {
     let rY = cursorY + 52;
-    ctx.fillText(`परामर्श दिनांक: ${consultDateStr} (${panchang.weekday})`, col1, rY);
-    ctx.fillText(`तिथि: ${panchang.paksha} ${panchang.tithi}`, col2, rY);
-    ctx.fillText(`नक्षत्र: ${panchang.nakshatra}`, col3, rY);
-    ctx.fillText(`स्थान: ${locationName}`, col4, rY);
+    ctx.fillText(`${pickL(currentLang, 'परामर्श दिनांक:', 'Date:', 'પરામર્શ તારીખ:')} ${consultDateStr} (${trWeekday(panchang.weekday, currentLang)})`, col1, rY);
+    ctx.fillText(`${pickL(currentLang, 'तिथि:', 'Tithi:', 'તિથિ:')} ${trVedic(panchang.paksha, currentLang)} ${trVedic(panchang.tithi, currentLang)}`, col2, rY);
+    ctx.fillText(`${pickL(currentLang, 'नक्षत्र:', 'Nakshatra:', 'નક્ષત્ર:')} ${trVedic(panchang.nakshatra, currentLang)}`, col3, rY);
+    ctx.fillText(`${pickL(currentLang, 'स्थान:', 'Location:', 'સ્થળ:')} ${resolvedLocation}`, col4, rY);
 
     rY += 26;
-    ctx.fillText(`योग: ${panchang.yoga} | करण: ${panchang.karana}`, col1, rY);
-    ctx.fillText(`चंद्र राशि: ${panchang.lunarRashi}`, col2, rY);
-    ctx.fillText(`संवत्: ${panchang.samvat}`, col3, rY);
-    ctx.fillText(`समय: ${consultTimeStr}`, col4, rY);
+    ctx.fillText(`${pickL(currentLang, 'योग:', 'Yoga:', 'યોગ:')} ${trVedic(panchang.yoga, currentLang)} | ${pickL(currentLang, 'करण:', 'Karana:', 'કરણ:')} ${trVedic(panchang.karana, currentLang)}`, col1, rY);
+    ctx.fillText(`${pickL(currentLang, 'चंद्र राशि:', 'Moon Sign:', 'ચંદ્ર રાશિ:')} ${trRashi(panchang.lunarRashi, currentLang)}`, col2, rY);
+    ctx.fillText(`${pickL(currentLang, 'संवत्:', 'Samvat:', 'સંવત:')} ${trVedic(panchang.samvat, currentLang)}`, col3, rY);
+    ctx.fillText(`${pickL(currentLang, 'समय:', 'Time:', 'સમય:')} ${consultTimeStr}`, col4, rY);
   }
 
   cursorY += cBoxH + 24;
 
-  // 2. Query Box (जातक द्वारा पूछा गया प्रश्न)
+  // 2. Query Box
   if (query) {
     ctx.fillStyle = '#7A1D1D';
     ctx.font = 'bold 16px "Tiro Devanagari Hindi", serif';
-    ctx.fillText('॥ जातक जिज्ञासा / विचारणीय प्रश्न ॥', pBoxX, cursorY);
+    ctx.fillText(
+      pickL(currentLang, '॥ जातक जिज्ञासा / विचारणीय प्रश्न ॥', 'Consultation Question / Query', '॥ જાતક જિજ્ઞાસા / વિચારણીય પ્રશ્ન ॥'),
+      pBoxX,
+      cursorY
+    );
 
     cursorY += 10;
     const cleanQ = query.replace(/\n/g, ' ');
@@ -252,7 +314,16 @@ export async function downloadUmaConsultationPdf(
   // 3. Section Title: Astrological Decision & Analysis
   ctx.fillStyle = '#7A1D1D';
   ctx.font = 'bold 18px "Tiro Devanagari Hindi", serif';
-  ctx.fillText('॥ उमा ज्योतिषाचार्य निर्णय, शास्त्रोक्त फलादेश एवं सात्विक उपाय ॥', pBoxX, cursorY);
+  ctx.fillText(
+    pickL(
+      currentLang,
+      '॥ उमा ज्योतिषाचार्य निर्णय, शास्त्रोक्त फलादेश एवं सात्विक उपाय ॥',
+      'Uma Jyotishacharya Analysis, Predictions & Vedic Remedies',
+      '॥ ઉમા જ્યોતિષાચાર્ય નિર્ણય, શાસ્ત્રોક્ત ફળાદેશ અને સાત્વિક ઉપાય ॥'
+    ),
+    pBoxX,
+    cursorY
+  );
 
   cursorY += 10;
   ctx.strokeStyle = '#B58738';
@@ -302,7 +373,7 @@ export async function downloadUmaConsultationPdf(
         // Check if page overflow
         if (cursorY > maxY) {
           // Draw page number on current canvas
-          drawPageFooter(ctx, width, height, canvasPages.length, branding);
+          drawPageFooter(ctx, width, height, canvasPages.length, branding, false, currentLang);
 
           // Create next page
           const nextPage = createBlankParchmentPage(canvasPages.length, canvasPages.length + 1);
@@ -325,7 +396,7 @@ export async function downloadUmaConsultationPdf(
   }
 
   // Draw final footer on the last canvas
-  drawPageFooter(ctx, width, height, canvasPages.length, branding, true);
+  drawPageFooter(ctx, width, height, canvasPages.length, branding, true, currentLang);
 
   // Compile PDF from canvases using jsPDF
   const pdf = new jsPDF({
@@ -390,7 +461,8 @@ function drawPageFooter(
   height: number,
   pageNum: number,
   branding: AstrologerBranding,
-  isLastPage: boolean = false
+  _isLastPage: boolean = false,
+  lang: string = 'hi'
 ) {
   const footerY = height - 120;
   const pBoxX = 75;
@@ -415,7 +487,7 @@ function drawPageFooter(
   ctx.textAlign = 'center';
   ctx.fillText('ॐ', pBoxX + 45, footerY + 30);
   ctx.font = '9px "Tiro Devanagari Hindi", serif';
-  ctx.fillText('प्रमाणित', pBoxX + 45, footerY + 46);
+  ctx.fillText(pickL(lang, 'प्रमाणित', 'Certified', 'પ્રમાણિત'), pBoxX + 45, footerY + 46);
   ctx.restore();
 
   // Astrologer Branding / Visiting Card text
@@ -423,17 +495,17 @@ function drawPageFooter(
   ctx.font = 'bold 17px "Tiro Devanagari Hindi", serif';
   ctx.textAlign = 'left';
 
-  const astName = branding.enabled && branding.name ? branding.name : 'वैदिक ज्योतिषाचार्य';
+  const astName = branding.enabled && branding.name ? branding.name : pickL(lang, 'वैदिक ज्योतिषाचार्य', 'Vedic Jyotishacharya', 'વૈદિક જ્યોતિષાચાર્ય');
   const astTitle =
-    branding.enabled && branding.title ? branding.title : 'वैदिक ज्योतिषी एवं कर्मकांड मर्मज्ञ';
+    branding.enabled && branding.title ? branding.title : pickL(lang, 'वैदिक ज्योतिषी एवं कर्मकांड मर्मज्ञ', 'Vedic Astrologer & Karmakanda Scholar', 'વૈદિક જ્યોતિષી અને કર્મકાંડ મર્મજ્ઞ');
   const astSansthan =
     branding.enabled && branding.sansthan
       ? branding.sansthan
-      : 'श्री शक्ति वैदिक ज्योतिष एवं पंचांग संस्थान';
+      : pickL(lang, 'श्री शक्ति वैदिक ज्योतिष एवं पंचांग संस्थान', 'Shri Shakti Vedic Astrology & Panchang Sansthan', 'શ્રી શક્તિ વૈદિક જ્યોતિષ અને પંચાંગ સંસ્થાન');
   const astContact =
     branding.enabled && branding.phone
-      ? `संपर्क: ${branding.phone} | ${branding.city || 'भारत'}`
-      : `स्थान: ${branding.city || 'वाराणसी / दिल्ली'} | ॥ धर्मो रक्षति रक्षितः ॥`;
+      ? `${pickL(lang, 'संपर्क:', 'Contact:', 'સંપર્ક:')} ${branding.phone} | ${branding.city || pickL(lang, 'भारत', 'India', 'ભારત')}`
+      : `${pickL(lang, 'स्थान:', 'Location:', 'સ્થળ:')} ${branding.city || pickL(lang, 'वाराणसी / दिल्ली', 'Varanasi / New Delhi', 'વારાણસી / દિલ્હી')} | ॥ धर्मो रक्षति रक्षितः ॥`;
 
   ctx.fillText(astName, pBoxX + 90, footerY + 16);
 
@@ -453,7 +525,7 @@ function drawPageFooter(
 
   ctx.fillStyle = '#8C6239';
   ctx.font = '12px "Tiro Devanagari Hindi", serif';
-  ctx.fillText(`पृष्ठ संख्या ${pageNum}`, width - pBoxX - 10, footerY + 46);
+  ctx.fillText(`${pickL(lang, 'पृष्ठ संख्या', 'Page', 'પૃષ્ઠ સંખ્યા')} ${pageNum}`, width - pBoxX - 10, footerY + 46);
 }
 
 /**
@@ -465,45 +537,48 @@ export function formatWhatsAppConsultationMessage(params: {
   answer: string;
   panchang: VedicPanchangData;
   branding?: AstrologerBranding;
+  lang?: string;
 }): string {
-  const { activeKundali, query, answer, panchang, branding = getAstrologerBranding() } = params;
+  const { activeKundali, query, answer, panchang, branding = getAstrologerBranding(), lang = 'hi' } = params;
+  const currentLang = (lang || 'hi').slice(0, 2).toLowerCase();
+  const dateLocale = currentLang === 'en' ? 'en-US' : currentLang === 'gu' ? 'gu-IN' : 'hi-IN';
 
   const cleanAns = answer
     .replace(/\*\*(.*?)\*\*/g, '*$1*') // Keep WhatsApp bold format
     .replace(/#{1,6}\s?/g, '')
     .trim();
 
-  const astName = branding.enabled && branding.name ? branding.name : 'वैदिक ज्योतिषाचार्य';
-  const astTitle = branding.enabled && branding.title ? branding.title : 'वैदिक ज्योतिषाचार्य';
+  const astName = branding.enabled && branding.name ? branding.name : pickL(currentLang, 'वैदिक ज्योतिषाचार्य', 'Vedic Jyotishacharya', 'વૈદિક જ્યોતિષાચાર્ય');
+  const astTitle = branding.enabled && branding.title ? branding.title : pickL(currentLang, 'वैदिक ज्योतिषाचार्य', 'Vedic Astrologer', 'વૈદિક જ્યોતિષાચાર્ય');
   const astPhone = branding.enabled && branding.phone ? branding.phone : '';
   const astSansthan =
     branding.enabled && branding.sansthan
       ? branding.sansthan
-      : 'श्री शक्ति सनातन वैदिक पंचांग';
+      : pickL(currentLang, 'श्री शक्ति सनातन वैदिक पंचांग', 'Shri Shakti Sanatan Vedic Panchang', 'શ્રી શક્તિ સનાતન વૈદિક પંચાંગ');
 
   let msg = `॥ ॐ श्री गणेशाय नमः ॥ 🌺\n`;
   msg += `*${astSansthan}*\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━\n`;
-  msg += `📜 *ज्योतिषीय परामर्श व शास्त्रोक्त निर्णय*\n\n`;
+  msg += `📜 *${pickL(currentLang, 'ज्योतिषीय परामर्श व शास्त्रोक्त निर्णय', 'Vedic Astrology Consultation & Guidance', 'જ્યોતિષીય પરામર્શ અને શાસ્ત્રોક્ત નિર્ણય')}*\n\n`;
 
   if (activeKundali) {
-    msg += `👤 *जातक:* ${activeKundali.name}\n`;
-    msg += `🌟 *लग्न:* ${activeKundali.lagnaRashi} | *राशि:* ${activeKundali.moonRashi} (${activeKundali.nakshatra})\n`;
-    msg += `🪐 *वर्तमान दशा:* ${activeKundali.mahadasha}\n`;
+    msg += `👤 *${pickL(currentLang, 'जातक:', 'Native:', 'જાતક:')}* ${activeKundali.name}\n`;
+    msg += `🌟 *${pickL(currentLang, 'लग्न:', 'Lagna:', 'લગ્ન:')}* ${trRashi(activeKundali.lagnaRashi, currentLang)} | *${pickL(currentLang, 'राशि:', 'Moon Sign:', 'રાશિ:')}* ${trRashi(activeKundali.moonRashi, currentLang)} (${trVedic(activeKundali.nakshatra, currentLang)})\n`;
+    msg += `🪐 *${pickL(currentLang, 'वर्तमान दशा:', 'Current Dasha:', 'વર્તમાન દશા:')}* ${trPlanet(activeKundali.mahadasha, currentLang)}\n`;
   } else {
-    msg += `📅 *दिनांक:* ${panchang.date.toLocaleDateString('hi-IN')} (${panchang.weekday})\n`;
-    msg += `✨ *तिथि:* ${panchang.paksha} ${panchang.tithi} | *नक्षत्र:* ${panchang.nakshatra}\n`;
+    msg += `📅 *${pickL(currentLang, 'दिनांक:', 'Date:', 'તારીખ:')}* ${panchang.date.toLocaleDateString(dateLocale)} (${trWeekday(panchang.weekday, currentLang)})\n`;
+    msg += `✨ *${pickL(currentLang, 'तिथि:', 'Tithi:', 'તિથિ:')}* ${trVedic(panchang.paksha, currentLang)} ${trVedic(panchang.tithi, currentLang)} | *${pickL(currentLang, 'नक्षत्र:', 'Nakshatra:', 'નક્ષત્ર:')}* ${trVedic(panchang.nakshatra, currentLang)}\n`;
   }
 
   if (query) {
-    msg += `\n❓ *जातक का प्रश्न:* "${query.trim()}"\n`;
+    msg += `\n❓ *${pickL(currentLang, 'जातक का प्रश्न:', 'Question:', 'જાતકનો પ્રશ્ન:')}* "${query.trim()}"\n`;
   }
 
-  msg += `\n🔮 *उमा शास्त्रीय फलादेश व उपाय:*\n${cleanAns}\n\n`;
+  msg += `\n🔮 *${pickL(currentLang, 'उमा शास्त्रीय फलादेश व उपाय:', 'Uma Scriptural Analysis & Remedies:', 'ઉમા શાસ્ત્રીય ફળાદેશ અને ઉપાય:')}*\n${cleanAns}\n\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━\n`;
-  msg += `⚜️ *परामर्शदाता:* ${astName} (${astTitle})\n`;
+  msg += `⚜️ *${pickL(currentLang, 'परामर्शदाता:', 'Consultant:', 'પરામર્શદાતા:')}* ${astName} (${astTitle})\n`;
   if (astPhone) {
-    msg += `📞 *संपर्क:* ${astPhone}\n`;
+    msg += `📞 *${pickL(currentLang, 'संपर्क:', 'Contact:', 'સંપર્ક:')}* ${astPhone}\n`;
   }
   msg += `॥ शुभम् भवतु • धर्मो रक्षति रक्षितः ॥`;
 

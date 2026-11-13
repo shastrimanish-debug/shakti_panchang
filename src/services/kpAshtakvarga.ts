@@ -384,12 +384,14 @@ export function calculateAshtakvarga(k: KundaliData): AshtakvargaResult {
 /**
  * Jaimini 7 Chara Karaka Engine
  */
-export function calculateJaiminiKarakas(k: KundaliData): {
+export function calculateJaiminiKarakas(k: KundaliData, lang: string = 'hi'): {
   karakas: JaiminiKarakaInfo[];
   atmakaraka: JaiminiKarakaInfo;
   amatyakaraka: JaiminiKarakaInfo;
   karakamshaRashi: string;
 } {
+  const l = (lang || 'hi').slice(0, 2).toLowerCase();
+  const pick = (hi: string, en: string, gu: string) => (l === 'en' ? en : l === 'gu' ? gu : hi);
   const MAIN_PLANETS = ['सूर्य', 'चंद्र', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'];
 
   // Sort 7 planets by degree in rashi descending
@@ -398,13 +400,41 @@ export function calculateJaiminiKarakas(k: KundaliData): {
     .sort((a, b) => b.degreeInRashi - a.degreeInRashi);
 
   const KARAKA_ROLES = [
-    { code: 'AK', title: 'आत्मकारक (Atmakaraka)', desc: 'आत्मा, जीवन का मूल उद्देश्य व आत्मिक उन्नति' },
-    { code: 'AmK', title: 'अमात्यकारक (Amatyakaraka)', desc: 'करियर, आजीविका, पद, प्रतिष्ठा व बुद्धि' },
-    { code: 'BK', title: 'भ्रातृकारक (Bhratrukaraka)', desc: 'सहोदर (भाई-बहन), गुरु, मार्गदर्शक व साहस' },
-    { code: 'MK', title: 'मातृकारक (Matrukaraka)', desc: 'माता, गृह सुख, स्थाई संपत्ति व वाहन' },
-    { code: 'PK', title: 'पुत्रकारक (Putrakaraka)', desc: 'संतान सुख, उच्च विद्या, बुद्धि व पूर्व पुण्य' },
-    { code: 'GK', title: 'ज्ञातिकारक (Gnatikaraka)', desc: 'प्रतिस्पर्धा, रोग, ऋण, शत्रु व संघर्ष' },
-    { code: 'DK', title: 'दारकारक (Darakaraka)', desc: 'जीवनसाथी, वैवाहिक सुख, व्यापार व साझेदारी' },
+    {
+      code: 'AK',
+      title: pick('आत्मकारक (Atmakaraka)', 'Atmakaraka (AK)', 'આત્મકારક (AK)'),
+      desc: pick('आत्मा, जीवन का मूल उद्देश्य व आत्मिक उन्नति', 'Soul, core life purpose and spiritual growth', 'આત્મા, જીવનનો મૂળ ઉદ્દેશ અને આત્મિક ઉન્નતિ'),
+    },
+    {
+      code: 'AmK',
+      title: pick('अमात्यकारक (Amatyakaraka)', 'Amatyakaraka (AmK)', 'અમાત્યકારક (AmK)'),
+      desc: pick('करियर, आजीविका, पद, प्रतिष्ठा व बुद्धि', 'Career, livelihood, status, authority and intellect', 'કરિયર, આજીવિકા, પદ, પ્રતિષ્ઠા અને બુદ્ધિ'),
+    },
+    {
+      code: 'BK',
+      title: pick('भ्रातृकारक (Bhratrukaraka)', 'Bhratrukaraka (BK)', 'ભ્રાતૃકારક (BK)'),
+      desc: pick('सहोदर (भाई-बहन), गुरु, मार्गदर्शक व साहस', 'Siblings, Guru, mentors and courage', 'ભાઈ-બહેન, ગુરુ, માર્ગદર્શક અને સાહસ'),
+    },
+    {
+      code: 'MK',
+      title: pick('मातृकारक (Matrukaraka)', 'Matrukaraka (MK)', 'માતૃકારક (MK)'),
+      desc: pick('माता, गृह सुख, स्थाई संपत्ति व वाहन', 'Mother, domestic happiness, property and vehicles', 'માતા, ગૃહસુખ, સ્થાવર મિલકત અને વાહન'),
+    },
+    {
+      code: 'PK',
+      title: pick('पुत्रकारक (Putrakaraka)', 'Putrakaraka (PK)', 'પુત્રકારક (PK)'),
+      desc: pick('संतान सुख, उच्च विद्या, बुद्धि व पूर्व पुण्य', 'Children, higher learning, wisdom and past merit', 'સંતાન સુખ, ઉચ્ચ વિદ્યા, બુદ્ધિ અને પૂર્વ પુણ્ય'),
+    },
+    {
+      code: 'GK',
+      title: pick('ज्ञातिकारक (Gnatikaraka)', 'Gnatikaraka (GK)', 'જ્ઞાતિકારક (GK)'),
+      desc: pick('प्रतिस्पर्धा, रोग, ऋण, शत्रु व संघर्ष', 'Competition, ailments, debts, rivals and struggles', 'પ્રતિસ્પર્ધા, રોગ, દેવું, શત્રુ અને સંઘર્ષ'),
+    },
+    {
+      code: 'DK',
+      title: pick('दारकारक (Darakaraka)', 'Darakaraka (DK)', 'દારકારક (DK)'),
+      desc: pick('जीवनसाथी, वैवाहिक सुख, व्यापार व साझेदारी', 'Spouse, marital happiness, business and partnerships', 'જીવનસાથી, વૈવાહિક સુખ, વેપાર અને ભાગીદારી'),
+    },
   ];
 
   const karakas: JaiminiKarakaInfo[] = sortedPlanets.map((p, idx) => {

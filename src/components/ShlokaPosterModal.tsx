@@ -15,6 +15,14 @@ import {
 import { getAstrologerBranding, AstrologerBranding } from '../services/storage';
 import { shareImageFile, shareTextContent } from '../lib/shareHelper';
 import { saveImageNative } from '../lib/device';
+import { useLanguage } from '../i18n';
+
+function pickL<T>(lang: string, hi: T, en: T, gu: T): T {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  if (c === 'en') return en;
+  if (c === 'gu') return gu;
+  return hi;
+}
 
 export interface ShlokaPosterData {
   headerKicker?: string; // e.g., "॥ श्रीमद्भगवद्गीता • अध्याय २, श्लोक ४७ ॥"
@@ -107,6 +115,9 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
   data,
   onOpenBrandingModal,
 }) => {
+  const { language } = useLanguage();
+  const cLang = (language || 'hi').slice(0, 2).toLowerCase();
+  const dateLocale = cLang === 'en' ? 'en-US' : cLang === 'gu' ? 'gu-IN' : 'hi-IN';
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(true);
@@ -296,7 +307,12 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
       headerBottomY += format === 'status_9_16' ? 40 : 30;
     }
 
-    const badgeText = data.extraBadge || data.accentTag || (data.speaker ? `प्रवक्ता/ऋषि: ${data.speaker}` : '');
+    const badgeText =
+      data.extraBadge ||
+      data.accentTag ||
+      (data.speaker
+        ? `${pickL(cLang, 'प्रवक्ता/ऋषि:', 'Speaker / Rishi:', 'પ્રવક્તા/ઋષિ:')} ${data.speaker}`
+        : '');
     if (badgeText) {
       ctx.fillStyle = pal.outerBorder;
       ctx.font = 'bold 25px sans-serif';
@@ -375,7 +391,11 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
 
     ctx.fillStyle = pal.kickerColor;
     ctx.font = 'bold 23px serif';
-    ctx.fillText('✦ मूल पाठ / मुख्य विवरण ✦', W / 2, cursorY + 42);
+    ctx.fillText(
+      pickL(cLang, '✦ मूल पाठ / मुख्य विवरण ✦', '✦ Original Verse / Key Summary ✦', '✦ મૂળ પાઠ / મુખ્ય વિગત ✦'),
+      W / 2,
+      cursorY + 42
+    );
 
     ctx.fillStyle = pal.sanskritColor;
     ctx.font = `bold ${sanskritFontSize}px serif`;
@@ -412,7 +432,16 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
 
     ctx.fillStyle = pal.meaningTitle;
     ctx.font = 'bold 25px sans-serif';
-    ctx.fillText('॥ दिव्य भावार्थ एवं जीवन संदेश ॥', W / 2, cursorY + 44);
+    ctx.fillText(
+      pickL(
+        cLang,
+        '॥ दिव्य भावार्थ एवं जीवन संदेश ॥',
+        'Divine Meaning & Sacred Insight',
+        '॥ દિવ્ય ભાવાર્થ અને જીવન સંદેશ ॥'
+      ),
+      W / 2,
+      cursorY + 44
+    );
 
     ctx.fillStyle = pal.meaningText;
     ctx.font = `bold ${meaningFontSize}px sans-serif`;
@@ -449,7 +478,12 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
       ctx.fillStyle = pal.meaningText;
       ctx.font = 'bold 21px sans-serif';
       ctx.fillText(
-        'सनातन वैदिक ज्योतिष एवं शास्त्र-सम्मत प्रमाणिक मार्गदर्शन',
+        pickL(
+          cLang,
+          'सनातन वैदिक ज्योतिष एवं शास्त्र-सम्मत प्रमाणिक मार्गदर्शन',
+          'Authentic Sanatan Vedic Astrology & Scriptural Guidance',
+          'સનાતન વૈદિક જ્યોતિષ અને શાસ્ત્ર-સંમત પ્રમાણિત માર્ગદર્શન'
+        ),
         W / 2,
         cursorY + 92
       );
@@ -472,7 +506,16 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
     if (branding.enabled && branding.name) {
       ctx.fillStyle = pal.footerGold;
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillText('॥ वैदिक ज्योतिष, कुंडली एवं आध्यात्मिक परामर्श ॥', W / 2, footerY + 40);
+      ctx.fillText(
+        pickL(
+          cLang,
+          '॥ वैदिक ज्योतिष, कुंडली एवं आध्यात्मिक परामर्श ॥',
+          'Vedic Astrology, Kundali & Spiritual Consultation',
+          '॥ વૈદિક જ્યોતિષ, કુંડળી અને આધ્યાત્મિક પરામર્શ ॥'
+        ),
+        W / 2,
+        footerY + 40
+      );
 
       ctx.fillStyle = pal.footerCream;
       ctx.font = 'bold 35px sans-serif';
@@ -480,7 +523,11 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
 
       ctx.fillStyle = pal.footerGold;
       ctx.font = 'bold 23px sans-serif';
-      ctx.fillText(branding.title || 'वैदिक ज्योतिषाचार्य', W / 2, footerY + 122);
+      ctx.fillText(
+        branding.title || pickL(cLang, 'वैदिक ज्योतिषाचार्य', 'Vedic Astrologer', 'વૈદિક જ્યોતિષાચાર્ય'),
+        W / 2,
+        footerY + 122
+      );
 
       ctx.fillStyle = pal.footerCream;
       ctx.font = 'bold 24px sans-serif';
@@ -492,7 +539,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
         .filter(Boolean)
         .join('   •   ');
       ctx.fillText(
-        contactLine || 'सनातन शक्ति पंचांग',
+        contactLine || pickL(cLang, 'सनातन शक्ति पंचांग', 'Sanatan Shakti Panchang', 'સનાતન શક્તિ પંચાંગ'),
         W / 2,
         footerY + 162
       );
@@ -501,20 +548,34 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
       ctx.font = '19px sans-serif';
       ctx.fillText(
         branding.specialization
-          ? `विशेषज्ञता: ${branding.specialization}`
-          : 'सनातन शक्ति पंचांग • प्रामाणिक वैदिक ज्ञान एवं पंचांग',
+          ? `${pickL(cLang, 'विशेषज्ञता:', 'Expertise:', 'વિશેષજ્ઞતા:')} ${branding.specialization}`
+          : pickL(
+              cLang,
+              'सनातन शक्ति पंचांग • प्रामाणिक वैदिक ज्ञान एवं पंचांग',
+              'Sanatan Shakti Panchang • Authentic Vedic Wisdom & Almanac',
+              'સનાતન શક્તિ પંચાંગ • પ્રામાણિક વૈદિક જ્ઞાન અને પંચાંગ'
+            ),
         W / 2,
         footerY + 195
       );
     } else {
       ctx.fillStyle = pal.footerGold;
       ctx.font = 'bold 36px serif';
-      ctx.fillText('सनातन शक्ति पंचांग', W / 2, footerY + 64);
+      ctx.fillText(
+        pickL(cLang, 'सनातन शक्ति पंचांग', 'Sanatan Shakti Panchang', 'સનાતન શક્તિ પંચાંગ'),
+        W / 2,
+        footerY + 64
+      );
 
       ctx.fillStyle = pal.footerCream;
       ctx.font = 'bold 23px sans-serif';
       ctx.fillText(
-        'दैनिक पंचांग • शुभ चौघड़िया • कुंडली मिलान • प्राचीन ग्रन्थ स्वाध्याय',
+        pickL(
+          cLang,
+          'दैनिक पंचांग • शुभ चौघड़िया • कुंडली मिलान • प्राचीन ग्रन्थ स्वाध्याय',
+          'Daily Panchang • Shubh Choghadiya • Kundali Matching • Scriptures',
+          'દૈનિક પંચાંગ • શુભ ચોઘડિયા • કુંડળી મિલાન • પ્રાચીન ગ્રંથ સ્વાધ્યાય'
+        ),
         W / 2,
         footerY + 110
       );
@@ -530,7 +591,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
       ctx.fillStyle = pal.footerCream;
       ctx.font = '19px sans-serif';
       ctx.fillText(
-        new Date().toLocaleDateString('hi-IN', {
+        new Date().toLocaleDateString(dateLocale, {
           weekday: 'long',
           day: 'numeric',
           month: 'long',
@@ -549,7 +610,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [data, format, posterTheme, branding]);
+  }, [data, format, posterTheme, branding, cLang, dateLocale]);
 
   useEffect(() => {
     if (isOpen && data) {
@@ -565,13 +626,13 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
   const getShareCaption = () => {
     let txt = `*${data.headerKicker || `॥ ${data.title} ॥`}*\n\n`;
     txt += `${data.sanskrit}\n\n`;
-    txt += `*भावार्थ:* ${data.meaning}\n`;
+    txt += `*${pickL(cLang, 'भावार्थ:', 'Meaning:', 'ભાવાર્થ:')}* ${data.meaning}\n`;
     if (branding.enabled && branding.name) {
       txt += `──────────────────\n`;
-      txt += `🙏 *सौजन्य:* ${branding.name} (${branding.title || 'वैदिक ज्योतिषी'})\n`;
+      txt += `🙏 *${pickL(cLang, 'सौजन्य:', 'Courtesy:', 'સૌજન્ય:')}* ${branding.name} (${branding.title || pickL(cLang, 'वैदिक ज्योतिषी', 'Vedic Astrologer', 'વૈદિક જ્યોતિષી')})\n`;
       if (branding.phone) txt += `📞 ${branding.phone}\n`;
     } else {
-      txt += `\n— *सनातन शक्ति पंचांग*`;
+      txt += `\n— *${pickL(cLang, 'सनातन शक्ति पंचांग', 'Sanatan Shakti Panchang', 'સનાતન શક્તિ પંચાંગ')}*`;
     }
     return txt;
   };
@@ -664,10 +725,15 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
                 className="font-granth font-bold text-sm sm:text-base truncate"
                 style={{ color: '#FFFFFF' }}
               >
-                HD स्टेटस एवं पोस्टर कार्ड
+                {pickL(cLang, 'HD स्टेटस एवं पोस्टर कार्ड', 'HD Status & Poster Card', 'HD સ્ટેટસ અને પોસ્ટર કાર્ડ')}
               </h3>
               <p className="text-[11px] truncate" style={{ color: '#FDE68A' }}>
-                व्हाट्सएप स्टेटस, स्टोरी व ग्रुप्स के लिए सचित्र कार्ड
+                {pickL(
+                  cLang,
+                  'व्हाट्सएप स्टेटस, स्टोरी व ग्रुप्स के लिए सचित्र कार्ड',
+                  'Illustrated card for WhatsApp Status, Stories & Groups',
+                  'વોટ્સએપ સ્ટેટસ, સ્ટોરી અને ગ્રુપ્સ માટે સચિત્ર કાર્ડ'
+                )}
               </p>
             </div>
           </div>
@@ -676,7 +742,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
             onClick={onClose}
             style={{ backgroundColor: '#4A0E0E', color: '#FFFFFF' }}
             className="p-1.5 rounded-lg cursor-pointer shrink-0"
-            aria-label="बंद करें"
+            aria-label={pickL(cLang, 'बंद करें', 'Close', 'બંધ કરો')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -711,7 +777,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
               className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap"
             >
               <Smartphone className="w-3.5 h-3.5" />
-              <span>स्टेटस (9:16)</span>
+              <span>{pickL(cLang, 'स्टेटस (9:16)', 'Status (9:16)', 'સ્ટેટસ (9:16)')}</span>
             </button>
             <button
               type="button"
@@ -732,7 +798,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
               className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap"
             >
               <Square className="w-3.5 h-3.5" />
-              <span>पोस्ट (4:5)</span>
+              <span>{pickL(cLang, 'पोस्ट (4:5)', 'Post (4:5)', 'પોસ્ટ (4:5)')}</span>
             </button>
           </div>
 
@@ -741,9 +807,9 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
             <Palette className="w-3.5 h-3.5 mr-0.5" style={{ color: '#7C2D12' }} />
             {(
               [
-                { id: 'bhojpatra', label: 'भोजपत्र' },
-                { id: 'kesariya', label: 'केसरिया' },
-                { id: 'tamra', label: 'ताम्र-रात्रि' },
+                { id: 'bhojpatra', label: pickL(cLang, 'भोजपत्र', 'Bhojpatra', 'ભોજપત્ર') },
+                { id: 'kesariya', label: pickL(cLang, 'केसरिया', 'Saffron', 'કેસરિયા') },
+                { id: 'tamra', label: pickL(cLang, 'ताम्र-रात्रि', 'Copper Night', 'તામ્ર-રાત્રિ') },
               ] as const
             ).map((th) => (
               <button
@@ -791,7 +857,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
                   style={{ color: '#8B1E1E' }}
                 />
                 <p className="text-xs font-bold" style={{ color: '#3A1405' }}>
-                  HD स्टेटस कार्ड तैयार हो रहा है...
+                  {pickL(cLang, 'HD स्टेटस कार्ड तैयार हो रहा है...', 'Generating HD Status Card...', 'HD સ્ટેટસ કાર્ડ તૈયાર થઈ રહ્યું છે...')}
                 </p>
               </div>
             ) : (
@@ -817,13 +883,18 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
               <div className="min-w-0">
                 <div className="font-bold truncate" style={{ color: '#241005' }}>
                   {branding.enabled && branding.name
-                    ? `ब्रांडिंग: ${branding.name}`
-                    : 'सनातन शक्ति पंचांग ब्रांडिंग'}
+                    ? `${pickL(cLang, 'ब्रांडिंग:', 'Branding:', 'બ્રાન્ડિંગ:')} ${branding.name}`
+                    : pickL(cLang, 'सनातन शक्ति पंचांग ब्रांडिंग', 'Sanatan Shakti Panchang Branding', 'સનાતન શક્તિ પંચાંગ બ્રાન્ડિંગ')}
                 </div>
                 <div className="text-[11px] truncate" style={{ color: '#5C2D0C' }}>
                   {branding.enabled && branding.phone
                     ? `📞 ${branding.phone}`
-                    : 'नीचे कार्ड पर अपना नाम व मोबाइल नंबर जोड़ें'}
+                    : pickL(
+                        cLang,
+                        'नीचे कार्ड पर अपना नाम व मोबाइल नंबर जोड़ें',
+                        'Add your name & mobile number on the card footer',
+                        'નીચે કાર્ડ પર તમારું નામ અને મોબાઇલ નંબર ઉમેરો'
+                      )}
                 </div>
               </div>
             </div>
@@ -838,7 +909,7 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
                 style={{ backgroundColor: '#8B1E1E', color: '#FFFFFF' }}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 cursor-pointer"
               >
-                नाम जोड़ें
+                {pickL(cLang, 'नाम जोड़ें', 'Add Name', 'નામ ઉમેરો')}
               </button>
             )}
           </div>
@@ -859,7 +930,14 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
             className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-95"
           >
             <Share2 className="w-4 h-4" />
-            <span>व्हाट्सएप स्टेटस / ग्रुप पर शेयर करें</span>
+            <span>
+              {pickL(
+                cLang,
+                'व्हाट्सएप स्टेटस / ग्रुप पर शेयर करें',
+                'Share to WhatsApp Status / Group',
+                'વોટ્સએપ સ્ટેટસ / ગ્રુપ પર શેર કરો'
+              )}
+            </span>
           </button>
 
           <div className="grid grid-cols-2 gap-2">
@@ -873,12 +951,12 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
               {downloadSuccess ? (
                 <>
                   <Check className="w-3.5 h-3.5" style={{ color: '#86EFAC' }} />
-                  <span>डाउनलोड हुआ!</span>
+                  <span>{pickL(cLang, 'डाउनलोड हुआ!', 'Downloaded!', 'ડાઉનલોડ થયું!')}</span>
                 </>
               ) : (
                 <>
                   <Download className="w-3.5 h-3.5" style={{ color: '#FDE047' }} />
-                  <span>HD इमेज सेव करें</span>
+                  <span>{pickL(cLang, 'HD इमेज सेव करें', 'Save HD Image', 'HD ઇમેજ સેવ કરો')}</span>
                 </>
               )}
             </button>
@@ -896,12 +974,12 @@ export const ShlokaPosterModal: React.FC<ShlokaPosterModalProps> = ({
               {copySuccess ? (
                 <>
                   <Check className="w-3.5 h-3.5" style={{ color: '#15803D' }} />
-                  <span>कॉपी हो गया!</span>
+                  <span>{pickL(cLang, 'कॉपी हो गया!', 'Copied!', 'કોપી થઈ ગયું!')}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" style={{ color: '#7C2D12' }} />
-                  <span>टेक्स्ट कॉपी करें</span>
+                  <span>{pickL(cLang, 'टेक्स्ट कॉपी करें', 'Copy Caption', 'ટેક્સ્ટ કોપી કરો')}</span>
                 </>
               )}
             </button>

@@ -4,6 +4,7 @@ import { BookOpen, Copy, Check, Volume2, VolumeX, Sparkles, RefreshCw, Share2 } 
 import { umaVoice } from '../services/UmaVoiceService';
 import { useLanguage } from '../i18n';
 import { triggerHapticSelection } from '../utils/haptics';
+import { openWhatsAppShare } from '../services/umaConsultationPdf';
 
 interface DailyShlokaCardProps {
   date?: Date;
@@ -87,7 +88,13 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
   const handleShare = async () => {
     triggerHapticSelection();
     const shareTitle = `🕉️ ${loc.title} — ${shloka.source}`;
-    const shareText = `🕉️ *${loc.title}*\n\n🪔 *संस्कृत श्लोक:* \n"${shloka.sanskrit}"\n\n📖 *${loc.meaningLabel}*\n${loc.meaning}\n\n📚 *${chrome.source}* ${shloka.source}\n\n✨ *सनातन शक्ति पंचांग* से प्रतिदिन प्राप्त करें पावन सुभाषितम् व श्लोक`;
+    const shlokaHdr = language === 'en' ? 'Sanskrit Shloka:' : language === 'gu' ? 'સંસ્કૃત શ્લોક:' : 'संस्कृत श्लोक:';
+    const footerMsg = language === 'en'
+      ? '*Sanatan Shakti Panchang* — Receive sacred Subhashitam & Shlokas daily'
+      : language === 'gu'
+      ? '*સનાતન શક્તિ પંચાંગ* — દરરોજ પાવન સુભાષિતમ્ અને શ્લોક મેળવો'
+      : '*सनातन शक्ति पंचांग* से प्रतिदिन प्राप्त करें पावन सुभाषितम् व श्लोक';
+    const shareText = `🕉️ *${loc.title}*\n\n🪔 *${shlokaHdr}* \n"${shloka.sanskrit}"\n\n📖 *${loc.meaningLabel}*\n${loc.meaning}\n\n📚 *${chrome.source}* ${shloka.source}\n\n✨ ${footerMsg}`;
 
     if (navigator.share) {
       try {
@@ -101,9 +108,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
       }
     }
 
-    // Direct WhatsApp share fallback
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-    window.open(whatsappUrl, '_blank');
+    openWhatsAppShare(shareText);
   };
 
   const shareButtonLabel = language === 'en' ? 'Share' : language === 'gu' ? 'શેર કરો' : 'साझा करें';

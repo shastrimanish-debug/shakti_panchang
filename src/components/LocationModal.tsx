@@ -50,7 +50,8 @@ export function LocationModal({
   title,
   persistGlobal = true,
 }: LocationModalProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const langCode = (language || 'hi').slice(0, 2).toLowerCase();
   const modalTitle = title || t('location.title', 'स्थान / शहर / वैश्विक नगर चुनें');
   const [activeTab, setActiveTab] = useState<ModalTab>("search");
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,7 +68,7 @@ export function LocationModal({
   const [customName, setCustomName] = useState("");
   const [customDistrict, setCustomDistrict] = useState("");
   const [customState, setCustomState] = useState("");
-  const [customCountry, setCustomCountry] = useState("भारत");
+  const [customCountry, setCustomCountry] = useState(langCode === 'en' ? "India" : langCode === 'gu' ? "ભારત" : "भारत");
   const [customLat, setCustomLat] = useState("28.6139");
   const [customLon, setCustomLon] = useState("77.2090");
   const [customTz, setCustomTz] = useState("5.5");
@@ -183,13 +184,20 @@ export function LocationModal({
     const tz = parseFloat(customTz);
 
     if (Number.isNaN(lat) || Number.isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-      setError("सही अक्षांश (−90 से 90) और देशांतर (−180 से 180) लिखें।");
+      setError(
+        langCode === 'en'
+          ? "Please enter valid Latitude (−90 to 90) and Longitude (−180 to 180)."
+          : langCode === 'gu'
+          ? "કૃપા કરીને સાચો અક્ષાંશ (−90 થી 90) અને રેખાંશ (−180 થી 180) લખો."
+          : "सही अक्षांश (−90 से 90) और देशांतर (−180 से 180) लिखें।"
+      );
       return;
     }
 
-    const base = customName.trim() || `कस्टम स्थान (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+    const base = customName.trim() || `${langCode === 'en' ? 'Custom Location' : langCode === 'gu' ? 'કસ્ટમ સ્થાન' : 'कस्टम स्थान'} (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+    const worldLabel = langCode === 'en' ? "World" : langCode === 'gu' ? "વિશ્વ" : "विश्व";
     const full = customDistrict
-      ? `${base} (${customDistrict}, ${customState || customCountry || "विश्व"})`
+      ? `${base} (${customDistrict}, ${customState || customCountry || worldLabel})`
       : customState
         ? `${base} (${customState}, ${customCountry})`
         : customCountry
@@ -202,7 +210,7 @@ export function LocationModal({
       longitude: lon,
       state: customState.trim() || undefined,
       district: customDistrict.trim() || undefined,
-      country: customCountry.trim() || "भारत",
+      country: customCountry.trim() || (langCode === 'en' ? "India" : langCode === 'gu' ? "ભારત" : "भारत"),
       type: "custom",
       timezoneHours: Number.isNaN(tz) ? timezoneHoursFor(lat, lon) : tz,
     };
@@ -213,7 +221,13 @@ export function LocationModal({
 
   const handleGpsDetect = () => {
     if (!("geolocation" in navigator)) {
-      setError("इस ब्राउज़र में GPS उपलब्ध नहीं है। शहर का नाम खोजें।");
+      setError(
+        langCode === 'en'
+          ? "GPS is not supported in this browser. Please search by city name."
+          : langCode === 'gu'
+          ? "આ બ્રાઉઝરમાં GPS ઉપલબ્ધ નથી. શહેરનું નામ શોધો."
+          : "इस ब्राउज़र में GPS उपलब्ध नहीं है। शहर का नाम खोजें।"
+      );
       return;
     }
     setGpsLoading(true);
@@ -235,7 +249,7 @@ export function LocationModal({
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
           handleSelect({
-            name: `GPS स्थान (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`,
+            name: `${langCode === 'en' ? 'GPS Location' : langCode === 'gu' ? 'GPS સ્થાન' : 'GPS स्थान'} (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`,
             latitude: lat,
             longitude: lon,
             type: "gps",
@@ -247,7 +261,13 @@ export function LocationModal({
       },
       () => {
         setGpsLoading(false);
-        setError("GPS नहीं मिल सका। अनुमति दें, या शहर/गाँव का नाम लिखें।");
+        setError(
+          langCode === 'en'
+            ? "Could not get GPS location. Please grant permission or type a city name."
+            : langCode === 'gu'
+            ? "GPS સ્થાન મળી શક્યું નહીં. કૃપા કરીને પરવાનગી આપો અથવા શહેરનું નામ લખો."
+            : "GPS नहीं मिल सका। अनुमति दें, या शहर/गाँव का नाम लिखें।"
+        );
       },
       { enableHighAccuracy: true, timeout: 9000 }
     );
@@ -354,19 +374,31 @@ export function LocationModal({
               <div className="flex items-center justify-between text-[11px] text-[#735133] px-1 font-medium">
                 <span>
                   {isLoading
-                    ? "विश्व मानचित्र पर खोज हो रही है..."
-                    : `${results.length} नगर उपलब्ध • अक्षांश-देशांतर व समय-क्षेत्र सहित`}
+                    ? (langCode === 'en' ? "Searching world map..." : langCode === 'gu' ? "વિશ્વ નકશા પર શોધ ચાલુ છે..." : "विश्व मानचित्र पर खोज हो रही है...")
+                    : (langCode === 'en'
+                        ? `${results.length} cities available • with coordinates & timezone`
+                        : langCode === 'gu'
+                        ? `${results.length} શહેરો ઉપલબ્ધ • અક્ષાંશ-રેખાંશ અને સમય-ક્ષેત્ર સહિત`
+                        : `${results.length} नगर उपलब्ध • अक्षांश-देशांतर व समय-क्षेत्र सहित`)}
                 </span>
-                <span className="text-[#B56A00] font-bold">Drik Panchang डेटाबेस</span>
+                <span className="text-[#B56A00] font-bold">
+                  {langCode === 'en' ? 'Drik Panchang Database' : langCode === 'gu' ? 'દૃક્ પંચાંગ ડેટાબેઝ' : 'Drik Panchang डेटाबेस'}
+                </span>
               </div>
             </div>
 
             <div className="flex-1 bg-[#FAF2E4] overflow-y-auto overscroll-contain min-h-0 p-2 space-y-1.5">
               {results.length === 0 ? (
                 <div className="text-center py-10 px-4 text-[#8C6239] space-y-2">
-                  <p className="text-sm font-medium">कोई नगर नहीं मिला।</p>
+                  <p className="text-sm font-medium">
+                    {langCode === 'en' ? 'No city found.' : langCode === 'gu' ? 'કોઈ શહેર મળ્યું નથી.' : 'कोई नगर नहीं मिला।'}
+                  </p>
                   <p className="text-xs text-[#735133]">
-                    "विश्व नगर" टैब से देश व राज्य चुनें, या "कस्टम निर्देशांक" से नया स्थान जोड़ें।
+                    {langCode === 'en'
+                      ? 'Select country & state from "World Cities", or add a place under "Custom Coordinates".'
+                      : langCode === 'gu'
+                      ? '"વિશ્વ નગર" ટેબમાંથી દેશ અને રાજ્ય પસંદ કરો અથવા "કસ્ટમ કોઓર્ડિનેટ્સ" થી નવું સ્થાન ઉમેરો.'
+                      : '"विश्व नगर" टैब से देश व राज्य चुनें, या "कस्टम निर्देशांक" से नया स्थान जोड़ें।'}
                   </p>
                 </div>
               ) : (
@@ -376,6 +408,7 @@ export function LocationModal({
                     Math.abs(loc.longitude - currentLocation.longitude) < 0.01;
                   const tz = loc.timezoneHours ?? timezoneHoursFor(loc.latitude, loc.longitude);
                   const tzString = `UTC${tz >= 0 ? `+${tz}` : tz}`;
+                  const displayLocName = langCode === 'en' ? (loc.name.match(/\(([^)]+)\)/)?.[1] || loc.name) : loc.name;
 
                   return (
                     <button
@@ -396,10 +429,10 @@ export function LocationModal({
                         />
                         <div className="min-w-0">
                           <div className="text-sm font-bold leading-snug truncate">
-                            {loc.name}
+                            {displayLocName}
                           </div>
                           <div className="text-[11px] text-[#735133] flex items-center gap-1.5 flex-wrap">
-                            <span>{loc.state || loc.country || "विश्व"}</span>
+                            <span>{loc.state || loc.country || (langCode === 'en' ? "World" : langCode === 'gu' ? "વિશ્વ" : "विश्व")}</span>
                             <span>•</span>
                             <span>
                               {loc.latitude.toFixed(2)}°, {loc.longitude.toFixed(2)}°
@@ -425,7 +458,7 @@ export function LocationModal({
             {/* Country Picker Bar */}
             <div className="p-2.5 border-b border-[#8C6239]/20 bg-[#F4E8D1] space-y-2 shrink-0">
               <label className="text-[11px] font-bold text-[#5C3A21] uppercase tracking-wider block">
-                1. देश चुनें (Select Country)
+                {langCode === 'en' ? '1. Select Country' : langCode === 'gu' ? '૧. દેશ પસંદ કરો' : '1. देश चुनें (Select Country)'}
               </label>
               <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
                 {countries.map((c) => (
@@ -443,7 +476,7 @@ export function LocationModal({
                     }`}
                   >
                     <span>{c.flag}</span>
-                    <span>{c.nameHi.split("(")[0].trim()}</span>
+                    <span>{langCode === 'en' ? c.nameEn : c.nameHi.split("(")[0].trim()}</span>
                   </button>
                 ))}
               </div>
@@ -452,7 +485,11 @@ export function LocationModal({
               {availableRegions.length > 1 && (
                 <div className="pt-1">
                   <label className="text-[11px] font-bold text-[#5C3A21] uppercase tracking-wider block mb-1">
-                    2. राज्य / प्रांत चुनें ({selectedCountryInfo.flag} {selectedCountryInfo.nameHi.split("(")[0].trim()})
+                    {langCode === 'en'
+                      ? `2. Select State / Region (${selectedCountryInfo.flag} ${selectedCountryInfo.nameEn})`
+                      : langCode === 'gu'
+                      ? `૨. રાજ્ય / પ્રાંત પસંદ કરો (${selectedCountryInfo.flag} ${selectedCountryInfo.nameHi.split("(")[0].trim()})`
+                      : `2. राज्य / प्रांत चुनें (${selectedCountryInfo.flag} ${selectedCountryInfo.nameHi.split("(")[0].trim()})`}
                   </label>
                   <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
                     <button
@@ -464,7 +501,7 @@ export function LocationModal({
                           : "bg-white/70 text-[#5C3A21] border border-[#8C6239]/30"
                       }`}
                     >
-                      सभी ({countryCities.length})
+                      {langCode === 'en' ? `All (${countryCities.length})` : langCode === 'gu' ? `બધા (${countryCities.length})` : `सभी (${countryCities.length})`}
                     </button>
                     {availableRegions.map((region) => (
                       <button
@@ -488,8 +525,12 @@ export function LocationModal({
             {/* City List for Chosen Country / Region */}
             <div className="flex-1 bg-[#FAF2E4] overflow-y-auto overscroll-contain min-h-0 p-2 space-y-1.5">
               <div className="px-1 py-0.5 text-[11px] font-semibold text-[#735133] flex justify-between">
-                <span>{selectedCountryInfo.flag} {selectedCountryInfo.nameHi} • {filteredDirectoryCities.length} नगर</span>
-                <span>सटीक पंचांग व सूर्योदय गणना</span>
+                <span>
+                  {selectedCountryInfo.flag} {langCode === 'en' ? selectedCountryInfo.nameEn : selectedCountryInfo.nameHi} • {filteredDirectoryCities.length} {langCode === 'en' ? 'cities' : langCode === 'gu' ? 'શહેરો' : 'नगर'}
+                </span>
+                <span>
+                  {langCode === 'en' ? 'Exact Panchang & Sunrise Calculations' : langCode === 'gu' ? 'સચોટ પંચાંગ અને સૂર્યોદય ગણતરી' : 'सटीक पंचांग व सूर्योदय गणना'}
+                </span>
               </div>
               {filteredDirectoryCities.map((city) => {
                 const loc = toSavedLocation(city);
@@ -514,7 +555,7 @@ export function LocationModal({
                       <span className="text-base shrink-0 leading-none mt-0.5">{city.flag}</span>
                       <div className="min-w-0">
                         <div className="text-sm font-bold leading-snug truncate">
-                          {city.nameHi} <span className="text-xs font-normal text-[#735133]">({city.nameEn})</span>
+                          {langCode === 'en' ? city.nameEn : city.nameHi} <span className="text-xs font-normal text-[#735133]">({langCode === 'en' ? city.nameHi : city.nameEn})</span>
                         </div>
                         <div className="text-[11px] text-[#735133] flex items-center gap-1.5 flex-wrap">
                           <span>{city.region}</span>
@@ -525,12 +566,12 @@ export function LocationModal({
                           </span>
                           {city.type === 'capital' && (
                             <span className="bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded text-[10px] font-bold">
-                              राजधानी
+                              {langCode === 'en' ? 'Capital' : langCode === 'gu' ? 'રાજધાની' : 'राजधानी'}
                             </span>
                           )}
                           {city.type === 'pilgrimage' && (
                             <span className="bg-orange-100 text-orange-900 px-1.5 py-0.2 rounded text-[10px] font-bold">
-                              तीर्थ
+                              {langCode === 'en' ? 'Pilgrimage' : langCode === 'gu' ? 'તીર્થ' : 'तीर्थ'}
                             </span>
                           )}
                         </div>
@@ -548,7 +589,11 @@ export function LocationModal({
         {activeTab === "pilgrimage" && (
           <div className="flex-1 bg-[#FAF2E4] overflow-y-auto overscroll-contain min-h-0 p-2.5 space-y-2">
             <div className="p-2 bg-[#F4E8D1] border border-[#8C6239]/30 rounded-xl text-xs text-[#5C3A21] font-medium">
-              चार धाम, द्वादश ज्योतिर्लिंग, सप्त पुरी एवं सिद्ध तीर्थ — इन पावन स्थलों के अक्षांश-देशांतर से पंचांग की गणना पूर्णतः प्रमाणिक होती है।
+              {langCode === 'en'
+                ? 'Char Dham, 12 Jyotirlingas, Sapta Puri & Siddha Peethas — Panchang calculations use authentic coordinates of these sacred places.'
+                : langCode === 'gu'
+                ? 'ચાર ધામ, દ્વાદશ જ્યોતિર્લિંગ, સપ્ત પુરી અને સિદ્ધ તીર્થો — આ પાવન સ્થળોના અક્ષાંશ-રેખાંશથી પંચાંગની સચોટ ગણતરી થાય છે.'
+                : 'चार धाम, द्वादश ज्योतिर्लिंग, सप्त पुरी एवं सिद्ध तीर्थ — इन पावन स्थलों के अक्षांश-देशांतर से पंचांग की गणना पूर्णतः प्रमाणिक होती है।'}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -556,6 +601,7 @@ export function LocationModal({
                 const isCurrent =
                   Math.abs(loc.latitude - currentLocation.latitude) < 0.01 &&
                   Math.abs(loc.longitude - currentLocation.longitude) < 0.01;
+                const dispName = langCode === 'en' ? (loc.name.match(/\(([^)]+)\)/)?.[1] || loc.name) : loc.name;
                 return (
                   <button
                     key={`${loc.name}-${idx}`}
@@ -570,7 +616,7 @@ export function LocationModal({
                     <div className="flex items-center gap-2 min-w-0 pr-1">
                       <Sparkles className="w-4 h-4 text-[#B56A00] shrink-0" />
                       <div className="min-w-0">
-                        <div className="text-xs font-bold leading-tight truncate">{loc.name}</div>
+                        <div className="text-xs font-bold leading-tight truncate">{dispName}</div>
                         <div className="text-[10px] text-[#735133] truncate">
                           {loc.state || loc.country} • {loc.latitude.toFixed(2)}°, {loc.longitude.toFixed(2)}°
                         </div>
@@ -589,18 +635,22 @@ export function LocationModal({
           <form onSubmit={handleCustomSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden bg-[#FAF2E4]">
             <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3.5 space-y-3">
             <p className="text-xs text-[#735133] font-medium">
-              यदि आपका गाँव, कस्बा या विदेश का कोई स्थान सूची में नहीं है, तो उसके सटीक निर्देशांक (GPS) व समय-क्षेत्र यहाँ भरें:
+              {langCode === 'en'
+                ? 'If your village, town, or international location is not listed, enter its exact GPS coordinates and timezone here:'
+                : langCode === 'gu'
+                ? 'જો તમારું ગામ, શહેર કે વિદેશનું સ્થાન સૂચિમાં ન હોય, તો તેના સચોટ અક્ષાંશ-રેખાંશ (GPS) અને સમય-ક્ષેત્ર અહીં ભરો:'
+                : 'यदि आपका गाँव, कस्बा या विदेश का कोई स्थान सूची में नहीं है, तो उसके सटीक निर्देशांक (GPS) व समय-क्षेत्र यहाँ भरें:'}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
                 <label className="text-xs font-bold text-[#5C3A21] block mb-1">
-                  स्थान / गाँव का नाम *
+                  {langCode === 'en' ? 'City / Village Name *' : langCode === 'gu' ? 'સ્થાન / ગામનું નામ *' : 'स्थान / गाँव का नाम *'}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="उदा. रामनगर, शिवगंज, Sunnyvale..."
+                  placeholder={langCode === 'en' ? 'e.g. Ramnagar, Sunnyvale...' : langCode === 'gu' ? 'દા.ત. રામનગર, શિવગંજ, Sunnyvale...' : 'उदा. रामनगर, शिवगंज, Sunnyvale...'}
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   className="w-full min-h-10 px-3 py-1.5 bg-white border border-[#8C6239]/50 rounded-lg text-sm font-semibold text-[#5C3A21] outline-none focus:border-[#B56A00]"
@@ -609,11 +659,11 @@ export function LocationModal({
 
               <div>
                 <label className="text-xs font-bold text-[#5C3A21] block mb-1">
-                  देश (Country)
+                  {langCode === 'en' ? 'Country' : langCode === 'gu' ? 'દેશ (Country)' : 'देश (Country)'}
                 </label>
                 <input
                   type="text"
-                  placeholder="उदा. भारत, USA, Canada, UK..."
+                  placeholder={langCode === 'en' ? 'e.g. India, USA, Canada, UK...' : langCode === 'gu' ? 'દા.ત. ભારત, USA, Canada, UK...' : 'उदा. भारत, USA, Canada, UK...'}
                   value={customCountry}
                   onChange={(e) => setCustomCountry(e.target.value)}
                   className="w-full min-h-10 px-3 py-1.5 bg-white border border-[#8C6239]/50 rounded-lg text-sm font-semibold text-[#5C3A21] outline-none focus:border-[#B56A00]"
@@ -622,11 +672,11 @@ export function LocationModal({
 
               <div>
                 <label className="text-xs font-bold text-[#5C3A21] block mb-1">
-                  राज्य / प्रांत (State / Region)
+                  {langCode === 'en' ? 'State / Province / Region' : langCode === 'gu' ? 'રાજ્ય / પ્રાંત (State / Region)' : 'राज्य / प्रांत (State / Region)'}
                 </label>
                 <input
                   type="text"
-                  placeholder="उदा. राजस्थान, उत्तर प्रदेश, California..."
+                  placeholder={langCode === 'en' ? 'e.g. Gujarat, Maharashtra, California...' : langCode === 'gu' ? 'દા.ત. ગુજરાત, રાજસ્થાન, California...' : 'उदा. राजस्थान, उत्तर प्रदेश, California...'}
                   value={customState}
                   onChange={(e) => setCustomState(e.target.value)}
                   className="w-full min-h-10 px-3 py-1.5 bg-white border border-[#8C6239]/50 rounded-lg text-sm font-semibold text-[#5C3A21] outline-none focus:border-[#B56A00]"
@@ -635,11 +685,11 @@ export function LocationModal({
 
               <div>
                 <label className="text-xs font-bold text-[#5C3A21] block mb-1">
-                  जिला / तहसील (District / County)
+                  {langCode === 'en' ? 'District / County' : langCode === 'gu' ? 'જિલ્લો / તાલુકો (District / County)' : 'जिला / तहसील (District / County)'}
                 </label>
                 <input
                   type="text"
-                  placeholder="उदा. सिरोही, वाराणसी, Santa Clara..."
+                  placeholder={langCode === 'en' ? 'e.g. Varanasi, Santa Clara...' : langCode === 'gu' ? 'દા.ત. સુરત, વારાણસી, Santa Clara...' : 'उदा. सिरोही, वाराणसी, Santa Clara...'}
                   value={customDistrict}
                   onChange={(e) => setCustomDistrict(e.target.value)}
                   className="w-full min-h-10 px-3 py-1.5 bg-white border border-[#8C6239]/50 rounded-lg text-sm font-semibold text-[#5C3A21] outline-none focus:border-[#B56A00]"
@@ -648,13 +698,13 @@ export function LocationModal({
 
               <div>
                 <label className="text-xs font-bold text-[#5C3A21] block mb-1">
-                  अक्षांश (Latitude: −90 से 90) *
+                  {langCode === 'en' ? 'Latitude (−90 to 90) *' : langCode === 'gu' ? 'અક્ષાંશ (Latitude: −90 થી 90) *' : 'अक्षांश (Latitude: −90 से 90) *'}
                 </label>
                 <input
                   type="number"
                   step="any"
                   required
-                  placeholder="उदा. 28.6139"
+                  placeholder={langCode === 'en' ? 'e.g. 28.6139' : langCode === 'gu' ? 'દા.ત. 28.6139' : 'उदा. 28.6139'}
                   value={customLat}
                   onChange={(e) => {
                     setCustomLat(e.target.value);
@@ -670,13 +720,13 @@ export function LocationModal({
 
               <div>
                 <label className="text-xs font-bold text-[#5C3A21] block mb-1">
-                  देशांतर (Longitude: −180 से 180) *
+                  {langCode === 'en' ? 'Longitude (−180 to 180) *' : langCode === 'gu' ? 'રેખાંશ (Longitude: −180 થી 180) *' : 'देशांतर (Longitude: −180 से 180) *'}
                 </label>
                 <input
                   type="number"
                   step="any"
                   required
-                  placeholder="उदा. 77.2090"
+                  placeholder={langCode === 'en' ? 'e.g. 77.2090' : langCode === 'gu' ? 'દા.ત. 77.2090' : 'उदा. 77.2090'}
                   value={customLon}
                   onChange={(e) => {
                     setCustomLon(e.target.value);
@@ -693,7 +743,7 @@ export function LocationModal({
 
             <div>
               <label className="text-xs font-bold text-[#5C3A21] block mb-1">
-                समय-क्षेत्र ऑफसेट (Timezone Offset: UTC Hours)
+                {langCode === 'en' ? 'Timezone Offset (UTC Hours)' : langCode === 'gu' ? 'સમય-ક્ષેત્ર ઓફસેટ (Timezone Offset: UTC Hours)' : 'समय-क्षेत्र ऑफसेट (Timezone Offset: UTC Hours)'}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -706,7 +756,11 @@ export function LocationModal({
                   className="w-32 min-h-10 px-3 py-1.5 bg-white border border-[#8C6239]/50 rounded-lg text-sm font-semibold text-[#5C3A21] outline-none focus:border-[#B56A00]"
                 />
                 <span className="text-xs text-[#735133] font-medium">
-                  (भारत = +5.5, नेपाल = +5.75, लंदन = 0, न्यू यॉर्क = -5, कैलिफोर्निया = -8, दुबई = +4)
+                  {langCode === 'en'
+                    ? '(India = +5.5, Nepal = +5.75, London = 0, New York = -5, California = -8, Dubai = +4)'
+                    : langCode === 'gu'
+                    ? '(ભારત = +5.5, નેપાળ = +5.75, લંડન = 0, ન્યૂયોર્ક = -5, કેલિફોર્નિયા = -8, દુબઈ = +4)'
+                    : '(भारत = +5.5, नेपाल = +5.75, लंदन = 0, न्यू यॉर्क = -5, कैलिफोर्निया = -8, दुबई = +4)'}
                 </span>
               </div>
             </div>
@@ -716,7 +770,11 @@ export function LocationModal({
               className="w-full min-h-11 py-2.5 px-4 bg-[#B56A00] hover:bg-[#965500] text-white rounded-xl text-sm font-bold shadow-md cursor-pointer transition active:scale-[0.99] flex items-center justify-center gap-2 mt-2"
             >
               <MapPin className="w-4 h-4" />
-              स्थान सुरक्षित करें और पंचांग देखें
+              {langCode === 'en'
+                ? 'Save Location & View Panchang'
+                : langCode === 'gu'
+                ? 'સ્થાન સુરક્ષિત કરો અને પંચાંગ જુઓ'
+                : 'स्थान सुरक्षित करें और पंचांग देखें'}
             </button>
             </div>
           </form>
