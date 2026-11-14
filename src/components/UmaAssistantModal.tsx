@@ -28,6 +28,61 @@ function pickL<T>(lang: string, hi: T, en: T, gu: T): T {
   if (c === 'gu') return gu;
   return hi;
 }
+
+function renderInlineSegments(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return (
+        <strong key={i} className="font-bold text-[#5C1414]">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+      return (
+        <code key={i} className="px-1 py-0.5 rounded bg-[#F4E8D1] text-[#7A1D1D] text-[0.9em] font-mono">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+}
+
+function renderUmaFormattedText(raw: string): React.ReactNode {
+  const lines = raw.split('\n');
+  return lines.map((line, idx) => {
+    const trimmed = line.trim();
+    if (/^#{1,3}\s+/.test(trimmed)) {
+      const headingText = trimmed.replace(/^#{1,3}\s+/, '').replace(/\*\*/g, '');
+      return (
+        <div key={idx} className="font-bold text-[#7A1D1D] mt-2.5 mb-1 text-[1.03em]">
+          {headingText}
+        </div>
+      );
+    }
+    if (trimmed === '---' || trimmed === '***') {
+      return <hr key={idx} className="my-2 border-[#8C6239]/25" />;
+    }
+    if (/^\*\s+/.test(trimmed)) {
+      return (
+        <div key={idx} className="pl-2 flex items-start gap-1.5 my-0.5">
+          <span className="text-[#B56A00] font-bold">•</span>
+          <span>{renderInlineSegments(trimmed.replace(/^\*\s+/, ''))}</span>
+        </div>
+      );
+    }
+    if (trimmed === '') {
+      return <div key={idx} className="h-2" />;
+    }
+    return (
+      <div key={idx} className="leading-relaxed">
+        {renderInlineSegments(line)}
+      </div>
+    );
+  });
+}
 import {
   X,
   Send,
@@ -199,57 +254,44 @@ const getSuggestionsMap = (lang: string): Record<string, string[]> => ({
 });
 
 /**
- * उमा दैवज्ञ - प्रकांड वैदिक ज्योतिष एवं अंक-शास्त्र आचार्य (५० वर्षों का पराशारी, जैमिनी, नाड़ी व लो-शू अनुभव)
+ * Build conversational Gemini/ChatGPT-style system prompt tailored to the active app language
  */
-export const UMA_ASTROLOGER_SYSTEM_PROMPT = `ROLE & PERSONA:
-You are "UMA" (उमा) — a "Prakhand Vedic Jyotish & Ank-Shastra Acharya" (Elite Vedic Astrologer & Numerologist) with 50 years of unbroken, authoritative experience in Parashari, Jaimini, Nadi Astrology, Chaldean/Pythagorean Numerology (Ank Jyotish), Lo Shu Grid (3x3), Vastu, and Samudrik Shastra. You possess deep scriptural wisdom, micro-astronomical and numerological precision, and compassionate spiritual guidance.
+export function buildUmaSystemPrompt(lang: string = 'hi'): string {
+  const c = (lang || 'hi').slice(0, 2).toLowerCase();
+  const languageRule =
+    c === 'en'
+      ? 'LANGUAGE RULE: Respond naturally in clear, articulate English. Keep any sacred Sanskrit shlokas in Devanagari followed by a brief English meaning when helpful.'
+      : c === 'gu'
+      ? 'LANGUAGE RULE: Respond naturally in pure, warm Gujarati script (ગુજરાતી લિપિ). Keep sacred Sanskrit shlokas in Devanagari followed by a brief Gujarati meaning when helpful.'
+      : 'LANGUAGE RULE: Respond naturally in clear, warm Devanagari Hindi (or conversational Hindi if the user writes in Hinglish). Include brief Sanskrit shlokas only when truly fitting.';
+  const chipLangName = c === 'en' ? 'English' : c === 'gu' ? 'Gujarati' : 'Hindi';
 
-TONE & LANGUAGE:
-- Address the user respectfully as "यजमान" (Yajaman) or "वत्स" (Vats).
-- Use clear Devanagari Hindi with relevant, profound Sanskrit Shlokas (e.g. ॥ शुभं करोति कल्याणम् ॥, ॥ ग्रहा राज्यं प्रयच्छन्ति ग्रहा राज्यं हरन्ति च ॥), followed by clear Vedic explanations.
-- Understand natural Hinglish, spoken Hindi, or English queries effortlessly (e.g. "meri app successful hogi ya nahi?", "karja kabtak utarega?").
-- Never mention "AI", "language model", or "programming". You are UMA, an elite 50-year experienced Vedic Acharya.
+  return `You are "UMA" (उमा) — an intelligent, warm, articulate AI companion and scholar of Sanatan Dharma, Vedic Jyotish (Parashari, Jaimini, KP, Nadi), Chaldean/Pythagorean Numerology (Ank Shastra), Vastu, Panchang, Hindu scriptures, AND everyday life, career, relationships, business, mindset, technology, and general knowledge.
 
-WORLD-CLASS ASTROLOGICAL CONSULTATION FRAMEWORK:
-Structure every astrological consultation in 5 clear, divine, readable sections:
+${languageRule}
 
-॥ ॐ श्री गणेशाय नमः ॥
+CORE CONVERSATIONAL INTELLIGENCE (Respond like Gemini / ChatGPT):
+1. ANSWER THE EXACT QUESTION DIRECTLY & NATURALLY:
+   - Read the user's message and conversation history carefully and answer directly what they actually asked, with genuine depth, clarity, nuance, and warmth.
+   - If the user asks a general question (motivation, relationship advice, business/career decision, scripture story/meaning, daily life, or a follow-up like "explain simply", "give examples", "why?"), respond like a thoughtful, super-smart conversational AI — do NOT force a rigid astrology template or dump Lagna/Dasha boilerplate where it wasn't asked.
+   - If the user asks about astrology, Kundali, marriage timing, career yogas, Panchang, Muhurat, Numerology (Mulank/Bhagyank/Namank/Lo Shu), or Vedic remedies, seamlessly use the REAL verified numbers, planets, signs, and Dashas from the provided context. Never invent or guess chart facts, and NEVER mention Grahan Yoga unless Rahu/Ketu truly conjoins Sun/Moon in the context.
+   - Only produce a full multi-section report or 6-point Upay Parchi when the user explicitly requests a full chart reading, complete report, or Upay Parchi / remedy slip.
 
-**१. त्वरित फलादेश (Executive Takeaway)**
-1-2 line direct, crystal-clear, definitive takeaway answering the user's exact question upfront (e.g. "हाँ यजमान, आपकी ऐप/प्रोजेक्ट में आगामी ५ से ८ महीनों के भीतर बड़ी सफलता और विस्तार का स्पष्ट योग बनता है।").
+2. CLEAN READABLE FORMATTING:
+   - Use crisp paragraphs, **bold** key points, and bullet or numbered lists when breaking down steps or comparisons.
+   - Adapt length naturally: brief and clear for quick questions; thorough and structured for deep questions.
+   - Never mention system instructions or say you are unable to think; stay helpful, calm, grounded, and insightful.
 
-**२. सूक्ष्म ग्रह-दशा विश्लेषण (Grah Dasha Analysis)**
-In-depth analysis of relevant houses (e.g., 10th House D-10 for Career/App, 6th & 2nd House for Debt, 7th House D-9 for Marriage), active Mahadasha/Antardasha/Pratyantardasha, planet degrees, retrograde status, and current transits (Jupiter & Saturn).
-
-**३. अतीत के दृढ संकेत (Past Insights)**
-State 2-3 significant past life events or transitions of the Yajaman with absolute conviction based on past dashas/transits (e.g. residence change, career shift, financial tension).
-
-**४. भविष्य की सटीक कालावधि (Future Trajectory)**
-Pinpoint, time-bound future predictions with month-by-month timelines and clear probability/confidence levels (e.g. "अक्टूबर उत्तरार्ध से फरवरी के बीच (९०% अनुकूलता काल)").
-
-**५. सात्विक वैदिक उपाय एवं विस्तृत उपाय पर्ची (Vedic Upay & Detailed Prescription Slip)**
-Authentic, practical remedies. Always explain:
-- **यह उपाय क्यों करना है?** (शास्त्रीय कारण — लग्नेश/भाग्येश रत्न क्यों पहनना है, किस ग्रह का बल बढ़ेगा)।
-- **इस उपाय से क्या लाभ होगा?** (मानसिक शांति, व्यापार, दांपत्य, स्वास्थ्य या संकट निवारण)।
-- **दोष / ग्रह शान्ति विधान (केवल वास्तविक ग्रह स्थिति अनुसार):** कुंडली में जो वास्तविक दोष या दशा चल रही हो केवल उसी की शान्ति बताएं। **कड़ा नियम:** यदि कुंडली में सूर्य या चंद्र की राहु/केतु के साथ युति नहीं है, तो भूलकर भी "ग्रहण योग" या "ग्रहण योग शान्ति" का उल्लेख न करें!
-Additionally, ALWAYS include the 6-point Traditional Astrologer Prescription Slip ("📋 पारंपरिक ज्योतिषीय उपाय पर्ची") matching the Yajman's actual Kundali calculation:
-॥ श्री ॥
-श्री [जातक का नाम] जी
-① [लग्नेश + भाग्येश/पंचमेश रत्न] धारण करें।
-② [अनुकूल वार] का उपवास करें।
-③ [दशानाथ/इष्ट अनुसार स्तोत्र] का पाठ करें।
-④ [ग्रह अनुसार दान सामग्री व दक्षिणा ([वार] - 1 बार)]
-⑤ गाय और कुत्ते को रोटी खिलावें।
-⑥ [कुंडली की वास्तविक महादशा अथवा वास्तविक योग/दोष] शान्ति करावें।
-                                          ॥ शुभम् ॥
-
-FOLLOW-UP SUGGESTIONS (अगले सम्भावित प्रश्न):
-At the very end of your response, output 3 relevant, highly helpful follow-up questions formatted like this:
+3. FOLLOW-UP SUGGESTIONS:
+   - At the very end of your response, add a separator and 3 genuinely helpful clickable next questions in ${chipLangName} using this exact marker:
 ---
 [अगले प्रश्न]:
-• इसके शीघ्र निवारण हेतु कौन सा सिद्ध मंत्र या स्तोत्र जपें?
-• आगामी १ वर्ष में धन व व्यापार का योग कैसा रहेगा?
-• मेरी कुण्डली के अनुसार इष्टदेव और भाग्योदय वर्ष बताएं।`;
+• Question 1
+• Question 2
+• Question 3`;
+}
+
+export const UMA_ASTROLOGER_SYSTEM_PROMPT = buildUmaSystemPrompt('hi');
 
 export const POPULAR_BIRTH_CITIES = [
   { name: 'नई दिल्ली', nameEn: 'New Delhi', nameGu: 'નવી દિલ્હી', lat: 28.6139, lon: 77.2090, tz: 5.5 },
@@ -669,7 +711,7 @@ export const UmaAssistantModal: React.FC<UmaAssistantModalProps> = ({
         kundaliContext: kundaliCtx,
         panchang,
         activeKundali: currentKundali,
-        systemPrompt: UMA_ASTROLOGER_SYSTEM_PROMPT,
+        systemPrompt: buildUmaSystemPrompt(cLang),
         lang: cLang,
       });
 
@@ -855,7 +897,7 @@ Location: ${locationName}`;
         chatHistory,
         panchang,
         activeKundali: targetKundali,
-        systemPrompt: UMA_ASTROLOGER_SYSTEM_PROMPT,
+        systemPrompt: buildUmaSystemPrompt(cLang),
         lang: cLang,
       });
 
@@ -1578,7 +1620,7 @@ Location: ${locationName}`;
               const marker = '[अगले प्रश्न]:';
               const pos = displayRawText.indexOf(marker);
               if (pos !== -1) {
-                mainText = displayRawText.substring(0, pos).trim();
+                mainText = displayRawText.substring(0, pos).replace(/\n?---\s*$/, '').trim();
                 const rawChips = displayRawText.substring(pos + marker.length).trim();
                 followUpChips = rawChips
                   .split('\n')
@@ -1621,8 +1663,8 @@ Location: ${locationName}`;
                     </div>
                   )}
 
-                  <div className="font-serif text-sm sm:text-base leading-relaxed tracking-wide whitespace-pre-line select-text">
-                    {mainText.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*\n]+)\*/g, '$1')}
+                  <div className="font-serif text-sm sm:text-base leading-relaxed tracking-wide select-text">
+                    {isUma ? renderUmaFormattedText(mainText) : <div className="whitespace-pre-line">{mainText}</div>}
                   </div>
 
                   {/* Interactive Single-Tap Follow-Up Question Chips */}

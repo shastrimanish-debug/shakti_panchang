@@ -1,7 +1,7 @@
 {
   "name": "shakti-panchang",
   "private": true,
-  "version": "1.0.70",
+  "version": "1.0.71",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -21,7 +21,7 @@
     "@capacitor/core": "^8.5.1",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/preferences": "^8.0.1",
-    "@google/genai": "^2.21.0",
+    "@google/genai": "^3.3.0",
     "@ionic/pwa-elements": "^3.4.0",
     "@types/three": "^0.186.0",
     "astronomy-engine": "^2.1.19",

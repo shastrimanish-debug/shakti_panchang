@@ -28,7 +28,7 @@ import {
 import { DISHASHOOL_MAP, TRAVEL_REMEDIES } from "../services/disha";
 import { calculateKundali } from "../services/kundali";
 import { getSavedKundaliProfiles } from "../services/storage";
-import { getUmaApiEndpoints } from "../services/UmaVoiceService";
+import { getUmaApiEndpoints, HOSTING_UMA_CHAT_URL, isCapacitorClient } from "../services/UmaVoiceService";
 import i18n from "../i18n";
 import { trPlanet, trRashi, trVedic, trWeekday, trChoghadiyaMeaning } from "../i18n/vedicTranslate";
 
@@ -58,7 +58,7 @@ export type UmaActionType =
 export interface UmaResponse {
   ok: boolean;
   text: string;
-  source: "local_vedic" | "gemini" | "hybrid";
+  source: "local_vedic" | "gemini" | "grok" | "openrouter" | "hybrid";
   actionPayload?: {
     type: UmaActionType;
     label: string;
@@ -95,15 +95,34 @@ export async function pingUmaServer(): Promise<{ state: UmaLinkState; providers:
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
       return { state: "local", providers: ["local_vedic"] };
     }
-    const endpoints = getUmaApiEndpoints("/api/health");
-    for (const url of endpoints) {
-      const healthResp = await fetch(url, { signal: AbortSignal.timeout(2500) }).catch(() => null);
+    const checkEndpoints = isCapacitorClient()
+      ? [HOSTING_UMA_CHAT_URL, ...getUmaApiEndpoints("/api/health")]
+      : [...getUmaApiEndpoints("/api/health"), HOSTING_UMA_CHAT_URL];
+
+    for (const url of checkEndpoints) {
+      const healthResp = await fetch(url, { signal: AbortSignal.timeout(3000) }).catch(() => null);
       if (healthResp && healthResp.ok) {
         const data = await healthResp.json().catch(() => null);
-        if (data?.hasGeminiKey) {
-          return { state: "online", providers: ["gemini", "local_vedic"] };
+        if (!data) continue;
+        // Hosting uma.php GET response
+        if (data.service === "uma" && data.ok) {
+          const active: string[] = [];
+          if (data.grok) active.push("grok");
+          if (data.gemini) active.push("gemini");
+          if (data.openrouter) active.push("openrouter");
+          if (active.length > 0) {
+            return { state: "online", providers: [...active, "local_vedic"] };
+          }
         }
-        return { state: "local", providers: ["local_vedic"] };
+        // Node /api/health response
+        if (data.hasGeminiKey || data.hasHostingKey) {
+          const hp = data.hostingProviders || {};
+          const active: string[] = [];
+          if (hp.grok) active.push("grok");
+          if (data.hasLocalKey || hp.gemini) active.push("gemini");
+          if (hp.openrouter) active.push("openrouter");
+          return { state: "online", providers: active.length ? [...active, "local_vedic"] : ["gemini", "local_vedic"] };
+        }
       }
     }
     return { state: "local", providers: ["local_vedic"] };
@@ -1562,16 +1581,40 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
   const l = normLang(lang);
   const isNumQuery = Boolean(forceNumerology) || isNumerologyQuery(query);
 
-  if (isNumQuery) {
-    const combinedNumQuery = numerologyContext
-      ? `${numerologyContext}\nप्रश्न: ${query}`
-      : query;
-    const numRes = synthesizeNumerologyVerdict(combinedNumQuery, activeKundali, panchang, l);
-    return {
-      ok: true,
-      text: numRes.text,
-      source: "local_vedic",
-      actionPayload: {
+  const effectiveKundali =
+    activeKundali ||
+    tryParseKundaliFromQuery(query) ||
+    (typeof window !== "undefined" ? getSavedKundaliProfiles()[0] || null : null);
+
+  let autoNumerologyCtx = numerologyContext || "";
+  if (isNumQuery && !autoNumerologyCtx && effectiveKundali) {
+    try {
+      const dob = effectiveKundali.birthDate ? new Date(effectiveKundali.birthDate) : null;
+      if (dob && !isNaN(dob.getTime())) {
+        const d = dob.getDate();
+        const mo = dob.getMonth() + 1;
+        const y = dob.getFullYear();
+        const m = calculateMulank(d);
+        const b = calculateBhagyank(d, mo, y);
+        const n = calculateNamank(effectiveKundali.name || "Yajman");
+        const kua = calculateKuaNumber(y, "male");
+        const py = calculatePersonalYear(d, mo, new Date().getFullYear());
+        const grid = calculateLoshuGrid(d, mo, y);
+        autoNumerologyCtx = `[Calculated Numerology Data for ${effectiveKundali.name}]: Mulank (Root)=${m}, Bhagyank (Destiny)=${b}, Chaldean Namank=${n.compound}->${n.single}, Kua=${kua}, Personal Year=${py.yearNum}, Lo Shu Present=[${Object.entries(grid.counts).filter(([, v]) => v > 0).map(([k, v]) => `${k}x${v}`).join(", ")}], Missing=[${grid.missingNumbers.join(", ") || "None"}]`;
+      }
+    } catch {
+      // Ignore numerology helper error
+    }
+  }
+
+  const microKundaliCtx =
+    kundaliContext || (effectiveKundali ? buildMicroAstrologyContextPrompt(effectiveKundali, panchang) : "");
+  const combinedKundaliContext = [microKundaliCtx, autoNumerologyCtx]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const defaultAction: AskUmaResponse["actionPayload"] = isNumQuery
+    ? {
         type: "open_numerology",
         label:
           l === "en"
@@ -1579,57 +1622,37 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
             : l === "gu"
             ? "અંક જ્યોતિષ અને લો-શૂ ચક્ર જુઓ"
             : "अंक ज्योतिष व लो-शू चक्र देखें",
-      },
-    };
-  }
+      }
+    : effectiveKundali
+    ? {
+        type: "open_kundali",
+        label:
+          l === "en"
+            ? "View Full Birth Chart"
+            : l === "gu"
+            ? "જન્મકુંડળી વિસ્તાર જુઓ"
+            : "जन्मकुंडली विस्तार देखें",
+      }
+    : {
+        type: "open_panchang",
+        label:
+          l === "en"
+            ? "View Today's Panchang"
+            : l === "gu"
+            ? "આજનું પંચાંગ જુઓ"
+            : "आज का पंचांग देखें",
+      };
 
-  const effectiveKundali =
-    activeKundali ||
-    tryParseKundaliFromQuery(query) ||
-    (typeof window !== "undefined" ? getSavedKundaliProfiles()[0] || null : null);
-
-  const localRes = await generateUma({ query, kundali: effectiveKundali, panchang, lang: l });
-
-  let autoNumerologyCtx = numerologyContext || "";
-  if (!autoNumerologyCtx && effectiveKundali) {
-    const localNum = synthesizeNumerologyVerdict(query, effectiveKundali, panchang, l);
-    autoNumerologyCtx = `\n[Numerology Micro-Calculations]:\n${localNum.text}`;
-  }
-
-  const microKundaliCtx =
-    kundaliContext || (effectiveKundali ? buildMicroAstrologyContextPrompt(effectiveKundali, panchang) : "");
-  const combinedKundaliContext = [microKundaliCtx, autoNumerologyCtx, `\n[Classical Micro-Calculation Reference]:\n${localRes.text}`]
-    .filter(Boolean)
-    .join("\n\n");
-
-  const defaultAction: AskUmaResponse["actionPayload"] =
-    localRes.actionPayload ||
-    (effectiveKundali
-      ? {
-          type: "open_kundali",
-          label:
-            l === "en"
-              ? "View Full Birth Chart"
-              : l === "gu"
-              ? "જન્મકુંડળી વિસ્તાર જુઓ"
-              : "जन्मकुंडली विस्तार देखें",
-        }
-      : {
-          type: "open_panchang",
-          label:
-            l === "en"
-              ? "View Today's Panchang"
-              : l === "gu"
-              ? "આજનું પંચાંગ જુઓ"
-              : "आज का पंचांग देखें",
-        });
-
-  // Primary online API endpoint (/api/uma/chat)
+  // Primary online AI endpoints (Node /api/uma/chat + Hosting uma.php)
   if (typeof navigator === "undefined" || navigator.onLine !== false) {
     try {
       const lic = getLicenseStatus();
-      const endpoints = getUmaApiEndpoints("/api/uma/chat");
-      let resp: Response | null = null;
+      const apiEndpoints = getUmaApiEndpoints("/api/uma/chat");
+      const endpoints = isCapacitorClient()
+        ? [HOSTING_UMA_CHAT_URL, ...apiEndpoints]
+        : [...apiEndpoints, HOSTING_UMA_CHAT_URL];
+
+      let data: any = null;
       for (const url of endpoints) {
         const r = await fetch(url, {
           method: "POST",
@@ -1637,7 +1660,7 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
             "Content-Type": "application/json",
             "x-license-token": lic.token,
           },
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(32000),
           body: JSON.stringify({
             query,
             panchangContext,
@@ -1649,60 +1672,78 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
           }),
         }).catch(() => null);
         if (r && r.ok) {
-          resp = r;
-          break;
+          const parsed = await r.json().catch(() => null);
+          if (parsed?.ok && typeof parsed.text === "string" && parsed.text.trim()) {
+            data = parsed;
+            break;
+          }
         }
       }
 
-      if (resp && resp.ok) {
-        const data = await resp.json();
-        if (data?.ok && typeof data.text === "string" && data.text.trim()) {
-          const aiText = data.text.trim();
-          let finalText = aiText;
-          const parchi = generateTraditionalUpayParchi(effectiveKundali, panchang, l);
+      if (data?.ok && typeof data.text === "string" && data.text.trim()) {
+        const aiText = data.text.trim();
+        let finalText = aiText;
+        const parchi = generateTraditionalUpayParchi(effectiveKundali, panchang, l);
 
-          // If the chart does NOT have Grahan Yog, ensure AI never outputs Grahan Yog Shanti
-          if (!/ग्रहण|Grahan|ગ્રહણ/i.test(parchi.detectedDoshaYoga)) {
-            finalText = finalText.replace(/⑥\s*[^\n]*(?:ग्रहण|Grahan|ગ્રહણ)[^\n]*/gi, `⑥ ${parchi.points[5]}`);
-          }
-
-          const wantsParchi = /उपाय पर्ची|पर्ची|पूरी कुंडली|संपूर्ण कुंडली|संपूर्ण फलादेश|upay parchi|remedy slip|પર્ચી/i.test(query);
-          if (wantsParchi && !finalText.includes("①")) {
-            const parchiTitle =
-              l === "en"
-                ? "📋 Traditional Vedic Remedy Slip (6-Point Prescription):"
-                : l === "gu"
-                ? "📋 પારંપરિક જ્યોતિષીય ઉપાય પર્ચી (૬-સૂત્રીય વિધાન):"
-                : "📋 पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक — संक्षिप्त ६-सूत्रीय विधान):";
-            const parchiTip =
-              l === "en"
-                ? "(💡 Click the '📋 Upay Slip' button below to view, edit, download or share this traditional letterhead slip.)"
-                : l === "gu"
-                ? "(💡 નીચે આપેલા '📋 ઉપાય પર્ચી' બટન પર ક્લિક કરીને તમે આ લેટરહેડ પર્ચી જોઈ, એડિટ અને ડાઉનલોડ કરી શકો છો.)"
-                : "(💡 नीचे दिए '📋 उपाय पर्ची' बटन पर क्लिक करके आप इस पारंपरिक लेटरहेड पर्ची को देख, संपादित व डाउनलोड/शेयर कर सकते हैं।)";
-            const parchiBlock = `\n\n${parchiTitle}\n${parchi.formattedTextBlock}\n${parchiTip}`;
-            if (finalText.includes("[अगले प्रश्न]")) {
-              const idx = finalText.indexOf("[अगले प्रश्न]");
-              finalText = `${finalText.slice(0, idx).trim()}${parchiBlock}\n\n---\n${finalText.slice(idx)}`;
-            } else {
-              finalText = `${finalText.trim()}${parchiBlock}`;
-            }
-          }
-
-          return {
-            ok: true,
-            text: finalText,
-            source: "gemini",
-            actionPayload: defaultAction,
-          };
+        // If the chart does NOT have Grahan Yog, ensure AI never outputs Grahan Yog Shanti
+        if (!/ग्रहण|Grahan|ગ્રહણ/i.test(parchi.detectedDoshaYoga)) {
+          finalText = finalText.replace(/⑥\s*[^\n]*(?:ग्रहण|Grahan|ગ્રહણ)[^\n]*/gi, `⑥ ${parchi.points[5]}`);
         }
+
+        const wantsParchi = /उपाय पर्ची|पर्ची|पूरी कुंडली|संपूर्ण कुंडली|संपूर्ण फलादेश|upay parchi|remedy slip|પર્ચી/i.test(query);
+        if (wantsParchi && !finalText.includes("①")) {
+          const parchiTitle =
+            l === "en"
+              ? "📋 Traditional Vedic Remedy Slip (6-Point Prescription):"
+              : l === "gu"
+              ? "📋 પારંપરિક જ્યોતિષીય ઉપાય પર્ચી (૬-સૂત્રીય વિધાન):"
+              : "📋 पारंपरिक ज्योतिषीय उपाय पर्ची (उपाय पत्रक — संक्षिप्त ६-सूत्रीय विधान):";
+          const parchiTip =
+            l === "en"
+              ? "(💡 Click the '📋 Upay Slip' button below to view, edit, download or share this traditional letterhead slip.)"
+              : l === "gu"
+              ? "(💡 નીચે આપેલા '📋 ઉપાય પર્ચી' બટન પર ક્લિક કરીને તમે આ લેટરહેડ પર્ચી જોઈ, એડિટ અને ડાઉનલોડ કરી શકો છો.)"
+              : "(💡 नीचे दिए '📋 उपाय पर्ची' बटन पर क्लिक करके आप इस पारंपरिक लेटरહેડ पर्ची को देख, संपादित व डाउनलोड/शेयर कर सकते हैं।)";
+          const parchiBlock = `\n\n${parchiTitle}\n${parchi.formattedTextBlock}\n${parchiTip}`;
+          if (finalText.includes("[अगले प्रश्न]")) {
+            const idx = finalText.indexOf("[अगले प्रश्न]");
+            finalText = `${finalText.slice(0, idx).trim()}${parchiBlock}\n\n---\n${finalText.slice(idx)}`;
+          } else {
+            finalText = `${finalText.trim()}${parchiBlock}`;
+          }
+        }
+
+        const rawProv = String(data.provider || "").toLowerCase();
+        const resolvedSource: AskUmaResponse["source"] =
+          rawProv === "grok" || rawProv === "openrouter" ? rawProv : "gemini";
+
+        return {
+          ok: true,
+          text: finalText,
+          source: resolvedSource,
+          actionPayload: defaultAction,
+        };
       }
     } catch (err) {
-      console.warn("/api/uma/chat unavailable, using 100% deterministic Sookshma Ganit engine:", err);
+      console.warn("Online AI endpoints unavailable, using deterministic offline Sookshma Ganit engine:", err);
     }
   }
 
-  // 100% Deterministic Local Vedic & Numerology Sookshma Ganit Engine (Works completely offline!)
+  // Deterministic Offline Fallback (only reached when offline or AI endpoint unavailable)
+  if (isNumQuery) {
+    const combinedNumQuery = numerologyContext
+      ? `${numerologyContext}\nप्रश्न: ${query}`
+      : query;
+    const numRes = synthesizeNumerologyVerdict(combinedNumQuery, activeKundali, panchang, l);
+    return {
+      ok: true,
+      text: numRes.text,
+      source: "local_vedic",
+      actionPayload: defaultAction,
+    };
+  }
+
+  const localRes = await generateUma({ query, kundali: effectiveKundali, panchang, lang: l });
   return {
     ok: localRes.ok,
     text: localRes.text,

@@ -45,19 +45,25 @@ export interface ToneConfig {
   samplePhrase: string;
 }
 
+export const HOSTING_UMA_CHAT_URL = 'https://myshivshakti.in/shaktipanchang/uma/v1/uma.php';
+
 const CLOUD_BACKEND_ORIGINS = [
   'https://ais-pre-yltck7of4bz54fytkvtlmd-88514486913.asia-east1.run.app',
   'https://ais-dev-yltck7of4bz54fytkvtlmd-88514486913.asia-east1.run.app',
 ];
 
-export function getUmaApiEndpoints(path: string): string[] {
-  if (typeof window === 'undefined') return [path];
-  const isCapacitorLocal =
+export function isCapacitorClient(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
     Capacitor.isNativePlatform() ||
     window.location.protocol === 'capacitor:' ||
-    (window.location.hostname === 'localhost' && !window.location.port);
+    (window.location.hostname === 'localhost' && !window.location.port)
+  );
+}
 
-  if (isCapacitorLocal) {
+export function getUmaApiEndpoints(path: string): string[] {
+  if (typeof window === 'undefined') return [path];
+  if (isCapacitorClient()) {
     return CLOUD_BACKEND_ORIGINS.map((origin) => `${origin}${path}`);
   }
   return [path, ...CLOUD_BACKEND_ORIGINS.map((origin) => `${origin}${path}`)];

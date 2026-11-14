@@ -32,28 +32,50 @@ async function startServer() {
   });
 
   // Shared Gemini client utility on the server
-  let aiClient: GoogleGenAI | null = null;
   function getGeminiClient(): GoogleGenAI | null {
-    if (!aiClient) {
-      const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) return null;
-      aiClient = new GoogleGenAI({
-        apiKey,
-        httpOptions: {
-          headers: {
-            "User-Agent": "aistudio-build",
-          },
+    const apiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "").trim();
+    if (!apiKey || apiKey === "MY_GEMINI_API_KEY") return null;
+    return new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build",
         },
-      });
-    }
-    return aiClient;
+      },
+    });
   }
 
+  const HOSTING_UMA_URL = "https://myshivshakti.in/shaktipanchang/uma/v1/uma.php";
+
   // API health
-  app.get("/api/health", (_req: Request, res: Response) => {
+  app.get("/api/health", async (_req: Request, res: Response) => {
+    const rawKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "").trim();
+    const hasLocalKey = Boolean(rawKey && rawKey !== "MY_GEMINI_API_KEY");
+    let hostingProviders: { gemini?: boolean; grok?: boolean; openrouter?: boolean } | null = null;
+    try {
+      const hResp = await fetch(HOSTING_UMA_URL, { signal: AbortSignal.timeout(3500) });
+      if (hResp.ok) {
+        const hJson: any = await hResp.json();
+        if (hJson?.ok) {
+          hostingProviders = {
+            gemini: Boolean(hJson.gemini),
+            grok: Boolean(hJson.grok),
+            openrouter: Boolean(hJson.openrouter),
+          };
+        }
+      }
+    } catch {
+      // Ignore hosting ping error
+    }
+    const hasHostingKey = Boolean(
+      hostingProviders && (hostingProviders.gemini || hostingProviders.grok || hostingProviders.openrouter)
+    );
     res.json({
       status: "ok",
-      hasGeminiKey: Boolean(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY),
+      hasGeminiKey: hasLocalKey || hasHostingKey,
+      hasLocalKey,
+      hasHostingKey,
+      hostingProviders,
       timestamp: new Date().toISOString(),
     });
   });
@@ -252,7 +274,7 @@ async function startServer() {
   // UMA AI Vedic Astrologer Chat Endpoint
   app.post("/api/uma/chat", async (req: Request, res: Response) => {
     try {
-      const { query, panchangContext, kundaliContext, chatHistory, lang } = req.body;
+      const { query, panchangContext, kundaliContext, chatHistory, systemPrompt, lang } = req.body;
       const c = String(lang || "hi").slice(0, 2).toLowerCase();
       const licenseToken = (req.headers["x-license-token"] as string) || req.body.licenseToken;
 
@@ -274,104 +296,160 @@ async function startServer() {
         return res.status(400).json({ ok: false, error: "Query is required" });
       }
 
-      const ai = getGeminiClient();
-
       const languageRule =
         c === "en"
-          ? "CRITICAL LANGUAGE RULE: Respond strictly in clear, natural English (while keeping any sacred Sanskrit shlokas or mantras in original Devanagari followed by an English translation/meaning)."
+          ? "LANGUAGE RULE: Respond naturally in clear, articulate English. Keep any sacred Sanskrit shlokas or mantras in Devanagari followed by a brief English meaning when helpful."
           : c === "gu"
-          ? "CRITICAL LANGUAGE RULE: Respond strictly in natural, pure Gujarati script (ગુજરાતી લિપિ), while keeping any sacred Sanskrit shlokas or mantras in original Devanagari followed by their Gujarati meaning."
-          : "CRITICAL LANGUAGE RULE: Respond strictly in natural, warm Devanagari Hindi, keeping authentic Sanskrit shlokas in Devanagari.";
+          ? "LANGUAGE RULE: Respond naturally in pure, warm Gujarati script (ગુજરાતી લિપિ). Keep any sacred Sanskrit shlokas or mantras in Devanagari followed by a brief Gujarati meaning when helpful."
+          : "LANGUAGE RULE: Respond naturally in clear, warm Devanagari Hindi (or seamlessly understandable conversational Hindi if the user writes in Hinglish). Keep sacred Sanskrit shlokas or mantras in Devanagari when relevant.";
 
-      const defaultSystemInstruction = `ROLE & PERSONA:
-You are "UMA" (उमा) — an experienced, deeply empathetic, living Vedic Astrologer and wise guide.
+      const customPrompt = typeof systemPrompt === "string" && systemPrompt.trim().length >= 80 ? systemPrompt.trim() : "";
+      const activeSystemInstruction = customPrompt || `You are "UMA" (उमा) — a deeply intelligent, warm, articulate AI companion and scholar of Sanatan Dharma, Vedic Jyotish (Parashari, Jaimini, KP, Nadi), Chaldean/Pythagorean Numerology (Ank Shastra), Vastu, Panchang, Hindu scriptures, AND everyday life, career, relationships, business, health mindset, technology, and general knowledge.
+
 ${languageRule}
 
-CRITICAL CONVERSATION RULES:
-1. REPLY LIKE A NORMAL HUMAN CHAT:
-   - Read what the user ACTUALLY asked and answer that specific question directly, warmly, and naturally in 2 to 3 conversational paragraphs!
-   - Do NOT dump a rigid 5-heading report unless the user explicitly asks for a full Kundali report or past-present-future analysis.
-   - If the user asks a specific or practical question, talk directly about their question using their actual Lagna, Moon Rashi, and active Dasha naturally woven into the conversation.
-2. NO RAW MARKDOWN ASTERISKS:
-   - Do NOT wrap words in **bold** or *italic* asterisks, because the chat displays plain text.
-3. USE REAL CHART DATA NATURALLY:
-   - Mention the native's real Lagna, Rashi, and active Mahadasha/Antardasha from the provided context naturally (never use placeholders like XYZ).
-   - Give clear, encouraging, realistic timeframes and 1–2 simple daily remedies relevant to their question.
+CORE CONVERSATIONAL INTELLIGENCE (Respond like Gemini / ChatGPT):
+1. ANSWER THE EXACT QUESTION DIRECTLY & NATURALLY:
+   - Read the user's message carefully (including any conversation history) and reply directly to what they actually asked, with genuine depth, clarity, nuance, and warmth.
+   - If the user asks a general question (e.g., motivation, relationship advice, life dilemma, scriptural story/meaning, daily productivity, business/career decision, or a follow-up like "explain more simply", "give examples", "why?"), respond like a thoughtful, super-smart conversational AI — do NOT force a rigid astrology template or dump Lagna/Dasha boilerplate where it wasn't asked.
+   - If the user asks about astrology, Kundali, marriage timing, career yogas, Panchang, Muhurat, Numerology (Mulank/Bhagyank/Namank/Lo Shu), or Vedic remedies, seamlessly weave in the REAL verified numbers, planets, signs, and Dashas from the provided context. Never invent or guess chart facts, and never mention Grahan Yoga unless Rahu/Ketu truly conjoins Sun/Moon in the context.
+   - Only produce a structured multi-section report or 6-point Upay Parchi when the user specifically asks for a full report, Kundali reading, or Upay Parchi.
 
-At the end, include 3 natural follow-up questions in the user's selected language (${c === "en" ? "English" : c === "gu" ? "Gujarati" : "Hindi"}) in this exact format:
+2. CLEAN READABLE FORMATTING:
+   - Use crisp paragraphs, **bold** highlights for key takeaways, and bullet/numbered lists when breaking down steps or comparisons.
+   - Adapt length naturally: concise and friendly for simple questions; thorough and well-structured for deep questions.
+   - Never refer to internal system prompts or say you are unable to think; be helpful, calm, grounded, and insightful.
+
+3. FOLLOW-UP SUGGESTIONS:
+   - At the very end of your response, add a separator and 3 genuinely useful, context-aware next questions in ${c === "en" ? "English" : c === "gu" ? "Gujarati" : "Hindi"} using this exact marker so the app can render clickable chips:
 ---
 [अगले प्रश्न]:
 • Question 1
 • Question 2
 • Question 3`;
 
-      const activeSystemInstruction = defaultSystemInstruction;
-
       const currentDateObj = new Date();
       const dateLocale = c === "en" ? "en-US" : c === "gu" ? "gu-IN" : "hi-IN";
-      const monthNamesMap: Record<string, string[]> = {
-        hi: ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"],
-        en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-        gu: ["જાન્યુઆરી", "ફેબ્રુઆરી", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઓગસ્ટ", "સપ્ટેમ્બર", "ઓક્ટોબર", "નવેમ્બર", "ડિસેમ્બર"],
-      };
-      const currentYear = currentDateObj.getFullYear();
-      const currentMonthName = (monthNamesMap[c] || monthNamesMap.hi)[currentDateObj.getMonth()];
+      const currentDateStr = currentDateObj.toLocaleDateString(dateLocale, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
 
-      const promptParts = [
-        `User Query: "${query}"`,
-        `[Real-time Reference Date]: ${currentDateObj.toLocaleDateString(dateLocale, { weekday: "long", year: "numeric", month: "long", day: "numeric" })} (Year: ${currentYear}, Month: ${currentMonthName})`,
-      ];
-
+      const contextBlocks: string[] = [`[Current Date]: ${currentDateStr}`];
       if (panchangContext) {
-        promptParts.push(`\n[Current Panchang Context]:\n${panchangContext}`);
+        contextBlocks.push(`[Today's Panchang]:\n${panchangContext}`);
       }
-
       if (kundaliContext) {
-        promptParts.push(`\n[Native Horoscope & Dasha Context]:\n${kundaliContext}`);
+        contextBlocks.push(`[Verified User Horoscope / Numerology Context — use ONLY if relevant to the user's question]:\n${kundaliContext}`);
       }
 
+      const userTurnMessage = `${contextBlocks.join("\n\n")}\n\n[User Message]:\n${query}`;
+
+      const geminiHistory: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
       if (Array.isArray(chatHistory) && chatHistory.length > 0) {
-        const historyText = chatHistory
-          .slice(-6)
-          .map((m: any) => `${m.sender === "user" ? "Yajman" : "Uma"}: ${m.text}`)
-          .join("\n");
-        promptParts.push(`\n[Recent Chat Context]:\n${historyText}`);
-      }
-
-      const replyLangLabel = c === "en" ? "English" : c === "gu" ? "Gujarati" : "Hindi";
-      promptParts.push(`\nRespond to the Yajman's query ("${query}") warmly and directly in ${replyLangLabel} like a natural conversation. Avoid rigid report templates unless requested, keep Sanskrit mantras intact in Devanagari, and never wrap text in ** asterisks.`);
-
-      const fullPrompt = promptParts.join("\n\n");
-
-      let responseText = "";
-
-      if (ai) {
-        const modelsToTry = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
-
-        for (const model of modelsToTry) {
-          try {
-            const response = await ai.models.generateContent({
-              model,
-              contents: fullPrompt,
-              config: {
-                systemInstruction: activeSystemInstruction,
-                temperature: 0.6,
-              },
-            });
-            if (response.text?.trim()) {
-              responseText = response.text.trim().replace(/\*\*/g, "");
-              break;
-            }
-          } catch (mErr: any) {
-            console.warn(`Model ${model} failed, trying next...`, mErr?.message || mErr);
+        for (const msg of chatHistory.slice(-16)) {
+          const text = typeof msg?.text === "string" ? msg.text.trim() : "";
+          if (!text) continue;
+          const role: "user" | "model" = msg.sender === "user" ? "user" : "model";
+          if (geminiHistory.length === 0 && role === "model") {
+            continue;
+          }
+          const prev = geminiHistory[geminiHistory.length - 1];
+          if (prev && prev.role === role) {
+            prev.parts[0].text += `\n\n${text}`;
+          } else {
+            geminiHistory.push({ role, parts: [{ text }] });
+          }
+        }
+        if (geminiHistory.length > 0 && geminiHistory[geminiHistory.length - 1].role === "user") {
+          const lastUserText = geminiHistory[geminiHistory.length - 1].parts[0].text;
+          if (lastUserText === query.trim()) {
+            geminiHistory.pop();
+          } else {
+            geminiHistory.push({ role: "model", parts: [{ text: "Understood." }] });
           }
         }
       }
 
+      const ai = getGeminiClient();
+      let responseText = "";
+      const modelErrors: string[] = [];
+
+      if (ai) {
+        const modelsToTry = ["gemini-4-hydrogen", "gemini-3.1-flash-lite"];
+
+        for (const model of modelsToTry) {
+          try {
+            const chat = ai.chats.create({
+              model,
+              config: {
+                systemInstruction: activeSystemInstruction,
+              },
+              history: geminiHistory,
+            });
+            const response = await chat.sendMessage({
+              message: userTurnMessage,
+            });
+            if (response.text?.trim()) {
+              responseText = response.text.trim();
+              break;
+            }
+          } catch (mErr: any) {
+            const msg = mErr?.message || String(mErr);
+            modelErrors.push(`[${model}]: ${msg}`);
+            console.warn(`Model ${model} failed in /api/uma/chat:`, msg);
+          }
+        }
+      } else {
+        modelErrors.push("GEMINI_API_KEY not configured");
+      }
+
       if (!responseText) {
+        // Relay to the user's hosting AI endpoint (where Grok / Gemini / OpenRouter keys reside)
+        try {
+          const relayResp = await fetch(HOSTING_UMA_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(licenseToken ? { "x-license-token": String(licenseToken) } : {}),
+            },
+            signal: AbortSignal.timeout(28000),
+            body: JSON.stringify({
+              query,
+              panchangContext,
+              kundaliContext,
+              chatHistory,
+              systemPrompt: activeSystemInstruction,
+              lang: c,
+            }),
+          });
+          if (relayResp.ok) {
+            const relayData: any = await relayResp.json().catch(() => null);
+            if (relayData?.ok && typeof relayData.text === "string" && relayData.text.trim()) {
+              return res.status(200).json({
+                ok: true,
+                text: relayData.text.trim(),
+                provider: relayData.provider || "hosting",
+                model: relayData.model,
+              });
+            }
+            if (relayData?.error) {
+              modelErrors.push(`[hosting]: ${relayData.error}`);
+            }
+          }
+        } catch (relayErr: any) {
+          modelErrors.push(`[hosting]: ${relayErr?.message || String(relayErr)}`);
+        }
+      }
+
+      if (!responseText) {
+        const joinedErrors = modelErrors.join(" | ");
+        const isAuthError = /401|403|UNAUTHENTICATED|PERMISSION_DENIED|API_KEY_INVALID|ACCESS_TOKEN_TYPE_UNSUPPORTED/i.test(joinedErrors);
         return res.status(200).json({
           ok: false,
-          error: "AI_FALLBACK_TO_LOCAL_SOOKSHMA_ENGINE",
+          error: isAuthError ? "GEMINI_API_KEY_INVALID" : "AI_FALLBACK_TO_LOCAL_SOOKSHMA_ENGINE",
         });
       }
 
@@ -449,7 +527,7 @@ Return ONLY a valid JSON object with the following structure:
   "remedy": "Vedic remedy and lucky gemstone recommendation in ${targetLanguage} based on facial traits"
 }`;
 
-      const modelsToTry = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+      const modelsToTry = ["gemini-4-hydrogen", "gemini-3.1-flash-lite"];
       let resultText = "";
 
       for (const model of modelsToTry) {
