@@ -1660,7 +1660,7 @@ export async function askUma(params: AskUmaParams): Promise<AskUmaResponse> {
             "Content-Type": "application/json",
             "x-license-token": lic.token,
           },
-          signal: AbortSignal.timeout(32000),
+          signal: AbortSignal.timeout(45000),
           body: JSON.stringify({
             query,
             panchangContext,

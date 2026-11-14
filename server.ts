@@ -415,7 +415,7 @@ CORE CONVERSATIONAL INTELLIGENCE (Respond like Gemini / ChatGPT):
               "Content-Type": "application/json",
               ...(licenseToken ? { "x-license-token": String(licenseToken) } : {}),
             },
-            signal: AbortSignal.timeout(28000),
+            signal: AbortSignal.timeout(45000),
             body: JSON.stringify({
               query,
               panchangContext,

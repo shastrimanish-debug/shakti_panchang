@@ -12,6 +12,25 @@ export interface ReleaseNote {
 
 export const APP_RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "1.0.72",
+    versionCode: 72,
+    date: "नवंबर 2026",
+    title: "संस्करण ७२ (v1.0.72) - उमा AI होस्टिंग नेटवर्क व 45-सेकंड स्थिर टाइमआउट सुधार",
+    highlights: [
+      "उमा AI ऑनलाइन नेटवर्क टाइमआउट को ४५ सेकंड किया गया ताकि धीमे नेटवर्क या व्यस्त AI मॉडल पर भी उत्तर बीच में न कटे।",
+      "होस्टिंग सर्वर रिले एवं Android/Web डायरेक्ट उमा एंडपॉइंट्स के बीच पूर्ण स्थिरता।"
+    ],
+    details: [
+      {
+        category: "स्थिरता व नेटवर्क सुधार",
+        items: [
+          "server.ts एवं src/lib/uma.ts में AbortSignal टाइमआउट 45000ms अपग्रेड।",
+          "लाइव होस्टिंग `uma.php` v3 (Gemini + OpenRouter) के साथ पूर्ण संगतता।"
+        ]
+      }
+    ]
+  },
+  {
     version: "1.0.71",
     versionCode: 71,
     date: "नवंबर 2026",
