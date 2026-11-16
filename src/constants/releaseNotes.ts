@@ -12,6 +12,25 @@ export interface ReleaseNote {
 
 export const APP_RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "1.0.73",
+    versionCode: 73,
+    date: "नवंबर 2026",
+    title: "संस्करण ७३ (v1.0.73) - Android 15+ Edge-to-Edge पूर्ण अनुपालन व आधुनिक डिस्प्ले सुधार",
+    highlights: [
+      "Google Play Console की दोनों Android 15+ Edge-to-Edge चेतावनियों का पूर्ण समाधान (`EdgeToEdge.enable()` एकीकरण)।",
+      "पुरानी `android:statusBarColor` XML विशेषता हटाकर आधुनिक, सुरक्षित सिस्टम-बार इनसेट हैंडलिंग लागू।"
+    ],
+    details: [
+      {
+        category: "Android 15/16 (SDK 35/36) प्ले कंसोल सुधार",
+        items: [
+          "MainActivity.java में `androidx.activity.EdgeToEdge.enable(this)` लागू।",
+          "styles.xml से deprecated `android:statusBarColor` हटाया गया; Capacitor SystemBars और safe-area CSS insets के साथ पूर्ण संगतता।"
+        ]
+      }
+    ]
+  },
+  {
     version: "1.0.72",
     versionCode: 72,
     date: "नवंबर 2026",

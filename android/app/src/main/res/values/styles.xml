@@ -13,7 +13,6 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowBackground">#fffaf3</item>
-        <item name="android:statusBarColor">#5c2612</item>
         <item name="android:textColorPrimary">#2b180d</item>
         <item name="android:textColorSecondary">#5c3a21</item>
         <item name="android:dialogTheme">@style/AppTheme.Dialog</item>
