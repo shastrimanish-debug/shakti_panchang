@@ -57,6 +57,7 @@ const ReleaseNotesModal = React.lazy(() => import('./components/ReleaseNotesModa
 const SadeSatiView = React.lazy(() => import('./components/SadeSatiView').then((m) => ({ default: m.SadeSatiView })));
 const DailyGocharView = React.lazy(() => import('./components/DailyGocharView').then((m) => ({ default: m.DailyGocharView })));
 const JapaMalaModal = React.lazy(() => import('./components/JapaMalaModal').then((m) => ({ default: m.JapaMalaModal })));
+const NityaHavanView = React.lazy(() => import('./components/NityaHavanView').then((m) => ({ default: m.NityaHavanView })));
 
 const HanumanChalisaPathView = React.lazy(async () => {
   const [{ ScripturePathView }, { HANUMAN_CHALISA }, { default: i18nInstance }] = await Promise.all([
@@ -1066,6 +1067,18 @@ export function App() {
                 onNavigateToKundali={() => handleSelectTab('kundali')}
                 onPrevChapter={handlePrevPage}
                 onNextChapter={handleNextPage}
+              />
+            )}
+
+            {activeTab === 'havan' && (
+              <NityaHavanView
+                panchang={panchang}
+                currentLocation={currentLocation}
+                onOpenUmaWithQuery={(query) => {
+                  setUmaInitialPrompt(query);
+                  setIsUmaModalOpen(true);
+                }}
+                onBackToPanchang={() => handleSelectTab('panchang')}
               />
             )}
           </Suspense>

@@ -194,6 +194,33 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </button>
         </div>
 
+        {/* Daily Nitya Havan & Agnivasa Card */}
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => handleAction(() => onSelectTab('havan'))}
+            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#5C2612] via-[#7A3418] to-[#4A1C0B] text-[#FAF2E4] border-[#D4AF37]"
+          >
+            <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+              <div className="p-2 bg-[#2B1006] rounded-xl text-amber-300 shrink-0 border border-amber-500/30">
+                <Flame className="w-5 h-5 text-amber-300" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-black text-[#FFD88A] leading-snug flex items-center gap-1.5">
+                  <span>{langCode === 'en' ? 'Daily Nitya Havan & Agnivasa' : langCode === 'gu' ? 'દૈનિક નિત્ય હવન અને અગ્નિવાસ' : 'दैनिक नित्य हवन व अग्निवास'}</span>
+                  <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-400/40">{langCode === 'en' ? 'NEW' : langCode === 'gu' ? 'નવું' : 'नया'}</span>
+                </div>
+                <div className="text-[10px] text-[#F5ECE0]/90 leading-snug mt-0.5">
+                  {langCode === 'en' ? 'Agnivasa check, weekday Samidha, 5-step Vidhi & Swaha Counter' : langCode === 'gu' ? 'અગ્નિવાસ નિર્ણય, વાર સમિધા, ૫-ચરણીય વિધિ અને સ્વાહા કાઉન્ટર' : 'अग्निवास निर्णय, समिधा-सामग्री, ५-चरणीय विधि व स्वाहा काउंटर'}
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] bg-[#2B1006] text-[#FFD88A] px-2.5 py-1 rounded-lg font-bold shrink-0">
+              {langCode === 'en' ? 'Open →' : langCode === 'gu' ? 'ખોલો →' : 'खोलें →'}
+            </span>
+          </button>
+        </div>
+
         {/* Ancient Granth, Upanishads & Puranas Card */}
         <div className="mt-2.5">
           <button

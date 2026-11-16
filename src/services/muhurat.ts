@@ -2,9 +2,11 @@ import { VedicPanchangData } from '../types';
 import { getDayChoghadiya, getInauspiciousWindows, getAuspiciousWindows } from './choghadiya';
 import { formatPlaceTime } from './engine/time';
 import { trVedic, trWeekday, trChoghadiyaMeaning } from '../i18n/vedicTranslate';
+import { calculateAgnivasa } from './havan';
 
 export const MUHURAT_ACTIVITIES = [
   'सामान्य शुभ कार्य',
+  'यज्ञ / हवन',
   'यात्रा',
   'नया व्यापार',
   'वाहन खरीद',
@@ -185,6 +187,20 @@ export function getMuhuratGuidance(
       reasons.push(L(`तिथि ${panchang.tithi} एवं नक्षत्र ${panchang.nakshatra} नामकरण संस्कार हेतु शुभ संकेत दे रहे हैं।`, `${locTithi} and ${locNak} Nakshatra indicate favorable conditions for Namakaran.`, `${locTithi} તિથિ અને ${locNak} નક્ષત્ર નામકરણ સંસ્કાર માટે શુભ છે.`));
       recommendations.push(L('प्रातः काल शुभ चौघड़िया में बालक का नामकरण व आशीर्वाद समारोह करें।', 'Perform morning naming and blessing rituals during Shubh Choghadiya.', 'સવારે શુભ ચોઘડિયામાં નામકરણ વિધિ સંપન્ન કરો.'));
       break;
+
+    case 'यज्ञ / हवन': {
+      const agni = calculateAgnivasa(panchang, c);
+      if (agni.isAuspicious) {
+        grade = 'excellent';
+        reasons.push(agni.fruitDescription);
+        recommendations.push(agni.practicalGuidance);
+      } else {
+        grade = 'neutral';
+        reasons.push(agni.fruitDescription);
+        recommendations.push(`${agni.practicalGuidance} ${agni.nityaExceptionNote}`);
+      }
+      break;
+    }
 
     default:
       grade = 'good';

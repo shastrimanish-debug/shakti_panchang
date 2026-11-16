@@ -1,4 +1,0 @@
-Options -Indexes
-<FilesMatch "^(config\.php|\.htaccess)$">
-  Require all denied
-</FilesMatch>

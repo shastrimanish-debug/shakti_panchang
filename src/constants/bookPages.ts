@@ -699,6 +699,16 @@ export const BOOK_PAGES: BookPageItem[] = [
     icon: Sparkles,
     screenTitle: '📿 १०८ डिजिटल रुद्राक्ष जप माला',
   },
+  {
+    id: 'havan',
+    title: 'दैनिक अग्निवास विचार एवं नित्य हवन विधि',
+    label: 'नित्य हवन व अग्निवास',
+    pageNumber: 39,
+    chapter: 'सप्तविंशति अध्याय',
+    desc: 'दैनिक अग्निवास (पृथ्वी/आकाश/पाताल) निर्णय, वार अनुसार समिधा-सामग्री, संक्षिप्त ५-चरणीय हवन विधि व स्वाहा आहुति काउंटर',
+    icon: Flame,
+    screenTitle: '🔥 नित्य हवन व अग्निवास विधि',
+  },
 ];
 
 const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
@@ -948,6 +958,12 @@ const BOOK_PAGE_EN: Record<string, { title: string; label: string; desc: string;
     desc: '108 Rudraksha beads, Sumeru peak, divine bell sound & daily japa tracker',
     screenTitle: '📿 108 Digital Japa Mala',
   },
+  havan: {
+    title: 'Daily Agnivasa Check & Nitya Havan Vidhi',
+    label: 'Havan & Agnivasa',
+    desc: 'Shastric Agnivasa status (Earth/Sky/Nether), weekday Samidha, 5-step Havan & Swaha Ahuti counter',
+    screenTitle: '🔥 Nitya Havan & Agnivasa',
+  },
 };
 
 const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string; screenTitle?: string }> = {
@@ -1196,6 +1212,12 @@ const BOOK_PAGE_GU: Record<string, { title: string; label: string; desc: string;
     label: 'જપ માળા',
     desc: '૧૦૮ રુદ્રાક્ષ મણકા, સુમેરુ, દિવ્ય ઘંટડી ધ્વનિ અને દૈનિક જપ સંકલ્પ ટ્રેકર',
     screenTitle: '📿 ૧૦૮ ડિજિટલ રુદ્રાક્ષ જપ માળા',
+  },
+  havan: {
+    title: 'દૈનિક અગ્નિવાસ વિચાર અને નિત્ય હવન વિધિ',
+    label: 'નિત્ય હવન અને અગ્નિવાસ',
+    desc: 'દૈનિક અગ્નિવાસ (પૃથ્વી/આકાશ/પાતાળ) નિર્ણય, વાર મુજબ સમિધા-સામગ્રી અને સ્વાહા આહુતિ કાઉન્ટર',
+    screenTitle: '🔥 નિત્ય હવન અને અગ્નિવાસ',
   },
 };
 

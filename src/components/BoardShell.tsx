@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Loader2,
   Scale,
+  Flame,
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
@@ -35,6 +36,7 @@ import { DailyShlokaCard } from "./DailyShlokaCard";
 import { VedicDatePickerModal } from "./VedicDateTimePickerModals";
 import { TithiNirnayaModal } from "./TithiNirnayaModal";
 import { getDailyFestivalDecision } from "../services/tithiNirnaya";
+import { calculateAgnivasa } from "../services/havan";
 
 function clock(d?: Date) {
   if (!d) return "—";
@@ -443,7 +445,7 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
       pa: "ਅੱਜ",
       or: "ଆଜି",
     },
-    ids: ["panchang", "kalnirnay", "gochar", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
+    ids: ["panchang", "havan", "kalnirnay", "gochar", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
   },
   {
     title: {
@@ -690,6 +692,7 @@ export function TodayBoard({
 
   const placeLabelKey = t("kundali.place", "स्थान");
   const dailyDecision = getDailyFestivalDecision(activeDate, panchang, language);
+  const dailyAgnivasa = calculateAgnivasa(panchang, language);
 
   const formatPlaceDisplay = (name: string, lang: string): string => {
     if (!name) return '';
@@ -1038,6 +1041,46 @@ export function TodayBoard({
           <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "#FDE68A" }} />
         </motion.button>
 
+        {/* Daily Agnivasa & Nitya Havan Vidhi Trigger */}
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            triggerHapticSelection();
+            onOpen("havan");
+          }}
+          style={{
+            backgroundColor: "var(--bx-cream)",
+            borderColor: dailyAgnivasa.isAuspicious ? "#059669" : "var(--bx-gold)",
+            color: "var(--bx-ink)",
+          }}
+          className="w-full p-2.5 sm:p-3 rounded-2xl border shadow-2xs flex items-center justify-between gap-2 cursor-pointer transition hover:opacity-95"
+        >
+          <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border"
+              style={{
+                backgroundColor: "var(--bx-panel)",
+                borderColor: "var(--bx-line)",
+              }}
+            >
+              <Flame
+                className={`w-4 h-4 ${dailyAgnivasa.isAuspicious ? "text-emerald-600" : "text-amber-600"}`}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-black flex items-center gap-1.5 flex-wrap" style={{ color: "var(--bx-header)" }}>
+                <span>{dailyAgnivasa.title}</span>
+              </div>
+              <div className="text-[10px] sm:text-[11px] leading-snug mt-0.5 opacity-85 truncate">
+                {dailyAgnivasa.badgeText} · {language === "en" ? "Open Nitya Havan Vidhi & Swaha Mantras" : language === "gu" ? "નિત્ય હવન વિધિ અને સ્વાહા મંત્ર ખોલો" : "नित्य हवन विधि, समिधा व स्वाहा मंत्र खोलें"}
+              </div>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 shrink-0 opacity-75" style={{ color: "var(--bx-header)" }} />
+        </motion.button>
+
         <div className="grid grid-cols-2 gap-2">
           {facts.map(([k, v]) =>
             k === placeLabelKey && onPlace ? (
@@ -1213,6 +1256,31 @@ export function TodayBoard({
         >
           <strong>{t("nav.granthPuran", "प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय")}</strong>
           <p>{t("nav.granthPuranDesc", "श्रीमद्भगवद्गीता, १० प्रमुख उपनिषद्, अष्टादश महापुराण व वैदिक सूक्त सार")}</p>
+        </motion.button>
+        <motion.button
+          type="button"
+          whileHover={{ y: -2, scale: 1.008 }}
+          whileTap={{ scale: 0.97 }}
+          className="bx-tile bx-glass h-auto min-h-16 col-span-2 cursor-pointer"
+          onClick={() => {
+            triggerHapticSelection();
+            onOpen("havan");
+          }}
+        >
+          <strong>
+            {language === "en"
+              ? "🔥 Daily Nitya Havan & Agnivasa Check"
+              : language === "gu"
+              ? "🔥 દૈનિક નિત્ય હવન અને અગ્નિવાસ વિચાર"
+              : "🔥 दैनिक नित्य हवन विधि व अग्निवास विचार"}
+          </strong>
+          <p>
+            {language === "en"
+              ? `${dailyAgnivasa.badgeText} · Samidha, 5-step Vidhi & Swaha Counter`
+              : language === "gu"
+              ? `${dailyAgnivasa.badgeText} · સમિધા, ૫-ચરણીય વિધિ અને સ્વાહા કાઉન્ટર`
+              : `${dailyAgnivasa.badgeText} · समिधा, ५-चरणीय विधि व स्वाहा काउंटर`}
+          </p>
         </motion.button>
       </motion.div>
 

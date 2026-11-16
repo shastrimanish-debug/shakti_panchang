@@ -696,6 +696,7 @@ export const ATTR_EXACT_EN: Record<string, string> = {
   'वानर': 'Vanara (Monkey)',
   'नकुल': 'Nakula (Mongoose)',
   'त्रिकूट': 'Trikoot',
+  'यज्ञ / हवन': 'Yagya / Havan',
 };
 
 export const ATTR_EXACT_GU: Record<string, string> = {
@@ -719,6 +720,7 @@ export const ATTR_EXACT_GU: Record<string, string> = {
   'वानर': 'વાનર',
   'नकुल': 'નકુલ',
   'त्रिकूट': 'ત્રિકૂટ',
+  'यज्ञ / हवन': 'યજ્ઞ / હવન',
 };
 
 /**

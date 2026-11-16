@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { VedicPanchangData } from '../types';
 import { MUHURAT_ACTIVITIES, getMuhuratGuidance, getDailyMuhuratDetails } from '../services/muhurat';
+import { calculateAgnivasa, getDailyHavanGuide, getBestHavanTiming } from '../services/havan';
 import { DISHASHOOL_MAP } from '../services/disha';
 import { useTranslation, useLanguage } from '../i18n';
 import { trVedic } from '../i18n/vedicTranslate';
@@ -10,6 +11,7 @@ import {
   Calendar,
   Clock,
   ShieldCheck,
+  Flame,
 } from 'lucide-react';
 import { UniversalStoryDeck, StorySlideItem } from './UniversalStoryDeck';
 
@@ -36,6 +38,9 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({
   const shoolDirection = DISHASHOOL_MAP[weekday];
   const guidance = getMuhuratGuidance(selectedActivity, panchang, shoolDirection, cLang);
   const dailyRows = getDailyMuhuratDetails(panchang, cLang);
+  const agnivasa = calculateAgnivasa(panchang, cLang);
+  const havanGuide = getDailyHavanGuide(panchang, cLang);
+  const havanTiming = getBestHavanTiming(panchang, cLang);
 
   const slides: StorySlideItem[] = [
     // Slide 1: Daily Muhurats
@@ -151,7 +156,7 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({
         <div className="h-full flex flex-col justify-between py-1 space-y-2">
           {/* Activity picker */}
           <div className="flex flex-wrap gap-1 justify-center shrink-0">
-            {MUHURAT_ACTIVITIES.slice(0, 5).map((act) => (
+            {MUHURAT_ACTIVITIES.slice(0, 6).map((act) => (
               <button
                 key={act}
                 type="button"
@@ -199,7 +204,60 @@ export const MuhuratView: React.FC<MuhuratViewProps> = ({
       ),
     },
 
-    // Slide 4: Vedic Muhurat Principles
+    // Slide 4: Agnivasa & Daily Havan Muhurat
+    {
+      id: 'havan-agnivasa',
+      title: L('दैनिक अग्निवास एवं हवन मुहूर्त', 'Daily Agnivasa & Havan Muhurat', 'દૈનિક અગ્નિવાસ અને હવન મુહૂર્ત'),
+      subtitle: agnivasa.badgeText,
+      badge: agnivasa.isAuspicious
+        ? L('पृथ्वी · शुभ', 'Prithvi · Auspicious', 'પૃથ્વી · શુભ')
+        : L('नित्य कर्म', 'Nitya Vidhi', 'નિત્ય કર્મ'),
+      icon: '🔥',
+      voiceText: agnivasa.fruitDescription,
+      content: (
+        <div className="h-full flex flex-col justify-between py-1 space-y-2.5">
+          <div className={`p-3 rounded-2xl border-2 space-y-1.5 ${
+            agnivasa.isAuspicious
+              ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
+              : 'bg-amber-50/90 border-amber-300 text-[#5C3A21]'
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-black flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-orange-600 shrink-0" />
+                <span>{agnivasa.title}</span>
+              </span>
+              <span className="text-[10px] font-bold tabular-nums opacity-80">{agnivasa.formulaDisplay}</span>
+            </div>
+            <p className="text-xs leading-relaxed font-medium">{agnivasa.practicalGuidance}</p>
+            <p className="text-[11px] opacity-85 leading-snug">{agnivasa.nityaExceptionNote}</p>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-white/90 border border-[#E8DCCB] text-xs space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#8C6239]">{havanTiming.bestWindowLabel}</span>
+              <span className="font-mono font-black text-[#462B17]">{havanTiming.bestWindowTime}</span>
+            </div>
+            <div className="text-[11px] text-[#5C3A21]">
+              <strong>{L('समिधा:', 'Samidha:', 'સમિધા:')}</strong> {havanGuide.samidha}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent('navigate-to-tab', { detail: { tab: 'havan' } }));
+            }}
+            className="w-full min-h-[44px] py-2.5 px-4 rounded-2xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] font-black text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer transition"
+          >
+            <Flame className="w-4 h-4 text-amber-300" />
+            <span>{L('सम्पूर्ण नित्य हवन विधि व आहुति मन्त्र खोलें →', 'Open Complete Nitya Havan Vidhi & Mantras →', 'સંપૂર્ણ નિત્ય હવન વિધિ અને આહુતિ મંત્ર ખોલો →')}</span>
+          </button>
+        </div>
+      ),
+    },
+
+    // Slide 5: Vedic Muhurat Principles
     {
       id: 'rules',
       title: L('वैदिक मुहूर्त शास्त्र नियम', 'Vedic Muhurat Shastra Rules', 'વૈદિક મુહૂર્ત શાસ્ત્ર નિયમો'),
