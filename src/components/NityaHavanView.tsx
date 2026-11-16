@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import {
   Flame,
   Volume2,
@@ -13,7 +14,9 @@ import {
   BookOpen,
   Compass,
   ShieldCheck,
+  Play,
 } from 'lucide-react';
+import { HavanMediaGallery } from './HavanMediaGallery';
 import { SavedLocation, VedicPanchangData } from '../types';
 import {
   buildDailySankalpaText,
@@ -34,6 +37,33 @@ interface NityaHavanViewProps {
   onOpenUmaWithQuery?: (query: string) => void;
   onBackToPanchang?: () => void;
 }
+
+const havanStepsContainerVariants: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.06,
+    },
+  },
+};
+
+const havanStepItemVariants: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 14,
+    scale: 0.985,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.44,
+      ease: [0.22, 1, 0.36, 1] as const,
+    },
+  },
+};
 
 function playSacredHavanBell() {
   try {
@@ -72,6 +102,7 @@ export const NityaHavanView: React.FC<NityaHavanViewProps> = ({
   onBackToPanchang,
 }) => {
   const { language } = useLanguage();
+  const prefersReducedMotion = useReducedMotion();
   const cLang = (language || 'hi').slice(0, 2).toLowerCase();
   const L = <T,>(hi: T, en: T, gu: T): T => (cLang === 'en' ? en : cLang === 'gu' ? gu : hi);
 
@@ -89,6 +120,8 @@ export const NityaHavanView: React.FC<NityaHavanViewProps> = ({
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showFormula, setShowFormula] = useState<boolean>(false);
+  const [activeRitualStep, setActiveRitualStep] = useState<number>(1);
+  const gallerySectionRef = React.useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     try {
@@ -486,9 +519,9 @@ export const NityaHavanView: React.FC<NityaHavanViewProps> = ({
             </section>
           </div>
 
-          {/* RIGHT COLUMN (5 Cols): Interactive Ahuti Counter + Mantras + 5 Steps */}
+          {/* RIGHT COLUMN (5 Cols): Interactive Ahuti Counter + Dynamic Sankalpa */}
           <div className="lg:col-span-5 space-y-4">
-            {/* 4. Interactive Swaha Ahuti Studio */}
+            {/* 3. Interactive Swaha Ahuti Studio */}
             <section
               className="rounded-3xl border p-4 sm:p-5 space-y-3.5 shadow-xs"
               style={{
@@ -667,7 +700,20 @@ export const NityaHavanView: React.FC<NityaHavanViewProps> = ({
                 </div>
               </div>
             </section>
+          </div>
+        </div>
 
+        {/* Paired Ritual Media Stage (7 Cols) + Concise 5-Step Nitya Havan Vidhi (5 Cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          <div ref={gallerySectionRef} className="lg:col-span-7">
+            <HavanMediaGallery
+              lang={cLang}
+              activeStep={activeRitualStep}
+              onSelectStep={(step) => setActiveRitualStep(step)}
+            />
+          </div>
+
+          <div className="lg:col-span-5">
             {/* 5. Concise 5-Step Nitya Havan Vidhi */}
             <section
               className="rounded-3xl border p-4 sm:p-5 space-y-2.5 shadow-xs"
@@ -682,28 +728,63 @@ export const NityaHavanView: React.FC<NityaHavanViewProps> = ({
                 <span>{L('सरल ५-चरणीय नित्य हवन विधि', 'Simple 5-Step Nitya Havan Vidhi', 'સરળ ૫-ચરણીય નિત્ય હવન વિધિ')}</span>
               </h2>
 
-              <div className="space-y-2">
-                {steps.map((st) => (
-                  <div
-                    key={st.step}
-                    className="p-3 rounded-2xl border space-y-1"
-                    style={{
-                      backgroundColor: 'var(--bx-cream)',
-                      borderColor: 'var(--bx-line)',
-                    }}
-                  >
-                    <div className="text-xs font-black" style={{ color: 'var(--bx-header)' }}>
-                      {st.title}
-                    </div>
-                    <p className="text-xs leading-relaxed opacity-90">{st.instruction}</p>
-                    {st.mantra && (
-                      <p className="text-[11px] font-granth font-bold pt-0.5" style={{ color: 'var(--bx-header)' }}>
-                        {st.mantra}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <motion.div
+                className="space-y-2"
+                variants={havanStepsContainerVariants}
+                initial={prefersReducedMotion ? 'visible' : 'hidden'}
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.12 }}
+              >
+                {steps.map((st) => {
+                  const isStepActive = activeRitualStep === st.step;
+                  return (
+                    <motion.div
+                      key={st.step}
+                      variants={havanStepItemVariants}
+                      className="p-3 rounded-2xl border space-y-1.5 transition-colors"
+                      style={{
+                        backgroundColor: 'var(--bx-cream)',
+                        borderColor: isStepActive ? 'var(--bx-gold)' : 'var(--bx-line)',
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-xs font-black" style={{ color: 'var(--bx-header)' }}>
+                          {st.title}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHapticSelection();
+                            setActiveRitualStep(st.step);
+                            if (window.innerWidth < 1024) {
+                              gallerySectionRef.current?.scrollIntoView({
+                                behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                                block: 'nearest',
+                              });
+                            }
+                          }}
+                          className="min-h-[40px] px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shrink-0"
+                          style={{
+                            backgroundColor: isStepActive ? 'var(--bx-header)' : 'var(--bx-panel)',
+                            color: isStepActive ? '#FFFFFF' : 'var(--bx-header)',
+                            borderColor: isStepActive ? 'var(--bx-gold)' : 'var(--bx-line)',
+                          }}
+                          aria-label={L(`चरण ${st.step} दृश्य देखें`, `View Step ${st.step} video`, `ચરણ ${st.step} દ્રશ્ય જુઓ`)}
+                        >
+                          <Play className="w-3 h-3 fill-current" />
+                          <span>{L('दृश्य', 'View', 'દ્રશ્ય')}</span>
+                        </button>
+                      </div>
+                      <p className="text-xs leading-relaxed opacity-90">{st.instruction}</p>
+                      {st.mantra && (
+                        <p className="text-[11px] font-granth font-bold pt-0.5" style={{ color: 'var(--bx-header)' }}>
+                          {st.mantra}
+                        </p>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
             </section>
           </div>
         </div>
