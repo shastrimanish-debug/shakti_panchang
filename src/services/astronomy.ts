@@ -367,8 +367,37 @@ export function calculateVedicPanchang(
   const era = hinduEra(date);
   const vikramSamvat = era.vikram;
   const sakaSamvat = era.saka;
-  const masa = MASAS[sunRashiIdx];
   const settings = getCalcSettings();
+
+  let masaName = MASAS[sunRashiIdx];
+  try {
+    const searchStart = new Date(solar.sunrise.getTime() + 3600000);
+    const prevNewMoon = Astronomy.SearchMoonPhase(0, searchStart, -32);
+    if (prevNewMoon) {
+      const prevSunRashi = Math.floor(getSunMoonSidereal(prevNewMoon.date).sunSidereal / 30) % 12;
+      const amantaIdx = (prevSunRashi + 1) % 12;
+      let isAdhika = false;
+      const nextNewMoon = Astronomy.SearchMoonPhase(
+        0,
+        new Date(prevNewMoon.date.getTime() + 2 * 86400000),
+        32
+      );
+      if (nextNewMoon) {
+        const nextSunRashi = Math.floor(getSunMoonSidereal(nextNewMoon.date).sunSidereal / 30) % 12;
+        if (nextSunRashi === prevSunRashi) {
+          isAdhika = true;
+        }
+      }
+      const masaIdx =
+        settings.masaSystem === 'purnimanta' && tithiNum > 15 && !isAdhika
+          ? (amantaIdx + 1) % 12
+          : amantaIdx;
+      masaName = isAdhika ? `अधिक ${MASAS[masaIdx]}` : MASAS[masaIdx];
+    }
+  } catch {
+    masaName = MASAS[sunRashiIdx];
+  }
+  const masa = masaName;
   const windows = dayMuhuratWindows(solar);
   let spans: ReturnType<typeof computeDayBoundaries> | undefined;
   let engineCheck: VedicPanchangData["engineCheck"];
@@ -435,8 +464,11 @@ export function calculateVedicPanchang(
     karanaSpan: spans?.karanaSpan,
     dayWindows: [windows.brahma, windows.abhijit, windows.pradosh, windows.nishith],
     engineCheck,
-    calculationNote:
-      "सूर्योदय अपवर्तन सहित। तिथि-नक्षत्र प्रारंभ/समाप्ति सूर्योदय-आधारित।",
+    calculationNote: `सूर्योदय अपवर्तन सहित · ${
+      settings.masaSystem === 'amanta' ? 'अमान्त' : 'पूर्णिमान्त'
+    } · ${
+      settings.ekadashiTradition === 'vaishnava' ? 'वैष्णव एकादशी मत' : 'स्मार्त एकादशी मत'
+    }।`,
   };
 }
 

@@ -1,8 +1,11 @@
 import { FestivalItem } from '../types';
-import { getSunMoonSidereal } from './astronomy';
+import { calculateSolarTimes, getSunMoonSidereal } from './astronomy';
+import { getCalcSettings, type EkadashiTradition, type MasaSystem } from './engine/calcSettings';
+import { timezoneHoursFor } from './engine/time';
+import { getStoredLocation } from './storage';
 
-// Cache generated festivals per year for zero-latency retrieval
-const YEAR_FESTIVALS_CACHE = new Map<number, FestivalItem[]>();
+// Cache generated festivals per (year + location + regional tradition) for zero-latency retrieval
+const YEAR_FESTIVALS_CACHE = new Map<string, FestivalItem[]>();
 
 type WatchPoint = 'sunrise' | 'madhyahna' | 'aparahna' | 'pradosh' | 'nishita';
 
@@ -20,25 +23,48 @@ function sunRashiIndex(date: Date): number {
   return Math.floor(getSunMoonSidereal(date).sunSidereal / 30) % 12;
 }
 
-/** IST civil noon, so the calendar day does not drift with the server timezone. */
+/** Local civil noon for a calendar date. */
 function civilNoon(year: number, month: number, day: number): Date {
   return new Date(year, month, day, 12, 0, 0);
 }
 
-function watchInstant(year: number, month: number, day: number, when: WatchPoint): Date {
-  // Hours are UTC equivalents of India Standard Time.
-  if (when === 'sunrise') return new Date(Date.UTC(year, month, day, 0, 50, 0));
-  if (when === 'madhyahna') return new Date(Date.UTC(year, month, day, 6, 40, 0));
-  if (when === 'aparahna') return new Date(Date.UTC(year, month, day, 9, 30, 0));
-  if (when === 'pradosh') return new Date(Date.UTC(year, month, day, 13, 10, 0));
-  // Nishita of this civil date = midnight that ends the day (00:00 IST next morning).
-  return new Date(Date.UTC(year, month, day, 18, 30, 0));
+function watchInstant(
+  year: number,
+  month: number,
+  day: number,
+  when: WatchPoint,
+  lat: number,
+  lon: number,
+  tzHours: number
+): Date {
+  try {
+    const solar = calculateSolarTimes(civilNoon(year, month, day), lat, lon, tzHours);
+    if (when === 'sunrise') return solar.sunrise;
+    if (when === 'madhyahna') {
+      return new Date((solar.sunrise.getTime() + solar.sunset.getTime()) / 2);
+    }
+    if (when === 'aparahna') {
+      const dayLen = solar.sunset.getTime() - solar.sunrise.getTime();
+      return new Date(solar.sunrise.getTime() + 0.65 * dayLen);
+    }
+    if (when === 'pradosh') {
+      return new Date(solar.sunset.getTime() + 24 * 60000);
+    }
+    // Nishita: true solar midnight between sunset and next sunrise
+    return new Date((solar.sunset.getTime() + solar.nextSunrise.getTime()) / 2);
+  } catch {
+    if (when === 'sunrise') return new Date(Date.UTC(year, month, day, 0, 50, 0));
+    if (when === 'madhyahna') return new Date(Date.UTC(year, month, day, 6, 40, 0));
+    if (when === 'aparahna') return new Date(Date.UTC(year, month, day, 9, 30, 0));
+    if (when === 'pradosh') return new Date(Date.UTC(year, month, day, 13, 10, 0));
+    return new Date(Date.UTC(year, month, day, 18, 30, 0));
+  }
 }
 
 /**
- * First IST civil day in an inclusive window whose chosen muhurta
+ * First local civil day in an inclusive window whose chosen muhurta
  * falls in `tithi` (0 = Shukla Pratipada ... 29 = Amavasya).
- * Optional sidereal sun rashi keeps a wide window from grabbing the wrong month.
+ * For Ekadashi (10 or 25), applies Vaishnava Arunodaya Dashami-Viddha check when selected.
  */
 function findTithiDay(
   year: number,
@@ -48,15 +74,39 @@ function findTithiDay(
   toDay: number,
   tithi: number,
   when: WatchPoint,
-  sunRashi?: number,
+  lat: number,
+  lon: number,
+  tzHours: number,
+  ekadashiTradition: EkadashiTradition,
+  sunRashi?: number
 ): Date | null {
   const cursor = civilNoon(year, fromMonth, fromDay);
   const end = civilNoon(year, toMonth, toDay);
   while (cursor.getTime() <= end.getTime()) {
     const month = cursor.getMonth();
     const day = cursor.getDate();
-    const instant = watchInstant(year, month, day, when);
+    const instant = watchInstant(year, month, day, when, lat, lon, tzHours);
     if (tithiIndex(instant) === tithi && (sunRashi === undefined || sunRashiIndex(instant) === sunRashi)) {
+      // Vaishnava Ekadashi: avoid if Dashami touches Arunodaya (96 mins prior to local sunrise)
+      if (ekadashiTradition === 'vaishnava' && (tithi === 10 || tithi === 25) && when === 'sunrise') {
+        const arunodaya = new Date(instant.getTime() - 96 * 60000);
+        if (tithiIndex(arunodaya) === tithi - 1) {
+          const nextDay = addDays(civilNoon(year, month, day), 1);
+          const nextSunrise = watchInstant(
+            nextDay.getFullYear(),
+            nextDay.getMonth(),
+            nextDay.getDate(),
+            'sunrise',
+            lat,
+            lon,
+            tzHours
+          );
+          const nextTithi = tithiIndex(nextSunrise);
+          if (nextTithi === tithi || nextTithi === tithi + 1) {
+            return nextDay;
+          }
+        }
+      }
       return civilNoon(year, month, day);
     }
     cursor.setDate(cursor.getDate() + 1);
@@ -70,8 +120,14 @@ function addDays(base: Date, days: number): Date {
   return d;
 }
 
-/** IST calendar day when sidereal Sun crosses `targetDeg` (0 = Mesha). */
-function solarIngressDate(year: number, targetDeg: number, fromMonth: number, toMonth: number): Date {
+/** Local calendar day when sidereal Sun crosses `targetDeg` (0 = Mesha). */
+function solarIngressDate(
+  year: number,
+  targetDeg: number,
+  fromMonth: number,
+  toMonth: number,
+  tzHours: number
+): Date {
   let lo = Date.UTC(year, fromMonth, 1);
   let hi = Date.UTC(year, toMonth, 28, 18);
   const rel = (t: number) => {
@@ -88,8 +144,8 @@ function solarIngressDate(year: number, targetDeg: number, fromMonth: number, to
     if (rel(mid) < 0) lo = mid;
     else hi = mid;
   }
-  const ist = new Date(hi + 5.5 * 3600000);
-  return civilNoon(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate());
+  const local = new Date(hi + tzHours * 3600000);
+  return civilNoon(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
 }
 
 const TITHI = {
@@ -120,9 +176,23 @@ const TITHI = {
  * (sunrise, midday, afternoon, pradosh or nishita) — not "new moon instant + N days".
  */
 export function getFestivalsForYear(year: number): FestivalItem[] {
-  if (YEAR_FESTIVALS_CACHE.has(year)) {
-    return YEAR_FESTIVALS_CACHE.get(year)!;
+  const settings = getCalcSettings();
+  const loc = typeof window !== 'undefined'
+    ? getStoredLocation()
+    : { name: 'New Delhi', latitude: 28.6139, longitude: 77.209, timezoneHours: 5.5 };
+  const lat = loc.latitude ?? 28.6139;
+  const lon = loc.longitude ?? 77.209;
+  const tzHours = loc.timezoneHours ?? timezoneHoursFor(lat, lon);
+  const masaSystem: MasaSystem = settings.masaSystem;
+  const ekadashiTradition: EkadashiTradition = settings.ekadashiTradition;
+
+  const cacheKey = `${year}|${lat.toFixed(2)}|${lon.toFixed(2)}|${tzHours}|${settings.ayanamsha}|${masaSystem}|${ekadashiTradition}`;
+  if (YEAR_FESTIVALS_CACHE.has(cacheKey)) {
+    return YEAR_FESTIVALS_CACHE.get(cacheKey)!;
   }
+
+  const ekadashiTag =
+    ekadashiTradition === 'vaishnava' ? 'वैष्णव मत' : 'स्मार्त मत';
 
   const festivals: FestivalItem[] = [];
   const on = (
@@ -133,14 +203,28 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     tithi: number,
     when: WatchPoint,
     sunRashi?: number,
-  ) => findTithiDay(year, fromMonth, fromDay, toMonth, toDay, tithi, when, sunRashi);
+  ) =>
+    findTithiDay(
+      year,
+      fromMonth,
+      fromDay,
+      toMonth,
+      toDay,
+      tithi,
+      when,
+      lat,
+      lon,
+      tzHours,
+      ekadashiTradition,
+      sunRashi
+    );
 
   const push = (item: FestivalItem | null) => {
     if (item && item.date) festivals.push(item);
   };
 
-  const makar = solarIngressDate(year, 270, 0, 0);
-  const mesha = solarIngressDate(year, 0, 3, 3);
+  const makar = solarIngressDate(year, 270, 0, 0, tzHours);
+  const mesha = solarIngressDate(year, 0, 3, 3, tzHours);
 
   push({
     id: `fest-${year}-lohri`,
@@ -175,7 +259,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       name: 'Mauni Amavasya',
       hindiName: 'मौनी अमावस्या',
       type: 'अमावस्या',
-      description: 'माघ कृष्ण अमावस्या, मौन व्रत, त्रिवेणी संगम व पवित्र नदियों में स्नान का महापुण्यकारी दिवस।',
+      description:
+        masaSystem === 'amanta'
+          ? 'पौष अमावस्या (अमान्त परंपरा), मौन व्रत, त्रिवेणी संगम व पवित्र नदियों में स्नान का महापुण्यकारी दिवस।'
+          : 'माघ कृष्ण अमावस्या (पूर्णिमान्त परंपरा), मौन व्रत, त्रिवेणी संगम व पवित्र नदियों में स्नान का महापुण्यकारी दिवस।',
     });
   }
   const vasant = on(0, 15, 1, 5, TITHI.panchami, 'sunrise');
@@ -198,7 +285,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       name: 'Maha Shivratri',
       hindiName: 'महाशिवरात्रि',
       type: 'व्रत',
-      description: 'फाल्गुन कृष्ण चतुर्दशी, देवाधिदेव महादेव व माता पार्वती का महाकल्याणकारी विवाह उत्सव एवं चार प्रहर रुद्राभिषेक।',
+      description:
+        masaSystem === 'amanta'
+          ? 'माघ वद चतुर्दशी (अमान्त परंपरा), देवाधिदेव महादेव व माता पार्वती का महाकल्याणकारी विवाह उत्सव एवं चार प्रहर रुद्राभिषेक।'
+          : 'फाल्गुन कृष्ण चतुर्दशी (पूर्णिमान्त परंपरा), देवाधिदेव महादेव व माता पार्वती का महाकल्याणकारी विवाह उत्सव एवं चार प्रहर रुद्राभिषेक।',
     });
   }
 
@@ -295,10 +385,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     push({
       id: `fest-${year}-nirjala-ekadashi`,
       date: nirjala,
-      name: 'Nirjala Ekadashi',
-      hindiName: 'निर्जला एकादशी (भीमसेनी एकादशी)',
+      name: `Nirjala Ekadashi (${ekadashiTradition === 'vaishnava' ? 'Vaishnava' : 'Smarta'})`,
+      hindiName: `निर्जला एकादशी (${ekadashiTag})`,
       type: 'एकादशी',
-      description: 'ज्येष्ठ शुक्ल एकादशी, बिना जल ग्रहण किए समस्त 24 एकादशियों का पुण्य फल प्रदान करने वाला महाव्रत।',
+      description: `ज्येष्ठ शुक्ल एकादशी (${ekadashiTag}), बिना जल ग्रहण किए समस्त 24 एकादशियों का पुण्य फल प्रदान करने वाला महाव्रत।`,
     });
   }
 
@@ -318,10 +408,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     push({
       id: `fest-${year}-devshayani-ekadashi`,
       date: devshayani,
-      name: 'Devshayani Ekadashi',
-      hindiName: 'देवशयनी एकादशी (आषाढ़ी एकादशी)',
+      name: `Devshayani Ekadashi (${ekadashiTradition === 'vaishnava' ? 'Vaishnava' : 'Smarta'})`,
+      hindiName: `देवशयनी एकादशी (${ekadashiTag})`,
       type: 'एकादशी',
-      description: 'आषाढ़ शुक्ल एकादशी, भगवान श्री विष्णु का योगनिद्रा में शयन, चातुर्मास महाव्रत का शुभारंभ।',
+      description: `आषाढ़ शुक्ल एकादशी (${ekadashiTag}), भगवान श्री विष्णु का योगनिद्रा में शयन, चातुर्मास महाव्रत का शुभारंभ।`,
     });
   }
   const guruPu = on(6, 15, 7, 8, TITHI.purnima, 'sunrise');
@@ -378,7 +468,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       name: 'Krishna Janmashtami',
       hindiName: 'श्री कृष्ण जन्माष्टमी',
       type: 'पर्व',
-      description: 'भाद्रपद कृष्ण अष्टमी, निशीथ काल, भगवान योगेश्वर श्री कृष्ण का पावन प्राकट्योत्सव।',
+      description:
+        masaSystem === 'amanta'
+          ? 'श्रावण वद अष्टमी (अमान्त परंपरा), निशीथ काल, भगवान योगेश्वर श्री कृष्ण का पावन प्राकट्योत्सव।'
+          : 'भाद्रपद कृष्ण अष्टमी (पूर्णिमान्त परंपरा), निशीथ काल, भगवान योगेश्वर श्री कृष्ण का पावन प्राकट्योत्सव।',
     });
   }
 
@@ -504,7 +597,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       name: 'Karwa Chauth',
       hindiName: 'करवा चौथ (कर्क चतुर्थी)',
       type: 'व्रत',
-      description: 'कार्तिक कृष्ण चतुर्थी, सुहागिनों द्वारा पति की दीर्घायु हेतु चंद्र दर्शन पर्यंत निर्जला व्रत।',
+      description:
+        masaSystem === 'amanta'
+          ? 'आश्विन वद चतुर्थी (अमान्त परंपरा), सुहागिनों द्वारा पति की दीर्घायु हेतु चंद्र दर्शन पर्यंत निर्जला व्रत।'
+          : 'कार्तिक कृष्ण चतुर्थी (पूर्णिमान्त परंपरा), सुहागिनों द्वारा पति की दीर्घायु हेतु चंद्र दर्शन पर्यंत निर्जला व्रत।',
     });
   }
   const ahoi = on(9, 25, 10, 8, TITHI.krishnaAshtami, 'sunrise');
@@ -515,7 +611,7 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       name: 'Ahoi Ashtami',
       hindiName: 'अहोई अष्टमी',
       type: 'व्रत',
-      description: 'कार्तिक कृष्ण अष्टमी, संतान की दीर्घायु व कल्याण हेतु माताओं द्वारा तारों को अर्घ्य देकर व्रत।',
+      description: 'कार्तिक कृष्ण (अमान्त आश्विन वद) अष्टमी, संतान की दीर्घायु व कल्याण हेतु माताओं द्वारा तारों को अर्घ्य देकर व्रत।',
     });
   }
 
@@ -527,7 +623,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       name: 'Dhanteras',
       hindiName: 'धनतेरस (धन्वंतरि जयंती / कुबेर पूजन)',
       type: 'पर्व',
-      description: 'कार्तिक कृष्ण त्रयोदशी, आरोग्य के देव भगवान धन्वंतरि प्राकट्य दिवस, यम दीपदान व नवीन धातु क्रय।',
+      description:
+        masaSystem === 'amanta'
+          ? 'आश्विन वद त्रयोदशी (अमान्त परंपरा), आरोग्य के देव भगवान धन्वंतरि प्राकट्य दिवस, यम दीपदान व नवीन धातु क्रय।'
+          : 'कार्तिक कृष्ण त्रयोदशी (पूर्णिमान्त परंपरा), आरोग्य के देव भगवान धन्वंतरि प्राकट्य दिवस, यम दीपदान व नवीन धातु क्रय।',
     });
   }
   const narak = on(10, 2, 10, 14, TITHI.krishnaChaturdashi, 'pradosh', 6);
@@ -538,7 +637,7 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       name: 'Narak Chaturdashi / Roop Chaudas',
       hindiName: 'नरक चतुर्दशी (छोटी दीवाली / रूप चौदस)',
       type: 'पर्व',
-      description: 'कार्तिक कृष्ण चतुर्दशी, भगवान श्री कृष्ण द्वारा नरकासुर वध स्मृति, यम तर्पण एवं उबटन स्नान।',
+      description: 'कृष्ण चतुर्दशी, भगवान श्री कृष्ण द्वारा नरकासुर वध स्मृति, यम तर्पण एवं उबटन स्नान।',
     });
   }
   const diwali = on(10, 3, 10, 16, TITHI.amavasya, 'pradosh', 6);
@@ -549,7 +648,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       name: 'Diwali',
       hindiName: 'दीपावली (महालक्ष्मी पूजन)',
       type: 'पर्व',
-      description: 'कार्तिक अमावस्या, प्रकाश का महापर्व, धन-धान्य व ऐश्वर्य प्रदाता भगवती महालक्ष्मी व श्री गणेश का महापूजन।',
+      description:
+        masaSystem === 'amanta'
+          ? 'आश्विन अमावस्या (अमान्त परंपरा), प्रकाश का महापर्व, धन-धान्य व ऐश्वर्य प्रदाता भगवती महालक्ष्मी व श्री गणेश का महापूजन।'
+          : 'कार्तिक अमावस्या (पूर्णिमान्त परंपरा), प्रकाश का महापर्व, धन-धान्य व ऐश्वर्य प्रदाता भगवती महालक्ष्मी व श्री गणेश का महापूजन।',
     });
     const govardhan = on(10, diwali.getDate(), 10, 18, TITHI.pratipada, 'aparahna') || addDays(diwali, 1);
     push({
@@ -585,10 +687,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
       push({
         id: `fest-${year}-dev-uthani-ekadashi`,
         date: uthani,
-        name: 'Dev Uthani Ekadashi / Tulsi Vivah',
-        hindiName: 'देवउठनी एकादशी (प्रबोधिनी / तुलसी विवाह)',
+        name: `Dev Uthani Ekadashi (${ekadashiTradition === 'vaishnava' ? 'Vaishnava' : 'Smarta'})`,
+        hindiName: `देवउठनी एकादशी (${ekadashiTag})`,
         type: 'एकादशी',
-        description: 'कार्तिक शुक्ल एकादशी, श्री हरि विष्णु का योगनिद्रा से जागरण, चातुर्मास समापन एवं तुलसी-शालिग्राम विवाह।',
+        description: `कार्तिक शुक्ल एकादशी (${ekadashiTag}), श्री हरि विष्णु का योगनिद्रा से जागरण, चातुर्मास समापन एवं तुलसी-शालिग्राम विवाह।`,
       });
     }
   }
@@ -609,10 +711,10 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
     push({
       id: `fest-${year}-gita-jayanti`,
       date: gita,
-      name: 'Gita Jayanti / Mokshada Ekadashi',
-      hindiName: 'गीता जयंती / मोक्षदा एकादशी',
+      name: `Gita Jayanti / Mokshada Ekadashi (${ekadashiTradition === 'vaishnava' ? 'Vaishnava' : 'Smarta'})`,
+      hindiName: `गीता जयंती / मोक्षदा एकादशी (${ekadashiTag})`,
       type: 'एकादशी',
-      description: 'मार्गशीर्ष शुक्ल एकादशी, कुरुक्षेत्र के समर में योगेश्वर श्री कृष्ण द्वारा अर्जुन को श्रीमद्भगवद्गीता उपदेश दिवस।',
+      description: `मार्गशीर्ष शुक्ल एकादशी (${ekadashiTag}), कुरुक्षेत्र के समर में योगेश्वर श्री कृष्ण द्वारा अर्जुन को श्रीमद्भगवद्गीता उपदेश दिवस।`,
     });
   }
   const paushaPu = on(11, 10, 11, 31, TITHI.purnima, 'sunrise');
@@ -631,7 +733,7 @@ export function getFestivalsForYear(year: number): FestivalItem[] {
   const uniqueMap = new Map<string, FestivalItem>();
   festivals.forEach((f) => uniqueMap.set(f.id, f));
   const result = Array.from(uniqueMap.values());
-  YEAR_FESTIVALS_CACHE.set(year, result);
+  YEAR_FESTIVALS_CACHE.set(cacheKey, result);
   return result;
 }
 
@@ -801,8 +903,13 @@ export function getLocalizedFestival(
       description: meta?.enDesc || fest.description || '',
     };
   }
+  const traditionSuffixGu = fest.hindiName?.includes('वैष्णव')
+    ? ' (વૈષ્ણવ મત)'
+    : fest.hindiName?.includes('स्मार्त')
+      ? ' (સ્માર્ત મત)'
+      : '';
   return {
-    title: meta?.guTitle || fest.hindiName || fest.name,
+    title: `${meta?.guTitle || fest.hindiName || fest.name}${meta?.guTitle ? traditionSuffixGu : ''}`,
     type: typeMapGu[fest.type || ''] || fest.type || '',
     description: meta?.guDesc || fest.description || '',
   };

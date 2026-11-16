@@ -295,8 +295,15 @@ export function App() {
     };
   }, []);
 
-  // Calculate high-precision Vedic Panchang based on server-synced Date, Geo-coordinates & selected Language
+  // Calculate high-precision Vedic Panchang based on server-synced Date, Geo-coordinates, CalcSettings & selected Language
   const [dynamicPanchangData, setDynamicPanchangData] = useState<VedicPanchangData | null>(null);
+  const [calcSettingsRev, setCalcSettingsRev] = useState(0);
+
+  useEffect(() => {
+    const onSettingsChange = () => setCalcSettingsRev((v) => v + 1);
+    window.addEventListener('shakti-calc-settings', onSettingsChange);
+    return () => window.removeEventListener('shakti-calc-settings', onSettingsChange);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -325,7 +332,6 @@ export function App() {
   }, [currentDate, currentLocation, currentLang]);
 
   const panchang = useMemo(() => {
-    if (dynamicPanchangData) return dynamicPanchangData;
     const resolvedLoc = resolveBirthCoordinates(
       currentLocation.name,
       currentLocation.latitude,
@@ -339,8 +345,17 @@ export function App() {
       resolvedLoc.longitude,
       resolvedLoc.timezoneHours
     );
-    return getLocalizedPanchang(base, currentLang);
-  }, [currentDate, currentLocation, currentLang, dynamicPanchangData]);
+    const localizedBase = getLocalizedPanchang(base, currentLang);
+    if (dynamicPanchangData) {
+      return {
+        ...dynamicPanchangData,
+        masa: localizedBase.masa,
+        ayanamshaName: localizedBase.ayanamshaName,
+        calculationNote: localizedBase.calculationNote,
+      };
+    }
+    return localizedBase;
+  }, [currentDate, currentLocation, currentLang, dynamicPanchangData, calcSettingsRev]);
 
   useEffect(() => {
     scheduleMorningBriefs(

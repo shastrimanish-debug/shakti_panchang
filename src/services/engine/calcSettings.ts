@@ -1,17 +1,23 @@
 export type AyanamshaId = "lahiri" | "raman" | "kp";
 export type NodeType = "mean" | "true";
 export type HouseSystem = "whole" | "sripati";
+export type MasaSystem = "purnimanta" | "amanta";
+export type EkadashiTradition = "smarta" | "vaishnava";
 
 export interface CalcSettings {
   ayanamsha: AyanamshaId;
   nodeType: NodeType;
   houseSystem: HouseSystem;
+  masaSystem: MasaSystem;
+  ekadashiTradition: EkadashiTradition;
 }
 
 export const DEFAULT_CALC_SETTINGS: CalcSettings = {
   ayanamsha: "lahiri",
   nodeType: "mean",
   houseSystem: "whole",
+  masaSystem: "purnimanta",
+  ekadashiTradition: "smarta",
 };
 
 const KEY = "shakti_calc_settings_v1";
@@ -32,6 +38,16 @@ export const HOUSE_LABELS: Record<HouseSystem, string> = {
   sripati: "श्रीपति भाव",
 };
 
+export const MASA_SYSTEM_LABELS: Record<MasaSystem, string> = {
+  purnimanta: "पूर्णिमान्त (उत्तर भारत / काशी)",
+  amanta: "अमान्त (गुजरात / महाराष्ट्र / दक्षिण)",
+};
+
+export const EKADASHI_TRADITION_LABELS: Record<EkadashiTradition, string> = {
+  smarta: "स्मार्त (गृहस्थ मत)",
+  vaishnava: "वैष्णव (दशमी विद्धा वर्जित)",
+};
+
 export function getCalcSettings(): CalcSettings {
   if (typeof window === "undefined") return { ...DEFAULT_CALC_SETTINGS };
   try {
@@ -42,6 +58,8 @@ export function getCalcSettings(): CalcSettings {
       ayanamsha: p.ayanamsha === "raman" || p.ayanamsha === "kp" ? p.ayanamsha : "lahiri",
       nodeType: p.nodeType === "true" ? "true" : "mean",
       houseSystem: p.houseSystem === "sripati" ? "sripati" : "whole",
+      masaSystem: p.masaSystem === "amanta" ? "amanta" : "purnimanta",
+      ekadashiTradition: p.ekadashiTradition === "vaishnava" ? "vaishnava" : "smarta",
     };
   } catch {
     return { ...DEFAULT_CALC_SETTINGS };

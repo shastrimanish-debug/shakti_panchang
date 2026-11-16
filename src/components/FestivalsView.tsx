@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FestivalItem } from '../types';
 import { getFestivalsForYear, getLocalizedFestival } from '../services/festivals';
 import { saveAppReminder } from '../services/storage';
+import { getCalcSettings, setCalcSettings, type MasaSystem, type EkadashiTradition } from '../services/engine/calcSettings';
 import {
   Sparkles,
   Calendar,
@@ -64,9 +65,30 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
 
   const [addedReminderId, setAddedReminderId] = useState<string | null>(null);
   const [isTithiNirnayaOpen, setIsTithiNirnayaOpen] = useState(false);
+  const [settingsRev, setSettingsRev] = useState(0);
+
+  useEffect(() => {
+    const refresh = () => setSettingsRev((v) => v + 1);
+    window.addEventListener('shakti-calc-settings', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('shakti-calc-settings', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+
+  const calcSettings = useMemo(() => getCalcSettings(), [settingsRev]);
+
+  const handleSetMasaSystem = (masaSystem: MasaSystem) => {
+    setCalcSettings({ ...getCalcSettings(), masaSystem });
+  };
+
+  const handleSetEkadashi = (ekadashiTradition: EkadashiTradition) => {
+    setCalcSettings({ ...getCalcSettings(), ekadashiTradition });
+  };
 
   const selectedYear = currentDate.getFullYear() || 2026;
-  const festivals = useMemo(() => getFestivalsForYear(selectedYear), [selectedYear]);
+  const festivals = useMemo(() => getFestivalsForYear(selectedYear), [selectedYear, settingsRev]);
 
   const upcomingList = useMemo(() => {
     const today = new Date(currentDate);
@@ -164,7 +186,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
                 daysDiff === 0
-                  ? 'bg-rose-600 text-white animate-pulse'
+                  ? 'bg-rose-600 text-white'
                   : daysDiff === 1
                   ? 'bg-amber-600 text-white'
                   : 'bg-amber-100 text-[#8C4A00] border border-amber-300'
@@ -211,7 +233,66 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
       ),
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-2">
-          <div className="space-y-2 overflow-y-auto max-h-[460px] pr-0.5">
+          {/* Compact Regional Panchang Tradition Bar */}
+          <div className="p-2 rounded-2xl bg-amber-50/90 border border-amber-300/80 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-[10px] font-black text-[#6E441F] mr-0.5">
+                {L('मास:', 'Masa:', 'માસ:')}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleSetMasaSystem('purnimanta')}
+                className={`px-2 py-1 rounded-xl text-[10px] font-black transition cursor-pointer ${
+                  calcSettings.masaSystem === 'purnimanta'
+                    ? 'bg-[#6A3716] text-amber-50 shadow-xs'
+                    : 'bg-white text-[#5C3A21] border border-amber-300/70 hover:bg-amber-100'
+                }`}
+              >
+                {L('पूर्णिमान्त (काशी)', 'Purnimanta', 'પૂર્ણિમાંત')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetMasaSystem('amanta')}
+                className={`px-2 py-1 rounded-xl text-[10px] font-black transition cursor-pointer ${
+                  calcSettings.masaSystem === 'amanta'
+                    ? 'bg-[#6A3716] text-amber-50 shadow-xs'
+                    : 'bg-white text-[#5C3A21] border border-amber-300/70 hover:bg-amber-100'
+                }`}
+              >
+                {L('अमान्त (गुज/दक्षिण)', 'Amanta (Guj/South)', 'અમાંત (ગુજ/દક્ષિણ)')}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-[10px] font-black text-[#6E441F] mr-0.5">
+                {L('एकादशी:', 'Ekadashi:', 'એકાદશી:')}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleSetEkadashi('smarta')}
+                className={`px-2 py-1 rounded-xl text-[10px] font-black transition cursor-pointer ${
+                  calcSettings.ekadashiTradition === 'smarta'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-white text-[#5C3A21] border border-amber-300/70 hover:bg-amber-100'
+                }`}
+              >
+                {L('स्मार्त', 'Smarta', 'સ્માર્ત')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetEkadashi('vaishnava')}
+                className={`px-2 py-1 rounded-xl text-[10px] font-black transition cursor-pointer ${
+                  calcSettings.ekadashiTradition === 'vaishnava'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-white text-[#5C3A21] border border-amber-300/70 hover:bg-amber-100'
+                }`}
+              >
+                {L('वैष्णव', 'Vaishnava', 'વૈષ્ણવ')}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2 overflow-y-auto max-h-[400px] pr-0.5">
             {upcomingChunk1.map((fest, idx) => renderFestivalCard(fest, idx, '🪔'))}
           </div>
           <div className="text-[10px] text-center text-[#8C6239] pt-1 border-t border-amber-200/60 shrink-0">
@@ -341,7 +422,37 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({
       ),
       content: (
         <div className="h-full flex flex-col justify-between py-1 space-y-2">
-          <div className="space-y-2 overflow-y-auto max-h-[460px] pr-0.5">
+          <div className="p-2 rounded-2xl bg-amber-50/90 border border-amber-300/80 flex items-center justify-between gap-2 shrink-0">
+            <span className="text-[10px] font-black text-[#6E441F]">
+              {L('एकादशी मत (अरुणोदय नियम):', 'Ekadashi Rule (Arunodaya):', 'એકાદશી મત (અરુણોદય નિયમ):')}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => handleSetEkadashi('smarta')}
+                className={`px-2.5 py-1 rounded-xl text-[10px] font-black transition cursor-pointer ${
+                  calcSettings.ekadashiTradition === 'smarta'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-white text-[#5C3A21] border border-amber-300/70 hover:bg-amber-100'
+                }`}
+              >
+                {L('स्मार्त', 'Smarta', 'સ્માર્ત')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetEkadashi('vaishnava')}
+                className={`px-2.5 py-1 rounded-xl text-[10px] font-black transition cursor-pointer ${
+                  calcSettings.ekadashiTradition === 'vaishnava'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-white text-[#5C3A21] border border-amber-300/70 hover:bg-amber-100'
+                }`}
+              >
+                {L('वैष्णव', 'Vaishnava', 'વૈષ્ણવ')}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2 overflow-y-auto max-h-[400px] pr-0.5">
             {vratsList.length > 0 ? (
               vratsList.map((fest, idx) => renderFestivalCard(fest, idx, '🕉️'))
             ) : (

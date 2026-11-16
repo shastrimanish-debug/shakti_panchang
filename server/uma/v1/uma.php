@@ -2,9 +2,9 @@
 declare(strict_types=1);
 
 /*
- * UMA AI SERVER — SHAKTI PANCHANG
- * Priority: Grok (xAI) -> Gemini -> OpenRouter
- * If every provider fails, the app uses its own local Vedic engine.
+ * UMA AI SERVER — SHAKTI PANCHANG (v6 — Gemini 3.8 Flash / Auth Key AQ. or AIza + OpenRouter)
+ * Priority: Gemini (generativelanguage.googleapis.com + aiplatform.googleapis.com) -> OpenRouter
+ * If both fail, the app uses its own local Vedic engine.
  * API keys stay in config.php. Never inside the APK.
  */
 
@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo json_encode([
         'ok' => true,
         'service' => 'uma',
+        'version' => 6,
         'gemini' => !empty($GEMINI_ENABLED) && uma_configured((string)($GEMINI_API_KEY ?? ''), 'PASTE_YOUR_GEMINI_API_KEY_HERE'),
-        'grok' => !empty($XAI_ENABLED) && uma_configured((string)($XAI_API_KEY ?? ''), 'PASTE_YOUR_XAI_API_KEY_HERE'),
         'openrouter' => !empty($OPENROUTER_ENABLED) && uma_configured((string)($OPENROUTER_API_KEY ?? ''), 'PASTE_YOUR_OPENROUTER_KEY_HERE'),
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -63,198 +63,304 @@ if ($query === '') {
     exit;
 }
 
-$maxLen = (int)($UMA_MAX_INPUT_LENGTH ?? 12000);
-$clip = static function (string $text) use ($maxLen): string {
+$rawLang = strtolower(substr(trim((string)($input['lang'] ?? 'hi')), 0, 2));
+$lang = in_array($rawLang, ['hi', 'en', 'gu'], true) ? $rawLang : 'hi';
+
+$maxLen = (int)($UMA_MAX_INPUT_LENGTH ?? 16000);
+$clip = static function (string $text, int $limit = 0) use ($maxLen): string {
     $text = trim($text);
+    $cap = $limit > 0 ? $limit : $maxLen;
     if (function_exists('mb_substr')) {
-        return mb_substr($text, 0, $maxLen);
+        return mb_substr($text, 0, $cap);
     }
-    return substr($text, 0, $maxLen);
+    return substr($text, 0, $cap);
 };
 
-$defaultSystem = <<<'PROMPT'
-ROLE & PERSONA:
-You are "UMA" (उमा) — a "Prakhand Vedic Jyotish Acharya" (Elite Vedic Astrologer) with 50 years of unbroken practice in Parashari, Jaimini, and Nadi Astrology. You are a compassionate, divine, and authoritative sage, uncompromising on Vedic mathematics, planetary degrees, and ancient scriptural wisdom.
+$langRule = match ($lang) {
+    'en' => 'LANGUAGE RULE: Respond naturally in clear, articulate English. Keep any sacred Sanskrit shlokas in Devanagari followed by a brief English meaning when helpful.',
+    'gu' => 'LANGUAGE RULE: Respond naturally in pure, warm Gujarati script (ગુજરાતી લિપિ). Keep sacred Sanskrit shlokas in Devanagari followed by a brief Gujarati meaning when helpful.',
+    default => 'LANGUAGE RULE: Respond naturally in clear, warm Devanagari Hindi (or conversational Hindi if the user writes in Hinglish). Include brief Sanskrit shlokas only when truly fitting.',
+};
+$chipLangName = match ($lang) {
+    'en' => 'English',
+    'gu' => 'Gujarati',
+    default => 'Hindi',
+};
 
-TONE & LANGUAGE:
-- Speak in a highly respectful, divine, and comforting tone. Address the user as "यजमान" (Yajaman) or "वत्स" (Vats).
-- Use a blend of pure Devanagari Hindi and relevant, profound Sanskrit Shlokas (e.g. ॥ शुभं करोति कल्याणम् ॥, ॥ ग्रहा राज्यं प्रयच्छन्ति ग्रहा राज्यं हरन्ति च ॥), followed by clear Vedic explanations.
-- Maintain the authority of a 50-year experienced sage—compassionate, wise, yet uncompromising on authentic Vedic calculations. Never say "As an AI model" or "I am programmed to".
+$defaultSystem = <<<PROMPT
+You are "UMA" (उमा) — an intelligent, warm, articulate AI companion and scholar of Sanatan Dharma, Vedic Jyotish (Parashari, Jaimini, KP, Nadi), Chaldean/Pythagorean Numerology (Ank Shastra), Vastu, Panchang, Hindu scriptures, AND everyday life, career, relationships, business, mindset, technology, and general knowledge.
 
-BEHAVIORAL & COMPUTATIONAL GUIDELINES:
+{$langRule}
 
-1. ASTRONOMICAL CALCULATIONS & KUNDALI ANALYSIS:
-- Never rely solely on Lagna (D-1). Silently analyze D-9 (Navamsha) for internal strength and marital alignment, D-10 (Dashamsha) for career and status, Nakshatra Padas, Vimshottari Dasha (Mahadasha/Antardasha/Pratyantar), Ashtakvarga points, and precise planetary positions.
-- Account for Retrograde (वक्री) planets, Combustion (अस्त), Exaltation/Debilitation (उच्च/नीच), and Planetary Wars (ग्रह युद्ध).
-- If birth details/Kundali are present in the context, use them directly without asking again for name, date, time, or place. If no Kundali is loaded and the query requires personal predictions, explain the Vedic principles and gracefully suggest entering birth details in the Kundali tab.
+CORE CONVERSATIONAL INTELLIGENCE (Respond with the clarity and depth of Gemini / ChatGPT):
+1. ANSWER THE EXACT QUESTION DIRECTLY & NATURALLY:
+   - Read the user's message and conversation history carefully and answer directly what they actually asked, with genuine depth, clarity, nuance, and warmth.
+   - If the user asks a general question (motivation, relationship advice, business/career decision, scripture story/meaning, science, daily life, or a follow-up like "explain simply" / "give examples"), answer naturally like a super-smart conversational AI — do NOT force a rigid astrology report template or dump Lagna/Dasha boilerplate where it wasn't asked.
+   - If the user asks about astrology, Kundali, marriage timing, career yogas, Panchang, Muhurat, Numerology (Mulank/Bhagyank/Namank/Lo Shu), or Vedic remedies, weave in the REAL verified planets, houses, Dashas, and numbers from the provided context. Never invent chart facts, and NEVER mention Grahan Yoga unless Rahu/Ketu truly conjoins Sun/Moon in the context.
+   - Only produce a structured multi-section astrology report or 6-point Upay Parchi when the user explicitly requests a full chart reading or remedy slip.
 
-2. STRUCTURED RESPONSE FRAMEWORK FOR ASTROLOGICAL CONSULTATIONS:
-When answering queries about career, marriage, health, wealth, dasha, future predictions, or remedies, structure your response with these clear, divine headings:
+2. CLEAN FORMATTING & NATURAL TONE:
+   - Use crisp paragraphs, **bold** key points, and clean bullet lists where helpful.
+   - Match length to the question: brief and direct for quick questions; thorough and structured for complex questions.
 
-॥ ॐ श्री गणेशाय नमः ॥
-
-**ग्रह-दशा विश्लेषण (Grah Dasha Analysis)**
-Deep analysis of relevant houses (1st, 2nd, 5th, 7th, 9th, 10th, 11th, etc.), D-9/D-10, active Mahadasha/Antardasha, and planetary transits.
-
-**अतीत के दृढ संकेत (Past Insights)**
-State 2-3 significant past life events or transitions of the Yajaman with absolute conviction based on past dashas/transits (e.g. residence change, career shift, financial tension).
-
-**भविष्य की सटीक कालावधि (Future Trajectory)**
-Provide pinpoint, time-bound future predictions with specific timelines (e.g. "अक्टूबर के मध्य में जब गुरु का गोचर..."). Avoid vague terms like "soon" or "maybe".
-
-**वैदिक सात्विक उपाय (Vedic Upay)**
-Authentic, practical, non-destructive remedies: exact Mantra, specific Japa count (e.g. 108 या 21 माला), Daan (charity) items, and non-structural Vastu adjustments.
-
-3. DIRECT QUERIES (PANCHANG/MUHURAT/TODAY):
-For direct inquiries (e.g. Rahu Kaal, Choghadiya, Today's Tithi, Disha Shool), provide the precise answer upfront in respectful, divine Vedic language without forcing past revelations.
+3. FOLLOW-UP SUGGESTIONS:
+   - At the very end of your response, add a separator and 3 relevant clickable follow-up questions in {$chipLangName} using this exact marker:
+---
+[अगले प्रश्न]:
+• Question 1
+• Question 2
+• Question 3
 PROMPT;
 
 $system = trim((string)($input['systemPrompt'] ?? ''));
-if ($system === '' || strlen($system) < 200) {
+if ($system === '' || strlen($system) < 80) {
     $system = $defaultSystem;
 }
-$system = $clip($system);
+$system = $clip($system, 8000);
 
-$parts = ['उपयोगकर्ता का प्रश्न: "' . $clip($query) . '"'];
 $panchang = trim((string)($input['panchangContext'] ?? ''));
 $kundali = trim((string)($input['kundaliContext'] ?? ''));
+$contextParts = [];
 if ($panchang !== '') {
-    $parts[] = "[वर्तमान पंचांग]\n" . $clip($panchang);
+    $contextParts[] = "[Today's Panchang]\n" . $clip($panchang, 3000);
 }
 if ($kundali !== '') {
-    $parts[] = "[जन्म कुंडली]\n" . $clip($kundali);
-} else {
-    $parts[] = "[कुंडली स्थिति]: अभी कोई जन्म कुंडली लोड नहीं है। व्यक्तिगत फल पूछा हो तो सिद्धांत बताओ और कुंडली टैब में विवरण भरने का परामर्श दो।";
+    $contextParts[] = "[Verified User Horoscope / Numerology Context — use ONLY if relevant to the user's question]\n" . $clip($kundali, 5000);
 }
+$contextParts[] = "[User Message]\n" . $clip($query, 4000);
+$currentUserMessage = implode("\n\n", $contextParts);
 
+// Build normalized multi-turn history
+$maxMsgs = max(2, min(16, (int)($UMA_MAX_MESSAGES ?? 10)));
+$openAiTurns = [];
+$geminiTurns = [];
 $history = $input['chatHistory'] ?? [];
 if (is_array($history) && $history) {
-    $lines = [];
-    foreach (array_slice($history, -1 * (int)($UMA_MAX_MESSAGES ?? 8)) as $message) {
-        if (!is_array($message)) {
+    foreach (array_slice($history, -$maxMsgs) as $msg) {
+        if (!is_array($msg)) {
             continue;
         }
-        $who = (($message['sender'] ?? '') === 'uma') ? 'उमा' : 'यजमान';
-        $text = $clip((string)($message['text'] ?? ''));
-        if ($text !== '') {
-            $lines[] = $who . ': ' . $text;
+        $txt = $clip((string)($msg['text'] ?? ''), 2500);
+        if ($txt === '') {
+            continue;
+        }
+        $isUma = (($msg['sender'] ?? '') === 'uma');
+        if (count($openAiTurns) === 0 && $isUma) {
+            continue;
+        }
+        $oRole = $isUma ? 'assistant' : 'user';
+        $gRole = $isUma ? 'model' : 'user';
+
+        $lastIdx = count($openAiTurns) - 1;
+        if ($lastIdx >= 0 && $openAiTurns[$lastIdx]['role'] === $oRole) {
+            $openAiTurns[$lastIdx]['content'] .= "\n\n" . $txt;
+            $geminiTurns[$lastIdx]['parts'][0]['text'] .= "\n\n" . $txt;
+        } else {
+            $openAiTurns[] = ['role' => $oRole, 'content' => $txt];
+            $geminiTurns[] = ['role' => $gRole, 'parts' => [['text' => $txt]]];
         }
     }
-    if ($lines) {
-        $parts[] = "[पूर्व संवाद]\n" . implode("\n", $lines);
+    $lastIdx = count($openAiTurns) - 1;
+    if ($lastIdx >= 0 && $openAiTurns[$lastIdx]['role'] === 'user') {
+        if (trim($openAiTurns[$lastIdx]['content']) === trim($query)) {
+            array_pop($openAiTurns);
+            array_pop($geminiTurns);
+        } else {
+            $openAiTurns[] = ['role' => 'assistant', 'content' => 'Understood.'];
+            $geminiTurns[] = ['role' => 'model', 'parts' => [['text' => 'Understood.']]];
+        }
     }
 }
-$parts[] = 'उपरोक्त पंचांग व कुंडली विवरण के आधार पर यजमान के प्रश्न का उत्तर ५० वर्षों के अनुभवी प्रकांड वैदिक ज्योतिष आचार्य के रूप में देवतुल्य व सात्विक शैली में दें।';
-$userPrompt = implode("\n\n", $parts);
 
-function uma_reply(string $text, string $provider, string $model): void {
+function uma_reply(string $text, string $provider, string $model, array $fallbackReason = []): void {
     $text = trim($text);
     $text = (string)preg_replace('/^```(?:\w+)?\s*/', '', $text);
     $text = trim((string)preg_replace('/\s*```$/', '', $text));
     if ($text === '') {
         return;
     }
-    http_response_code(200);
-    echo json_encode([
+    $out = [
         'ok' => true,
         'text' => $text,
         'provider' => $provider,
         'model' => $model,
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    ];
+    if ($fallbackReason) {
+        $out['fallbackReason'] = $fallbackReason;
+    }
+    http_response_code(200);
+    echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-function uma_post(string $url, array $payload, array $headers, int $timeout): ?array {
+function uma_extract_openai_text(array $decoded): string {
+    $content = $decoded['choices'][0]['message']['content'] ?? '';
+    if (is_string($content)) {
+        return $content;
+    }
+    if (is_array($content)) {
+        $out = '';
+        foreach ($content as $part) {
+            if (is_array($part) && isset($part['text']) && is_string($part['text'])) {
+                $out .= $part['text'];
+            }
+        }
+        return $out;
+    }
+    return '';
+}
+
+function uma_post(string $url, array $payload, array $headers, int $timeout): array {
     $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($body === false) {
-        return null;
+        return ['ok' => false, 'status' => 0, 'error' => 'json_encode_failed', 'data' => null];
     }
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $body,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_CONNECTTIMEOUT => 5,
         CURLOPT_TIMEOUT => $timeout,
         CURLOPT_HTTPHEADER => $headers,
     ]);
     $response = curl_exec($ch);
     $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
     curl_close($ch);
-    if ($response === false || $status < 200 || $status >= 300) {
-        return null;
+
+    if ($response === false) {
+        return ['ok' => false, 'status' => $status, 'error' => $curlErr ?: 'curl_failed', 'data' => null];
     }
     $decoded = json_decode($response, true);
-    return is_array($decoded) ? $decoded : null;
-}
-
-$timeout = (int)($UMA_TIMEOUT_SECONDS ?? 22);
-$maxOut = (int)($UMA_MAX_OUTPUT_TOKENS ?? 1200);
-
-$xaiKey = trim((string)($XAI_API_KEY ?? ''));
-$xaiModel = trim((string)($XAI_MODEL ?? 'grok-4'));
-if (!empty($XAI_ENABLED) && uma_configured($xaiKey, 'PASTE_YOUR_XAI_API_KEY_HERE')) {
-    $decoded = uma_post('https://api.x.ai/v1/chat/completions', [
-        'model' => $xaiModel,
-        'temperature' => 0.6,
-        'max_tokens' => $maxOut,
-        'messages' => [
-            ['role' => 'system', 'content' => $system],
-            ['role' => 'user', 'content' => $userPrompt],
-        ],
-    ], [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $xaiKey,
-    ], $timeout);
-    if (is_array($decoded)) {
-        uma_reply((string)($decoded['choices'][0]['message']['content'] ?? ''), 'grok', $xaiModel);
+    if ($status < 200 || $status >= 300 || !is_array($decoded)) {
+        $errMsg = is_array($decoded)
+            ? (string)($decoded['error']['message'] ?? $decoded['error'] ?? ('HTTP_' . $status))
+            : ('HTTP_' . $status);
+        return ['ok' => false, 'status' => $status, 'error' => substr($errMsg, 0, 140), 'data' => null];
     }
+    return ['ok' => true, 'status' => $status, 'error' => '', 'data' => $decoded];
 }
 
+$timeout = max(10, min(18, (int)($UMA_TIMEOUT_SECONDS ?? 16)));
+$maxOut = max(800, (int)($UMA_MAX_OUTPUT_TOKENS ?? 1600));
+$providerErrors = [];
+
+// 1. GEMINI (Tries Gemini API generativelanguage.googleapis.com AND Vertex/Agent Platform if AQ.* key)
 $geminiKey = trim((string)($GEMINI_API_KEY ?? ''));
-$geminiModel = trim((string)($GEMINI_MODEL ?? 'gemini-2.5-flash'));
+$geminiModel = trim((string)($GEMINI_MODEL ?? 'gemini-3.8-flash'));
 if (!empty($GEMINI_ENABLED) && uma_configured($geminiKey, 'PASTE_YOUR_GEMINI_API_KEY_HERE')) {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/'
-        . rawurlencode($geminiModel)
-        . ':generateContent?key=' . rawurlencode($geminiKey);
-    $decoded = uma_post($url, [
+    $geminiContents = array_merge(
+        $geminiTurns,
+        [['role' => 'user', 'parts' => [['text' => $currentUserMessage]]]]
+    );
+    $geminiPayload = [
         'systemInstruction' => ['parts' => [['text' => $system]]],
-        'contents' => [['role' => 'user', 'parts' => [['text' => $userPrompt]]]],
+        'contents' => $geminiContents,
         'generationConfig' => [
-            'temperature' => 0.6,
+            'temperature' => 0.7,
             'maxOutputTokens' => $maxOut,
         ],
-    ], ['Content-Type: application/json'], $timeout);
-    if (is_array($decoded)) {
-        $text = '';
-        foreach (($decoded['candidates'][0]['content']['parts'] ?? []) as $part) {
-            if (isset($part['text']) && is_string($part['text'])) {
-                $text .= $part['text'];
+    ];
+    $geminiHeaders = [
+        'Content-Type: application/json',
+        'x-goog-api-key: ' . $geminiKey,
+    ];
+
+    $geminiTimeout = min($timeout, 10);
+    $glModels = array_values(array_unique(array_filter([
+        $geminiModel !== '' ? $geminiModel : null,
+        'gemini-3.8-flash',
+        'gemini-3.5-flash-lite',
+        'gemini-3.1-flash-lite',
+        'gemini-2.5-flash',
+    ])));
+    foreach ($glModels as $gm) {
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/'
+            . rawurlencode($gm)
+            . ':generateContent';
+        $res = uma_post($url, $geminiPayload, $geminiHeaders, $geminiTimeout);
+        if ($res['ok'] && is_array($res['data'])) {
+            $text = '';
+            foreach (($res['data']['candidates'][0]['content']['parts'] ?? []) as $part) {
+                if (isset($part['text']) && is_string($part['text'])) {
+                    $text .= $part['text'];
+                }
+            }
+            uma_reply($text, 'gemini', $gm);
+        }
+        $providerErrors['gemini:' . $gm] = $res['status'] . ' ' . $res['error'];
+        if (in_array($res['status'], [401, 402, 403], true)) {
+            break;
+        }
+    }
+
+    if (str_starts_with($geminiKey, 'AQ.')) {
+        $vertexModels = array_values(array_unique(array_filter([
+            ($geminiModel !== '' && $geminiModel !== 'gemini-flash-latest') ? $geminiModel : null,
+            'gemini-3.8-flash',
+            'gemini-2.5-flash',
+        ])));
+        foreach ($vertexModels as $vm) {
+            $url = 'https://aiplatform.googleapis.com/v1/publishers/google/models/'
+                . rawurlencode($vm)
+                . ':generateContent';
+            $res = uma_post($url, $geminiPayload, $geminiHeaders, $timeout);
+            if ($res['ok'] && is_array($res['data'])) {
+                $text = '';
+                foreach (($res['data']['candidates'][0]['content']['parts'] ?? []) as $part) {
+                    if (isset($part['text']) && is_string($part['text'])) {
+                        $text .= $part['text'];
+                    }
+                }
+                uma_reply($text, 'gemini', $vm);
+            }
+            $providerErrors['gemini_vertex:' . $vm] = $res['status'] . ' ' . $res['error'];
+            if (in_array($res['status'], [401, 402, 403], true)) {
+                break;
             }
         }
-        uma_reply($text, 'gemini', $geminiModel);
     }
 }
 
+// 2. OPENROUTER
 $orKey = trim((string)($OPENROUTER_API_KEY ?? ''));
 $orModel = trim((string)($OPENROUTER_MODEL ?? 'openrouter/free'));
 if (!empty($OPENROUTER_ENABLED) && uma_configured($orKey, 'PASTE_YOUR_OPENROUTER_KEY_HERE')) {
-    $decoded = uma_post('https://openrouter.ai/api/v1/chat/completions', [
-        'model' => $orModel,
-        'temperature' => 0.6,
-        'max_tokens' => $maxOut,
-        'messages' => [
-            ['role' => 'system', 'content' => $system],
-            ['role' => 'user', 'content' => $userPrompt],
-        ],
-    ], [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $orKey,
-        'HTTP-Referer: https://myshivshakti.in',
-        'X-Title: SHAKTI PANCHANG - UMA',
-    ], $timeout);
-    if (is_array($decoded)) {
-        uma_reply((string)($decoded['choices'][0]['message']['content'] ?? ''), 'openrouter', $orModel);
+    $orMessagesWithSys = array_merge(
+        [['role' => 'system', 'content' => $system]],
+        $openAiTurns,
+        [['role' => 'user', 'content' => $currentUserMessage]]
+    );
+    $orMessagesInlineSys = array_merge(
+        $openAiTurns,
+        [['role' => 'user', 'content' => "[Instructions]\n" . $system . "\n\n" . $currentUserMessage]]
+    );
+
+    $orAttempts = [
+        ['model' => $orModel, 'messages' => $orMessagesWithSys],
+        ['model' => $orModel, 'messages' => $orMessagesInlineSys],
+    ];
+
+    foreach ($orAttempts as $idx => $attempt) {
+        $res = uma_post('https://openrouter.ai/api/v1/chat/completions', [
+            'model' => $attempt['model'],
+            'temperature' => 0.7,
+            'max_tokens' => $maxOut,
+            'messages' => $attempt['messages'],
+        ], [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $orKey,
+            'HTTP-Referer: https://myshivshakti.in',
+            'X-Title: SHAKTI PANCHANG - UMA',
+        ], $timeout);
+        if ($res['ok'] && is_array($res['data'])) {
+            uma_reply(uma_extract_openai_text($res['data']), 'openrouter', $attempt['model'], $providerErrors);
+        }
+        $providerErrors['openrouter#' . $idx . ':' . $attempt['model']] = $res['status'] . ' ' . $res['error'];
+        if (in_array($res['status'], [401, 402, 403], true)) {
+            break;
+        }
     }
 }
 
@@ -262,5 +368,6 @@ http_response_code(200);
 echo json_encode([
     'ok' => false,
     'error' => 'ALL_UNAVAILABLE',
-], JSON_UNESCAPED_UNICODE);
+    'details' => $providerErrors,
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 exit;
