@@ -12,6 +12,25 @@ export interface ReleaseNote {
 
 export const APP_RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "1.0.76",
+    versionCode: 76,
+    date: "नवंबर 2026",
+    title: "संस्करण ७६ (v1.0.76) - Google Play आजीवन VIP बिलिंग ('shakti' / 'premium-99') पूर्ण एकीकरण",
+    highlights: [
+      "Google Play Billing Library v8 एकीकरण: अब मुख्य एकमुश्त उत्पाद 'shakti' (परचेस ऑप्शन 'premium-99' — भारत ₹99 / Global $1 आजीवन VIP) सीधे Play Store पेमेंट शीट खोलता है।",
+      "बैकअप संगतता: पूर्व के 'shakti_annual' सब्सक्रिप्शन धारकों की पात्रता जांच व ITEM_ALREADY_OWNED स्वचालित अनलॉक भी सुरक्षित रखा गया है।"
+    ],
+    details: [
+      {
+        category: "Google Play Store बिलिंग सुधार",
+        items: [
+          "PlayLicensePlugin.java में getOneTimePurchaseOfferDetailsList() व 'premium-99' offerToken चयन लागू।",
+          "खरीद के तुरंत बाद Lifetime VIP स्थिति ('lifetime') व गोपनीयता नीति में उत्पाद ID अद्यतन।"
+        ]
+      }
+    ]
+  },
+  {
     version: "1.0.75",
     versionCode: 75,
     date: "नवंबर 2026",
