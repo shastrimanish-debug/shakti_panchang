@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -30,6 +31,9 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -51,7 +55,13 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
     static final String LEGACY_SUBS_PRODUCT_ID = "shakti_annual";
 
     private static final long TRIAL_MS = 7L * 24 * 60 * 60 * 1000;
+    private static final long CLOCK_ROLLBACK_TOLERANCE_MS = 120_000L;
+    private static final long MEDIASTORE_REFRESH_MS = 15L * 60 * 1000;
     private static final String FILE_NAME = "shakti-panchang-trial-v25.txt";
+    private static final String INTERNAL_FILE_NAME = "sp-trial-anchor.dat";
+    private static final String PREFS_NAME = "shakti_play_license_prefs";
+    private static final String PREF_ANCHOR = "trial_anchor_v25";
+    private static final String PREF_PLAY_CACHE = "play_owned_cache_v1";
 
     private BillingClient billingClient;
     private PluginCall purchaseCall;
@@ -61,6 +71,7 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
 
     @PluginMethod
     public void status(PluginCall call) {
+        loadPlayCache();
         readAnchor();
         connect(new Runnable() {
             @Override
@@ -72,7 +83,7 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
                     }
                 });
             }
-        }, call);
+        }, call, false);
     }
 
     @PluginMethod
@@ -83,14 +94,18 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
             public void run() {
                 queryProductsAndBuy(call);
             }
-        }, call);
+        }, call, true);
     }
 
-    private void connect(final Runnable then, final PluginCall call) {
+    private void connect(final Runnable then, final PluginCall call, final boolean rejectOnFailure) {
         Activity activity = getActivity();
         if (activity == null) {
-            purchaseCall = null;
-            call.reject("ऐप स्क्रीन तैयार नहीं है।");
+            if (rejectOnFailure) {
+                purchaseCall = null;
+                call.reject("ऐप स्क्रीन तैयार नहीं है।");
+            } else {
+                call.resolve(snapshot());
+            }
             return;
         }
         if (billingClient != null && billingClient.isReady()) {
@@ -109,8 +124,12 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     then.run();
                 } else {
-                    purchaseCall = null;
-                    call.reject("Google Play बिलिंग नहीं खुली। Play Store से इंस्टॉल ऐप पर ही सदस्यता बनेगी।");
+                    if (rejectOnFailure) {
+                        purchaseCall = null;
+                        call.reject("Google Play बिलिंग नहीं खुली। Play Store से इंस्टॉल ऐप पर ही सदस्यता बनेगी।");
+                    } else {
+                        call.resolve(snapshot());
+                    }
                 }
             }
 
@@ -122,8 +141,7 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
 
     private void queryOwned(final Runnable then) {
         if (billingClient == null || !billingClient.isReady()) {
-            playOwned = false;
-            playLifetime = false;
+            loadPlayCache();
             then.run();
             return;
         }
@@ -165,6 +183,7 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
                 }
                 playLifetime = hasInApp;
                 playOwned = hasInApp || foundSubs;
+                savePlayCache(playOwned, playLifetime);
                 then.run();
             });
         });
@@ -356,6 +375,9 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
                     anyPending = true;
                 }
             }
+            if (playOwned) {
+                savePlayCache(playOwned, playLifetime);
+            }
             if (!playOwned && anyPending) {
                 if (call != null) {
                     call.reject("भुगतान अभी लंबित (Pending) है। Google Play से पुष्टि होते ही ऐप स्वतः अनलॉक हो जाएगा।");
@@ -371,15 +393,16 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
     private JSObject snapshot() {
         long now = System.currentTimeMillis();
         Anchor anchor = readAnchor();
+        long effectiveNow = Math.max(now, anchor.maxSeen);
         boolean tampered = anchor.tampered;
-        boolean trial = !tampered && now < anchor.start + TRIAL_MS;
+        boolean trial = !tampered && now < anchor.start + TRIAL_MS && effectiveNow < anchor.start + TRIAL_MS;
         boolean entitled = playOwned || trial;
         long end = playOwned
             ? (playLifetime ? now + 100L * 365 * 86400000L : now + 365L * 86400000L)
             : anchor.start + TRIAL_MS;
         long days = playOwned && playLifetime
             ? 36500
-            : (entitled ? Math.max(1, (long) Math.ceil((end - now) / 86400000.0)) : 0);
+            : (entitled ? Math.max(1, (long) Math.ceil((end - effectiveNow) / 86400000.0)) : 0);
 
         JSObject out = new JSObject();
         out.put("entitled", entitled);
@@ -389,51 +412,221 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
         out.put("expiresAt", end);
         out.put("issuedAt", anchor.start);
         out.put("tampered", tampered);
-        out.put("reason", entitled ? "" : "७ दिन का परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता Google Play से लें।");
+        out.put(
+            "reason",
+            entitled
+                ? ""
+                : (tampered
+                    ? "समय परिवर्तन का पता चला। ₹99 / $1 की आजीवन सदस्यता Google Play से लें।"
+                    : "७ दिन का परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता Google Play से लें।")
+        );
         return out;
     }
 
     private static final class Anchor {
         long start;
+        long maxSeen;
         boolean tampered;
+    }
+
+    private void savePlayCache(boolean owned, boolean lifetime) {
+        try {
+            Context context = getContext();
+            if (context == null) return;
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            if (!owned) {
+                prefs.edit().remove(PREF_PLAY_CACHE).apply();
+                return;
+            }
+            String payload = (owned ? "1" : "0") + "|" + (lifetime ? "1" : "0");
+            String body = payload + "|" + signPlayCache(owned, lifetime);
+            prefs.edit().putString(PREF_PLAY_CACHE, body).apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void loadPlayCache() {
+        try {
+            Context context = getContext();
+            if (context == null) return;
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String raw = prefs.getString(PREF_PLAY_CACHE, null);
+            if (raw == null || raw.isEmpty()) return;
+            String[] parts = raw.trim().split("\\|");
+            if (parts.length != 3) return;
+            boolean owned = "1".equals(parts[0]);
+            boolean lifetime = "1".equals(parts[1]);
+            if (signPlayCache(owned, lifetime).equals(parts[2])) {
+                playOwned = owned;
+                playLifetime = lifetime;
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String signPlayCache(boolean owned, boolean lifetime) {
+        try {
+            String raw = (owned ? "1" : "0") + ":" + (lifetime ? "1" : "0") + ":shakti-play-v1";
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.US_ASCII));
+            StringBuilder hex = new StringBuilder();
+            for (int i = 0; i < 8; i++) hex.append(String.format(Locale.US, "%02x", hash[i]));
+            return hex.toString();
+        } catch (Exception e) {
+            return "0";
+        }
+    }
+
+    private Anchor parseLayer(String raw) {
+        if (raw == null) return null;
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) return null;
+        String[] parts = trimmed.split("\\|");
+        Anchor parsed = new Anchor();
+        try {
+            if (parts.length == 3) {
+                long start = Long.parseLong(parts[0]);
+                long seen = Long.parseLong(parts[1]);
+                if (!sign(start, seen).equals(parts[2])) {
+                    parsed.tampered = true;
+                    return parsed;
+                }
+                parsed.start = start;
+                parsed.maxSeen = Math.max(start, seen);
+                return parsed;
+            }
+            if (parts.length >= 4) {
+                long start = Long.parseLong(parts[0]);
+                long seen = Long.parseLong(parts[1]);
+                boolean tampered = "1".equals(parts[2]);
+                if (!sign4(start, seen, tampered).equals(parts[3])) {
+                    parsed.tampered = true;
+                    return parsed;
+                }
+                parsed.start = start;
+                parsed.maxSeen = Math.max(start, seen);
+                parsed.tampered = tampered;
+                return parsed;
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        parsed.tampered = true;
+        return parsed;
     }
 
     private Anchor readAnchor() {
         long now = System.currentTimeMillis();
-        Anchor anchor = new Anchor();
-        String raw = readFile();
-        if (raw == null || raw.isEmpty()) {
-            anchor.start = now;
-            writeFile(anchor.start, now);
-            return anchor;
+        Anchor[] layers = new Anchor[]{
+            parseLayer(readPrefsAnchor()),
+            parseLayer(readInternalFile()),
+            parseLayer(readMediaStoreFile())
+        };
+
+        long earliestStart = 0;
+        long highestSeen = 0;
+        long previousMediaStoreSeen = layers[2] != null && !layers[2].tampered ? layers[2].maxSeen : 0;
+        boolean tampered = false;
+
+        for (Anchor layer : layers) {
+            if (layer == null) continue;
+            if (layer.tampered) {
+                tampered = true;
+            }
+            if (layer.start > 1_000_000_000_000L && (earliestStart == 0 || layer.start < earliestStart)) {
+                earliestStart = layer.start;
+            }
+            if (layer.maxSeen > highestSeen) {
+                highestSeen = layer.maxSeen;
+            }
         }
-        String[] parts = raw.trim().split("\\|");
-        if (parts.length < 3) {
-            anchor.start = now;
-            writeFile(anchor.start, now);
-            return anchor;
+
+        if (earliestStart == 0 || earliestStart > now + CLOCK_ROLLBACK_TOLERANCE_MS) {
+            if (earliestStart > now + CLOCK_ROLLBACK_TOLERANCE_MS) {
+                tampered = true;
+            }
+            if (earliestStart == 0) {
+                earliestStart = now;
+            }
         }
-        long start;
-        long seen;
-        try {
-            start = Long.parseLong(parts[0]);
-            seen = Long.parseLong(parts[1]);
-        } catch (NumberFormatException e) {
-            anchor.start = now;
-            writeFile(anchor.start, now);
-            return anchor;
+
+        if (highestSeen > 0 && now + CLOCK_ROLLBACK_TOLERANCE_MS < highestSeen) {
+            tampered = true;
         }
-        String expect = sign(start, seen);
-        if (!expect.equals(parts[2])) {
-            anchor.start = start > 0 ? start : now;
-            return anchor;
+
+        long updatedSeen = Math.max(now, Math.max(highestSeen, earliestStart));
+
+        Anchor result = new Anchor();
+        result.start = earliestStart;
+        result.maxSeen = updatedSeen;
+        result.tampered = tampered;
+
+        String serialized = earliestStart + "|" + updatedSeen + "|" + (tampered ? "1" : "0") + "|" + sign4(earliestStart, updatedSeen, tampered);
+        writePrefsAnchor(serialized);
+        writeInternalFile(serialized);
+
+        boolean shouldRefreshMediaStore =
+            layers[2] == null
+            || layers[2].start != earliestStart
+            || (tampered && !layers[2].tampered)
+            || (updatedSeen - previousMediaStoreSeen >= MEDIASTORE_REFRESH_MS);
+        if (shouldRefreshMediaStore) {
+            writeMediaStoreFile(serialized);
         }
-        anchor.start = start;
-        return anchor;
+
+        return result;
     }
 
-    private void writeFile(long start, long seen) {
-        String body = start + "|" + seen + "|" + sign(start, seen);
+    private String readPrefsAnchor() {
+        try {
+            Context context = getContext();
+            if (context == null) return null;
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            return prefs.getString(PREF_ANCHOR, null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void writePrefsAnchor(String body) {
+        try {
+            Context context = getContext();
+            if (context == null) return;
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            prefs.edit().putString(PREF_ANCHOR, body).apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String readInternalFile() {
+        try {
+            Context context = getContext();
+            if (context == null) return null;
+            File file = new File(context.getFilesDir(), INTERNAL_FILE_NAME);
+            if (!file.exists()) return null;
+            try (InputStream in = new FileInputStream(file)) {
+                ByteArrayOutputStream buf = new ByteArrayOutputStream();
+                byte[] tmp = new byte[256];
+                int n;
+                while ((n = in.read(tmp)) > 0) buf.write(tmp, 0, n);
+                return buf.toString(StandardCharsets.UTF_8.name());
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void writeInternalFile(String body) {
+        try {
+            Context context = getContext();
+            if (context == null) return;
+            File file = new File(context.getFilesDir(), INTERNAL_FILE_NAME);
+            try (FileOutputStream out = new FileOutputStream(file, false)) {
+                out.write(body.getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void writeMediaStoreFile(String body) {
         try {
             Context context = getContext();
             if (context == null) return;
@@ -455,7 +648,7 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
         }
     }
 
-    private String readFile() {
+    private String readMediaStoreFile() {
         try {
             Context context = getContext();
             if (context == null || Build.VERSION.SDK_INT < 29) return null;
@@ -491,6 +684,18 @@ public class PlayLicensePlugin extends Plugin implements PurchasesUpdatedListene
     private String sign(long start, long seen) {
         try {
             String raw = start + ":" + seen + ":shakti-trial-v1";
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.US_ASCII));
+            StringBuilder hex = new StringBuilder();
+            for (int i = 0; i < 8; i++) hex.append(String.format(Locale.US, "%02x", hash[i]));
+            return hex.toString();
+        } catch (Exception e) {
+            return "0";
+        }
+    }
+
+    private String sign4(long start, long seen, boolean tampered) {
+        try {
+            String raw = start + ":" + seen + ":" + (tampered ? "1" : "0") + ":shakti-trial-v2";
             byte[] hash = MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.US_ASCII));
             StringBuilder hex = new StringBuilder();
             for (int i = 0; i < 8; i++) hex.append(String.format(Locale.US, "%02x", hash[i]));

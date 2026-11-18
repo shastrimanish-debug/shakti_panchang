@@ -180,33 +180,63 @@ function persistAnchorTime(start: number) {
  */
 const VIP_MASTER_KEYS = new Set<string>([]);
 
-function readTrialStart(now: number): number {
+function readTrialAnchor(now: number): { start: number; maxSeen: number; tampered: boolean } {
   const key = "sp_trial_start_v25";
-  let start = 0;
+  const seenKey = "sp_max_seen_v25";
+  let start = getEarliestAnchorTime(now);
+  let maxSeen = 0;
+  let tampered = false;
+
   try {
-    start = Number(localStorage.getItem(key) || "0");
+    tampered = localStorage.getItem(STORAGE_KEYS.TAMPER_FLAG) === "1";
   } catch {
-    start = 0;
+    /* ignore */
   }
+
+  try {
+    const v25 = Number(localStorage.getItem(key) || "0");
+    if (v25 > 1000000000000 && v25 <= now + 60000 && (start === 0 || v25 < start)) {
+      start = v25;
+    }
+    const savedSeen = Number(localStorage.getItem(seenKey) || "0");
+    if (savedSeen > 1000000000000) maxSeen = savedSeen;
+  } catch {
+    /* ignore */
+  }
+
   try {
     if (typeof document !== "undefined" && document.cookie) {
       const match = document.cookie.match(/_sp_t25=([0-9]+)/);
       const saved = match ? Number(match[1]) : 0;
-      if (saved > 1000000000000 && (start === 0 || saved < start)) start = saved;
+      if (saved > 1000000000000 && saved <= now + 60000 && (start === 0 || saved < start)) start = saved;
     }
   } catch {
     /* ignore */
   }
+
   try {
     const sess = Number(sessionStorage.getItem(key) || "0");
-    if (sess > 1000000000000 && (start === 0 || sess < start)) start = sess;
+    if (sess > 1000000000000 && sess <= now + 60000 && (start === 0 || sess < start)) start = sess;
   } catch {
     /* ignore */
   }
-  if (!(start > 1000000000000 && start <= now + 60000)) start = now;
+
+  if (maxSeen > 0 && now + 120000 < maxSeen) {
+    tampered = true;
+  }
+
+  if (!(start > 1000000000000 && start <= now + 60000)) {
+    start = now;
+  }
+
+  maxSeen = Math.max(now, maxSeen, start);
+  persistAnchorTime(start);
+
   const str = String(start);
   try {
     localStorage.setItem(key, str);
+    localStorage.setItem(seenKey, String(maxSeen));
+    if (tampered) localStorage.setItem(STORAGE_KEYS.TAMPER_FLAG, "1");
   } catch {
     /* ignore */
   }
@@ -223,7 +253,8 @@ function readTrialStart(now: number): number {
   } catch {
     /* ignore */
   }
-  return start;
+
+  return { start, maxSeen, tampered };
 }
 
 /**
@@ -232,33 +263,37 @@ function readTrialStart(now: number): number {
 export function getLicenseStatus(): LicenseStatus {
   if (nativeStatus) return nativeStatus;
   const now = Date.now();
+  const isNative = Capacitor.isNativePlatform();
 
-  // Check if lifetime or annual license is active in storage
-  try {
-    const isLifetime = localStorage.getItem("sp_lifetime_active_v1") === "true";
-    const annualUntil = Number(localStorage.getItem(STORAGE_KEYS.ANNUAL) || "0");
-    if (isLifetime || annualUntil > now) {
-      return {
-        ok: true,
-        entitled: true,
-        kind: "lifetime",
-        daysRemaining: 36500,
-        expiresAt: new Date(now + 100 * 365 * 86400000).toISOString(),
-        issuedAt: new Date().toISOString(),
-        token: "sp-lifetime-active",
-        planName: "श्री शक्ति पंचांग आजीवन VIP सदस्यता",
-        amount: 99,
-        isTampered: false,
-      };
+  // Never trust WebView localStorage entitlement flags on native Android builds.
+  if (!isNative) {
+    try {
+      const isLifetime = localStorage.getItem("sp_lifetime_active_v1") === "true";
+      const annualUntil = Number(localStorage.getItem(STORAGE_KEYS.ANNUAL) || "0");
+      if (isLifetime || annualUntil > now) {
+        return {
+          ok: true,
+          entitled: true,
+          kind: "lifetime",
+          daysRemaining: 36500,
+          expiresAt: new Date(now + 100 * 365 * 86400000).toISOString(),
+          issuedAt: new Date().toISOString(),
+          token: "sp-lifetime-active",
+          planName: "श्री शक्ति पंचांग आजीवन VIP सदस्यता",
+          amount: 99,
+          isTampered: false,
+        };
+      }
+    } catch {
+      /* ignore */
     }
-  } catch {
-    /* ignore */
   }
 
-  const start = readTrialStart(now);
+  const { start, maxSeen, tampered } = readTrialAnchor(now);
+  const effectiveNow = Math.max(now, maxSeen);
   const trialEnd = start + TRIAL_DURATION_MS;
-  const entitled = now < trialEnd;
-  const daysRemaining = entitled ? Math.max(1, Math.ceil((trialEnd - now) / 86400000)) : 0;
+  const entitled = !tampered && now < trialEnd && effectiveNow < trialEnd;
+  const daysRemaining = entitled ? Math.max(1, Math.ceil((trialEnd - effectiveNow) / 86400000)) : 0;
 
   return {
     ok: true,
@@ -272,8 +307,10 @@ export function getLicenseStatus(): LicenseStatus {
     amount: 99,
     reason: entitled
       ? undefined
+      : tampered
+      ? "समय परिवर्तन का पता चला। ₹99 / $1 की आजीवन सदस्यता प्राप्त करके ऐप को अनलॉक करें।"
       : "७ दिन का निःशुल्क परीक्षण समाप्त। ₹99 / $1 की आजीवन सदस्यता प्राप्त करके ऐप को अनलॉक करें।",
-    isTampered: false,
+    isTampered: tampered,
   };
 }
 
@@ -297,14 +334,14 @@ const LicenseContext = createContext<LicenseContextValue | null>(null);
 
 export function LicenseProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<LicenseStatus>(getLicenseStatus);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => Capacitor.isNativePlatform());
 
   const refresh = useCallback(async () => {
     if (Capacitor.isNativePlatform()) {
       try {
         nativeStatus = mapNative(await PlayLicense.status());
       } catch {
-        nativeStatus = null;
+        // Keep previous verified native status if present rather than downgrading/resetting
       }
     }
     const next = getLicenseStatus();

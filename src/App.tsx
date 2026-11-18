@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Sparkles } from 'lucide-react';
+import { Crown, MapPin, Sparkles } from 'lucide-react';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, syncKundaliProfilesWithNativeStorage, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES, getStoredFontSize, setStoredFontSize, AppFontSize } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
@@ -233,14 +233,21 @@ export function App() {
   const isEntitled = licenseStatus.entitled;
 
   const triggerSubscriptionModal = useCallback((reason?: string) => {
-    const defaultReason = currentLang === 'en'
-      ? 'Your 7-day free trial has ended. Only the main Panchang page is free. Activate lifetime subscription to unlock all features.'
-      : currentLang === 'gu'
-      ? '૭ દિવસનું મફત પરીક્ષણ પૂર્ણ થયું છે. હવે માત્ર પંચાંગનું મુખ્ય પૃષ્ઠ મફત છે. અન્ય સુવિધાઓ માટે સભ્યપદ સક્રિય કરો.'
-      : "७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। अब केवल पंचांग का मुख्य पृष्ठ निःशुल्क उपलब्ध है। अन्य सुविधाओं के लिए कृपया वार्षिक सदस्यता सक्रिय करें।";
+    const defaultReason =
+      licenseStatus.kind === 'trial'
+        ? currentLang === 'en'
+          ? `Free trial active (${licenseStatus.daysRemaining} days left). You can purchase Lifetime VIP (₹99 / $1) early anytime.`
+          : currentLang === 'gu'
+          ? `મફત ટ્રાયલ સક્રિય છે (${licenseStatus.daysRemaining} દિવસ બાકી). તમે ઈચ્છો તો અત્યારે જ ₹99 / $1 માં આજીવન VIP ખરીદી શકો છો.`
+          : `आपका ७-दिवसीय निःशुल्क परीक्षण सक्रिय है (${licenseStatus.daysRemaining} दिन शेष)। आप चाहें तो अभी ₹99 / $1 में आजीवन VIP खरीद सकते हैं।`
+        : currentLang === 'en'
+        ? 'Your 7-day free trial has ended. Activate Lifetime VIP (₹99 / $1) to unlock the app.'
+        : currentLang === 'gu'
+        ? '૭ દિવસનું મફત પરીક્ષણ પૂર્ણ થયું છે. એપ અનલોક કરવા માટે ₹99 / $1 આજીવન VIP સભ્યપદ સક્રિય કરો.'
+        : '७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। ऐप को अनलॉक करने के लिए कृपया ₹99 / $1 आजीवन VIP सदस्यता सक्रिय करें।';
     setSubscriptionReason(reason || defaultReason);
     setIsSubscriptionModalOpen(true);
-  }, [currentLang]);
+  }, [currentLang, licenseStatus.kind, licenseStatus.daysRemaining]);
 
   useEffect(() => {
     const open = () => triggerSubscriptionModal();
@@ -425,10 +432,10 @@ export function App() {
           ? getLocalizedBookPage(matchedPage, currentLang).label
           : (currentLang === 'en' ? 'this chapter' : currentLang === 'gu' ? 'આ પ્રકરણ' : 'यह अध्याय');
         const msg = currentLang === 'en'
-          ? `7-day free trial ended. Only Panchang home is free. Activate Lifetime VIP (₹99 / $1) to unlock ${localizedLabel}.`
+          ? `7-day free trial ended. Activate Lifetime VIP (₹99 / $1) to unlock ${localizedLabel}.`
           : currentLang === 'gu'
           ? `૭-દિવસનું મફત પરીક્ષણ પૂર્ણ થયું છે. ${localizedLabel} જોવા માટે આજીવન VIP સભ્યપદ (₹99 / $1) સક્રિય કરો.`
-          : `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। केवल पंचांग मुख्य पृष्ठ फ्री है। ${localizedLabel} देखने के लिए आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।`;
+          : `७-दिवसीय निःशुल्क परीक्षण पूर्ण हो चुका है। ${localizedLabel} देखने के लिए आजीवन VIP सदस्यता (₹99 / $1) सक्रिय करें।`;
         triggerSubscriptionModal(msg);
         return;
       }
@@ -594,14 +601,62 @@ export function App() {
           )}
         </div>
 
-        {/* Right: Persistent City Selector ("शहर चुनें"), Font Scale & Uma AI Button */}
+        {/* Right: VIP Purchase, Persistent City Selector ("शहर चुनें"), Font Scale & Uma AI Button */}
         <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 ml-auto shrink-0">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.94 }}
+            transition={{ type: "spring", stiffness: 450, damping: 26 }}
+            className={`bx-tabmenu px-2 sm:px-2.5 py-1 sm:py-1.5 cursor-pointer shrink-0 ${
+              licenseStatus.kind !== 'lifetime' && licenseStatus.kind !== 'annual'
+                ? 'bx-navbtn-solid'
+                : ''
+            }`}
+            onClick={() => {
+              triggerHapticSelection();
+              triggerSubscriptionModal();
+            }}
+            title={
+              licenseStatus.kind === 'lifetime' || licenseStatus.kind === 'annual'
+                ? currentLang === 'en'
+                  ? 'Lifetime VIP Active'
+                  : currentLang === 'gu'
+                  ? 'આજીવન VIP સક્રિય'
+                  : 'आजीवन VIP सदस्यता सक्रिय'
+                : currentLang === 'en'
+                ? 'Buy Lifetime VIP Pass (₹99 / $1)'
+                : currentLang === 'gu'
+                ? 'આજીવન VIP ખરીદો (₹99 / $1)'
+                : 'आजीवन VIP खरीदें (₹99 / $1)'
+            }
+          >
+            <Crown
+              className="w-3.5 h-3.5 shrink-0"
+              style={{
+                color:
+                  licenseStatus.kind !== 'lifetime' && licenseStatus.kind !== 'annual'
+                    ? '#FFD88A'
+                    : 'var(--bx-gold)',
+              }}
+            />
+            <span className="text-[11px] sm:text-xs font-extrabold">
+              {licenseStatus.kind === 'lifetime' || licenseStatus.kind === 'annual'
+                ? 'VIP ✓'
+                : currentLang === 'en'
+                ? 'VIP ₹99'
+                : currentLang === 'gu'
+                ? 'VIP ₹99'
+                : '₹99 VIP'}
+            </span>
+          </motion.button>
+
           <motion.button
             type="button"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu max-w-[125px] xs:max-w-[175px] sm:max-w-[260px] px-1.5 sm:px-2.5 py-1 sm:py-1.5 cursor-pointer shrink min-w-0"
+            className="bx-tabmenu max-w-[96px] xs:max-w-[148px] sm:max-w-[230px] px-1.5 sm:px-2.5 py-1 sm:py-1.5 cursor-pointer shrink min-w-0"
             style={{
               backgroundColor: 'var(--bx-header)',
               color: '#FFFFFF',
@@ -614,14 +669,14 @@ export function App() {
             title={currentLang === 'en' ? "Select City / Location" : "शहर / स्थान बदलें (Select City)"}
           >
             <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
-            <span className="truncate max-w-[55px] xs:max-w-[90px] sm:max-w-[150px] text-xs font-semibold">
+            <span className="truncate max-w-[52px] xs:max-w-[88px] sm:max-w-[140px] text-xs font-semibold">
               {currentLang === 'en'
                 ? (currentLocation.name.match(/\(([^)]+)\)/)?.[1] || currentLocation.name)
                 : currentLocation.name}
             </span>
             <span
               style={{ backgroundColor: 'var(--bx-gold)', color: '#FFFFFF' }}
-              className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-black shrink-0 hidden xs:inline"
+              className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-black shrink-0 hidden sm:inline"
             >
               {t("common.changeCity", "शहर ▾")}
             </span>
