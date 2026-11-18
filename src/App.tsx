@@ -540,6 +540,7 @@ export function App() {
           language={currentLang}
           daysRemaining={licenseStatus.daysRemaining}
           locked={!isEntitled}
+          vipActive={licenseStatus.kind === 'lifetime' || licenseStatus.kind === 'annual'}
           onLanguage={(code) => {
             void setLanguage(code);
           }}
@@ -570,11 +571,11 @@ export function App() {
   return (
     <DrawerHostContext.Provider value={drawerApi}>
     <TabMenuContext.Provider value={tabMenu}>
-    <div key={`app-root-${currentLang}`} data-font-size={appFontSize} className={`board bx-bento ${theme}-theme h-dvh w-screen overflow-hidden relative flex flex-col font-sans`}>
+    <div key={`app-root-${currentLang}`} data-font-size={appFontSize} className={`board bx-bento ${theme}-theme h-full w-full overflow-hidden relative flex flex-col font-sans`}>
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
       <div className="bx-rail shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <BoardMenuButton
             open={drawerOpen}
             onClick={() => {
@@ -590,25 +591,30 @@ export function App() {
               transition={{ type: "spring", stiffness: 450, damping: 28 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
-              className="bx-tabmenu cursor-pointer"
+              className="bx-tabmenu cursor-pointer shrink-0"
               onClick={() => {
                 triggerHapticSelection();
                 tabMenu.go();
               }}
             >
-              {t("common.mainMenu", "मुख्य मेनू")}
+              <span className="sm:hidden">
+                {currentLang === 'en' ? 'Menu' : currentLang === 'gu' ? 'મેનુ' : 'मेनू'}
+              </span>
+              <span className="hidden sm:inline">
+                {t("common.mainMenu", "मुख्य मेनू")}
+              </span>
             </motion.button>
           )}
         </div>
 
-        {/* Right: VIP Purchase, Persistent City Selector ("शहर चुनें"), Font Scale & Uma AI Button */}
-        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 ml-auto shrink-0">
+        {/* Right: VIP Purchase, Persistent City Selector, Font Scale & Uma AI Button */}
+        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1 justify-end">
           <motion.button
             type="button"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className={`bx-tabmenu px-2 sm:px-2.5 py-1 sm:py-1.5 cursor-pointer shrink-0 ${
+            className={`bx-tabmenu px-2 sm:px-2.5 cursor-pointer shrink-0 ${
               licenseStatus.kind !== 'lifetime' && licenseStatus.kind !== 'annual'
                 ? 'bx-navbtn-solid'
                 : ''
@@ -640,7 +646,7 @@ export function App() {
                     : 'var(--bx-gold)',
               }}
             />
-            <span className="text-[11px] sm:text-xs font-extrabold">
+            <span className="text-xs font-extrabold">
               {licenseStatus.kind === 'lifetime' || licenseStatus.kind === 'annual'
                 ? 'VIP ✓'
                 : currentLang === 'en'
@@ -656,8 +662,9 @@ export function App() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu max-w-[96px] xs:max-w-[148px] sm:max-w-[230px] px-1.5 sm:px-2.5 py-1 sm:py-1.5 cursor-pointer shrink min-w-0"
+            className="bx-tabmenu max-w-[110px] sm:max-w-[220px] px-2 sm:px-2.5 cursor-pointer min-w-0 overflow-hidden"
             style={{
+              flexShrink: 1,
               backgroundColor: 'var(--bx-header)',
               color: '#FFFFFF',
               borderColor: 'var(--bx-gold)',
@@ -669,14 +676,14 @@ export function App() {
             title={currentLang === 'en' ? "Select City / Location" : "शहर / स्थान बदलें (Select City)"}
           >
             <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
-            <span className="truncate max-w-[52px] xs:max-w-[88px] sm:max-w-[140px] text-xs font-semibold">
+            <span className="truncate min-w-0 text-xs font-semibold">
               {currentLang === 'en'
                 ? (currentLocation.name.match(/\(([^)]+)\)/)?.[1] || currentLocation.name)
                 : currentLocation.name}
             </span>
             <span
               style={{ backgroundColor: 'var(--bx-gold)', color: '#FFFFFF' }}
-              className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-black shrink-0 hidden sm:inline"
+              className="text-[10px] px-1.5 py-0.5 rounded-full font-black shrink-0 hidden sm:inline"
             >
               {t("common.changeCity", "शहर ▾")}
             </span>
@@ -688,7 +695,7 @@ export function App() {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu px-1.5 sm:px-2 py-1 sm:py-1.5 cursor-pointer shrink-0"
+            className="bx-tabmenu px-2 cursor-pointer shrink-0"
             style={{
               backgroundColor: appFontSize !== 'normal' ? 'var(--bx-header)' : 'var(--bx-panel)',
               color: appFontSize !== 'normal' ? '#FFFFFF' : 'var(--bx-ink)',
@@ -714,7 +721,7 @@ export function App() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu px-2 sm:px-2.5 py-1 sm:py-1.5 cursor-pointer shrink-0"
+            className="bx-tabmenu px-2 sm:px-2.5 cursor-pointer shrink-0"
             style={{
               backgroundColor: 'var(--bx-panel)',
               color: 'var(--bx-header)',

@@ -3,11 +3,17 @@ package com.shaktipanchang.app;
 import android.Manifest;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.webkit.WebView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -25,6 +31,26 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(UmaDevicePlugin.class);
         registerPlugin(PlayLicensePlugin.class);
         super.onCreate(savedInstanceState);
+
+        WindowInsetsControllerCompat insetsController =
+            new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(false);
+        insetsController.setAppearanceLightNavigationBars(false);
+
+        View contentView = findViewById(android.R.id.content);
+        if (contentView != null) {
+            contentView.setBackgroundColor(Color.parseColor("#3a140c"));
+            ViewCompat.setOnApplyWindowInsetsListener(contentView, (v, windowInsets) -> {
+                Insets bars = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
+                );
+                Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+                v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+                return WindowInsetsCompat.CONSUMED;
+            });
+            ViewCompat.requestApplyInsets(contentView);
+        }
+
         if (wipeWebCache) {
             try {
                 WebView webView = getBridge().getWebView();

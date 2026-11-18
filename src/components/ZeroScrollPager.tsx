@@ -452,7 +452,7 @@ export function ZeroScrollPager({ children, className = "", contentClassName = "
       </div>
 
       {pageCount > 1 && (
-        <div className="bx-pagebar shrink-0 z-[45] flex items-center justify-between gap-2 px-2 py-1 border-t" data-zsp-chrome="1">
+        <div className="bx-pagebar shrink-0 z-[45] flex items-center justify-between gap-2 px-2.5 py-1.5 border-t" data-zsp-chrome="1">
           <button type="button" onClick={() => go(-1)} disabled={atStart} className="bx-navbtn">
             <ChevronLeft className="w-4 h-4" />
             <span>{t("common.prev", "पिछला")}</span>

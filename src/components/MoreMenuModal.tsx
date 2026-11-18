@@ -93,7 +93,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md" onClick={onClose}>
-      <div className="bx-more w-full max-w-md h-[100dvh] sm:h-[86dvh] max-h-[100dvh] bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 text-[#3E2714] dark:text-[#FAF2E4] rounded-t-3xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden min-h-0 flex flex-col" onClick={(event) => event.stopPropagation()}>
+      <div className="bx-more w-full max-w-md h-full sm:h-[86dvh] max-h-full bg-[#FFFDF9]/98 dark:bg-[#23140C]/98 text-[#3E2714] dark:text-[#FAF2E4] rounded-t-2xl sm:rounded-3xl border-t-2 sm:border border-[#DFCBB5] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden min-h-0 flex flex-col" onClick={(event) => event.stopPropagation()}>
         <div className="shrink-0 flex items-center justify-between gap-2 px-4 pt-4 pb-3 border-b border-[#8C6239]/30">
           <div className="flex items-center gap-2 min-w-0">
             <ShaktiLogo size={24} className="shrink-0" />
@@ -145,7 +145,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('shiv_tantra'))}
-            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#2A0808] via-[#4A1212] to-[#2B0E05] text-[#FAF2E4] border-[#D4AF37]"
+            className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2 transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#2A0808] via-[#4A1212] to-[#2B0E05] text-[#FAF2E4] border-[#D4AF37]"
           >
             <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
               <div className="p-2 bg-[#1A0505] rounded-xl text-amber-300 shrink-0 text-lg border border-[#D4AF37]/40">
@@ -172,7 +172,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('devta_arpan'))}
-            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-amber-600 via-orange-600 to-red-700 text-[#FAF2E4] border-[#D4AF37]"
+            className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2 transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-amber-600 via-orange-600 to-red-700 text-[#FAF2E4] border-[#D4AF37]"
           >
             <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
               <div className="p-2 bg-[#2C0A0A] rounded-xl text-amber-300 shrink-0 text-lg">
@@ -199,7 +199,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('havan'))}
-            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#5C2612] via-[#7A3418] to-[#4A1C0B] text-[#FAF2E4] border-[#D4AF37]"
+            className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2 transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#5C2612] via-[#7A3418] to-[#4A1C0B] text-[#FAF2E4] border-[#D4AF37]"
           >
             <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
               <div className="p-2 bg-[#2B1006] rounded-xl text-amber-300 shrink-0 border border-amber-500/30">
@@ -226,7 +226,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('granth_puran'))}
-            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-[#FAF2E4] dark:bg-[#341F14] text-[#3E2714] dark:text-[#FAF2E4] border-[#B56A00]"
+            className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2 transition cursor-pointer shadow-xs active:scale-95 bg-[#FAF2E4] dark:bg-[#341F14] text-[#3E2714] dark:text-[#FAF2E4] border-[#B56A00]"
           >
             <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
               <div className="p-2 bg-[#5C3A21] rounded-xl text-[#FFD88A] shrink-0">
@@ -252,7 +252,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('japamala'))}
-            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#2D1606] via-[#4A240A] to-[#2B1202] text-[#FAF2E4] border-amber-600/60"
+            className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2 transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#2D1606] via-[#4A240A] to-[#2B1202] text-[#FAF2E4] border-amber-600/60"
           >
             <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
               <div className="p-2 bg-[#1C0D03] rounded-xl text-amber-300 shrink-0 text-lg border border-amber-500/30">
@@ -279,7 +279,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('sadesati'))}
-            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#1E2638] via-[#2A344D] to-[#171D2D] text-[#FAF2E4] border-blue-400/40"
+            className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2 transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#1E2638] via-[#2A344D] to-[#171D2D] text-[#FAF2E4] border-blue-400/40"
           >
             <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
               <div className="p-2 bg-[#121824] rounded-xl text-blue-300 shrink-0 text-lg border border-blue-400/30">
@@ -306,7 +306,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(() => onSelectTab('gochar'))}
-            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#38260E] via-[#523814] to-[#2E1F0A] text-[#FAF2E4] border-amber-500/40"
+            className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2 transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#38260E] via-[#523814] to-[#2E1F0A] text-[#FAF2E4] border-amber-500/40"
           >
             <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
               <div className="p-2 bg-[#201507] rounded-xl text-amber-300 shrink-0 text-lg border border-amber-500/30">
@@ -333,7 +333,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           <button
             type="button"
             onClick={() => handleAction(() => onOpenSubscriptionModal?.())}
-            className="w-full p-3 rounded-2xl border flex items-center justify-between transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#5C3A21] to-[#462B17] text-[#FAF2E4] border-[#B56A00]"
+            className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2 transition cursor-pointer shadow-xs active:scale-95 bg-gradient-to-r from-[#5C3A21] to-[#462B17] text-[#FAF2E4] border-[#B56A00]"
           >
             <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
               <div className="p-2 bg-[#B56A00] rounded-xl text-white shrink-0">
