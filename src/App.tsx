@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, MapPin, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Crown, MapPin, Sparkles } from 'lucide-react';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { getStoredLocation, getSavedKundaliProfiles, syncKundaliProfilesWithNativeStorage, getStoredTheme, setStoredTheme, AppTheme, DEVOTIONAL_THEMES, getStoredFontSize, setStoredFontSize, AppFontSize } from './services/storage';
 import { calculateVedicPanchang } from './services/astronomy';
@@ -8,7 +8,7 @@ import { fetchDynamicPanchang, getLocalizedPanchang } from './services/panchangA
 import { scheduleMorningBriefs } from './services/morningBrief';
 import { SavedLocation, KundaliData, VedicPanchangData } from './types';
 import { BOOK_PAGES, getLocalizedBookPage } from './constants/bookPages';
-import { BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TabMenuContext, TodayBoard } from './components/BoardShell';
+import { BhaktiHubBoard, BoardDock, BoardDrawer, BoardMenuButton, DrawerHostContext, ModuleBoard, TabMenuContext, TodayBoard } from './components/BoardShell';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { FrontPage } from './components/FrontPage';
 import { useLicense } from './lib/license-client';
@@ -152,6 +152,17 @@ export function App() {
     location: currentLocation,
   });
   const [activeTab, setActiveTab] = useState<string>('panchang');
+  const [lastRootTab, setLastRootTab] = useState<string>('panchang');
+  const [recentTabs, setRecentTabs] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem('sp_recent_tabs_v1');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((id) => typeof id === 'string').slice(0, 6) : [];
+    } catch {
+      return [];
+    }
+  });
   const [turnDirection, setTurnDirection] = useState<'forward' | 'backward'>('forward');
   const [pageTurnNotice, setPageTurnNotice] = useState<string | null>(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(true);
@@ -445,8 +456,23 @@ export function App() {
         return;
       }
 
+      const rootTabs = new Set(['panchang', 'dashboard', 'kalnirnay', 'kundali', 'bhakti_hub', 'services', 'index']);
+      if (rootTabs.has(tabId)) {
+        setLastRootTab(tabId === 'index' ? 'services' : tabId === 'dashboard' ? 'panchang' : tabId);
+      } else {
+        setRecentTabs((prev) => {
+          const next = [tabId, ...prev.filter((id) => id !== tabId)].slice(0, 6);
+          try {
+            localStorage.setItem('sp_recent_tabs_v1', JSON.stringify(next));
+          } catch {
+            // ignore storage quota
+          }
+          return next;
+        });
+      }
+
       const targetIdx = BOOK_PAGES.findIndex((p) => p.id === tabId);
-      if (tabId === 'services' || tabId === 'index') {
+      if (tabId === 'services' || tabId === 'index' || tabId === 'bhakti_hub') {
         setTurnDirection('backward');
         setActiveTab(tabId);
       } else if (targetIdx !== -1) {
@@ -525,9 +551,24 @@ export function App() {
 
   const pageMeta = BOOK_PAGES.find((p) => p.id === activeTab);
   const pageTitle =
-    activeTab === "services" || activeTab === "index" || !pageMeta
+    activeTab === "bhakti_hub"
+      ? currentLang === "en"
+        ? "Bhakti & Remedies"
+        : currentLang === "gu"
+        ? "ભક્તિ અને ઉપાય"
+        : "भक्ति व उपाय"
+      : activeTab === "services" || activeTab === "index" || !pageMeta
       ? t("nav.allServices", "सभी सेवाएँ")
       : getLocalizedBookPage(pageMeta, currentLang).label;
+  const isRootTab =
+    activeTab === "panchang" ||
+    activeTab === "dashboard" ||
+    activeTab === "kalnirnay" ||
+    activeTab === "kundali" ||
+    activeTab === "bhakti_hub" ||
+    activeTab === "services" ||
+    activeTab === "index";
+  const isVipActive = licenseStatus.kind === 'lifetime' || licenseStatus.kind === 'annual';
   const openFromDrawer = (fn: () => void) => {
     setDrawerOpen(false);
     fn();
@@ -574,57 +615,69 @@ export function App() {
     <div key={`app-root-${currentLang}`} data-font-size={appFontSize} className={`board bx-bento ${theme}-theme h-full w-full overflow-hidden relative flex flex-col font-sans`}>
       {/* PWA Network Offline Status Bar */}
       <OfflineIndicator />
-      <div className="bx-rail shrink-0">
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <BoardMenuButton
-            open={drawerOpen}
-            onClick={() => {
-              triggerHapticSelection();
-              setDrawerOpen((open) => !open);
-            }}
-          />
-          {activeTab !== "services" && activeTab !== "index" && (
-            <motion.button
+      {/* Clean 3-Zone Top App Bar (Zero Overlap on Any Mobile Screen) */}
+      <header className="bx-rail shrink-0">
+        {/* Left Zone: Back + Module Title on sub-screens OR Location selector on root tabs */}
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          {!isRootTab ? (
+            <>
+              <button
+                type="button"
+                className="bx-menu-btn cursor-pointer shrink-0"
+                onClick={() => {
+                  triggerHapticSelection();
+                  setTurnDirection('backward');
+                  setActiveTab(lastRootTab || 'panchang');
+                }}
+                aria-label={currentLang === 'en' ? 'Back' : currentLang === 'gu' ? 'પાછા' : 'वापस'}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span
+                className="font-granth font-bold text-[15px] sm:text-base truncate min-w-0"
+                style={{ color: 'var(--bx-header)' }}
+              >
+                {pageTitle}
+              </span>
+            </>
+          ) : (
+            <button
               type="button"
-              initial={{ opacity: 0, x: -8, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ type: "spring", stiffness: 450, damping: 28 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
-              className="bx-tabmenu cursor-pointer shrink-0"
+              className="bx-tabmenu max-w-[195px] sm:max-w-[260px] px-2.5 cursor-pointer min-w-0 overflow-hidden"
+              style={{
+                flexShrink: 1,
+                backgroundColor: 'var(--bx-cream)',
+                color: 'var(--bx-ink)',
+                borderColor: 'var(--bx-line)',
+              }}
               onClick={() => {
                 triggerHapticSelection();
-                tabMenu.go();
+                setIsLocationModalOpen(true);
               }}
+              title={currentLang === 'en' ? "Select City / Location" : "शहर / स्थान बदलें"}
             >
-              <span className="sm:hidden">
-                {currentLang === 'en' ? 'Menu' : currentLang === 'gu' ? 'મેનુ' : 'मेनू'}
+              <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-gold)' }} />
+              <span className="truncate min-w-0 text-xs font-bold">
+                {currentLang === 'en'
+                  ? (currentLocation.name.match(/\(([^)]+)\)/)?.[1] || currentLocation.name)
+                  : currentLocation.name}
               </span>
-              <span className="hidden sm:inline">
-                {t("common.mainMenu", "मुख्य मेनू")}
-              </span>
-            </motion.button>
+              <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-70" />
+            </button>
           )}
         </div>
 
-        {/* Right: VIP Purchase, Persistent City Selector, Font Scale & Uma AI Button */}
-        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1 justify-end">
-          <motion.button
+        {/* Right Zone: Only 3 Clean Controls — VIP, Uma AI, and Menu/Settings Drawer */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
             type="button"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.94 }}
-            transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className={`bx-tabmenu px-2 sm:px-2.5 cursor-pointer shrink-0 ${
-              licenseStatus.kind !== 'lifetime' && licenseStatus.kind !== 'annual'
-                ? 'bx-navbtn-solid'
-                : ''
-            }`}
+            className={`bx-tabmenu px-2.5 cursor-pointer shrink-0 ${!isVipActive ? 'bx-navbtn-solid' : ''}`}
             onClick={() => {
               triggerHapticSelection();
               triggerSubscriptionModal();
             }}
             title={
-              licenseStatus.kind === 'lifetime' || licenseStatus.kind === 'annual'
+              isVipActive
                 ? currentLang === 'en'
                   ? 'Lifetime VIP Active'
                   : currentLang === 'gu'
@@ -639,89 +692,20 @@ export function App() {
           >
             <Crown
               className="w-3.5 h-3.5 shrink-0"
-              style={{
-                color:
-                  licenseStatus.kind !== 'lifetime' && licenseStatus.kind !== 'annual'
-                    ? '#FFD88A'
-                    : 'var(--bx-gold)',
-              }}
+              style={{ color: !isVipActive ? '#FFD88A' : 'var(--bx-gold)' }}
             />
             <span className="text-xs font-extrabold">
-              {licenseStatus.kind === 'lifetime' || licenseStatus.kind === 'annual'
+              {isVipActive
                 ? 'VIP ✓'
-                : currentLang === 'en'
-                ? 'VIP ₹99'
-                : currentLang === 'gu'
+                : currentLang === 'en' || currentLang === 'gu'
                 ? 'VIP ₹99'
                 : '₹99 VIP'}
             </span>
-          </motion.button>
+          </button>
 
-          <motion.button
+          <button
             type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu max-w-[110px] sm:max-w-[220px] px-2 sm:px-2.5 cursor-pointer min-w-0 overflow-hidden"
-            style={{
-              flexShrink: 1,
-              backgroundColor: 'var(--bx-header)',
-              color: '#FFFFFF',
-              borderColor: 'var(--bx-gold)',
-            }}
-            onClick={() => {
-              triggerHapticSelection();
-              setIsLocationModalOpen(true);
-            }}
-            title={currentLang === 'en' ? "Select City / Location" : "शहर / स्थान बदलें (Select City)"}
-          >
-            <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
-            <span className="truncate min-w-0 text-xs font-semibold">
-              {currentLang === 'en'
-                ? (currentLocation.name.match(/\(([^)]+)\)/)?.[1] || currentLocation.name)
-                : currentLocation.name}
-            </span>
-            <span
-              style={{ backgroundColor: 'var(--bx-gold)', color: '#FFFFFF' }}
-              className="text-[10px] px-1.5 py-0.5 rounded-full font-black shrink-0 hidden sm:inline"
-            >
-              {t("common.changeCity", "शहर ▾")}
-            </span>
-          </motion.button>
-
-          {/* Senior Citizen / Elder Friendly Font Size Scaler */}
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.94 }}
-            transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu px-2 cursor-pointer shrink-0"
-            style={{
-              backgroundColor: appFontSize !== 'normal' ? 'var(--bx-header)' : 'var(--bx-panel)',
-              color: appFontSize !== 'normal' ? '#FFFFFF' : 'var(--bx-ink)',
-              borderColor: appFontSize !== 'normal' ? 'var(--bx-gold)' : 'var(--bx-line)',
-            }}
-            onClick={handleCycleFontSize}
-            title={currentLang === 'en' ? `Font Size (${appFontSize})` : `अक्षर का आकार बदलें (वर्तमान: ${appFontSize === 'xlarge' ? 'अति-विशाल (वृद्धजन)' : appFontSize === 'large' ? 'बड़ा' : 'सामान्य'})`}
-          >
-            <span className="font-bold text-xs">
-              {currentLang === 'en'
-                ? (appFontSize === 'xlarge' ? 'A++' : appFontSize === 'large' ? 'A+' : 'A')
-                : (appFontSize === 'xlarge' ? 'अ++' : appFontSize === 'large' ? 'अ+' : 'अ')}
-            </span>
-            <span className="text-[11px] font-semibold hidden sm:inline">
-              {currentLang === 'en'
-                ? (appFontSize === 'xlarge' ? 'Extra' : appFontSize === 'large' ? 'Large' : 'Font')
-                : (appFontSize === 'xlarge' ? 'अति-विशाल' : appFontSize === 'large' ? 'बड़ा' : 'अक्षर')}
-            </span>
-          </motion.button>
-
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            className="bx-tabmenu px-2 sm:px-2.5 cursor-pointer shrink-0"
+            className="bx-tabmenu px-2.5 cursor-pointer shrink-0"
             style={{
               backgroundColor: 'var(--bx-panel)',
               color: 'var(--bx-header)',
@@ -735,9 +719,17 @@ export function App() {
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-gold)' }} />
             <span className="text-xs font-bold">{currentLang === 'en' ? 'Uma' : currentLang === 'gu' ? 'ઉમા' : 'उमा'}</span>
-          </motion.button>
+          </button>
+
+          <BoardMenuButton
+            open={drawerOpen}
+            onClick={() => {
+              triggerHapticSelection();
+              setDrawerOpen((open) => !open);
+            }}
+          />
         </div>
-      </div>
+      </header>
 
       {/* Floating Page Turn Toast Notice */}
       {false && pageTurnNotice && (
@@ -784,7 +776,11 @@ export function App() {
             }
           >
             {(activeTab === 'services' || activeTab === 'index') && (
-              <ModuleBoard language={currentLang} onOpen={handleSelectTab} />
+              <ModuleBoard language={currentLang} recentIds={recentTabs} onOpen={handleSelectTab} />
+            )}
+
+            {activeTab === 'bhakti_hub' && (
+              <BhaktiHubBoard language={currentLang} onOpen={handleSelectTab} />
             )}
 
             {(activeTab === 'dashboard' || activeTab === 'panchang') && (
@@ -1163,6 +1159,16 @@ export function App() {
         </AnimatePresence>
       </main>
 
+      {/* Persistent 5-Tab Thumb-Friendly Bottom Navigation Bar */}
+      <BoardDock
+        active={activeTab}
+        onPanchang={() => handleSelectTab('panchang')}
+        onKalnirnay={() => handleSelectTab('kalnirnay')}
+        onKundali={() => handleSelectTab('kundali')}
+        onBhakti={() => handleSelectTab('bhakti_hub')}
+        onServices={() => handleSelectTab('services')}
+      />
+
       {drawerOpen && (
         <BoardDrawer
           title={pageTitle}
@@ -1177,6 +1183,8 @@ export function App() {
               : null
           }
           active={activeTab}
+          appFontSize={appFontSize}
+          vipActive={isVipActive}
           onClose={() => setDrawerOpen(false)}
           onBack={() => openFromDrawer(() => {
             setTurnDirection('backward');
@@ -1185,12 +1193,14 @@ export function App() {
           onPlace={() => openFromDrawer(() => setIsLocationModalOpen(true))}
           onLanguage={() => openFromDrawer(() => setIsLanguageModalOpen(true))}
           onTheme={() => openFromDrawer(() => setIsThemeModalOpen(true))}
-          onServices={() => openFromDrawer(() => {
-            setTurnDirection('backward');
-            setActiveTab("services");
-          })}
+          onCycleFontSize={handleCycleFontSize}
+          onVip={() => openFromDrawer(() => triggerSubscriptionModal())}
+          onWhatsApp={() => openFromDrawer(() => setIsWhatsAppPanchangOpen(true))}
+          onServices={() => openFromDrawer(() => handleSelectTab("services"))}
           onPanchang={() => openFromDrawer(() => handleSelectTab("panchang"))}
+          onKalnirnay={() => openFromDrawer(() => handleSelectTab("kalnirnay"))}
           onKundali={() => openFromDrawer(() => handleSelectTab("kundali"))}
+          onBhakti={() => openFromDrawer(() => handleSelectTab("bhakti_hub"))}
           onUma={() => openFromDrawer(() => setIsUmaModalOpen(true))}
           onMore={() => openFromDrawer(() => setIsMoreModalOpen(true))}
           onHost={bindDrawerHost}
@@ -1229,6 +1239,8 @@ export function App() {
             onToggleTheme={handleToggleTheme}
             onSetTheme={setTheme}
             onOpenThemeModal={() => setIsThemeModalOpen(true)}
+            appFontSize={appFontSize}
+            onCycleFontSize={handleCycleFontSize}
             isAudioEnabled={isAudioEnabled}
             onToggleAudio={() => setIsAudioEnabled(!isAudioEnabled)}
             onOpenReleaseNotes={() => setIsReleaseNotesOpen(true)}

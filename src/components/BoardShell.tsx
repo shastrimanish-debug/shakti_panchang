@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Calendar,
   LayoutGrid,
@@ -21,11 +21,21 @@ import {
   Loader2,
   Scale,
   Flame,
+  Clock,
+  Heart,
+  BookOpen,
+  Compass,
+  Crown,
+  Type,
+  Sunrise,
+  Sunset,
+  Moon,
+  Stars,
+  History,
 } from "lucide-react";
 import { BOOK_PAGES, getLocalizedBookPage } from "../constants/bookPages";
 import { VedicPanchangData, SavedLocation } from "../types";
 import { getSyncedNow } from "../hooks/useUserDateTime";
-import { ZeroScrollPager } from "./ZeroScrollPager";
 import { MoonPhaseChart, generateHdMoonPanchangDataUrl } from "./MoonPhaseChart";
 import { saveImageNative } from "../lib/device";
 import { shareImageFile } from "../lib/shareHelper";
@@ -76,7 +86,7 @@ export function BoardMenuButton({
       type="button"
       className="bx-menu-btn cursor-pointer"
       data-open={open ? "true" : "false"}
-      whileHover={{ scale: 1.05 }}
+      whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.92 }}
       transition={{ type: "spring", stiffness: 450, damping: 25 }}
       onClick={() => {
@@ -101,14 +111,21 @@ export function BoardDrawer({
   showBack,
   trialText,
   active,
+  appFontSize = "normal",
+  vipActive = false,
   onClose,
   onBack,
   onPlace,
   onLanguage,
   onTheme,
+  onCycleFontSize,
+  onVip,
+  onWhatsApp,
   onServices,
   onPanchang,
+  onKalnirnay,
   onKundali,
+  onBhakti,
   onUma,
   onMore,
   onHost,
@@ -118,37 +135,65 @@ export function BoardDrawer({
   showBack: boolean;
   trialText: string | null;
   active: string;
+  appFontSize?: "normal" | "large" | "xlarge";
+  vipActive?: boolean;
   onClose: () => void;
   onBack: () => void;
   onPlace: () => void;
   onLanguage: () => void;
   onTheme: () => void;
+  onCycleFontSize?: () => void;
+  onVip?: () => void;
+  onWhatsApp?: () => void;
   onServices: () => void;
   onPanchang: () => void;
+  onKalnirnay?: () => void;
   onKundali: () => void;
+  onBhakti?: () => void;
   onUma: () => void;
   onMore: () => void;
   onHost: (el: HTMLDivElement | null) => void;
 }) {
   const { t, language } = useLanguage();
   const brand =
-    language === "en" ? "Shakti" :
-    language === "gu" ? "શક્તિ" :
-    language === "mr" ? "शक्ती" :
-    language === "bn" ? "শক্তি" :
-    language === "ta" ? "சக்தி" :
-    language === "te" ? "శక్తి" :
-    language === "kn" ? "ಶಕ್ತಿ" :
-    language === "ml" ? "ശക്തി" :
-    language === "pa" ? "ਸ਼ਕਤੀ" :
-    language === "or" ? "ଶକ୍ତି" : "शक्ति";
+    language === "en" ? "Shakti Panchang" :
+    language === "gu" ? "શક્તિ પંચાંગ" :
+    language === "mr" ? "शक्ती पंचांग" :
+    language === "bn" ? "শক্তি পঞ্চাঙ্গ" :
+    language === "ta" ? "சக்தி பஞ்சாங்கம்" :
+    language === "te" ? "శక్తి పంచాంగం" :
+    language === "kn" ? "ಶಕ್ತಿ ಪಂಚಾಂಗ" :
+    language === "ml" ? "ശക്തി പഞ്ചാംഗം" :
+    language === "pa" ? "ਸ਼ਕਤੀ ਪੰਚਾਂਗ" :
+    language === "or" ? "ଶକ୍ତି ପଞ୍ଚାଙ୍ଗ" : "शक्ति पंचांग";
+
+  const fontLabel =
+    language === "en"
+      ? appFontSize === "xlarge"
+        ? "Font: A++"
+        : appFontSize === "large"
+        ? "Font: A+"
+        : "Font: A"
+      : language === "gu"
+      ? appFontSize === "xlarge"
+        ? "અક્ષર: અ++"
+        : appFontSize === "large"
+        ? "અક્ષર: અ+"
+        : "અક્ષર: અ"
+      : appFontSize === "xlarge"
+      ? "अक्षर: अ++"
+      : appFontSize === "large"
+      ? "अक्षर: अ+"
+      : "अक्षर: अ";
+
   const items = [
-    { id: "services", label: t("nav.services", "सेवाएँ"), icon: LayoutGrid, onClick: onServices },
-    { id: "panchang", label: t("nav.panchang", "पंचांग"), icon: Sun, onClick: onPanchang },
+    { id: "panchang", label: language === "en" ? "Today" : language === "gu" ? "આજ" : "आज", icon: Sun, onClick: onPanchang },
+    { id: "kalnirnay", label: language === "en" ? "Calendar" : language === "gu" ? "કેલેન્ડર" : "कैलेंडर", icon: Calendar, onClick: onKalnirnay || onServices },
     { id: "kundali", label: t("nav.kundali", "कुण्डली"), icon: UserRound, onClick: onKundali },
-    { id: "uma", label: t("nav.uma", "उमा"), icon: Sparkles, onClick: onUma },
-    { id: "more", label: t("nav.more", "अधिक"), icon: MoreHorizontal, onClick: onMore },
+    { id: "bhakti_hub", label: language === "en" ? "Bhakti" : language === "gu" ? "ભક્તિ" : "भक्ति", icon: Flame, onClick: onBhakti || onServices },
+    { id: "services", label: language === "en" ? "All" : language === "gu" ? "બધી" : "सभी", icon: LayoutGrid, onClick: onServices },
   ];
+
   return (
     <div className="bx-drawer-back" onClick={onClose}>
       <motion.aside
@@ -162,14 +207,14 @@ export function BoardDrawer({
         aria-label={brand}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 pb-2 border-b" style={{ borderColor: "var(--bx-line)" }}>
           <div className="min-w-0">
-            <div className="text-[15px] font-semibold leading-none">{brand}</div>
+            <div className="text-[15px] font-bold leading-none font-granth">{brand}</div>
             <div className="bx-kicker mt-1 truncate">{title}</div>
           </div>
           <motion.button
             type="button"
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.9 }}
             className="bx-iconbtn cursor-pointer"
             onClick={() => {
@@ -181,13 +226,10 @@ export function BoardDrawer({
             <X className="w-4 h-4" />
           </motion.button>
         </div>
+
         {showBack && (
           <motion.button
             type="button"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ type: "spring", stiffness: 420, damping: 28 }}
-            whileHover={{ x: -2 }}
             whileTap={{ scale: 0.97 }}
             className="bx-navbtn w-full mt-3 cursor-pointer"
             onClick={() => {
@@ -199,41 +241,40 @@ export function BoardDrawer({
             {t("nav.allServices", "सभी सेवाएँ")}
           </motion.button>
         )}
+
         <motion.button
           type="button"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 420, damping: 28, delay: 0.04 }}
-          whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.97 }}
-          className="bx-navbtn w-full mt-2 cursor-pointer"
+          className="bx-navbtn w-full mt-2.5 cursor-pointer justify-between"
           onClick={() => {
             triggerHapticSelection();
             onPlace();
           }}
         >
-          <MapPin className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">{place}</span>
+          <span className="flex items-center gap-2 min-w-0">
+            <MapPin className="w-4 h-4 shrink-0" style={{ color: "var(--bx-gold)" }} />
+            <span className="truncate">{place}</span>
+          </span>
+          <span className="text-[11px] font-bold opacity-75 shrink-0">
+            {t("more.changeBtn", "बदलें")}
+          </span>
         </motion.button>
-        {trialText && <div className="bx-kicker mt-2 px-1">{trialText}</div>}
+
+        {trialText && (
+          <div className="bx-kicker mt-2 px-1">{trialText}</div>
+        )}
+
         <nav className="grid grid-cols-5 gap-1 mt-3" aria-label={t("nav.services", "मुख्य")}>
-          {items.map((item, idx) => {
-            const on = item.id === "uma" ? false : active === item.id || (item.id === "kundali" && active === "milan");
+          {items.map((item) => {
+            const on =
+              active === item.id ||
+              (item.id === "kundali" && active === "milan");
             const Icon = item.icon;
             return (
               <motion.button
                 key={item.id}
                 type="button"
                 data-on={on ? "true" : "false"}
-                initial={{ opacity: 0, y: 10, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 420,
-                  damping: 26,
-                  delay: idx * 0.035,
-                }}
-                whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => {
                   triggerHapticSelection();
@@ -244,17 +285,17 @@ export function BoardDrawer({
                 <span className="bx-tile-icon w-7 h-7">
                   <Icon className="w-3.5 h-3.5" />
                 </span>
-                {item.label}
+                <span className="truncate max-w-full">{item.label}</span>
               </motion.button>
             );
           })}
         </nav>
+
+        {/* Display & Preferences Controls */}
         <div className="grid grid-cols-2 gap-2 mt-3">
           <motion.button
             type="button"
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 450, damping: 25 }}
             className="bx-navbtn cursor-pointer"
             onClick={() => {
               triggerHapticSelection();
@@ -266,9 +307,7 @@ export function BoardDrawer({
           </motion.button>
           <motion.button
             type="button"
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 450, damping: 25 }}
             className="bx-navbtn cursor-pointer"
             onClick={() => {
               triggerHapticSelection();
@@ -278,7 +317,90 @@ export function BoardDrawer({
             <Languages className="w-4 h-4" />
             {t("common.language", "भाषा")}
           </motion.button>
+          {onCycleFontSize && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.96 }}
+              className="bx-navbtn cursor-pointer"
+              onClick={() => {
+                triggerHapticSelection();
+                onCycleFontSize();
+              }}
+            >
+              <Type className="w-4 h-4" />
+              {fontLabel}
+            </motion.button>
+          )}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.96 }}
+            className="bx-navbtn cursor-pointer"
+            onClick={() => {
+              triggerHapticSelection();
+              onMore();
+            }}
+          >
+            <MoreHorizontal className="w-4 h-4" />
+            {t("common.settings", "सेटिंग्स")}
+          </motion.button>
         </div>
+
+        {/* Quick Actions: WhatsApp Card, Uma AI & VIP */}
+        <div className="space-y-2 mt-3">
+          {onWhatsApp && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.97 }}
+              className="bx-navbtn w-full cursor-pointer"
+              onClick={() => {
+                triggerHapticSelection();
+                onWhatsApp();
+              }}
+            >
+              <Share2 className="w-4 h-4 text-emerald-600" />
+              <span>{t("more.whatsappCardTitle", "व्हाट्सएप सुप्रभात कार्ड")}</span>
+            </motion.button>
+          )}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.97 }}
+            className="bx-navbtn w-full cursor-pointer"
+            onClick={() => {
+              triggerHapticSelection();
+              onUma();
+            }}
+          >
+            <Sparkles className="w-4 h-4" style={{ color: "var(--bx-gold)" }} />
+            <span>{t("more.umaCardTitle", "उमा वैदिक दैवज्ञ परामर्श")}</span>
+          </motion.button>
+          {onVip && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.97 }}
+              className={`bx-navbtn w-full cursor-pointer ${!vipActive ? "bx-navbtn-solid" : ""}`}
+              onClick={() => {
+                triggerHapticSelection();
+                onVip();
+              }}
+            >
+              <Crown className="w-4 h-4" style={{ color: vipActive ? "var(--bx-gold)" : "#FFD88A" }} />
+              <span>
+                {vipActive
+                  ? language === "en"
+                    ? "Lifetime VIP Active ✓"
+                    : language === "gu"
+                    ? "આજીવન VIP સક્રિય ✓"
+                    : "आजीवन VIP सक्रिय ✓"
+                  : language === "en"
+                  ? "Unlock Lifetime VIP (₹99 / $1)"
+                  : language === "gu"
+                  ? "આજીવન VIP ખરીદો (₹99 / $1)"
+                  : "आजीवन VIP खरीदें (₹99 / $1)"}
+              </span>
+            </motion.button>
+          )}
+        </div>
+
         <div ref={onHost} className="mt-3 empty:hidden" />
       </motion.aside>
     </div>
@@ -370,100 +492,226 @@ export function BoardHeader({
   );
 }
 
+const JYOTISH_CHILD_TABS = new Set([
+  "kundali",
+  "milan",
+  "prashna",
+  "sadesati",
+  "gochar",
+  "rashifal",
+  "numerology",
+  "palmistry",
+  "tarot",
+  "gemology",
+  "face_reading",
+  "iching",
+]);
+
+const BHAKTI_CHILD_TABS = new Set([
+  "bhakti_hub",
+  "durga",
+  "hanuman",
+  "sundarkand",
+  "vishnu_sahasranama",
+  "granth_puran",
+  "gita",
+  "vratkatha",
+  "audio_player",
+  "havan",
+  "devta_arpan",
+  "shiv_tantra",
+  "lal_kitab",
+  "upay",
+  "ravan_sanhita",
+  "saral",
+  "shastrokt",
+  "sabar",
+  "jain_mantras",
+  "vastu",
+  "reminders",
+]);
+
 export function BoardDock({
   active,
-  onServices,
   onPanchang,
+  onKalnirnay,
   onKundali,
-  onUma,
-  onMore,
+  onBhakti,
+  onServices,
 }: {
   active: string;
-  onServices: () => void;
   onPanchang: () => void;
+  onKalnirnay: () => void;
   onKundali: () => void;
-  onUma: () => void;
-  onMore: () => void;
+  onBhakti: () => void;
+  onServices: () => void;
 }) {
-  const { t } = useLanguage();
+  const { language } = useLanguage();
+  const labels = {
+    panchang:
+      language === "en" ? "Today" :
+      language === "gu" ? "આજ" :
+      language === "mr" ? "आज" :
+      language === "bn" ? "আজ" :
+      language === "ta" ? "இன்று" :
+      language === "te" ? "ఈరోజు" :
+      language === "kn" ? "ಇಂದು" :
+      language === "ml" ? "ഇന്ന്" :
+      language === "pa" ? "ਅੱਜ" :
+      language === "or" ? "ଆଜି" : "आज",
+    kalnirnay:
+      language === "en" ? "Calendar" :
+      language === "gu" ? "કેલેન્ડર" :
+      language === "mr" ? "कॅलेंडर" :
+      language === "bn" ? "ক্যালেন্ডার" :
+      language === "ta" ? "நாட்காட்டி" :
+      language === "te" ? "క్యాలెండర్" :
+      language === "kn" ? "ಕ್ಯಾಲೆಂಡರ್" :
+      language === "ml" ? "കലണ്ടർ" :
+      language === "pa" ? "ਕੈਲੰਡਰ" :
+      language === "or" ? "କ୍ୟାଲେଣ୍ଡର" : "कैलेंडर",
+    kundali:
+      language === "en" ? "Kundali" :
+      language === "gu" ? "કુંડળી" :
+      language === "mr" ? "कुंडली" :
+      language === "bn" ? "কোষ্ঠী" :
+      language === "ta" ? "ஜாதகம்" :
+      language === "te" ? "కుండలి" :
+      language === "kn" ? "ಕುಂಡಲಿ" :
+      language === "ml" ? "ജാതകം" :
+      language === "pa" ? "ਕੁੰਡਲੀ" :
+      language === "or" ? "କୁଣ୍ଡଳୀ" : "कुंडली",
+    bhakti:
+      language === "en" ? "Bhakti" :
+      language === "gu" ? "ભક્તિ" :
+      language === "mr" ? "भक्ती" :
+      language === "bn" ? "ভক্তি" :
+      language === "ta" ? "பக்தி" :
+      language === "te" ? "భక్తి" :
+      language === "kn" ? "ಭಕ್ತಿ" :
+      language === "ml" ? "ഭക്തി" :
+      language === "pa" ? "ਭਗਤੀ" :
+      language === "or" ? "ଭକ୍ତି" : "भक्ति",
+    services:
+      language === "en" ? "All" :
+      language === "gu" ? "બધી" :
+      language === "mr" ? "सर्व" :
+      language === "bn" ? "সব সেবা" :
+      language === "ta" ? "அனைத்தும்" :
+      language === "te" ? "అన్నీ" :
+      language === "kn" ? "ಎಲ್ಲಾ" :
+      language === "ml" ? "എല്ലാം" :
+      language === "pa" ? "ਸਭ" :
+      language === "or" ? "ସବୁ" : "सभी",
+  };
+
   const items = [
-    { id: "services", label: t("nav.services", "सेवाएँ"), icon: LayoutGrid, onClick: onServices },
-    { id: "panchang", label: t("nav.panchang", "पंचांग"), icon: Sun, onClick: onPanchang },
-    { id: "kundali", label: t("nav.kundali", "कुण्डली"), icon: UserRound, onClick: onKundali },
-    { id: "uma", label: t("nav.uma", "उमा"), icon: Sparkles, onClick: onUma },
-    { id: "more", label: t("nav.more", "अधिक"), icon: MoreHorizontal, onClick: onMore },
+    {
+      id: "panchang",
+      label: labels.panchang,
+      icon: Sun,
+      onClick: onPanchang,
+      isOn: active === "panchang" || active === "dashboard",
+    },
+    {
+      id: "kalnirnay",
+      label: labels.kalnirnay,
+      icon: Calendar,
+      onClick: onKalnirnay,
+      isOn: active === "kalnirnay" || active === "festivals",
+    },
+    {
+      id: "kundali",
+      label: labels.kundali,
+      icon: UserRound,
+      onClick: onKundali,
+      isOn: JYOTISH_CHILD_TABS.has(active),
+    },
+    {
+      id: "bhakti_hub",
+      label: labels.bhakti,
+      icon: Flame,
+      onClick: onBhakti,
+      isOn: BHAKTI_CHILD_TABS.has(active),
+    },
+    {
+      id: "services",
+      label: labels.services,
+      icon: LayoutGrid,
+      onClick: onServices,
+      isOn:
+        active === "services" ||
+        active === "index" ||
+        active === "choghadiya" ||
+        active === "muhurat" ||
+        active === "yatra",
+    },
   ];
+
   return (
-    <nav className="bx-dock shrink-0 z-40 grid grid-cols-5" aria-label={t("nav.services", "मुख्य")}>
-      {items.map((item, idx) => {
-        const on = item.id === "uma" ? false : active === item.id || (item.id === "kundali" && active === "milan");
+    <nav className="bx-dock shrink-0 z-40 grid grid-cols-5" aria-label={labels.services}>
+      {items.map((item) => {
         const Icon = item.icon;
         return (
-          <motion.button
+          <button
             key={item.id}
             type="button"
-            data-on={on ? "true" : "false"}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 420,
-              damping: 26,
-              delay: idx * 0.025,
-            }}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.92 }}
+            data-on={item.isOn ? "true" : "false"}
+            aria-current={item.isOn ? "page" : undefined}
             onClick={() => {
               triggerHapticSelection();
               item.onClick();
             }}
-            className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium min-w-0 px-0.5 cursor-pointer"
+            className="flex flex-col items-center justify-center gap-0.5 text-[10.5px] leading-tight min-w-0 px-0.5 cursor-pointer select-none"
           >
-            <span className="bx-tile-icon w-7 h-7">
-              <Icon className="w-3.5 h-3.5" />
+            <span className="bx-tile-icon flex items-center justify-center">
+              <Icon className="w-[18px] h-[18px]" strokeWidth={item.isOn ? 2.3 : 1.9} />
             </span>
-            {item.label}
-          </motion.button>
+            <span className="truncate max-w-full">{item.label}</span>
+          </button>
         );
       })}
     </nav>
   );
 }
 
-const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
+const SERVICE_GROUPS: { key: string; title: Record<string, string>; ids: string[] }[] = [
   {
+    key: "today",
     title: {
-      hi: "आज",
-      en: "Today",
-      gu: "આજ",
-      mr: "आज",
-      bn: "আজ",
-      ta: "இன்று",
-      te: "ఈరోజు",
-      kn: "ಇಂದು",
-      ml: "ഇന്ന്",
-      pa: "ਅੱਜ",
-      or: "ଆଜି",
+      hi: "आज व पंचांग",
+      en: "Today & Panchang",
+      gu: "આજ અને પંચાંગ",
+      mr: "आज व पंचांग",
+      bn: "আজ ও পঞ্চাঙ্গ",
+      ta: "இன்று & பஞ்சாங்கம்",
+      te: "ఈరోజు & పంచాంగం",
+      kn: "ಇಂದು & ಪಂಚಾಂಗ",
+      ml: "ഇന്ന് & പഞ്ചാംഗം",
+      pa: "ਅੱਜ ਅਤੇ ਪੰਚਾਂਗ",
+      or: "ଆଜି ଓ ପଞ୍ଚାଙ୍ଗ",
     },
-    ids: ["panchang", "havan", "kalnirnay", "gochar", "rashifal", "choghadiya", "muhurat", "yatra", "festivals"],
+    ids: ["panchang", "havan", "kalnirnay", "choghadiya", "muhurat", "festivals", "yatra", "gochar", "rashifal"],
   },
   {
+    key: "jyotish",
     title: {
-      hi: "जन्म पत्रिका व लाल किताब",
-      en: "Birth Chart & Lal Kitab",
-      gu: "જન્મ પત્રિકા અને લાલ કિતાબ",
-      mr: "जन्म कुंडली आणि लाल किताब",
-      bn: "কোষ্ঠী ও লাল কিতাব",
-      ta: "ஜாதகம் மற்றும் லால் கிதாப்",
-      te: "జాతక చక్రం & లాల్ కితాబ్",
-      kn: "ಜನ್ಮ ಕುಂಡಲಿ ಮತ್ತು ಲಾಲ್ ಕಿತಾಬ್",
-      ml: "ജാതകവും ലാൽ കിതാബും",
-      pa: "ਜਨਮ ਕੁੰਡਲੀ ਅਤੇ ਲਾਲ ਕਿਤਾਬ",
-      or: "ଜନ୍ମ କୁଣ୍ଡଳୀ ଓ ଲାଲ୍ କିତାବ୍",
+      hi: "ज्योतिष व उपाय",
+      en: "Astrology & Remedies",
+      gu: "જ્યોતિષ અને ઉપાય",
+      mr: "ज्योतिष व उपाय",
+      bn: "জ্যোতিষ ও প্রতিকার",
+      ta: "ஜோதிடம் & பரிகாரம்",
+      te: "జ్యోతిష్యం & పరిహారాలు",
+      kn: "ಜ್ಯೋತಿಷ್ಯ & ಪರಿಹಾರ",
+      ml: "ജ്യോതിഷവും പരിഹാരങ്ങളും",
+      pa: "ਜੋਤਿਸ਼ ਅਤੇ ਉਪਾਅ",
+      or: "ଜ୍ୟୋତିଷ ଓ ପ୍ରତିକାର",
     },
-    ids: ["sadesati", "lal_kitab", "ravan_sanhita", "kundali", "milan", "prashna", "saral", "shastrokt", "sabar", "numerology", "gemology", "jain_mantras"],
+    ids: ["kundali", "milan", "prashna", "sadesati", "lal_kitab", "ravan_sanhita", "saral", "shastrokt", "sabar", "numerology", "gemology", "jain_mantras"],
   },
   {
+    key: "bhakti",
     title: {
       hi: "शास्त्र और पाठ",
       en: "Scriptures & Stotram",
@@ -477,14 +725,15 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
       pa: "ਸ਼ਾਸਤਰ ਅਤੇ ਪਾਠ",
       or: "ଶାସ୍ତ୍ର ଓ ସ୍ତୋତ୍ର ପାଠ",
     },
-    ids: ["japamala", "vishnu_sahasranama", "granth_puran", "devta_arpan", "durga", "audio_player", "hanuman", "sundarkand", "gita", "vratkatha", "vastu", "reminders"],
+    ids: ["japamala", "durga", "hanuman", "sundarkand", "vishnu_sahasranama", "granth_puran", "gita", "vratkatha", "audio_player", "devta_arpan", "shiv_tantra", "vastu", "reminders"],
   },
   {
+    key: "darshan",
     title: {
-      hi: "दर्शन",
+      hi: "दर्शन व विद्या",
       en: "Mystic Readings",
-      gu: "દર્શન",
-      mr: "दर्शन",
+      gu: "દર્શન અને વિદ્યા",
+      mr: "दर्शन व विद्या",
       bn: "দিব্য দর্শন",
       ta: "ஜோதிட வாசிப்பு",
       te: "దివ్య దర్శనం",
@@ -497,11 +746,44 @@ const SERVICE_GROUPS: { title: Record<string, string>; ids: string[] }[] = [
   },
 ];
 
+const BHAKTI_SEGMENTS: { key: string; title: Record<string, string>; ids: string[] }[] = [
+  {
+    key: "path",
+    title: {
+      hi: "पाठ व स्तोत्र",
+      en: "Stotram & Path",
+      gu: "પાઠ અને સ્તોત્ર",
+      mr: "पाठ व स्तोत्र",
+    },
+    ids: ["durga", "hanuman", "sundarkand", "vishnu_sahasranama", "granth_puran", "gita", "vratkatha", "audio_player"],
+  },
+  {
+    key: "upay",
+    title: {
+      hi: "उपाय व मंत्र",
+      en: "Remedies & Mantras",
+      gu: "ઉપાય અને મંત્ર",
+      mr: "उपाय व मंत्र",
+    },
+    ids: ["lal_kitab", "ravan_sanhita", "saral", "shastrokt", "sabar", "jain_mantras"],
+  },
+  {
+    key: "sadhana",
+    title: {
+      hi: "साधना व हवन",
+      en: "Sadhana & Havan",
+      gu: "સાધના અને હવન",
+      mr: "साधना व हवन",
+    },
+    ids: ["japamala", "havan", "devta_arpan", "shiv_tantra", "vastu", "reminders"],
+  },
+];
+
 const SEARCH_HINTS: Record<string, string> = {
-  hi: "सेवा खोजें",
-  en: "Find a service",
-  gu: "સેવા શોધો",
-  mr: "सेवा शोधा",
+  hi: "सेवा खोजें (जैसे कुंडली, हवन, दुर्गा...)",
+  en: "Search 40+ services (Kundali, Havan, Gita...)",
+  gu: "સેવા શોધો (કુંડળી, હવન, દુર્ગા...)",
+  mr: "सेवा शोधा (कुंडली, हवन, दुर्गा...)",
   bn: "সেবা খুঁজুন",
   ta: "சேவையைத் தேடுங்கள்",
   te: "సేవను వెతకండి",
@@ -529,18 +811,159 @@ function groupTitle(title: Record<string, string>, language: string) {
   return title[language] || title.hi;
 }
 
-export function ModuleBoard({
+export function BhaktiHubBoard({
   language,
   onOpen,
 }: {
   language: string;
   onOpen: (id: string) => void;
 }) {
+  const [segment, setSegment] = useState<string>("all");
+  const pages = useMemo(
+    () => BOOK_PAGES.map((page) => getLocalizedBookPage(page, language)),
+    [language]
+  );
+  const byId = useMemo(() => new Map(pages.map((p) => [p.id, p])), [pages]);
+
+  const allLabel =
+    language === "en" ? "All" : language === "gu" ? "બધા" : language === "mr" ? "सर्व" : "सभी";
+  const heading =
+    language === "en"
+      ? "Bhakti, Scriptures & Remedies"
+      : language === "gu"
+      ? "ભક્તિ, શાસ્ત્ર પાઠ અને ઉપાય"
+      : "भक्ति, शास्त्र पाठ व सिद्ध उपाय";
+  const subtitle =
+    language === "en"
+      ? "Stotrams, Nitya Havan, 108 Japa Mala, Lal Kitab & Mantras in one place"
+      : language === "gu"
+      ? "સ્તોત્ર પાઠ, નિત્ય હવન, ૧૦૮ જપ માળા, લાલ કિતાબ અને સિદ્ધ મંત્ર"
+      : "संपूर्ण स्तोत्र-पाठ, नित्य हवन, १०८ जप माला, लाल किताब व सिद्ध मंत्र";
+
+  const visibleSegments =
+    segment === "all"
+      ? BHAKTI_SEGMENTS
+      : BHAKTI_SEGMENTS.filter((s) => s.key === segment);
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col bx-home">
+      {/* Compact Header & Segmented Filter Tabs */}
+      <div className="shrink-0 px-3 pt-3 pb-2 space-y-2.5 border-b" style={{ borderColor: "var(--bx-line)" }}>
+        <div>
+          <h2 className="font-granth font-bold text-lg leading-tight" style={{ color: "var(--bx-header)" }}>
+            {heading}
+          </h2>
+          <p className="text-xs mt-0.5 opacity-80" style={{ color: "var(--bx-mute)" }}>
+            {subtitle}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          {[
+            { key: "all", label: allLabel },
+            ...BHAKTI_SEGMENTS.map((s) => ({
+              key: s.key,
+              label: groupTitle(s.title, language),
+            })),
+          ].map((tab) => {
+            const active = segment === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => {
+                  triggerHapticSelection();
+                  setSegment(tab.key);
+                }}
+                style={{
+                  backgroundColor: active ? "var(--bx-header)" : "var(--bx-panel)",
+                  color: active ? "#FFFFFF" : "var(--bx-ink)",
+                  borderColor: active ? "var(--bx-gold)" : "var(--bx-line)",
+                }}
+                className="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition active:scale-95"
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Smooth Native Vertical Scroll */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 pt-3 pb-8 space-y-5"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+      >
+        {visibleSegments.map((sec) => {
+          const secPages = sec.ids
+            .map((id) => byId.get(id))
+            .filter((p): p is NonNullable<typeof p> => !!p);
+          if (!secPages.length) return null;
+
+          return (
+            <section key={sec.key} className="space-y-2">
+              <div className="flex items-center justify-between px-0.5">
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider"
+                  style={{ color: "var(--bx-mute)" }}
+                >
+                  {groupTitle(sec.title, language)}
+                </h3>
+                <span className="text-[11px] font-semibold opacity-70 tabular-nums" style={{ color: "var(--bx-mute)" }}>
+                  {secPages.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                {secPages.map((page) => {
+                  const Icon = page.icon;
+                  return (
+                    <button
+                      key={page.id}
+                      type="button"
+                      className="bx-tile bx-glass cursor-pointer text-left"
+                      onClick={() => {
+                        triggerHapticSelection();
+                        onOpen(page.id);
+                      }}
+                    >
+                      <span className="bx-tile-icon">
+                        <Icon className="w-4 h-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <strong className="truncate block">{page.label}</strong>
+                        <p className="line-clamp-2">{page.desc}</p>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function ModuleBoard({
+  language,
+  recentIds = [],
+  onOpen,
+}: {
+  language: string;
+  recentIds?: string[];
+  onOpen: (id: string) => void;
+}) {
   const [query, setQuery] = useState("");
-  const pages = BOOK_PAGES.map((page) => getLocalizedBookPage(page, language));
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const pages = useMemo(
+    () => BOOK_PAGES.map((page) => getLocalizedBookPage(page, language)),
+    [language]
+  );
   const byId = useMemo(() => new Map(pages.map((page) => [page.id, page])), [pages]);
   const q = query.trim().toLowerCase();
   const searchHint = SEARCH_HINTS[language] || SEARCH_HINTS.hi;
+
   const rank = (page: { label: string; title: string; desc: string }) => {
     const label = page.label.toLowerCase();
     const title = page.title.toLowerCase();
@@ -549,66 +972,181 @@ export function ModuleBoard({
     if (title.includes(q)) return 2;
     return 3;
   };
+
   const matches = (page: { label: string; title: string; desc: string }) =>
     !q || `${page.label} ${page.title} ${page.desc}`.toLowerCase().includes(q);
+
+  const recentPages = useMemo(
+    () =>
+      recentIds
+        .map((id) => byId.get(id))
+        .filter((p): p is NonNullable<typeof p> => !!p)
+        .slice(0, 6),
+    [recentIds, byId]
+  );
+
   let sections = SERVICE_GROUPS.map((group) => ({
+    key: group.key,
     title: groupTitle(group.title, language),
     pages: group.ids
       .map((id) => byId.get(id))
       .filter((page): page is NonNullable<typeof page> => !!page)
       .filter(matches),
   })).filter((group) => group.pages.length > 0);
+
   const used = new Set([...SERVICE_GROUPS.flatMap((group) => group.ids), "upay"]);
   const extra = pages.filter((page) => !used.has(page.id) && matches(page));
   if (extra.length) {
     sections.push({
-      title: language === "en" ? "More" : language === "gu" ? "વધુ" : language === "mr" ? "अधिक" : "और",
+      key: "more",
+      title: language === "en" ? "More" : language === "gu" ? "વધુ" : language === "mr" ? "अधिक" : "अन्य सेवाएँ",
       pages: extra,
     });
   }
+
   if (q) {
     const hits = sections
       .flatMap((section) => section.pages)
       .sort((a, b) => rank(a) - rank(b));
-    sections = hits.length ? [{ title: searchHint, pages: hits }] : [];
+    sections = hits.length ? [{ key: "search", title: searchHint, pages: hits }] : [];
+  } else if (activeCategory !== "all") {
+    sections = sections.filter((s) => s.key === activeCategory);
   }
+
+  const allTabLabel =
+    language === "en" ? "All" : language === "gu" ? "બધી" : language === "mr" ? "सर्व" : "सभी";
+  const recentLabel =
+    language === "en"
+      ? "Recently Opened"
+      : language === "gu"
+      ? "તાજેતરમાં ખોલેલ"
+      : "हाल ही में खोले गए";
 
   return (
     <div className="flex-1 min-h-0 flex flex-col bx-home">
-      <label className="bx-search px-3 pt-3 pb-1 shrink-0">
-        <Search className="bx-search-icon" aria-hidden="true" />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={`${searchHint} — ${pages.length}`}
-          aria-label={searchHint}
-        />
-      </label>
-      <ZeroScrollPager className="flex-1 min-h-0" contentClassName="px-3 pb-3 flex flex-col gap-3" resetKey={query}>
-          {sections.length === 0 && (
-            <div className="bx-fact text-sm">
-              {NO_MATCH_MESSAGES[language] || NO_MATCH_MESSAGES.hi}
-            </div>
+      {/* Sticky Search + Category Filter Tabs */}
+      <div className="shrink-0 px-3 pt-3 pb-2 space-y-2 border-b" style={{ borderColor: "var(--bx-line)" }}>
+        <label className="bx-search relative block">
+          <Search className="bx-search-icon" aria-hidden="true" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={searchHint}
+            aria-label={searchHint}
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full opacity-70 hover:opacity-100 cursor-pointer"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+            </button>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-stretch items-start content-start">
-            {sections.flatMap((section) =>
-              section.pages.map((page, idx) => {
+        </label>
+
+        {!q && (
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            {[
+              { key: "all", label: `${allTabLabel} (${pages.length - 1})` },
+              ...SERVICE_GROUPS.map((g) => ({
+                key: g.key,
+                label: groupTitle(g.title, language),
+              })),
+            ].map((tab) => {
+              const active = activeCategory === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    triggerHapticSelection();
+                    setActiveCategory(tab.key);
+                  }}
+                  style={{
+                    backgroundColor: active ? "var(--bx-header)" : "var(--bx-panel)",
+                    color: active ? "#FFFFFF" : "var(--bx-ink)",
+                    borderColor: active ? "var(--bx-gold)" : "var(--bx-line)",
+                  }}
+                  className="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition active:scale-95"
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Smooth Vertical Scrolling Content (No ZeroScrollPager Pagination) */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 pt-3 pb-8 space-y-5"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+      >
+        {/* Recently Opened Horizontal Strip */}
+        {!q && activeCategory === "all" && recentPages.length > 0 && (
+          <section className="space-y-2">
+            <div className="flex items-center gap-1.5 px-0.5">
+              <History className="w-3.5 h-3.5" style={{ color: "var(--bx-gold)" }} />
+              <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--bx-mute)" }}>
+                {recentLabel}
+              </h3>
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {recentPages.map((page) => {
                 const Icon = page.icon;
                 return (
-                  <motion.button
+                  <button
+                    key={`recent-${page.id}`}
+                    type="button"
+                    onClick={() => {
+                      triggerHapticSelection();
+                      onOpen(page.id);
+                    }}
+                    style={{
+                      backgroundColor: "var(--bx-panel)",
+                      borderColor: "var(--bx-line)",
+                      color: "var(--bx-ink)",
+                    }}
+                    className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold cursor-pointer active:scale-95 transition"
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-mark)" }} />
+                    <span className="whitespace-nowrap">{page.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {sections.length === 0 && (
+          <div className="bx-fact text-sm text-center py-6">
+            {NO_MATCH_MESSAGES[language] || NO_MATCH_MESSAGES.hi}
+          </div>
+        )}
+
+        {sections.map((section) => (
+          <section key={section.key} className="space-y-2">
+            <div className="flex items-center justify-between px-0.5">
+              <h3
+                className="text-xs font-bold uppercase tracking-wider"
+                style={{ color: "var(--bx-mute)" }}
+              >
+                {section.title}
+              </h3>
+              <span className="text-[11px] font-semibold opacity-70 tabular-nums" style={{ color: "var(--bx-mute)" }}>
+                {section.pages.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+              {section.pages.map((page) => {
+                const Icon = page.icon;
+                return (
+                  <button
                     key={page.id}
                     type="button"
-                    initial={{ opacity: 0, y: 12, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 380,
-                      damping: 26,
-                      delay: Math.min(idx * 0.018, 0.25),
-                    }}
-                    whileHover={{ y: -3, scale: 1.015 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bx-tile bx-glass cursor-pointer"
+                    className="bx-tile bx-glass cursor-pointer text-left"
                     onClick={() => {
                       triggerHapticSelection();
                       onOpen(page.id);
@@ -617,16 +1155,17 @@ export function ModuleBoard({
                     <span className="bx-tile-icon">
                       <Icon className="w-4 h-4" />
                     </span>
-                    <span>
-                      <strong>{page.label}</strong>
-                      <p>{page.desc}</p>
+                    <span className="min-w-0">
+                      <strong className="truncate block">{page.label}</strong>
+                      <p className="line-clamp-2">{page.desc}</p>
                     </span>
-                  </motion.button>
+                  </button>
                 );
-              }),
-            )}
-          </div>
-      </ZeroScrollPager>
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }
@@ -695,12 +1234,12 @@ export function TodayBoard({
   const dailyAgnivasa = calculateAgnivasa(panchang, language);
 
   const formatPlaceDisplay = (name: string, lang: string): string => {
-    if (!name) return '';
-    if (lang === 'en') {
+    if (!name) return "";
+    if (lang === "en") {
       const match = name.match(/\(([^)]+)\)/);
       if (match && match[1]) {
         const flagMatch = name.match(/^(\p{Emoji}|\p{Extended_Pictographic}|\S+)\s+/u);
-        const flag = flagMatch && !flagMatch[0].match(/[\u0900-\u097F]/) ? flagMatch[0] : '';
+        const flag = flagMatch && !flagMatch[0].match(/[\u0900-\u097F]/) ? flagMatch[0] : "";
         return `${flag}${match[1]}`.trim();
       }
     }
@@ -715,7 +1254,7 @@ export function TodayBoard({
   const facts: [string, string][] = [
     [t("panchang.tithi", "तिथि"), trVedic(panchang.tithi, language)],
     [t("panchang.paksha", "पक्ष"), trVedic(panchang.paksha, language)],
-    [t("panchang.nakshatra", "नक्षत्र"), `${trVedic(panchang.nakshatra, language)} · ${language === 'en' ? 'Charan' : language === 'gu' ? 'ચરણ' : 'चरण'} ${panchang.pada}`],
+    [t("panchang.nakshatra", "नक्षत्र"), `${trVedic(panchang.nakshatra, language)} · ${language === "en" ? "Charan" : language === "gu" ? "ચરણ" : "चरण"} ${panchang.pada}`],
     [t("panchang.yoga", "योग"), trVedic(panchang.yoga, language)],
     [t("panchang.karana", "करण"), trVedic(panchang.karana, language)],
     [t("panchang.weekday", "वार"), trVedic(panchang.weekday, language)],
@@ -731,6 +1270,50 @@ export function TodayBoard({
     [placeLabelKey, formatPlaceDisplay(place.name, language)],
   ];
 
+  // Super-App 4x2 Quick Shortcuts Grid
+  const quickShortcuts = [
+    {
+      id: "kundali",
+      label: language === "en" ? "Kundali" : language === "gu" ? "કુંડળી" : "कुंडली",
+      icon: UserRound,
+    },
+    {
+      id: "milan",
+      label: language === "en" ? "Match" : language === "gu" ? "મિલાન" : "मिलान",
+      icon: Heart,
+    },
+    {
+      id: "choghadiya",
+      label: language === "en" ? "Choghadiya" : language === "gu" ? "ચોઘડિયા" : "चौघड़िया",
+      icon: Clock,
+    },
+    {
+      id: "muhurat",
+      label: language === "en" ? "Muhurat" : language === "gu" ? "મુહૂર્ત" : "मुहूर्त",
+      icon: Compass,
+    },
+    {
+      id: "festivals",
+      label: language === "en" ? "Festivals" : language === "gu" ? "વ્રત-તહેવાર" : "व्रत-त्योहार",
+      icon: Calendar,
+    },
+    {
+      id: "rashifal",
+      label: language === "en" ? "Rashifal" : language === "gu" ? "રાશિફળ" : "राशिफल",
+      icon: Stars,
+    },
+    {
+      id: "japamala",
+      label: language === "en" ? "Japa Mala" : language === "gu" ? "જપ માળા" : "जप माला",
+      icon: Sparkles,
+    },
+    {
+      id: "services",
+      label: language === "en" ? "All 40+" : language === "gu" ? "બધી સેવા" : "सभी सेवाएँ",
+      icon: LayoutGrid,
+    },
+  ];
+
   const handleSaveHd = async () => {
     triggerHapticSelection();
     if (isSavingHd) return;
@@ -741,18 +1324,18 @@ export function TodayBoard({
       const slug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
       await saveImageNative(dataUrl, `shakti-panchang-hd-${slug}.png`);
       setHdNotice(
-        language === 'en'
+        language === "en"
           ? "✓ Full HD (1080p) Panchang image saved!"
-          : language === 'gu'
+          : language === "gu"
           ? "✓ ફુલ એચડી (1080p) પંચાંગ ચિત્ર સેવ થઈ ગયું!"
           : "✓ Full HD (1080p) पंचांग चित्र सेव हो गया!"
       );
       setTimeout(() => setHdNotice(null), 4000);
     } catch {
       setHdNotice(
-        language === 'en'
+        language === "en"
           ? "Error saving HD image, please try again."
-          : language === 'gu'
+          : language === "gu"
           ? "HD સેવ કરવામાં ક્ષતિ આવી, પુનઃ પ્રયાસ કરો."
           : "HD सेव करने में त्रुटि हुई, पुनः प्रयास करें।"
       );
@@ -770,15 +1353,15 @@ export function TodayBoard({
       const dataUrl = await generateHdMoonPanchangDataUrl(panchang, place.name);
       const slug = (panchang.solar.sunrise || new Date()).toISOString().slice(0, 10);
       const shareTitle =
-        language === 'en'
+        language === "en"
           ? `🕉️ *Today's Vedic Panchang & Lunar Phase (${place.name})*`
-          : language === 'gu'
+          : language === "gu"
           ? `🕉️ *આજનું વૈદિક પંચાંગ અને ચંદ્ર કળા (${place.name})*`
           : `🕉️ *आज का वैदिक पंचांग एवं चन्द्र कला (${place.name})*`;
       const shareText = [
         shareTitle,
         `• ${t("panchang.tithi", "तिथि")}: ${trVedic(panchang.paksha, language)} ${trVedic(panchang.tithi, language)}`,
-        `• ${t("panchang.nakshatra", "नक्षत्र")}: ${trVedic(panchang.nakshatra, language)} (${language === 'en' ? 'Charan' : 'चरण'} ${panchang.pada})`,
+        `• ${t("panchang.nakshatra", "नक्षत्र")}: ${trVedic(panchang.nakshatra, language)} (${language === "en" ? "Charan" : "चरण"} ${panchang.pada})`,
         `• ${t("panchang.yoga", "योग")}: ${trVedic(panchang.yoga, language)} | ${t("panchang.karana", "करण")}: ${trVedic(panchang.karana, language)}`,
         `• ${t("panchang.weekday", "वार")}: ${trVedic(panchang.weekday, language)} | ${t("panchang.shareMasaPaksha", "मास")}: ${trVedic(panchang.masa, language)}`,
         `• ${t("panchang.sunrise", "सूर्योदय")}: ${clock(panchang.solar.sunrise)} | ${t("panchang.sunset", "सूर्यास्त")}: ${clock(panchang.solar.sunset)}`,
@@ -787,7 +1370,7 @@ export function TodayBoard({
       await shareImageFile({
         imageUri: dataUrl,
         fileName: `shakti-panchang-hd-${slug}.png`,
-        title: language === 'en' ? "Today's Vedic Panchang (Full HD)" : "आज का वैदिक पंचांग (Full HD)",
+        title: language === "en" ? "Today's Vedic Panchang (Full HD)" : "आज का वैदिक पंचांग (Full HD)",
         text: shareText,
       });
     } catch {
@@ -798,86 +1381,30 @@ export function TodayBoard({
   };
 
   return (
-    <div className="flex-1 min-h-0 w-full bx-home overflow-y-auto overscroll-contain p-3 space-y-3.5 pb-24">
-      {/* 0. Top Location (शहर चुनें) & Date Control Bar */}
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 400, damping: 28, delay: 0.02 }}
-        style={{
-          backgroundColor: "var(--bx-panel)",
-          borderColor: "var(--bx-line)",
-        }}
-        className="border rounded-2xl p-2.5 sm:p-3 shadow-xs flex flex-wrap items-center justify-between gap-2"
-      >
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            onClick={() => {
-              triggerHapticSelection();
-              onPlace?.();
-            }}
-            style={{
-              backgroundColor: "var(--bx-header)",
-              color: "#FFFFFF",
-              borderColor: "var(--bx-gold)",
-            }}
-            className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
-            title={t("common.changeCity", "शहर / स्थान बदलें")}
-          >
-            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-mark-soft)" }} />
-            <span className="truncate max-w-[130px] sm:max-w-[180px]">{formatPlaceDisplay(place.name, language)}</span>
-            <span
-              style={{ backgroundColor: "var(--bx-gold)", color: "#FFFFFF" }}
-              className="text-[10px] px-1.5 py-0.5 rounded font-black shrink-0"
-            >
-              {t("common.changeCity", "शहर बदलें ▾")}
-            </span>
-          </motion.button>
-
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 450, damping: 26 }}
-            onClick={() => {
-              triggerHapticSelection();
-              onOpen("kalnirnay");
-            }}
-            style={{
-              backgroundColor: "var(--bx-cream)",
-              borderColor: "var(--bx-line)",
-              color: "var(--bx-header)",
-            }}
-            className="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition cursor-pointer hover:opacity-90"
-          >
-            <Calendar className="w-3.5 h-3.5" style={{ color: "var(--bx-header)" }} />
-            <span>{t("common.monthlyCalendar", "मासिक कैलेंडर")}</span>
-          </motion.button>
-        </div>
-
-        {onDateChange && (
-          <div
-            style={{
-              backgroundColor: "var(--bx-cream)",
-              borderColor: "var(--bx-line)",
-            }}
-            className="flex items-center gap-1 px-1.5 py-1 rounded-xl border"
-          >
-            <motion.button
+    <div
+      className="flex-1 min-h-0 w-full bx-home overflow-y-auto overscroll-contain p-3 space-y-3.5 pb-10"
+      style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+    >
+      {/* 1. Compact Date Control Strip (City selector lives cleanly in the Top Bar) */}
+      {onDateChange && (
+        <section
+          style={{
+            backgroundColor: "var(--bx-panel)",
+            borderColor: "var(--bx-line)",
+          }}
+          className="border rounded-2xl px-2 py-1.5 flex items-center justify-between gap-1.5"
+        >
+          <div className="flex items-center gap-0.5 min-w-0 flex-1">
+            <button
               type="button"
-              whileTap={{ scale: 0.9 }}
               onClick={handlePrevDay}
               style={{ color: "var(--bx-ink)" }}
-              className="p-1 rounded-lg hover:opacity-80 cursor-pointer"
+              className="w-9 h-9 rounded-xl flex items-center justify-center hover:opacity-80 active:scale-92 cursor-pointer shrink-0"
               title={t("common.prevDay", "पिछला दिन")}
               aria-label={t("common.prevDay", "पिछला दिन")}
             >
               <ChevronLeft className="w-4 h-4" />
-            </motion.button>
+            </button>
 
             <button
               type="button"
@@ -885,113 +1412,148 @@ export function TodayBoard({
                 triggerHapticSelection();
                 setIsDatePickerOpen(true);
               }}
-              className="relative flex items-center px-2 py-0.5 rounded-lg hover:bg-stone-200/60 cursor-pointer transition"
+              className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl cursor-pointer transition active:scale-98"
+              style={{ backgroundColor: "var(--bx-cream)", color: "var(--bx-ink)" }}
             >
-              <span
-                style={{ color: "var(--bx-ink)" }}
-                className="text-xs font-bold whitespace-nowrap"
-              >
-                📅 {formattedDate}
+              <Calendar className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-gold)" }} />
+              <span className="text-xs font-bold truncate tabular-nums">
+                {formattedDate}
               </span>
             </button>
 
-            <motion.button
+            <button
               type="button"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.92 }}
-              onClick={handleTodayReset}
-              style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF" }}
-              className="px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-              title={t("common.todayBtn", "आज की तिथि पर लौटें")}
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>{t("common.todayBtn", "आज")}</span>
-            </motion.button>
-
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.9 }}
               onClick={handleNextDay}
               style={{ color: "var(--bx-ink)" }}
-              className="p-1 rounded-lg hover:opacity-80 cursor-pointer"
+              className="w-9 h-9 rounded-xl flex items-center justify-center hover:opacity-80 active:scale-92 cursor-pointer shrink-0"
               title={t("common.nextDay", "अगला दिन")}
               aria-label={t("common.nextDay", "अगला दिन")}
             >
               <ChevronRight className="w-4 h-4" />
-            </motion.button>
+            </button>
           </div>
-        )}
-      </motion.section>
 
-      {/* 1. First on Screen: Moon Phase & Tithi Orbit with Built-in Share & HD Save */}
-      <motion.div
-        initial={{ opacity: 0, y: 12, scale: 0.99 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.06 }}
-      >
-        <MoonPhaseChart
-          panchang={panchang}
-          placeName={place.name}
-          onWhatsApp={onWhatsApp}
-        />
-      </motion.div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleTodayReset}
+              style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF" }}
+              className="h-9 px-2.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition"
+              title={t("common.todayBtn", "आज की तिथि पर लौटें")}
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>{t("common.todayBtn", "आज")}</span>
+            </button>
+          </div>
+        </section>
+      )}
 
-      {/* 2. Directly Below Moon Phase: Complete Panchang Details + Share & HD Save Options */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.1 }}
-        className="bg-[#FAF2E4] border border-[#8C6239]/40 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3"
+      {/* 2. Clean Today's Panchang Summary Hero Card */}
+      <section
+        style={{
+          backgroundColor: "var(--bx-panel)",
+          borderColor: "var(--bx-line)",
+        }}
+        className="border rounded-2xl p-3.5 space-y-3"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8C6239]/25 pb-2.5">
-          <div>
-            <div className="bx-kicker inline-flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-[#B56A00]" />
-              <span>{t("panchang.fullDetailsTitle", "आज का सम्पूर्ण पंचांग विवरण")}</span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "var(--bx-mute)" }}>
+              <span>{trVedic(panchang.masa, language)}</span>
+              <span>·</span>
+              <span>{trVedic(panchang.samvat, language)}</span>
             </div>
-            <h3 className="font-granth font-black text-base sm:text-lg text-[#5C3A21] mt-0.5">
-              <span>{trVedic(panchang.paksha, language)} · {trVedic(panchang.tithi, language)}</span>
+            <h1 className="font-granth font-black text-xl sm:text-2xl leading-snug mt-0.5" style={{ color: "var(--bx-header)" }}>
+              {trVedic(panchang.paksha, language)} {trVedic(panchang.tithi, language)}
+            </h1>
+            <div className="text-xs font-semibold mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5" style={{ color: "var(--bx-ink)" }}>
+              <span>{trVedic(panchang.weekday, language)}</span>
               {panchang.tithiSpan && (
-                <span className="text-xs font-bold text-rose-800 ml-1.5">
-                  ({clock(panchang.tithiSpan.end)} {language === "gu" ? "સુધી" : language === "en" ? "ends" : "तक"} ➔ {trVedic(panchang.tithiSpan.nextName, language)})
+                <span className="text-[11px] font-bold text-rose-700 dark:text-amber-300 tabular-nums">
+                  ({clock(panchang.tithiSpan.end)} {language === "gu" ? "સુધી" : language === "en" ? "ends" : "तक"} → {trVedic(panchang.tithiSpan.nextName, language)})
                 </span>
               )}
-              {" "}· {trVedic(panchang.weekday, language)}
-            </h3>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <motion.button
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
               type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
               onClick={handleShareHd}
               disabled={isSharingHd}
-              className="px-3 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#462B17] text-[#FAF2E4] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+              style={{
+                backgroundColor: "var(--bx-cream)",
+                borderColor: "var(--bx-line)",
+                color: "var(--bx-header)",
+              }}
+              className="h-9 px-2.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition"
+              title={t("common.share", "शेयर करें")}
             >
               {isSharingHd ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFD88A]" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Share2 className="w-3.5 h-3.5 text-[#FFD88A]" />
+                <Share2 className="w-3.5 h-3.5" />
               )}
-              <span>{t("common.share", "शेयर करें")}</span>
-            </motion.button>
-
-            <motion.button
+              <span className="hidden xs:inline sm:inline">{t("common.share", "शेयर")}</span>
+            </button>
+            <button
               type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
               onClick={handleSaveHd}
               disabled={isSavingHd}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+              style={{
+                backgroundColor: "var(--bx-header)",
+                color: "#FFFFFF",
+              }}
+              className="h-9 px-2.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition"
+              title={t("common.saveHd", "HD में सेव करें")}
             >
               {isSavingHd ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-200" />
               ) : (
                 <Download className="w-3.5 h-3.5 text-amber-200" />
               )}
-              <span>{t("common.saveHd", "HD में सेव करें")}</span>
-            </motion.button>
+              <span>HD</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4-Stat Quick Panchang Strip (tabular numerals) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t" style={{ borderColor: "var(--bx-line)" }}>
+          <div className="rounded-xl px-2.5 py-2" style={{ backgroundColor: "var(--bx-cream)" }}>
+            <div className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: "var(--bx-mute)" }}>
+              <Sunrise className="w-3 h-3" style={{ color: "var(--bx-gold)" }} />
+              <span>{t("panchang.sunrise", "सूर्योदय")}</span>
+            </div>
+            <div className="text-sm font-extrabold mt-0.5 tabular-nums" style={{ color: "var(--bx-ink)" }}>
+              {clock(panchang.solar.sunrise)}
+            </div>
+          </div>
+          <div className="rounded-xl px-2.5 py-2" style={{ backgroundColor: "var(--bx-cream)" }}>
+            <div className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: "var(--bx-mute)" }}>
+              <Sunset className="w-3 h-3" style={{ color: "var(--bx-gold)" }} />
+              <span>{t("panchang.sunset", "सूर्यास्त")}</span>
+            </div>
+            <div className="text-sm font-extrabold mt-0.5 tabular-nums" style={{ color: "var(--bx-ink)" }}>
+              {clock(panchang.solar.sunset)}
+            </div>
+          </div>
+          <div className="rounded-xl px-2.5 py-2" style={{ backgroundColor: "var(--bx-cream)" }}>
+            <div className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: "var(--bx-mute)" }}>
+              <Stars className="w-3 h-3" style={{ color: "var(--bx-gold)" }} />
+              <span>{t("panchang.nakshatra", "नक्षत्र")}</span>
+            </div>
+            <div className="text-sm font-extrabold mt-0.5 truncate" style={{ color: "var(--bx-ink)" }}>
+              {trVedic(panchang.nakshatra, language)}
+            </div>
+          </div>
+          <div className="rounded-xl px-2.5 py-2" style={{ backgroundColor: "var(--bx-cream)" }}>
+            <div className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: "var(--bx-mute)" }}>
+              <Moon className="w-3 h-3" style={{ color: "var(--bx-gold)" }} />
+              <span>{t("panchang.moonSign", "चंद्र राशि")}</span>
+            </div>
+            <div className="text-sm font-extrabold mt-0.5 truncate" style={{ color: "var(--bx-ink)" }}>
+              {trVedic(panchang.lunarRashi, language)}
+            </div>
           </div>
         </div>
 
@@ -1001,12 +1563,48 @@ export function TodayBoard({
             <span>{hdNotice}</span>
           </div>
         )}
+      </section>
 
-        {/* Shastrokt Tithi & Festival Decision Banner */}
-        <motion.button
+      {/* 3. Super-App 4x2 Quick Access Grid (Option 2 Combo) */}
+      <section aria-label={t("nav.services", "त्वरित सेवाएँ")} className="grid grid-cols-4 gap-2">
+        {quickShortcuts.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                triggerHapticSelection();
+                onOpen(item.id);
+              }}
+              style={{
+                backgroundColor: "var(--bx-panel)",
+                borderColor: "var(--bx-line)",
+                color: "var(--bx-ink)",
+              }}
+              className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-2xl border cursor-pointer active:scale-94 transition"
+            >
+              <span
+                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--bx-mark-soft)",
+                  color: "var(--bx-mark)",
+                }}
+              >
+                <Icon className="w-[18px] h-[18px]" />
+              </span>
+              <span className="text-[11px] font-bold leading-tight text-center truncate w-full px-0.5">
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </section>
+
+      {/* 4. Shastrokt Tithi Nirnaya & Daily Agnivasa Action Banners */}
+      <div className="space-y-2">
+        <button
           type="button"
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
           onClick={() => {
             triggerHapticSelection();
             setIsTithiNirnayaOpen(true);
@@ -1016,15 +1614,15 @@ export function TodayBoard({
             color: "#FFFFFF",
             borderColor: "var(--bx-gold)",
           }}
-          className="bx-dark-surface w-full p-2.5 sm:p-3 rounded-2xl border shadow-xs flex items-center justify-between gap-2 cursor-pointer transition hover:brightness-105"
+          className="bx-dark-surface w-full p-3 rounded-2xl border flex items-center justify-between gap-2.5 cursor-pointer active:scale-98 transition"
         >
-          <div className="flex items-center gap-2.5 text-left">
-            <div className="w-8 h-8 rounded-xl bg-white/15 border border-amber-300/40 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-xl bg-white/15 border border-amber-300/35 flex items-center justify-center shrink-0">
               <Scale className="w-4 h-4" style={{ color: "#FDE68A" }} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-black flex items-center gap-1.5 flex-wrap" style={{ color: "#FFFDF5" }}>
-                <span style={{ color: "#FFFDF5" }}>
+              <div className="text-xs font-bold flex items-center gap-1.5 flex-wrap" style={{ color: "#FFFDF5" }}>
+                <span>
                   {dailyDecision.isFestivalToday
                     ? `✨ ${dailyDecision.title}`
                     : dailyDecision.title}
@@ -1033,256 +1631,189 @@ export function TodayBoard({
                   {dailyDecision.badgeText}
                 </span>
               </div>
-              <div className="text-[10px] sm:text-[11px] leading-snug mt-0.5" style={{ color: "#FEF08A" }}>
+              <div className="text-[11px] leading-snug mt-0.5 line-clamp-2" style={{ color: "#FEF08A" }}>
                 {dailyDecision.bannerNotice}
               </div>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "#FDE68A" }} />
-        </motion.button>
+        </button>
 
-        {/* Daily Agnivasa & Nitya Havan Vidhi Trigger */}
-        <motion.button
+        <button
           type="button"
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
           onClick={() => {
             triggerHapticSelection();
             onOpen("havan");
           }}
           style={{
-            backgroundColor: "var(--bx-cream)",
-            borderColor: dailyAgnivasa.isAuspicious ? "#059669" : "var(--bx-gold)",
+            backgroundColor: "var(--bx-panel)",
+            borderColor: dailyAgnivasa.isAuspicious ? "#059669" : "var(--bx-line)",
             color: "var(--bx-ink)",
           }}
-          className="w-full p-2.5 sm:p-3 rounded-2xl border shadow-2xs flex items-center justify-between gap-2 cursor-pointer transition hover:opacity-95"
+          className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2.5 cursor-pointer active:scale-98 transition"
         >
           <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border"
-              style={{
-                backgroundColor: "var(--bx-panel)",
-                borderColor: "var(--bx-line)",
-              }}
+              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+              style={{ backgroundColor: "var(--bx-mark-soft)" }}
             >
               <Flame
                 className={`w-4 h-4 ${dailyAgnivasa.isAuspicious ? "text-emerald-600" : "text-amber-600"}`}
               />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-black flex items-center gap-1.5 flex-wrap" style={{ color: "var(--bx-header)" }}>
-                <span>{dailyAgnivasa.title}</span>
+              <div className="text-xs font-bold truncate" style={{ color: "var(--bx-header)" }}>
+                {dailyAgnivasa.title}
               </div>
-              <div className="text-[10px] sm:text-[11px] leading-snug mt-0.5 opacity-85 truncate">
-                {dailyAgnivasa.badgeText} · {language === "en" ? "Open Nitya Havan Vidhi & Swaha Mantras" : language === "gu" ? "નિત્ય હવન વિધિ અને સ્વાહા મંત્ર ખોલો" : "नित्य हवन विधि, समिधा व स्वाहा मंत्र खोलें"}
+              <div className="text-[11px] leading-snug mt-0.5 opacity-80 truncate">
+                {dailyAgnivasa.badgeText} · {language === "en" ? "Open Nitya Havan Vidhi & Swaha Counter" : language === "gu" ? "નિત્ય હવન વિધિ અને સ્વાહા મંત્ર ખોલો" : "नित्य हवन विधि, समिधा व स्वाहा मंत्र"}
               </div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 shrink-0 opacity-75" style={{ color: "var(--bx-header)" }} />
-        </motion.button>
+          <ChevronRight className="w-4 h-4 shrink-0 opacity-70" style={{ color: "var(--bx-header)" }} />
+        </button>
+      </div>
+
+      {/* 5. Moon Phase & Tithi Orbit */}
+      <MoonPhaseChart
+        panchang={panchang}
+        placeName={place.name}
+        onWhatsApp={onWhatsApp}
+      />
+
+      {/* 6. Complete 16-Item Panchang Details Grid */}
+      <section
+        style={{
+          backgroundColor: "var(--bx-panel)",
+          borderColor: "var(--bx-line)",
+        }}
+        className="border rounded-2xl p-3.5 space-y-3"
+      >
+        <div className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: "var(--bx-line)" }}>
+          <h2 className="font-granth font-bold text-base" style={{ color: "var(--bx-header)" }}>
+            {t("panchang.fullDetailsTitle", "आज का सम्पूर्ण पंचांग विवरण")}
+          </h2>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticSelection();
+              onWhatsApp();
+            }}
+            style={{ color: "var(--bx-mark)" }}
+            className="text-xs font-bold flex items-center gap-1 cursor-pointer"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>{language === "en" ? "WhatsApp Card" : language === "gu" ? "કાર્ડ" : "व्हाट्सएप कार्ड"}</span>
+          </button>
+        </div>
 
         <div className="grid grid-cols-2 gap-2">
           {facts.map(([k, v]) =>
             k === placeLabelKey && onPlace ? (
-              <motion.button
+              <button
                 key={k}
                 type="button"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   triggerHapticSelection();
                   onPlace();
                 }}
-                className="bx-fact bx-glass text-left cursor-pointer hover:border-[#8B1E1E]"
+                className="bx-fact bx-glass text-left cursor-pointer"
                 title={t("common.changeCity", "शहर / स्थान बदलें")}
               >
                 <div className="bx-kicker flex items-center justify-between gap-1">
                   <span>{k}</span>
-                  <span style={{ color: "var(--bx-header)" }} className="text-[10px] font-bold underline">
-                    {t("common.changeCity", "शहर बदलें ▾")}
+                  <span style={{ color: "var(--bx-mark)" }} className="text-[10px] font-bold">
+                    {t("more.changeBtn", "बदलें")} ▾
                   </span>
                 </div>
-                <b className="text-base mt-1 flex items-center gap-1 truncate">
-                  <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-gold)" }} />
-                  <span className="truncate">{v}</span>
-                </b>
-              </motion.button>
+                <b className="text-sm sm:text-base mt-1 block truncate">{v}</b>
+              </button>
             ) : k === t("panchang.tithi", "तिथि") ? (
-              <motion.button
+              <button
                 key={k}
                 type="button"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   triggerHapticSelection();
                   setIsTithiNirnayaOpen(true);
                 }}
-                className="bx-fact bx-glass text-left cursor-pointer hover:border-amber-500 relative flex flex-col justify-between"
-                title={language === 'en' ? 'View Shastric Tithi & Festival Decision' : language === 'gu' ? 'શાસ્ત્રોક્ત તિથિ અને પર્વ નિર્ણય જુઓ' : 'शास्त्रोक्त तिथि व पर्व निर्णय प्रमाण देखें'}
+                className="bx-fact bx-glass text-left cursor-pointer col-span-2"
+                title={language === "en" ? "View Shastric Tithi Proof" : "शास्त्रोक्त तिथि प्रमाण देखें"}
               >
                 <div className="bx-kicker flex items-center justify-between gap-1">
                   <span>{k}</span>
-                  <span style={{ color: "var(--bx-header)" }} className="text-[9px] font-bold bg-amber-100/90 text-amber-900 px-1 py-0.2 rounded border border-amber-300/60 shrink-0">
-                    {language === 'en' ? 'Shastric Proof ▾' : language === 'gu' ? 'શાસ્ત્રોક્ત નિર્ણય ▾' : 'शास्त्रोक्त प्रमाण ▾'}
+                  <span style={{ color: "var(--bx-mark)" }} className="text-[10px] font-bold shrink-0">
+                    {language === "en" ? "Shastric Proof ▾" : language === "gu" ? "શાસ્ત્રોક્ત નિર્ણય ▾" : "शास्त्रोक्त प्रमाण ▾"}
                   </span>
                 </div>
                 <div className="mt-1 space-y-0.5">
-                  <b className="text-base text-[#4A2610] block">{v}</b>
+                  <b className="text-base block">{v}</b>
                   {panchang.tithiSpan && (
-                    <span className="text-[10px] text-rose-700 font-bold block leading-tight">
-                      {clock(panchang.tithiSpan.end)} {language === 'gu' ? 'સુધી' : language === 'en' ? 'ends' : 'तक'} • {language === 'gu' ? 'ત્યારબાદ' : language === 'en' ? 'then' : 'आगे'} {trVedic(panchang.tithiSpan.nextName, language)} {dailyDecision.nextTithiFestivalBadge ? `(${dailyDecision.nextTithiFestivalBadge})` : ''}
+                    <span className="text-[11px] text-rose-700 dark:text-amber-300 font-bold block leading-tight tabular-nums">
+                      {clock(panchang.tithiSpan.end)} {language === "gu" ? "સુધી" : language === "en" ? "ends" : "तक"} • {language === "gu" ? "ત્યારબાદ" : language === "en" ? "then" : "आगे"} {trVedic(panchang.tithiSpan.nextName, language)} {dailyDecision.nextTithiFestivalBadge ? `(${dailyDecision.nextTithiFestivalBadge})` : ""}
                     </span>
                   )}
                 </div>
-              </motion.button>
+              </button>
             ) : (
               <div key={k} className="bx-fact bx-glass">
                 <div className="bx-kicker">{k}</div>
-                <b className="text-base mt-1">{v}</b>
+                <b className="text-sm sm:text-base mt-1 block tabular-nums">{v}</b>
               </div>
             )
           )}
         </div>
-      </motion.section>
+      </section>
 
-      {/* 3. 3D Mini Kundali Glimpse Card */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.14 }}
-        className="bx-kundali"
-        aria-label={t("nav.kundali", "आज की कुंडली")}
-      >
-        <div className="bx-kundali-stage">
-          <svg viewBox="0 0 100 100" className="bx-kundali-plate" aria-hidden="true">
-            <rect x="3" y="3" width="94" height="94" rx="2" />
-            <polygon points="50,3 97,50 50,97 3,50" />
-            <line x1="3" y1="3" x2="97" y2="97" />
-            <line x1="97" y1="3" x2="3" y2="97" />
-          </svg>
-          <div className="bx-kundali-core">
-            <span>ॐ</span>
-            <b>{trVedic(panchang.tithi, language)}</b>
-            <small>{trVedic(panchang.nakshatra, language)}</small>
-          </div>
-        </div>
-        <div className="bx-kundali-meta">
-          <span>{trVedic(panchang.weekday, language)}</span>
-          <span>{t("panchang.sunSign", "सूर्य")} · {trVedic(panchang.solarRashi, language)}</span>
-          <span>{t("panchang.moonSign", "चंद्र")} · {trVedic(panchang.lunarRashi, language)}</span>
-        </div>
-      </motion.section>
+      {/* 7. Daily Rotating Sanskrit Shloka */}
+      <DailyShlokaCard
+        date={panchang.solar.sunrise || new Date()}
+        onExploreMore={() => onOpen("granth_puran")}
+      />
 
-      {/* 4. Daily Rotating Sanskrit Shloka with Hindi Translation & Share Button */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.18 }}
-      >
-        <DailyShlokaCard
-          date={panchang.solar.sunrise || new Date()}
-          onExploreMore={() => onOpen("granth_puran")}
-        />
-      </motion.div>
-
-      {/* 5. Quick Action Tiles */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.22 }}
-        className="grid grid-cols-2 gap-2"
-      >
-        <motion.button
+      {/* 8. Bottom Curated Links to Scriptures & Bhakti Hub */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <button
           type="button"
-          whileHover={{ y: -2, scale: 1.01 }}
-          whileTap={{ scale: 0.96 }}
-          className="bx-tile bx-glass h-auto min-h-16 cursor-pointer"
-          onClick={() => {
-            triggerHapticSelection();
-            onWhatsApp();
-          }}
-        >
-          <strong>{t("common.share", "व्हाट्सएप कार्ड")}</strong>
-          <p>{t("nav.panchang", "पंचांग साझा व HD सेव")}</p>
-        </motion.button>
-        <motion.button
-          type="button"
-          whileHover={{ y: -2, scale: 1.01 }}
-          whileTap={{ scale: 0.96 }}
-          className="bx-tile bx-glass h-auto min-h-16 cursor-pointer"
-          onClick={() => {
-            triggerHapticSelection();
-            onOpen("choghadiya");
-          }}
-        >
-          <strong>{t("nav.choghadiya", "चौघड़िया")}</strong>
-          <p>{t("panchang.auspiciousTimings", "शुभ समय")}</p>
-        </motion.button>
-        <motion.button
-          type="button"
-          whileHover={{ y: -2, scale: 1.01 }}
-          whileTap={{ scale: 0.96 }}
-          className="bx-tile bx-glass h-auto min-h-16 cursor-pointer"
-          onClick={() => {
-            triggerHapticSelection();
-            onOpen("muhurat");
-          }}
-        >
-          <strong>{t("nav.muhurat", "मुहूर्त")}</strong>
-          <p>{t("panchang.auspiciousTimings", "काम के अनुसार समय")}</p>
-        </motion.button>
-        <motion.button
-          type="button"
-          whileHover={{ y: -2, scale: 1.01 }}
-          whileTap={{ scale: 0.96 }}
-          className="bx-tile bx-glass h-auto min-h-16 cursor-pointer"
-          onClick={() => {
-            triggerHapticSelection();
-            onOpen("rashifal");
-          }}
-        >
-          <strong>{t("nav.rashifal", "राशिफल")}</strong>
-          <p>{t("panchang.moonSign", "बारह राशियाँ")}</p>
-        </motion.button>
-        <motion.button
-          type="button"
-          whileHover={{ y: -2, scale: 1.008 }}
-          whileTap={{ scale: 0.97 }}
-          className="bx-tile bx-glass h-auto min-h-16 col-span-2 cursor-pointer"
+          className="bx-tile bx-glass h-auto cursor-pointer text-left"
           onClick={() => {
             triggerHapticSelection();
             onOpen("granth_puran");
           }}
         >
-          <strong>{t("nav.granthPuran", "प्राचीन ग्रन्थ, उपनिषद् व महापुराण स्वाध्याय")}</strong>
-          <p>{t("nav.granthPuranDesc", "श्रीमद्भगवद्गीता, १० प्रमुख उपनिषद्, अष्टादश महापुराण व वैदिक सूक्त सार")}</p>
-        </motion.button>
-        <motion.button
+          <span className="bx-tile-icon">
+            <BookOpen className="w-4 h-4" />
+          </span>
+          <span className="min-w-0">
+            <strong className="truncate block">
+              {language === "en" ? "Granth & Upanishad" : language === "gu" ? "ગ્રંથ અને ઉપનિષદ" : "ग्रन्थ व उपनिषद्"}
+            </strong>
+            <p className="line-clamp-2">
+              {language === "en" ? "Gita, Upanishads & 18 Puranas" : language === "gu" ? "ગીતા, ઉપનિષદ અને ૧૮ પુરાણ" : "गीता, उपनिषद् व अष्टादश पुराण"}
+            </p>
+          </span>
+        </button>
+
+        <button
           type="button"
-          whileHover={{ y: -2, scale: 1.008 }}
-          whileTap={{ scale: 0.97 }}
-          className="bx-tile bx-glass h-auto min-h-16 col-span-2 cursor-pointer"
+          className="bx-tile bx-glass h-auto cursor-pointer text-left"
           onClick={() => {
             triggerHapticSelection();
-            onOpen("havan");
+            onOpen("bhakti_hub");
           }}
         >
-          <strong>
-            {language === "en"
-              ? "🔥 Daily Nitya Havan & Agnivasa Check"
-              : language === "gu"
-              ? "🔥 દૈનિક નિત્ય હવન અને અગ્નિવાસ વિચાર"
-              : "🔥 दैनिक नित्य हवन विधि व अग्निवास विचार"}
-          </strong>
-          <p>
-            {language === "en"
-              ? `${dailyAgnivasa.badgeText} · Samidha, 5-step Vidhi & Swaha Counter`
-              : language === "gu"
-              ? `${dailyAgnivasa.badgeText} · સમિધા, ૫-ચરણીય વિધિ અને સ્વાહા કાઉન્ટર`
-              : `${dailyAgnivasa.badgeText} · समिधा, ५-चरणीय विधि व स्वाहा काउंटर`}
-          </p>
-        </motion.button>
-      </motion.div>
+          <span className="bx-tile-icon">
+            <Flame className="w-4 h-4" />
+          </span>
+          <span className="min-w-0">
+            <strong className="truncate block">
+              {language === "en" ? "Bhakti & Remedies" : language === "gu" ? "ભક્તિ અને ઉપાય" : "भक्ति व उपाय"}
+            </strong>
+            <p className="line-clamp-2">
+              {language === "en" ? "Path, Lal Kitab & Mantras" : language === "gu" ? "પાઠ, લાલ કિતાબ અને મંત્ર" : "स्तोत्र, लाल किताब व सिद्ध मंत्र"}
+            </p>
+          </span>
+        </button>
+      </div>
 
       <VedicDatePickerModal
         isOpen={isDatePickerOpen}

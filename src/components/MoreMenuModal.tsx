@@ -24,13 +24,13 @@ import {
   Lock,
   Calendar,
   HelpCircle,
+  Type,
 } from 'lucide-react';
 import { SavedLocation } from '../types';
-import { AppTheme, DEVOTIONAL_THEMES, getAstrologerBranding } from '../services/storage';
+import { AppTheme, AppFontSize, DEVOTIONAL_THEMES, getAstrologerBranding } from '../services/storage';
 import { useLicense } from '../lib/license-client';
 import { useLanguage } from '../i18n';
 import { triggerHapticSelection } from '../utils/haptics';
-import { ZeroScrollPager } from './ZeroScrollPager';
 import { CURRENT_RELEASE } from '../constants/releaseNotes';
 
 interface MoreMenuModalProps {
@@ -49,6 +49,8 @@ interface MoreMenuModalProps {
   onToggleTheme: () => void;
   onSetTheme?: (theme: AppTheme) => void;
   onOpenThemeModal?: () => void;
+  appFontSize?: AppFontSize;
+  onCycleFontSize?: () => void;
   isAudioEnabled: boolean;
   onToggleAudio: () => void;
   onOpenReleaseNotes?: () => void;
@@ -70,6 +72,8 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   onToggleTheme,
   onSetTheme,
   onOpenThemeModal,
+  appFontSize = 'normal',
+  onCycleFontSize,
   isAudioEnabled,
   onToggleAudio,
   onOpenReleaseNotes,
@@ -113,7 +117,10 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
-      <ZeroScrollPager className="flex-1 min-h-0 w-full" contentClassName="bx-more-flow px-3 pt-2 pb-1">
+      <div
+        className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain bx-more-flow px-3.5 pt-2 pb-8"
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+      >
 
         <div className="mt-3.5">
           <button
@@ -541,6 +548,28 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
             </div>
           </div>
 
+          {onCycleFontSize && (
+            <div className="flex items-center justify-between text-xs py-1.5 border-t border-[#8C6239]/20">
+              <span className="flex items-center gap-1.5 font-medium text-[#5C3A21] dark:text-[#FAF2E4]">
+                <Type className="w-3.5 h-3.5 text-[#B56A00]" />
+                {langCode === 'en'
+                  ? `Text Size: ${appFontSize === 'xlarge' ? 'Extra Large' : appFontSize === 'large' ? 'Large' : 'Normal'}`
+                  : langCode === 'gu'
+                  ? `અક્ષર કદ: ${appFontSize === 'xlarge' ? 'ખૂબ મોટા' : appFontSize === 'large' ? 'મોટા' : 'સામાન્ય'}`
+                  : `अक्षर आकार: ${appFontSize === 'xlarge' ? 'अति-विशाल' : appFontSize === 'large' ? 'बड़ा' : 'सामान्य'}`}
+              </span>
+              <button
+                type="button"
+                onClick={onCycleFontSize}
+                className="px-2.5 py-1 bg-[#FAF2E4] dark:bg-stone-800 border border-[#8C6239]/40 rounded-lg font-bold text-[#5C3A21] dark:text-[#FAF2E4] cursor-pointer m3-touch"
+              >
+                {langCode === 'en'
+                  ? appFontSize === 'xlarge' ? 'A++' : appFontSize === 'large' ? 'A+' : 'A'
+                  : appFontSize === 'xlarge' ? 'अ++' : appFontSize === 'large' ? 'अ+' : 'अ'}
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center justify-between text-xs py-1 border-t border-[#8C6239]/20">
             <span className="flex items-center gap-1.5 font-medium text-[#5C3A21] dark:text-[#FAF2E4]">
               {isAudioEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-600" /> : <VolumeX className="w-3.5 h-3.5 text-stone-500" />}
@@ -608,7 +637,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               : 'सनातन शक्ति पंचांग आपकी गोपनीयता का पूर्ण सम्मान करता है। आपकी जन्म कुंडली व व्यक्तिगत विवरण केवल आपके उपकरण (लोकल स्टोरेज) में सुरक्षित रहते हैं।'}
           </div>
         )}
-      </ZeroScrollPager>
+      </div>
       </div>
     </div>
   );

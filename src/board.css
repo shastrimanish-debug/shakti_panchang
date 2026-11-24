@@ -208,9 +208,15 @@
 .bx-dock {
   background: var(--bx-panel) !important;
   color: var(--bx-ink) !important;
-  border-top: 2px solid var(--bx-gold) !important;
-  padding-top: 6px;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid var(--bx-line) !important;
+  box-shadow: 0 -4px 18px rgba(42, 18, 8, 0.07) !important;
+  padding: 5px 4px calc(env(safe-area-inset-bottom, 0px) + 5px);
+}
+
+.tamra-theme .bx-dock {
+  background: rgba(26, 17, 12, 0.96) !important;
+  border-top-color: rgba(224, 160, 74, 0.28) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45) !important;
 }
 
 @media (max-width: 900px) {
@@ -221,7 +227,7 @@
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px);
   }
   .board {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: 0;
   }
 }
 
@@ -230,51 +236,57 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: nowrap;
-  gap: 6px;
-  height: auto;
+  gap: 8px;
+  min-height: 50px;
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  padding: 6px 8px;
-  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%);
-  border-bottom: 2px solid var(--bx-line);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 6px 10px;
+  background: var(--bx-panel);
+  border-bottom: 1px solid var(--bx-line);
+  box-shadow: 0 1px 8px rgba(42, 18, 8, 0.05);
   z-index: 40;
 }
 
 .tamra-theme .bx-rail {
-  background: rgba(26, 17, 12, 0.95);
-  border-bottom-color: rgba(224, 160, 74, 0.35);
+  background: rgba(26, 17, 12, 0.96);
+  border-bottom-color: rgba(224, 160, 74, 0.28);
 }
 
 .bx-tabmenu {
-  height: 34px;
-  padding: 0 9px;
-  border-radius: 999px;
-  border: 1.5px solid var(--bx-line);
-  background: var(--bx-panel);
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid var(--bx-line);
+  background: var(--bx-cream);
   color: var(--bx-ink);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   white-space: nowrap;
   flex-shrink: 0;
   cursor: pointer;
+  transition: transform 0.14s ease, background-color 0.14s ease, border-color 0.14s ease;
+}
+
+.bx-tabmenu:active {
+  transform: scale(0.96);
 }
 
 @media (min-width: 640px) {
   .bx-rail {
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 10px;
+    padding: 8px 14px;
+    min-height: 54px;
   }
   .bx-tabmenu {
-    height: 36px;
-    padding: 0 12px;
-    font-size: 12px;
-    gap: 5px;
+    height: 38px;
+    padding: 0 13px;
+    font-size: 12.5px;
+    gap: 6px;
   }
 }
 
@@ -290,17 +302,16 @@
 
 .bx-menu-btn {
   position: relative;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   border-radius: 12px;
   display: grid;
   place-items: center;
-  color: #3a2414;
-  background: rgba(255, 252, 247, 0.88);
-  border: 1px solid rgba(224, 177, 90, 0.55);
-  box-shadow: 0 6px 14px rgba(58, 29, 16, 0.12);
-  backdrop-filter: blur(12px);
+  color: var(--bx-ink);
+  background: var(--bx-cream);
+  border: 1px solid var(--bx-line);
+  box-shadow: 0 1px 3px rgba(42, 18, 8, 0.06);
 }
 
 @media (min-width: 640px) {
@@ -308,7 +319,7 @@
     width: 40px;
     height: 40px;
     flex: 0 0 40px;
-    border-radius: 14px;
+    border-radius: 12px;
   }
 }
 
@@ -1323,12 +1334,12 @@
 }
 
 /* ============================================================================
- * ROYAL 3D EMBOSSED FRONT PAGE & TACTILE 3D PUSH-BUTTON SYSTEM (v1.0.32)
- * Gives Front Page tiles, Panchang cards, Verse cards, and all Buttons across
- * the app authentic 3D depth, golden-copper rim highlights & push-down physics.
+ * MODERN SANATAN CLEAN CARD & ELEVATION SYSTEM (v1.0.79)
+ * Airy, single-elevation cards, crisp hairlines, thumb-friendly 44px hitboxes,
+ * and full compatibility across all 10 devotional themes & Tamra Dark Mode.
  * ============================================================================ */
 
-/* 1. Front Page Service Tiles & Panchang Fact Cards & Verse Cards (3D Raised Plaques) */
+/* 1. Service Tiles, Panchang Fact Cards & Verse Cards (Clean Single-Elevation) */
 .board.bx-bento .bx-tile,
 .board.bx-bento .bx-fact,
 .board.bx-bento .bx-verse,
@@ -1338,67 +1349,51 @@
 .board.bx-bento main button.bx-verse,
 .board.bx-bento .bx-kundali {
   touch-action: pan-y !important;
-  background: linear-gradient(180deg, var(--bx-panel) 0%, color-mix(in srgb, var(--bx-panel) 80%, var(--bx-cream)) 100%) !important;
-  border: 1.5px solid var(--bx-line) !important;
-  border-radius: 18px !important;
-  box-shadow:
-    0 4px 0 color-mix(in srgb, var(--bx-gold) 65%, #000),
-    0 6px 0 color-mix(in srgb, var(--bx-header) 70%, #000),
-    0 12px 20px rgba(0, 0, 0, 0.12),
-    inset 0 2px 1px rgba(255, 255, 255, 0.8),
-    inset 0 -1px 2px color-mix(in srgb, var(--bx-line) 40%, transparent) !important;
+  background: var(--bx-panel) !important;
+  border: 1px solid var(--bx-line) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(42, 18, 8, 0.06), 0 4px 12px -4px rgba(42, 18, 8, 0.05) !important;
   color: var(--bx-ink) !important;
   transition:
-    transform 0.14s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.14s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.14s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.14s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.14s ease !important;
 }
 
-/* Interactive 3D Hover Lift for clickable tiles & verse buttons */
 .board.bx-bento .bx-tile:hover,
 .board.bx-bento main button.bx-verse:hover {
-  transform: translateY(-2px);
   border-color: var(--bx-gold) !important;
-  box-shadow:
-    0 6px 0 color-mix(in srgb, var(--bx-gold) 65%, #000),
-    0 8px 0 color-mix(in srgb, var(--bx-header) 70%, #000),
-    0 16px 24px rgba(0, 0, 0, 0.18),
-    inset 0 2px 1px rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 4px 14px -2px rgba(42, 18, 8, 0.1) !important;
 }
 
-/* Interactive 3D Tactile Push-Down on Tap/Click */
 .board.bx-bento .bx-tile:active,
 .board.bx-bento main button.bx-verse:active {
-  transform: translateY(3px) !important;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--bx-header) 70%, #000),
-    0 3px 6px rgba(0, 0, 0, 0.14),
-    inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+  transform: scale(0.975) !important;
 }
 
-/* 2. 3D Medallion Icon Box inside Service Tiles */
+/* 2. Refined Icon Container inside Service Tiles */
 .board.bx-bento .bx-tile .bx-tile-icon {
-  width: 32px !important;
-  height: 32px !important;
-  flex: 0 0 32px !important;
-  border-radius: 10px !important;
-  background: linear-gradient(180deg, var(--bx-mark-soft) 0%, color-mix(in srgb, var(--bx-gold) 35%, var(--bx-mark-soft)) 100%) !important;
-  border: 1px solid var(--bx-gold) !important;
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px !important;
+  border-radius: 11px !important;
+  background: var(--bx-mark-soft) !important;
+  border: 1px solid color-mix(in srgb, var(--bx-gold) 35%, transparent) !important;
   color: var(--bx-mark) !important;
-  box-shadow:
-    0 2.5px 0 color-mix(in srgb, var(--bx-gold) 70%, #000),
-    0 4px 7px rgba(0, 0, 0, 0.12),
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.85) !important;
+  box-shadow: none !important;
 }
 
-/* 3. Top Header Rail & Menu/Navigation 3D Buttons */
+/* 3. Top Header Rail & Clean Navigation Buttons */
 .board.bx-bento .bx-rail {
-  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%) !important;
-  border-bottom: 2px solid var(--bx-line) !important;
-  box-shadow:
-    0 3px 0 color-mix(in srgb, var(--bx-gold) 40%, transparent),
-    0 6px 14px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  background: var(--bx-panel) !important;
+  border-bottom: 1px solid var(--bx-line) !important;
+  box-shadow: 0 1px 8px rgba(42, 18, 8, 0.05) !important;
+}
+
+.tamra-theme .board.bx-bento .bx-rail,
+.board.bx-bento.tamra-theme .bx-rail {
+  background: rgba(26, 17, 12, 0.96) !important;
+  border-bottom-color: rgba(224, 160, 74, 0.28) !important;
 }
 
 .board.bx-bento .bx-menu-btn,
@@ -1406,14 +1401,11 @@
 .board.bx-bento .bx-iconbtn,
 .board.bx-bento .bx-navbtn,
 .board.bx-bento .bx-head-btn {
-  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%) !important;
-  border: 1.5px solid var(--bx-gold) !important;
+  background: var(--bx-cream) !important;
+  border: 1px solid var(--bx-line) !important;
   color: var(--bx-ink) !important;
-  box-shadow:
-    0 3px 0 var(--bx-gold),
-    0 5px 10px rgba(58, 29, 16, 0.12),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.85) !important;
-  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+  box-shadow: 0 1px 2px rgba(42, 18, 8, 0.05) !important;
+  transition: transform 0.14s ease, border-color 0.14s ease, background-color 0.14s ease !important;
 }
 
 .board.bx-bento .bx-menu-btn:active,
@@ -1421,96 +1413,108 @@
 .board.bx-bento .bx-iconbtn:active,
 .board.bx-bento .bx-navbtn:active,
 .board.bx-bento .bx-head-btn:active {
-  transform: translateY(2.5px) !important;
-  box-shadow:
-    0 0.5px 0 var(--bx-gold),
-    0 2px 4px rgba(58, 29, 16, 0.1) !important;
-  inset: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+  transform: scale(0.95) !important;
 }
 
-/* Solid / Active 3D Nav Button */
+/* Solid / Active Primary Nav Button */
 .board.bx-bento .bx-navbtn-solid,
 .board.bx-bento .bx-iconbtn[aria-pressed="true"] {
-  background: linear-gradient(180deg, #7A1D1D 0%, #5C1414 100%) !important;
-  border: 1.5px solid #B58738 !important;
+  background: linear-gradient(180deg, var(--bx-header) 0%, var(--bx-header-2) 100%) !important;
+  border: 1px solid var(--bx-gold) !important;
   color: #FFF8EE !important;
-  box-shadow:
-    0 3px 0 #3E0C0C,
-    0 6px 12px rgba(0, 0, 0, 0.25),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(92, 20, 20, 0.22) !important;
 }
 
-/* 4. All General Interactive Buttons & Chips inside Modules (3D Push-Buttons) */
+/* 4. General Interactive Buttons inside Modules (Subtle Modern Tactile Feel) */
 .board.bx-bento main button:not(.bx-tile):not(.bx-verse) {
-  box-shadow:
-    0 3px 0 color-mix(in srgb, var(--bx-gold) 75%, #000),
-    0 5px 8px rgba(0, 0, 0, 0.12),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.45);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease, opacity 0.12s ease, border-color 0.12s ease;
 }
 
 .board.bx-bento main button:not(.bx-tile):not(.bx-verse):active {
-  transform: translateY(2px);
-  box-shadow:
-    0 0.5px 0 color-mix(in srgb, var(--bx-gold) 75%, #000),
-    0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: scale(0.97);
 }
 
-/* 5. Bottom Navigation Dock 3D Buttons */
+/* 5. Bottom Navigation Dock (5-Tab Thumb-Friendly Bar) */
 .board.bx-bento .bx-dock {
-  background: linear-gradient(180deg, var(--bx-panel) 0%, var(--bx-cream) 100%) !important;
-  border-top: 2px solid var(--bx-gold) !important;
-  box-shadow:
-    0 -4px 16px rgba(0, 0, 0, 0.1),
-    inset 0 2px 0 rgba(255, 255, 255, 0.8) !important;
+  background: var(--bx-panel) !important;
+  border-top: 1px solid var(--bx-line) !important;
+  box-shadow: 0 -4px 18px rgba(42, 18, 8, 0.07) !important;
+}
+
+.board.bx-bento.tamra-theme .bx-dock {
+  background: rgba(24, 15, 10, 0.98) !important;
+  border-top-color: rgba(224, 160, 74, 0.28) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45) !important;
 }
 
 .board.bx-bento .bx-dock button {
-  border-radius: 14px;
-  padding: 4px 6px;
-  transition: transform 0.12s ease !important;
+  border-radius: 12px;
+  padding: 4px 2px;
+  min-height: 46px;
+  color: var(--bx-mute);
+  transition: transform 0.14s ease, color 0.14s ease !important;
 }
 
 .board.bx-bento .bx-dock button:active {
-  transform: translateY(2px) scale(0.96) !important;
+  transform: scale(0.93) !important;
+}
+
+.board.bx-bento .bx-dock button .bx-tile-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--bx-mute) !important;
+  width: 34px !important;
+  height: 28px !important;
+  border-radius: 999px !important;
+  transition: background-color 0.16s ease, color 0.16s ease !important;
+}
+
+.board.bx-bento .bx-dock button[data-on="true"] {
+  color: var(--bx-header) !important;
+  font-weight: 800 !important;
 }
 
 .board.bx-bento .bx-dock button[data-on="true"] .bx-tile-icon {
-  background: linear-gradient(180deg, var(--bx-header) 0%, var(--bx-header-2) 100%) !important;
-  color: #fff8ee !important;
-  border: 1px solid var(--bx-gold) !important;
-  box-shadow:
-    0 2.5px 0 color-mix(in srgb, var(--bx-header-2) 65%, #000),
-    0 5px 10px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+  background: var(--bx-mark-soft) !important;
+  color: var(--bx-header) !important;
+  border: 1px solid color-mix(in srgb, var(--bx-gold) 45%, transparent) !important;
+  box-shadow: none !important;
 }
 
-/* 6. 3D Carved Search Input & Form Fields */
+.board.bx-bento.tamra-theme .bx-dock button[data-on="true"] {
+  color: #FFD88A !important;
+}
+
+.board.bx-bento.tamra-theme .bx-dock button[data-on="true"] .bx-tile-icon {
+  background: rgba(224, 160, 74, 0.2) !important;
+  color: #FFD88A !important;
+  border-color: rgba(224, 160, 74, 0.45) !important;
+}
+
+/* 6. Clean Search Input & Form Fields */
 .board.bx-bento .bx-search input,
 .board.bx-bento main input[type="text"],
 .board.bx-bento main input:not([type]) {
-  background: linear-gradient(180deg, var(--bx-cream) 0%, var(--bx-panel) 100%) !important;
-  border: 1.5px solid var(--bx-line) !important;
+  background: var(--bx-panel) !important;
+  border: 1px solid var(--bx-line) !important;
   color: var(--bx-ink) !important;
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.08),
-    0 2px 0 rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 1px 2px rgba(42, 18, 8, 0.04) !important;
 }
 
-/* 7. Dark Copper (Tamra) Theme 3D Adjustments */
+/* 7. Dark Copper (Tamra) Theme Clean Adjustments */
 .tamra-theme .board.bx-bento .bx-tile,
 .tamra-theme .board.bx-bento .bx-fact,
 .tamra-theme .board.bx-bento .bx-verse,
 .tamra-theme .board.bx-bento main .bx-verse,
-.tamra-theme .board.bx-bento main button.bx-verse {
-  background: linear-gradient(180deg, #2e2017 0%, #1f150f 100%) !important;
-  border-color: #8c5d2b !important;
+.tamra-theme .board.bx-bento main button.bx-verse,
+.board.bx-bento.tamra-theme .bx-tile,
+.board.bx-bento.tamra-theme .bx-fact,
+.board.bx-bento.tamra-theme .bx-verse {
+  background: #231812 !important;
+  border-color: rgba(224, 160, 74, 0.28) !important;
   color: #faeedb !important;
-  box-shadow:
-    0 4px 0 #4a2e14,
-    0 6px 0 #120b07,
-    0 12px 22px rgba(0, 0, 0, 0.45),
-    inset 0 1.5px 0 rgba(255, 215, 160, 0.22) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
 }
 
 /* 8. Shiv Tantra Vidya Complete Devotional Theme Adaptability */
