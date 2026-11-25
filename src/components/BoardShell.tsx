@@ -880,7 +880,7 @@ export function BhaktiHubBoard({
                   color: active ? "#FFFFFF" : "var(--bx-ink)",
                   borderColor: active ? "var(--bx-gold)" : "var(--bx-line)",
                 }}
-                className="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition active:scale-95"
+                className="px-3 py-1.5 rounded-[8px] border text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition"
               >
                 {tab.label}
               </button>
@@ -1038,7 +1038,7 @@ export function ModuleBoard({
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full opacity-70 hover:opacity-100 cursor-pointer"
+              className="bx-flat-btn absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded opacity-70 hover:opacity-100 cursor-pointer"
               aria-label="Clear search"
             >
               <X className="w-4 h-4" />
@@ -1047,7 +1047,7 @@ export function ModuleBoard({
         </label>
 
         {!q && (
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
             {[
               { key: "all", label: `${allTabLabel} (${pages.length - 1})` },
               ...SERVICE_GROUPS.map((g) => ({
@@ -1069,7 +1069,7 @@ export function ModuleBoard({
                     color: active ? "#FFFFFF" : "var(--bx-ink)",
                     borderColor: active ? "var(--bx-gold)" : "var(--bx-line)",
                   }}
-                  className="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition active:scale-95"
+                  className="px-3 py-1.5 rounded-[8px] border text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition"
                 >
                   {tab.label}
                 </button>
@@ -1109,7 +1109,7 @@ export function ModuleBoard({
                       borderColor: "var(--bx-line)",
                       color: "var(--bx-ink)",
                     }}
-                    className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold cursor-pointer active:scale-95 transition"
+                    className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-[8px] border text-xs font-bold cursor-pointer transition"
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-mark)" }} />
                     <span className="whitespace-nowrap">{page.label}</span>
@@ -1392,14 +1392,14 @@ export function TodayBoard({
             backgroundColor: "var(--bx-panel)",
             borderColor: "var(--bx-line)",
           }}
-          className="border rounded-2xl px-2 py-1.5 flex items-center justify-between gap-1.5"
+          className="border rounded-[10px] px-2 py-2 flex items-center justify-between gap-1.5 shadow-xs"
         >
-          <div className="flex items-center gap-0.5 min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
             <button
               type="button"
               onClick={handlePrevDay}
-              style={{ color: "var(--bx-ink)" }}
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:opacity-80 active:scale-92 cursor-pointer shrink-0"
+              style={{ backgroundColor: "var(--bx-cream)", color: "var(--bx-ink)", borderColor: "var(--bx-gold)" }}
+              className="w-9 h-9 rounded-[8px] border flex items-center justify-center cursor-pointer shrink-0"
               title={t("common.prevDay", "पिछला दिन")}
               aria-label={t("common.prevDay", "पिछला दिन")}
             >
@@ -1412,8 +1412,8 @@ export function TodayBoard({
                 triggerHapticSelection();
                 setIsDatePickerOpen(true);
               }}
-              className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl cursor-pointer transition active:scale-98"
-              style={{ backgroundColor: "var(--bx-cream)", color: "var(--bx-ink)" }}
+              className="flex-1 min-w-0 h-9 flex items-center justify-center gap-1.5 px-2 rounded-[8px] border cursor-pointer transition"
+              style={{ backgroundColor: "var(--bx-cream)", color: "var(--bx-ink)", borderColor: "var(--bx-gold)" }}
             >
               <Calendar className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--bx-gold)" }} />
               <span className="text-xs font-bold truncate tabular-nums">
@@ -1424,8 +1424,8 @@ export function TodayBoard({
             <button
               type="button"
               onClick={handleNextDay}
-              style={{ color: "var(--bx-ink)" }}
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:opacity-80 active:scale-92 cursor-pointer shrink-0"
+              style={{ backgroundColor: "var(--bx-cream)", color: "var(--bx-ink)", borderColor: "var(--bx-gold)" }}
+              className="w-9 h-9 rounded-[8px] border flex items-center justify-center cursor-pointer shrink-0"
               title={t("common.nextDay", "अगला दिन")}
               aria-label={t("common.nextDay", "अगला दिन")}
             >
@@ -1437,8 +1437,8 @@ export function TodayBoard({
             <button
               type="button"
               onClick={handleTodayReset}
-              style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF" }}
-              className="h-9 px-2.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition"
+              style={{ backgroundColor: "var(--bx-header)", color: "#FFFFFF", borderColor: "var(--bx-gold)" }}
+              className="h-9 px-2.5 rounded-[8px] border text-xs font-bold flex items-center gap-1 cursor-pointer transition"
               title={t("common.todayBtn", "आज की तिथि पर लौटें")}
             >
               <RotateCcw className="w-3 h-3" />
@@ -1454,7 +1454,7 @@ export function TodayBoard({
           backgroundColor: "var(--bx-panel)",
           borderColor: "var(--bx-line)",
         }}
-        className="border rounded-2xl p-3.5 space-y-3"
+        className="border rounded-[10px] p-3.5 space-y-3 shadow-xs"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
@@ -1483,10 +1483,10 @@ export function TodayBoard({
               disabled={isSharingHd}
               style={{
                 backgroundColor: "var(--bx-cream)",
-                borderColor: "var(--bx-line)",
+                borderColor: "var(--bx-gold)",
                 color: "var(--bx-header)",
               }}
-              className="h-9 px-2.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition"
+              className="h-9 px-2.5 rounded-[8px] border text-xs font-bold flex items-center gap-1 cursor-pointer transition"
               title={t("common.share", "शेयर करें")}
             >
               {isSharingHd ? (
@@ -1502,9 +1502,10 @@ export function TodayBoard({
               disabled={isSavingHd}
               style={{
                 backgroundColor: "var(--bx-header)",
+                borderColor: "var(--bx-gold)",
                 color: "#FFFFFF",
               }}
-              className="h-9 px-2.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition"
+              className="h-9 px-2.5 rounded-[8px] border text-xs font-bold flex items-center gap-1 cursor-pointer transition"
               title={t("common.saveHd", "HD में सेव करें")}
             >
               {isSavingHd ? (
@@ -1519,7 +1520,7 @@ export function TodayBoard({
 
         {/* 4-Stat Quick Panchang Strip (tabular numerals) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t" style={{ borderColor: "var(--bx-line)" }}>
-          <div className="rounded-xl px-2.5 py-2" style={{ backgroundColor: "var(--bx-cream)" }}>
+          <div className="rounded-[8px] px-2.5 py-2 border" style={{ backgroundColor: "var(--bx-cream)", borderColor: "var(--bx-line)" }}>
             <div className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: "var(--bx-mute)" }}>
               <Sunrise className="w-3 h-3" style={{ color: "var(--bx-gold)" }} />
               <span>{t("panchang.sunrise", "सूर्योदय")}</span>
@@ -1528,7 +1529,7 @@ export function TodayBoard({
               {clock(panchang.solar.sunrise)}
             </div>
           </div>
-          <div className="rounded-xl px-2.5 py-2" style={{ backgroundColor: "var(--bx-cream)" }}>
+          <div className="rounded-[8px] px-2.5 py-2 border" style={{ backgroundColor: "var(--bx-cream)", borderColor: "var(--bx-line)" }}>
             <div className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: "var(--bx-mute)" }}>
               <Sunset className="w-3 h-3" style={{ color: "var(--bx-gold)" }} />
               <span>{t("panchang.sunset", "सूर्यास्त")}</span>
@@ -1537,7 +1538,7 @@ export function TodayBoard({
               {clock(panchang.solar.sunset)}
             </div>
           </div>
-          <div className="rounded-xl px-2.5 py-2" style={{ backgroundColor: "var(--bx-cream)" }}>
+          <div className="rounded-[8px] px-2.5 py-2 border" style={{ backgroundColor: "var(--bx-cream)", borderColor: "var(--bx-line)" }}>
             <div className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: "var(--bx-mute)" }}>
               <Stars className="w-3 h-3" style={{ color: "var(--bx-gold)" }} />
               <span>{t("panchang.nakshatra", "नक्षत्र")}</span>
@@ -1546,7 +1547,7 @@ export function TodayBoard({
               {trVedic(panchang.nakshatra, language)}
             </div>
           </div>
-          <div className="rounded-xl px-2.5 py-2" style={{ backgroundColor: "var(--bx-cream)" }}>
+          <div className="rounded-[8px] px-2.5 py-2 border" style={{ backgroundColor: "var(--bx-cream)", borderColor: "var(--bx-line)" }}>
             <div className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: "var(--bx-mute)" }}>
               <Moon className="w-3 h-3" style={{ color: "var(--bx-gold)" }} />
               <span>{t("panchang.moonSign", "चंद्र राशि")}</span>
@@ -1558,15 +1559,15 @@ export function TodayBoard({
         </div>
 
         {hdNotice && (
-          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2">
+          <div className="p-2.5 rounded-[8px] bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
             <span>{hdNotice}</span>
           </div>
         )}
       </section>
 
-      {/* 3. Super-App 4x2 Quick Access Grid (Option 2 Combo) */}
-      <section aria-label={t("nav.services", "त्वरित सेवाएँ")} className="grid grid-cols-4 gap-2">
+      {/* 3. Super-App 4x2 3D Glossy Square Quick Access Grid */}
+      <section aria-label={t("nav.services", "त्वरित सेवाएँ")} className="grid grid-cols-4 gap-2.5">
         {quickShortcuts.map((item) => {
           const Icon = item.icon;
           return (
@@ -1577,23 +1578,12 @@ export function TodayBoard({
                 triggerHapticSelection();
                 onOpen(item.id);
               }}
-              style={{
-                backgroundColor: "var(--bx-panel)",
-                borderColor: "var(--bx-line)",
-                color: "var(--bx-ink)",
-              }}
-              className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-2xl border cursor-pointer active:scale-94 transition"
+              className="bx-gloss-square flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 cursor-pointer"
             >
-              <span
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{
-                  backgroundColor: "var(--bx-mark-soft)",
-                  color: "var(--bx-mark)",
-                }}
-              >
+              <span className="bx-gloss-icon flex items-center justify-center">
                 <Icon className="w-[18px] h-[18px]" />
               </span>
-              <span className="text-[11px] font-bold leading-tight text-center truncate w-full px-0.5">
+              <span className="text-[11px] font-extrabold leading-tight text-center truncate w-full px-0.5">
                 {item.label}
               </span>
             </button>
@@ -1602,7 +1592,7 @@ export function TodayBoard({
       </section>
 
       {/* 4. Shastrokt Tithi Nirnaya & Daily Agnivasa Action Banners */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <button
           type="button"
           onClick={() => {
@@ -1614,10 +1604,10 @@ export function TodayBoard({
             color: "#FFFFFF",
             borderColor: "var(--bx-gold)",
           }}
-          className="bx-dark-surface w-full p-3 rounded-2xl border flex items-center justify-between gap-2.5 cursor-pointer active:scale-98 transition"
+          className="bx-dark-surface w-full p-3 rounded-[9px] border flex items-center justify-between gap-2.5 cursor-pointer transition"
         >
           <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-xl bg-white/15 border border-amber-300/35 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-[8px] bg-white/15 border border-amber-300/35 flex items-center justify-center shrink-0">
               <Scale className="w-4 h-4" style={{ color: "#FDE68A" }} />
             </div>
             <div className="min-w-0 flex-1">
@@ -1647,15 +1637,14 @@ export function TodayBoard({
           }}
           style={{
             backgroundColor: "var(--bx-panel)",
-            borderColor: dailyAgnivasa.isAuspicious ? "#059669" : "var(--bx-line)",
+            borderColor: dailyAgnivasa.isAuspicious ? "#059669" : "var(--bx-gold)",
             color: "var(--bx-ink)",
           }}
-          className="w-full p-3 rounded-2xl border flex items-center justify-between gap-2.5 cursor-pointer active:scale-98 transition"
+          className="w-full p-3 rounded-[9px] border flex items-center justify-between gap-2.5 cursor-pointer transition"
         >
           <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-              style={{ backgroundColor: "var(--bx-mark-soft)" }}
+              className="bx-gloss-icon flex items-center justify-center shrink-0"
             >
               <Flame
                 className={`w-4 h-4 ${dailyAgnivasa.isAuspicious ? "text-emerald-600" : "text-amber-600"}`}
@@ -1687,9 +1676,9 @@ export function TodayBoard({
           backgroundColor: "var(--bx-panel)",
           borderColor: "var(--bx-line)",
         }}
-        className="border rounded-2xl p-3.5 space-y-3"
+        className="border rounded-[10px] p-3.5 space-y-3"
       >
-        <div className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: "var(--bx-line)" }}>
+        <div className="flex items-center justify-between gap-2 border-b pb-2.5" style={{ borderColor: "var(--bx-line)" }}>
           <h2 className="font-granth font-bold text-base" style={{ color: "var(--bx-header)" }}>
             {t("panchang.fullDetailsTitle", "आज का सम्पूर्ण पंचांग विवरण")}
           </h2>
@@ -1699,8 +1688,8 @@ export function TodayBoard({
               triggerHapticSelection();
               onWhatsApp();
             }}
-            style={{ color: "var(--bx-mark)" }}
-            className="text-xs font-bold flex items-center gap-1 cursor-pointer"
+            style={{ backgroundColor: "var(--bx-cream)", borderColor: "var(--bx-gold)", color: "var(--bx-header)" }}
+            className="px-2.5 py-1.5 rounded-[8px] border text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
           >
             <Share2 className="w-3.5 h-3.5" />
             <span>{language === "en" ? "WhatsApp Card" : language === "gu" ? "કાર્ડ" : "व्हाट्सएप कार्ड"}</span>

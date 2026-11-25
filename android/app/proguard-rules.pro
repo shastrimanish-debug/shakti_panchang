@@ -15,6 +15,15 @@
 -keep class com.shaktipanchang.app.** { *; }
 -keepclassmembers class com.shaktipanchang.app.** { *; }
 
+# Preserve AndroidX EdgeToEdge & SystemBarStyle so Play Console static analysis
+# detects EdgeToEdge.enable() and does not misflag inlined compat calls as deprecated APIs
+-keep class androidx.activity.EdgeToEdge {
+    public static *** enable*(...);
+}
+-keep class androidx.activity.SystemBarStyle { *; }
+-keep class androidx.activity.EdgeToEdgeApi** { *; }
+-keep interface androidx.activity.EdgeToEdgeImpl { *; }
+
 # Preserve annotations and enums
 -keepattributes *Annotation*
 -keepclassmembers enum * { *; }

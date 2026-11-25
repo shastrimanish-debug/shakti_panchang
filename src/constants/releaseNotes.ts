@@ -12,6 +12,27 @@ export interface ReleaseNote {
 
 export const APP_RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "1.0.80",
+    versionCode: 80,
+    date: "नवंबर 2026",
+    title: "संस्करण ८० (v1.0.80) - राजसी 3D उभरे ग्लॉसी स्क्वायर बटन (होम, बॉटम बार व सभी मॉड्यूल के अंदर)",
+    highlights: [
+      "राजसी 3D उभरापन व ग्लॉसी चमक: शीर्ष हेडर, 5-टैब बॉटम बार, होम 4×2 त्वरित ग्रिड, सभी सेवा कार्ड और हर मॉड्यूल के अंदर के बटनों में उभरा 3D बेवल व काँच-जैसी ग्लॉसी चमक वापस जोड़ी गई।",
+      "हर जगह क्रिस्प स्क्वायर बटन: बाहरी लेआउट के साथ-साथ कुंडली, पंचांग, उपाय, भक्ति व सभी आंतरिक मॉड्यूल में गोल की जगह एकसमान 3D स्क्वायर बटन शैली लागू।",
+      "Google Play Console Android 15/16 Edge-to-Edge चेतावनी समाधान: R8/ProGuard में `androidx.activity.EdgeToEdge` व `SystemBarStyle` संरक्षण, `SystemBarStyle.dark(Color.TRANSPARENT)` तथा `styles.xml` से पुराने `colorPrimaryDark` टिंट का उन्मूलन।"
+    ],
+    details: [
+      {
+        category: "3D ग्लॉसी स्क्वायर डिज़ाइन एवं Play Console अनुपालन",
+        items: [
+          "टैप करते ही असली 3D पुश-डाउन एहसास व ऊपर की तरफ स्पेक्युलर ग्लॉसी हाइलाइट।",
+          "5-टैब बॉटम बार, 3-ज़ोन हेडर और सभी 40+ मॉड्यूल 100% सुरक्षित व ओवरलैप-मुक्त।",
+          "MainActivity में `EdgeToEdge.enable(this, SystemBarStyle.dark(TRANSPARENT), ...)` एवं `proguard-rules.pro` कीप-रूल्स से Play Console की दोनों Edge-to-Edge चेतावनियों का निराकरण।"
+        ]
+      }
+    ]
+  },
+  {
     version: "1.0.79",
     versionCode: 79,
     date: "नवंबर 2026",
