@@ -948,10 +948,91 @@ const GITA_CHAPTER_NAMES_EN: Record<number, string> = {
   18: 'Moksha Sannyasa Yoga',
 };
 
+const GITA_CHAPTER_NAMES_GU: Record<number, string> = {
+  1: 'અર્જુનવિષાદયોગ',
+  2: 'સાંખ્યયોગ',
+  3: 'કર્મયોગ',
+  4: 'જ્ઞાનકર્મસંન્યાસયોગ',
+  5: 'કર્મસંન્યાસયોગ',
+  6: 'આત્મસંયમયોગ (ધ્યાનયોગ)',
+  7: 'જ્ઞાનવિજ્ઞાનયોગ',
+  8: 'અક્ષરબ્રહ્મયોગ',
+  9: 'રાજવિદ્યારાજગુહ્યયોગ',
+  10: 'વિભૂતિયોગ',
+  11: 'વિશ્વરૂપદર્શનયોગ',
+  12: 'ભક્તિયોગ',
+  13: 'ક્ષેત્ર-ક્ષેત્રજ્ઞવિભાગયોગ',
+  14: 'ગુણત્રયવિભાગયોગ',
+  15: 'પુરુષોત્તમયોગ',
+  16: 'દૈવાસુરસમ્પદ્વિભાગયોગ',
+  17: 'શ્રદ્ધાત્રયવિભાગયોગ',
+  18: 'મોક્ષસંન્યાસયોગ',
+};
+
+const REF_MAP_EN: [string, string][] = [
+  ['गीता', 'Gita'],
+  ['ईशावास्य', 'Isha Upanishad'],
+  ['कठोपनिषद्', 'Katha Upanishad'],
+  ['मुण्डकोपनिषद्', 'Mundaka Upanishad'],
+  ['बृहदारण्यक', 'Brihadaranyaka'],
+  ['केनोपनिषद्', 'Kena Upanishad'],
+  ['तैत्तिरीय', 'Taittiriya'],
+  ['छान्दोग्य', 'Chandogya'],
+  ['माण्डूक्य', 'Mandukya'],
+  ['भागवत', 'Bhagavata'],
+  ['शिवपुराण', 'Shiva Purana'],
+  ['विष्णुपुराण', 'Vishnu Purana'],
+  ['व्यास वचन', 'Vyasa Vachana'],
+  ['ऋग्वेद', 'Rigveda'],
+  ['यजुर्वेद', 'Yajurveda'],
+];
+
+const REF_MAP_GU: [string, string][] = [
+  ['गीता', 'ગીતા'],
+  ['ईशावास्य', 'ઈશાવાસ્ય'],
+  ['कठोपनिषद्', 'કઠોપનિષદ'],
+  ['मुण्डकोपनिषद्', 'મુંડકોપનિષદ'],
+  ['बृहदारण्यक', 'બૃહદારણ્યક'],
+  ['केनोपनिषद्', 'કેનોપનિષદ'],
+  ['तैत्तिरीय', 'તૈત્તિરીય'],
+  ['छान्दोग्य', 'છાંદોગ્ય'],
+  ['माण्डूक्य', 'માંડૂક્ય'],
+  ['भागवत', 'ભાગવત'],
+  ['शिवपुराण', 'શિવપુરાણ'],
+  ['विष्णुपुराण', 'વિષ્ણુપુરાણ'],
+  ['व्यास वचन', 'વ્યાસ વચન'],
+  ['ऋग्वेद', 'ઋગ્વેદ'],
+  ['यजुर्वेद', 'યજુર્વેદ'],
+];
+
+const DEVANAGARI_DIGITS = '०१२३४५६७८९';
+const GUJARATI_DIGITS = '૦૧૨૩૪૫૬૭૮૯';
+
+export function localizeGranthReference(
+  ref: string,
+  lang: 'hi' | 'en' | 'gu'
+): string {
+  if (!ref || lang === 'hi') return ref;
+  let out = ref;
+  const table = lang === 'en' ? REF_MAP_EN : REF_MAP_GU;
+  for (const [src, dst] of table) {
+    if (out.includes(src)) {
+      out = out.replace(src, dst);
+    }
+  }
+  if (lang === 'en') {
+    out = out.replace(/[०-९]/g, (d) => String(DEVANAGARI_DIGITS.indexOf(d)));
+  } else if (lang === 'gu') {
+    out = out.replace(/[०-९]/g, (d) => GUJARATI_DIGITS[DEVANAGARI_DIGITS.indexOf(d)] || d);
+  }
+  return out;
+}
+
 export const ALL_GRANTH_EXCERPTS: GranthExcerpt[] = [
   ...GITA_SHLOKAS.map((g): GranthExcerpt => {
     const chNameHi = GITA_CHAPTER_NAMES_HI[g.chapter] || `अध्याय ${g.chapter}`;
     const chNameEn = GITA_CHAPTER_NAMES_EN[g.chapter] || `Chapter ${g.chapter}`;
+    const chNameGu = GITA_CHAPTER_NAMES_GU[g.chapter] || `અધ્યાય ${g.chapter}`;
     return {
       id: `gita-${g.chapter}-${g.verse}`,
       tradition: 'gita',
@@ -963,7 +1044,7 @@ export const ALL_GRANTH_EXCERPTS: GranthExcerpt[] = [
       subSource: {
         hi: `अध्याय ${g.chapter} (${chNameHi}) • श्लोक ${g.verse}`,
         en: `Chapter ${g.chapter} (${chNameEn}) • Verse ${g.verse}`,
-        gu: `અધ્યાય ${g.chapter} (${chNameHi}) • શ્લોક ${g.verse}`,
+        gu: `અધ્યાય ${g.chapter} (${chNameGu}) • શ્લોક ${g.verse}`,
       },
       reference: `गीता ${g.chapter}.${g.verse}`,
       rishiOrSpeaker: {
@@ -974,7 +1055,7 @@ export const ALL_GRANTH_EXCERPTS: GranthExcerpt[] = [
       themeTag: {
         hi: chNameHi,
         en: chNameEn,
-        gu: chNameHi,
+        gu: chNameGu,
       },
       sanskrit: g.sanskrit,
       transliteration: g.transliteration,

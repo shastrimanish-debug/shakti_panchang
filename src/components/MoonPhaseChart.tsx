@@ -1082,33 +1082,43 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
       </div>
 
       {/* Prominent Share & HD Save Action Bar */}
-      <div className="pt-2 border-t border-[#8C6239]/25 flex flex-wrap items-center gap-2">
+      <div className="pt-2.5 border-t border-[#8C6239]/25 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         <button
           type="button"
           onClick={handleShareHdPanchang}
           disabled={isSharingHd}
-          className="flex-1 min-w-[140px] py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-[#5C3A21] to-[#7A4B2A] hover:brightness-110 text-[#FAF2E4] font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
+          style={{
+            background: 'linear-gradient(180deg, #6E4628 0%, #4E2F18 100%)',
+            color: '#FAF2E4',
+            borderColor: '#C58A3C',
+          }}
+          className="min-h-[44px] py-2.5 px-3 border rounded-lg hover:brightness-110 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 text-center leading-tight"
         >
           {isSharingHd ? (
-            <Loader2 className="w-4 h-4 animate-spin text-[#FFD88A]" />
+            <Loader2 className="w-4 h-4 shrink-0 animate-spin text-[#FFD88A]" />
           ) : (
-            <Share2 className="w-4 h-4 text-[#FFD88A]" />
+            <Share2 className="w-4 h-4 shrink-0 text-[#FFD88A]" />
           )}
-          <span>{t('panchang.sharePanchang', 'पंचांग शेयर करें (Share)')}</span>
+          <span className="truncate">{t('panchang.sharePanchang', 'पंचांग शेयर करें (Share)')}</span>
         </button>
 
         <button
           type="button"
           onClick={handleSaveHdImage}
           disabled={isSavingHd}
-          className="flex-1 min-w-[140px] py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-[#B56A00] to-[#8B1E1E] hover:brightness-110 text-white font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
+          style={{
+            background: 'linear-gradient(180deg, #C67300 0%, #8B1E1E 100%)',
+            color: '#FFFFFF',
+            borderColor: '#E5A93B',
+          }}
+          className="min-h-[44px] py-2.5 px-3 border rounded-lg hover:brightness-110 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 text-center leading-tight"
         >
           {isSavingHd ? (
-            <Loader2 className="w-4 h-4 animate-spin text-amber-200" />
+            <Loader2 className="w-4 h-4 shrink-0 animate-spin text-amber-200" />
           ) : (
-            <Download className="w-4 h-4 text-amber-200" />
+            <Download className="w-4 h-4 shrink-0 text-amber-200" />
           )}
-          <span>{t('panchang.saveHd1080', 'HD में सेव करें (1080p)')}</span>
+          <span className="truncate">{t('panchang.saveHd1080', 'HD में सेव करें (1080p)')}</span>
         </button>
 
         {onWhatsApp && (
@@ -1118,10 +1128,15 @@ export const MoonPhaseChart: React.FC<MoonPhaseChartProps> = ({
               triggerHapticSelection();
               onWhatsApp();
             }}
-            className="py-2.5 px-3 rounded-xl bg-[#F4E8D1] hover:bg-[#E8D5B5] border border-[#8C6239]/40 text-[#5C3A21] font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
+            style={{
+              backgroundColor: 'var(--bx-cream)',
+              borderColor: 'var(--bx-gold)',
+              color: 'var(--bx-header)',
+            }}
+            className="col-span-2 sm:col-span-1 min-h-[44px] py-2.5 px-3 rounded-lg border font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
             title={t('panchang.whatsappCard', 'व्हाट्सएप कार्ड')}
           >
-            <MessageCircle className="w-4 h-4 text-emerald-700" />
+            <MessageCircle className="w-4 h-4 shrink-0 text-emerald-700" />
             <span>{t('panchang.whatsappCard', 'व्हाट्सएप कार्ड')}</span>
           </button>
         )}

@@ -4,6 +4,7 @@ import {
   TRADITION_META,
   GranthExcerpt,
   ScriptureTradition,
+  localizeGranthReference,
 } from '../data/granthPuranData';
 import {
   BookOpen,
@@ -244,7 +245,17 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
     const sub = item.subSource[langKey] || item.subSource.hi;
     const meaning = item.meaning[langKey] || item.meaning.hi;
     const tika = item.commentary[langKey] || item.commentary.hi;
-    const text = `॥ ${title} (${sub}) ॥\n\n${item.sanskrit}\n\nभावार्थ: ${meaning}\n\nतत्त्व-चिंतन: ${tika}\n— शक्ति पंचांग (सनातन ग्रन्थ एवं उपनिषद् स्वाध्याय)`;
+    const meaningLabel =
+      langKey === 'en' ? 'Meaning' : langKey === 'gu' ? 'ભાવાર્થ' : 'भावार्थ';
+    const insightLabel =
+      langKey === 'en' ? 'Vedanta Insight' : langKey === 'gu' ? 'તત્ત્વ-ચિંતન' : 'तत्त्व-चिंतन';
+    const footerLabel =
+      langKey === 'en'
+        ? '— Shakti Panchang (Sanatan Granths & Upanishads)'
+        : langKey === 'gu'
+          ? '— શક્તિ પંચાંગ (સનાતન ગ્રંથ અને ઉપનિષદ સ્વાધ્યાય)'
+          : '— शक्ति पंचांग (सनातन ग्रन्थ एवं उपनिषद् स्वाध्याय)';
+    const text = `॥ ${title} (${sub}) ॥\n\n${item.sanskrit}\n\n${meaningLabel}: ${meaning}\n\n${insightLabel}: ${tika}\n${footerLabel}`;
     navigator.clipboard.writeText(text);
     setCopiedId(item.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -256,7 +267,17 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
     const sub = item.subSource[langKey] || item.subSource.hi;
     const meaning = item.meaning[langKey] || item.meaning.hi;
     const tika = item.commentary[langKey] || item.commentary.hi;
-    const shareText = `*॥ ${title} · ${sub} ॥*\n\n${item.sanskrit}\n\n*भावार्थ:* ${meaning}\n\n*वेदान्त दर्शन:* ${tika}\n\n📲 *शक्ति पंचांग — प्राचीन ग्रन्थ, उपनिषद् व पुराण स्वाध्याय*`;
+    const meaningLabel =
+      langKey === 'en' ? 'Meaning' : langKey === 'gu' ? 'ભાવાર્થ' : 'भावार्थ';
+    const insightLabel =
+      langKey === 'en' ? 'Vedanta Insight' : langKey === 'gu' ? 'વેદાંત દર્શન' : 'वेदान्त दर्शन';
+    const footerLabel =
+      langKey === 'en'
+        ? '📲 *Shakti Panchang — Ancient Granths, Upanishads & Puranas*'
+        : langKey === 'gu'
+          ? '📲 *શક્તિ પંચાંગ — પ્રાચીન ગ્રંથ, ઉપનિષદ અને પુરાણ સ્વાધ્યાય*'
+          : '📲 *शक्ति पंचांग — प्राचीन ग्रन्थ, उपनिषद् व पुराण स्वाध्याय*';
+    const shareText = `*॥ ${title} · ${sub} ॥*\n\n${item.sanskrit}\n\n*${meaningLabel}:* ${meaning}\n\n*${insightLabel}:* ${tika}\n\n${footerLabel}`;
     openWhatsAppShare(shareText);
   };
 
@@ -312,16 +333,16 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
     >
       {/* Top Sacred Manuscript Header */}
       <header
-        className="shrink-0 px-2.5 sm:px-3 py-2 shadow-xs border-b z-20"
+        className="shrink-0 px-2 sm:px-3 py-2 shadow-xs border-b z-20"
         style={{
           backgroundColor: 'var(--bx-panel)',
           borderColor: 'var(--bx-line)',
           color: 'var(--bx-ink)',
         }}
       >
-        <div className="flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
           {/* Left Navigation Buttons */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {onBackToPanchang && (
               <button
                 type="button"
@@ -334,11 +355,11 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   color: 'var(--bx-header)',
                   borderColor: 'var(--bx-line)',
                 }}
-                className="px-2.5 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0 shadow-2xs hover:opacity-90"
-                title="पंचांग पर वापस जाएं"
+                className="px-2 py-1.5 rounded-lg border transition cursor-pointer flex items-center gap-1 text-[11px] sm:text-xs font-bold shrink-0 shadow-2xs hover:opacity-90 whitespace-nowrap"
+                title={langKey === 'en' ? 'Back to Panchang' : langKey === 'gu' ? 'પંચાંગ પર પાછા જાઓ' : 'पंचांग पर वापस जाएं'}
               >
-                <ArrowLeft className="w-3.5 h-3.5" style={{ color: 'var(--bx-header)' }} />
-                <span className="text-xs font-bold">
+                <ArrowLeft className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-header)' }} />
+                <span>
                   {langKey === 'en' ? 'Panchang' : langKey === 'gu' ? 'પંચાંગ' : 'पंचांग'}
                 </span>
               </button>
@@ -355,12 +376,12 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 color: 'var(--bx-header)',
                 borderColor: 'var(--bx-line)',
               }}
-              className="px-2.5 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs hover:opacity-90"
-              title="ग्रन्थ अनुक्रमणिका"
+              className="px-2 py-1.5 rounded-lg border transition cursor-pointer flex items-center gap-1 text-[11px] sm:text-xs font-bold shrink-0 shadow-2xs hover:opacity-90 whitespace-nowrap"
+              title={langKey === 'en' ? 'Scripture Index' : langKey === 'gu' ? 'ગ્રંથ અનુક્રમણિકા' : 'ग्रन्थ अनुक्रमणिका'}
             >
-              <Menu className="w-3.5 h-3.5" style={{ color: 'var(--bx-header)' }} />
-              <span className="text-xs font-bold">
-                {langKey === 'en' ? 'Index' : langKey === 'gu' ? 'અનુક્રમણિકા' : 'सूची'}
+              <Menu className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-header)' }} />
+              <span>
+                {langKey === 'en' ? 'Index' : langKey === 'gu' ? 'સૂચિ' : 'सूची'}
               </span>
             </button>
           </div>
@@ -382,13 +403,15 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               style={{ color: 'var(--bx-mute)' }}
             >
               {currentExcerpt
-                ? `${currentExcerpt.scriptureName[langKey]} · ${currentExcerpt.reference}`
-                : TRADITION_META[activeTradition].subtitleHi}
+                ? `${currentExcerpt.scriptureName[langKey]} · ${localizeGranthReference(currentExcerpt.reference, langKey)}`
+                : langKey === 'en'
+                  ? TRADITION_META[activeTradition].subtitleEn
+                  : TRADITION_META[activeTradition].subtitleHi}
             </p>
           </div>
 
           {/* Right Action Tools */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={() => handleToggleSpeak()}
@@ -406,24 +429,28 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       borderColor: 'var(--bx-line)',
                     }
               }
-              className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs hover:opacity-90 ${
+              className={`px-2 py-1.5 rounded-lg border text-[11px] sm:text-xs font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs hover:opacity-90 whitespace-nowrap ${
                 isSpeaking ? 'animate-pulse' : ''
               }`}
-              title="सस्वर संस्कृत व हिंदी पाठ सुनें"
+              title={langKey === 'en' ? 'Listen to Sanskrit recitation' : langKey === 'gu' ? 'સસ્વર સંસ્કૃત પાઠ સાંભળો' : 'सस्वर संस्कृत व हिंदी पाठ सुनें'}
             >
               {isSpeaking ? (
-                <VolumeX className="w-3.5 h-3.5 text-white" />
+                <VolumeX className="w-3.5 h-3.5 shrink-0 text-white" />
               ) : (
-                <Volume2 className="w-3.5 h-3.5" style={{ color: 'var(--bx-header)' }} />
+                <Volume2 className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-header)' }} />
               )}
-              <span className="text-xs font-bold">
+              <span>
                 {isSpeaking
                   ? langKey === 'en'
                     ? 'Stop'
-                    : 'रुकें'
+                    : langKey === 'gu'
+                      ? 'રોકો'
+                      : 'रुकें'
                   : langKey === 'en'
                     ? 'Recite'
-                    : 'स्वर पाठ'}
+                    : langKey === 'gu'
+                      ? 'સ્વર'
+                      : 'स्वर'}
               </span>
             </button>
 
@@ -438,18 +465,22 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 color: 'var(--bx-header)',
                 borderColor: 'var(--bx-line)',
               }}
-              className="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs hover:opacity-90"
-              title="पठन मोड बदलें"
+              className="px-2 py-1.5 rounded-lg border text-[11px] sm:text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs hover:opacity-90 whitespace-nowrap"
+              title={langKey === 'en' ? 'Toggle View Mode' : langKey === 'gu' ? 'વાંચન મોડ બદલો' : 'पठन मोड बदलें'}
             >
-              <LayoutList className="w-3.5 h-3.5" style={{ color: 'var(--bx-header)' }} />
-              <span className="text-xs font-bold">
+              <LayoutList className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-header)' }} />
+              <span>
                 {viewMode === 'reader'
                   ? langKey === 'en'
                     ? 'All'
-                    : 'सूची'
+                    : langKey === 'gu'
+                      ? 'યાદી'
+                      : 'सभी'
                   : langKey === 'en'
                     ? 'Reader'
-                    : 'पठन'}
+                    : langKey === 'gu'
+                      ? 'પાઠ'
+                      : 'पठन'}
               </span>
             </button>
 
@@ -461,16 +492,19 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 color: 'var(--bx-header)',
                 borderColor: 'var(--bx-line)',
               }}
-              className="px-2 py-1.5 rounded-xl border text-xs font-bold cursor-pointer shadow-2xs hover:opacity-90"
-              title="अक्षर आकार बदलें"
+              className="px-2 py-1.5 rounded-lg border text-[11px] sm:text-xs font-bold cursor-pointer shadow-2xs hover:opacity-90 shrink-0 whitespace-nowrap"
+              title={langKey === 'en' ? 'Change Font Size' : langKey === 'gu' ? 'અક્ષરનું કદ બદલો' : 'अक्षर आकार बदलें'}
             >
-              {fontSize === 'sm'
-                ? 'अ-'
-                : fontSize === 'base'
-                  ? 'अ'
-                  : fontSize === 'lg'
-                    ? 'अ+'
-                    : 'अ++'}
+              {(() => {
+                const glyph = langKey === 'en' ? 'A' : langKey === 'gu' ? 'અ' : 'अ';
+                return fontSize === 'sm'
+                  ? `${glyph}-`
+                  : fontSize === 'base'
+                    ? glyph
+                    : fontSize === 'lg'
+                      ? `${glyph}+`
+                      : `${glyph}++`;
+              })()}
             </button>
 
             {onOpenUmaModal && currentExcerpt && (
@@ -479,7 +513,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 onClick={() => {
                   triggerHapticSelection();
                   onOpenUmaModal(
-                    `${currentExcerpt.scriptureName.hi} (${currentExcerpt.reference}) के श्लोक "${currentExcerpt.sanskrit.split('\n')[0]}" का गहरा वेदान्त रहस्य और दैनिक जीवन में प्रयोग समझाइए।`
+                    `${currentExcerpt.scriptureName[langKey] || currentExcerpt.scriptureName.hi} (${localizeGranthReference(currentExcerpt.reference, langKey)}) — "${currentExcerpt.sanskrit.split('\n')[0]}"`
                   );
                 }}
                 style={{
@@ -487,11 +521,11 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   color: '#FFFFFF',
                   borderColor: 'var(--bx-gold)',
                 }}
-                className="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 shadow-xs active:scale-95 transition cursor-pointer shrink-0"
+                className="px-2 py-1.5 rounded-lg border text-[11px] sm:text-xs font-bold flex items-center gap-1 shadow-xs active:scale-95 transition cursor-pointer shrink-0 whitespace-nowrap"
               >
-                <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--bx-mark-soft)' }} />
+                <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-mark-soft)' }} />
                 <span style={{ color: '#FFFFFF' }}>
-                  {langKey === 'en' ? 'Ask Uma' : 'उमा भाष्य'}
+                  {langKey === 'en' ? 'Ask Uma' : langKey === 'gu' ? 'ઉમા' : 'उमा'}
                 </span>
               </button>
             )}
@@ -579,7 +613,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 }
                 className="px-2.5 py-1 rounded-md border text-[11px] font-bold whitespace-nowrap cursor-pointer transition shadow-2xs"
               >
-                {langKey === 'en' ? 'All Texts' : 'सभी ग्रन्थ'}
+                {langKey === 'en' ? 'All Texts' : langKey === 'gu' ? 'બધા ગ્રંથો' : 'सभी ग्रन्थ'}
               </button>
               {availableScriptureNames.map((scr) => {
                 const isSelectedScr = selectedScriptureFilter === scr.key;
@@ -678,7 +712,9 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                 >
                   {langKey === 'en'
                     ? `Scripture Index (${filteredExcerpts.length})`
-                    : `ग्रन्थ श्लोक अनुक्रमणिका (${filteredExcerpts.length})`}
+                    : langKey === 'gu'
+                      ? `ગ્રંથ શ્લોક અનુક્રમણિકા (${filteredExcerpts.length})`
+                      : `ग्रन्थ श्लोक अनुक्रमणिका (${filteredExcerpts.length})`}
                 </h3>
               </div>
               <button
@@ -724,7 +760,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                         className="text-xs font-bold truncate"
                         style={{ color: isSelected ? '#FFFFFF' : '#241005' }}
                       >
-                        {item.scriptureName[langKey]} · {item.reference}
+                        {item.scriptureName[langKey]} · {localizeGranthReference(item.reference, langKey)}
                       </div>
                       <div
                         className="text-[11px] truncate mt-0.5 font-medium"
@@ -769,19 +805,27 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               {activeTradition === 'bookmarked'
                 ? langKey === 'en'
                   ? 'No Bookmarked Verses Yet'
-                  : 'अभी कोई श्लोक बुकमार्क नहीं किया गया है'
+                  : langKey === 'gu'
+                    ? 'હજી સુધી કોઈ શ્લોક બુકમાર્ક કરેલ નથી'
+                    : 'अभी कोई श्लोक बुकमार्क नहीं किया गया है'
                 : langKey === 'en'
                   ? 'No Matching Scripture Excerpts Found'
-                  : 'इस खोज से संबंधित कोई श्लोक नहीं मिला'}
+                  : langKey === 'gu'
+                    ? 'આ શોધ મુજબ કોઈ શ્લોક મળ્યો નથી'
+                    : 'इस खोज से संबंधित कोई श्लोक नहीं मिला'}
             </h3>
             <p className="text-xs font-medium" style={{ color: '#4A2511' }}>
               {activeTradition === 'bookmarked'
                 ? langKey === 'en'
                   ? 'Tap the bookmark icon on any Bhagavad Gita, Upanishad, or Purana verse to save it here for daily reflection.'
-                  : 'स्वाध्याय के दौरान किसी भी गीता श्लोक, उपनिषद् मन्त्र या पुराण वचन पर बुकमार्क चिह्न दबाकर यहाँ सहेजें।'
+                  : langKey === 'gu'
+                    ? 'સ્વાધ્યાય દરમિયાન કોઈપણ ગીતા શ્લોક, ઉપનિષદ મંત્ર કે પુરાણ વચન પર બુકમાર્ક દબાવીને અહીં સાચવો.'
+                    : 'स्वाध्याय के दौरान किसी भी गीता श्लोक, उपनिषद् मन्त्र या पुराण वचन पर बुकमार्क चिह्न दबाकर यहाँ सहेजें।'
                 : langKey === 'en'
                   ? 'Try clearing the search filter or selecting "All Scriptures".'
-                  : 'कृपया खोज शब्द बदलें या "सभी ग्रन्थ" विकल्प चुनें।'}
+                  : langKey === 'gu'
+                    ? 'કૃપા કરીને શોધ શબ્દ બદલો અથવા "સર્વ ગ્રંથો" પસંદ કરો.'
+                    : 'कृपया खोज शब्द बदलें या "सभी ग्रन्थ" विकल्प चुनें।'}
             </p>
             <button
               type="button"
@@ -793,7 +837,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
               style={{ backgroundColor: '#8B1E1E', color: '#FFFFFF' }}
               className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer"
             >
-              {langKey === 'en' ? 'Show All Scriptures' : 'सभी ग्रन्थ देखें'}
+              {langKey === 'en' ? 'Show All Scriptures' : langKey === 'gu' ? 'બધા ગ્રંથો જુઓ' : 'सभी ग्रन्थ देखें'}
             </button>
           </div>
         ) : viewMode === 'reader' && currentExcerpt ? (
@@ -821,13 +865,13 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   color: 'var(--bx-header)',
                   borderColor: 'var(--bx-line)',
                 }}
-                className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs hover:opacity-90"
+                className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs hover:opacity-90 shrink-0 whitespace-nowrap"
               >
-                <ChevronLeft className="w-4 h-4" style={{ color: 'var(--bx-header)' }} />
-                <span>{langKey === 'en' ? 'Prev' : 'पूर्व श्लोक'}</span>
+                <ChevronLeft className="w-4 h-4 shrink-0" style={{ color: 'var(--bx-header)' }} />
+                <span>{langKey === 'en' ? 'Prev' : langKey === 'gu' ? 'પૂર્વ' : 'पूर्व'}</span>
               </button>
 
-              <div className="text-center min-w-0 px-2">
+              <div className="text-center min-w-0 px-1.5 flex-1">
                 <div
                   className="text-xs sm:text-sm font-bold truncate"
                   style={{ color: 'var(--bx-header)' }}
@@ -857,12 +901,12 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   color: '#FFFFFF',
                   borderColor: 'var(--bx-gold)',
                 }}
-                className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs hover:opacity-90"
+                className="px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs hover:opacity-90 shrink-0 whitespace-nowrap"
               >
                 <span style={{ color: '#FFFFFF' }}>
-                  {langKey === 'en' ? 'Next' : 'अगला श्लोक'}
+                  {langKey === 'en' ? 'Next' : langKey === 'gu' ? 'આગળ' : 'अगला'}
                 </span>
-                <ChevronRight className="w-4 h-4" style={{ color: '#FFFFFF' }} />
+                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: '#FFFFFF' }} />
               </button>
             </div>
 
@@ -890,7 +934,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   </span>
                   <span aria-hidden="true">·</span>
                   <span style={{ color: 'var(--bx-ink)' }}>
-                    {currentExcerpt.reference}
+                    {localizeGranthReference(currentExcerpt.reference, langKey)}
                   </span>
                 </div>
 
@@ -950,11 +994,17 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                     type="button"
                     onClick={() => {
                       triggerHapticSelection();
+                      const vedantaPrefix =
+                        langKey === 'en'
+                          ? 'Vedanta Insight'
+                          : langKey === 'gu'
+                            ? 'વેદાંત દર્શન'
+                            : 'वेदान्त दर्शन';
                       setPosterData({
                         title: currentExcerpt.scriptureName[langKey] || currentExcerpt.scriptureName.hi,
-                        reference: `${currentExcerpt.subSource[langKey] || currentExcerpt.subSource.hi} · ${currentExcerpt.reference}`,
+                        reference: `${currentExcerpt.subSource[langKey] || currentExcerpt.subSource.hi} · ${localizeGranthReference(currentExcerpt.reference, langKey)}`,
                         sanskrit: currentExcerpt.sanskrit,
-                        meaning: `${currentExcerpt.meaning[langKey] || currentExcerpt.meaning.hi}\n\nवेदान्त दर्शन: ${currentExcerpt.commentary[langKey] || currentExcerpt.commentary.hi}`,
+                        meaning: `${currentExcerpt.meaning[langKey] || currentExcerpt.meaning.hi}\n\n${vedantaPrefix}: ${currentExcerpt.commentary[langKey] || currentExcerpt.commentary.hi}`,
                         speaker: currentExcerpt.rishiOrSpeaker[langKey] || currentExcerpt.rishiOrSpeaker.hi,
                         accentTag: `📜 ${currentExcerpt.themeTag[langKey] || currentExcerpt.themeTag.hi}`,
                       });
@@ -964,10 +1014,16 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       borderColor: 'var(--bx-gold)',
                       color: '#FFFFFF',
                     }}
-                    className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs hover:opacity-90"
-                    title="HD स्टेटस इमेज कार्ड डाउनलोड/शेयर करें"
+                    className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs hover:opacity-90 whitespace-nowrap"
+                    title={langKey === 'en' ? 'Download/Share HD Status Card' : langKey === 'gu' ? 'HD સ્ટેટસ કાર્ડ ડાઉનલોડ/શેર કરો' : 'HD स्टेटस इमेज कार्ड डाउनलोड/शेयर करें'}
                   >
-                    <span>📸 स्टेटस कार्ड</span>
+                    <span>
+                      {langKey === 'en'
+                        ? '📸 Status Card'
+                        : langKey === 'gu'
+                          ? '📸 સ્ટેટસ કાર્ડ'
+                          : '📸 स्टेटस कार्ड'}
+                    </span>
                   </button>
 
                   <button
@@ -978,11 +1034,13 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       borderColor: 'var(--bx-line)',
                       color: 'var(--bx-header)',
                     }}
-                    className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs hover:opacity-90"
-                    title="व्हाट्सएप पर साझा करें"
+                    className="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs hover:opacity-90 whitespace-nowrap"
+                    title={langKey === 'en' ? 'Share on WhatsApp' : langKey === 'gu' ? 'WhatsApp પર શેર કરો' : 'व्हाट्सएप पर साझा करें'}
                   >
                     <Share2 className="w-3.5 h-3.5" style={{ color: 'var(--bx-header)' }} />
-                    <span>{langKey === 'en' ? 'Share' : 'शेयर'}</span>
+                    <span>
+                      {langKey === 'en' ? 'Share' : langKey === 'gu' ? 'શેર' : 'शेयर'}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1037,10 +1095,14 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                     {showPadaccheda
                       ? langKey === 'en'
                         ? 'Hide'
-                        : 'छुपाएं'
+                        : langKey === 'gu'
+                          ? 'છુપાવો'
+                          : 'छुपाएं'
                       : langKey === 'en'
                         ? 'Show'
-                        : 'दिखाएं'}
+                        : langKey === 'gu'
+                          ? 'બતાવો'
+                          : 'दिखाएं'}
                   </button>
                 </div>
 
@@ -1062,7 +1124,9 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       >
                         {langKey === 'en'
                           ? 'Pronunciation Guide: '
-                          : 'उच्चारण पदच्छेद: '}
+                          : langKey === 'gu'
+                            ? 'ઉચ્ચારણ પદચ્છેદ: '
+                            : 'उच्चारण पदच्छेद: '}
                       </span>
                       {formatPadacchedaGuide(currentExcerpt.sanskrit)}
                     </div>
@@ -1200,7 +1264,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                         {item.scriptureName[langKey]}
                       </span>
                       <span aria-hidden="true">·</span>
-                      <span>{item.reference}</span>
+                      <span>{localizeGranthReference(item.reference, langKey)}</span>
                       <span aria-hidden="true">·</span>
                       <span>{item.themeTag[langKey]}</span>
                     </div>
@@ -1222,14 +1286,26 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                                 borderColor: '#C8A986',
                               }
                         }
-                        className="px-2 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                        className="px-2 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap"
                       >
                         {isItemSpeaking ? (
                           <VolumeX className="w-3 h-3" />
                         ) : (
                           <Volume2 className="w-3 h-3" />
                         )}
-                        <span>{isItemSpeaking ? 'रुकें' : 'सुनें'}</span>
+                        <span>
+                          {isItemSpeaking
+                            ? langKey === 'en'
+                              ? 'Stop'
+                              : langKey === 'gu'
+                                ? 'રોકો'
+                                : 'रुकें'
+                            : langKey === 'en'
+                              ? 'Listen'
+                              : langKey === 'gu'
+                                ? 'સાંભળો'
+                                : 'सुनें'}
+                        </span>
                       </button>
 
                       <button
@@ -1261,9 +1337,13 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                           backgroundColor: '#8B1E1E',
                           color: '#FFFFFF',
                         }}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer"
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer whitespace-nowrap"
                       >
-                        {langKey === 'en' ? 'Read Full' : 'विस्तार से पढ़ें'}
+                        {langKey === 'en'
+                          ? 'Read Full'
+                          : langKey === 'gu'
+                            ? 'વિગતવાર વાંચો'
+                            : 'विस्तार से पढ़ें'}
                       </button>
                     </div>
                   </div>
@@ -1313,7 +1393,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       style={{ color: '#8B1E1E' }}
                       className="font-bold hover:underline cursor-pointer"
                     >
-                      ← पूर्व अध्याय
+                      {langKey === 'en' ? '← Prev Chapter' : langKey === 'gu' ? '← પૂર્વ અધ્યાય' : '← पूर्व अध्याय'}
                     </button>
                   )}
                   {onNextChapter && (
@@ -1323,7 +1403,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                       style={{ color: '#8B1E1E' }}
                       className="font-bold hover:underline cursor-pointer"
                     >
-                      अगला अध्याय →
+                      {langKey === 'en' ? 'Next Chapter →' : langKey === 'gu' ? 'આગળનો અધ્યાય →' : 'अगला अध्याय →'}
                     </button>
                   )}
                 </div>
@@ -1347,13 +1427,13 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   className="text-xs font-bold"
                   style={{ color: '#6E1409' }}
                 >
-                  श्री दुर्गा सप्तशती
+                  {langKey === 'en' ? 'Durga Saptashati' : langKey === 'gu' ? 'શ્રી દુર્ગા સપ્તશતી' : 'श्री दुर्गा सप्तशती'}
                 </div>
                 <div
                   className="text-[11px] font-medium mt-0.5"
                   style={{ color: '#4A2511' }}
                 >
-                  १३ अध्याय व कवच पाठ
+                  {langKey === 'en' ? '13 Chapters & Kavach' : langKey === 'gu' ? '૧૩ અધ્યાય અને કવચ પાઠ' : '१३ अध्याय व कवच पाठ'}
                 </div>
               </button>
 
@@ -1373,13 +1453,13 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   className="text-xs font-bold"
                   style={{ color: '#6E1409' }}
                 >
-                  संपूर्ण सुंदरकांड
+                  {langKey === 'en' ? 'Sampoorna Sundarkand' : langKey === 'gu' ? 'સંપૂર્ણ સુંદરકાંડ' : 'संपूर्ण सुंदरकांड'}
                 </div>
                 <div
                   className="text-[11px] font-medium mt-0.5"
                   style={{ color: '#4A2511' }}
                 >
-                  श्री रामचरितमानस सोपान
+                  {langKey === 'en' ? 'Ramcharitmanas Chapter' : langKey === 'gu' ? 'શ્રી રામચરિતમાનસ સોપાન' : 'श्री रामचरितमानस सोपान'}
                 </div>
               </button>
 
@@ -1399,13 +1479,13 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   className="text-xs font-bold"
                   style={{ color: '#6E1409' }}
                 >
-                  श्री हनुमान चालीसा
+                  {langKey === 'en' ? 'Hanuman Chalisa' : langKey === 'gu' ? 'શ્રી હનુમાન ચાલીસા' : 'श्री हनुमान चालीसा'}
                 </div>
                 <div
                   className="text-[11px] font-medium mt-0.5"
                   style={{ color: '#4A2511' }}
                 >
-                  दोहा एवं ४० चौपाई
+                  {langKey === 'en' ? 'Doha & 40 Chaupais' : langKey === 'gu' ? 'દોહા અને ૪૦ ચોપાઈ' : 'दोहा एवं ४० चौपाई'}
                 </div>
               </button>
 
@@ -1425,13 +1505,13 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   className="text-xs font-bold"
                   style={{ color: '#6E1409' }}
                 >
-                  व्रत कथा व आरती
+                  {langKey === 'en' ? 'Vrat Katha & Aarti' : langKey === 'gu' ? 'વ્રત કથા અને આરતી' : 'व्रत कथा व आरती'}
                 </div>
                 <div
                   className="text-[11px] font-medium mt-0.5"
                   style={{ color: '#4A2511' }}
                 >
-                  एकादशी व पौराणिक कथाएं
+                  {langKey === 'en' ? 'Ekadashi & Sacred Stories' : langKey === 'gu' ? 'એકાદશી અને પૌરાણિક કથાઓ' : 'एकादशी व पौराणिक कथाएं'}
                 </div>
               </button>
             </div>

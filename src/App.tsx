@@ -658,9 +658,48 @@ export function App() {
             >
               <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--bx-gold)' }} />
               <span className="truncate min-w-0 text-xs font-bold">
-                {currentLang === 'en'
-                  ? (currentLocation.name.match(/\(([^)]+)\)/)?.[1] || currentLocation.name)
-                  : currentLocation.name}
+                {(() => {
+                  const raw = currentLocation.name || '';
+                  const eng = raw.match(/\(([^)]+)\)/)?.[1]?.trim() || raw;
+                  const hiPart = raw.replace(/\s*\([^)]*\)\s*/, '').trim() || raw;
+                  if (currentLang === 'hi' || currentLang === 'mr') return hiPart;
+                  if (currentLang === 'gu') {
+                    const guCities: Record<string, string> = {
+                      'New Delhi': 'નવી દિલ્હી',
+                      'Delhi': 'દિલ્હી',
+                      'Mumbai': 'મુંબઈ',
+                      'Ahmedabad': 'અમદાવાદ',
+                      'Surat': 'સુરત',
+                      'Vadodara': 'વડોદરા',
+                      'Rajkot': 'રાજકોટ',
+                      'Gandhinagar': 'ગાંધીનગર',
+                      'Bhavnagar': 'ભાવનગર',
+                      'Jamnagar': 'જામનગર',
+                      'Junagadh': 'જૂનાગઢ',
+                      'Dwarka': 'દ્વારકા',
+                      'Somnath': 'સોમનાથ',
+                      'Varanasi': 'વારાણસી',
+                      'Ujjain': 'ઉજ્જૈન',
+                      'Jaipur': 'જયપુર',
+                      'Haridwar': 'હરિદ્વાર',
+                      'Ayodhya': 'અયોધ્યા',
+                      'Mathura': 'મથુરા',
+                      'Prayagraj': 'પ્રયાગરાજ',
+                      'Pune': 'પુણે',
+                      'Indore': 'ઇન્દોર',
+                      'Bhopal': 'ભોપાલ',
+                      'Lucknow': 'લખનઉ',
+                      'Patna': 'પટના',
+                      'Kolkata': 'કોલકાતા',
+                      'Bengaluru': 'બેંગલુરુ',
+                      'Bangalore': 'બેંગલુરુ',
+                      'Chennai': 'ચેન્નાઈ',
+                      'Hyderabad': 'હૈદરાબાદ',
+                    };
+                    return guCities[eng] || eng;
+                  }
+                  return eng;
+                })()}
               </span>
               <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-70" />
             </button>

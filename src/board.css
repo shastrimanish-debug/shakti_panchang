@@ -1502,21 +1502,19 @@
     inset 0 1.5px 0.5px rgba(255, 255, 255, 0.52) !important;
 }
 
-/* 4. ALL Inner Module Buttons — Crisp 3D Glossy Raised Square Buttons */
+/* 4. ALL Inner Module Buttons — Crisp 3D Glossy Raised Square Buttons
+ * IMPORTANT: Never set background-image here! Many inner buttons use Tailwind
+ * bg-gradient-to-* (which relies on background-image with no background-color).
+ * Using inset box-shadow preserves 100% of every button's gradient/solid color
+ * while adding a crisp glossy specular glass highlight + 3D raised bevel. */
 .board.bx-bento main button:not(.bx-tile):not(.bx-verse):not(.bx-gloss-square):not(.bx-flat-btn) {
   touch-action: pan-y;
   border-radius: 8px !important;
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.42) 0%,
-    rgba(255, 255, 255, 0.12) 45%,
-    rgba(255, 255, 255, 0) 50%,
-    rgba(0, 0, 0, 0.06) 100%
-  );
   box-shadow:
     0 3px 0 color-mix(in srgb, var(--bx-gold) 72%, #2a1206),
-    0 5px 9px rgba(42, 18, 8, 0.14),
-    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.62);
+    0 5px 9px rgba(42, 18, 8, 0.16),
+    inset 0 13px 10px -9px rgba(255, 255, 255, 0.42),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.58);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
@@ -1524,8 +1522,8 @@
   transform: translateY(2.5px);
   box-shadow:
     0 0.5px 0 color-mix(in srgb, var(--bx-gold) 72%, #2a1206),
-    0 2px 4px rgba(42, 18, 8, 0.12),
-    inset 0 1px 2px rgba(0, 0, 0, 0.16);
+    0 2px 4px rgba(42, 18, 8, 0.14),
+    inset 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 
 /* Flat utility buttons (e.g. inline search clear icon) */
