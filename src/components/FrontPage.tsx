@@ -201,7 +201,7 @@ export function FrontPage({ language, daysRemaining, locked, vipActive, onLangua
           <div className="mx-auto mt-2.5 h-px w-28 bg-[#d4a84a]" />
           <p className="mt-2 text-base sm:text-lg text-[#fff6e8]">Powered by Shiv Shakti</p>
 
-          <div className="mt-3.5 flex flex-wrap justify-center gap-1.5 sm:gap-2">
+          <div data-no-translate="true" className="mt-3.5 flex flex-wrap justify-center gap-1.5 sm:gap-2">
             {SUPPORTED_LANGUAGES.map((item) => {
               const on = item.code === language;
               return (

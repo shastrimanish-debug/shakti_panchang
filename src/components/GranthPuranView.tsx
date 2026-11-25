@@ -1047,6 +1047,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
 
               {/* Primary Sanskrit Shloka / Mantra Display */}
               <div
+                data-no-translate="true"
                 style={{
                   backgroundColor: 'var(--bx-cream)',
                   borderColor: 'var(--bx-gold)',

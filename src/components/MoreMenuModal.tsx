@@ -377,7 +377,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                   <div className="text-xs font-bold text-[#5C3A21] dark:text-[#FFD88A] leading-snug">
                     {t('more.languageSection', 'ऐप की भाषा')}
                   </div>
-                  <div className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
+                  <div data-no-translate="true" className="text-[10px] text-[#735133] dark:text-[#D9C4A9] leading-snug mt-0.5">
                     {currentLang.nativeName} · English, हिन्दी, ગુજરાતી, मराठी
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import i18n, { SUPPORTED_LANGUAGES, LanguageOption, setAppLanguage, getInitialLanguage, getCurrentLanguage } from './index';
+import i18n, { SUPPORTED_LANGUAGES, LanguageOption, setAppLanguage, getInitialLanguage } from './index';
 import { useTranslation } from 'react-i18next';
+import { startDomAutoTranslator } from './autoTranslateEngine';
 
 interface LanguageContextType {
   language: string;
@@ -40,6 +41,18 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       window.removeEventListener('shakti_language_change', handleCustomEvent);
     };
   }, []);
+
+  // Universal Whole-App Auto-Translation for all 10 non-Hindi languages
+  // Translates any hardcoded Hindi across all 40+ modules & modals in-place
+  // while preserving sacred Sanskrit shlokas and language selector chips.
+  useEffect(() => {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (!language || language.slice(0, 2).toLowerCase() === 'hi') return;
+    const stop = startDomAutoTranslator(document.body, language);
+    return () => {
+      stop();
+    };
+  }, [language, version]);
 
   const setLanguage = useCallback(async (code: string) => {
     // 1. Await full i18n change first so dictionary is loaded & i18n.language is set

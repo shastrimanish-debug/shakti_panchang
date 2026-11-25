@@ -160,6 +160,175 @@ async function startServer() {
     }
   });
 
+  // -------------------------------------------------------------
+  // Universal Batched Translation API (/api/translate)
+  // Translates hardcoded Hindi module content into all 10 non-Hindi
+  // app languages with in-memory caching + Gemini + Hosting + MyMemory fallback
+  // -------------------------------------------------------------
+  const serverTranslationCache = new Map<string, string>();
+  const SERVER_TR_CACHE_MAX = 15000;
+  const TR_LANG_NAMES: Record<string, string> = {
+    en: "English",
+    gu: "Gujarati",
+    mr: "Marathi",
+    bn: "Bengali",
+    ta: "Tamil",
+    te: "Telugu",
+    kn: "Kannada",
+    ml: "Malayalam",
+    pa: "Punjabi",
+    or: "Odia",
+  };
+
+  app.post("/api/translate", async (req: Request, res: Response) => {
+    try {
+      const rawTexts = req.body?.texts;
+      const rawLang = String(req.body?.targetLang || "en").slice(0, 2).toLowerCase();
+      if (!Array.isArray(rawTexts) || rawTexts.length === 0) {
+        return res.status(400).json({ ok: false, error: "INVALID_TEXTS" });
+      }
+      if (!TR_LANG_NAMES[rawLang]) {
+        return res.json({ ok: true, translations: rawTexts.map((t: unknown) => String(t ?? "")) });
+      }
+
+      const texts: string[] = rawTexts.slice(0, 30).map((t: unknown) => String(t ?? "").trim());
+      const results = new Array<string>(texts.length);
+      const missingIndices: number[] = [];
+      const missingTexts: string[] = [];
+
+      texts.forEach((txt, idx) => {
+        const key = `${rawLang}::${txt}`;
+        const hit = serverTranslationCache.get(key);
+        if (hit) {
+          results[idx] = hit;
+        } else if (!txt) {
+          results[idx] = "";
+        } else {
+          missingIndices.push(idx);
+          missingTexts.push(txt);
+        }
+      });
+
+      if (missingTexts.length === 0) {
+        return res.json({ ok: true, translations: results, cached: true });
+      }
+
+      const targetName = TR_LANG_NAMES[rawLang];
+      const sysPrompt =
+        `You are an expert translator for an Indian Vedic Panchang, Jyotish, Vastu Shastra, Tantra & Hindu Scripture app. ` +
+        `Translate every Hindi string in the input JSON array into natural, idiomatic ${targetName}. ` +
+        `Rules: (1) Return ONLY a valid JSON array of strings with the EXACT SAME length and order (${missingTexts.length} items). ` +
+        `(2) No markdown fences or commentary. ` +
+        `(3) Keep emojis, numbers, and sacred terms natural (Vastu, Mantra, Yantra, Tantra, Kundali, Panchang, Agama). ` +
+        `(4) If a string already pairs Hindi and English like "मुख्य द्वार (Main Entrance)", translate cleanly without repeating the same meaning twice.`;
+
+      let batchOut: string[] | null = null;
+
+      // 1. Try local Gemini API
+      const ai = getGeminiClient();
+      if (ai) {
+        for (const model of ["gemini-2.5-flash", "gemini-3.1-flash-lite", "gemini-4-hydrogen"]) {
+          try {
+            const resp = await ai.models.generateContent({
+              model,
+              contents: JSON.stringify(missingTexts),
+              config: {
+                systemInstruction: sysPrompt,
+                responseMimeType: "application/json",
+              },
+            });
+            const raw = (resp.text || "").trim();
+            const match = raw.match(/\[[\s\S]*\]/);
+            if (match) {
+              const parsed = JSON.parse(match[0]);
+              if (Array.isArray(parsed) && parsed.length === missingTexts.length) {
+                batchOut = parsed.map((v: unknown, i: number) =>
+                  typeof v === "string" && v.trim() ? v.trim() : missingTexts[i]
+                );
+                break;
+              }
+            }
+          } catch {
+            // Try next model
+          }
+        }
+      }
+
+      // 2. Relay to Hosting AI endpoint (myshivshakti.in uma.php)
+      if (!batchOut) {
+        try {
+          const relayResp = await fetch(HOSTING_UMA_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(22000),
+            body: JSON.stringify({
+              query: JSON.stringify(missingTexts),
+              systemPrompt: sysPrompt,
+              lang: rawLang,
+            }),
+          });
+          if (relayResp.ok) {
+            const relayJson: any = await relayResp.json().catch(() => null);
+            const raw = String(relayJson?.text || "").trim();
+            const match = raw.match(/\[[\s\S]*\]/);
+            if (match) {
+              const parsed = JSON.parse(match[0]);
+              if (Array.isArray(parsed) && parsed.length === missingTexts.length) {
+                batchOut = parsed.map((v: unknown, i: number) =>
+                  typeof v === "string" && v.trim() ? v.trim() : missingTexts[i]
+                );
+              }
+            }
+          }
+        } catch {
+          // Fall through to MyMemory
+        }
+      }
+
+      // 3. Universal free fallback via MyMemory API
+      if (!batchOut) {
+        batchOut = await Promise.all(
+          missingTexts.map(async (src) => {
+            if (src.length > 480) return src;
+            try {
+              const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(src)}&langpair=hi|${encodeURIComponent(rawLang)}`;
+              const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+              if (r.ok) {
+                const j: any = await r.json();
+                const tr = j?.responseData?.translatedText;
+                if (typeof tr === "string" && tr.trim() && !/MYMEMORY WARNING/i.test(tr)) {
+                  return tr.trim();
+                }
+              }
+            } catch {
+              // keep original
+            }
+            return src;
+          })
+        );
+      }
+
+      // Populate cache & final array
+      missingIndices.forEach((origIdx, i) => {
+        const src = missingTexts[i];
+        const tr = batchOut?.[i] || src;
+        results[origIdx] = tr;
+        if (tr && tr !== src) {
+          if (serverTranslationCache.size >= SERVER_TR_CACHE_MAX) {
+            const firstKey = serverTranslationCache.keys().next().value;
+            if (firstKey) serverTranslationCache.delete(firstKey);
+          }
+          serverTranslationCache.set(`${rawLang}::${src}`, tr);
+        }
+      });
+
+      return res.json({ ok: true, translations: results });
+    } catch (err: any) {
+      console.error("Error in /api/translate:", err);
+      return res.status(500).json({ ok: false, error: "TRANSLATE_ERROR" });
+    }
+  });
+
   // Upay Parchi Direct Server-Side Download (100% reliable for Android WebView, iOS Safari, PWA)
   app.post("/api/parchi/download", (req: Request, res: Response) => {
     try {
