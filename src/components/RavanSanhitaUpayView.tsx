@@ -236,6 +236,7 @@ export function RavanSanhitaUpayView({
                 {L("आराध्य व ग्रह:", "Deity & Planet:", "આરાધ્ય અને ગ્રહ:")} {item.planetOrDeity}
               </span>
               <span
+                data-no-translate="true"
                 className="text-xs font-semibold block mt-0.5 line-clamp-2"
                 style={{ color: "#241004" }}
               >
@@ -499,6 +500,7 @@ function Detail({
           )}
         </div>
         <p
+          data-no-translate="true"
           className="font-granth font-bold text-[15px] sm:text-base leading-relaxed"
           style={{ color: "#4A0E0E" }}
         >

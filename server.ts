@@ -220,7 +220,8 @@ async function startServer() {
         `Rules: (1) Return ONLY a valid JSON array of strings with the EXACT SAME length and order (${missingTexts.length} items). ` +
         `(2) No markdown fences or commentary. ` +
         `(3) Keep emojis, numbers, and sacred terms natural (Vastu, Mantra, Yantra, Tantra, Kundali, Panchang, Agama). ` +
-        `(4) If a string already pairs Hindi and English like "मुख्य द्वार (Main Entrance)", translate cleanly without repeating the same meaning twice.`;
+        `(4) If a string already pairs Hindi and English like "मुख्य द्वार (Main Entrance)", translate cleanly without repeating the same meaning twice. ` +
+        `(5) NEVER translate or transliterate sacred Sanskrit shlokas, Vedic mantras, Viniyoga, or Ramcharitmanas Awadhi doha/chaupai verses — return them UNCHANGED in original Devanagari.`;
 
       let batchOut: string[] | null = null;
 

@@ -129,7 +129,7 @@ function Detail({ item, cLang }: { item: VastuUpay; cLang: string }) {
       </article>
       <article className="bx-verse">
         <div className="bx-kicker">{L("मंत्र", "Mantra", "મંત્ર")}</div>
-        <p className="text-sm">{item.mantra}</p>
+        <p data-no-translate="true" className="text-sm font-granth font-bold">{item.mantra}</p>
       </article>
       <article className="bx-verse">
         <div className="bx-kicker">{L("संदर्भ", "Reference", "સંદર્ભ")}</div>

@@ -152,7 +152,7 @@ export function SaralUpayPanel() {
         {selected.mantra ? (
           <div className="rounded-xl border border-[#8C6239]/20 bg-[#F4E8D1] p-3">
             <div className="flex items-start justify-between gap-3">
-              <p className="font-granth text-base leading-relaxed text-[#5C3A21]">{selected.mantra}</p>
+              <p data-no-translate="true" className="font-granth text-base leading-relaxed text-[#5C3A21]">{selected.mantra}</p>
               <button
                 type="button"
                 onClick={() => copyText(`mantra-${selected.id}`, selected.mantra)}
@@ -352,7 +352,7 @@ export function SaralUpayPanel() {
                   <span className="block text-xs text-[#735133]">{view.problem}</span>
                   <span className="mt-0.5 block text-[11px] text-[#5C3A21]">
                     <Sparkles className="mr-1 inline w-3 h-3 text-[#B56A00]" />
-                    {item.mantra || t('withoutMantra')}
+                    {item.mantra ? <span data-no-translate="true">{item.mantra}</span> : t('withoutMantra')}
                     {view.mantraMeaning ? ` · ${view.mantraMeaning}` : ''} · {view.day}
                   </span>
                   {entry ? (

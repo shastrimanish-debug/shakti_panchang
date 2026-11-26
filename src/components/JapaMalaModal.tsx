@@ -439,7 +439,7 @@ export const JapaMalaModal: React.FC<JapaMalaModalProps> = ({ isOpen, onClose })
                   }`}
                 >
                   <span className="font-black">{pickLocObj(m.name)}</span>
-                  <span className="text-[10px] opacity-75 truncate">{m.mantra}</span>
+                  <span data-no-translate="true" className="text-[10px] opacity-75 truncate">{m.mantra}</span>
                 </button>
               ))}
             </div>
@@ -454,7 +454,7 @@ export const JapaMalaModal: React.FC<JapaMalaModalProps> = ({ isOpen, onClose })
               <Sparkles className="w-3 h-3 text-amber-600" />
               <span>{pickLocObj(selectedMantra.deity)}</span>
             </div>
-            <p className="font-granth font-black text-sm sm:text-base text-[#462B17] leading-relaxed">
+            <p data-no-translate="true" className="font-granth font-black text-sm sm:text-base text-[#462B17] leading-relaxed">
               {currentMantraText}
             </p>
             <p className="text-[10.5px] text-[#6B421B] leading-snug">

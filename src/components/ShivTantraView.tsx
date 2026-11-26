@@ -531,7 +531,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                           {item.count}
                         </span>
                       </div>
-                      <div className="p-2.5 bg-[#FAF5ED] dark:bg-[#23140C] rounded-xl border border-amber-300/40 dark:border-amber-600/30 text-center font-granth text-xs sm:text-sm font-bold text-[#7A1D1D] dark:text-amber-200 leading-snug">
+                      <div data-no-translate="true" className="p-2.5 bg-[#FAF5ED] dark:bg-[#23140C] rounded-xl border border-amber-300/40 dark:border-amber-600/30 text-center font-granth text-xs sm:text-sm font-bold text-[#7A1D1D] dark:text-amber-200 leading-snug">
                         {item.mantra}
                       </div>
                       <p className="text-[11px] text-[#5C3A21] dark:text-[#D9C4A9] leading-relaxed mt-2">
@@ -720,7 +720,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                         <span className="font-bold font-granth text-sm text-[#7A1D1D] dark:text-[#FFD88A]">
                           {st.state}
                         </span>
-                        <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-2 py-0.2 rounded-full font-medium">
+                        <span data-no-translate="true" className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-2 py-0.2 rounded-full font-medium">
                           {st.sanskrit}
                         </span>
                       </div>
@@ -1003,7 +1003,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                   </div>
 
                   {/* Sanskrit Sutra Box */}
-                  <div className="p-3 bg-[#FFFDF9] dark:bg-[#381F14] rounded-2xl border border-amber-300/40 dark:border-amber-700/30 text-center font-granth text-xs sm:text-sm font-bold text-[#7A1D1D] dark:text-amber-200 leading-relaxed shadow-2xs">
+                  <div data-no-translate="true" className="p-3 bg-[#FFFDF9] dark:bg-[#381F14] rounded-2xl border border-amber-300/40 dark:border-amber-700/30 text-center font-granth text-xs sm:text-sm font-bold text-[#7A1D1D] dark:text-amber-200 leading-relaxed shadow-2xs">
                     {sutra.sanskrit}
                   </div>
 
@@ -1093,7 +1093,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
                         color: isSelected ? '#FFFFFF' : undefined,
                       }}
                     >
-                      <span className="text-xs font-bold">{idx + 1}. {chk.seedMantra.split(' ')[0]}</span>
+                      <span data-no-translate="true" className="text-xs font-bold">{idx + 1}. {chk.seedMantra.split(' ')[0]}</span>
                       <span className="text-[10px] truncate max-w-full font-medium">
                         {chk.name.split(' ')[0]}
                       </span>
@@ -1108,6 +1108,7 @@ export const ShivTantraView: React.FC<ShivTantraViewProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#DFCBB5] dark:border-[#5C3A21]/60 pb-3">
                 <div className="flex items-center gap-3">
                   <div
+                    data-no-translate="true"
                     className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-granth font-black text-xl shadow-md"
                     style={{ backgroundColor: activeChakra.colorHex }}
                   >

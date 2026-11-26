@@ -543,7 +543,7 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>{pickL('वैदिक सिद्ध मंत्र:', 'Vedic Sacred Mantra:', 'વૈદિક સિદ્ધ મંત્ર:')}</span>
                 </div>
-                <p className="font-granth text-sm font-black text-white">{mulank.mantra}</p>
+                <p data-no-translate="true" className="font-granth text-sm font-black text-white">{mulank.mantra}</p>
                 <p className="text-[10px] text-amber-200/80">
                   {pickL(
                     `जल चिकित्सा: ${mulank.waterBottleColor} में जल भरकर सूर्य स्नान कराएं व सेवन करें।`,

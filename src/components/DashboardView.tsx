@@ -854,7 +854,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-white/75 dark:bg-stone-900/70 border border-amber-500/20">
-                  <p className="text-xs sm:text-sm font-black font-granth text-[#4A2612] dark:text-amber-100 leading-relaxed italic">
+                  <p data-no-translate="true" className="text-xs sm:text-sm font-black font-granth text-[#4A2612] dark:text-amber-100 leading-relaxed italic">
                     "{dailyShloka.sanskrit}"
                   </p>
                   <p className="text-xs font-bold text-stone-700 dark:text-stone-300 mt-2 leading-relaxed">

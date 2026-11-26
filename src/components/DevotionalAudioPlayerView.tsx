@@ -629,6 +629,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                         return (
                           <div
                             key={lIdx}
+                            data-no-translate={!isBhavarth ? 'true' : undefined}
                             className={
                               isBhavarth
                                 ? 'text-xs sm:text-sm font-sans font-semibold text-[#735133] pt-1.5 mt-1.5 border-t border-[#8C6239]/20'
@@ -647,7 +648,7 @@ export const DevotionalAudioPlayerView: React.FC<{
                         <span className="font-black text-[#B56A00] text-[10px] uppercase tracking-wider block mb-0.5">
                           {L('🔱 पदच्छेद (सरल शुद्ध उच्चारण):', '🔱 Padaccheda (Easy Pronunciation Split):', '🔱 પદચ્છેદ (સરળ શુદ્ધ ઉચ્ચારણ):')}
                         </span>
-                        <span className="font-medium leading-relaxed whitespace-pre-line">
+                        <span data-no-translate="true" className="font-medium leading-relaxed whitespace-pre-line">
                           {padacchedaText}
                         </span>
                       </div>

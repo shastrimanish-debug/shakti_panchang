@@ -3242,7 +3242,7 @@ export const KundaliView: React.FC<KundaliViewProps> = ({
                 <div className="text-xs font-bold text-[#8C6239] uppercase tracking-wider mb-1">
                   {L('महामंत्र (Mantra)', 'Maha Mantra', 'મહામંત્ર (Mantra)')}
                 </div>
-                <p className="text-xs sm:text-sm font-black text-[#5C3A21] leading-relaxed">
+                <p data-no-translate="true" className="text-xs sm:text-sm font-black text-[#5C3A21] leading-relaxed">
                   {remedies.mantra}
                 </p>
               </div>

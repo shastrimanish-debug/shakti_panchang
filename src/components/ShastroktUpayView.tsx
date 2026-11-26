@@ -110,7 +110,7 @@ export function ShastroktUpayView() {
           >
             <div className="bx-kicker">{item.id} · {trShastroktDeity(item.deity, cLang)}</div>
             <strong className="text-sm font-bold" style={{ color: "#241004" }}>{item.title}</strong>
-            <span className="text-xs font-semibold" style={{ color: "#4A0E0E" }}>{item.mantra}</span>
+            <span data-no-translate="true" className="text-xs font-semibold" style={{ color: "#4A0E0E" }}>{item.mantra}</span>
           </button>
         ))}
         {!selected && list.length === 0 ? (
@@ -158,7 +158,7 @@ function Detail({ item }: { item: ShastroktUpay }) {
       </div>
       <article className="bx-verse">
         <div className="bx-kicker">{trShastroktDeity(item.deity, cLang)} · {item.category}</div>
-        <p className="font-granth font-bold text-[18px] leading-relaxed" style={{ color: "#4A0E0E" }}>{item.mantra}</p>
+        <p data-no-translate="true" className="font-granth font-bold text-[18px] leading-relaxed" style={{ color: "#4A0E0E" }}>{item.mantra}</p>
         <p className="text-sm font-semibold" style={{ color: "#241004" }}>{item.purpose}</p>
       </article>
       <article className="bx-verse">

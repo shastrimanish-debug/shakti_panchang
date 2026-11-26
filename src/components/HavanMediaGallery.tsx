@@ -963,7 +963,7 @@ export const HavanMediaGallery: React.FC<HavanMediaGalleryProps> = ({
               <h3 className="font-granth text-sm sm:text-base font-black text-white leading-snug truncate">
                 {activeClip.title[cLang]}
               </h3>
-              <p className="text-xs text-amber-100/90 line-clamp-1 mt-0.5">
+              <p data-no-translate="true" className="text-xs text-amber-100/90 line-clamp-1 mt-0.5">
                 {activeClip.mantra}
               </p>
             </div>

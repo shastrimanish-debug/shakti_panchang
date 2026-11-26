@@ -467,7 +467,7 @@ export const DurgaSaptashatiView: React.FC<{
                         className="px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer"
                         title="HD स्टेटस कार्ड बनाएं"
                       >
-                        📸 स्टेटस
+                        {language === "en" ? "📸 Status" : language === "gu" ? "📸 સ્ટેટસ" : "📸 स्टेटस"}
                       </button>
                       <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
                         {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -480,7 +480,7 @@ export const DurgaSaptashatiView: React.FC<{
                       </button>
                     </div>
                   </div>
-                  <p className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
+                  <p data-no-translate="true" className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
                   <p className="bx-mean"><b style={{ color: "var(--bx-ink)" }}>{ui.meaning}</b> {verse.hindi}</p>
                 </article>
               );
@@ -582,7 +582,7 @@ export const DurgaSaptashatiView: React.FC<{
                         className="px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer"
                         title="HD स्टेटस कार्ड बनाएं"
                       >
-                        📸 स्टेटस
+                        {language === "en" ? "📸 Status" : language === "gu" ? "📸 સ્ટેટસ" : "📸 स्टेटस"}
                       </button>
                       <button type="button" className="bx-iconbtn" aria-label={ui.copy} onClick={() => handleCopy(verse.id, verse.sanskrit, verse.hindi)}>
                         {copiedId === verse.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -595,9 +595,10 @@ export const DurgaSaptashatiView: React.FC<{
                       </button>
                     </div>
                   </div>
-                  <p className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
+                  <p data-no-translate="true" className={`bx-sans font-granth ${fontSize === "sm" ? "text-[13px]" : fontSize === "lg" ? "text-base" : "text-[15px]"}`}>{verse.sanskrit}</p>
                   <p className="text-[11px] text-[#6B4423] bg-amber-50/70 rounded-lg px-2 py-1 border border-amber-200/60">
-                    <b className="text-[#B56A00]">पदच्छेद:</b> {formatPadacchedaGuide(verse.sanskrit)}
+                    <b className="text-[#B56A00]">{language === "en" ? "Padaccheda:" : language === "gu" ? "પદચ્છેદ:" : "पदच्छेद:"}</b>{" "}
+                    <span data-no-translate="true">{formatPadacchedaGuide(verse.sanskrit)}</span>
                   </p>
                   <p className="bx-mean"><b style={{ color: "var(--bx-ink)" }}>{ui.meaning}</b> {verse.hindi}</p>
                 </article>

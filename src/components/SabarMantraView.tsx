@@ -191,7 +191,7 @@ function Detail({ item }: { item: SabarMantra }) {
 
       <article className="bx-verse">
         <div className="bx-kicker">{trSabarDeity(item.deity, cLang)} · {L("पूरा मंत्र", "Full Mantra", "સંપૂર્ણ મંત્ર")}</div>
-        <p className="font-granth font-bold whitespace-pre-wrap text-[16px] leading-relaxed" style={{ color: "#4A0E0E" }}>{item.mantra}</p>
+        <p data-no-translate="true" className="font-granth font-bold whitespace-pre-wrap text-[16px] leading-relaxed" style={{ color: "#4A0E0E" }}>{item.mantra}</p>
         <p className="text-sm font-semibold" style={{ color: "#241004" }}>{item.use}</p>
       </article>
       <article className="bx-verse">

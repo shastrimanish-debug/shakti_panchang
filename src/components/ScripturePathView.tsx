@@ -448,8 +448,9 @@ export function ScripturePathView({ title, verses }: { title: string; verses: Pa
                   </div>
                 </div>
 
-                {/* Verse Text Body */}
+                {/* Verse Text Body (Original Sacred Sanskrit / Awadhi Script — Never Auto-Translated) */}
                 <p
+                  data-no-translate="true"
                   style={{ color: "#4A0E0E" }}
                   className={`font-granth font-bold whitespace-pre-wrap ${fontClasses[fontSizeIndex]}`}
                 >

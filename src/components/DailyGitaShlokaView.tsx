@@ -344,10 +344,11 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
 
               {/* Sanskrit Text */}
               <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[#FFF8EE] to-[#FBE8C8] border border-amber-300 text-center">
-                <div className="text-[10px] font-black text-[#B56A00] uppercase tracking-wider mb-1">
+                <div data-no-translate="true" className="text-[10px] font-black text-[#B56A00] uppercase tracking-wider mb-1">
                   ॥ श्री भगवानुवाच ॥
                 </div>
                 <p
+                  data-no-translate="true"
                   className={`font-granth font-black text-[#462B17] leading-relaxed whitespace-pre-line ${
                     fontSize === 'sm' ? 'text-xs' : fontSize === 'lg' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'
                   }`}
@@ -356,21 +357,21 @@ export const DailyGitaShlokaView: React.FC<DailyGitaShlokaViewProps> = ({
                 </p>
                 <div className="mt-2 pt-2 border-t border-amber-400/40 text-xs text-[#5C3A21]">
                   <span className="font-black text-[#B56A00] text-[10px] uppercase tracking-wider">
-                    🔱 पदच्छेद (सरल उच्चारण):{' '}
+                    {language === 'en' ? '🔱 Padaccheda (Pronunciation): ' : language === 'gu' ? '🔱 પદચ્છેદ (સરળ ઉચ્ચારણ): ' : '🔱 पदच्छेद (सरल उच्चारण): '}
                   </span>
-                  <span className="font-semibold">{formatPadacchedaGuide(currentShloka.sanskrit)}</span>
+                  <span data-no-translate="true" className="font-semibold">{formatPadacchedaGuide(currentShloka.sanskrit)}</span>
                 </div>
                 {currentShloka.transliteration && (
-                  <p className="text-[11px] text-[#8C6239] mt-1.5 italic font-mono">
+                  <p data-no-translate="true" className="text-[11px] text-[#8C6239] mt-1.5 italic font-mono">
                     {currentShloka.transliteration}
                   </p>
                 )}
               </div>
 
-              {/* Hindi Meaning */}
+              {/* Localized Meaning */}
               <div className="p-3 rounded-xl bg-white border border-amber-200 text-xs text-[#3E2714]">
                 <div className="text-[10px] font-bold text-[#8C6239] uppercase tracking-wider mb-0.5">
-                  हिंदी भावार्थ:
+                  {language === 'en' ? 'Meaning:' : language === 'gu' ? 'ભાવાર્થ:' : 'हिंदी भावार्थ:'}
                 </div>
                 <p className="leading-relaxed text-[11px] sm:text-xs font-medium">
                   {currentShloka.localizedMeaning}

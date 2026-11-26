@@ -51,7 +51,24 @@ const LANG_FULL_NAMES: Record<string, string> = {
 };
 
 const MAX_CACHE_ENTRIES = 2500;
-const CACHE_PREFIX = 'shakti_autotr_v2_';
+const CACHE_PREFIX = 'shakti_autotr_v3_';
+const LEGACY_CACHE_PREFIX = 'shakti_autotr_v2_';
+let legacyPurged = false;
+
+function purgeLegacyCaches(): void {
+  if (legacyPurged || typeof window === 'undefined') return;
+  legacyPurged = true;
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(LEGACY_CACHE_PREFIX)) toRemove.push(k);
+    }
+    for (const k of toRemove) localStorage.removeItem(k);
+  } catch {
+    // ignore storage errors
+  }
+}
 
 // Session flags to avoid retrying blocked providers repeatedly
 let gtxBlockedForSession = false;
@@ -63,6 +80,7 @@ const saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const inflightPromises = new Map<string, Promise<string | null>>();
 
 function getLangCache(lang: string): Map<string, string> {
+  purgeLegacyCaches();
   let cache = memCaches.get(lang);
   if (cache) return cache;
   cache = new Map<string, string>();
@@ -129,8 +147,14 @@ function isCapacitorRuntime(): boolean {
 }
 
 /**
- * Sacred Sanskrit Shloka / Mantra detector — NEVER translate sacred shlokas!
+ * Sacred Sanskrit Shloka / Viniyoga / Mantra detector — NEVER translate sacred Sanskrit!
  */
+const HINDI_PROSE_VERBS_RE =
+  /(?:^|[\s,।])(है|हैं|था|थी|थे|करें|करता|करती|चाहिए|होता|होती|होते|नहीं|क्योंकि|जिससे|सकता|सकती|जाता|जाती|कहा गया|बताया गया)(?:$|[\s,।.])/;
+
+const SANSKRIT_SACRED_MARKERS_RE =
+  /(विनियोगः|विनियोग:|ऋषिः|छन्दः|छंदः|कीलकम्|कवचम्|अर्गलास्तोत्रम्|नमो नमः|स्वाहा|वौषट्|हुं फट्|प्रकीर्तिताः|उवाच:|उवाच\s|नमस्तुभ्यम्|शरणं गताः|रक्षतु|पातु\s|मंगलम्|मङ्गलम्)/;
+
 export function isSacredSanskritOrProtected(text: string): boolean {
   const t = text.trim();
   if (!t) return true;
@@ -139,6 +163,15 @@ export function isSacredSanskritOrProtected(text: string): boolean {
   if (t.includes('॥')) return true;
   // Pure Vedic mantra starting with ॐ and ending in sacred invocation
   if (/^ॐ\s+[\u0900-\u097F\s,।\-:]+(नमः|स्वाहा|हुं|फट्|वषट्|शान्तिः|शांतिः|नमो|स्तुते)\s*[।!]*$/.test(t)) {
+    return true;
+  }
+  // Sanskrit Viniyoga / Stotra / Kavach / Mantra invocation without Hindi prose verbs
+  if (SANSKRIT_SACRED_MARKERS_RE.test(t) && !HINDI_PROSE_VERBS_RE.test(t)) {
+    return true;
+  }
+  // Visarga-heavy or halanta-heavy pure Sanskrit verse line (e.g. ending in म् / त् / न् / ः)
+  const sanskritWordEndings = (t.match(/(?:म्|त्|न्|ः)(?=[\s,।]|$)/g) || []).length;
+  if (sanskritWordEndings >= 2 && !HINDI_PROSE_VERBS_RE.test(t)) {
     return true;
   }
   // Single sacred symbol
@@ -166,6 +199,7 @@ function isElementProtected(el: Element | null): boolean {
     if (SKIP_TAGS.has(curr.tagName)) return true;
     if (curr.getAttribute('data-no-translate') === 'true') return true;
     if (curr.getAttribute('translate') === 'no') return true;
+    if (curr.classList?.contains('bx-sans')) return true;
     curr = curr.parentElement;
   }
   return false;
@@ -256,7 +290,8 @@ async function translateViaHostingAi(texts: string[], targetLang: string): Promi
       `Rules: (1) Return ONLY a valid JSON array of strings with the EXACT SAME length and order. ` +
       `(2) Do not add markdown fences, notes, or explanations. ` +
       `(3) Preserve emojis, numbers, punctuation, and sacred Vedic terms naturally (e.g., Vastu, Mantra, Yantra, Tantra, Kundali, Panchang). ` +
-      `(4) If a string already has both Hindi and English like "मुख्य द्वार (Main Entrance)", translate cleanly without duplicating meaning.`;
+      `(4) If a string already has both Hindi and English like "मुख्य द्वार (Main Entrance)", translate cleanly without duplicating meaning. ` +
+      `(5) NEVER translate or transliterate sacred Sanskrit shlokas, Vedic mantras, Viniyoga, or Ramcharitmanas Awadhi doha/chaupai verses — return them UNCHANGED in original Devanagari.`;
 
     const resp = await fetch(HOSTING_UMA_URL, {
       method: 'POST',

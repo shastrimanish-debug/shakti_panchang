@@ -624,11 +624,11 @@ export const NityaHavanView: React.FC<NityaHavanViewProps> = ({
                   </div>
                 </div>
 
-                <p className="font-granth text-base font-black leading-relaxed" style={{ color: 'var(--bx-header)' }}>
+                <p data-no-translate="true" className="font-granth text-base font-black leading-relaxed" style={{ color: 'var(--bx-header)' }}>
                   {activeMantra.sanskrit}
                 </p>
                 {cLang === 'en' && (
-                  <p className="text-xs italic opacity-80">{activeMantra.transliteration}</p>
+                  <p data-no-translate="true" className="text-xs italic opacity-80">{activeMantra.transliteration}</p>
                 )}
                 <p className="text-xs leading-relaxed opacity-90">{activeMantra.meaning}</p>
               </div>
@@ -777,7 +777,7 @@ export const NityaHavanView: React.FC<NityaHavanViewProps> = ({
                       </div>
                       <p className="text-xs leading-relaxed opacity-90">{st.instruction}</p>
                       {st.mantra && (
-                        <p className="text-[11px] font-granth font-bold pt-0.5" style={{ color: 'var(--bx-header)' }}>
+                        <p data-no-translate="true" className="text-[11px] font-granth font-bold pt-0.5" style={{ color: 'var(--bx-header)' }}>
                           {st.mantra}
                         </p>
                       )}

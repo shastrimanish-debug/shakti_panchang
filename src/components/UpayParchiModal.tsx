@@ -1882,7 +1882,7 @@ export const UpayParchiModal: React.FC<UpayParchiModalProps> = ({
                               {rj.count}
                             </span>
                           </div>
-                          <p className="text-[11px] font-mono text-[#162C6A] mt-1 break-all">
+                          <p data-no-translate="true" className="text-[11px] font-mono text-[#162C6A] mt-1 break-all">
                             {rj.mantra}
                           </p>
                         </div>

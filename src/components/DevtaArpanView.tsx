@@ -600,7 +600,7 @@ export const DevtaArpanView: React.FC<DevtaArpanViewProps> = ({
                           </div>
                         </div>
 
-                        <div className="font-serif text-xs font-semibold text-[#462B17] italic">
+                        <div data-no-translate="true" className="font-serif text-xs font-semibold text-[#462B17] italic">
                           {item.mantra}
                         </div>
                       </div>

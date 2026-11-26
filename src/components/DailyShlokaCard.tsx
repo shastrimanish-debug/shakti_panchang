@@ -174,7 +174,7 @@ export const DailyShlokaCard: React.FC<DailyShlokaCardProps> = ({ date = new Dat
 
       {/* Sanskrit Shloka Verse */}
       <div className="pt-3 pb-2.5 text-center px-1">
-        <blockquote className="font-granth text-xs sm:text-sm font-black text-[#5C3A21] leading-relaxed whitespace-pre-line tracking-wide">
+        <blockquote data-no-translate="true" className="font-granth text-xs sm:text-sm font-black text-[#5C3A21] leading-relaxed whitespace-pre-line tracking-wide">
           {shloka.sanskrit}
         </blockquote>
       </div>

@@ -763,6 +763,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                         {item.scriptureName[langKey]} · {localizeGranthReference(item.reference, langKey)}
                       </div>
                       <div
+                        data-no-translate="true"
                         className="text-[11px] truncate mt-0.5 font-medium"
                         style={{ color: isSelected ? '#FDE68A' : '#5C2D0C' }}
                       >
@@ -1129,7 +1130,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                             ? 'ઉચ્ચારણ પદચ્છેદ: '
                             : 'उच्चारण पदच्छेद: '}
                       </span>
-                      {formatPadacchedaGuide(currentExcerpt.sanskrit)}
+                      <span data-no-translate="true">{formatPadacchedaGuide(currentExcerpt.sanskrit)}</span>
                     </div>
 
                     {currentExcerpt.wordMeanings.length > 0 && (
@@ -1143,6 +1144,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                             className="text-xs sm:text-sm flex items-baseline gap-1.5"
                           >
                             <span
+                              data-no-translate="true"
                               className="font-granth font-bold shrink-0"
                               style={{ color: '#6E1409' }}
                             >
@@ -1350,6 +1352,7 @@ export const GranthPuranView: React.FC<GranthPuranViewProps> = ({
                   </div>
 
                   <p
+                    data-no-translate="true"
                     style={{ color: '#4A0E0E' }}
                     className="font-granth font-bold text-base sm:text-lg whitespace-pre-line leading-relaxed"
                   >

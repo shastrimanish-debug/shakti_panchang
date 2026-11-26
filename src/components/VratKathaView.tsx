@@ -333,12 +333,12 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                 <div className="text-[11px] font-black text-[#B56A00] flex items-center gap-1 uppercase tracking-wider">
                   <Sparkles className="w-3.5 h-3.5" /> मंगलाचरण श्लोक
                 </div>
-                <p className={`font-granth font-bold text-[#5C3A21] whitespace-pre-wrap leading-relaxed ${size}`}>
+                <p data-no-translate="true" className={`font-granth font-bold text-[#5C3A21] whitespace-pre-wrap leading-relaxed ${size}`}>
                   {currentKatha.shlok}
                 </p>
                 {currentKatha.shlokMeaning && currentKatha.shlokMeaning.trim().length > 0 && (
                   <div className="pt-2 border-t border-[#8C6239]/20 text-[#3E2714]">
-                    <span className="text-[11px] font-bold text-[#8C6239] block">हिंदी भावार्थ:</span>
+                    <span className="text-[11px] font-bold text-[#8C6239] block">भावार्थ:</span>
                     <p className={`font-medium ${size}`}>{currentKatha.shlokMeaning}</p>
                   </div>
                 )}
@@ -415,7 +415,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                         const contentText = trimmed.replace(/^(हिंदी अनुवाद:|हिंदी भावार्थ:|भावार्थ:)\s*/, '');
                         return (
                           <div key={lIdx} className="bg-[#FAF2E4] p-3 rounded-xl border-l-4 border-l-[#B56A00] border-[#8C6239]/20 space-y-0.5">
-                            <span className="font-bold text-[#B56A00] block text-xs">हिंदी अर्थ:</span>
+                            <span className="font-bold text-[#B56A00] block text-xs">भावार्थ:</span>
                             <p className="font-medium text-[#3E2714] text-xs sm:text-sm leading-relaxed">
                               {contentText}
                             </p>
@@ -426,7 +426,7 @@ export const VratKathaView: React.FC<VratKathaViewProps> = ({
                       // Shloka Sanskrit Verse Text
                       if (isShlokaBlock && !trimmed.startsWith('हिंदी')) {
                         return (
-                          <p key={lIdx} className="font-granth font-bold text-[#5C3A21] text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                          <p key={lIdx} data-no-translate="true" className="font-granth font-bold text-[#5C3A21] text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
                             {trimmed}
                           </p>
                         );

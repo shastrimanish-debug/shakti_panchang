@@ -461,7 +461,8 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                         {currentMantra.beej && (
                           <span className="px-2.5 py-0.5 bg-[#5C3A21] text-[#FFD88A] rounded-full text-[11px] font-bold border border-[#B56A00]/50 flex items-center gap-1">
                             <Zap className="w-3 h-3 text-amber-300" />
-                            {L('बीज मंत्र:', 'Beej Mantra:', 'બીજ મંત્ર:')} {currentMantra.beej}
+                            <span>{L('बीज मंत्र:', 'Beej Mantra:', 'બીજ મંત્ર:')}</span>{' '}
+                            <span data-no-translate="true">{currentMantra.beej}</span>
                           </span>
                         )}
                         {currentMantra.riddhi && (
@@ -477,7 +478,7 @@ export const JainMantraView: React.FC<JainMantraViewProps> = () => {
                       <div className="text-[10px] font-black text-[#8C6239] uppercase tracking-wider">
                         {L('॥ जैन पाठ ॥', '॥ JAIN PATH ॥', '॥ જૈન પાઠ ॥')}
                       </div>
-                      <div className="font-granth font-bold text-base sm:text-xl text-[#3E2714] leading-relaxed whitespace-pre-line selection:bg-[#B56A00] selection:text-white">
+                      <div data-no-translate="true" className="font-granth font-bold text-base sm:text-xl text-[#3E2714] leading-relaxed whitespace-pre-line selection:bg-[#B56A00] selection:text-white">
                         {currentMantra.mantra}
                       </div>
                     </div>

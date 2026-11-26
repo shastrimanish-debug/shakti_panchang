@@ -239,7 +239,7 @@ export const LalKitabUpayListView: React.FC<{
                         <Sparkles className="w-3 h-3 text-amber-600" />
                         <span>{pick('मंत्र / प्रार्थना / जप:', 'Mantra / Prayer:', 'મંત્ર / પ્રાર્થના / જપ:')}</span>
                       </div>
-                      <p className="text-xs font-semibold text-[#7F1D1D]">{remedy.mantra}</p>
+                      <p data-no-translate="true" className="text-xs font-semibold text-[#7F1D1D]">{remedy.mantra}</p>
                     </div>
                   )}
 
